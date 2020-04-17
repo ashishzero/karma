@@ -1,0 +1,19 @@
+# build files
+bin/*
+
+# visual studio files
+.vs
+tools/.vs
+tools/bin/*.sln
+*.pdb
+*.ilk
+*.vcxproj.user
+
+# configuration and log files
+*.log
+
+/run_tree/karma_x64_Debug.exe
+/run_tree/karma_x64_Developer.exe
+
+# misc
+.clang-format

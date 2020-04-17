@@ -1,0 +1,13 @@
+# These things need sorting / cleanup
+
+- Create *get_user_save_directory*, *create_directory*, *check_for_directory_presence* and such functions
+
+- Defered Shading for optimized lighting
+- Physically Based Renbering
+- Some rendering warning / errors are ignored in OpenGL Debug callback, need to take a look at those
+- Support for instanced rendering in the engine
+
+- Local Thread Allocator
+- In utils.h file, cleanup random and hash util functions
+
+- Make it easier to import and and load assets into the engine
