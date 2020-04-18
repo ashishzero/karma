@@ -62,6 +62,12 @@ u8 utf32_to_utf8(utf32 codepoint, utf8 buffer[4]) {
 	return bytes;
 }
 
+bool codepoint_is_surrogate(utf32 codepoint) {
+	bool high = (codepoint >= HIGH_SURROGATE_CODEPOINT_FIRST && codepoint <= HIGH_SURROGATE_CODEPOINT_LAST);
+	bool low  = (codepoint >= LOW_SURROGATE_CODEPOINT_FIRST && codepoint <= LOW_SURROGATE_CODEPOINT_LAST);
+	return high || low;
+}
+
 bool string_iter_continue(const String string, String_Iter *iter) {
 	return iter->index < string.count;
 }

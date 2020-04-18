@@ -517,7 +517,7 @@ struct Array {
 	}
 
 	inline Array(Allocator_Proc proc, void *data = 0) {
-		allocator.proc = alloc;
+		allocator.proc = proc;
 		allocator.data = data;
 	}
 

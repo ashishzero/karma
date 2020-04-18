@@ -5,6 +5,11 @@
 #define STB_SPRINTF_MIN 512
 #include "stb_sprintf.h"
 
+constexpr u32 HIGH_SURROGATE_CODEPOINT_FIRST = 0xD800;
+constexpr u32 HIGH_SURROGATE_CODEPOINT_LAST	 = 0xDBFF;
+constexpr u32 LOW_SURROGATE_CODEPOINT_FIRST	 = 0xDC00;
+constexpr u32 LOW_SURROGATE_CODEPOINT_LAST	 = 0xDFFF;
+
 struct Utf32_Codepoint {
 	utf32 code;
 	u8	size_in_bytes;
@@ -23,6 +28,7 @@ struct String_Search_Result {
 s64					 string_utf8_length(const String str);
 Utf32_Codepoint		 utf8_to_utf32(const utf8 *character);
 u8					 utf32_to_utf8(utf32 codepoint, utf8 buffer[4]);
+bool				 codepoint_is_surrogate(utf32 codepoint);
 bool				 string_iter_continue(const String string, String_Iter *iter);
 bool				 string_iter_next(const String string, String_Iter *iter);
 bool				 string_match(const String a, const String b);

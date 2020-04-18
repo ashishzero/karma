@@ -17,7 +17,7 @@
 
 enum Lookup_Flag_Bit : u16 {
 	Lookup_Flag_RIGHT_TO_LEFT		   = 0x0001,
-	Lookup_Flag_IGNORE_BASE_GLYPH	  = 0x0002,
+	Lookup_Flag_IGNORE_BASE_GLYPH	   = 0x0002,
 	Lookup_Flag_IGNORE_LIGATURES	   = 0x0004,
 	Lookup_Flag_IGNORE_MARKS		   = 0x0008,
 	Lookup_Flag_USE_MARK_FILTERING_SET = 0x0010,
@@ -448,7 +448,7 @@ enum Lang_Tag : u32 {
 	Lang_Tag_DOGRI2						 = tag32be("DGR "),
 	Lang_Tag_DHANGU						 = tag32be("DHG "),
 	Lang_Tag_DIMLI						 = tag32be("DIQ "),
-	Lang_Tag_DIVEHI_DHIVEHI_MALDIVIAN	= tag32be("DIV "),
+	Lang_Tag_DIVEHI_DHIVEHI_MALDIVIAN	 = tag32be("DIV "),
 	Lang_Tag_ZARMA						 = tag32be("DJR "),
 	Lang_Tag_DJAMBARRPUYNGU				 = tag32be("DJR0"),
 	Lang_Tag_DANGME						 = tag32be("DNG "),
@@ -548,7 +548,7 @@ enum Lang_Tag : u32 {
 	Lang_Tag_INGUSH						 = tag32be("ING "),
 	Lang_Tag_INUKTITUT					 = tag32be("INU "),
 	Lang_Tag_INUPIAT					 = tag32be("IPK "),
-	Lang_Tag_PHONETIC_TRANSCRIPTION_IPA  = tag32be("IPPH"),
+	Lang_Tag_PHONETIC_TRANSCRIPTION_IPA	 = tag32be("IPPH"),
 	Lang_Tag_IRISH						 = tag32be("IRI "),
 	Lang_Tag_IRISH_TRADITIONAL			 = tag32be("IRT "),
 	Lang_Tag_ICELANDIC					 = tag32be("ISL "),
@@ -969,7 +969,7 @@ enum Font_Gsub : u16 {
 };
 
 struct Feature_Indices {
-	u16  count;
+	u16	 count;
 	u16 *ptr;
 };
 
@@ -994,7 +994,7 @@ struct Dynamic_Font {
 	void *mark_glyph_set;
 
 	Feature_List gsub_feature;
-	Lookup_List  gsub_lookup;
+	Lookup_List	 gsub_lookup;
 };
 
 bool font_create(const String content, int index, Dynamic_Font *font) {
@@ -1005,8 +1005,8 @@ bool font_create(const String content, int index, Dynamic_Font *font) {
 		// GDEF Information Caching
 		{
 			u16 *gdef  = (u16 *)(font->info.data + font->info.gdef);
-			u16  major = bswap16p_be(gdef + 0);
-			u16  minor = bswap16p_be(gdef + 1);
+			u16	 major = bswap16p_be(gdef + 0);
+			u16	 minor = bswap16p_be(gdef + 1);
 			assert(major == 1 && (minor == 0 || minor == 2 || minor == 3));
 
 			u16 glyph_class_defination_offset		= bswap16p_be(gdef + 2);
@@ -1031,24 +1031,24 @@ bool font_create(const String content, int index, Dynamic_Font *font) {
 			u16 minor = bswap16p_be(gsub + 1);
 
 			// v1.0
-			u16 script_list_offset  = bswap16p_be(gsub + 2);
+			u16 script_list_offset	= bswap16p_be(gsub + 2);
 			u16 feature_list_offset = bswap16p_be(gsub + 3);
-			u16 lookup_list_offset  = bswap16p_be(gsub + 4);
+			u16 lookup_list_offset	= bswap16p_be(gsub + 4);
 
 			assert(major == 1);
 			assert(minor == 0 || minor == 1);
 			assert(script_list_offset && feature_list_offset && lookup_list_offset);
 
 			u8 *ptr			 = (u8 *)gsub;
-			u8 *script_list  = ptr + script_list_offset;
+			u8 *script_list	 = ptr + script_list_offset;
 			u8 *feature_list = ptr + feature_list_offset;
-			u8 *lookup_list  = ptr + lookup_list_offset;
+			u8 *lookup_list	 = ptr + lookup_list_offset;
 
 			u16 script_offset		  = 0;
 			u16 default_script_offset = 0;
 
 			// TODO : binary search?
-			u16  script_count = bswap16p_be(script_list);
+			u16	 script_count = bswap16p_be(script_list);
 			u16 *script		  = (u16 *)(script_list + 2);
 			for (u16 i = 0; i < script_count; ++i) {
 				auto tag	= *((u32 *)script);
@@ -1095,24 +1095,24 @@ bool font_create(const String content, int index, Dynamic_Font *font) {
 
 			assert(bswap16p_be(lang_sys + 0) == 0);
 
-			u16 req_feature_index   = bswap16p_be(lang_sys + 1);
+			u16 req_feature_index	= bswap16p_be(lang_sys + 1);
 			u16 feature_index_count = bswap16p_be(lang_sys + 2);
 
-			u16 feature_count   = bswap16p_be(feature_list);
+			u16 feature_count	= bswap16p_be(feature_list);
 			u8 *feature_records = feature_list + 2;
 
 			u16 lookup_count   = bswap16p_be(lookup_list);
 			u8 *lookup_indices = lookup_list + 2;
 
 			font->gsub_feature.indices.count = feature_index_count;
-			font->gsub_feature.indices.ptr   = lang_sys + 3;
+			font->gsub_feature.indices.ptr	 = lang_sys + 3;
 
-			font->gsub_feature.ptr	 = feature_list;
+			font->gsub_feature.ptr	   = feature_list;
 			font->gsub_feature.count   = feature_count;
 			font->gsub_feature.records = feature_records;
 
-			font->gsub_lookup.ptr	 = lookup_list;
-			font->gsub_lookup.count   = lookup_count;
+			font->gsub_lookup.ptr	  = lookup_list;
+			font->gsub_lookup.count	  = lookup_count;
 			font->gsub_lookup.lookups = lookup_indices;
 		}
 
@@ -1123,13 +1123,14 @@ bool font_create(const String content, int index, Dynamic_Font *font) {
 
 struct Glyph_Info {
 	u32 id;
+	int cluster;
 	u32 codepoints[10];
 	int codepoint_count = 0;
 };
 
 struct Glyph_Range {
 	Glyph_Info *infos	= 0;
-	s32			count   = 0;
+	s32			count	= 0;
 	s32			current = 0;
 	s32			max		= 0;
 	s32			skip	= 0;
@@ -1139,7 +1140,7 @@ Glyph_Range glyph_range(u32 count) {
 	Glyph_Range range;
 
 	if (count) {
-		range.max = count;
+		range.max	= count;
 		range.infos = new Glyph_Info[count];
 	}
 
@@ -1150,25 +1151,25 @@ void glyph_range_clear(Glyph_Range *range) {
 	range->count = 0;
 }
 
-void glyph_range_add_no_bound_check(Glyph_Range *range, u32 id, u32 codepoint) {
+void glyph_range_add_no_bound_check(Glyph_Range *range, u32 id, u32 codepoint, int cluster) {
 	assert(range->count < range->max);
-	range->infos[range->count].id = id;
-	range->infos[range->count].codepoints[0] = codepoint;
+	range->infos[range->count].id			   = id;
+	range->infos[range->count].codepoints[0]   = codepoint;
 	range->infos[range->count].codepoint_count = 1;
 	range->count += 1;
 }
 
 void glyph_range_reallocate(Glyph_Range *range, u32 count) {
-	range->max = count;
+	range->max	 = count;
 	range->infos = (Glyph_Info *)mreallocate(range->infos, range->max * sizeof(Glyph_Info));
 	if (range->count > range->max) range->count = range->max;
 }
 
-void glyph_range_add(Glyph_Range *range, u32 id, u32 codepoint) {
+void glyph_range_add(Glyph_Range *range, u32 id, u32 codepoint, int cluster) {
 	if (range->count == range->max) {
 		glyph_range_reallocate(range, (u32)array_get_grow_capacity(range->max, 1));
 	}
-	glyph_range_add_no_bound_check(range, id, codepoint);
+	glyph_range_add_no_bound_check(range, id, codepoint, cluster);
 }
 
 u32 glyph_range_current(Glyph_Range *range) {
@@ -1193,7 +1194,7 @@ void glyph_range_remove_from_next(Glyph_Range *range, u32 count) {
 
 void glyph_range_shift_from_next(Glyph_Range *range, u32 count) {
 	if (range->count + (s32)count >= range->max)
-	glyph_range_reallocate(range, (u32)array_get_grow_capacity(range->max, count));
+		glyph_range_reallocate(range, (u32)array_get_grow_capacity(range->max, count));
 	u32 shift_count = range->count - range->current - 1;
 	memmove(range->infos + range->current + 1 + count, range->infos + range->current + 1, shift_count * sizeof(Glyph_Info));
 }
@@ -1211,9 +1212,9 @@ int font_find_coverage_index(void *coverage, u16 glyph_id) {
 	// TODO: Perform binary search for finding coverage index
 
 	if (coverage_format == 1) {
-		u16  glyph_count = bswap16p_be(ptr);
-		u16  id			 = 0;
-		u16 *glyph_ids   = (u16 *)(ptr + 2);
+		u16	 glyph_count = bswap16p_be(ptr);
+		u16	 id			 = 0;
+		u16 *glyph_ids	 = (u16 *)(ptr + 2);
 		for (u16 glyph_id_index = 0; glyph_id_index < glyph_count; ++glyph_id_index) {
 			id = bswap16p_be(glyph_ids + glyph_id_index);
 			if (glyph_id == id) {
@@ -1222,8 +1223,8 @@ int font_find_coverage_index(void *coverage, u16 glyph_id) {
 			}
 		}
 	} else if (coverage_format == 2) {
-		u16  range_count	= bswap16p_be(ptr);
-		u16  start_glyph_id = 0, end_glyph_id = 0, start_ptr_id = 0;
+		u16	 range_count	= bswap16p_be(ptr);
+		u16	 start_glyph_id = 0, end_glyph_id = 0, start_ptr_id = 0;
 		u16 *range = (u16 *)(ptr + 2);
 		for (u16 range_index = 0; range_index < range_count; ++range_index) {
 			start_glyph_id = bswap16p_be(range + 0);
@@ -1248,15 +1249,15 @@ u16 font_find_glyph_class(void *glyph_class_defination, u16 glyph_id) {
 	u8 *ptr			 = (u8 *)glyph_class_defination + 2;
 
 	if (class_format == 1) {
-		u16  start_glyph_id	= bswap16p_be(ptr);
-		u16  glyph_count	   = bswap16p_be(ptr + 2);
+		u16	 start_glyph_id	   = bswap16p_be(ptr);
+		u16	 glyph_count	   = bswap16p_be(ptr + 2);
 		u16 *class_value_array = (u16 *)(ptr + 4);
 		if (glyph_id >= start_glyph_id && glyph_id < start_glyph_id + glyph_count) {
 			return bswap16p_be(class_value_array + glyph_id - glyph_count);
 		}
 	} else if (class_format == 2) {
-		u16  class_range_count = bswap16p_be(ptr);
-		u16  start_glyph_id = 0, end_glyph_id = 0, class_id = 0;
+		u16	 class_range_count = bswap16p_be(ptr);
+		u16	 start_glyph_id = 0, end_glyph_id = 0, class_id = 0;
 		u16 *class_range_record = (u16 *)(ptr + 2);
 		for (u16 i = 0; i < class_range_count; ++i) {
 			start_glyph_id = bswap16p_be(class_range_record + 0);
@@ -1277,8 +1278,8 @@ void font_apply_gsub_lookup(Dynamic_Font *font, void *lookup_ptr, Glyph_Range *r
 // Single Substitution
 void font_apply_gsub_subtable_type1(void *subtable, Glyph_Range *range) {
 	u16 *ptr			 = (u16 *)subtable;
-	u16  subformat		 = bswap16p_be(ptr);
-	u16  coverage_offset = bswap16p_be(ptr + 1);
+	u16	 subformat		 = bswap16p_be(ptr);
+	u16	 coverage_offset = bswap16p_be(ptr + 1);
 
 	if (subformat == 1) {
 		u16 unsigned_delta_glyph_id = bswap16p_be(ptr + 2);
@@ -1291,7 +1292,7 @@ void font_apply_gsub_subtable_type1(void *subtable, Glyph_Range *range) {
 	} else if (subformat == 2) {
 		auto coverage_index = font_find_coverage_index((u8 *)subtable + coverage_offset, glyph_range_current(range));
 		if (coverage_index != -1) {
-			u16  glyph_count		  = bswap16p_be(ptr + 2);
+			u16	 glyph_count		  = bswap16p_be(ptr + 2);
 			u16 *substitute_glyph_ids = ptr + 3;
 			assert(coverage_index < glyph_count);
 			range->infos[range->current].id = bswap16p_be(substitute_glyph_ids + coverage_index);
@@ -1304,16 +1305,16 @@ void font_apply_gsub_subtable_type1(void *subtable, Glyph_Range *range) {
 // Multiple Substitution
 void font_apply_gsub_subtable_type2(void *subtable, Glyph_Range *range) {
 	u16 *ptr			 = (u16 *)subtable;
-	u16  subformat		 = bswap16p_be(ptr);
-	u16  coverage_offset = bswap16p_be(ptr + 1);
+	u16	 subformat		 = bswap16p_be(ptr);
+	u16	 coverage_offset = bswap16p_be(ptr + 1);
 
 	assert(subformat == 1);
 	auto coverage_index = font_find_coverage_index((u8 *)subtable + coverage_offset, glyph_range_current(range));
 	if (coverage_index != -1) {
-		u16  sequence_count  = bswap16p_be(ptr + 2);
+		u16	 sequence_count	 = bswap16p_be(ptr + 2);
 		u16 *sequence_offset = ptr + 3;
-		u16 *sequence_table  = (u16 *)((u8 *)subtable + bswap16p_be(sequence_offset + coverage_index));
-		u16  glyph_count	 = bswap16p_be(sequence_table);
+		u16 *sequence_table	 = (u16 *)((u8 *)subtable + bswap16p_be(sequence_offset + coverage_index));
+		u16	 glyph_count	 = bswap16p_be(sequence_table);
 
 		sequence_table += 1;
 		glyph_range_shift_from_next(range, glyph_count - 1);
@@ -1327,15 +1328,15 @@ void font_apply_gsub_subtable_type2(void *subtable, Glyph_Range *range) {
 // Alternate Substitution
 void font_apply_gsub_subtable_type3(void *subtable, Glyph_Range *range, u16 alternate_index) {
 	u16 *ptr				 = (u16 *)subtable;
-	u16  subformat			 = bswap16p_be(ptr);
-	u16  coverage_offset	 = bswap16p_be(ptr + 1);
-	u16  alternate_set_count = bswap16p_be(ptr + 2);
+	u16	 subformat			 = bswap16p_be(ptr);
+	u16	 coverage_offset	 = bswap16p_be(ptr + 1);
+	u16	 alternate_set_count = bswap16p_be(ptr + 2);
 	assert(subformat == 1);
 
 	auto coverage_index = font_find_coverage_index((u8 *)subtable + coverage_offset, glyph_range_current(range));
 	if (coverage_index != -1) {
 		u16 *alternate_table = ptr + 3 + coverage_index;
-		u16  glyph_count	 = bswap16p_be(alternate_table);
+		u16	 glyph_count	 = bswap16p_be(alternate_table);
 		if (alternate_index >= glyph_count) alternate_index = 0;
 		range->infos[range->current].id = bswap16p_be(alternate_table + 1 + alternate_index);
 	}
@@ -1344,33 +1345,33 @@ void font_apply_gsub_subtable_type3(void *subtable, Glyph_Range *range, u16 alte
 // Ligatures Substitution
 void font_apply_gsub_subtable_type4(void *subtable, Glyph_Range *range) {
 	u16 *ptr				  = (u16 *)subtable;
-	u16  subformat			  = bswap16p_be(ptr);
-	u16  coverage_offset	  = bswap16p_be(ptr + 1);
-	u16  ligature_set_count   = bswap16p_be(ptr + 2);
+	u16	 subformat			  = bswap16p_be(ptr);
+	u16	 coverage_offset	  = bswap16p_be(ptr + 1);
+	u16	 ligature_set_count	  = bswap16p_be(ptr + 2);
 	u16 *ligature_set_offsets = ptr + 3;
 
 	assert(subformat == 1);
 
 	int coverage_index = font_find_coverage_index((u8 *)subtable + coverage_offset, glyph_range_current(range));
 	if (coverage_index != -1) {
-		u16  ligature_set_offset = bswap16p_be(ligature_set_offsets + coverage_index);
+		u16	 ligature_set_offset = bswap16p_be(ligature_set_offsets + coverage_index);
 		u8 * ligature_set		 = (u8 *)subtable + ligature_set_offset;
-		u16  ligature_count		 = bswap16p_be(ligature_set);
-		u16 *ligature_offsets	= (u16 *)(ligature_set + 2);
+		u16	 ligature_count		 = bswap16p_be(ligature_set);
+		u16 *ligature_offsets	 = (u16 *)(ligature_set + 2);
 
 		for (u16 ligature_index = 0; ligature_index < ligature_count; ++ligature_index) {
 			u16 *ligature			 = (u16 *)(ligature_set + bswap16p_be(ligature_offsets + ligature_index));
-			u16  ligature_glyph		 = bswap16p_be(ligature);
-			u16  component_count	 = bswap16p_be(ligature + 1);
+			u16	 ligature_glyph		 = bswap16p_be(ligature);
+			u16	 component_count	 = bswap16p_be(ligature + 1);
 			u16 *component_glyph_ids = ligature + 2;
 
 			if (component_count > range->count - range->current) continue;
 
 			bool found = true;
 			for (u16 component_index = 0; component_index < component_count - 1; ++component_index) {
-				u16  glyph_id   = bswap16p_be(component_glyph_ids + component_index);
+				u16	 glyph_id	= bswap16p_be(component_glyph_ids + component_index);
 				auto look_index = range->current + component_index + 1;
-				if (glyph_id != range->infos[look_index].id) {
+				if (glyph_id != range->infos[look_index].id || range->infos[range->current].cluster != range->infos[look_index].cluster) {
 					found = false;
 					break;
 				}
@@ -1399,7 +1400,7 @@ void font_appply_gsub_substitution_lookup_record(Dynamic_Font *font, void *subst
 
 	for (u16 subst_lookup_record_index = 0; subst_lookup_record_index < subst_count; ++subst_lookup_record_index) {
 		u16 glyph_sequence_index = bswap16p_be(subst_lookup_record);
-		u16 lookup_list_index	= bswap16p_be(subst_lookup_record + 1);
+		u16 lookup_list_index	 = bswap16p_be(subst_lookup_record + 1);
 		subst_lookup_record += 2;
 		assert(range->current + glyph_sequence_index < range->count);
 
@@ -1414,42 +1415,42 @@ void font_appply_gsub_substitution_lookup_record(Dynamic_Font *font, void *subst
 // Contextual Substitution
 void font_apply_gsub_subtable_type5(Dynamic_Font *font, void *subtable, Glyph_Range *range) {
 	u16 *ptr			 = (u16 *)subtable;
-	u16  subformat		 = bswap16p_be(ptr + 0);
-	u16  coverage_offset = bswap16p_be(ptr + 1);
+	u16	 subformat		 = bswap16p_be(ptr + 0);
+	u16	 coverage_offset = bswap16p_be(ptr + 1);
 
 	if (subformat == 1) {
 		auto coverage_index = font_find_coverage_index((u8 *)subtable + coverage_offset, glyph_range_current(range));
 		if (coverage_index != -1) {
-			u16  subrule_set_offset_count = bswap16p_be(ptr + 2);
+			u16	 subrule_set_offset_count = bswap16p_be(ptr + 2);
 			u16 *subrule_set_offsets	  = ptr + 3;
 
 			assert(coverage_index < subrule_set_offset_count);
 
-			u16  subrule_set_offset   = bswap16p_be(subrule_set_offsets + coverage_index);
+			u16	 subrule_set_offset	  = bswap16p_be(subrule_set_offsets + coverage_index);
 			u16 *subrule_set		  = (u16 *)((u8 *)subtable + subrule_set_offset);
-			u16  subrule_offset_count = bswap16p_be(subrule_set);
+			u16	 subrule_offset_count = bswap16p_be(subrule_set);
 			u16 *subrule_offsets	  = subrule_set + 1;
 			u8 * subrule_set_ptr	  = (u8 *)subrule_set;
 
 			for (u16 subrule_index = 0; subrule_index < subrule_offset_count; ++subrule_index) {
-				u16  subrule_offset = bswap16p_be(subrule_offsets + subrule_index);
+				u16	 subrule_offset = bswap16p_be(subrule_offsets + subrule_index);
 				u16 *subrule		= (u16 *)(subrule_set_ptr + subrule_offset);
-				u16  glyph_count	= bswap16p_be(subrule);
+				u16	 glyph_count	= bswap16p_be(subrule);
 
 				if (glyph_count > range->count - range->current) continue;
 
 				bool found = true;
 				for (u16 glyph_index = 0; glyph_index < glyph_count - 1; glyph_index += 1) {
-					u16  input_glyph_id = bswap16p_be(subrule + 2 + glyph_index);
+					u16	 input_glyph_id = bswap16p_be(subrule + 2 + glyph_index);
 					auto look_index		= range->current + glyph_index + 1;
-					if (input_glyph_id != range->infos[look_index].id) {
+					if (input_glyph_id != range->infos[look_index].id || range->infos[range->current].cluster != range->infos[look_index].cluster) {
 						found = false;
 						break;
 					}
 				}
 
 				if (found) {
-					u16  subst_count		 = bswap16p_be(subrule + 1);
+					u16	 subst_count		 = bswap16p_be(subrule + 1);
 					u16 *subst_lookup_record = subrule + 2 + glyph_count - 1;
 					font_appply_gsub_substitution_lookup_record(font, subst_lookup_record, subst_count, range);
 					break;
@@ -1459,9 +1460,9 @@ void font_apply_gsub_subtable_type5(Dynamic_Font *font, void *subtable, Glyph_Ra
 	} else if (subformat == 2) {
 		auto coverage_index = font_find_coverage_index((u8 *)subtable + coverage_offset, glyph_range_current(range));
 		if (coverage_index != -1) {
-			u16  class_defination_offset   = bswap16p_be(ptr + 2);
-			u16  subclass_set_offset_count = bswap16p_be(ptr + 3);
-			u16 *subclass_set_offsets	  = ptr + 4;
+			u16	 class_defination_offset   = bswap16p_be(ptr + 2);
+			u16	 subclass_set_offset_count = bswap16p_be(ptr + 3);
+			u16 *subclass_set_offsets	   = ptr + 4;
 			u8 * class_defination		   = (u8 *)subtable + class_defination_offset;
 
 			auto class_id = font_find_glyph_class(class_defination, glyph_range_current(range));
@@ -1470,28 +1471,28 @@ void font_apply_gsub_subtable_type5(Dynamic_Font *font, void *subtable, Glyph_Ra
 			u16 subclass_set_offset = bswap16p_be(subclass_set_offsets + class_id);
 			if (subclass_set_offset) {
 				u8 * subclass_set		   = ((u8 *)subtable + subclass_set_offset);
-				u16  subclass_rule_count   = bswap16p_be(subclass_set);
+				u16	 subclass_rule_count   = bswap16p_be(subclass_set);
 				u16 *subclass_rule_offsets = (u16 *)(subclass_set + 2);
 
 				for (u16 subclass_rule_index = 0; subclass_rule_index < subclass_rule_count; ++subclass_rule_index) {
-					u16  subclass_rule_offset = bswap16p_be(subclass_rule_offsets + subclass_rule_index);
+					u16	 subclass_rule_offset = bswap16p_be(subclass_rule_offsets + subclass_rule_index);
 					u16 *subclass_rule		  = (u16 *)(subclass_set + subclass_rule_offset);
-					u16  glyph_count		  = bswap16p_be(subclass_rule);
+					u16	 glyph_count		  = bswap16p_be(subclass_rule);
 
 					if (glyph_count > range->count - range->current) continue;
 
 					bool found = true;
 					for (u16 glyph_index = 0; glyph_index < glyph_count - 1; glyph_index += 1) {
-						u16  input_class_id = bswap16p_be(subclass_rule + 2 + glyph_index);
+						u16	 input_class_id = bswap16p_be(subclass_rule + 2 + glyph_index);
 						auto look_index		= range->current + glyph_index + 1;
-						if (input_class_id != font_find_glyph_class(class_defination, range->infos[look_index].id)) {
+						if (input_class_id != font_find_glyph_class(class_defination, range->infos[look_index].id) || range->infos[range->current].cluster != range->infos[look_index].cluster) {
 							found = false;
 							break;
 						}
 					}
 
 					if (found) {
-						u16  subst_count		 = bswap16p_be(subclass_rule + 1);
+						u16	 subst_count		 = bswap16p_be(subclass_rule + 1);
 						u16 *subst_lookup_record = subclass_rule + 2 + glyph_count - 1;
 						font_appply_gsub_substitution_lookup_record(font, subst_lookup_record, subst_count, range);
 						break;
@@ -1506,8 +1507,9 @@ void font_apply_gsub_subtable_type5(Dynamic_Font *font, void *subtable, Glyph_Ra
 
 			bool found = true;
 			for (u16 glyph_index = 0; glyph_index < glyph_count - 1; glyph_index += 1) {
-				u16  coverage_offset = bswap16p_be(coverage_offsets + glyph_index);
-				auto coverage_index  = font_find_coverage_index((u8 *)subtable + coverage_offset, range->infos[range->current + glyph_index].id);
+				u16	 coverage_offset = bswap16p_be(coverage_offsets + glyph_index);
+				auto look_index		 = range->current + glyph_index;
+				auto coverage_index	 = font_find_coverage_index((u8 *)subtable + coverage_offset, range->infos[look_index].id || range->infos[range->current].cluster != range->infos[look_index].cluster);
 				if (coverage_index != -1) {
 					found = false;
 					break;
@@ -1515,7 +1517,7 @@ void font_apply_gsub_subtable_type5(Dynamic_Font *font, void *subtable, Glyph_Ra
 			}
 
 			if (found) {
-				u16  subst_count		 = bswap16p_be(ptr + 2);
+				u16	 subst_count		 = bswap16p_be(ptr + 2);
 				u16 *subst_lookup_record = coverage_offsets + glyph_count;
 				font_appply_gsub_substitution_lookup_record(font, subst_lookup_record, subst_count, range);
 			}
@@ -1529,36 +1531,36 @@ void font_apply_gsub_subtable_type5(Dynamic_Font *font, void *subtable, Glyph_Ra
 // Chaining Contextual Substitution
 void font_apply_gsub_subtable_type6(Dynamic_Font *font, void *subtable, Glyph_Range *range) {
 	u16 *ptr			 = (u16 *)subtable;
-	u16  subformat		 = bswap16p_be(ptr + 0);
-	u16  coverage_offset = bswap16p_be(ptr + 1);
+	u16	 subformat		 = bswap16p_be(ptr + 0);
+	u16	 coverage_offset = bswap16p_be(ptr + 1);
 
 	if (subformat == 1) {
 		auto coverage_index = font_find_coverage_index((u8 *)subtable + coverage_offset, glyph_range_current(range));
 		if (coverage_index != -1) {
-			u16  chain_subrule_set_count   = bswap16p_be(ptr + 2);
+			u16	 chain_subrule_set_count   = bswap16p_be(ptr + 2);
 			u16 *chain_subrule_set_offsets = ptr + 3;
 
 			assert(coverage_index < chain_subrule_set_count);
 
-			u16  chain_subrule_set_offset = bswap16p_be(chain_subrule_set_offsets + coverage_index);
+			u16	 chain_subrule_set_offset = bswap16p_be(chain_subrule_set_offsets + coverage_index);
 			u16 *chain_subrule_set		  = (u16 *)((u8 *)subtable + chain_subrule_set_offset);
 
-			u16  chain_subrule_count   = bswap16p_be(chain_subrule_set);
+			u16	 chain_subrule_count   = bswap16p_be(chain_subrule_set);
 			u16 *chain_subrule_offsets = chain_subrule_set + 1;
 			u8 * chain_subrule_set_ptr = (u8 *)chain_subrule_set;
 
 			for (u16 chain_subrule_index = 0; chain_subrule_index < chain_subrule_count; ++chain_subrule_index) {
-				u16  chain_subrule_offset = bswap16p_be(chain_subrule_offsets + chain_subrule_index);
+				u16	 chain_subrule_offset = bswap16p_be(chain_subrule_offsets + chain_subrule_index);
 				u16 *chain_subrule		  = (u16 *)(chain_subrule_set_ptr + chain_subrule_offset);
 
 				u16 backtrack_glyph_count = bswap16p_be(chain_subrule);
 				if (range->current - backtrack_glyph_count < 0) continue;
 				u16 *backtrack_glyphs = chain_subrule + 1;
 
-				u16  input_glyph_count	 = bswap16p_be(backtrack_glyphs + backtrack_glyph_count);
+				u16	 input_glyph_count	   = bswap16p_be(backtrack_glyphs + backtrack_glyph_count);
 				u16 *input_glyphs		   = backtrack_glyphs + backtrack_glyph_count + 1;
-				u16  lookahead_glyph_count = bswap16p_be(input_glyphs + input_glyph_count - 1);
-				u16 *lookahead_glyphs	  = input_glyphs + input_glyph_count - 1 + 1;
+				u16	 lookahead_glyph_count = bswap16p_be(input_glyphs + input_glyph_count - 1);
+				u16 *lookahead_glyphs	   = input_glyphs + input_glyph_count - 1 + 1;
 
 				u16 required_glyph_count = input_glyph_count + lookahead_glyph_count - 1;
 				if (range->current + required_glyph_count >= range->count) continue;
@@ -1566,8 +1568,9 @@ void font_apply_gsub_subtable_type6(Dynamic_Font *font, void *subtable, Glyph_Ra
 				bool found = true;
 
 				for (u16 glyph_index = 0; glyph_index < backtrack_glyph_count; ++glyph_index) {
-					auto glyph_id = bswap16p_be(backtrack_glyphs + glyph_index);
-					if (range->infos[range->current - 1 - glyph_index].id != glyph_id) {
+					auto glyph_id	= bswap16p_be(backtrack_glyphs + glyph_index);
+					auto look_index = range->current - 1 - glyph_index;
+					if (range->infos[look_index].id != glyph_id || range->infos[range->current].cluster != range->infos[look_index].cluster) {
 						found = false;
 						break;
 					}
@@ -1575,9 +1578,9 @@ void font_apply_gsub_subtable_type6(Dynamic_Font *font, void *subtable, Glyph_Ra
 
 				if (found) {
 					for (u16 glyph_index = 0; glyph_index < input_glyph_count; ++glyph_index) {
-						auto glyph_id   = bswap16p_be(input_glyphs + glyph_index);
+						auto glyph_id	= bswap16p_be(input_glyphs + glyph_index);
 						auto look_index = range->current + glyph_index + 1;
-						if (glyph_id != range->infos[look_index].id) {
+						if (glyph_id != range->infos[look_index].id || range->infos[range->current].cluster != range->infos[look_index].cluster) {
 							found = false;
 							break;
 						}
@@ -1586,9 +1589,9 @@ void font_apply_gsub_subtable_type6(Dynamic_Font *font, void *subtable, Glyph_Ra
 
 				if (found) {
 					for (u16 glyph_index = 0; glyph_index < lookahead_glyph_count; ++glyph_index) {
-						auto glyph_id   = bswap16p_be(lookahead_glyphs + glyph_index);
+						auto glyph_id	= bswap16p_be(lookahead_glyphs + glyph_index);
 						auto look_index = range->current + glyph_index + input_glyph_count;
-						if (glyph_id != range->infos[look_index].id) {
+						if (glyph_id != range->infos[look_index].id || range->infos[range->current].cluster != range->infos[look_index].cluster) {
 							found = false;
 							break;
 						}
@@ -1596,7 +1599,7 @@ void font_apply_gsub_subtable_type6(Dynamic_Font *font, void *subtable, Glyph_Ra
 				}
 
 				if (found) {
-					u16  subst_count		 = bswap16p_be(lookahead_glyphs + lookahead_glyph_count);
+					u16	 subst_count		 = bswap16p_be(lookahead_glyphs + lookahead_glyph_count);
 					u16 *subst_lookup_record = lookahead_glyphs + lookahead_glyph_count + 1;
 					font_appply_gsub_substitution_lookup_record(font, subst_lookup_record, subst_count, range);
 					break;
@@ -1606,10 +1609,10 @@ void font_apply_gsub_subtable_type6(Dynamic_Font *font, void *subtable, Glyph_Ra
 	} else if (subformat == 2) {
 		auto coverage_index = font_find_coverage_index((u8 *)subtable + coverage_offset, glyph_range_current(range));
 		if (coverage_index != -1) {
-			u16  backtrack_class_defination_offset = bswap16p_be(ptr + 2);
-			u16  input_class_defination_offset	 = bswap16p_be(ptr + 3);
-			u16  lookahead_class_defination_offset = bswap16p_be(ptr + 4);
-			u16  chain_subclass_set_count		   = bswap16p_be(ptr + 5);
+			u16	 backtrack_class_defination_offset = bswap16p_be(ptr + 2);
+			u16	 input_class_defination_offset	   = bswap16p_be(ptr + 3);
+			u16	 lookahead_class_defination_offset = bswap16p_be(ptr + 4);
+			u16	 chain_subclass_set_count		   = bswap16p_be(ptr + 5);
 			u16 *chain_subclass_set_offsets		   = ptr + 6;
 
 			u8 * backtrack_class_defination = (u8 *)subtable + backtrack_class_defination_offset;
@@ -1621,23 +1624,23 @@ void font_apply_gsub_subtable_type6(Dynamic_Font *font, void *subtable, Glyph_Ra
 			u16 chain_subclass_set_offset = bswap16p_be(chain_subclass_set_offsets + class_id);
 			if (chain_subclass_set_offset) {
 				u8 * chain_subclass_set			 = ((u8 *)subtable + chain_subclass_set_offset);
-				u16  chain_subclass_rule_count   = bswap16p_be(chain_subclass_set);
+				u16	 chain_subclass_rule_count	 = bswap16p_be(chain_subclass_set);
 				u16 *chain_subclass_rule_offsets = (u16 *)(chain_subclass_set + 2);
 
 				for (u16 chain_subclass_rule_index = 0;
 					 chain_subclass_rule_index < chain_subclass_rule_count;
 					 ++chain_subclass_rule_index) {
-					u16  chain_subclass_rule_offset = bswap16p_be(chain_subclass_rule_offsets + chain_subclass_rule_index);
+					u16	 chain_subclass_rule_offset = bswap16p_be(chain_subclass_rule_offsets + chain_subclass_rule_index);
 					u16 *chain_subclass_rule		= (u16 *)(chain_subclass_set + chain_subclass_rule_offset);
 
 					u16 backtrack_class_count = bswap16p_be(chain_subclass_rule);
 					if (range->current - backtrack_class_count < 0) continue;
 					u16 *backtrack_classes = chain_subclass_rule + 1;
 
-					u16  input_class_count	 = bswap16p_be(backtrack_classes + backtrack_class_count);
+					u16	 input_class_count	   = bswap16p_be(backtrack_classes + backtrack_class_count);
 					u16 *input_classes		   = backtrack_classes + backtrack_class_count + 1;
-					u16  lookahead_class_count = bswap16p_be(input_classes + input_class_count - 1);
-					u16 *lookahead_classes	 = input_classes + input_class_count - 1 + 1;
+					u16	 lookahead_class_count = bswap16p_be(input_classes + input_class_count - 1);
+					u16 *lookahead_classes	   = input_classes + input_class_count - 1 + 1;
 
 					u16 required_class_count = input_class_count + lookahead_class_count - 1;
 					if (range->current + required_class_count >= range->count) continue;
@@ -1645,9 +1648,10 @@ void font_apply_gsub_subtable_type6(Dynamic_Font *font, void *subtable, Glyph_Ra
 					bool found = true;
 
 					for (u16 class_index = 0; class_index < backtrack_class_count; ++class_index) {
-						auto class_id	 = bswap16p_be(backtrack_classes + class_index);
-						auto chk_class_id = font_find_glyph_class(backtrack_class_defination, range->infos[range->current - 1 - class_index].id);
-						if (chk_class_id != class_id) {
+						auto class_id	  = bswap16p_be(backtrack_classes + class_index);
+						auto look_index	  = range->current - 1 - class_index;
+						auto chk_class_id = font_find_glyph_class(backtrack_class_defination, range->infos[look_index].id);
+						if (chk_class_id != class_id || range->infos[range->current].cluster != range->infos[look_index].cluster) {
 							found = false;
 							break;
 						}
@@ -1655,10 +1659,10 @@ void font_apply_gsub_subtable_type6(Dynamic_Font *font, void *subtable, Glyph_Ra
 
 					if (found) {
 						for (u16 class_index = 0; class_index < input_class_count; ++class_index) {
-							auto class_id	 = bswap16p_be(input_classes + class_index);
-							auto look_index   = range->current + class_index + 1;
+							auto class_id	  = bswap16p_be(input_classes + class_index);
+							auto look_index	  = range->current + class_index + 1;
 							auto chk_class_id = font_find_glyph_class(input_class_defination, range->infos[look_index].id);
-							if (class_id != chk_class_id) {
+							if (class_id != chk_class_id || range->infos[range->current].cluster != range->infos[look_index].cluster) {
 								found = false;
 								break;
 							}
@@ -1667,10 +1671,10 @@ void font_apply_gsub_subtable_type6(Dynamic_Font *font, void *subtable, Glyph_Ra
 
 					if (found) {
 						for (u16 class_index = 0; class_index < lookahead_class_count; ++class_index) {
-							auto class_id	 = bswap16p_be(lookahead_classes + class_index);
-							auto look_index   = range->current + class_index + input_class_count;
+							auto class_id	  = bswap16p_be(lookahead_classes + class_index);
+							auto look_index	  = range->current + class_index + input_class_count;
 							auto chk_class_id = font_find_glyph_class(input_class_defination, range->infos[look_index].id);
-							if (class_id != chk_class_id) {
+							if (class_id != chk_class_id || range->infos[range->current].cluster != range->infos[look_index].cluster) {
 								found = false;
 								break;
 							}
@@ -1678,7 +1682,7 @@ void font_apply_gsub_subtable_type6(Dynamic_Font *font, void *subtable, Glyph_Ra
 					}
 
 					if (found) {
-						u16  subst_count		 = bswap16p_be(lookahead_classes + lookahead_class_count);
+						u16	 subst_count		 = bswap16p_be(lookahead_classes + lookahead_class_count);
 						u16 *subst_lookup_record = lookahead_classes + lookahead_class_count + 1;
 						font_appply_gsub_substitution_lookup_record(font, subst_lookup_record, subst_count, range);
 						break;
@@ -1691,9 +1695,9 @@ void font_apply_gsub_subtable_type6(Dynamic_Font *font, void *subtable, Glyph_Ra
 		if (range->current - backtrack_glyph_count < 0) return;
 		u16 *backtrack_coverage_offsets = ptr + 2;
 
-		u16  input_glyph_count			= bswap16p_be(backtrack_coverage_offsets + backtrack_glyph_count);
+		u16	 input_glyph_count			= bswap16p_be(backtrack_coverage_offsets + backtrack_glyph_count);
 		u16 *input_coverage_offsets		= backtrack_coverage_offsets + backtrack_glyph_count + 1;
-		u16  lookahead_glyph_count		= bswap16p_be(input_coverage_offsets + input_glyph_count);
+		u16	 lookahead_glyph_count		= bswap16p_be(input_coverage_offsets + input_glyph_count);
 		u16 *lookahead_coverage_offsets = input_coverage_offsets + input_glyph_count + 1;
 
 		u16 required_glyph_count = input_glyph_count + lookahead_glyph_count - 1;
@@ -1702,10 +1706,10 @@ void font_apply_gsub_subtable_type6(Dynamic_Font *font, void *subtable, Glyph_Ra
 		bool found = true;
 
 		for (u16 glyph_coverage_index = 0; glyph_coverage_index < backtrack_glyph_count; ++glyph_coverage_index) {
-			u16  coverage_offset = bswap16p_be(backtrack_coverage_offsets + glyph_coverage_index);
+			u16	 coverage_offset = bswap16p_be(backtrack_coverage_offsets + glyph_coverage_index);
 			auto look_index		 = range->current - 1 - glyph_coverage_index;
-			auto coverage_index  = font_find_coverage_index((u8 *)subtable + coverage_offset, range->infos[look_index].id);
-			if (coverage_index != -1) {
+			auto coverage_index	 = font_find_coverage_index((u8 *)subtable + coverage_offset, range->infos[look_index].id);
+			if (coverage_index != -1 || range->infos[range->current].cluster != range->infos[look_index].cluster) {
 				found = false;
 				break;
 			}
@@ -1713,10 +1717,10 @@ void font_apply_gsub_subtable_type6(Dynamic_Font *font, void *subtable, Glyph_Ra
 
 		if (found) {
 			for (u16 glyph_coverage_index = 0; glyph_coverage_index < input_glyph_count; ++glyph_coverage_index) {
-				u16  coverage_offset = bswap16p_be(input_coverage_offsets + glyph_coverage_index);
+				u16	 coverage_offset = bswap16p_be(input_coverage_offsets + glyph_coverage_index);
 				auto look_index		 = range->current + glyph_coverage_index;
-				auto coverage_index  = font_find_coverage_index((u8 *)subtable + coverage_offset, range->infos[look_index].id);
-				if (coverage_index != -1) {
+				auto coverage_index	 = font_find_coverage_index((u8 *)subtable + coverage_offset, range->infos[look_index].id);
+				if (coverage_index != -1 || range->infos[range->current].cluster != range->infos[look_index].cluster) {
 					found = false;
 					break;
 				}
@@ -1725,10 +1729,10 @@ void font_apply_gsub_subtable_type6(Dynamic_Font *font, void *subtable, Glyph_Ra
 
 		if (found) {
 			for (u16 glyph_coverage_index = 0; glyph_coverage_index < lookahead_glyph_count; ++glyph_coverage_index) {
-				u16  coverage_offset = bswap16p_be(lookahead_coverage_offsets + glyph_coverage_index);
+				u16	 coverage_offset = bswap16p_be(lookahead_coverage_offsets + glyph_coverage_index);
 				auto look_index		 = range->current + glyph_coverage_index + input_glyph_count;
-				auto coverage_index  = font_find_coverage_index((u8 *)subtable + coverage_offset, range->infos[look_index].id);
-				if (coverage_index != -1) {
+				auto coverage_index	 = font_find_coverage_index((u8 *)subtable + coverage_offset, range->infos[look_index].id);
+				if (coverage_index != -1 || range->infos[range->current].cluster != range->infos[look_index].cluster) {
 					found = false;
 					break;
 				}
@@ -1736,7 +1740,7 @@ void font_apply_gsub_subtable_type6(Dynamic_Font *font, void *subtable, Glyph_Ra
 		}
 
 		if (found) {
-			u16  subst_count		 = bswap16p_be(lookahead_coverage_offsets + lookahead_glyph_count);
+			u16	 subst_count		 = bswap16p_be(lookahead_coverage_offsets + lookahead_glyph_count);
 			u16 *subst_lookup_record = lookahead_coverage_offsets + lookahead_glyph_count + 1;
 			font_appply_gsub_substitution_lookup_record(font, subst_lookup_record, subst_count, range);
 		}
@@ -1749,14 +1753,14 @@ void font_apply_gsub_subtable_type6(Dynamic_Font *font, void *subtable, Glyph_Ra
 //  Reverse Chaining Contextual Single Substitution
 void font_apply_gsub_subtable_type8(void *subtable, Glyph_Range *range) {
 	u16 *ptr			 = (u16 *)subtable;
-	u16  subformat		 = bswap16p_be(ptr + 0);
-	u16  coverage_offset = bswap16p_be(ptr + 1);
+	u16	 subformat		 = bswap16p_be(ptr + 0);
+	u16	 coverage_offset = bswap16p_be(ptr + 1);
 
 	auto coverage_index = font_find_coverage_index((u8 *)subtable + coverage_offset, glyph_range_current(range));
 	if (coverage_index != -1) {
-		u16  backtrack_glyph_count		= bswap16p_be(ptr + 2);
+		u16	 backtrack_glyph_count		= bswap16p_be(ptr + 2);
 		u16 *backtrack_coverage_offsets = ptr + 3;
-		u16  lookahead_glyph_count		= bswap16p_be(backtrack_coverage_offsets + backtrack_glyph_count);
+		u16	 lookahead_glyph_count		= bswap16p_be(backtrack_coverage_offsets + backtrack_glyph_count);
 		u16 *lookahead_coverage_offsets = backtrack_coverage_offsets + backtrack_glyph_count + 1;
 
 		if (range->current - backtrack_glyph_count < 0) return;
@@ -1765,10 +1769,10 @@ void font_apply_gsub_subtable_type8(void *subtable, Glyph_Range *range) {
 		bool found = true;
 
 		for (u16 glyph_coverage_index = 0; glyph_coverage_index < backtrack_glyph_count; ++glyph_coverage_index) {
-			u16  coverage_offset = bswap16p_be(backtrack_coverage_offsets + glyph_coverage_index);
+			u16	 coverage_offset = bswap16p_be(backtrack_coverage_offsets + glyph_coverage_index);
 			auto look_index		 = range->current - 1 - glyph_coverage_index;
-			auto coverage_index  = font_find_coverage_index((u8 *)subtable + coverage_offset, range->infos[look_index].id);
-			if (coverage_index != -1) {
+			auto coverage_index	 = font_find_coverage_index((u8 *)subtable + coverage_offset, range->infos[look_index].id);
+			if (coverage_index != -1 || range->infos[range->current].cluster != range->infos[look_index].cluster) {
 				found = false;
 				break;
 			}
@@ -1776,10 +1780,10 @@ void font_apply_gsub_subtable_type8(void *subtable, Glyph_Range *range) {
 
 		if (found) {
 			for (u16 glyph_coverage_index = 0; glyph_coverage_index < lookahead_glyph_count; ++glyph_coverage_index) {
-				u16  coverage_offset = bswap16p_be(lookahead_coverage_offsets + glyph_coverage_index);
+				u16	 coverage_offset = bswap16p_be(lookahead_coverage_offsets + glyph_coverage_index);
 				auto look_index		 = range->current + glyph_coverage_index + 1;
-				auto coverage_index  = font_find_coverage_index((u8 *)subtable + coverage_offset, range->infos[look_index].id);
-				if (coverage_index != -1) {
+				auto coverage_index	 = font_find_coverage_index((u8 *)subtable + coverage_offset, range->infos[look_index].id);
+				if (coverage_index != -1 || range->infos[range->current].cluster != range->infos[look_index].cluster) {
 					found = false;
 					break;
 				}
@@ -1787,10 +1791,10 @@ void font_apply_gsub_subtable_type8(void *subtable, Glyph_Range *range) {
 		}
 
 		if (found) {
-			u16  glyph_count	 = bswap16p_be(lookahead_coverage_offsets + lookahead_glyph_count);
+			u16	 glyph_count	 = bswap16p_be(lookahead_coverage_offsets + lookahead_glyph_count);
 			u16 *subst_glyph_ids = lookahead_coverage_offsets + lookahead_glyph_count + 1;
 			assert(coverage_index < glyph_count);
-			u16 subst_glyph_id		   = bswap16p_be(subst_glyph_ids + coverage_index);
+			u16 subst_glyph_id				= bswap16p_be(subst_glyph_ids + coverage_index);
 			range->infos[range->current].id = subst_glyph_id;
 		}
 	}
@@ -1798,9 +1802,9 @@ void font_apply_gsub_subtable_type8(void *subtable, Glyph_Range *range) {
 
 void font_apply_gsub_subtable_type7(Dynamic_Font *font, void *subtable, Glyph_Range *range) {
 	u16 *ptr		= (u16 *)subtable;
-	u16  subformat  = bswap16p_be(ptr + 0);
-	u16  ext_type   = bswap16p_be(ptr + 1);
-	u32  ext_offset = bswap16p_be(ptr + 2);
+	u16	 subformat	= bswap16p_be(ptr + 0);
+	u16	 ext_type	= bswap16p_be(ptr + 1);
+	u32	 ext_offset = bswap16p_be(ptr + 2);
 
 	u8 *ext_subtable = (u8 *)subtable + ext_offset;
 
@@ -1848,8 +1852,8 @@ void font_apply_gsub_subtable_type7(Dynamic_Font *font, void *subtable, Glyph_Ra
 
 void font_apply_gsub_lookup(Dynamic_Font *font, void *lookup_ptr, Glyph_Range *range) {
 	u16 *lookup = (u16 *)lookup_ptr;
-	u16  type   = bswap16p_be(lookup + 0);
-	u16  flag   = bswap16p_be(lookup + 1);
+	u16	 type	= bswap16p_be(lookup + 0);
+	u16	 flag	= bswap16p_be(lookup + 1);
 
 	u32 glyph_id = glyph_range_current(range);
 
@@ -1871,7 +1875,7 @@ void font_apply_gsub_lookup(Dynamic_Font *font, void *lookup_ptr, Glyph_Range *r
 	if ((flag & Lookup_Flag_IGNORE_LIGATURES) && glyph_class == 2) return;
 	if ((flag & Lookup_Flag_IGNORE_MARKS) && glyph_class == 3) return;
 
-	u16  subtable_count   = bswap16p_be(lookup + 2);
+	u16	 subtable_count	  = bswap16p_be(lookup + 2);
 	u16 *subtable_offsets = lookup + 3;
 
 	if (glyph_class == 4) {
@@ -1882,7 +1886,7 @@ void font_apply_gsub_lookup(Dynamic_Font *font, void *lookup_ptr, Glyph_Range *r
 			u16 table_format = bswap16p_be(ptr + 0);
 			assert(table_format == 1);
 			u16 mark_glyph_set_count = bswap16p_be(ptr + 1);
-			u16 mark_filtering_set   = bswap16p_be(lookup + 3 + subtable_count);
+			u16 mark_filtering_set	 = bswap16p_be(lookup + 3 + subtable_count);
 			assert(mark_filtering_set < mark_glyph_set_count);
 			u32 coverage_offset = bswap32p_be((u32 *)ptr + 1 + mark_filtering_set);
 			// TODO: I could not find from where the coverage offset is specified, confirm that this is correct!!!
@@ -1945,41 +1949,125 @@ void font_apply_gsub_lookup(Dynamic_Font *font, void *lookup_ptr, Glyph_Range *r
 }
 
 void font_apply_gsub_feature(Dynamic_Font *font, void *feature, Glyph_Range *range) {
-	u16  lookup_list_indices_count = bswap16p_be((u16 *)feature + 1);
+	u16	 lookup_list_indices_count = bswap16p_be((u16 *)feature + 1);
 	u16 *lookup_list_indices	   = (u16 *)feature + 2;
 
 	for (u16 list_counter = 0; list_counter < lookup_list_indices_count; ++list_counter) {
 		u16 lookup_list_index = bswap16p_be(lookup_list_indices + list_counter);
 		assert(lookup_list_index < font->gsub_lookup.count);
-		u16   lookup_offset = bswap16p_be((u16 *)font->gsub_lookup.lookups + lookup_list_index);
+		u16	  lookup_offset = bswap16p_be((u16 *)font->gsub_lookup.lookups + lookup_list_index);
 		auto *lookup		= font->gsub_lookup.ptr + lookup_offset;
 		font_apply_gsub_lookup(font, lookup, range);
 	}
 }
 
+struct Grapheme_Cluster {
+	utf32				  codepoint;
+	Ucd_Grapheme_Property prop;
+	Ucd_Indic_Syllable	  syllable;
+	int					  value;
+};
+
 struct Font_Shape {
-	Glyph_Info *glyph_infos;
-	Array_View<utf32> codepoints;
-	u32  glyph_count;
+	Glyph_Info *				 glyph_infos;
+	Array_View<Grapheme_Cluster> codepoints;
+	u32							 glyph_count;
 };
 
 Font_Shape font_shape_string(Dynamic_Font *font, String string) {
-	Glyph_Range range = glyph_range((u32)string.count);
+	Glyph_Range range = glyph_range((u32)string_utf8_length(string));
 	//defer { glyph_range_free(&range); };
 
-	Array<utf32> codepoints;
+	Array<Grapheme_Cluster> codepoints;
 
 	String_Iter iter;
 	while (string_iter_next(string, &iter)) {
-		array_add(&codepoints, iter.codepoint.code);
+		auto				  codepoint = iter.codepoint.code;
+		Ucd_Grapheme_Property prop		= ucd_grapheme_property(codepoint);
+		Grapheme_Cluster	  d;
+		d.codepoint = codepoint;
+		d.prop		= prop;
+		d.value		= 0;
+		array_add(&codepoints, d);
 	}
 
-	auto string_count = string_utf8_length(string);
+	// Clustering
+	int cluster_value = 0;
+	for (s64 i = 0; i < codepoints.count; ++i) {
+		bool should_inc;
+
+		if (i == 0 || i == codepoints.count - 1) {
+			should_inc = false;
+		} else {
+			auto p = codepoints[i - 1].prop;
+			auto n = codepoints[i].prop;
+
+			if (p == Ucd_Grapheme_Property_CR && n == Ucd_Grapheme_Property_LF)
+				should_inc = false;
+			else if (p == Ucd_Grapheme_Property_CONTROL || p == Ucd_Grapheme_Property_CR || p == Ucd_Grapheme_Property_LF)
+				should_inc = true;
+			else if (n == Ucd_Grapheme_Property_CONTROL || n == Ucd_Grapheme_Property_CR || n == Ucd_Grapheme_Property_LF)
+				should_inc = true;
+			else if (p == Ucd_Grapheme_Property_L &&
+					 (n == Ucd_Grapheme_Property_L || n == Ucd_Grapheme_Property_V || n == Ucd_Grapheme_Property_LV || n == Ucd_Grapheme_Property_LVT))
+				should_inc = false;
+			else if ((p == Ucd_Grapheme_Property_LV || p == Ucd_Grapheme_Property_V) && (n == Ucd_Grapheme_Property_V || n == Ucd_Grapheme_Property_T))
+				should_inc = false;
+			else if ((p == Ucd_Grapheme_Property_LVT || p == Ucd_Grapheme_Property_T) && (n == Ucd_Grapheme_Property_T))
+				should_inc = false;
+			else if (n == Ucd_Grapheme_Property_EXTEND || n == Ucd_Grapheme_Property_ZWJ)
+				should_inc = false;
+			else if (n == Ucd_Grapheme_Property_SPACINGMARK || p == Ucd_Grapheme_Property_PREPEND)
+				should_inc = false;
+			// TODO: We don't check for Emoji, do we need to support Emojis?
+			else if (n == Ucd_Grapheme_Property_REGIONAL_INDICATOR && p == Ucd_Grapheme_Property_REGIONAL_INDICATOR)
+				should_inc = false;
+			else
+				should_inc = true;
+		}
+
+		if (should_inc) cluster_value += 1;
+
+		codepoints[i].value	   = cluster_value;
+		codepoints[i].syllable = ucd_indic_syllable(codepoints[i].codepoint);
+	}
+
+	// Devanagari Clustering
+	const utf32 DEVANAGARI_RA	 = 0x0930;
+	const utf32 DEVANAGARI_VIRMA = 0x094D;
+	#if 0
+	s64 consume;
+	for (s64 i = 0; i < codepoints.count; i += consume) {
+		consume = 1;
+
+		if (i + 1 < codepoints.count) {
+			if (codepoints[i].syllable == Ucd_Indic_Syllable_CONSONANT &&
+				codepoints[i + 1].syllable == Ucd_Indic_Syllable_VIRAMA) {
+				codepoints[i].syllable = Ucd_Indic_Syllable_CONSONANT_DEAD;
+
+				consume += 1;
+			}
+
+			if (i + 2 < codepoints.count) {
+				if (codepoints[i].codepoint == DEVANAGARI_RA &&
+					codepoints[i + 2].syllable == Ucd_Indic_Syllable_CONSONANT) {
+
+					auto consonant	  = codepoints[i + 2];
+					codepoints[i + 2] = codepoints[i + 1];
+					codepoints[i + 1] = codepoints[i];
+					codepoints[i]	  = consonant;
+
+					consume += 2;
+				}
+			}
+		}
+	}
+	#endif
 
 	// Converting codepoints to glyph indices
 	for (s32 i = 0; i < codepoints.count; ++i) {
-		auto id = (u32)stbtt_FindGlyphIndex(&font->info, (int)codepoints[i]);
-		glyph_range_add_no_bound_check(&range, id, codepoints[i]);
+		auto id = (u32)stbtt_FindGlyphIndex(&font->info, (int)codepoints[i].codepoint);
+		glyph_range_add_no_bound_check(&range, id, codepoints[i].codepoint, 0);
 	}
 
 	static Feature_Tag features[] = {
@@ -2009,7 +2097,7 @@ Font_Shape font_shape_string(Dynamic_Font *font, String string) {
 				u16 feature_record_index = bswap16p_be((u16 *)gsub.indices.ptr + feature_index);
 				assert(feature_record_index < gsub.count);
 				u8 *		feature_record = gsub.records + feature_record_index * 6;
-				Feature_Tag feature_tag	= *((Feature_Tag *)feature_record);
+				Feature_Tag feature_tag	   = *((Feature_Tag *)feature_record);
 				if (feature_tag == features[i])
 					font_apply_gsub_feature(font, gsub.ptr + bswap16p_be(feature_record + 4), &range);
 			}
@@ -2020,7 +2108,7 @@ Font_Shape font_shape_string(Dynamic_Font *font, String string) {
 			u16 feature_record_index = bswap16p_be((u16 *)gsub.indices.ptr + feature_index);
 			assert(feature_record_index < gsub.count);
 			u8 *		feature_record = gsub.records + feature_record_index * 6;
-			Feature_Tag feature_tag	= *((Feature_Tag *)feature_record);
+			Feature_Tag feature_tag	   = *((Feature_Tag *)feature_record);
 
 			switch (feature_tag) {
 			// Standard
@@ -2052,9 +2140,9 @@ Font_Shape font_shape_string(Dynamic_Font *font, String string) {
 	}
 
 	Font_Shape shape;
-	shape.glyph_infos   = range.infos;
-	shape.glyph_count   = range.count;
-	shape.codepoints    = codepoints;
+	shape.glyph_infos = range.infos;
+	shape.glyph_count = range.count;
+	shape.codepoints  = codepoints;
 
 	return shape;
 }

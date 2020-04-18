@@ -2,10 +2,10 @@
 #include "gfx_renderer.h"
 #include "imgui/imconfig.h"
 #include "imgui/imgui.h"
+#include "maths.h"
 #include "string.h"
 #include "systems.h"
 #include "utility.h"
-#include "maths.h"
 
 #include "stb_image.h"
 
@@ -37,7 +37,7 @@ int system_main() {
 		params.srgb			  = true;
 		defer { stbi_image_free(pixels); };
 		circle.handle = gfx_create_texture2d(w, h, n, pixels, &params);
-		circle.rect   = Mm_Rect(0, 0, 1, 1);
+		circle.rect	  = Mm_Rect(0, 0, 1, 1);
 	}
 	assert(circle.handle);
 
@@ -49,16 +49,16 @@ int system_main() {
 	const float dt = 1.0f / 60.0f;
 
 	float  t			 = 0.0f;
-	float  accumulator   = 0.0f;
-	float  frame_time	= 0.0f;
-	float  event_time	= 0.0f;
+	float  accumulator	 = 0.0f;
+	float  frame_time	 = 0.0f;
+	float  event_time	 = 0.0f;
 	float  simulate_time = 0.0f;
-	float  render_time   = 0.0f;
+	float  render_time	 = 0.0f;
 	float  gpu_time		 = 0.0f;
 	Handle gpu_query	 = gfx_create_query();
 
 	u64 frequency = system_get_frequency();
-	u64 counter   = system_get_counter();
+	u64 counter	  = system_get_counter();
 
 	r32 window_w = 0, window_h = 0;
 
@@ -79,10 +79,11 @@ int system_main() {
 
 	utf32 codepoint = (utf32)'र';
 
-	u8 buffer[5] = {};
-	auto bytes = utf32_to_utf8(codepoint, buffer);
+	u8	 buffer[5] = {};
+	auto bytes	   = utf32_to_utf8(codepoint, buffer);
 
-	const String string = u8"श्रुश्वरश्;न्निध्यंर";
+	//const String string = u8"र्ज्ञ श्वरश्;न्निध्यंर";
+	const String string = u8"र्क;र्र्;र्ज्ञ";
 	//const String string = u8"देहांते तव +-*/ सान्निध्यं देहि मे परमेश्"; //श्वर ";
 	//const String string = u8"The cake is a lie";
 
@@ -113,7 +114,7 @@ int system_main() {
 	}
 #endif
 
-	u32 region_index = 0;
+	u32	 region_index = 0;
 	Vec2 rect_min(0), rect_max(0);
 	Vec2 rect_min_target(0), rect_max_target(0);
 	Vec2 line_beg(0), line_end(0);
@@ -145,9 +146,9 @@ int system_main() {
 				s32 h = event.window.dimension.y;
 				gfx_resize_framebuffer(w, h);
 				region.viewport = { 0, 0, w, h };
-				region.scissor  = region.viewport;
-				window_w		= (r32) w;
-				window_h		= (r32) h;
+				region.scissor	= region.viewport;
+				window_w		= (r32)w;
+				window_h		= (r32)h;
 				continue;
 			}
 
@@ -161,12 +162,12 @@ int system_main() {
 				break;
 			}
 
-			if ((event.type & Event_Type_KEY_UP) && event.key.symbol == Key_DOWN) {
+			if ((event.type & Event_Type_KEY_DOWN) && event.key.symbol == Key_DOWN) {
 				region_index = (region_index + 1) % font_shape.glyph_count;
 				break;
 			}
 
-			if ((event.type & Event_Type_KEY_UP) && event.key.symbol == Key_UP) {
+			if ((event.type & Event_Type_KEY_DOWN) && event.key.symbol == Key_UP) {
 				region_index = region_index > 0 ? region_index - 1 : font_shape.glyph_count - 1;
 				break;
 			}
@@ -199,7 +200,7 @@ int system_main() {
 
 		gfx_frame(0, region, Clear_Flag_ALL, hex_to_color4(Colorh(0x00, 0x45, 0x4f)));
 
-		float h	= 1;
+		float h	   = 1;
 		auto  view = orthographic_view(0, window_w, window_h, 0);
 
 #if 0
@@ -230,10 +231,10 @@ int system_main() {
 		ImGui::UpdateFrame(frame_time, event_time, simulate_time, render_time, gpu_time);
 
 		ImGui::Begin("Font");
-		Vec2 p = ImGui::GetCursorScreenPos();
-		auto* draw_list = ImGui::GetWindowDrawList();
+		Vec2  p			= ImGui::GetCursorScreenPos();
+		auto *draw_list = ImGui::GetWindowDrawList();
 
-		static bool draw_points = false, draw_baseline = true, draw_regions = false;
+		static bool	 draw_points = false, draw_baseline = true, draw_regions = false;
 		static float scale = 1.0f / 20.0f;
 
 		p += Vec2(170, 350);
@@ -245,7 +246,8 @@ int system_main() {
 		int x0, y0, x1, y1;
 		u16 prev_id = 0;
 		for (u32 id = 0; id < font_shape.glyph_count; ++id) {
-			stbtt_vertex *vertices = 0; defer { STBTT_free(vertices, font.info.userdata); };
+			stbtt_vertex *vertices = 0;
+			defer { STBTT_free(vertices, font.info.userdata); };
 			int num_verts = stbtt_GetGlyphShape(&font.info, font_shape.glyph_infos[id].id, &vertices);
 
 			int advance, left_side_bearing;
@@ -267,22 +269,22 @@ int system_main() {
 				}
 			}
 
-			Vec2 pos = {};
-			int num_segments = 12;
+			Vec2  pos		   = {};
+			int	  num_segments = 12;
 			float x = 0, y = 0, cx = 0, cy = 0, cx1, cy1;
 			for (int i = 0; i < num_verts; ++i) {
-				x  = (r32)vertices[i].x     * scale;
-				y  = -(r32)vertices[i].y    * scale;
-				cx = (r32)vertices[i].cx    * scale;
-				cy = -(r32)vertices[i].cy   * scale;
-				cx1 = (r32)vertices[i].cx1  * scale;
+				x	= (r32)vertices[i].x * scale;
+				y	= -(r32)vertices[i].y * scale;
+				cx	= (r32)vertices[i].cx * scale;
+				cy	= -(r32)vertices[i].cy * scale;
+				cx1 = (r32)vertices[i].cx1 * scale;
 				cy1 = -(r32)vertices[i].cy1 * scale;
 
 				if (draw_points)
-					draw_list->AddRectFilled(p + Vec2(x-2, y-2), p + Vec2(x+2,y+2), 0xff0000ff);
-				
+					draw_list->AddRectFilled(p + Vec2(x - 2, y - 2), p + Vec2(x + 2, y + 2), 0xff0000ff);
+
 				switch (vertices[i].type) {
-				case STBTT_vmove: 
+				case STBTT_vmove:
 					break;
 
 				case STBTT_vline: {
@@ -293,10 +295,10 @@ int system_main() {
 				case STBTT_vcurve: {
 					Vec2 p1(p + pos), p2(p.x + cx, p.y + cy), p3(p.x + x, p.y + y);
 					draw_list->PathLineTo(p1);
-					p1 = draw_list->_Path.back();
+					p1			 = draw_list->_Path.back();
 					float t_step = 1.0f / (float)num_segments;
 					for (int i_step = 1; i_step <= num_segments; i_step++) {
-						auto resp =  bezier_quadratic(p1, p2, p3, t_step * i_step);
+						auto resp = bezier_quadratic(p1, p2, p3, t_step * i_step);
 						draw_list->_Path.push_back(resp);
 					}
 					draw_list->PathStroke(0xffff00ff, false, 1);
@@ -310,17 +312,16 @@ int system_main() {
 				}
 
 				pos = { x, y };
-
 			}
 
-			p.x += (r32)(advance) * scale;
+			p.x += (r32)(advance)*scale;
 		}
 
 		utf8 buffer[50];
 		ImGui::BeginChild("Child");
 		for (u32 id = 0; id < font_shape.glyph_count; ++id) {
 			auto count = font_shape.glyph_infos[id].codepoint_count;
-			int idx = 0;
+			int	 idx   = 0;
 			for (int i = 0; i < count; ++i) {
 				idx += utf32_to_utf8(font_shape.glyph_infos[id].codepoints[i], buffer + idx);
 				if (i != count - 1) {
@@ -329,7 +330,7 @@ int system_main() {
 				}
 			}
 			buffer[idx] = 0;
-			u32 color = id == region_index ? 0xff00ffff : 0xffffffff;
+			u32 color	= id == region_index ? 0xff00ffff : 0xffffffff;
 			ImGui::TextColored(hex_to_color4(color), "[%d] %u (%d) : %s", (int)id, font_shape.glyph_infos[id].id, count, buffer);
 			if (ImGui::IsItemClicked()) region_index = id;
 		}
@@ -345,12 +346,13 @@ int system_main() {
 		int codepoint_index = 0;
 		for (u32 id = 0; id < font_shape.glyph_count; ++id) {
 			auto count = font_shape.glyph_infos[id].codepoint_count;
-			u32 color = id == region_index ? 0xff00ffff : 0xffffffff;
+			u32	 color = id == region_index ? 0xff00ffff : 0xffffffff;
 			for (int i = 0; i < count; ++i, ++codepoint_index) {
-				auto codepoint = font_shape.glyph_infos[id].codepoints[i];
-				buffer[utf32_to_utf8(codepoint, buffer)] = 0;
-				auto syllable = ucd_indic_syllable(codepoint);
-				ImGui::TextColored(hex_to_color4(color), "[%d] U+%x  %s : %s", codepoint_index, codepoint, buffer, enum_string(syllable));
+				auto &codepoint							 = font_shape.codepoints[codepoint_index];
+				buffer[utf32_to_utf8(codepoint.codepoint, buffer)] = 0;
+				auto syllable							 = ucd_indic_syllable(codepoint.codepoint);
+				ImGui::TextColored(hex_to_color4(color), "[%d] U+%x  %s : %s, %s (%d)", 
+					codepoint_index, codepoint, buffer, enum_string(syllable), enum_string(codepoint.prop), codepoint.value);
 
 				if (ImGui::IsItemClicked()) region_index = id;
 			}

@@ -621,3 +621,26 @@ Ucd_Indic_Position ucd_indic_position(uint32_t codepoint);
 const char *enum_string(Ucd_Indic_Position value);
 
 
+enum Ucd_Grapheme_Property : uint32_t {
+	Ucd_Grapheme_Property_UNKNOWN,
+	Ucd_Grapheme_Property_PREPEND,
+	Ucd_Grapheme_Property_CR,
+	Ucd_Grapheme_Property_LF,
+	Ucd_Grapheme_Property_CONTROL,
+	Ucd_Grapheme_Property_EXTEND,
+	Ucd_Grapheme_Property_REGIONAL_INDICATOR,
+	Ucd_Grapheme_Property_SPACINGMARK,
+	Ucd_Grapheme_Property_L,
+	Ucd_Grapheme_Property_V,
+	Ucd_Grapheme_Property_T,
+	Ucd_Grapheme_Property_LV,
+	Ucd_Grapheme_Property_LVT,
+	Ucd_Grapheme_Property_ZWJ,
+	Ucd_Grapheme_Property_COUNT,
+};
+
+
+Ucd_Grapheme_Property ucd_grapheme_property(uint32_t codepoint);
+const char *enum_string(Ucd_Grapheme_Property value);
+
+
