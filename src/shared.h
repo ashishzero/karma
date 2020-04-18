@@ -473,9 +473,7 @@ inline void mfree(void *ptr, Allocator allocator = context.allocator) {
 }
 
 void *operator new(ptrsize size, Allocator allocator);
-void  operator delete(void *ptr, Allocator allocator);
 void *operator new(ptrsize size);
-void  operator delete(void *ptr);
 
 //
 //
@@ -517,7 +515,7 @@ struct Array {
 	}
 
 	inline Array(Allocator_Proc proc, void *data = 0) {
-		allocator.proc = alloc;
+		allocator.proc = proc;
 		allocator.data = data;
 	}
 
