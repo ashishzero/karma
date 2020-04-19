@@ -88,12 +88,12 @@ Token parser_expect_identifier(Array_View<Token> tokens, s64 index, String ident
 
 void generate_glsl_shader(const String file, const String out) {
 	auto content = system_read_entire_file(file);
-	defer { mfree(content); };
+	defer { mfree(content.data); };
 	if (!content.count) return;
 
 	Tokenization_Status status;
 	auto tokens = tokenize(content, &status);
-	defer { mfree(tokens); };
+	defer { mfree(tokens.data); };
 
 	if (status.result != Tokenization_Result_SUCCESS) {
 		const char * err_msg = "";

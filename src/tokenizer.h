@@ -146,7 +146,7 @@ struct Tokenization_Status {
 Array_View<Token> tokenize(String string, Tokenization_Status * status);
 
 // TODO: Remove this!
-String enum_string(Token_Kind kind) {
+inline String enum_string(Token_Kind kind) {
 	static String strings[] = {
 		"Token_Kind_NONE",
 

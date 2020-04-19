@@ -1463,7 +1463,7 @@ void system_display_critical_message(const String msg) {
 	mfree(pool);
 }
 
-void *system_allocator(Allocation_Type type, ptrsize size, void *ptr, void *user_ptr) {
+void *system_allocator(Allocation_Type type, ptrsize size, const void *ptr, void *user_ptr) {
 	// TODO: Make a local thread allocator
 
 	if (type == Allocation_Type_NEW) {
@@ -1472,13 +1472,13 @@ void *system_allocator(Allocation_Type type, ptrsize size, void *ptr, void *user
 	} else if (type == Allocation_Type_RESIZE) {
 		void *new_ptr;
 		if (ptr)
-			new_ptr = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, ptr, size);
+			new_ptr = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (void *)ptr, size);
 		else
 			new_ptr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
 		return new_ptr;
 	} else if (type == Allocation_Type_FREE) {
 		if (ptr) {
-			HRESULT hr = HeapFree(GetProcessHeap(), 0, ptr);
+			HRESULT hr = HeapFree(GetProcessHeap(), 0, (void *)ptr);
 			if (FAILED(hr)) {
 				win32_check_for_error();
 			}

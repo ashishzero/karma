@@ -340,7 +340,7 @@ enum Allocation_Type { Allocation_Type_NEW,
 					   Allocation_Type_RESIZE,
 					   Allocation_Type_FREE };
 
-typedef void *(*Allocator_Proc)(Allocation_Type type, ptrsize size, void *ptr, void *user_ptr);
+typedef void *(*Allocator_Proc)(Allocation_Type type, ptrsize size, const void *ptr, void *user_ptr);
 
 struct Allocator {
 	Allocator_Proc proc = 0;
@@ -372,7 +372,7 @@ struct Push_Allocator {
 
 extern thread_local Thread_Context context;
 
-inline void *temporary_allocator_proc(Allocation_Type type, ptrsize size, void *ptr, void *user_ptr) {
+inline void *temporary_allocator_proc(Allocation_Type type, ptrsize size, const void *ptr, void *user_ptr) {
 	Temporary_Memory *temp = (Temporary_Memory *)&context.temp_memory;
 
 	if (type == Allocation_Type_NEW) {
@@ -468,7 +468,7 @@ inline void *mreallocate(void *ptr, ptrsize size, Allocator allocator = context.
 	return allocator.proc(Allocation_Type_RESIZE, size, ptr, allocator.data);
 }
 
-inline void mfree(void *ptr, Allocator allocator = context.allocator) {
+inline void mfree(const void *ptr, Allocator allocator = context.allocator) {
 	allocator.proc(Allocation_Type_FREE, 0, ptr, allocator.data);
 }
 
@@ -666,12 +666,3 @@ struct String {
 
 	inline operator Array_View<utf8>() { return Array_View<utf8>(data, count); }
 };
-
-//
-// Overloaded Free
-//
-
-template <typename T>
-inline void mfree(Array_View<T> arr, Allocator allocator = context.allocator) {
-	mfree(arr.data, allocator);
-}
