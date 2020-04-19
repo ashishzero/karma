@@ -2,22 +2,22 @@
 #include "maths_types.h"
 
 Vec2 vec2_add(Vec2 a, Vec2 b) {
-	return Vec2(a.x + b.x, a.y + b.y);
+	return vec2(a.x + b.x, a.y + b.y);
 }
 Vec3 vec3_add(Vec3 a, Vec3 b) {
-	return Vec3(a.x + b.x, a.y + b.y, a.z + b.z);
+	return vec3(a.x + b.x, a.y + b.y, a.z + b.z);
 }
 Vec4 vec4_add(Vec4 a, Vec4 b) {
-	return Vec4(a.x + b.x, a.y + b.y, a.z + b.z, a.w + b.w);
+	return vec4(a.x + b.x, a.y + b.y, a.z + b.z, a.w + b.w);
 }
 Vec2s vec2s_add(Vec2s a, Vec2s b) {
-	return Vec2s(a.x + b.x, a.y + b.y);
+	return vec2s(a.x + b.x, a.y + b.y);
 }
 Vec3s vec3s_add(Vec3s a, Vec3s b) {
-	return Vec3s(a.r + b.r, a.g + b.g, a.b + b.g);
+	return vec3s(a.r + b.r, a.g + b.g, a.b + b.g);
 }
 Vec4s vec4s_add(Vec4s a, Vec4s b) {
-	return Vec4s(a.r + b.r, a.g + b.g, a.b + b.g, a.a + b.a);
+	return vec4s(a.r + b.r, a.g + b.g, a.b + b.g, a.a + b.a);
 }
 
 //
@@ -25,22 +25,22 @@ Vec4s vec4s_add(Vec4s a, Vec4s b) {
 //
 
 Vec2 vec2_sub(Vec2 a, Vec2 b) {
-	return Vec2(a.x - b.x, a.y - b.y);
+	return vec2(a.x - b.x, a.y - b.y);
 }
 Vec3 vec3_sub(Vec3 a, Vec3 b) {
-	return Vec3(a.x - b.x, a.y - b.y, a.z - b.z);
+	return vec3(a.x - b.x, a.y - b.y, a.z - b.z);
 }
 Vec4 vec4_sub(Vec4 a, Vec4 b) {
-	return Vec4(a.x - b.x, a.y - b.y, a.z - b.z, a.w - b.w);
+	return vec4(a.x - b.x, a.y - b.y, a.z - b.z, a.w - b.w);
 }
 Vec2s vec2s_sub(Vec2s a, Vec2s b) {
-	return Vec2s(a.x - b.x, a.y - b.y);
+	return vec2s(a.x - b.x, a.y - b.y);
 }
 Vec3s vec3s_sub(Vec3s a, Vec3s b) {
-	return Vec3s(a.r - b.r, a.g - b.g, a.b - b.b);
+	return vec3s(a.r - b.r, a.g - b.g, a.b - b.b);
 }
 Vec4s vec4s_sub(Vec4s a, Vec4s b) {
-	return Vec4s(a.r - b.r, a.g - b.g, a.b - b.g, a.a - b.a);
+	return vec4s(a.r - b.r, a.g - b.g, a.b - b.g, a.a - b.a);
 }
 
 //
@@ -48,37 +48,37 @@ Vec4s vec4s_sub(Vec4s a, Vec4s b) {
 //
 
 Vec2 vec2_mul(r32 s, Vec2 v) {
-	return Vec2(s * v.x, s * v.y);
+	return vec2(s * v.x, s * v.y);
 }
 Vec2 vec2_mul(Vec2 v, r32 s) {
 	return vec2_mul(s, v);
 }
 Vec3 vec3_mul(r32 s, Vec3 v) {
-	return Vec3(s * v.x, s * v.y, s * v.z);
+	return vec3(s * v.x, s * v.y, s * v.z);
 }
 Vec3 vec3_mul(Vec3 v, r32 s) {
 	return vec3_mul(s, v);
 }
 Vec4 vec4_mul(r32 s, Vec4 v) {
-	return Vec4(s * v.x, s * v.y, s * v.z, s * v.w);
+	return vec4(s * v.x, s * v.y, s * v.z, s * v.w);
 }
 Vec4 vec4_mul(Vec4 v, r32 s) {
 	return vec4_mul(s, v);
 }
 Vec2s vec2s_mul(s32 s, Vec2s v) {
-	return Vec2s(s * v.x, s * v.y);
+	return vec2s(s * v.x, s * v.y);
 }
 Vec2s vec2s_mul(Vec2s v, s32 s) {
 	return vec2s_mul(s, v);
 }
 Vec3s vec3s_mul(s32 s, Vec3s v) {
-	return Vec3s(s * v.x, s * v.y, s * v.z);
+	return vec3s(s * v.x, s * v.y, s * v.z);
 }
 Vec3s vec3s_mul(Vec3s v, s32 s) {
 	return vec3s_mul(s, v);
 }
 Vec4s vec4s_mul(s32 s, Vec4s v) {
-	return Vec4s(s * v.x, s * v.y, s * v.z, s * v.w);
+	return vec4s(s * v.x, s * v.y, s * v.z, s * v.w);
 }
 Vec4s vec4s_mul(Vec4s v, s32 s) {
 	return vec4s_mul(s, v);
@@ -90,23 +90,23 @@ Vec4s vec4s_mul(Vec4s v, s32 s) {
 
 Vec2 vec2_div(Vec2 v, r32 s) {
 	s = 1.0f / s;
-	return Vec2(v.x * s, v.y * s);
+	return vec2(v.x * s, v.y * s);
 }
 Vec3 vec3_div(Vec3 v, r32 s) {
 	s = 1.0f / s;
-	return Vec3(v.x * s, v.y * s, v.z * s);
+	return vec3(v.x * s, v.y * s, v.z * s);
 }
 Vec4 vec4_div(Vec4 v, r32 s) {
 	return vec4_mul(v, 1.0f / s);
 }
 Vec2s vec2s_div(Vec2s v, s32 s) {
-	return Vec2s(v.x / s, v.y / s);
+	return vec2s(v.x / s, v.y / s);
 }
 Vec3s vec3s_div(Vec3s v, s32 s) {
-	return Vec3s(v.x / s, v.y / s, v.z / s);
+	return vec3s(v.x / s, v.y / s, v.z / s);
 }
 Vec4s vec4s_div(Vec4s v, s32 s) {
-	return Vec4s(v.x / s, v.y / s, v.z / s, v.w / s);
+	return vec4s(v.x / s, v.y / s, v.z / s, v.w / s);
 }
 
 //
@@ -114,22 +114,22 @@ Vec4s vec4s_div(Vec4s v, s32 s) {
 //
 
 Vec2 vec2_hadamard(Vec2 l, Vec2 r) {
-	return Vec2(l.x * r.x, l.y * r.y);
+	return vec2(l.x * r.x, l.y * r.y);
 }
 Vec3 vec3_hadamard(Vec3 l, Vec3 r) {
-	return Vec3(l.x * r.x, l.y * r.y, l.z * r.z);
+	return vec3(l.x * r.x, l.y * r.y, l.z * r.z);
 }
 Vec4 vec4_hadamard(Vec4 l, Vec4 r) {
-	return Vec4(l.x * r.x, l.y * r.y, l.z * r.z, l.w * r.w);
+	return vec4(l.x * r.x, l.y * r.y, l.z * r.z, l.w * r.w);
 }
 Vec2s vec2s_hadamard(Vec2s l, Vec2s r) {
-	return Vec2s(l.x * r.x, l.y * r.y);
+	return vec2s(l.x * r.x, l.y * r.y);
 }
 Vec3s vec3s_hadamard(Vec3s l, Vec3s r) {
-	return Vec3s(l.x * r.x, l.y * r.y, l.z * r.z);
+	return vec3s(l.x * r.x, l.y * r.y, l.z * r.z);
 }
 Vec4s vec4s_hadamard(Vec4s l, Vec4s r) {
-	return Vec4s(l.x * r.x, l.y * r.y, l.z * r.z, l.w * r.w);
+	return vec4s(l.x * r.x, l.y * r.y, l.z * r.z, l.w * r.w);
 }
 
 //
@@ -310,9 +310,9 @@ r32 mm_height(Mm_Rect m) {
 
 Mat3 mat3_identity() {
 	Mat3 m;
-	m.rows[0] = Vec3(1.0f, 0.0f, 0.0f);
-	m.rows[1] = Vec3(0.0f, 1.0f, 0.0f);
-	m.rows[2] = Vec3(0.0f, 0.0f, 1.0f);
+	m.rows[0] = vec3(1.0f, 0.0f, 0.0f);
+	m.rows[1] = vec3(0.0f, 1.0f, 0.0f);
+	m.rows[2] = vec3(0.0f, 0.0f, 1.0f);
 	return m;
 }
 
@@ -337,18 +337,18 @@ Mat3 mat3_inverse(const Mat3 &mat) {
 
 Mat3 mat3_transpose(const Mat3 &m) {
 	Mat3 res;
-	res.rows[0] = Vec3(m.m2[0][0], m.m2[1][0], m.m2[2][0]);
-	res.rows[1] = Vec3(m.m2[0][1], m.m2[1][1], m.m2[2][1]);
-	res.rows[2] = Vec3(m.m2[0][2], m.m2[1][2], m.m2[2][2]);
+	res.rows[0] = vec3(m.m2[0][0], m.m2[1][0], m.m2[2][0]);
+	res.rows[1] = vec3(m.m2[0][1], m.m2[1][1], m.m2[2][1]);
+	res.rows[2] = vec3(m.m2[0][2], m.m2[1][2], m.m2[2][2]);
 	return res;
 }
 
 Mat4 mat4_identity() {
 	Mat4 m;
-	m.rows[0] = Vec4(1.0f, 0.0f, 0.0f, 0.0f);
-	m.rows[1] = Vec4(0.0f, 1.0f, 0.0f, 0.0f);
-	m.rows[2] = Vec4(0.0f, 0.0f, 1.0f, 0.0f);
-	m.rows[3] = Vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	m.rows[0] = vec4(1.0f, 0.0f, 0.0f, 0.0f);
+	m.rows[1] = vec4(0.0f, 1.0f, 0.0f, 0.0f);
+	m.rows[2] = vec4(0.0f, 0.0f, 1.0f, 0.0f);
+	m.rows[3] = vec4(0.0f, 0.0f, 0.0f, 1.0f);
 	return m;
 }
 
@@ -476,10 +476,10 @@ Mat4 mat4_inverse(const Mat4 &mat) {
 
 Mat4 mat4_transpose(const Mat4 &m) {
 	Mat4 res;
-	res.rows[0] = Vec4(m.m2[0][0], m.m2[1][0], m.m2[2][0], m.m2[3][0]);
-	res.rows[1] = Vec4(m.m2[0][1], m.m2[1][1], m.m2[2][1], m.m2[3][1]);
-	res.rows[2] = Vec4(m.m2[0][2], m.m2[1][2], m.m2[2][2], m.m2[3][2]);
-	res.rows[3] = Vec4(m.m2[0][3], m.m2[1][3], m.m2[2][3], m.m2[3][3]);
+	res.rows[0] = vec4(m.m2[0][0], m.m2[1][0], m.m2[2][0], m.m2[3][0]);
+	res.rows[1] = vec4(m.m2[0][1], m.m2[1][1], m.m2[2][1], m.m2[3][1]);
+	res.rows[2] = vec4(m.m2[0][2], m.m2[1][2], m.m2[2][2], m.m2[3][2]);
+	res.rows[3] = vec4(m.m2[0][3], m.m2[1][3], m.m2[2][3], m.m2[3][3]);
 	return res;
 }
 
@@ -556,9 +556,9 @@ Vec4 mat4_vec4_mul(const Mat4 &mat, Vec4 vec) {
 
 Mat3 mat3_scalar(r32 S_1, r32 S_2) {
 	Mat3 m;
-	m.rows[0] = Vec3(S_1, 0.0f, 0.0f);
-	m.rows[1] = Vec3(0.0f, S_2, 0.0f);
-	m.rows[2] = Vec3(0.0f, 0.0f, 1.0f);
+	m.rows[0] = vec3(S_1, 0.0f, 0.0f);
+	m.rows[1] = vec3(0.0f, S_2, 0.0f);
+	m.rows[2] = vec3(0.0f, 0.0f, 1.0f);
 	return m;
 }
 
@@ -568,9 +568,9 @@ Mat3 mat3_scalar(Vec2 s) {
 
 Mat3 mat3_translation(r32 T_x, r32 T_y) {
 	Mat3 m;
-	m.rows[0] = Vec3(1.0f, 0.0f, T_x);
-	m.rows[1] = Vec3(0.0f, 1.0f, T_y);
-	m.rows[2] = Vec3(0.0f, 0.0f, 1.0f);
+	m.rows[0] = vec3(1.0f, 0.0f, T_x);
+	m.rows[1] = vec3(0.0f, 1.0f, T_y);
+	m.rows[2] = vec3(0.0f, 0.0f, 1.0f);
 	return m;
 }
 
@@ -582,9 +582,9 @@ Mat3 mat3_rotation(r32 angle) {
 	Mat3 m;
 	r32  c	= cosf(angle);
 	r32  s	= sinf(angle);
-	m.rows[0] = Vec3(c, -s, 0.0f);
-	m.rows[1] = Vec3(s, c, 0.0f);
-	m.rows[2] = Vec3(0.0f, 0.0f, 1.0f);
+	m.rows[0] = vec3(c, -s, 0.0f);
+	m.rows[1] = vec3(s, c, 0.0f);
+	m.rows[2] = vec3(0.0f, 0.0f, 1.0f);
 	return m;
 }
 
@@ -594,18 +594,18 @@ Mat3 mat3_lookat(Vec2 from, Vec2 to, Vec2 forward) {
 	r32  sin_theta = sqrtf(1.0f - cos_theta * cos_theta);
 
 	Mat3 m;
-	m.rows[0] = Vec3(cos_theta, -sin_theta, from.x);
-	m.rows[1] = Vec3(sin_theta, cos_theta, from.y);
-	m.rows[2] = Vec3(0.0f, 0.0f, 1.0f);
+	m.rows[0] = vec3(cos_theta, -sin_theta, from.x);
+	m.rows[1] = vec3(sin_theta, cos_theta, from.y);
+	m.rows[2] = vec3(0.0f, 0.0f, 1.0f);
 	return m;
 }
 
 Mat4 mat4_scalar(r32 S_1, r32 S_2, r32 S_3) {
 	Mat4 m;
-	m.rows[0] = Vec4(S_1, 0.0f, 0.0f, 0.0f);
-	m.rows[1] = Vec4(0.0f, S_2, 0.0f, 0.0f);
-	m.rows[2] = Vec4(0.0f, 0.0f, S_3, 0.0f);
-	m.rows[3] = Vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	m.rows[0] = vec4(S_1, 0.0f, 0.0f, 0.0f);
+	m.rows[1] = vec4(0.0f, S_2, 0.0f, 0.0f);
+	m.rows[2] = vec4(0.0f, 0.0f, S_3, 0.0f);
+	m.rows[3] = vec4(0.0f, 0.0f, 0.0f, 1.0f);
 	return m;
 }
 
@@ -615,10 +615,10 @@ Mat4 mat4_scalar(Vec3 s) {
 
 Mat4 mat4_translation(r32 T_x, r32 T_y, r32 T_z) {
 	Mat4 m;
-	m.rows[0] = Vec4(1.0f, 0.0f, 0.0f, T_x);
-	m.rows[1] = Vec4(0.0f, 1.0f, 0.0f, T_y);
-	m.rows[2] = Vec4(0.0f, 0.0f, 1.0f, T_z);
-	m.rows[3] = Vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	m.rows[0] = vec4(1.0f, 0.0f, 0.0f, T_x);
+	m.rows[1] = vec4(0.0f, 1.0f, 0.0f, T_y);
+	m.rows[2] = vec4(0.0f, 0.0f, 1.0f, T_z);
+	m.rows[3] = vec4(0.0f, 0.0f, 0.0f, 1.0f);
 	return m;
 }
 
@@ -628,28 +628,28 @@ Mat4 mat4_translation(Vec3 t) {
 
 Mat4 mat4_rotation_x(r32 angle) {
 	Mat4 m;
-	m.rows[0] = Vec4(1.0f, 0.0f, 0.0f, 0.0f);
-	m.rows[1] = Vec4(0.0f, cosf(angle), -sinf(angle), 0.0f);
-	m.rows[2] = Vec4(0.0f, sinf(angle), cosf(angle), 0.0f);
-	m.rows[3] = Vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	m.rows[0] = vec4(1.0f, 0.0f, 0.0f, 0.0f);
+	m.rows[1] = vec4(0.0f, cosf(angle), -sinf(angle), 0.0f);
+	m.rows[2] = vec4(0.0f, sinf(angle), cosf(angle), 0.0f);
+	m.rows[3] = vec4(0.0f, 0.0f, 0.0f, 1.0f);
 	return m;
 }
 
 Mat4 mat4_rotation_y(r32 angle) {
 	Mat4 m;
-	m.rows[0] = Vec4(cosf(angle), 0.0f, -sinf(angle), 0.0f);
-	m.rows[1] = Vec4(0.0f, 1.0f, 0.0f, 0.0f);
-	m.rows[2] = Vec4(sinf(angle), 0.0f, cosf(angle), 0.0f);
-	m.rows[3] = Vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	m.rows[0] = vec4(cosf(angle), 0.0f, -sinf(angle), 0.0f);
+	m.rows[1] = vec4(0.0f, 1.0f, 0.0f, 0.0f);
+	m.rows[2] = vec4(sinf(angle), 0.0f, cosf(angle), 0.0f);
+	m.rows[3] = vec4(0.0f, 0.0f, 0.0f, 1.0f);
 	return m;
 }
 
 Mat4 mat4_rotation_z(r32 angle) {
 	Mat4 m;
-	m.rows[0] = Vec4(cosf(angle), -sinf(angle), 0.0f, 0.0f);
-	m.rows[1] = Vec4(sinf(angle), cosf(angle), 0.0f, 0.0f);
-	m.rows[2] = Vec4(0.0f, 0.0f, 1.0f, 0.0f);
-	m.rows[3] = Vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	m.rows[0] = vec4(cosf(angle), -sinf(angle), 0.0f, 0.0f);
+	m.rows[1] = vec4(sinf(angle), cosf(angle), 0.0f, 0.0f);
+	m.rows[2] = vec4(0.0f, 0.0f, 1.0f, 0.0f);
+	m.rows[3] = vec4(0.0f, 0.0f, 0.0f, 1.0f);
 	return m;
 }
 
@@ -665,10 +665,10 @@ Mat4 mat4_rotation(r32 x, r32 y, r32 z, r32 angle) {
 	r32 z2 = z * z;
 
 	Mat4 m;
-	m.rows[0] = Vec4(c + x2 * (1 - c), xy * (1 - c) - z * s, zx * (1 - c) + y * s, 0.0f);
-	m.rows[1] = Vec4(xy * (1 - c) + z * s, c + y2 * (1 - c), yz * (1 - c) - x * s, 0.0f);
-	m.rows[2] = Vec4(zx * (1 - c) - y * s, yz * (1 - c) + x * s, c + z2 * (1 - c), 0.0f);
-	m.rows[3] = Vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	m.rows[0] = vec4(c + x2 * (1 - c), xy * (1 - c) - z * s, zx * (1 - c) + y * s, 0.0f);
+	m.rows[1] = vec4(xy * (1 - c) + z * s, c + y2 * (1 - c), yz * (1 - c) - x * s, 0.0f);
+	m.rows[2] = vec4(zx * (1 - c) - y * s, yz * (1 - c) + x * s, c + z2 * (1 - c), 0.0f);
+	m.rows[3] = vec4(0.0f, 0.0f, 0.0f, 1.0f);
 	return m;
 }
 
@@ -682,20 +682,20 @@ Mat4 mat4_lookat(Vec3 from, Vec3 to, Vec3 world_up) {
 	Vec3 v = vec3_cross(n, u);
 
 	Mat4 result;
-	result.rows[0] = Vec4(u.x, n.x, v.x, from.x);
-	result.rows[1] = Vec4(u.y, n.y, v.y, from.y);
-	result.rows[2] = Vec4(u.z, n.z, v.z, from.z);
-	result.rows[3] = Vec4(0, 0, 0, 1);
+	result.rows[0] = vec4(u.x, n.x, v.x, from.x);
+	result.rows[1] = vec4(u.y, n.y, v.y, from.y);
+	result.rows[2] = vec4(u.z, n.z, v.z, from.z);
+	result.rows[3] = vec4(0, 0, 0, 1);
 
 	return result;
 }
 
 Mat4 mat4_ortho_gl(r32 l, r32 r, r32 t, r32 b, r32 n, r32 f) {
 	Mat4 m;
-	m.rows[0] = Vec4(2 / (r - l), 0.0f, 0.0f, -(l + r) / (r - l));
-	m.rows[1] = Vec4(0.0f, 2 / (t - b), 0.0f, -(t + b) / (t - b));
-	m.rows[2] = Vec4(0.0f, 0.0f, 2 / (f - n), -(f + n) / (f - n));
-	m.rows[3] = Vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	m.rows[0] = vec4(2 / (r - l), 0.0f, 0.0f, -(l + r) / (r - l));
+	m.rows[1] = vec4(0.0f, 2 / (t - b), 0.0f, -(t + b) / (t - b));
+	m.rows[2] = vec4(0.0f, 0.0f, 2 / (f - n), -(f + n) / (f - n));
+	m.rows[3] = vec4(0.0f, 0.0f, 0.0f, 1.0f);
 	return m;
 }
 
@@ -704,10 +704,10 @@ Mat4 mat4_perspective_gl(r32 fov, r32 aspect_ratio, r32 n, r32 f) {
 	r32  fpn = f + n;
 	r32  fmn = f - n;
 	Mat4 m;
-	m.rows[0] = Vec4(cot / aspect_ratio, 0.0f, 0.0f, 0.0f);
-	m.rows[1] = Vec4(0.0f, cot, 0.0f, 0.0f);
-	m.rows[2] = Vec4(0.0f, 0.0f, fpn / fmn, -2.0f * f * n / fmn);
-	m.rows[3] = Vec4(0.0f, 0.0f, 1.0f, 0.0f);
+	m.rows[0] = vec4(cot / aspect_ratio, 0.0f, 0.0f, 0.0f);
+	m.rows[1] = vec4(0.0f, cot, 0.0f, 0.0f);
+	m.rows[2] = vec4(0.0f, 0.0f, fpn / fmn, -2.0f * f * n / fmn);
+	m.rows[3] = vec4(0.0f, 0.0f, 1.0f, 0.0f);
 	return m;
 }
 
@@ -758,25 +758,16 @@ Mat3 mat4_to_mat3(const Mat4 &mat) {
 
 Mat4 mat3_to_mat4(const Mat3 &mat) {
 	Mat4 result;
-	result.rows[0] = Vec4(mat.rows[0], 0);
-	result.rows[1] = Vec4(mat.rows[1], 0);
-	result.rows[2] = Vec4(mat.rows[2], 0);
-	result.rows[3] = Vec4(0, 0, 0, 1);
+	result.rows[0] = vec4(mat.rows[0], 0);
+	result.rows[1] = vec4(mat.rows[1], 0);
+	result.rows[2] = vec4(mat.rows[2], 0);
+	result.rows[3] = vec4(0, 0, 0, 1);
 	return result;
 }
 
 //
 //
 //
-
-Quat quat(r32 x, r32 y, r32 z, r32 w) {
-	Quat q;
-	q.x = x;
-	q.y = y;
-	q.z = z;
-	q.w = w;
-	return q;
-}
 
 Quat quat_identity() {
 	return quat(0, 0, 0, 1);
@@ -823,7 +814,7 @@ Vec3 quat_rotate(Quat q, Vec3 v) {
 	Quat p   = quat(v.x, v.y, v.z, 0);
 	Quat qc  = quat_conjugate(q);
 	Quat res = (q * p * qc);
-	return Vec3(res.x, res.y, res.z);
+	return vec3(res.x, res.y, res.z);
 }
 
 Quat quat_angle_axis(Vec3 axis, r32 angle) {
@@ -903,10 +894,10 @@ Quat quat_mat4(const Mat4 &m) {
 
 Quat quat_mat4_normalize(const Mat4 &m) {
 	Mat4 nm;
-	nm.rows[0] = Vec4(vec3_normalize(m.rows[0].xyz), m.rows[0].w);
-	nm.rows[1] = Vec4(vec3_normalize(m.rows[1].xyz), m.rows[1].w);
-	nm.rows[2] = Vec4(vec3_normalize(m.rows[2].xyz), m.rows[2].w);
-	nm.rows[3] = Vec4(vec3_normalize(m.rows[3].xyz), m.rows[3].w);
+	nm.rows[0] = vec4(vec3_normalize(m.rows[0].xyz), m.rows[0].w);
+	nm.rows[1] = vec4(vec3_normalize(m.rows[1].xyz), m.rows[1].w);
+	nm.rows[2] = vec4(vec3_normalize(m.rows[2].xyz), m.rows[2].w);
+	nm.rows[3] = vec4(vec3_normalize(m.rows[3].xyz), m.rows[3].w);
 	return quat_mat4(nm);
 }
 
@@ -1054,7 +1045,7 @@ Colorh color4_to_hex(Color4 v) {
 	u8 g = static_cast<u8>(255.0f * v.g);
 	u8 b = static_cast<u8>(255.0f * v.b);
 	u8 a = static_cast<u8>(255.0f * v.a);
-	return Colorh(r, g, b, a);
+	return colorh(r, g, b, a);
 }
 
 Color4 hex_to_color4(Colorh c) {
@@ -1063,7 +1054,7 @@ Color4 hex_to_color4(Colorh c) {
 	r32 g   = static_cast<r32>(c.g) * div;
 	r32 b   = static_cast<r32>(c.b) * div;
 	r32 a   = static_cast<r32>(c.a) * div;
-	return Vec4(r, g, b, a);
+	return vec4(r, g, b, a);
 }
 
 Color3 hex_to_color3(Colorh c) {
@@ -1071,7 +1062,7 @@ Color3 hex_to_color3(Colorh c) {
 	r32 r   = static_cast<r32>(c.r) * div;
 	r32 g   = static_cast<r32>(c.g) * div;
 	r32 b   = static_cast<r32>(c.b) * div;
-	return Vec3(r, g, b);
+	return vec3(r, g, b);
 }
 
 Color3 hsv_to_rgb(Color_HSV col) {

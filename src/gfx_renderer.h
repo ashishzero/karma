@@ -31,7 +31,7 @@ void gfx_destroy_texture2d(Handle texture);
 
 void gfx_present();
 
-void gfx_frame(Framebuffer* framebuffer, Render_Region& region, Clear_Flag flags, Color4 color = Color4(0, 0, 0, 1));
+void gfx_frame(Framebuffer* framebuffer, Render_Region& region, Clear_Flag flags, Color4 color = vec4(0, 0, 0, 1));
 
 void gfx2d_begin(Vec2 position, float zoom, Camera_View& view, Handle shader);
 void gfx2d_end();

@@ -37,7 +37,7 @@ int system_main() {
 		params.srgb			  = true;
 		defer { stbi_image_free(pixels); };
 		circle.handle = gfx_create_texture2d(w, h, n, pixels, &params);
-		circle.rect	  = Mm_Rect(0, 0, 1, 1);
+		circle.rect	  = mm_rect(0, 0, 1, 1);
 	}
 	assert(circle.handle);
 
@@ -62,7 +62,7 @@ int system_main() {
 
 	r32 window_w = 0, window_h = 0;
 
-	auto tex_rect = Mm_Rect(0, 1, 1, 0);
+	auto tex_rect = mm_rect(0, 1, 1, 0);
 
 	String content = system_read_entire_file("c:/windows/fonts/mangal.ttf");
 	assert(content);
@@ -115,10 +115,10 @@ int system_main() {
 #endif
 
 	u32	 region_index = 0;
-	Vec2 rect_min(0), rect_max(0);
-	Vec2 rect_min_target(0), rect_max_target(0);
-	Vec2 line_beg(0), line_end(0);
-	Vec2 line_beg_target(0), line_end_target(0);
+	Vec2 rect_min = {}, rect_max = {};
+	Vec2 rect_min_target = {}, rect_max_target = {};
+	Vec2 line_beg = {}, line_end = {};
+	Vec2 line_beg_target = {}, line_end_target = {};
 
 	while (running) {
 		gfx_begin_query(gpu_query);
@@ -192,13 +192,13 @@ int system_main() {
 		float alpha = accumulator / dt;
 
 		Color4 picker[4] = {
-			Color4(1, 1, 1, 1),
-			Color4(1, 1, 1, 1),
-			Color4(0, 0, 0, 1),
-			Color4(0, 0, 0, 1),
+			vec4(1, 1, 1, 1),
+			vec4(1, 1, 1, 1),
+			vec4(0, 0, 0, 1),
+			vec4(0, 0, 0, 1),
 		};
 
-		gfx_frame(0, region, Clear_Flag_ALL, hex_to_color4(Colorh(0x00, 0x45, 0x4f)));
+		gfx_frame(0, region, Clear_Flag_ALL, hex_to_color4(colorh(0x00, 0x45, 0x4f)));
 
 		float h	   = 1;
 		auto  view = orthographic_view(0, window_w, window_h, 0);
@@ -237,10 +237,10 @@ int system_main() {
 		static bool	 draw_points = false, draw_baseline = true, draw_regions = false;
 		static float scale = 1.0f / 20.0f;
 
-		p += Vec2(170, 350);
+		p += vec2(170, 350);
 
 		if (draw_baseline)
-			draw_list->AddLine(Vec2(0, p.y), Vec2(window_w, p.y), 0xffffff00);
+			draw_list->AddLine(vec2(0, p.y), vec2(window_w, p.y), 0xffffff00);
 		//p.x -= 150;
 
 		int x0, y0, x1, y1;
@@ -254,16 +254,16 @@ int system_main() {
 			stbtt_GetGlyphHMetrics(&font.info, font_shape.glyph_infos[id].id, &advance, &left_side_bearing);
 
 			if (stbtt_GetGlyphBox(&font.info, font_shape.glyph_infos[id].id, &x0, &y0, &x1, &y1)) {
-				Vec2 rmin = Vec2(p.x + x0 * scale, p.y - y0 * scale);
-				Vec2 rmax = Vec2(p.x + x1 * scale, p.y - y1 * scale);
+				Vec2 rmin = vec2(p.x + x0 * scale, p.y - y0 * scale);
+				Vec2 rmax = vec2(p.x + x1 * scale, p.y - y1 * scale);
 				if (draw_regions) {
 					draw_list->AddRect(rmin, rmax, 0xffffffff);
 				}
 				if (region_index == id) {
 					rect_min_target = rmin;
 					rect_max_target = rmax;
-					line_beg_target = Vec2(p.x, p.y - 100);
-					line_end_target = Vec2(p.x + advance * scale, p.y - 100);
+					line_beg_target = vec2(p.x, p.y - 100);
+					line_end_target = vec2(p.x + advance * scale, p.y - 100);
 					draw_list->AddRect(rect_min, rect_max, 0xff00ffff);
 					draw_list->AddLine(line_beg, line_end, 0xff0e00ff, 3);
 				}
@@ -281,19 +281,19 @@ int system_main() {
 				cy1 = -(r32)vertices[i].cy1 * scale;
 
 				if (draw_points)
-					draw_list->AddRectFilled(p + Vec2(x - 2, y - 2), p + Vec2(x + 2, y + 2), 0xff0000ff);
+					draw_list->AddRectFilled(p + vec2(x - 2, y - 2), p + vec2(x + 2, y + 2), 0xff0000ff);
 
 				switch (vertices[i].type) {
 				case STBTT_vmove:
 					break;
 
 				case STBTT_vline: {
-					Vec2 a = p + pos, b = p + Vec2(x, y);
+					Vec2 a = p + pos, b = p + vec2(x, y);
 					draw_list->AddLine(a, b, 0xffff00ff);
 				} break;
 
 				case STBTT_vcurve: {
-					Vec2 p1(p + pos), p2(p.x + cx, p.y + cy), p3(p.x + x, p.y + y);
+					Vec2 p1 = p + pos, p2 = vec2(p.x + cx, p.y + cy), p3 = vec2(p.x + x, p.y + y);
 					draw_list->PathLineTo(p1);
 					p1			 = draw_list->_Path.back();
 					float t_step = 1.0f / (float)num_segments;
@@ -305,7 +305,7 @@ int system_main() {
 				} break;
 
 				case STBTT_vcubic: {
-					draw_list->AddBezierCurve(p + pos, p + Vec2(cx, cy), p + Vec2(cx1, cy1), p + Vec2(x, y), 0xffff00ff, 1, num_segments);
+					draw_list->AddBezierCurve(p + pos, p + vec2(cx, cy), p + vec2(cx1, cy1), p + vec2(x, y), 0xffff00ff, 1, num_segments);
 				} break;
 
 					invalid_default_case();
@@ -330,7 +330,7 @@ int system_main() {
 				}
 			}
 			buffer[idx] = 0;
-			u32 color	= id == region_index ? 0xff00ffff : 0xffffffff;
+			Colorh color	= (id == region_index) ? colorh(0xff00ffff) : colorh(0xffffffff);
 			ImGui::TextColored(hex_to_color4(color), "[%d] %u (%d) : %s", (int)id, font_shape.glyph_infos[id].id, count, buffer);
 			if (ImGui::IsItemClicked()) region_index = id;
 		}
@@ -346,7 +346,7 @@ int system_main() {
 		int codepoint_index = 0;
 		for (u32 id = 0; id < font_shape.glyph_count; ++id) {
 			auto count = font_shape.glyph_infos[id].codepoint_count;
-			u32	 color = id == region_index ? 0xff00ffff : 0xffffffff;
+			Colorh color = id == region_index ? colorh(0xff00ffff) : colorh(0xffffffff);
 			for (int i = 0; i < count; ++i, ++codepoint_index) {
 				auto &codepoint							 = font_shape.codepoints[codepoint_index];
 				buffer[utf32_to_utf8(codepoint.codepoint, buffer)] = 0;

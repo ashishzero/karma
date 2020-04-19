@@ -21,9 +21,9 @@ inline r32 map01(r32 x1, r32 x2, r32 x) {
 	return map(x1, x2, 0, 1, x);
 }
 
-#define WORLD_UP Vec3(0, 0, 1)
-#define WORLD_RIGHT Vec3(1, 0, 0)
-#define WORLD_FORWARD Vec3(0, 1, 0)
+const Vec3 WORLD_UP		 = vec3(0, 0, 1);
+const Vec3 WORLD_RIGHT	 = vec3(1, 0, 0);
+const Vec3 WORLD_FORWARD = vec3(0, 1, 0);
 
 Vec2  vec2_add(Vec2 a, Vec2 b);
 Vec3  vec3_add(Vec3 a, Vec3 b);
@@ -86,20 +86,20 @@ Vec4s vec4s_hadamard(Vec4s l, Vec4s r);
 //
 //
 
-inline Vec2  operator-(Vec2 &v) { return Vec2(-v.x, -v.y); }
-inline Vec3  operator-(Vec3 &v) { return Vec3(-v.x, -v.y, -v.z); }
-inline Vec4  operator-(Vec4 &v) { return Vec4(-v.x, -v.y, -v.z, -v.w); }
-inline Vec2s operator-(Vec2s &v) { return Vec2s(-v.x, -v.y); }
-inline Vec3s operator-(Vec3s &v) { return Vec3s(-v.x, -v.y, -v.z); }
-inline Vec4s operator-(Vec4s &v) { return Vec4s(-v.x, -v.y, -v.z, -v.w); }
+inline Vec2	 operator-(Vec2 &v) { return vec2(-v.x, -v.y); }
+inline Vec3	 operator-(Vec3 &v) { return vec3(-v.x, -v.y, -v.z); }
+inline Vec4	 operator-(Vec4 &v) { return vec4(-v.x, -v.y, -v.z, -v.w); }
+inline Vec2s operator-(Vec2s &v) { return vec2s(-v.x, -v.y); }
+inline Vec3s operator-(Vec3s &v) { return vec3s(-v.x, -v.y, -v.z); }
+inline Vec4s operator-(Vec4s &v) { return vec4s(-v.x, -v.y, -v.z, -v.w); }
 
 //
 //
 //
 
-inline Vec2  operator+(Vec2 a, Vec2 b) { return vec2_add(a, b); }
-inline Vec3  operator+(Vec3 a, Vec3 b) { return vec3_add(a, b); }
-inline Vec4  operator+(Vec4 a, Vec4 b) { return vec4_add(a, b); }
+inline Vec2	 operator+(Vec2 a, Vec2 b) { return vec2_add(a, b); }
+inline Vec3	 operator+(Vec3 a, Vec3 b) { return vec3_add(a, b); }
+inline Vec4	 operator+(Vec4 a, Vec4 b) { return vec4_add(a, b); }
 inline Vec2s operator+(Vec2s a, Vec2s b) { return vec2s_add(a, b); }
 inline Vec3s operator+(Vec3s a, Vec3s b) { return vec3s_add(a, b); }
 inline Vec4s operator+(Vec4s a, Vec4s b) { return vec4s_add(a, b); }
@@ -108,9 +108,9 @@ inline Vec4s operator+(Vec4s a, Vec4s b) { return vec4s_add(a, b); }
 //
 //
 
-inline Vec2  operator-(Vec2 a, Vec2 b) { return vec2_sub(a, b); }
-inline Vec3  operator-(Vec3 a, Vec3 b) { return vec3_sub(a, b); }
-inline Vec4  operator-(Vec4 a, Vec4 b) { return vec4_sub(a, b); }
+inline Vec2	 operator-(Vec2 a, Vec2 b) { return vec2_sub(a, b); }
+inline Vec3	 operator-(Vec3 a, Vec3 b) { return vec3_sub(a, b); }
+inline Vec4	 operator-(Vec4 a, Vec4 b) { return vec4_sub(a, b); }
 inline Vec2s operator-(Vec2s a, Vec2s b) { return vec2s_sub(a, b); }
 inline Vec3s operator-(Vec3s a, Vec3s b) { return vec3s_sub(a, b); }
 inline Vec4s operator-(Vec4s a, Vec4s b) { return vec4s_sub(a, b); }
@@ -177,12 +177,12 @@ inline Vec4s &operator-=(Vec4s &a, Vec4s b) {
 //
 //
 
-inline Vec2  operator*(Vec2 v, r32 s) { return vec2_mul(v, s); }
-inline Vec2  operator*(r32 s, Vec2 v) { return vec2_mul(v, s); }
-inline Vec3  operator*(Vec3 v, r32 s) { return vec3_mul(v, s); }
-inline Vec3  operator*(r32 s, Vec3 v) { return vec3_mul(v, s); }
-inline Vec4  operator*(Vec4 v, r32 s) { return vec4_mul(v, s); }
-inline Vec4  operator*(r32 s, Vec4 v) { return vec4_mul(v, s); }
+inline Vec2	 operator*(Vec2 v, r32 s) { return vec2_mul(v, s); }
+inline Vec2	 operator*(r32 s, Vec2 v) { return vec2_mul(v, s); }
+inline Vec3	 operator*(Vec3 v, r32 s) { return vec3_mul(v, s); }
+inline Vec3	 operator*(r32 s, Vec3 v) { return vec3_mul(v, s); }
+inline Vec4	 operator*(Vec4 v, r32 s) { return vec4_mul(v, s); }
+inline Vec4	 operator*(r32 s, Vec4 v) { return vec4_mul(v, s); }
 inline Vec2s operator*(Vec2s v, s32 s) { return vec2s_mul(v, s); }
 inline Vec2s operator*(s32 s, Vec2s v) { return vec2s_mul(v, s); }
 inline Vec3s operator*(Vec3s v, s32 s) { return vec3s_mul(v, s); }
@@ -194,9 +194,9 @@ inline Vec4s operator*(s32 s, Vec4s v) { return vec4s_mul(v, s); }
 //
 //
 
-inline Vec2  operator/(Vec2 v, r32 s) { return vec2_div(v, s); }
-inline Vec3  operator/(Vec3 v, r32 s) { return vec3_div(v, s); }
-inline Vec4  operator/(Vec4 v, r32 s) { return vec4_div(v, s); }
+inline Vec2	 operator/(Vec2 v, r32 s) { return vec2_div(v, s); }
+inline Vec3	 operator/(Vec3 v, r32 s) { return vec3_div(v, s); }
+inline Vec4	 operator/(Vec4 v, r32 s) { return vec4_div(v, s); }
 inline Vec2s operator/(Vec2s v, s32 s) { return vec2s_div(v, s); }
 inline Vec3s operator/(Vec3s v, s32 s) { return vec3s_div(v, s); }
 inline Vec4s operator/(Vec4s v, s32 s) { return vec4s_div(v, s); }
@@ -345,14 +345,14 @@ Vec3 mat3_vec3_mul(const Mat3 &mat, Vec3 vec);
 Mat4 mat4_mul(const Mat4 &left, const Mat4 &right);
 Vec4 mat4_vec4_mul(const Mat4 &mat, Vec4 vec);
 
-inline Mat3  operator*(const Mat3 &a, const Mat3 &b) { return mat3_mul(a, b); }
+inline Mat3	 operator*(const Mat3 &a, const Mat3 &b) { return mat3_mul(a, b); }
 inline Mat3 &operator*=(Mat3 &t, Mat3 &o) {
 	t = mat3_mul(t, o);
 	return t;
 }
 inline Vec3 operator*(const Mat3 &m, Vec3 v) { return mat3_vec3_mul(m, v); }
 
-inline Mat4  operator*(const Mat4 &a, const Mat4 &b) { return mat4_mul(a, b); }
+inline Mat4	 operator*(const Mat4 &a, const Mat4 &b) { return mat4_mul(a, b); }
 inline Mat4 &operator*=(Mat4 &t, Mat4 &o) {
 	t = mat4_mul(t, o);
 	return t;
@@ -371,7 +371,7 @@ Mat3 mat3_translation(Vec2 t);
 
 Mat3 mat3_rotation(r32 angle);
 
-Mat3 mat3_lookat(Vec2 from, Vec2 to, Vec2 forward = Vec2(1, 0));
+Mat3 mat3_lookat(Vec2 from, Vec2 to, Vec2 forward = vec2(1, 0));
 
 Mat4 mat4_scalar(r32 S_1, r32 S_2, r32 S_3);
 Mat4 mat4_scalar(Vec3 s);
@@ -406,11 +406,11 @@ Mat4 mat3_to_mat4(const Mat3 &mat);
 
 Quat quat_identity();
 
-inline Quat operator-(Quat &q) { return Quat(-q.v4); }
-inline Quat operator-(Quat r1, Quat r2) { return Quat(r1.v4 - r2.v4); }
-inline Quat operator+(Quat r1, Quat r2) { return Quat(r1.v4 + r2.v4); }
-inline Quat operator*(Quat q, r32 s) { return Quat(q.v4 * s); }
-inline Quat operator*(r32 s, Quat q) { return Quat(q.v4 * s); }
+inline Quat operator-(Quat &q) { return quat(-q.v4); }
+inline Quat operator-(Quat r1, Quat r2) { return quat(r1.v4 - r2.v4); }
+inline Quat operator+(Quat r1, Quat r2) { return quat(r1.v4 + r2.v4); }
+inline Quat operator*(Quat q, r32 s) { return quat(q.v4 * s); }
+inline Quat operator*(r32 s, Quat q) { return quat(q.v4 * s); }
 
 r32 quat_dot(Quat q1, Quat q2);
 r32 quat_length(Quat q);
@@ -426,7 +426,7 @@ Quat quat_angle_axis_normalize(Vec3 axis, r32 angle);
 
 void quat_get_angle_axis(Quat q, r32 *angle, Vec3 *axis);
 Vec3 quat_get_axis(Quat q);
-r32  quat_get_angle(Quat q);
+r32	 quat_get_angle(Quat q);
 
 Quat quat_mat4(const Mat4 &m);
 Quat quat_mat4_normalize(const Mat4 &m);
@@ -455,7 +455,7 @@ Colorh color4_to_hex(Color4 v);
 Color4 hex_to_color4(Colorh c);
 Color3 hex_to_color3(Colorh c);
 
-Color3	hsv_to_rgb(Color_HSV c);
+Color3	  hsv_to_rgb(Color_HSV c);
 Color_HSV rgb_to_hsv(Color3 c);
 
 //
@@ -496,8 +496,8 @@ Type bezeir_cubic(Type a, Type b, Type c, Type d, r32 t) {
 
 template <typename Type>
 Type slerp(Type from, Type to, r32 angle, r32 t) {
-	r32 s   = sinf(angle);
-	r32 ts  = sinf(angle * t);
+	r32 s	= sinf(angle);
+	r32 ts	= sinf(angle * t);
 	r32 mts = sinf(angle * (1 - t));
 	return (mts * from + ts * to) * (1.0f / s);
 }
@@ -508,7 +508,7 @@ Vec3 slerp(Vec3 from, Vec3 to, r32 t);
 Vec4 slerp(Vec4 from, Vec4 to, r32 t);
 Quat slerp(Quat from, Quat to, r32 t);
 
-r32  step(r32 edge, r32 val);
+r32	 step(r32 edge, r32 val);
 Vec2 step(Vec2 edge, Vec2 val);
 Vec3 step(Vec3 edge, Vec3 val);
 Vec4 step(Vec4 edge, Vec4 val);
@@ -525,7 +525,7 @@ r32 inverse_smoothstep(r32 x);
 //
 //
 
-r32  move_toward(r32 from, r32 to, r32 factor);
+r32	 move_toward(r32 from, r32 to, r32 factor);
 Vec2 move_toward(Vec2 from, Vec2 to, r32 factor);
 Vec3 move_toward(Vec3 from, Vec3 to, r32 factor);
 Vec4 move_toward(Vec4 from, Vec4 to, r32 factor);

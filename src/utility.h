@@ -39,15 +39,15 @@ inline r32 random_r32_range(Rng* rng, float min, float max) {
 }
 
 inline Vec2 random_vec2(Rng* rng) {
-	return Vec2(random_r32(rng), random_r32(rng));
+	return vec2(random_r32(rng), random_r32(rng));
 }
 
 inline Vec3 random_vec3(Rng* rng) {
-	return Vec3(random_r32(rng), random_r32(rng), random_r32(rng));
+	return vec3(random_r32(rng), random_r32(rng), random_r32(rng));
 }
 
 inline Vec4 random_vec4(Rng* rng) {
-	return Vec4(random_r32(rng), random_r32(rng), random_r32(rng), random_r32(rng));
+	return vec4(random_r32(rng), random_r32(rng), random_r32(rng), random_r32(rng));
 }
 
 inline Color_HSV random_color_hsv(Rng* rng, float s, float v) {
@@ -63,14 +63,15 @@ inline Color3 random_color3(Rng* rng, float s, float v) {
 }
 
 inline Color4 random_color4(Rng* rng, float s, float v) {
-	return Vec4(hsv_to_rgb(random_color_hsv(rng, s, v)), 1.0f);
+	return vec4(hsv_to_rgb(random_color_hsv(rng, s, v)), 1.0f);
 }
 
 //
 //
 //
 
-inline u32 murmur3_32(const u8* key, size_t len, u32 seed) {
+inline u32 murmur3_32(const void* ptr, size_t len, u32 seed) {
+	const u8 * key = (u8 *)ptr;
 	u32 h = seed;
 	u32 k;
 	/* Read in groups of 4. */

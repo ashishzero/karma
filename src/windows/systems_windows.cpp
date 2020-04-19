@@ -572,7 +572,8 @@ Vec2s system_get_primary_monitor_size() {
 Vec2s system_get_client_size() {
 	RECT rect = {};
 	GetClientRect(window_handle, &rect);
-	return Vec2s(rect.right - rect.left, rect.bottom - rect.top);
+
+	return vec2s(rect.right - rect.left, rect.bottom - rect.top);
 }
 
 int system_fullscreen_state(int toggle) {
@@ -899,7 +900,7 @@ void win32_mouse_button_event(Mouse_Button_Event *event, WPARAM wparam, LPARAM l
 	Vec2s wr		= system_get_client_size();
 	int   x			= GET_X_LPARAM(lparam);
 	int   y			= GET_Y_LPARAM(lparam);
-	event->position = Vec2s(x, wr.y - y); // inverting y
+	event->position = vec2s(x, wr.y - y); // inverting y
 }
 
 void win32_push_event(Event event) {
@@ -964,7 +965,7 @@ static LRESULT CALLBACK win32_wnd_proc(HWND wnd, UINT msg, WPARAM wparam, LPARAM
 		}
 
 		event.type			   = Event_Type_WINDOW_RESIZE;
-		event.window.dimension = Vec2s(x, y);
+		event.window.dimension = vec2s(x, y);
 	} break;
 
 	case WM_DPICHANGED: {
@@ -1043,7 +1044,7 @@ static LRESULT CALLBACK win32_wnd_proc(HWND wnd, UINT msg, WPARAM wparam, LPARAM
 	case WM_MOUSEMOVE: {
 		RECT rc;
 		GetClientRect(window_handle, &rc);
-		Vec2s wr(rc.right - rc.left, rc.bottom - rc.top);
+		Vec2s wr = vec2s(rc.right - rc.left, rc.bottom - rc.top);
 
 		event.type = Event_Type_MOUSE_CURSOR;
 		int x	  = GET_X_LPARAM(lparam);
@@ -1257,7 +1258,7 @@ static inline Vec2 xinput_axis_deadzone_correction(SHORT x, SHORT y, SHORT deadz
 		norm_mag = mag / (r32)(XINPUT_GAMEPAD_THUMB_MAX - deadzone);
 	}
 
-	return Vec2(norm_x * norm_mag, norm_y * norm_mag);
+	return vec2(norm_x * norm_mag, norm_y * norm_mag);
 }
 
 static inline r32 xinput_trigger_deadzone_correction(SHORT value, SHORT deadzone) {

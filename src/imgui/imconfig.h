@@ -71,11 +71,11 @@
 #include "../maths.h"
 #define IM_VEC2_CLASS_EXTRA                                                 \
         ImVec2(const Vec2& f) { x = f.x; y = f.y; }                       \
-        operator Vec2() const { return Vec2(x,y); }
+        operator Vec2() const { return vec2(x,y); }
 
 #define IM_VEC4_CLASS_EXTRA                                                 \
         ImVec4(const Vec4& f) { x = f.x; y = f.y; z = f.z; w = f.w; }     \
-        operator Vec4() const { return Vec4(x,y,z,w); }
+        operator Vec4() const { return vec4(x,y,z,w); }
 
 
 //---- Use 32-bit vertex indices (default is 16-bit) is one way to allow large meshes with more than 64K vertices.

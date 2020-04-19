@@ -42,7 +42,7 @@ static Quad_Render_Range quad_render_range[MAX_QUADS_PER_CALL];
 static Mat3				 quad_transformation_stack[MAX_QUADS_PER_CALL];
 static u32				 quad_top;
 static u32				 quad_transformation_top;
-static Color4			 quad_top_colors[4] = { Color4(1), Color4(1), Color4(1), Color4(1) };
+static Color4			 quad_top_colors[4] = { vec4(1), vec4(1), vec4(1), vec4(1) };
 static Handle			 quad_top_texture;
 static Handle			 quad_vertex_buffer;
 static Handle			 quad_index_buffer;
@@ -208,7 +208,7 @@ void gfx2d_begin(Vec2 position, float zoom, Camera_View &view, Handle shader) {
 	}
 
 	Quad_Buffer buf;
-	buf.transform = projection * mat4_translation(Vec3(position, 0)) * mat4_scalar(Vec3(zoom));
+	buf.transform = projection * mat4_translation(vec3(position, 0)) * mat4_scalar(vec3(zoom));
 
 	gfx->begin(shader, (u8 *)&buf, sizeof(buf));
 }
@@ -311,26 +311,26 @@ void gfx2d_quad(Vec2 v0, Vec2 v1, Vec2 v2, Vec2 v3, Mm_Rect texture_rect, r32 de
 
 	if (quad_transformation_top > 1) {
 		Mat3 &transformation = quad_transformation_stack[quad_transformation_top - 1];
-		v0					 = (transformation * Vec3(v0, 0)).xy;
-		v1					 = (transformation * Vec3(v1, 0)).xy;
-		v2					 = (transformation * Vec3(v2, 0)).xy;
-		v3					 = (transformation * Vec3(v3, 0)).xy;
+		v0					 = (transformation * vec3(v0, 0)).xy;
+		v1					 = (transformation * vec3(v1, 0)).xy;
+		v2					 = (transformation * vec3(v2, 0)).xy;
+		v3					 = (transformation * vec3(v3, 0)).xy;
 	}
 
 	quad.v[0]	 = v0;
-	quad.t[0]	 = Vec2(texture_rect.min.x, texture_rect.min.y);
+	quad.t[0]	 = vec2(texture_rect.min.x, texture_rect.min.y);
 	quad.color[0] = quad_top_colors[0];
 
 	quad.v[1]	 = v1;
-	quad.t[1]	 = Vec2(texture_rect.min.x, texture_rect.max.y);
+	quad.t[1]	 = vec2(texture_rect.min.x, texture_rect.max.y);
 	quad.color[1] = quad_top_colors[1];
 
 	quad.v[2]	 = v2;
-	quad.t[2]	 = Vec2(texture_rect.max.x, texture_rect.max.y);
+	quad.t[2]	 = vec2(texture_rect.max.x, texture_rect.max.y);
 	quad.color[2] = quad_top_colors[2];
 
 	quad.v[3]	 = v3;
-	quad.t[3]	 = Vec2(texture_rect.max.x, texture_rect.min.y);
+	quad.t[3]	 = vec2(texture_rect.max.x, texture_rect.min.y);
 	quad.color[3] = quad_top_colors[3];
 
 	quad.texture = quad_top_texture;
@@ -345,8 +345,8 @@ void gfx2d_quad(Vec2 v0, Vec2 v1, Vec2 v2, Vec2 v3, Mm_Rect texture_rect, r32 de
 
 void gfx2d_rect(Vec2 p, Vec2 d, Mm_Rect texture_rect, r32 depth) {
 	auto v0 = p;
-	auto v1 = Vec2(p.x, p.y + d.y);
+	auto v1 = vec2(p.x, p.y + d.y);
 	auto v2 = p + d;
-	auto v3 = Vec2(p.x + d.x, p.y);
+	auto v3 = vec2(p.x + d.x, p.y);
 	gfx2d_quad(v0, v1, v2, v3, texture_rect, depth);
 }

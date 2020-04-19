@@ -675,7 +675,7 @@ void Gfx_Platform_OpenGL::clear(Clear_Flag flags, Color4 color) {
 	if (flags & Clear_Flag_DEPTH) f |= GL_DEPTH_BUFFER_BIT;
 	if (flags & Clear_Flag_STENCIL) f |= GL_STENCIL_BUFFER_BIT;
 	if (f) {
-		glClearColor(color.r, color.g, color.b, color.a);
+		glClearColor(color.x, color.y, color.z, color.w);
 		glClear(f);
 	}
 }
@@ -711,25 +711,32 @@ void Gfx_Platform_OpenGL::begin(Handle hshader, u8 *data, ptrsize size) {
 	for (u32 i = 0; i < shader->uniform_count; ++i) {
 		auto &u = shader->uniforms[i];
 
+		r32 * data;
+
 		switch (u.type) {
 		case 1:
-			glUniform1fv(u.location, 1, istream_consume(&stream, r32));
+			data = istream_consume(&stream, r32);
+			glUniform1fv(u.location, 1, data);
 			break;
 
 		case 2:
-			glUniform2fv(u.location, 1, (istream_consume(&stream, Vec2))->m);
+			data = (r32 *)(istream_consume(&stream, Vec2));
+			glUniform2fv(u.location, 1, data);
 			break;
 
 		case 3:
-			glUniform3fv(u.location, 1, (istream_consume(&stream, Vec3))->m);
+			data = (r32 *)(istream_consume(&stream, Vec3));
+			glUniform3fv(u.location, 1, data);
 			break;
 
 		case 4:
-			glUniform4fv(u.location, 1, (istream_consume(&stream, Vec4))->m);
+			data = (r32 *)(istream_consume(&stream, Vec4));
+			glUniform4fv(u.location, 1, data);
 			break;
 
 		case 16:
-			glUniformMatrix4fv(u.location, 1, GL_TRUE, (istream_consume(&stream, Mat4))->m);
+			data = (r32 *)(istream_consume(&stream, Mat4));
+			glUniformMatrix4fv(u.location, 1, GL_TRUE, data);
 			break;
 
 		default:
