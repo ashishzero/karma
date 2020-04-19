@@ -12,43 +12,47 @@ constexpr r32 MATH_R32_EQUALS_DEFAULT_TOLERANCE = 0.001f;
 
 #include <math.h>
 
-union Vec2 {
-	r32 m[2];
-
-	struct {
-		r32 x, y;
+struct Vec2 {
+	union {
+		struct {
+			r32 x, y;
+		};
+		r32 m[2];
 	};
 };
 
 inline Vec2 vec2(r32 a) { Vec2 v; v.x = v.y = a; return v; }
 inline Vec2 vec2(r32 a, r32 b) { Vec2 v; v.x = a; v.y = b; return v; }
 
-union Vec2s {
-	s32 m[2];
-	struct {
-		s32 x, y;
+struct Vec2s {
+	union {
+		struct {
+			s32 x, y;
+		};
+		s32 m[2];
 	};
 };
 
 inline Vec2s vec2s(int a) { Vec2s v; v.x = v.y = a; return v; }
 inline Vec2s vec2s(int a, int b) { Vec2s v; v.x = a; v.y = b; return v; }
 
-union Vec3 {
-	r32 m[3];
-
-	struct {
-		r32 x, y, z;
-	};
-	struct {
-		r32 r, g, b;
-	};
-	struct {
-		Vec2  xy;
-		r32 _ignorez;
-	};
-	struct {
-		r32 _ignorex;
-		Vec2  yz;
+struct Vec3 {
+	union {
+		struct {
+			r32 x, y, z;
+		};
+		struct {
+			r32 r, g, b;
+		};
+		struct {
+			Vec2  xy;
+			r32 _ignorez;
+		};
+		struct {
+			r32 _ignorex;
+			Vec2  yz;
+		};
+		r32 m[3];
 	};
 };
 
@@ -57,21 +61,23 @@ inline Vec3 vec3(r32 a, r32 b, r32 c) { Vec3 v; v.x = a; v.y = b; v.z = c; retur
 inline Vec3 vec3(Vec2 a, r32 b) { Vec3 v;  v.xy = a; v.z = b; return v; }
 inline Vec3 vec3(r32 a, Vec2 b) { Vec3 v;  v.x = a; v.yz = b; return v; }
 
-union Vec3s {
-	s32 m[3];
-	struct {
-		s32 x, y, z;
-	};
-	struct {
-		s32 r, g, b;
-	};
-	struct {
-		Vec2s xy;
-		s32   _ignorez;
-	};
-	struct {
-		s32   _ignorex;
-		Vec2s yz;
+struct Vec3s {
+	union {
+		struct {
+			s32 x, y, z;
+		};
+		struct {
+			s32 r, g, b;
+		};
+		struct {
+			Vec2s xy;
+			s32   _ignorez;
+		};
+		struct {
+			s32   _ignorex;
+			Vec2s yz;
+		};
+		s32 m[3];
 	};
 };
 
@@ -80,29 +86,31 @@ inline Vec3s vec3s(int a, int b, int c) { Vec3s v; v.x = a; v.y = b; v.z = c; re
 inline Vec3s vec3s(Vec2s a, int b) { Vec3s v; v.xy = a; v.z = b; return v; }
 inline Vec3s vec3s(int a, Vec2s b) { Vec3s v; v.x = a; v.yz = b; return v; }
 
-union Vec4 {
-	r32 m[4];
-	struct {
-		r32 x, y, z, w;
-	};
-	struct {
-		r32 r, g, b, a;
-	};
-	struct {
-		Vec2 xy;
-		Vec2 zw;
-	};
-	struct {
-		Vec3  xyz;
-		r32 _ignorew;
-	};
-	struct {
-		r32 _ignorex;
-		Vec3  yzw;
-	};
-	struct {
-		Vec3  rgb;
-		r32 alpha;
+struct Vec4 {
+	union {
+		struct {
+			r32 x, y, z, w;
+		};
+		struct {
+			r32 r, g, b, a;
+		};
+		struct {
+			Vec2 xy;
+			Vec2 zw;
+		};
+		struct {
+			Vec3  xyz;
+			r32 _ignorew;
+		};
+		struct {
+			r32 _ignorex;
+			Vec3  yzw;
+		};
+		struct {
+			Vec3  rgb;
+			r32 alpha;
+		};
+		r32 m[4];
 	};
 };
 
@@ -113,29 +121,31 @@ inline Vec4 vec4(Vec2 a, r32 b, r32 c = 1) { Vec4 v; v.xy = a; v.z = b; v.w = c;
 inline Vec4 vec4(Vec3 a, r32 b = 1) { Vec4 v; v.xyz = a; v.w = b; return v; }
 inline Vec4 vec4(r32 a, Vec3 b) { Vec4 v; v.x = a; v.yzw = b; return v; }
 
-union Vec4s {
-	s32 m[4];
-	struct {
-		s32 x, y, z, w;
-	};
-	struct {
-		s32 r, g, b, a;
-	};
-	struct {
-		Vec2s xy;
-		Vec2s zw;
-	};
-	struct {
-		Vec3s xyz;
-		s32   _ignorew;
-	};
-	struct {
-		s32   _ignorex;
-		Vec3s yzw;
-	};
-	struct {
-		Vec3s rgb;
-		s32   alpha;
+struct Vec4s {
+	union {
+		struct {
+			s32 x, y, z, w;
+		};
+		struct {
+			s32 r, g, b, a;
+		};
+		struct {
+			Vec2s xy;
+			Vec2s zw;
+		};
+		struct {
+			Vec3s xyz;
+			s32   _ignorew;
+		};
+		struct {
+			s32   _ignorex;
+			Vec3s yzw;
+		};
+		struct {
+			Vec3s rgb;
+			s32   alpha;
+		};
+		s32 m[4];
 	};
 };
 
@@ -152,20 +162,24 @@ struct Color_HSV {
 	r32 h, s, v; // [0, 1]
 };
 
-union Colorh {
-	struct {
-		u8 r, g, b, a;
+struct Colorh {
+	union {
+		struct {
+			u8 r, g, b, a;
+		};
+		u32 hex;
 	};
-	u32 hex;
 };
 
 inline Colorh colorh(u8 _r, u8 _g, u8 _b, u8 _a = 0xff) { Colorh c; c.r = _r; c.g = _g; c.b = _b; c.a = _a; return c; }
 inline Colorh colorh(u32 color) { Colorh c; c.hex = color; return c; }
 
-union Mat3 {
-	Vec3  rows[3];
-	r32 m[9];
-	r32 m2[4][4];
+struct Mat3 {
+	union {
+		Vec3  rows[3];
+		r32 m[9];
+		r32 m2[4][4];
+	};
 };
 
 inline Mat3 mat3(Vec3 r0, Vec3 r1, Vec3 r2) {
@@ -186,10 +200,12 @@ inline Mat3 mat3(r32 x00, r32 x10, r32 x20,
 	return res;
 }
 
-union Mat4 {
-	Vec4  rows[4];
-	r32 m[16];
-	r32 m2[4][4];
+struct Mat4 {
+	union {
+		Vec4  rows[4];
+		r32 m[16];
+		r32 m2[4][4];
+	};
 };
 
 inline Mat4 mat4(Vec4 r0, Vec4 r1, Vec4 r2, Vec4 r3) {
@@ -213,15 +229,17 @@ inline Mat4 mat4(r32 x00, r32 x10, r32 x20, r32 x30,
 	return m;
 }
 
-union Quat {
-	struct {
-		r32 x, y, z, w;
-	};
-	struct {
-		r32 i, j, k, real;
-	};
-	struct {
-		Vec4 v4;
+struct Quat {
+	union {
+		struct {
+			r32 x, y, z, w;
+		};
+		struct {
+			r32 i, j, k, real;
+		};
+		struct {
+			Vec4 v4;
+		};
 	};
 };
 

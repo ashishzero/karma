@@ -1,4 +1,4 @@
-#include "parser.h"
+#include "tokenizer.h"
 
 bool is_numeral(u32 codepoint) {
 	return codepoint >= '0' && codepoint <= '9';

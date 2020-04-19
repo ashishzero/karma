@@ -8,7 +8,7 @@
 #include "stb_image.h"
 
 #if defined(BUILD_DEBUG) || defined(BUILD_DEVELOPER)
-#include "parser.cpp"
+#include "tokenizer.cpp"
 
 #include "systems.h"
 #include "string.h"
