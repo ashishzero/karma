@@ -16,7 +16,7 @@ bool is_binary_numeral(u32 codepoint) {
 	return codepoint == '0' || codepoint == '1';
 }
 
-bool parse_integer(const String string, s64* out) {
+bool parse_integer(const String string, s64 * out) {
 	if (!string) return false;
 
 	s64 index = 0;
@@ -34,11 +34,11 @@ bool parse_integer(const String string, s64* out) {
 
 		if (index < string.count) {
 			switch (string[index]) {
-				case 'x': index += 1; base = 16; break;
-				case 'h': index += 1; base = 16; break;
-				case 'd': index += 1; base = 10; break;
-				case 'o': index += 1; base = 8; break;
-				case 'b': index += 1; base = 2; break;
+			case 'x': index += 1; base = 16; break;
+			case 'h': index += 1; base = 16; break;
+			case 'd': index += 1; base = 10; break;
+			case 'o': index += 1; base = 8; break;
+			case 'b': index += 1; base = 2; break;
 			}
 		}
 	}
@@ -50,21 +50,25 @@ bool parse_integer(const String string, s64* out) {
 		code = string[index];
 
 		if (is_numeral(code)) {
-			if ((base == 10 || base == 16) || 
-				(is_oct_numeral(code) && base == 8) || 
+			if ((base == 10 || base == 16) ||
+				(is_oct_numeral(code) && base == 8) ||
 				(is_binary_numeral(code) && base == 2))
 				value = value * base + (code - '0');
 			else
 				break;
-		} else if (base == 16) {
+		}
+		else if (base == 16) {
 			if (code >= 'a' && code <= 'f') {
 				value = value * base + (code - 'a') + 10;
-			} else if (code >= 'A' && code <= 'F') {
+			}
+			else if (code >= 'A' && code <= 'F') {
 				value = value * base + (code - 'A') + 10;
-			} else {
+			}
+			else {
 				break;
 			}
-		} else {
+		}
+		else {
 			break;
 		}
 
@@ -74,7 +78,7 @@ bool parse_integer(const String string, s64* out) {
 	return index >= string.count;
 }
 
-bool parse_real(const String string, r64* out) {
+bool parse_real(const String string, r64 * out) {
 	if (!string) return false;
 
 	s64 index = 0;
@@ -99,7 +103,7 @@ bool parse_real(const String string, r64* out) {
 	bool period_fail = false;
 	if (index < string.count && code == '.') {
 		r64 p = 1, s = 0;
-		
+
 		for (index += 1; index < string.count; index += 1) {
 			code = string[index];
 			if (code >= '0' && code <= '9')
@@ -137,7 +141,8 @@ bool parse_real(const String string, r64* out) {
 			r64 p = pow(10, exp);
 
 			if (negative) value /= p; else value *= p;
-		} else {
+		}
+		else {
 			exponent_fail = true;
 		}
 	}
@@ -149,158 +154,46 @@ bool parse_real(const String string, r64* out) {
 	return result;
 }
 
+struct Tokenizer_State {
+	String				content;
+	ptrsize				row;
+	ptrsize				column;
+	String_Iter			at[3];
+	bool				can_continue;
+	Tokenization_Status status;
+};
 
-
-const char* token_kind_string(Token_Kind kind) {
-	static const char* strings[] = {
-		"Token_Kind_NONE",
-
-		"Token_Kind_AT",
-		"Token_Kind_HASH",
-		"Token_Kind_DOLLAR",
-		"Token_Kind_OPEN_BRACKET",
-		"Token_Kind_CLOSE_BRACKET",
-		"Token_Kind_SLASH",
-		"Token_Kind_OPEN_CURLY_BRACKET",
-		"Token_Kind_CLOSE_CURLY_BRACKET",
-		"Token_Kind_OPEN_SQUARE_BRACKET",
-		"Token_Kind_CLOSE_SQUARE_BRACKET",
-		"Token_Kind_COLON",
-		"Token_Kind_SEMICOLON",
-		"Token_Kind_COMMA",
-		"Token_Kind_PERIOD",
-		"Token_Kind_QUESTION_MARK",
-		"Token_Kind_TILDE",
-		"Token_Kind_BACK_TICK",
-
-		"Token_Kind_EXCLAMATION",
-		"Token_Kind_PERCENT",
-		"Token_Kind_CARET",
-		"Token_Kind_AMPERSAND",
-		"Token_Kind_ASTRICK",
-		"Token_Kind_PLUS",
-		"Token_Kind_MINUS",
-		"Token_Kind_EQUALS",
-		"Token_Kind_UNDERSCORE",
-		"Token_Kind_PIPE",
-		"Token_Kind_BACK_SLASH",
-		"Token_Kind_LESS_THAN",
-		"Token_Kind_GREATER_THAN",
-
-		"Token_Kind_COMPARE_EQUALS",
-		"Token_Kind_COMPARE_NOT_EQUALS",
-		"Token_Kind_COMPARE_LESS_THAN_EQUALS",
-		"Token_Kind_COMPARE_GREATER_THAN_EQUALS",
-		"Token_Kind_LOGICAL_AND",
-		"Token_Kind_LOGICAL_OR",
-		"Token_Kind_LEFT_SHIFT",
-		"Token_Kind_RIGHT_SHIFT",
-		"Token_Kind_PLUS_PLUS",
-		"Token_Kind_MINUS_MINUS",
-		"Token_Kind_PLUS_EQUALS",
-		"Token_Kind_MINUS_EQUALS",
-		"Token_Kind_MUL_EQUALS",
-		"Token_Kind_DIV_EQUALS",
-		"Token_Kind_MOD_EQUALS",
-		"Token_Kind_AND_EQUALS",
-		"Token_Kind_OR_EQUALS",
-		"Token_Kind_XOR_EQUALS",
-		"Token_Kind_DASH_ARROW",
-		"Token_Kind_EQUAL_ARROW",
-		"Token_Kind_DOUBLE_COLON",
-
-		"Token_Kind_DQ_STRING",
-		"Token_Kind_SQ_STRING",
-
-		"Token_Kind_REAL_LITERAL",
-		"Token_Kind_INTEGER_LITERAL",
-	
-		"Token_Kind_IDENTIFIER",
-
-		"Token_Kind_END_OF_STREAM"
-	};
-
-	static_assert(static_count(strings) == Token_Kind_END_OF_STREAM + 1, "Token_Kind and strings array count don't match!");
-
-	return strings[kind];
+void tokenizer_error(Tokenizer_State * tokenizer, Tokenization_Result result, ptrsize row, ptrsize column, ptrsize offset) {
+	tokenizer->status.result = result;
+	tokenizer->status.row = row;
+	tokenizer->status.column = column;
+	tokenizer->status.offset = offset;
+	tokenizer->can_continue = false;
 }
 
-Lexer lexer_init(String content) {
-	Lexer lexer = {};
-	lexer.content = content;
-	lexer.row = 1;
-	lexer.column = 1;
-
-	string_iter_next(content, lexer.at + 0);
-	lexer.at[1] = lexer.at[0];
-	string_iter_next(content, lexer.at + 1);
-	lexer.at[2] = lexer.at[1];
-	string_iter_next(content, lexer.at + 2);
-
-	lexer.processing = true;
-	lexer.error_count = 0;
-
-	return lexer;
-}
-
-bool lexer_can_continue(Lexer* lexer) {
-	return lexer->processing;
-}
-
-bool lexer_pass(Lexer* lexer) {
-	return lexer->error_count == 0;
-}
-
-int lexer_errors(Lexer* lexer) {
-	return lexer->error_count;
-}
-
-bool lexer_max_error_reached(Lexer* lexer) {
-	return lexer->error_count == LEXER_MAX_ERROR;
-}
-
-void lexer_clear_errors(Lexer* lexer) {
-	lexer->error_count = 0;
-}
-
-void lexer_error(Lexer* lexer, Lexer_Error_Kind kind, Token_Kind expected, String content, Token got) {
-	if (lexer->error_count != LEXER_MAX_ERROR) {
-		lexer->error[lexer->error_count].kind = kind;
-		lexer->error[lexer->error_count].expected = expected;
-		lexer->error[lexer->error_count].content = content;
-		lexer->error[lexer->error_count].got = got;
-		lexer->error_count += 1;
-	}
-}
-
-void lexer_error(Lexer* lexer, Lexer_Error_Kind kind, Token_Kind expected, Token got) {
-	static String content("", 0);
-	lexer_error(lexer, kind, expected, content, got);
-}
-
-void lexer_advance(Lexer* lexer, int count) {
-	if (lexer->processing) {
+void tokenizer_advance(Tokenizer_State * tokenizer, int count) {
+	if (tokenizer->can_continue) {
 		for (int i = 0; i < count; ++i) {
-			lexer->column += 1;
-			lexer->at[0] = lexer->at[1];
-			lexer->at[1] = lexer->at[2];
-			if (!string_iter_next(lexer->content, lexer->at + 2))
-				lexer->at[2] = {};
+			tokenizer->column += 1;
+			tokenizer->at[0] = tokenizer->at[1];
+			tokenizer->at[1] = tokenizer->at[2];
+			if (!string_iter_next(tokenizer->content, tokenizer->at + 2))
+				tokenizer->at[2] = {};
 
-			if (lexer->at[0].codepoint.size_in_bytes == 0) lexer->processing = false;
+			if (tokenizer->at[0].codepoint.size_in_bytes == 0) tokenizer->can_continue = false;
 		}
 	}
 }
 
-bool lexer_check_and_advance_newline(Lexer* lexer) {
-	if (lexer->at[0].codepoint.code == '\r' || lexer->at[0].codepoint.code == '\n') {
-		if (lexer->at[0].codepoint.code == '\r' && lexer->at[1].codepoint.code == '\n') {
-			lexer_advance(lexer, 1);
+bool tokenizer_check_and_advance_newline(Tokenizer_State * tokenizer) {
+	if (tokenizer->at[0].codepoint.code == '\r' || tokenizer->at[0].codepoint.code == '\n') {
+		if (tokenizer->at[0].codepoint.code == '\r' && tokenizer->at[1].codepoint.code == '\n') {
+			tokenizer_advance(tokenizer, 1);
 		}
-		lexer_advance(lexer, 1);
+		tokenizer_advance(tokenizer, 1);
 
-		lexer->column = 1;
-		lexer->row += 1;
+		tokenizer->column = 1;
+		tokenizer->row += 1;
 
 		return true;
 	}
@@ -308,43 +201,48 @@ bool lexer_check_and_advance_newline(Lexer* lexer) {
 	return false;
 }
 
-bool lexer_check_and_advance_comments(Lexer* lexer) {
-	if (lexer->at[0].codepoint.code == '/') {
-		if (lexer->at[1].codepoint.code == '/') {
-			lexer_advance(lexer, 2);
+bool tokenizer_check_and_advance_comments(Tokenizer_State * tokenizer) {
+	if (tokenizer->at[0].codepoint.code == '/') {
+		if (tokenizer->at[1].codepoint.code == '/') {
+			tokenizer_advance(tokenizer, 2);
 
 			// single line comment
-			while (lexer_can_continue(lexer)) {
-				if (lexer_check_and_advance_newline(lexer)) break;
-				lexer_advance(lexer, 1);
+			while (tokenizer->can_continue) {
+				if (tokenizer_check_and_advance_newline(tokenizer)) break;
+				tokenizer_advance(tokenizer, 1);
 			}
 
 			return true;
-		} else if (lexer->at[1].codepoint.code == '*') {
-			lexer_advance(lexer, 2);
+		}
+		else if (tokenizer->at[1].codepoint.code == '*') {
+			tokenizer_advance(tokenizer, 2);
+
+			ptrsize err_row = tokenizer->row;
+			ptrsize err_col = tokenizer->column;
+			s64 err_offset  = tokenizer->at[0].index;
 
 			// comment block
 			bool comment_ended = false;
-			while (lexer_can_continue(lexer)) {
-				if (lexer_check_and_advance_newline(lexer)) continue;
+			while (tokenizer->can_continue) {
+				if (tokenizer_check_and_advance_newline(tokenizer)) continue;
 
-				if (lexer->at[0].codepoint.code == '*' && lexer->at[1].codepoint.code == '/') {
-					lexer_advance(lexer, 2);
+				if (tokenizer->at[0].codepoint.code == '*' && tokenizer->at[1].codepoint.code == '/') {
+					tokenizer_advance(tokenizer, 2);
 					comment_ended = true;
 					break;
 				}
 
-				lexer_advance(lexer, 1);
+				tokenizer_advance(tokenizer, 1);
 			}
 
 			Token token;
 			token.kind = Token_Kind_NONE;
-			token.row = lexer->row;
-			token.column = lexer->column;
-			token.content = String(lexer->content.data + lexer->at[0].index, lexer->content.count - lexer->at[0].index);
+			token.row = tokenizer->row;
+			token.column = tokenizer->column;
+			token.content = String(tokenizer->content.data + tokenizer->at[0].index, tokenizer->content.count - tokenizer->at[0].index);
 			token.value = Value();
 
-			if (!comment_ended) lexer_error(lexer, Lexer_Error_Kind_COMMENT_BLOCK_NO_END, Token_Kind_NONE, token);
+			if (!comment_ended) tokenizer_error(tokenizer, Tokenization_Result_ERROR_COMMENT_BLOCK_NO_END, err_row, err_col, err_offset);
 
 			return true;
 		}
@@ -353,39 +251,39 @@ bool lexer_check_and_advance_comments(Lexer* lexer) {
 	return false;
 }
 
-Token lexer_next_token(Lexer* lexer) {
+Token tokenizer_next_token(Tokenizer_State * tokenizer) {
 	Token token;
 	token.kind = Token_Kind_NONE;
 
-	s64 index = lexer->at[0].index;
-	token.column = lexer->column;
-	token.row = lexer->row;
+	s64 index = tokenizer->at[0].index;
+	token.column = tokenizer->column;
+	token.row = tokenizer->row;
 	s64 count = 0;
 
-	while (lexer_can_continue(lexer)) {
-		if (lexer_check_and_advance_comments(lexer) || lexer_check_and_advance_newline(lexer)) {
+	while (tokenizer->can_continue) {
+		if (tokenizer_check_and_advance_comments(tokenizer) || tokenizer_check_and_advance_newline(tokenizer)) {
 			if (count) break;
 
-			index = lexer->at[0].index;
-			token.column = lexer->column;
-			token.row = lexer->row;
+			index = tokenizer->at[0].index;
+			token.column = tokenizer->column;
+			token.row = tokenizer->row;
 			continue;
 		}
 
-		auto a = lexer->at[0].codepoint.code;
-		auto b = lexer->at[1].codepoint.code;
-		auto c = lexer->at[2].codepoint.code;
+		auto a = tokenizer->at[0].codepoint.code;
+		auto b = tokenizer->at[1].codepoint.code;
+		auto c = tokenizer->at[2].codepoint.code;
 
-		if (lexer->at[0].codepoint.size_in_bytes == 1) {
+		if (tokenizer->at[0].codepoint.size_in_bytes == 1) {
 
 			if (a == '\f' || a == ' ' || a == '\t') {
-				lexer_advance(lexer, 1);
-				
+				tokenizer_advance(tokenizer, 1);
+
 				if (count) break;
 
-				index = lexer->at[0].index;
-				token.column = lexer->column;
-				token.row = lexer->row;
+				index = tokenizer->at[0].index;
+				token.column = tokenizer->column;
+				token.row = tokenizer->row;
 				continue;
 			}
 
@@ -395,56 +293,67 @@ Token lexer_next_token(Lexer* lexer) {
 				if (b == '=') {
 
 					switch (a) {
-						case '=': token.kind = Token_Kind_COMPARE_EQUALS; tok_counts = 2; break;
-						case '!': token.kind = Token_Kind_COMPARE_NOT_EQUALS; tok_counts = 2; break;
-						case '<': token.kind = Token_Kind_COMPARE_LESS_THAN_EQUALS; tok_counts = 2; break;
-						case '>': token.kind = Token_Kind_COMPARE_GREATER_THAN_EQUALS; tok_counts = 2; break;
-						case '+': token.kind = Token_Kind_PLUS_EQUALS; tok_counts = 2; break;
-						case '-': token.kind = Token_Kind_MINUS_EQUALS; tok_counts = 2; break;
-						case '*': token.kind = Token_Kind_MUL_EQUALS; tok_counts = 2; break;
-						case '/': token.kind = Token_Kind_DIV_EQUALS; tok_counts = 2; break;
-						case '%': token.kind = Token_Kind_MOD_EQUALS; tok_counts = 2; break;
-						case '&': token.kind = Token_Kind_AND_EQUALS; tok_counts = 2; break;
-						case '|': token.kind = Token_Kind_OR_EQUALS; tok_counts = 2; break;
-						case '^': token.kind = Token_Kind_XOR_EQUALS; tok_counts = 2; break;
+					case '=': token.kind = Token_Kind_COMPARE_EQUALS; tok_counts = 2; break;
+					case '!': token.kind = Token_Kind_COMPARE_NOT_EQUALS; tok_counts = 2; break;
+					case '<': token.kind = Token_Kind_COMPARE_LESS_THAN_EQUALS; tok_counts = 2; break;
+					case '>': token.kind = Token_Kind_COMPARE_GREATER_THAN_EQUALS; tok_counts = 2; break;
+					case '+': token.kind = Token_Kind_PLUS_EQUALS; tok_counts = 2; break;
+					case '-': token.kind = Token_Kind_MINUS_EQUALS; tok_counts = 2; break;
+					case '*': token.kind = Token_Kind_MUL_EQUALS; tok_counts = 2; break;
+					case '/': token.kind = Token_Kind_DIV_EQUALS; tok_counts = 2; break;
+					case '%': token.kind = Token_Kind_MOD_EQUALS; tok_counts = 2; break;
+					case '&': token.kind = Token_Kind_AND_EQUALS; tok_counts = 2; break;
+					case '|': token.kind = Token_Kind_OR_EQUALS; tok_counts = 2; break;
+					case '^': token.kind = Token_Kind_XOR_EQUALS; tok_counts = 2; break;
 					}
 
-				} else if (a == '&' && b == '&') {
+				}
+				else if (a == '&' && b == '&') {
 					token.kind = Token_Kind_LOGICAL_AND;
 					tok_counts = 2;
-				} else if (a == '|' && b == '|') {
+				}
+				else if (a == '|' && b == '|') {
 					token.kind = Token_Kind_LOGICAL_OR;
 					tok_counts = 2;
-				} else if (a == '<' && b == '<') {
+				}
+				else if (a == '<' && b == '<') {
 					token.kind = Token_Kind_LEFT_SHIFT;
 					tok_counts = 2;
-				} else if (a == '>' && b == '>') {
+				}
+				else if (a == '>' && b == '>') {
 					token.kind = Token_Kind_RIGHT_SHIFT;
 					tok_counts = 2;
-				} else if (a == '+' && b == '+') {
+				}
+				else if (a == '+' && b == '+') {
 					token.kind = Token_Kind_PLUS_PLUS;
 					tok_counts = 2;
-				} else if (a == '-' && b == '-') {
+				}
+				else if (a == '-' && b == '-') {
 					token.kind = Token_Kind_MINUS_MINUS;
 					tok_counts = 2;
-				} else if (a == '-' && b == '>') {
+				}
+				else if (a == '-' && b == '>') {
 					token.kind = Token_Kind_DASH_ARROW;
 					tok_counts = 2;
-				} else if (a == '=' && b == '>') {
+				}
+				else if (a == '=' && b == '>') {
 					token.kind = Token_Kind_EQUAL_ARROW;
 					tok_counts = 2;
-				} else if (a == ':' && b == ':') {
+				}
+				else if (a == ':' && b == ':') {
 					token.kind = Token_Kind_DOUBLE_COLON;
 					tok_counts = 2;
-				} else {
+				}
+				else {
 					if (a == '+' || a == '-' || a == '.') {
 						if (is_numeral(b)) {
 							count = 2;
-							lexer_advance(lexer, 2);
+							tokenizer_advance(tokenizer, 2);
 							continue;
-						} else if (b == '.' && is_numeral(c)) {
+						}
+						else if (b == '.' && is_numeral(c)) {
 							count = 3;
-							lexer_advance(lexer, 3);
+							tokenizer_advance(tokenizer, 3);
 							continue;
 						}
 					}
@@ -453,8 +362,8 @@ Token lexer_next_token(Lexer* lexer) {
 
 				if (tok_counts) {
 					count = tok_counts;
-					token.value = String(lexer->content.data + index, count);
-					lexer_advance(lexer, tok_counts);
+					token.value = String(tokenizer->content.data + index, count);
+					tokenizer_advance(tokenizer, tok_counts);
 					break;
 				}
 
@@ -463,43 +372,43 @@ Token lexer_next_token(Lexer* lexer) {
 			Token_Kind kind = Token_Kind_NONE;
 
 			switch (a) {
-				case '@': kind = Token_Kind_AT; break;
-				case '#': kind = Token_Kind_HASH; break;
-				case '$': kind = Token_Kind_DOLLAR; break;
-				case '(': kind = Token_Kind_OPEN_BRACKET; break;
-				case ')': kind = Token_Kind_CLOSE_BRACKET; break;
-				case '{': kind = Token_Kind_OPEN_CURLY_BRACKET; break;
-				case '}': kind = Token_Kind_CLOSE_CURLY_BRACKET; break;
-				case '[': kind = Token_Kind_OPEN_SQUARE_BRACKET; break;
-				case ']': kind = Token_Kind_CLOSE_SQUARE_BRACKET; break;
-				case ':': kind = Token_Kind_COLON; break;
-				case ';': kind = Token_Kind_SEMICOLON; break;
-				case ',': kind = Token_Kind_COMMA; break;
-				case '.': kind = Token_Kind_PERIOD; break;
-				case '?': kind = Token_Kind_QUESTION_MARK; break;
-				case '~': kind = Token_Kind_TILDE; break;
-				case '`': kind = Token_Kind_BACK_TICK; break;
-				case '!': kind = Token_Kind_EXCLAMATION; break;
-				case '%': kind = Token_Kind_PERCENT; break;
-				case '^': kind = Token_Kind_CARET; break;
-				case '|': kind = Token_Kind_PIPE; break;
-				case '&': kind = Token_Kind_AMPERSAND; break;
-				case '*': kind = Token_Kind_ASTRICK; break;
-				case '=': kind = Token_Kind_EQUALS; break;
-				case '<': kind = Token_Kind_LESS_THAN; break;
-				case '>': kind = Token_Kind_GREATER_THAN; break;
-				case '+': kind = Token_Kind_PLUS; break;
-				case '-': kind = Token_Kind_MINUS; break;
-				case '/': kind = Token_Kind_SLASH; break;
-				case '\\': kind = Token_Kind_BACK_SLASH; break;
+			case '@': kind = Token_Kind_AT; break;
+			case '#': kind = Token_Kind_HASH; break;
+			case '$': kind = Token_Kind_DOLLAR; break;
+			case '(': kind = Token_Kind_OPEN_BRACKET; break;
+			case ')': kind = Token_Kind_CLOSE_BRACKET; break;
+			case '{': kind = Token_Kind_OPEN_CURLY_BRACKET; break;
+			case '}': kind = Token_Kind_CLOSE_CURLY_BRACKET; break;
+			case '[': kind = Token_Kind_OPEN_SQUARE_BRACKET; break;
+			case ']': kind = Token_Kind_CLOSE_SQUARE_BRACKET; break;
+			case ':': kind = Token_Kind_COLON; break;
+			case ';': kind = Token_Kind_SEMICOLON; break;
+			case ',': kind = Token_Kind_COMMA; break;
+			case '.': kind = Token_Kind_PERIOD; break;
+			case '?': kind = Token_Kind_QUESTION_MARK; break;
+			case '~': kind = Token_Kind_TILDE; break;
+			case '`': kind = Token_Kind_BACK_TICK; break;
+			case '!': kind = Token_Kind_EXCLAMATION; break;
+			case '%': kind = Token_Kind_PERCENT; break;
+			case '^': kind = Token_Kind_CARET; break;
+			case '|': kind = Token_Kind_PIPE; break;
+			case '&': kind = Token_Kind_AMPERSAND; break;
+			case '*': kind = Token_Kind_ASTRICK; break;
+			case '=': kind = Token_Kind_EQUALS; break;
+			case '<': kind = Token_Kind_LESS_THAN; break;
+			case '>': kind = Token_Kind_GREATER_THAN; break;
+			case '+': kind = Token_Kind_PLUS; break;
+			case '-': kind = Token_Kind_MINUS; break;
+			case '/': kind = Token_Kind_SLASH; break;
+			case '\\': kind = Token_Kind_BACK_SLASH; break;
 			}
 
 			if (kind != Token_Kind_NONE) {
 				if (!count) {
 					count = 1;
 					token.kind = kind;
-					token.value = lexer->at[0].codepoint;
-					lexer_advance(lexer, 1);
+					token.value = tokenizer->at[0].codepoint;
+					tokenizer_advance(tokenizer, 1);
 				}
 				break;
 			}
@@ -511,68 +420,75 @@ Token lexer_next_token(Lexer* lexer) {
 
 				token.kind = ((a == '"') ? Token_Kind_DQ_STRING : Token_Kind_SQ_STRING);
 
+				s64 err_offset = tokenizer->at[0].index;
+
 				bool end_found = false;
 				count = 1;
-				lexer_advance(lexer, 1);
+				tokenizer_advance(tokenizer, 1);
 
-				while (lexer_can_continue(lexer)) {
-					if (lexer_check_and_advance_newline(lexer)) break;
+				while (tokenizer->can_continue) {
+					if (tokenizer_check_and_advance_newline(tokenizer)) break;
 					count += 1;
 
-					if (lexer->at[0].codepoint.code == '\\') {
+					if (tokenizer->at[0].codepoint.code == '\\') {
 						count += 1;
-						lexer_advance(lexer, 2);
+						tokenizer_advance(tokenizer, 2);
 						continue;
 					}
 
-					if (lexer->at[0].codepoint.code == a) {
-						lexer_advance(lexer, 1);
+					if (tokenizer->at[0].codepoint.code == a) {
+						tokenizer_advance(tokenizer, 1);
 						end_found = true;
 						break;
 					}
 
-					lexer_advance(lexer, 1);
+					tokenizer_advance(tokenizer, 1);
 				}
 
-				if (!end_found) lexer_error(lexer, Lexer_Error_Kind_NO_MATCHING_PARENTHESIS, token.kind, token);
-				token.value = String(lexer->content.data + index + 1, count - 2);
+				if (!end_found) tokenizer_error(tokenizer, Tokenization_Result_ERROR_NO_MATCHING_PARENTHESIS, token.row, token.column, err_offset);
+				token.value = String(tokenizer->content.data + index + 1, count - 2);
 
 				break;
 			}
 
 		}
 
-		count += lexer->at[0].codepoint.size_in_bytes;
-		lexer_advance(lexer, 1);
+		count += tokenizer->at[0].codepoint.size_in_bytes;
+		tokenizer_advance(tokenizer, 1);
 	}
 
-	token.content = String(lexer->content.data + index, count);
+	token.content = String(tokenizer->content.data + index, count);
 
 	if (token.kind == Token_Kind_NONE) {
-		
+
 		if (count) {
 			r64 rval; s64 ival;
 			if (parse_integer(token.content, &ival)) {
 				token.kind = Token_Kind_INTEGER_LITERAL;
 				token.value = ival;
-			} else if (parse_real(token.content, &rval)) {
+			}
+			else if (parse_real(token.content, &rval)) {
 				token.kind = Token_Kind_REAL_LITERAL;
 				token.value = rval;
-			} else {
+			}
+			else {
 				if (string_match(token.content, "true")) {
 					token.kind = Token_Kind_INTEGER_LITERAL;
 					token.value = (s64)1;
-				} else if (string_match(token.content, "false")) {
+				}
+				else if (string_match(token.content, "false")) {
 					token.kind = Token_Kind_INTEGER_LITERAL;
 					token.value = (s64)0;
-				} else {
+				}
+				else {
 					token.kind = Token_Kind_IDENTIFIER;
 					token.value = token.content;
 				}
 			}
-		} else {
+		}
+		else {
 			token.kind = Token_Kind_END_OF_STREAM;
-			token.content = String(lexer->content.data + lexer->content.count, 0);
+			token.content = String(tokenizer->content.data + tokenizer->content.count, 0);
 			token.value = token.content;
 		}
 
@@ -581,26 +497,27 @@ Token lexer_next_token(Lexer* lexer) {
 	return token;
 }
 
-Token lexer_require_token(Lexer* lexer, Token_Kind kind) {
-	Token token = lexer_next_token(lexer);
-	if (token.kind != kind) {
-		lexer_error(lexer, Lexer_Error_Kind_INVALID_TOKEN_KIND, kind, token);
+Array_View<Token> tokenize(String string, Tokenization_Status * status) {
+	Tokenizer_State tokenizer = {};
+	tokenizer.content = string;
+	tokenizer.row = 1;
+	tokenizer.column = 1;
+
+	string_iter_next(string, tokenizer.at + 0);
+	tokenizer.at[1] = tokenizer.at[0];
+	string_iter_next(string, tokenizer.at + 1);
+	tokenizer.at[2] = tokenizer.at[1];
+	string_iter_next(string, tokenizer.at + 2);
+
+	tokenizer.can_continue = true;
+	tokenizer.status.result = Tokenization_Result_SUCCESS;
+
+	Array<Token> tokens;
+	while (tokenizer.can_continue) {
+		auto tkn = tokenizer_next_token(&tokenizer);
+		array_add(&tokens, tkn);
 	}
-	return token;
-}
 
-Token lexer_require_identifier(Lexer* lexer, String id) {
-	auto token = lexer_require_token(lexer, Token_Kind_IDENTIFIER);
-
-	bool fail = true;
-	if (lexer_pass(lexer)) {
-		if (string_match(token.content, id))
-			fail = false;
-	}
-
-	if (fail) {
-		lexer_error(lexer, Lexer_Error_Kind_INVALID_TOKEN_KIND, Token_Kind_IDENTIFIER, id, token);
-	}
-
-	return token;
+	*status = tokenizer.status;
+	return tokens;
 }

@@ -666,3 +666,12 @@ struct String {
 
 	inline operator Array_View<utf8>() { return Array_View<utf8>(data, count); }
 };
+
+//
+// Overloaded Free
+//
+
+template <typename T>
+inline void mfree(Array_View<T> arr, Allocator allocator = context.allocator) {
+	mfree(arr.data, allocator);
+}

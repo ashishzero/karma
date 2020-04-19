@@ -135,7 +135,7 @@ inline void ostream_write_formatted(Ostream *stream, const char *fmt, ...) {
 	va_end(ap);
 }
 
-inline String ostream_build_string(Ostream *stream) {
+inline String ostream_build_string(Ostream *stream, bool null_terminate = false) {
 	s64 count = 0;
 
 	for (auto buk = &stream->head; buk != 0; buk = buk->next) {
@@ -143,13 +143,15 @@ inline String ostream_build_string(Ostream *stream) {
 	}
 
 	String string;
-	string.data  = new u8[count];
+	string.data  = new u8[count + (s64)(null_terminate)];
 	string.count = 0;
 
 	for (auto buk = &stream->head; buk != 0; buk = buk->next) {
 		memcpy(string.data + string.count, buk->data, buk->filled);
 		string.count += buk->filled;
 	}
+
+	if (null_terminate) string.data[count] = 0;
 
 	return string;
 }

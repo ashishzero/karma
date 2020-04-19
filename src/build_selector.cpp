@@ -14,22 +14,6 @@
 #include "string.h"
 #include "stream.h"
 
-void print_lexer_errors(Lexer* lexer) {
-	for (int i = 0; i < lexer_errors(lexer); ++i) {
-		auto& err = lexer->error[i];
-		if (err.kind == Lexer_Error_Kind_COMMENT_BLOCK_NO_END && err.content) {
-			system_log(LOG_ERROR, "Prebuild:GLSL", "%zu:%zu Expected: %s, Got: %s",
-					   err.got.row, err.got.column, tto_cstring(err.content),
-					   tto_cstring(err.got.content));
-		} else {
-			system_log(LOG_ERROR, "Prebuild:GLSL", "%zu:%zu Expected: %s, Got: %s",
-					   err.got.row, err.got.column, token_kind_string(err.expected),
-					   tto_cstring(err.got.content));
-		}
-	}
-	lexer_clear_errors(lexer);
-}
-
 int get_glsl_var_type(const String type) {
 	if (string_match(type, "float"))
 		return 1;
@@ -52,14 +36,79 @@ int get_glsl_texture_type(const String type) {
 		return 0;
 }
 
+Token parser_expect_token_kind(Array_View<Token> tokens, s64 index, Token_Kind kind, int * error_count, const char * file) {
+	if (index < tokens.count) {
+		auto token = tokens[index];
+		if (token.kind != kind) {
+			*error_count += 1;
+			system_log(LOG_ERROR, "Prebuild:GLSL", "%s (%zu, %zu): Expected %s but found %s", 
+				file, token.row, token.column, enum_string(kind).data, enum_string(token.kind).data);
+		}
+		return token;
+	}
+	else {
+		auto token = tokens[tokens.count - 1];
+		system_log(LOG_ERROR, "Prebuild:GLSL", "%s (%zu, %zu): Expected %s but end of file reached", 
+			file, token.row, token.column, enum_string(kind).data);
+		token.kind = Token_Kind_NONE;
+		token.row = MAX_UINT64;
+		token.column = MAX_UINT64;
+		return token;
+	}
+}
+
+Token parser_expect_identifier(Array_View<Token> tokens, s64 index, String identifier, int * error_count, const char * file) {
+	if (index < tokens.count) {
+		auto token = tokens[index];
+		if (token.kind != Token_Kind_IDENTIFIER) {
+			*error_count += 1;
+			system_log(LOG_ERROR, "Prebuild:GLSL", "%s (%zu, %zu): Expected %s but found %s", 
+				file, token.row, token.column, identifier, enum_string(token.kind).data);
+		}
+		else {
+			if (!string_match(identifier, token.content)) {
+				*error_count += 1;
+				system_log(LOG_ERROR, "Prebuild:GLSL", "%s (%zu, %zu): Expected %s but found %s", 
+					file, token.row, token.column, identifier, tto_cstring(token.content));
+			}
+		}
+		return token;
+	}
+	else {
+		auto token = tokens[tokens.count - 1];
+		system_log(LOG_ERROR, "Prebuild:GLSL", "%s (%zu, %zu): Expected %s but end of file reached", 
+			file, token.row, token.column, identifier);
+		token.kind = Token_Kind_NONE;
+		token.row = MAX_UINT64;
+		token.column = MAX_UINT64;
+		return token;
+	}
+}
+
+
 void generate_glsl_shader(const String file, const String out) {
 	auto content = system_read_entire_file(file);
-	defer { mfree(content.data); };
+	defer { mfree(content); };
 	if (!content.count) return;
 
+	Tokenization_Status status;
+	auto tokens = tokenize(content, &status);
+	defer { mfree(tokens); };
+
+	if (status.result != Tokenization_Result_SUCCESS) {
+		const char * err_msg = "";
+		if (status.result == Tokenization_Result_ERROR_COMMENT_BLOCK_NO_END)
+			err_msg = "Comment Block not ended";
+		else if (status.result == Tokenization_Result_ERROR_NO_MATCHING_PARENTHESIS)
+			err_msg = "Matching parenthesis not found";
+
+		system_log(LOG_ERROR, "Prebuild:GLSL", "%s (%zu, %zu): %s", tto_cstring(file), status.row, status.column, err_msg);
+		return;
+	}
+
 	struct Shared {
-		const char* type;
-		const char* name;
+		const char * type;
+		const char * name;
 	};
 
 	struct Attribute {
@@ -76,167 +125,184 @@ void generate_glsl_shader(const String file, const String out) {
 	bool depth = 0;
 	bool cull = 0;
 	bool blend = 0;
+
 	Array<Shared> shared;
 	Array<Attribute> attribute;
 	Array<Uniform> uniforms;
 	Array<Uniform> textures;
+
 	String vertex_code = {};
 	String fragment_code = {};
 
 	int double_colons = 0;
 
 	defer {
-		array_free(&shared); 
+		array_free(&shared);
 		array_free(&attribute);
 		array_free(&uniforms);
 		array_free(&textures);
 	};
 
-	auto lexer = lexer_init(content);
+	const char * file_loc = tto_cstring(file);
 
-	Token token;
-	for (token = lexer_next_token(&lexer); 
-		 token.kind != Token_Kind_END_OF_STREAM;
-		 token = lexer_next_token(&lexer)) {
+	Token token = {};
+	for (s64 index = 0; index < tokens.count; ++index) {
+		token = tokens[index];
 
 		if (double_colons) {
 			switch (token.kind) {
-				case Token_Kind_IDENTIFIER:
-				{
-					if (string_match(token.content, "layout")) {
-						
-						if (double_colons == 1) {
-							lexer_require_token(&lexer, Token_Kind_OPEN_BRACKET);
-							lexer_require_identifier(&lexer, "location");
-							lexer_require_token(&lexer, Token_Kind_EQUALS);
-							auto index_id = lexer_require_token(&lexer, Token_Kind_INTEGER_LITERAL);
-							lexer_require_token(&lexer, Token_Kind_CLOSE_BRACKET);
-							lexer_require_identifier(&lexer, "in");
-							auto type_id = lexer_require_token(&lexer, Token_Kind_IDENTIFIER);
-							lexer_require_token(&lexer, Token_Kind_IDENTIFIER);
-							lexer_require_token(&lexer, Token_Kind_SEMICOLON);
+			case Token_Kind_IDENTIFIER:
+			{
+				if (string_match(token.content, "layout")) {
 
-							if (lexer_pass(&lexer)) {
-								int type = get_glsl_var_type(type_id.content);
-								if (type != 0) {
-									Attribute a;
-									a.count = type;
-									a.index = (int)index_id.value.integer;
-									array_add(&attribute, a);
-								} else {
-									system_log(LOG_ERROR, "Prebuild:GLSL", "%zu:%zu Unknown type '%s'",
-											   tto_cstring(type_id.content));
-								}
-							}
-						}
+					if (double_colons == 1) {
+						int error_count = 0;
 
-					} else if (string_match(token.content, "uniform")) {
+						parser_expect_token_kind(tokens, ++index, Token_Kind_OPEN_BRACKET, &error_count, file_loc);
+						parser_expect_identifier(tokens, ++index, "location", &error_count, file_loc);
+						parser_expect_token_kind(tokens, ++index, Token_Kind_EQUALS, &error_count, file_loc);
+						auto index_id = parser_expect_token_kind(tokens, ++index, Token_Kind_INTEGER_LITERAL, &error_count, file_loc);
+						parser_expect_token_kind(tokens, ++index, Token_Kind_CLOSE_BRACKET, &error_count, file_loc);
+						parser_expect_identifier(tokens, ++index, "in", &error_count, file_loc);
+						auto type_id = parser_expect_token_kind(tokens, ++index, Token_Kind_IDENTIFIER, &error_count, file_loc);
+						parser_expect_token_kind(tokens, ++index, Token_Kind_IDENTIFIER, &error_count, file_loc);
+						parser_expect_token_kind(tokens, ++index, Token_Kind_SEMICOLON, &error_count, file_loc);
 
-						auto type_id = lexer_require_token(&lexer, Token_Kind_IDENTIFIER);
-						auto name_id = lexer_require_token(&lexer, Token_Kind_IDENTIFIER);
-						lexer_require_token(&lexer, Token_Kind_SEMICOLON);
-
-						if (lexer_pass(&lexer)) {
+						if (error_count == 0) {
 							int type = get_glsl_var_type(type_id.content);
 							if (type != 0) {
-								array_add(&uniforms, Uniform{ name_id.content, type });
-							} else {
-								type = get_glsl_texture_type(type_id.content);
-								if (type != 0) {
-									array_add(&textures, Uniform{ name_id.content, type });
-								} else {
-									system_log(LOG_ERROR, "Prebuild:GLSL", "%zu:%zu Unknown type '%s'",
-											   tto_cstring(type_id.content));
-								}
+								Attribute a;
+								a.count = type;
+								a.index = (int)index_id.value.integer;
+								array_add(&attribute, a);
+							}
+							else {
+								system_log(LOG_ERROR, "Prebuild:GLSL", "%zu:%zu Unknown type '%s'",
+									tto_cstring(type_id.content));
 							}
 						}
-
 					}
-				} break;
 
-				case Token_Kind_DOUBLE_COLON:
-				{
-					if (double_colons == 2) break;
+				}
+				else if (string_match(token.content, "uniform")) {
+					int error_count = 0;
 
-					double_colons += 1;
-					vertex_code.count = token.content.data - vertex_code.data - 1;
+					auto type_id = parser_expect_token_kind(tokens, ++index, Token_Kind_IDENTIFIER, &error_count, file_loc);
+					auto name_id = parser_expect_token_kind(tokens, ++index, Token_Kind_IDENTIFIER, &error_count, file_loc);
+					parser_expect_token_kind(tokens, ++index, Token_Kind_SEMICOLON, &error_count, file_loc);
 
-					auto id = lexer_require_token(&lexer, Token_Kind_IDENTIFIER);
-					if (lexer_pass(&lexer)) {
-						if (!string_match(id.content, "Fragment"))
-							system_log(LOG_ERROR, "Prebuild:GLSL", "%zu:%zu Expected 'Fragment', Got '%s'",
-									   id.row, id.column, tto_cstring(id.content));
-
-						fragment_code.data = id.content.data + id.content.count;
+					if (error_count == 0) {
+						int type = get_glsl_var_type(type_id.content);
+						if (type != 0) {
+							array_add(&uniforms, Uniform { name_id.content, type });
+						}
+						else {
+							type = get_glsl_texture_type(type_id.content);
+							if (type != 0) {
+								array_add(&textures, Uniform { name_id.content, type });
+							}
+							else {
+								system_log(LOG_ERROR, "Prebuild:GLSL", "%zu:%zu Unknown type '%s'",
+									tto_cstring(type_id.content));
+							}
+						}
 					}
-				} break;
+
+				}
+			} break;
+
+			case Token_Kind_DOUBLE_COLON:
+			{
+				if (double_colons == 2) break;
+
+				double_colons += 1;
+				vertex_code.count = token.content.data - vertex_code.data - 1;
+
+				int error_count = 0;
+
+				auto id = parser_expect_token_kind(tokens, ++index, Token_Kind_IDENTIFIER, &error_count, file_loc);
+				if (error_count == 0) {
+					if (!string_match(id.content, "Fragment"))
+						system_log(LOG_ERROR, "Prebuild:GLSL", "%zu:%zu Expected 'Fragment', Got '%s'",
+							id.row, id.column, tto_cstring(id.content));
+
+					fragment_code.data = id.content.data + id.content.count;
+				}
+			} break;
 			}
 
-		} else {
+		}
+		else {
 
 			switch (token.kind) {
-				case Token_Kind_PERIOD:
-				{
-					auto id = lexer_require_token(&lexer, Token_Kind_IDENTIFIER);
-					lexer_require_token(&lexer, Token_Kind_EQUALS);
-					auto val = lexer_require_token(&lexer, Token_Kind_INTEGER_LITERAL);
-					lexer_require_token(&lexer, Token_Kind_SEMICOLON);
+			case Token_Kind_PERIOD:
+			{
+				int error_count = 0;
 
-					if (lexer_pass(&lexer)) {
-						String name = id.content;
-						if (string_match(name, "version"))
-							version = (int)val.value.integer;
-						else if (string_match(name, "depth"))
-							depth = val.value.integer;
-						else if (string_match(name, "cull"))
-							cull = val.value.integer;
-						else if (string_match(name, "blend"))
-							blend = val.value.integer;
-						else
-							system_log(LOG_ERROR, "Prebuild:GLSL", "%zu:%zu Error unknown identifier '%s'",
-									   id.row, id.column, tto_cstring(id.content));
+				auto id = parser_expect_token_kind(tokens, ++index, Token_Kind_IDENTIFIER, &error_count, file_loc);
+				parser_expect_token_kind(tokens, ++index, Token_Kind_EQUALS, &error_count, file_loc);
+				auto val = parser_expect_token_kind(tokens, ++index, Token_Kind_INTEGER_LITERAL, &error_count, file_loc);
+				parser_expect_token_kind(tokens, ++index, Token_Kind_SEMICOLON, &error_count, file_loc);
+
+				if (error_count == 0) {
+					String name = id.content;
+					if (string_match(name, "version"))
+						version = (int)val.value.integer;
+					else if (string_match(name, "depth"))
+						depth = val.value.integer;
+					else if (string_match(name, "cull"))
+						cull = val.value.integer;
+					else if (string_match(name, "blend"))
+						blend = val.value.integer;
+					else
+						system_log(LOG_ERROR, "Prebuild:GLSL", "%zu:%zu Error unknown identifier '%s'",
+							id.row, id.column, tto_cstring(id.content));
+				}
+			} break;
+
+			case Token_Kind_AT:
+			{
+				int error_count = 0;
+
+				auto type_id = parser_expect_token_kind(tokens, ++index, Token_Kind_IDENTIFIER, &error_count, file_loc);
+				auto name_id = parser_expect_token_kind(tokens, ++index, Token_Kind_IDENTIFIER, &error_count, file_loc);
+				parser_expect_token_kind(tokens, ++index, Token_Kind_SEMICOLON, &error_count, file_loc);
+
+				if (error_count == 0) {
+					Shared s;
+					s.name = tto_cstring(name_id.content);
+					s.type = tto_cstring(type_id.content);
+					array_add(&shared, s);
+				}
+			} break;
+
+			case Token_Kind_DOUBLE_COLON:
+			{
+				double_colons = 1;
+
+				int error_count = 0;
+
+				auto id = parser_expect_token_kind(tokens, ++index, Token_Kind_IDENTIFIER, &error_count, file_loc);
+
+				if (error_count == 0) {
+					if (!string_match(id.content, "Vertex")) {
+						system_log(LOG_ERROR, "Prebuild:GLSL", "%zu:%zu Expected 'Vertex', Got '%s'",
+							id.row, id.column, tto_cstring(id.content));
 					}
-				} break;
 
-				case Token_Kind_AT:
-				{
-					auto type_id = lexer_require_token(&lexer, Token_Kind_IDENTIFIER);
-					auto name_id = lexer_require_token(&lexer, Token_Kind_IDENTIFIER);
-					lexer_require_token(&lexer, Token_Kind_SEMICOLON);
+					vertex_code.data = id.content.data + id.content.count;
+				}
+			} break;
 
-					if (lexer_pass(&lexer)) {
-						Shared s;
-						s.name = tto_cstring(name_id.content);
-						s.type = tto_cstring(type_id.content);
-						array_add(&shared, s);
-					}
-				} break;
-
-				case Token_Kind_DOUBLE_COLON:
-				{
-					double_colons = 1;
-
-					auto id = lexer_require_token(&lexer, Token_Kind_IDENTIFIER);
-					if (lexer_pass(&lexer)) {
-						if (!string_match(id.content, "Vertex"))
-							system_log(LOG_ERROR, "Prebuild:GLSL", "%zu:%zu Expected 'Vertex', Got '%s'",
-									   id.row, id.column, tto_cstring(id.content));
-
-						vertex_code.data = id.content.data + id.content.count;
-					}
-				} break;
-
-				default:
-				{
-					system_log(LOG_ERROR, "Prebuild:GLSL", "%zu:%zu Invalid identifier '%s'",
-							   token.row, token.column, tto_cstring(token.content));
-				} break;
+			default:
+			{
+				system_log(LOG_ERROR, "Prebuild:GLSL", "%zu:%zu Invalid identifier '%s'",
+					token.row, token.column, tto_cstring(token.content));
+			} break;
 			}
 		}
 
-		print_lexer_errors(&lexer);
 	}
-
 
 	if (fragment_code.data) {
 		fragment_code.count = token.content.data - fragment_code.data;
@@ -307,13 +373,14 @@ void generate_glsl_shader(const String file, const String out) {
 		system_close_file(&outf);
 
 		system_log(LOG_INFO, "Prebuild:GLSL", "Exported shader '%s'", tto_cstring(out));
-	} else {
+	}
+	else {
 		system_log(LOG_ERROR, "Prebuild:GLSL", "Unable to write '%s'", tto_cstring(out));
 	}
 
 }
 
-void generate_glsl_shaders(const char* dir, const char* out) {
+void generate_glsl_shaders(const char * dir, const char * out) {
 	auto files = system_find_files(tprintf("%s/shaders/*.glsl", dir), false);
 
 	foreach(index, file, files) {
@@ -327,7 +394,7 @@ void generate_glsl_shaders(const char* dir, const char* out) {
 	mfree(files.data);
 }
 
-void do_pre_build_steps(const char* dir, const char* out) {
+void do_pre_build_steps(const char * dir, const char * out) {
 	generate_glsl_shaders(dir, out);
 	reset_temporary_memory();
 }

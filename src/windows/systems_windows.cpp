@@ -717,7 +717,7 @@ void system_hide_cursor() {
 }
 
 void system_set_cursor_kind(Cursor_Kind kind) {
-	HANDLE handle;
+	HANDLE handle = INVALID_HANDLE_VALUE;
 	switch (kind) {
 	case Cursor_Kind_ARROW:
 		handle = LoadImageW(0, MAKEINTRESOURCEW(OCR_NORMAL), IMAGE_CURSOR, 0, 0, LR_SHARED);
@@ -1518,6 +1518,8 @@ void win32_initialize_xinput() {
 	if (!XInputGetKeystroke) XInputGetKeystroke = xinput_get_keystroke_stub;
 }
 
+#ifndef SYSTEMS_RUN_WITH_CRT
+
 int wWinMain(HINSTANCE instance, HINSTANCE prev_instance, LPWSTR cmd_line, int show_cmd) {
 	(void)prev_instance;
 	(void)cmd_line;
@@ -1562,6 +1564,36 @@ int wWinMain(HINSTANCE instance, HINSTANCE prev_instance, LPWSTR cmd_line, int s
 
 	return result;
 }
+
+#else
+
+int main(int argc, char * argv []) {
+	win32_map_keys();
+
+	SetThreadDescription(GetCurrentThread(), L"Main");
+
+	context.id					= GetCurrentThreadId();
+	context.allocator.proc		= system_allocator;
+	context.allocator.data		= 0;
+
+	void *ptr = VirtualAlloc(0, static_cast<SIZE_T>(TEMPORARY_MEMORY_SIZE), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+	if (ptr == 0) {
+		win32_check_for_error();
+		system_fatal_error("Out of memory: Unable to allocate temporary storage memory!");
+	}
+	context.temp_memory = Temporary_Memory(ptr, static_cast<ptrsize>(TEMPORARY_MEMORY_SIZE));
+
+	win32_initialize_xinput();
+
+	int result = system_main();
+
+	VirtualFree(context.temp_memory.ptr, 0, MEM_RELEASE);
+	context = {};
+
+	return result;
+}
+
+#endif
 
 void system_log(int type, const char *title, ANALYSE_PRINTF_FMT const char *fmt, ...) {
 	char	pool[STB_SPRINTF_MIN];
