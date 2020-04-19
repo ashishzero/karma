@@ -582,10 +582,10 @@ Handle Gfx_Platform_OpenGL::create_shader(String src) {
 	assert(shader->in_attribute_count < MAX_IN_ATTRIBUTE_LAYOUT);
 
 	foreach (index, a, atts) {
-		shader->in_attributes[index].index  = a->index;
-		shader->in_attributes[index].count  = a->count;
+		shader->in_attributes[index].index  = a.index;
+		shader->in_attributes[index].count  = a.count;
 		shader->in_attributes[index].offset = shader->stride;
-		shader->stride += a->count * sizeof(float);
+		shader->stride += a.count * sizeof(float);
 	}
 
 	String vertex_src, fragment_src;

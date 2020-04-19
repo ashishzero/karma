@@ -475,7 +475,7 @@ Array_View<System_Find_File_Info> system_find_files(const String search, bool re
 	Array<String> find_directories;
 	defer {
 		foreach (index, it, find_directories) {
-			if (index) mfree(it->data);
+			if (index) mfree(it.data);
 		}
 		array_free(&find_directories);
 	};

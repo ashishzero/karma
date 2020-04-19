@@ -318,7 +318,7 @@ void generate_glsl_shader(const String file, const String out) {
 		{
 			ostream_write_buffer(&stream, header.data, header.count);
 			foreach(index, s, shared) {
-				ostream_write_formatted(&stream, "out %s %s;\n", s->type, s->name);
+				ostream_write_formatted(&stream, "out %s %s;\n", s.type, s.name);
 			}
 			ostream_write_buffer(&stream, vertex_code.data, vertex_code.count);
 			vertex = ostream_build_string(&stream);
@@ -328,7 +328,7 @@ void generate_glsl_shader(const String file, const String out) {
 		{
 			ostream_write_buffer(&stream, header.data, header.count);
 			foreach(index, s, shared) {
-				ostream_write_formatted(&stream, "in %s %s;\n", s->type, s->name);
+				ostream_write_formatted(&stream, "in %s %s;\n", s.type, s.name);
 			}
 			ostream_write_buffer(&stream, fragment_code.data, fragment_code.count);
 			fragment = ostream_build_string(&stream);
@@ -348,7 +348,7 @@ void generate_glsl_shader(const String file, const String out) {
 
 		outf.write(outf.handle, &attribute.count, sizeof(attribute.count));
 		foreach(index, a, attribute) {
-			outf.write(outf.handle, a, sizeof(*a));
+			outf.write(outf.handle, &a, sizeof(a));
 		}
 
 		outf.write(outf.handle, &vertex.count, sizeof(vertex.count));
@@ -358,16 +358,16 @@ void generate_glsl_shader(const String file, const String out) {
 
 		outf.write(outf.handle, &uniforms.count, sizeof(uniforms.count));
 		foreach(index, u, uniforms) {
-			outf.write(outf.handle, &u->name.count, sizeof(u->name.count));
-			outf.write(outf.handle, u->name.data, u->name.count);
-			outf.write(outf.handle, &u->type, sizeof(u->type));
+			outf.write(outf.handle, &u.name.count, sizeof(u.name.count));
+			outf.write(outf.handle, u.name.data, u.name.count);
+			outf.write(outf.handle, &u.type, sizeof(u.type));
 		}
 
 		outf.write(outf.handle, &textures.count, sizeof(textures.count));
 		foreach(index, u, textures) {
-			outf.write(outf.handle, &u->name.count, sizeof(u->name.count));
-			outf.write(outf.handle, u->name.data, u->name.count);
-			outf.write(outf.handle, &u->type, sizeof(u->type));
+			outf.write(outf.handle, &u.name.count, sizeof(u.name.count));
+			outf.write(outf.handle, u.name.data, u.name.count);
+			outf.write(outf.handle, &u.type, sizeof(u.type));
 		}
 
 		system_close_file(&outf);
@@ -384,11 +384,11 @@ void generate_glsl_shaders(const char * dir, const char * out) {
 	auto files = system_find_files(tprintf("%s/shaders/*.glsl", dir), false);
 
 	foreach(index, file, files) {
-		generate_glsl_shader(file->path, tprintf("%s/%s.fx.glsl", out, tto_cstring(file->name)));
+		generate_glsl_shader(file.path, tprintf("%s/%s.fx.glsl", out, tto_cstring(file.name)));
 	}
 
 	foreach(index, file, files) {
-		mfree(file->path.data);
+		mfree(file.path.data);
 	}
 
 	mfree(files.data);

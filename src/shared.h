@@ -617,9 +617,9 @@ void array_emplace(Array<T> *a, const Args &... args) {
 	a->count++;
 }
 
-#define foreach(index, name, arr) \
-	if (auto name = ((arr).data)) \
-		for (s64 index = 0; index < ((arr).count); ++index, ++name)
+#define foreach(index, item, arr) \
+    for(s64 keep = 1, index = 0; keep && index < (arr).count; keep = !keep, ++index) \
+      for(auto & item = ((arr)[index]); keep; keep = !keep)
 
 //
 // UTF-8 Strings
