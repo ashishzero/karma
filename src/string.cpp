@@ -260,3 +260,59 @@ char *to_cstring(String string) {
 	cstr[string.count] = 0;
 	return cstr;
 }
+
+String string_copy(String string) {
+	u8 * data = new u8[string.count];
+	memcpy(data, string.data, string.count);
+	return String(data, string.count);
+}
+
+String string_tcopy(String string) {
+	u8 * data = (u8 *)tallocate(string.count);
+	memcpy(data, string.data, string.count);
+	return String(data, string.count);
+}
+
+String string_concat(String a, String b) {
+	u8 * data = new u8[a.count + b.count];
+	memcpy(data, a.data, a.count);
+	memcpy(data + a.count, b.data, b.count);
+	return String(data, a.count + b.count);
+}
+
+String string_concat(Array_View<String> strings) {
+	s64 len = 0;
+	foreach(index, string, strings) {
+		len += string.count;
+	}
+	u8 * data = new u8[len];
+
+	s64 pos = 0;
+	foreach(index, string, strings) {
+		memcpy(data + pos, string.data, string.count);
+		pos += string.count;
+	}
+	return String(data, len);
+}
+
+String string_tconcat(String a, String b) {
+	u8 * data = (u8 *)tallocate(a.count + b.count);
+	memcpy(data, a.data, a.count);
+	memcpy(data + a.count, b.data, b.count);
+	return String(data, a.count + b.count);
+}
+
+String string_tconcat(Array_View<String> strings) {
+	s64 len = 0;
+	foreach(index, string, strings) {
+		len += string.count;
+	}
+	u8 * data = (u8 *)tallocate(len);
+
+	s64 pos = 0;
+	foreach(index, string, strings) {
+		memcpy(data + pos, string.data, string.count);
+		pos += string.count;
+	}
+	return String(data, len);
+}

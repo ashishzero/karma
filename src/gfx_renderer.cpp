@@ -191,7 +191,7 @@ void gfx2d_begin(Vec2 position, float zoom, Camera_View &view, Handle shader) {
 
 	 Mat4 projection;
 	if (gfx->backend == Render_Backend_OPENGL) {
-		if (view.kind == Camera_View::ORTHOGRAPHIC)
+		if (view.kind == ORTHOGRAPHIC)
 			projection = mat4_ortho_gl(view.orthographic.left,
 									   view.orthographic.right,
 									   view.orthographic.top,

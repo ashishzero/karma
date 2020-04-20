@@ -77,35 +77,37 @@ enum Clear_Flag_Bit : u32 {
 };
 typedef u32 Clear_Flag;
 
+enum Camera_View_Kind {
+	PERSPECTIVE, ORTHOGRAPHIC
+};
+
+struct Camera_View_Perspective {
+	float field_of_view;
+	float aspect_ratio;
+	float far_plane;
+	float near_plane;
+};
+
+struct Camera_View_Orthographic {
+	float left;
+	float right;
+	float top;
+	float bottom;
+	float near;
+	float far;
+};
+
 struct Camera_View {
-	enum Kind {
-		PERSPECTIVE, ORTHOGRAPHIC
-	};
-
-	Kind kind;
-
+	Camera_View_Kind kind;
 	union {
-		struct {
-			float field_of_view;
-			float aspect_ratio;
-			float far_plane;
-			float near_plane;
-		} perspective;
-		struct {
-			float left;
-			float right;
-			float top;
-			float bottom;
-			float near;
-			float far;
-		} orthographic;
+		Camera_View_Perspective perspective;
+		Camera_View_Orthographic orthographic;
 	};
-
 };
 
 inline Camera_View perspective_view(float fov, float ar, float n, float f) {
 	Camera_View view;
-	view.kind = Camera_View::PERSPECTIVE;
+	view.kind = PERSPECTIVE;
 	view.perspective.field_of_view = fov;
 	view.perspective.aspect_ratio = ar;
 	view.perspective.near_plane = n;
@@ -115,7 +117,7 @@ inline Camera_View perspective_view(float fov, float ar, float n, float f) {
 
 inline Camera_View orthographic_view(float left, float right, float top, float bottom, float near = -1, float far = 1) {
 	Camera_View view;
-	view.kind = Camera_View::ORTHOGRAPHIC;
+	view.kind = ORTHOGRAPHIC;
 	view.orthographic.left = left;
 	view.orthographic.right = right;
 	view.orthographic.top = top;
