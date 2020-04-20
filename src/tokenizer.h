@@ -14,12 +14,10 @@ enum Value_Kind {
 struct Value {
 	Value_Kind kind;
 
-	union {
-		r64 real;
-		s64 integer;
-		Utf32_Codepoint codepoint;
-		String string;
-	};
+	r64 real;
+	s64 integer;
+	Utf32_Codepoint codepoint;
+	String string;
 
 	inline Value() {
 		kind = Value_Kind_NONE;
