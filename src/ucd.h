@@ -1,3 +1,4 @@
+#pragma once
 #include <stdint.h>
 
 enum Ucd_Script : uint32_t {

@@ -333,8 +333,13 @@ struct ExitScopeHelp {
 //
 //
 
+#ifndef DEFAULT_TEMPORARY_MEMORY_SIZE
+#define DEFAULT_TEMPORARY_MEMORY_SIZE mega_bytes(32)
+#endif
+
 const ptrsize MEMORY_ALIGNMENT		= sizeof(ptrsize);
-const ptrsize TEMPORARY_MEMORY_SIZE = mega_bytes(32);
+
+const ptrsize TEMPORARY_MEMORY_SIZE = DEFAULT_TEMPORARY_MEMORY_SIZE;
 
 enum Allocation_Type { Allocation_Type_NEW,
 					   Allocation_Type_RESIZE,

@@ -7,8 +7,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-#if defined(BUILD_DEBUG) || defined(BUILD_DEVELOPER)
-#include "tokenizer.cpp"
+#include "tokenizer.h"
 
 #include "systems.h"
 #include "string.h"
@@ -398,5 +397,3 @@ void do_pre_build_steps(const char * dir, const char * out) {
 	generate_glsl_shaders(dir, out);
 	reset_temporary_memory();
 }
-
-#endif

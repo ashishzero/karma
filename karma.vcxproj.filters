@@ -33,13 +33,7 @@
     <ClCompile Include="src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\build_selector.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\pcg\pcg_basic.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\true_type.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\string.cpp">
@@ -70,6 +64,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\tokenizer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\build.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\prebuild.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\type_info.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -105,9 +108,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\shared_crt_impl.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\build_selector.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\stream.h">
@@ -159,6 +159,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\tokenizer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\prebuild.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\type_info.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
