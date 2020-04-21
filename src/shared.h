@@ -364,6 +364,7 @@ struct Thread_Context {
 	u64				 id;
 	Allocator		 allocator;
 	Temporary_Memory temp_memory;
+	void *			 data;
 };
 
 struct Push_Allocator {
