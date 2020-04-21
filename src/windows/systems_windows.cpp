@@ -1165,6 +1165,16 @@ static LRESULT CALLBACK win32_wnd_proc(HWND wnd, UINT msg, WPARAM wparam, LPARAM
 	return result;
 }
 
+String system_get_command_line() {
+	wchar_t *cmd_line = GetCommandLineW();
+	int len = WideCharToMultiByte(CP_UTF8, 0, cmd_line, -1, 0, 0, 0, 0);
+	String result;
+	// No need to free this because this function only get called once usually
+	result.data = (u8 *)HeapAlloc(GetProcessHeap(), 0, len);
+	result.count = WideCharToMultiByte(CP_UTF8, 0, cmd_line, -1, (char *)result.data, len, 0, 0);
+	return result;
+}
+
 Handle system_create_window(const char *title, s32 width, s32 height, System_Window_Show show, System_Window_State *state) {
 	assert(!window_handle); // currently only single window is supported
 
@@ -1244,6 +1254,10 @@ Handle system_create_window(const char *title, s32 width, s32 height, System_Win
 
 void system_request_quit() {
 	PostQuitMessage(0);
+}
+
+void system_exit_process(int result) {
+	ExitProcess(result);
 }
 
 static inline Vec2 xinput_axis_deadzone_correction(SHORT x, SHORT y, SHORT deadzone) {

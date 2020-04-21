@@ -344,8 +344,11 @@ bool system_is_cursor_visible();
 String system_get_clipboard_text();
 void   system_set_clipboard_text(const String string);
 
+String system_get_command_line();
+
 Handle system_create_window(const char *title, s32 width, s32 height, System_Window_Show show, System_Window_State *state = 0);
 void   system_request_quit();
+void   system_exit_process(int result);
 
 bool system_poll_events(Event *event);
 

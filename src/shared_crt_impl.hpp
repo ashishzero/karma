@@ -1,5 +1,8 @@
 #pragma once
 #include "shared.h"
+#define STB_SPRINTF_IMPLEMENTATION
+#include "stb_sprintf.h"
+#include "string.cpp"
 #include <stdio.h>
 #include <stdlib.h>
 #include <thread>
@@ -7,6 +10,7 @@
 int system_main();
 
 thread_local Thread_Context context;
+static String __shared_impl_crt_main_cmd_line__;
 
 void *operator new(ptrsize size, Allocator allocator) {
 	return mallocate(size, allocator);
@@ -16,13 +20,13 @@ void *operator new(ptrsize size) {
 	return mallocate(size);
 }
 
-void *malloc_allocator(Allocation_Type type, ptrsize size, void *ptr, void *user_ptr) {
+void *malloc_allocator(Allocation_Type type, ptrsize size, const void *ptr, void *user_ptr) {
 	if (type == Allocation_Type_NEW) {
 		return malloc(size);
 	} else if (type == Allocation_Type_RESIZE) {
-		return realloc(ptr, size);
+		return realloc((void *)ptr, size);
 	} else if (type == Allocation_Type_FREE) {
-		free(ptr);
+		free((void *)ptr);
 		return 0;
 	} else {
 		invalid_code_path();
@@ -30,7 +34,11 @@ void *malloc_allocator(Allocation_Type type, ptrsize size, void *ptr, void *user
 	return 0;
 }
 
-int main() {
+inline String get_command_line() {
+	return __shared_impl_crt_main_cmd_line__;
+}
+
+int main(int argc, char * argv[]) {
 	auto thread_id				= std::this_thread::get_id();
 	context.id					= *(u64 *)&thread_id;
 	context.allocator.proc		= malloc_allocator;
@@ -45,6 +53,15 @@ int main() {
 	}
 
 	context.temp_memory = Temporary_Memory(ptr, static_cast<ptrsize>(TEMPORARY_MEMORY_SIZE));
+
+	Array<String> strings;
+	array_resize(&strings, argc);
+	for (int i = 0; i < argc; ++i) {
+		array_add(&strings, String(argv[i], strlen(argv[i])));
+		array_add(&strings, String(" "));
+	}
+	__shared_impl_crt_main_cmd_line__ = string_concat(strings);
+	array_free(&strings);
 
 	int result = system_main();
 
