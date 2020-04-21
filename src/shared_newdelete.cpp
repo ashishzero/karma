@@ -12,6 +12,6 @@ void operator delete(void * ptr, Allocator allocator) {
 	mfree(ptr, allocator);
 }
 
-void operator delete(void * ptr) {
+void operator delete(void * ptr) noexcept {
 	mfree(ptr);
 }
