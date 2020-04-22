@@ -1,19 +1,19 @@
-# build files
+# intermediate build files
 bin/*
 
 # visual studio files
 .vs
-tools/.vs
-tools/bin/*.sln
 *.pdb
+*.ipdb
+*.iobj
 *.ilk
 *.vcxproj.user
 
-# configuration and log files
-*.log
-
-/run_tree/karma_x64_Debug.exe
-/run_tree/karma_x64_Developer.exe
-
 # misc
 .clang-format
+*.log
+
+# execuables
+/run_tree/karma_x64_Debug.exe
+/run_tree/karma_x64_Developer.exe
+/tools/reflection/reflection_Debug_x64.exe
