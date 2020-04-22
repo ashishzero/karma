@@ -16,6 +16,17 @@
 #	endif
 #endif
 
+// Architecture identification
+#if defined(__amd64__) || defined(__amd64) || defined(__x86_64__) || defined(__x86_64) || defined(_M_AMD64) || defined(_M_X64)
+#define ARCHITECTURE_AMD64
+#elif defined(__arm__) || defined(__thumb__) || defined(__TARGET_ARCH_ARM) || defined(__TARGET_ARCH_THUMB) || defined(_ARM) || defined(_M_ARM) || defined(_M_ARMT) || defined(__arm) || defined(__aarch64__)
+#define ARCHITECTURE_ARM
+#elif defined(i386) || defined(__i386) || defined(__i386__) || defined(__i386) || defined(__i386) || defined(__IA32__) || defined(_M_I86) || defined(_X86_)
+#define ARCHITECTURE_INTELX86
+#elif defined(__ia64__) || defined(_IA64) || defined(__IA64__) || defined(__ia64) || defined(_M_IA64) || defined(_M_IA64) || defined(__itanium__)
+#define ARCHITECTURE_IA64
+#endif
+
 // Platform identification
 #if defined(__ANDROID__) || defined(__ANDROID_API__)
 #	define TARGET_ANDROID
