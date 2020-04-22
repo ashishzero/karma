@@ -175,7 +175,7 @@ String_Search_Result string_isearch_reverse(const String string, const String it
 	return result;
 }
 
-String sprintf(String string, const char *fmt, ...) {
+String sprintf(String string, ANALYSE_PRINTF_FORMAT_STRING(const char *fmt), ...) {
 	va_list ap;
 	va_start(ap, fmt);
 	int n = stbsp_vsnprintf((char *)string.data, (int)string.count, fmt, ap);
@@ -183,7 +183,7 @@ String sprintf(String string, const char *fmt, ...) {
 	return String(string.data, n);
 }
 
-String mprintf(const char *fmt, ...) {
+String mprintf(ANALYSE_PRINTF_FORMAT_STRING(const char *fmt), ...) {
 	String string;
 
 	va_list args1;
@@ -199,7 +199,7 @@ String mprintf(const char *fmt, ...) {
 	return string;
 }
 
-String tprintf(const char *fmt, ...) {
+String tprintf(ANALYSE_PRINTF_FORMAT_STRING(const char *fmt), ...) {
 	String string;
 
 	va_list args1;
@@ -215,12 +215,12 @@ String tprintf(const char *fmt, ...) {
 	return string;
 }
 
-String vsprintf(String string, char const *fmt, va_list va) {
+String vsprintf(String string, ANALYSE_PRINTF_FORMAT_STRING(char const *fmt), va_list va) {
 	int n = stbsp_vsnprintf((char *)string.data, (int)string.count, fmt, va);
 	return String(string.data, n);
 }
 
-String vmprintf(char const *fmt, va_list va) {
+String vmprintf(ANALYSE_PRINTF_FORMAT_STRING(char const *fmt), va_list va) {
 	String string;
 
 	va_list vaa;
@@ -233,7 +233,7 @@ String vmprintf(char const *fmt, va_list va) {
 	return string;
 }
 
-String vtprintf(char const *fmt, va_list va) {
+String vtprintf(ANALYSE_PRINTF_FORMAT_STRING(char const *fmt), va_list va) {
 	String string;
 
 	va_list vaa;

@@ -62,13 +62,13 @@ Token parser_expect_identifier(Array_View<Token> tokens, s64 index, String ident
 		if (token.kind != Token_Kind_IDENTIFIER) {
 			*error_count += 1;
 			system_log(LOG_ERROR, "Prebuild:GLSL", "%s (%zu, %zu): Expected %s but found %s", 
-				file, token.row, token.column, identifier, enum_string(token.kind).data);
+				file, token.row, token.column, identifier.data, enum_string(token.kind).data);
 		}
 		else {
 			if (!string_match(identifier, token.content)) {
 				*error_count += 1;
 				system_log(LOG_ERROR, "Prebuild:GLSL", "%s (%zu, %zu): Expected %s but found %s", 
-					file, token.row, token.column, identifier, tto_cstring(token.content));
+					file, token.row, token.column, identifier.data, tto_cstring(token.content));
 			}
 		}
 		return token;
@@ -76,7 +76,7 @@ Token parser_expect_identifier(Array_View<Token> tokens, s64 index, String ident
 	else {
 		auto token = tokens[tokens.count - 1];
 		system_log(LOG_ERROR, "Prebuild:GLSL", "%s (%zu, %zu): Expected %s but end of file reached", 
-			file, token.row, token.column, identifier);
+			file, token.row, token.column, identifier.data);
 		token.kind = Token_Kind_NONE;
 		token.row = MAX_UINT64;
 		token.column = MAX_UINT64;

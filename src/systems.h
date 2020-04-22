@@ -376,7 +376,7 @@ void *system_allocator(Allocation_Type type, ptrsize size, void *ptr, void *user
 
 int system_main();
 
-void system_log(int type, const char *title, ANALYSE_PRINTF_FMT const char *fmt, ...);
+void system_log(int type, const char *title, ANALYSE_PRINTF_FORMAT_STRING(const char *fmt), ...) ANALYSE_PRINTF_FORMAT(3, 4);
 
 #if defined(BUILD_DEBUG) || defined(BUILD_DEVELOPER)
 #	define system_trace(fmt, ...) system_log(LOG_INFO, "Trace", fmt, ##__VA_ARGS__)

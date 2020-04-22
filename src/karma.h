@@ -128,11 +128,19 @@ inline void runtime_assert(bool exp) {
 // Analysis Macros
 #if defined(_MSC_VER) && (_MSC_VER >= 1600) /* VS 2010 and above */
 #	include <sal.h>
-#	define ANALYSE_PRINTF_FMT _Printf_format_string_
-#	define ANALYSE_SCANF_FMT _Scanf_format_string_impl_
+#	define ANALYSE_PRINTF_FORMAT_STRING(fmt) _Printf_format_string_ fmt
+#	define ANALYSE_SCANF_FORMAT_STRING(fmt) _Scanf_format_string_ fmt
 #else
-#	define ANALYSE_PRINTF_FMT
-#	define ANALYSE_SCANF_FMT
+#	define ANALYSE_PRINTF_FORMAT_STRING(fmt)
+#	define ANALYSE_SCANF_FORMAT_STRING(fmt)
+#endif
+
+#if defined(__GNUC__)
+# define ANALYSE_PRINTF_FORMAT(m, n) __attribute__((format(printf,m,n)))
+# define ANALYSE_SCANF_FORMAT(m, n) __attribute__((format(scanf,m,n)))
+#else
+# define ANALYSE_PRINTF_FORMAT(m, n)
+# define ANALYSE_SCANF_FORMAT(m, n)
 #endif
 
 #define bit(p) (1ull << (p))
@@ -415,7 +423,6 @@ inline void *temporary_allocator_proc(Allocation_Type type, ptrsize size, const 
 			void *mem = temporary_allocator_proc(Allocation_Type_NEW, size, 0, user_ptr);
 
 			if (mem) {
-				ptrsize allocated_size = *((ptrsize *)ptr - 1);
 				memmove(mem, ptr, allocated_size);
 			}
 

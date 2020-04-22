@@ -58,16 +58,19 @@
     <OutDir>$(SolutionDir)run_tree\</OutDir>
     <IntDir>$(SolutionDir)bin\$(ProjectName)\$(Platform)-$(Configuration)\</IntDir>
     <TargetName>$(ProjectName)_$(Platform)_$(Configuration)</TargetName>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Developer|x64'">
     <OutDir>$(SolutionDir)run_tree\</OutDir>
     <IntDir>$(SolutionDir)bin\$(ProjectName)\$(Platform)-$(Configuration)\</IntDir>
     <TargetName>$(ProjectName)_$(Platform)_$(Configuration)</TargetName>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>$(SolutionDir)run_tree\</OutDir>
     <IntDir>$(SolutionDir)bin\$(ProjectName)\$(Platform)-$(Configuration)\</IntDir>
     <TargetName>$(ProjectName)</TargetName>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -95,6 +98,10 @@
       <TreatWarningAsError>true</TreatWarningAsError>
       <SmallerTypeCheck>false</SmallerTypeCheck>
       <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>false</SDLCheck>
+      <ExceptionHandling>SyncCThrow</ExceptionHandling>
+      <DisableSpecificWarnings>
+      </DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <AdditionalDependencies>
@@ -128,6 +135,10 @@ popd
       <TreatWarningAsError>true</TreatWarningAsError>
       <SmallerTypeCheck>false</SmallerTypeCheck>
       <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>false</SDLCheck>
+      <ExceptionHandling>SyncCThrow</ExceptionHandling>
+      <DisableSpecificWarnings>
+      </DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <AdditionalDependencies>
@@ -155,6 +166,10 @@ popd
       <TreatWarningAsError>true</TreatWarningAsError>
       <SmallerTypeCheck>false</SmallerTypeCheck>
       <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>false</SDLCheck>
+      <ExceptionHandling>SyncCThrow</ExceptionHandling>
+      <DisableSpecificWarnings>
+      </DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <AdditionalDependencies>

@@ -1609,7 +1609,7 @@ int main(int argc, char * argv []) {
 
 #endif
 
-void system_log(int type, const char *title, ANALYSE_PRINTF_FMT const char *fmt, ...) {
+void system_log(int type, const char *title, ANALYSE_PRINTF_FORMAT_STRING(const char *fmt), ...) {
 	char	pool[STB_SPRINTF_MIN];
 	wchar_t msg[STB_SPRINTF_MIN + 1];
 

@@ -29,6 +29,9 @@ int system_main() {
 	gfx_create_context(platform, Render_Backend_OPENGL, 1, 4, 800, 600);
 	ImGui::Initialize();
 
+	int hhhh = 9;
+	system_log(LOG_INFO, "Thing", "GGGG %d", hhhh);
+
 	Rng rng = random_init(0, 0);
 
 	Handle quad_shader = gfx_create_shader("./data/quad.fx");

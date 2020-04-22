@@ -39,12 +39,12 @@ String				 string_substring(const String string, s64 index, s64 count);
 String_Search_Result string_isearch(const String string, const String item);
 String_Search_Result string_isearch_reverse(const String string, const String item);
 
-String sprintf(String string, const char *fmt, ...);
-String mprintf(const char *fmt, ...);
-String tprintf(const char *fmt, ...);
-String vsprintf(String string, char const *fmt, va_list va);
-String vmprintf(char const *fmt, va_list va);
-String vtprintf(char const *fmt, va_list va);
+String sprintf(String string, ANALYSE_PRINTF_FORMAT_STRING(const char *fmt), ...) ANALYSE_PRINTF_FORMAT(2, 3);
+String mprintf(ANALYSE_PRINTF_FORMAT_STRING(const char *fmt), ...) ANALYSE_PRINTF_FORMAT(1, 2);
+String tprintf(ANALYSE_PRINTF_FORMAT_STRING(const char *fmt), ...) ANALYSE_PRINTF_FORMAT(1, 2);
+String vsprintf(String string, ANALYSE_PRINTF_FORMAT_STRING(char const *fmt), va_list va) ANALYSE_PRINTF_FORMAT(2, 3);
+String vmprintf(ANALYSE_PRINTF_FORMAT_STRING(char const *fmt), va_list va) ANALYSE_PRINTF_FORMAT(1, 2);
+String vtprintf(ANALYSE_PRINTF_FORMAT_STRING(char const *fmt), va_list va) ANALYSE_PRINTF_FORMAT(1, 2);
 char * tto_cstring(String string);
 char * to_cstring(String string);
 String string_copy(String string);
