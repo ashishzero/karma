@@ -164,7 +164,6 @@ enum Ucd_Script : uint32_t {
 
 
 Ucd_Script ucd_script(uint32_t codepoint);
-const char *enum_string(Ucd_Script value);
 
 
 enum Ucd_Script_Ext : uint32_t {
@@ -231,7 +230,6 @@ enum Ucd_Script_Ext : uint32_t {
 
 
 Ucd_Script_Ext ucd_script_ext(uint32_t codepoint);
-const char *enum_string(Ucd_Script_Ext value);
 
 
 enum Ucd_Block : uint32_t {
@@ -549,7 +547,6 @@ enum Ucd_Block : uint32_t {
 
 
 Ucd_Block ucd_block(uint32_t codepoint);
-const char *enum_string(Ucd_Block value);
 
 
 enum Ucd_Indic_Syllable : uint32_t {
@@ -594,7 +591,6 @@ enum Ucd_Indic_Syllable : uint32_t {
 
 
 Ucd_Indic_Syllable ucd_indic_syllable(uint32_t codepoint);
-const char *enum_string(Ucd_Indic_Syllable value);
 
 
 enum Ucd_Indic_Position : uint32_t {
@@ -619,7 +615,6 @@ enum Ucd_Indic_Position : uint32_t {
 
 
 Ucd_Indic_Position ucd_indic_position(uint32_t codepoint);
-const char *enum_string(Ucd_Indic_Position value);
 
 
 enum Ucd_Grapheme_Property : uint32_t {
@@ -642,6 +637,5 @@ enum Ucd_Grapheme_Property : uint32_t {
 
 
 Ucd_Grapheme_Property ucd_grapheme_property(uint32_t codepoint);
-const char *enum_string(Ucd_Grapheme_Property value);
 
 

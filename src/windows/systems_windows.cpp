@@ -1,5 +1,5 @@
 #define OEMRESOURCE
-#include "../string.h"
+#include "../length_string.h"
 #include "../systems.h"
 #include "resource.h"
 #include <ShlObj_core.h>

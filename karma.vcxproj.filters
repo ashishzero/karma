@@ -21,9 +21,6 @@
     <ClCompile Include="src\gfx_renderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\maths.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\glad\src\glad.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -34,9 +31,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\pcg\pcg_basic.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\string.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\windows\systems_windows.cpp">
@@ -72,7 +66,10 @@
     <ClCompile Include="src\prebuild.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\type_info.cpp">
+    <ClCompile Include="src\length_string.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\lin_maths.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -84,15 +81,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\gfx_types.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\maths.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\maths_types.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\shared.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\systems.h">
@@ -123,9 +111,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\stb_sprintf.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\string.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\windows\resource.h">
@@ -162,6 +147,21 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\prebuild.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\reflection.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\karma.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\length_string.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\lin_maths.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\lin_maths_types.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\type_info.h">

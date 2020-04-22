@@ -1,7 +1,7 @@
 #pragma once
-#include "maths.h"
-#include "string.h"
-#include "shared.h"
+#include "karma.h"
+#include "lin_maths.h"
+#include "length_string.h"
 
 //
 //

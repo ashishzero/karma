@@ -1,5 +1,5 @@
-#include "maths.h"
-#include "maths_types.h"
+#include "lin_maths.h"
+#include "lin_maths_types.h"
 
 Vec2 vec2_add(Vec2 a, Vec2 b) {
 	return vec2(a.x + b.x, a.y + b.y);

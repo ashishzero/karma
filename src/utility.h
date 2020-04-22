@@ -1,6 +1,6 @@
 #pragma once
-#include "shared.h"
-#include "maths.h"
+#include "karma.h"
+#include "lin_maths.h"
 
 #include "pcg/pcg_basic.h"
 

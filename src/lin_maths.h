@@ -1,5 +1,5 @@
 #pragma once
-#include "maths_types.h"
+#include "lin_maths_types.h"
 
 #define to_radians(deg) ((deg) * (MATH_PI / 180.0f))
 #define to_degrees(rad) ((rad) * (180.0f / MATH_PI_INVERSE))

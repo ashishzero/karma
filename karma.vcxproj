@@ -56,17 +56,17 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>$(SolutionDir)run_tree\</OutDir>
-    <IntDir>$(SolutionDir)bin\$(Platform)-$(Configuration)\</IntDir>
+    <IntDir>$(SolutionDir)bin\$(ProjectName)\$(Platform)-$(Configuration)\</IntDir>
     <TargetName>$(ProjectName)_$(Platform)_$(Configuration)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Developer|x64'">
     <OutDir>$(SolutionDir)run_tree\</OutDir>
-    <IntDir>$(SolutionDir)bin\$(Platform)-$(Configuration)\</IntDir>
+    <IntDir>$(SolutionDir)bin\$(ProjectName)\$(Platform)-$(Configuration)\</IntDir>
     <TargetName>$(ProjectName)_$(Platform)_$(Configuration)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>$(SolutionDir)run_tree\</OutDir>
-    <IntDir>$(SolutionDir)bin\$(Platform)-$(Configuration)\</IntDir>
+    <IntDir>$(SolutionDir)bin\$(ProjectName)\$(Platform)-$(Configuration)\</IntDir>
     <TargetName>$(ProjectName)</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -102,6 +102,15 @@
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <SubSystem>Windows</SubSystem>
     </Link>
+    <PreBuildEvent>
+      <Command>pushd $(SolutionDir)tools\reflection
+reflection.exe include:'../../src/' build:'../../src/build.cpp' output:'../../src/type_info.h'
+popd
+</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>Running Reflection...</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Developer|x64'">
     <ClCompile>
@@ -126,6 +135,15 @@
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <SubSystem>Windows</SubSystem>
     </Link>
+    <PreBuildEvent>
+      <Command>pushd $(SolutionDir)tools\reflection
+reflection.exe include:'../../src/' build:'../../src/build.cpp' output:'../../src/type_info.h'
+popd
+</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>Running Reflection...</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -144,6 +162,15 @@
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <SubSystem>Windows</SubSystem>
     </Link>
+    <PreBuildEvent>
+      <Command>pushd $(SolutionDir)tools\reflection
+reflection.exe include:'../../src/' build:'../../src/build.cpp' output:'../../src/type_info.h'
+popd
+</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>Running Reflection...</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\build.cpp" />
@@ -174,7 +201,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="src\glad\src\glad.c" />
-    <ClCompile Include="src\maths.cpp">
+    <ClCompile Include="src\lin_maths.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Developer|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
@@ -190,12 +217,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Developer|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="src\string.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Developer|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="src\type_info.cpp">
+    <ClCompile Include="src\length_string.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Developer|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
@@ -220,6 +242,7 @@
     <ClInclude Include="src\imgui\imstb_textedit.h" />
     <ClInclude Include="src\imgui\imstb_truetype.h" />
     <ClInclude Include="src\opentype.h" />
+    <ClInclude Include="src\reflection.h" />
     <ClInclude Include="src\type_info.h" />
     <ClInclude Include="src\ucd.h" />
     <ClInclude Include="src\windows\resource.h" />
@@ -229,16 +252,16 @@
     <ClInclude Include="src\gfx_types.h" />
     <ClInclude Include="src\glad\include\glad\glad.h" />
     <ClInclude Include="src\glad\include\khr\khrplatform.h" />
-    <ClInclude Include="src\maths.h" />
-    <ClInclude Include="src\maths_types.h" />
+    <ClInclude Include="src\lin_maths.h" />
+    <ClInclude Include="src\lin_maths_types.h" />
     <ClInclude Include="src\tokenizer.h" />
     <ClInclude Include="src\pcg\pcg_basic.h" />
-    <ClInclude Include="src\shared.h" />
+    <ClInclude Include="src\karma.h" />
     <ClInclude Include="src\shared_crt_impl.hpp" />
     <ClInclude Include="src\stb_image.h" />
     <ClInclude Include="src\stb_sprintf.h" />
     <ClInclude Include="src\stream.h" />
-    <ClInclude Include="src\string.h" />
+    <ClInclude Include="src\length_string.h" />
     <ClInclude Include="src\systems.h" />
     <ClInclude Include="src\stb_truetype.h" />
     <ClInclude Include="src\utility.h" />

@@ -64,21 +64,21 @@
 // Platform Independent source files
 //
 
-#include "shared.h"
+#include "karma.h"
 
 // Entry point
 #include "main.cpp"
 
 #include "shared_newdelete.cpp"
 
-#include "maths.cpp"
+#include "lin_maths.cpp"
 
+#include "string.h"
 #define STB_SPRINTF_IMPLEMENTATION
 #include "stb_sprintf.h"
-#include "string.cpp"
+#include "length_string.cpp"
 
 #include "ucd.cpp"
-#include "type_info.cpp"
 
 #include "gfx_renderer.cpp"
 
@@ -91,12 +91,16 @@
 //
 //
 
+#ifndef RUN_REFLECTION
+
 #ifndef EXCLUDE_SYSTEMS_BUILD
 
 #if defined(TARGET_WINDOWS)
 #include "windows/systems_windows.cpp"
 #else
 #error "Platform not supported!"
+#endif
+
 #endif
 
 #endif
@@ -121,3 +125,6 @@
 #include "gfx_opengl.cpp"
 #endif
 
+#ifndef RUN_REFLECTION
+#include "type_info.h"
+#endif

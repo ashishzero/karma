@@ -401,6 +401,7 @@ Token tokenizer_next_token(Tokenizer_State * tokenizer) {
 			case '-': kind = Token_Kind_MINUS; break;
 			case '/': kind = Token_Kind_SLASH; break;
 			case '\\': kind = Token_Kind_BACK_SLASH; break;
+			case '\0': kind = Token_Kind_NULL; break;
 			}
 
 			if (kind != Token_Kind_NONE) {

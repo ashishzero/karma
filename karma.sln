@@ -1,29 +1,31 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28307.1000
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30011.22
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "karma", "karma.vcxproj", "{55FCB402-DB26-4248-AA19-A8209F535834}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "reflection", "tools\reflection\reflection.vcxproj", "{0131D512-C446-4D4C-AB15-842C7D440F7B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
-		Debug|x86 = Debug|x86
 		Developer|x64 = Developer|x64
-		Developer|x86 = Developer|x86
 		Release|x64 = Release|x64
-		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{55FCB402-DB26-4248-AA19-A8209F535834}.Debug|x64.ActiveCfg = Debug|x64
 		{55FCB402-DB26-4248-AA19-A8209F535834}.Debug|x64.Build.0 = Debug|x64
-		{55FCB402-DB26-4248-AA19-A8209F535834}.Debug|x86.ActiveCfg = Debug|x64
 		{55FCB402-DB26-4248-AA19-A8209F535834}.Developer|x64.ActiveCfg = Developer|x64
 		{55FCB402-DB26-4248-AA19-A8209F535834}.Developer|x64.Build.0 = Developer|x64
-		{55FCB402-DB26-4248-AA19-A8209F535834}.Developer|x86.ActiveCfg = Developer|x64
 		{55FCB402-DB26-4248-AA19-A8209F535834}.Release|x64.ActiveCfg = Release|x64
 		{55FCB402-DB26-4248-AA19-A8209F535834}.Release|x64.Build.0 = Release|x64
-		{55FCB402-DB26-4248-AA19-A8209F535834}.Release|x86.ActiveCfg = Release|x64
+		{0131D512-C446-4D4C-AB15-842C7D440F7B}.Debug|x64.ActiveCfg = Debug|x64
+		{0131D512-C446-4D4C-AB15-842C7D440F7B}.Debug|x64.Build.0 = Debug|x64
+		{0131D512-C446-4D4C-AB15-842C7D440F7B}.Developer|x64.ActiveCfg = Debug|x64
+		{0131D512-C446-4D4C-AB15-842C7D440F7B}.Developer|x64.Build.0 = Debug|x64
+		{0131D512-C446-4D4C-AB15-842C7D440F7B}.Release|x64.ActiveCfg = Release|x64
+		{0131D512-C446-4D4C-AB15-842C7D440F7B}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

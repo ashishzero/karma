@@ -1,6 +1,6 @@
 #pragma once
 
-#include "shared.h"
+#include "karma.h"
 #include "string.h"
 
 inline u8 *move_ahead(u8 **ptr, int bytes) {

@@ -12,7 +12,7 @@
 //-----------------------------------------------------------------------------
 
 #pragma once
-#include "../shared.h"
+#include "../karma.h"
 
 //---- Define assertion handler. Defaults to calling assert().
 // If your macro uses multiple statements, make sure is enclosed in a 'do { .. } while (0)' block so it can be used as a single statement.
@@ -68,7 +68,7 @@
 
 //---- Define constructor and implicit cast operators to convert back<>forth between your math types and ImVec2/ImVec4.
 // This will be inlined as part of ImVec2 and ImVec4 class declarations.
-#include "../maths.h"
+#include "../lin_maths.h"
 #define IM_VEC2_CLASS_EXTRA                                                 \
         ImVec2(const Vec2& f) { x = f.x; y = f.y; }                       \
         operator Vec2() const { return vec2(x,y); }

@@ -2,18 +2,22 @@
 #include "gfx_renderer.h"
 #include "imgui/imconfig.h"
 #include "imgui/imgui.h"
-#include "maths.h"
-#include "string.h"
+#include "lin_maths.h"
+#include "length_string.h"
 #include "systems.h"
 #include "utility.h"
 
+// TEMP
+#ifdef BUILD_RELEASE
+#define STB_IMAGE_IMPLEMENTATION
+#endif
 #include "stb_image.h"
 
 #include "opentype.h"
 
 #include "stream.h"
-#include "string.h"
-#include "systems.h"
+
+#include "reflection.h"
 
 #define timed_begin(x) u64 timed_counter_##x = system_get_counter()
 #define timed_end(x) ((1000000.0f * (r32)(system_get_counter() - timed_counter_##x)) / (r32)system_get_frequency()) / 1000.0f
@@ -352,7 +356,10 @@ int system_main() {
 				buffer[utf32_to_utf8(codepoint.codepoint, buffer)] = 0;
 				auto syllable							 = ucd_indic_syllable(codepoint.codepoint);
 				ImGui::TextColored(hex_to_color4(color), "[%d] U+%x  %s : %s, %s (%d)", 
-					codepoint_index, codepoint, buffer, enum_string(syllable), enum_string(codepoint.prop), codepoint.value);
+					codepoint_index, codepoint, buffer, 
+					enum_string(syllable).data + reflect_info(syllable)->name.count + 1, 
+					enum_string(codepoint.prop).data + reflect_info(codepoint.prop)->name.count + 1, 
+					codepoint.value);
 
 				if (ImGui::IsItemClicked()) region_index = id;
 			}

@@ -1,8 +1,10 @@
 #pragma once
-#include "shared.h"
+#define _CRT_SECURE_NO_WARNINGS
+#include "karma.h"
+#include "length_string.h"
 #define STB_SPRINTF_IMPLEMENTATION
 #include "stb_sprintf.h"
-#include "string.cpp"
+#include "length_string.cpp"
 #include <stdio.h>
 #include <stdlib.h>
 #include <thread>
@@ -60,7 +62,10 @@ int main(int argc, char * argv[]) {
 		array_add(&strings, String(argv[i], strlen(argv[i])));
 		array_add(&strings, String(" "));
 	}
+	// we don't need to null terminate but we'll because it makes life a bit easier when working with certain things
+	array_add(&strings, String("\0"));
 	__shared_impl_crt_main_cmd_line__ = string_concat(strings);
+	__shared_impl_crt_main_cmd_line__.count -= 1; // Don't count null terminator
 	array_free(&strings);
 
 	int result = system_main();

@@ -1,6 +1,6 @@
 #pragma once
-#include "shared.h"
-#include "maths.h"
+#include "karma.h"
+#include "lin_maths.h"
 #include "gfx_types.h"
 
 bool gfx_create_context(Handle platform, Render_Backend backend, s32 vsync, s32 multisamples, s32 framebuffer_w, s32 framebuffer_h);

@@ -1,5 +1,5 @@
 #pragma once
-#include "shared.h"
+#include "karma.h"
 #include "string.h"
 #include "ucd.h"
 
@@ -81,7 +81,7 @@ enum Script_Tag : u32 {
 	Script_Tag_HANUNOO							 = tag32be("hano"),
 	Script_Tag_HATRAN							 = tag32be("hatr"),
 	Script_Tag_HEBREW							 = tag32be("hebr"),
-	Script_Tag_HIRAGANA							 = tag32be("kana"),
+	Script_Tag_KANA                              = tag32be("kana"),
 	Script_Tag_IMPERIAL_ARAMAIC					 = tag32be("armi"),
 	Script_Tag_INSCRIPTIONAL_PAHLAVI			 = tag32be("phli"),
 	Script_Tag_INSCRIPTIONAL_PARTHIAN			 = tag32be("prti"),
@@ -89,7 +89,6 @@ enum Script_Tag : u32 {
 	Script_Tag_KAITHI							 = tag32be("kthi"),
 	Script_Tag_KANNADA							 = tag32be("knda"),
 	Script_Tag_KANNADA2							 = tag32be("knd2"),
-	Script_Tag_KATAKANA							 = tag32be("kana"),
 	Script_Tag_KAYAH_LI							 = tag32be("kali"),
 	Script_Tag_KHAROSTHI						 = tag32be("khar"),
 	Script_Tag_KHMER							 = tag32be("khmr"),

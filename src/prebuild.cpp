@@ -1,4 +1,4 @@
-#include "shared.h"
+#include "karma.h"
 
 #define STBI_ASSERT(x) assert(x)
 #define STBI_MALLOC(sz)	mallocate(sz)
