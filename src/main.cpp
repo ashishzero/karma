@@ -29,9 +29,6 @@ int system_main() {
 	gfx_create_context(platform, Render_Backend_OPENGL, 1, 4, 800, 600);
 	ImGui::Initialize();
 
-	int hhhh = 9;
-	system_log(LOG_INFO, "Thing", "GGGG %d", hhhh);
-
 	Rng rng = random_init(0, 0);
 
 	Handle quad_shader = gfx_create_shader("./data/quad.fx");
@@ -84,7 +81,7 @@ int system_main() {
 	Dynamic_Font font;
 	font_create(content, 0, &font);
 
-	utf32 codepoint = (utf32)'र';
+	utf32 codepoint = U'र';
 
 	u8	 buffer[5] = {};
 	auto bytes	   = utf32_to_utf8(codepoint, buffer);

@@ -1285,7 +1285,7 @@ void font_apply_gsub_subtable_type1(void *subtable, Glyph_Range *range) {
 		s16 delta_glyph_id			= *((s16 *)&unsigned_delta_glyph_id);
 
 		auto coverage_index = font_find_coverage_index((u8 *)subtable + coverage_offset, glyph_range_current(range));
-		if (coverage_offset != -1) {
+		if (coverage_index != -1) {
 			range->infos[range->current].id += delta_glyph_id;
 		}
 	} else if (subformat == 2) {

@@ -138,6 +138,9 @@ inline void runtime_assert(bool exp) {
 #if defined(__GNUC__)
 # define ANALYSE_PRINTF_FORMAT(m, n) __attribute__((format(printf,m,n)))
 # define ANALYSE_SCANF_FORMAT(m, n) __attribute__((format(scanf,m,n)))
+#elif defined(__clang__)
+# define ANALYSE_PRINTF_FORMAT(m, n) __attribute__((__format__ (__printf__,m,n)))
+# define ANALYSE_SCANF_FORMAT(m, n) __attribute__((__format__ (__scanf__,m,n)))
 #else
 # define ANALYSE_PRINTF_FORMAT(m, n)
 # define ANALYSE_SCANF_FORMAT(m, n)

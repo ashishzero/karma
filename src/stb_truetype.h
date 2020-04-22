@@ -1532,8 +1532,8 @@ STBTT_DEF int stbtt_FindGlyphIndex(const stbtt_fontinfo *info, int unicode_codep
 			   id_range_offset = sub_headers[k + 3];
 			   stbtt_uint16 p = sub_headers[k + 3 + id_range_offset];
 			   if (p == 0)  return p;
-			   p = p + id_delta;
-			   return p < 65536 ? p : (p % 65536);
+               stbtt_uint32 np = (stbtt_uint32)p + (stbtt_uint32)id_delta;
+			   return np < 65536 ? np : (np % 65536);
 		   } else {
 			   return 0;
 		   }

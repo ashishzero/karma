@@ -42,9 +42,9 @@ String_Search_Result string_isearch_reverse(const String string, const String it
 String sprintf(String string, ANALYSE_PRINTF_FORMAT_STRING(const char *fmt), ...) ANALYSE_PRINTF_FORMAT(2, 3);
 String mprintf(ANALYSE_PRINTF_FORMAT_STRING(const char *fmt), ...) ANALYSE_PRINTF_FORMAT(1, 2);
 String tprintf(ANALYSE_PRINTF_FORMAT_STRING(const char *fmt), ...) ANALYSE_PRINTF_FORMAT(1, 2);
-String vsprintf(String string, ANALYSE_PRINTF_FORMAT_STRING(char const *fmt), va_list va) ANALYSE_PRINTF_FORMAT(2, 3);
-String vmprintf(ANALYSE_PRINTF_FORMAT_STRING(char const *fmt), va_list va) ANALYSE_PRINTF_FORMAT(1, 2);
-String vtprintf(ANALYSE_PRINTF_FORMAT_STRING(char const *fmt), va_list va) ANALYSE_PRINTF_FORMAT(1, 2);
+String vsprintf(String string, ANALYSE_PRINTF_FORMAT_STRING(char const * fmt), va_list va);
+String vmprintf(ANALYSE_PRINTF_FORMAT_STRING(char const *fmt), va_list va);
+String vtprintf(ANALYSE_PRINTF_FORMAT_STRING(char const *fmt), va_list va);
 char * tto_cstring(String string);
 char * to_cstring(String string);
 String string_copy(String string);

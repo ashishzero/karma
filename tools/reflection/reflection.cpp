@@ -922,7 +922,7 @@ int system_main() {
 
 	CXIndex index = clang_createIndex(0, 0);
 
-	u32 flags = CXTranslationUnit_SkipFunctionBodies;
+	u32 flags = CXTranslationUnit_None;
 
 	Output_Info out = { };
 	context.data = &out;
@@ -932,13 +932,28 @@ int system_main() {
 
 		CXTranslationUnit unit = clang_parseTranslationUnit(index, files[file_index], options.data, (int)options.count, 0, 0, flags);
 
+		bool error = false;
 		for (unsigned i = 0, n = clang_getNumDiagnostics(unit); i != n; ++i) {
 			CXDiagnostic diag = clang_getDiagnostic(unit, i);
-			CXString string = clang_formatDiagnostic(diag, clang_defaultDiagnosticDisplayOptions());
-			fprintf(stderr, "\n%s\n", clang_getCString(string));
-			clang_disposeString(string);
-			return -1;
+
+			auto location = clang_getDiagnosticLocation(diag);
+
+			CXFile file;
+			unsigned int line, column, offset;
+			clang_getSpellingLocation(location, &file, &line, &column, &offset);
+			auto file_spelling = clang_File_tryGetRealPathName(file);
+
+			u32 diag_flags = CXDiagnostic_DisplaySourceRanges | CXDiagnostic_DisplayOption;
+			diag_flags |= CXDiagnostic_DisplayCategoryId | CXDiagnostic_DisplayCategoryName;
+			auto diag_spelling = clang_formatDiagnostic(diag, diag_flags);
+
+			fprintf(stderr, "%s(%u, %u) : %s\n", clang_getCString(file_spelling), line, column, clang_getCString(diag_spelling));
+
+			clang_disposeString(file_spelling);
+			clang_disposeString(diag_spelling);
+			error = true;
 		}
+		if (error) return -1;
 
 		if (unit == 0) {
 			printf("Unable to parse translation unit. Quitting.");
