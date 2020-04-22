@@ -97,34 +97,33 @@ struct Camera_View_Orthographic {
 	float far;
 };
 
-union Camera_View_Data {
-	Camera_View_Perspective perspective;
-	Camera_View_Orthographic orthographic;
-};
-
 struct Camera_View {
 	Camera_View_Kind kind;
-	Camera_View_Data data;
+
+	union {
+		Camera_View_Perspective perspective;
+		Camera_View_Orthographic orthographic;
+	};
 };
 
 inline Camera_View perspective_view(float fov, float ar, float n, float f) {
 	Camera_View view;
 	view.kind = PERSPECTIVE;
-	view.data.perspective.field_of_view = fov;
-	view.data.perspective.aspect_ratio = ar;
-	view.data.perspective.near_plane = n;
-	view.data.perspective.far_plane = f;
+	view.perspective.field_of_view = fov;
+	view.perspective.aspect_ratio = ar;
+	view.perspective.near_plane = n;
+	view.perspective.far_plane = f;
 	return view;
 }
 
 inline Camera_View orthographic_view(float left, float right, float top, float bottom, float near = -1, float far = 1) {
 	Camera_View view;
 	view.kind = ORTHOGRAPHIC;
-	view.data.orthographic.left = left;
-	view.data.orthographic.right = right;
-	view.data.orthographic.top = top;
-	view.data.orthographic.bottom = bottom;
-	view.data.orthographic.near = near;
-	view.data.orthographic.far = far;
+	view.orthographic.left = left;
+	view.orthographic.right = right;
+	view.orthographic.top = top;
+	view.orthographic.bottom = bottom;
+	view.orthographic.near = near;
+	view.orthographic.far = far;
 	return view;
 }

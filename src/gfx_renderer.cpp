@@ -192,17 +192,17 @@ void gfx2d_begin(Vec2 position, float zoom, Camera_View &view, Handle shader) {
 	 Mat4 projection;
 	if (gfx->backend == Render_Backend_OPENGL) {
 		if (view.kind == ORTHOGRAPHIC)
-			projection = mat4_ortho_gl(view.data.orthographic.left,
-									   view.data.orthographic.right,
-									   view.data.orthographic.top,
-									   view.data.orthographic.bottom,
-									   view.data.orthographic.near,
-									   view.data.orthographic.far);
+			projection = mat4_ortho_gl(view.orthographic.left,
+									   view.orthographic.right,
+									   view.orthographic.top,
+									   view.orthographic.bottom,
+									   view.orthographic.near,
+									   view.orthographic.far);
 		else
-			projection = mat4_perspective_gl(view.data.perspective.field_of_view,
-											 view.data.perspective.aspect_ratio,
-											 view.data.perspective.near_plane,
-											 view.data.perspective.far_plane);
+			projection = mat4_perspective_gl(view.perspective.field_of_view,
+											 view.perspective.aspect_ratio,
+											 view.perspective.near_plane,
+											 view.perspective.far_plane);
 	} else {
 		projection = mat4_identity();
 	}

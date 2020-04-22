@@ -5365,24 +5365,17 @@ template <> struct Reflect<Camera_View_Orthographic> {
 	}
 };
 
-template <> struct Reflect<Camera_View_Data> {
-	static constexpr Type_Id id = Type_Id_UNION;
-	static const Type_Info * const info() {
-		static const Union_Member union_members[] = {
-			{ "perspective", 0, 0, Reflect<Camera_View_Perspective>::info() },
-			{ "orthographic", 0, 0, Reflect<Camera_View_Orthographic>::info() },
-		};
-		static const Type_Info_Union i(24, "Camera_View_Data", static_count(union_members), union_members);
-		return &i;
-	}
-};
-
 template <> struct Reflect<Camera_View> {
 	static constexpr Type_Id id = Type_Id_STRUCT;
 	static const Type_Info * const info() {
+		static const Union_Member _anonymous_union_members_1[] = {
+			{ "perspective", 0, 0, Reflect<Camera_View_Perspective>::info() },
+			{ "orthographic", 0, 0, Reflect<Camera_View_Orthographic>::info() },
+		};
+		static const Type_Info_Union _i_anonymous_union_1(24, "Camera_View::anonymous union", static_count(_anonymous_union_members_1), _anonymous_union_members_1);
 		static const Struct_Member struct_members[] = {
 			{ "kind", 0, 0, 0, Reflect<Camera_View_Kind>::info() },
-			{ "data", 4, 0, 0, Reflect<Camera_View_Data>::info() },
+			{ "anonymous", 0, 0, 0, &_i_anonymous_union_1 },
 		};
 		static const Type_Info_Struct i(28, "Camera_View", static_count(struct_members), struct_members, 0);
 		return &i;
