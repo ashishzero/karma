@@ -18,13 +18,13 @@
 
 // Architecture identification
 #if defined(__amd64__) || defined(__amd64) || defined(__x86_64__) || defined(__x86_64) || defined(_M_AMD64) || defined(_M_X64)
-#define ARCHITECTURE_AMD64
+#	define ARCHITECTURE_AMD64
 #elif defined(__arm__) || defined(__thumb__) || defined(__TARGET_ARCH_ARM) || defined(__TARGET_ARCH_THUMB) || defined(_ARM) || defined(_M_ARM) || defined(_M_ARMT) || defined(__arm) || defined(__aarch64__)
-#define ARCHITECTURE_ARM
+#	define ARCHITECTURE_ARM
 #elif defined(i386) || defined(__i386) || defined(__i386__) || defined(__i386) || defined(__i386) || defined(__IA32__) || defined(_M_I86) || defined(_X86_)
-#define ARCHITECTURE_INTELX86
+#	define ARCHITECTURE_INTELX86
 #elif defined(__ia64__) || defined(_IA64) || defined(__IA64__) || defined(__ia64) || defined(_M_IA64) || defined(_M_IA64) || defined(__itanium__)
-#define ARCHITECTURE_IA64
+#	define ARCHITECTURE_IA64
 #endif
 
 // Platform identification
@@ -58,7 +58,7 @@
 #elif defined(__FUNCSIG__)
 #	define CURRENT_FUNCTION __FUNCSIG__
 #elif (defined(__INTEL_COMPILER) && (__INTEL_COMPILER >= 600)) || \
- (defined(__IBMCPP__) && (__IBMCPP__ >= 500))
+	(defined(__IBMCPP__) && (__IBMCPP__ >= 500))
 #	define CURRENT_FUNCTION __FUNCTION__
 #elif defined(__BORLANDC__) && (__BORLANDC__ >= 0x550)
 #	define CURRENT_FUNCTION __FUNC__
@@ -81,8 +81,10 @@ struct Compile_Info {
 #define CURRENT_FILE __FILE__
 #define CURRENT_LINE __LINE__
 
-#define COMPILE_INFO \
-	Compile_Info { CURRENT_FILE, CURRENT_LINE, CURRENT_FUNCTION }
+#define COMPILE_INFO                                 \
+	Compile_Info {                                   \
+		CURRENT_FILE, CURRENT_LINE, CURRENT_FUNCTION \
+	}
 
 #if defined(HAVE_SIGNAL_H) && !defined(__WATCOMC__)
 #	include <signal.h> // raise()
@@ -116,9 +118,9 @@ struct Compile_Info {
 			trigger_breakpoint(); \
 		}
 #	define invalid_default_case() \
-	default: {                     \
-		trigger_breakpoint();      \
-	} break
+		default: {                 \
+			trigger_breakpoint();  \
+		} break
 #	define invalid_code_path() trigger_breakpoint()
 #else
 #	define assert(expression)
@@ -140,28 +142,28 @@ inline void runtime_assert(bool exp) {
 #if defined(_MSC_VER) && (_MSC_VER >= 1600) /* VS 2010 and above */
 #	include <sal.h>
 #	define ANALYSE_PRINTF_FORMAT_STRING(fmt) _Printf_format_string_ fmt
-#	define ANALYSE_SCANF_FORMAT_STRING(fmt) _Scanf_format_string_ fmt
+#	define ANALYSE_SCANF_FORMAT_STRING(fmt)  _Scanf_format_string_ fmt
 #else
 #	define ANALYSE_PRINTF_FORMAT_STRING(fmt)
 #	define ANALYSE_SCANF_FORMAT_STRING(fmt)
 #endif
 
 #if defined(__GNUC__)
-# define ANALYSE_PRINTF_FORMAT(m, n) __attribute__((format(printf,m,n)))
-# define ANALYSE_SCANF_FORMAT(m, n) __attribute__((format(scanf,m,n)))
+#	define ANALYSE_PRINTF_FORMAT(m, n) __attribute__((format(printf, m, n)))
+#	define ANALYSE_SCANF_FORMAT(m, n)  __attribute__((format(scanf, m, n)))
 #elif defined(__clang__)
-# define ANALYSE_PRINTF_FORMAT(m, n) __attribute__((__format__ (__printf__,m,n)))
-# define ANALYSE_SCANF_FORMAT(m, n) __attribute__((__format__ (__scanf__,m,n)))
+#	define ANALYSE_PRINTF_FORMAT(m, n) __attribute__((__format__(__printf__, m, n)))
+#	define ANALYSE_SCANF_FORMAT(m, n)  __attribute__((__format__(__scanf__, m, n)))
 #else
-# define ANALYSE_PRINTF_FORMAT(m, n)
-# define ANALYSE_SCANF_FORMAT(m, n)
+#	define ANALYSE_PRINTF_FORMAT(m, n)
+#	define ANALYSE_SCANF_FORMAT(m, n)
 #endif
 
-#define bit(p) (1ull << (p))
-#define set_bit(n, b) ((n) |= (b))
-#define get_bit(n, b) ((n) & (b))
-#define clear_bit(n, b) ((n) &= ~(b))
-#define toggle_bit(n, b) ((n) ^= (b))
+#define bit(p)               (1ull << (p))
+#define set_bit(n, b)        ((n) |= (b))
+#define get_bit(n, b)        ((n) & (b))
+#define clear_bit(n, b)      ((n) &= ~(b))
+#define toggle_bit(n, b)     ((n) ^= (b))
 #define consume_bit(n, p, b) (((n) & (((1 << (b)) - 1) << (p))) >> (p))
 
 #define kilo_bytes(n) ((n)*1024u)
@@ -185,8 +187,8 @@ typedef uint64_t u64;
 typedef size_t ptrsize;
 
 typedef unsigned char utf8;
-typedef char16_t	  utf16;
-typedef char32_t	  utf32;
+typedef char16_t      utf16;
+typedef char32_t      utf32;
 
 // for consistency
 typedef float  r32;
@@ -207,8 +209,8 @@ constexpr u32 MAX_UINT32 = UINT32_MAX;
 constexpr u64 MAX_UINT64 = UINT64_MAX;
 
 constexpr r32 EPSILON_FLOAT = FLT_EPSILON;
-constexpr r32 MAX_FLOAT		= FLT_MAX;
-constexpr r32 MIN_FLOAT		= FLT_MIN;
+constexpr r32 MAX_FLOAT     = FLT_MAX;
+constexpr r32 MIN_FLOAT     = FLT_MIN;
 
 constexpr ptrsize MAX_SIZE = SIZE_MAX;
 
@@ -240,10 +242,10 @@ constexpr ptrsize MAX_SIZE = SIZE_MAX;
 #		endif
 #	else
 #		if defined(__BIG_ENDIAN__) || defined(__ARMEB__) || defined(__ARMEB__) || \
-		 defined(__AARCH64EB__) || defined(_MIPSEB) || defined(__MIPSEB) || defined(__MIPSEB__)
+			defined(__AARCH64EB__) || defined(_MIPSEB) || defined(__MIPSEB) || defined(__MIPSEB__)
 #			define ENDIAN ENDIAN_BIG
 #		elif defined(__LITTLE_ENDIAN__) || defined(__ARMEL__) || defined(__THUMBEL__) || \
-		 defined(__AARCH64EL__) || defined(_MIPSEL) || defined(__MIPSEL) || defined(__MIPSEL__)
+			defined(__AARCH64EL__) || defined(_MIPSEL) || defined(__MIPSEL) || defined(__MIPSEL__)
 #			define ENDIAN ENDIAN_LIL
 #		endif
 #	endif
@@ -273,43 +275,57 @@ inline u64 bswap64(u64 a) {
 	return a;
 }
 
-inline u16 bswap16p(void *a) { return bswap16(*(u16 *)a); }
+inline u16 bswap16p(void *a) {
+	return bswap16(*(u16 *)a);
+}
 
-inline u32 bswap32p(void *a) { return bswap32(*(u32 *)a); }
+inline u32 bswap32p(void *a) {
+	return bswap32(*(u32 *)a);
+}
 
-inline u64 bswap64p(void *a) { return bswap64(*(u64 *)a); }
+inline u64 bswap64p(void *a) {
+	return bswap64(*(u64 *)a);
+}
 
 #if ENDIAN == ENDIAN_LIL
-constexpr u32 tag32le(const char (&string)[5]) { return ((((u8)string[0]) << 24) | (((u8)string[1]) << 16) | (((u8)string[2]) << 8) | ((u8)string[3])); }
-constexpr u32 tag32be(const char (&string)[5]) { return ((((u8)string[3]) << 24) | (((u8)string[2]) << 16) | (((u8)string[1]) << 8) | ((u8)string[0])); }
+constexpr u32 tag32le(const char (&string)[5]) {
+	return ((((u8)string[0]) << 24) | (((u8)string[1]) << 16) | (((u8)string[2]) << 8) | ((u8)string[3]));
+}
+constexpr u32 tag32be(const char (&string)[5]) {
+	return ((((u8)string[3]) << 24) | (((u8)string[2]) << 16) | (((u8)string[1]) << 8) | ((u8)string[0]));
+}
 #else
-constexpr u32 tag32be(const char (&string)[5]) { return ((((u8)string[0]) << 24) | (((u8)string[1]) << 16) | (((u8)string[2]) << 8) | ((u8)string[3])); }
-constexpr u32 tag32le(const char (&string)[5]) { return ((((u8)string[3]) << 24) | (((u8)string[2]) << 16) | (((u8)string[1]) << 8) | ((u8)string[0])); }
+constexpr u32 tag32be(const char (&string)[5]) {
+	return ((((u8)string[0]) << 24) | (((u8)string[1]) << 16) | (((u8)string[2]) << 8) | ((u8)string[3]));
+}
+constexpr u32 tag32le(const char (&string)[5]) {
+	return ((((u8)string[3]) << 24) | (((u8)string[2]) << 16) | (((u8)string[1]) << 8) | ((u8)string[0]));
+}
 #endif
 
 #if ENDIAN == ENDIAN_LIL
-#	define bswap16_be(a) bswap16(a)
-#	define bswap32_be(a) bswap32(a)
-#	define bswap64_be(a) bswap64(a)
+#	define bswap16_be(a)  bswap16(a)
+#	define bswap32_be(a)  bswap32(a)
+#	define bswap64_be(a)  bswap64(a)
 #	define bswap16p_be(a) bswap16p(a)
 #	define bswap32p_be(a) bswap32p(a)
 #	define bswap64p_be(a) bswap64p(a)
-#	define bswap16_le(a) (a)
-#	define bswap32_le(a) (a)
-#	define bswap64_le(a) (a)
+#	define bswap16_le(a)  (a)
+#	define bswap32_le(a)  (a)
+#	define bswap64_le(a)  (a)
 #	define bswap16p_le(a) (*(u16 *)(a))
 #	define bswap32p_le(a) (*(u32 *)(a))
 #	define bswap64p_le(a) (*(u64 *)(a))
 #else
-#	define bswap16_le(a) bswap16(a)
-#	define bswap32_le(a) bswap32(a)
-#	define bswap64_le(a) bswap64(a)
+#	define bswap16_le(a)  bswap16(a)
+#	define bswap32_le(a)  bswap32(a)
+#	define bswap64_le(a)  bswap64(a)
 #	define bswap16p_le(a) bswap16p(a)
 #	define bswap32p_le(a) bswap32p(a)
 #	define bswap64p_le(a) bswap64p(a)
-#	define bswap16_be(a) (a)
-#	define bswap32_be(a) (a)
-#	define bswap64_be(a) (a)
+#	define bswap16_be(a)  (a)
+#	define bswap32_be(a)  (a)
+#	define bswap64_be(a)  (a)
 #	define bswap16p_be(a) (*(u16 *)(a))
 #	define bswap32p_be(a) (*(u32 *)(a))
 #	define bswap64p_be(a) (*(u64 *)(a))
@@ -326,20 +342,26 @@ union Handle {
 	u64   h64;
 	void *hptr;
 
-	inline operator bool() { return hptr != 0; }
+	inline operator bool() {
+		return hptr != 0;
+	}
 };
 
 //
 // Defer
 //
 #define CONCAT_INTERNAL(x, y) x##y
-#define CONCAT(x, y) CONCAT_INTERNAL(x, y)
+#define CONCAT(x, y)          CONCAT_INTERNAL(x, y)
 
 template <typename T>
 struct ExitScope {
 	T lambda;
-	ExitScope(T lambda) : lambda(lambda) {}
-	~ExitScope() { lambda(); }
+	ExitScope(T lambda) :
+		lambda(lambda) {
+	}
+	~ExitScope() {
+		lambda();
+	}
 };
 
 struct ExitScopeHelp {
@@ -356,10 +378,10 @@ struct ExitScopeHelp {
 //
 
 #ifndef DEFAULT_TEMPORARY_MEMORY_SIZE
-#define DEFAULT_TEMPORARY_MEMORY_SIZE mega_bytes(32)
+#	define DEFAULT_TEMPORARY_MEMORY_SIZE mega_bytes(32)
 #endif
 
-const ptrsize MEMORY_ALIGNMENT		= sizeof(ptrsize);
+const ptrsize MEMORY_ALIGNMENT = sizeof(ptrsize);
 
 const ptrsize TEMPORARY_MEMORY_SIZE = DEFAULT_TEMPORARY_MEMORY_SIZE;
 
@@ -371,27 +393,28 @@ typedef void *(*Allocator_Proc)(Allocation_Type type, ptrsize size, const void *
 
 struct Allocator {
 	Allocator_Proc proc = 0;
-	void *		   data = 0;
+	void *         data = 0;
 };
 
 struct Temporary_Memory {
-	u8 *	base	 = 0;
-	u8 *	ptr		 = 0;
+	u8 *    base     = 0;
+	u8 *    ptr      = 0;
 	ptrsize capacity = 0;
 
-	inline Temporary_Memory() {}
+	inline Temporary_Memory() {
+	}
 	inline Temporary_Memory(void *ptr, ptrsize capacity) {
-		this->base	 = (u8 *)ptr;
-		this->ptr	  = this->base;
+		this->base     = (u8 *)ptr;
+		this->ptr      = this->base;
 		this->capacity = capacity;
 	}
 };
 
 struct Thread_Context {
-	u64				 id;
-	Allocator		 allocator;
+	u64              id;
+	Allocator        allocator;
 	Temporary_Memory temp_memory;
-	void *			 data;
+	void *           data;
 };
 
 struct Push_Allocator {
@@ -411,8 +434,8 @@ inline void *temporary_allocator_proc(Allocation_Type type, ptrsize size, const 
 
 		if (nxtptr <= endptr) {
 			ptrsize *result = (ptrsize *)temp->ptr;
-			*result			= size;
-			temp->ptr		= nxtptr;
+			*result         = size;
+			temp->ptr       = nxtptr;
 			return (void *)(result + 1);
 		}
 
@@ -427,8 +450,8 @@ inline void *temporary_allocator_proc(Allocation_Type type, ptrsize size, const 
 
 			if (nxtptr <= endptr) {
 				ptrsize *result = (ptrsize *)beg_ptr - 1;
-				*result			= size;
-				temp->ptr		= nxtptr;
+				*result         = size;
+				temp->ptr       = nxtptr;
 				return (void *)(result + 1);
 			}
 
@@ -468,9 +491,13 @@ inline void pop_temporary_allocator(Push_Allocator &mark) {
 
 #define push_scoped_temporary_allocator()                                     \
 	auto CONCAT(push_allocator__, CURRENT_LINE) = push_temporary_allocator(); \
-	defer { pop_temporary_allocator(CONCAT(push_allocator__, CURRENT_LINE)); }
+	defer {                                                                   \
+		pop_temporary_allocator(CONCAT(push_allocator__, CURRENT_LINE));      \
+	}
 
-inline u8 *get_temporary_allocator_point() { return context.temp_memory.ptr; }
+inline u8 *get_temporary_allocator_point() {
+	return context.temp_memory.ptr;
+}
 
 inline void set_temporary_allocator_point(u8 *ptr) {
 	assert(ptr >= context.temp_memory.base && ptr <= context.temp_memory.base + context.temp_memory.capacity);
@@ -479,9 +506,13 @@ inline void set_temporary_allocator_point(u8 *ptr) {
 
 #define scoped_temporary_allocation()                                                     \
 	auto CONCAT(scope_temp_allocation__, CURRENT_LINE) = get_temporary_allocator_point(); \
-	defer { set_temporary_allocator_point(CONCAT(scope_temp_allocation__, CURRENT_LINE)); }
+	defer {                                                                               \
+		set_temporary_allocator_point(CONCAT(scope_temp_allocation__, CURRENT_LINE));     \
+	}
 
-inline void reset_temporary_memory() { context.temp_memory.ptr = context.temp_memory.base; }
+inline void reset_temporary_memory() {
+	context.temp_memory.ptr = context.temp_memory.base;
+}
 
 inline void *tallocate(ptrsize size) {
 	return temporary_allocator_proc(Allocation_Type_NEW, size, 0, 0);
@@ -501,8 +532,8 @@ inline void mfree(const void *ptr, Allocator allocator = context.allocator) {
 
 void *operator new(ptrsize size, Allocator allocator);
 void *operator new(ptrsize size);
-void operator delete(void *ptr, Allocator allocator);
-void operator delete(void *ptr) noexcept;
+void  operator delete(void *ptr, Allocator allocator);
+void  operator delete(void *ptr) noexcept;
 
 //
 //
@@ -516,13 +547,16 @@ struct Array_View {
 	s64 count = 0;
 	T * data  = 0;
 
-	inline Array_View() {}
+	inline Array_View() {
+	}
 	inline Array_View(T *p, s64 n) {
 		data  = p;
 		count = n;
 	}
 
-	inline operator bool() { return count; }
+	inline operator bool() {
+		return count;
+	}
 
 	inline T &operator[](s64 index) {
 		assert(index < count);
@@ -536,7 +570,7 @@ struct Array {
 	s64 count = 0;
 	T * data  = 0;
 
-	s64		  capacity  = 0;
+	s64       capacity  = 0;
 	Allocator allocator = { 0, 0 };
 
 	inline Array() {
@@ -548,9 +582,13 @@ struct Array {
 		allocator.data = data;
 	}
 
-	inline operator bool() { return count; }
+	inline operator bool() {
+		return count;
+	}
 
-	inline operator Array_View<T>() { return Array_View<T>(data, count); }
+	inline operator Array_View<T>() {
+		return Array_View<T>(data, count);
+	}
 
 	inline T &operator[](s64 index) {
 		assert(index < count);
@@ -561,10 +599,10 @@ struct Array {
 template <typename T>
 void array_resize(Array<T> *a, s64 n) {
 	if (a->data) {
-		a->data		= (T *)a->allocator.proc(Allocation_Type_RESIZE, n * sizeof(T), a->data, a->allocator.data);
+		a->data     = (T *)a->allocator.proc(Allocation_Type_RESIZE, n * sizeof(T), a->data, a->allocator.data);
 		a->capacity = n;
 	} else {
-		a->data		= (T *)a->allocator.proc(Allocation_Type_NEW, n * sizeof(T), 0, a->allocator.data);
+		a->data     = (T *)a->allocator.proc(Allocation_Type_NEW, n * sizeof(T), 0, a->allocator.data);
 		a->capacity = n;
 	}
 	if (a->count > a->capacity) a->count = a->capacity;
@@ -584,8 +622,8 @@ void array_set_count(Array<T> *a, s64 count) {
 template <typename T>
 void array_free(Array<T> *a) {
 	a->allocator.proc(Allocation_Type_FREE, 0, a->data, a->allocator.data);
-	a->count	= 0;
-	a->data		= 0;
+	a->count    = 0;
+	a->data     = 0;
 	a->capacity = 0;
 }
 
@@ -595,7 +633,7 @@ void array_clear(Array<T> *a) {
 }
 
 inline s64 array_get_grow_capacity(s64 c, s64 n) {
-	s64 geom		 = c + c / 2;
+	s64 geom         = c + c / 2;
 	s64 new_capacity = c + n;
 	if (c < new_capacity) return (new_capacity);
 	return geom;
@@ -607,7 +645,7 @@ void array_add(Array<T> *a, const T &d) {
 		s64 c = array_get_grow_capacity(a->capacity, 1);
 		array_resize(a, c);
 	}
-	a->data[a->count] = T{ d };
+	a->data[a->count] = T { d };
 	a->count++;
 }
 
@@ -617,7 +655,8 @@ void array_append(Array<T> *a, const T *ptr, s64 count) {
 		s64 n = capacity_grow(a->capacity, count);
 		array_resize(a, n);
 	}
-	for (s64 i = 0; i < count; ++i) a->data[i + a->count] = ptr[i];
+	for (s64 i = 0; i < count; ++i)
+		a->data[i + a->count] = ptr[i];
 	a->count += count;
 }
 
@@ -646,9 +685,9 @@ void array_emplace(Array<T> *a, const Args &... args) {
 	a->count++;
 }
 
-#define foreach(index, item, arr) \
-    for(s64 keep = 1, index = 0; keep && index < (arr).count; keep = !keep, ++index) \
-      for(auto & item = ((arr)[index]); keep; keep = !keep)
+#define foreach(index, item, arr)                                                     \
+	for (s64 keep = 1, index = 0; keep && index < (arr).count; keep = !keep, ++index) \
+		for (auto &item = ((arr)[index]); keep; keep = !keep)
 
 //
 // UTF-8 Strings
@@ -658,7 +697,8 @@ struct String {
 	s64   count = 0; // size in bytes of *data*
 	utf8 *data  = 0;
 
-	inline String() {}
+	inline String() {
+	}
 
 	template <s64 n> // for string literals
 	constexpr String(const char (&a)[n]) {
@@ -691,7 +731,11 @@ struct String {
 		return data[index];
 	}
 
-	inline operator bool() const { return count; }
+	inline operator bool() const {
+		return count;
+	}
 
-	inline operator Array_View<utf8>() { return Array_View<utf8>(data, count); }
+	inline operator Array_View<utf8>() {
+		return Array_View<utf8>(data, count);
+	}
 };

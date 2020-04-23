@@ -28,24 +28,24 @@ struct Quad_Sort_Key {
 
 struct Quad_Render_Range {
 	Handle texture;
-	u32	index;
-	u32	count;
+	u32    index;
+	u32    count;
 };
 
 static Gfx_Platform *gfx;
-static Handle		 white_texture;
+static Handle        white_texture;
 
-static constexpr int	 MAX_QUADS_PER_CALL = 2048;
-static Quad				 quads[MAX_QUADS_PER_CALL];
-static Quad_Sort_Key	 quad_sort_keys[MAX_QUADS_PER_CALL];
+static constexpr int     MAX_QUADS_PER_CALL = 2048;
+static Quad              quads[MAX_QUADS_PER_CALL];
+static Quad_Sort_Key     quad_sort_keys[MAX_QUADS_PER_CALL];
 static Quad_Render_Range quad_render_range[MAX_QUADS_PER_CALL];
-static Mat3				 quad_transformation_stack[MAX_QUADS_PER_CALL];
-static u32				 quad_top;
-static u32				 quad_transformation_top;
-static Color4			 quad_top_colors[4] = { vec4(1), vec4(1), vec4(1), vec4(1) };
-static Handle			 quad_top_texture;
-static Handle			 quad_vertex_buffer;
-static Handle			 quad_index_buffer;
+static Mat3              quad_transformation_stack[MAX_QUADS_PER_CALL];
+static u32               quad_top;
+static u32               quad_transformation_top;
+static Color4            quad_top_colors[4] = { vec4(1), vec4(1), vec4(1), vec4(1) };
+static Handle            quad_top_texture;
+static Handle            quad_vertex_buffer;
+static Handle            quad_index_buffer;
 
 bool gfx_create_context(Handle platform, Render_Backend backend, s32 vsync, s32 multisamples, s32 framebuffer_w, s32 framebuffer_h) {
 	if (backend == Render_Backend_OPENGL) {
@@ -63,12 +63,12 @@ bool gfx_create_context(Handle platform, Render_Backend backend, s32 vsync, s32 
 	params.gen_mipmaps = false;
 	params.mag_filter  = Texture_Filter_NEAREST;
 	params.min_filter  = Texture_Filter_NEAREST;
-	params.srgb		   = false;
-	params.wrap_s	  = Texture_Wrap_REPEAT;
-	params.wrap_t	  = Texture_Wrap_REPEAT;
+	params.srgb        = false;
+	params.wrap_s      = Texture_Wrap_REPEAT;
+	params.wrap_t      = Texture_Wrap_REPEAT;
 
 	const u8 white_pixels[] = { 0xff, 0xff, 0xff, 0xff };
-	white_texture			= gfx->create_texture2d(1, 1, 4, white_pixels, &params);
+	white_texture           = gfx->create_texture2d(1, 1, 4, white_pixels, &params);
 
 	u16  indices[MAX_QUADS_PER_CALL * 6];
 	u16 *index = indices;
@@ -83,10 +83,10 @@ bool gfx_create_context(Handle platform, Render_Backend backend, s32 vsync, s32 
 		index += 6;
 	}
 
-	quad_vertex_buffer			 = gfx->create_vertex_buffer(Buffer_Type_DYNAMIC, sizeof(Quad_Vertex) * 4 * MAX_QUADS_PER_CALL, 0);
-	quad_index_buffer			 = gfx->create_index_buffer(Buffer_Type_STATIC, sizeof(u16) * 6 * MAX_QUADS_PER_CALL, (void *)indices);
+	quad_vertex_buffer           = gfx->create_vertex_buffer(Buffer_Type_DYNAMIC, sizeof(Quad_Vertex) * 4 * MAX_QUADS_PER_CALL, 0);
+	quad_index_buffer            = gfx->create_index_buffer(Buffer_Type_STATIC, sizeof(u16) * 6 * MAX_QUADS_PER_CALL, (void *)indices);
 	quad_transformation_stack[0] = mat3_identity();
-	quad_transformation_top		 = 1;
+	quad_transformation_top      = 1;
 
 	return true;
 }
@@ -163,7 +163,7 @@ static inline void quad_to_vertex(Quad_Vertex *vertex, const Quad &quad) {
 	for (int i = 0; i < 4; ++i) {
 		vertex[i].position  = quad.v[i];
 		vertex[i].tex_coord = quad.t[i];
-		vertex[i].color		= quad.color[i];
+		vertex[i].color     = quad.color[i];
 	}
 }
 
@@ -186,10 +186,10 @@ void gfx_frame(Framebuffer *framebuffer, Render_Region &region, Clear_Flag flags
 }
 
 void gfx2d_begin(Vec2 position, float zoom, Camera_View &view, Handle shader) {
-	quad_top				= 0;
+	quad_top                = 0;
 	quad_transformation_top = 1;
 
-	 Mat4 projection;
+	Mat4 projection;
 	if (gfx->backend == Render_Backend_OPENGL) {
 		if (view.kind == ORTHOGRAPHIC)
 			projection = mat4_ortho_gl(view.orthographic.left,
@@ -219,7 +219,9 @@ void gfx2d_end() {
 		return;
 	}
 
-	sort_insert(quad_sort_keys, quad_top, [](const Quad_Sort_Key *a, const Quad_Sort_Key *b) -> int { return a->key - b->key; });
+	sort_insert(quad_sort_keys, quad_top, [](const Quad_Sort_Key *a, const Quad_Sort_Key *b) -> int {
+		return a->key - b->key;
+	});
 
 	Quad_Vertex *vertex = (Quad_Vertex *)gfx->map_vertex_buffer(quad_vertex_buffer, 0, sizeof(Quad_Vertex) * 4 * quad_top);
 
@@ -306,31 +308,31 @@ void gfx2d_quad(Vec2 v0, Vec2 v1, Vec2 v2, Vec2 v3, Mm_Rect texture_rect, r32 de
 		quad_top = 0;
 	}
 
-	Quad &		   quad = quads[quad_top];
+	Quad &         quad = quads[quad_top];
 	Quad_Sort_Key &sort = quad_sort_keys[quad_top];
 
 	if (quad_transformation_top > 1) {
 		Mat3 &transformation = quad_transformation_stack[quad_transformation_top - 1];
-		v0					 = (transformation * vec3(v0, 0)).xy;
-		v1					 = (transformation * vec3(v1, 0)).xy;
-		v2					 = (transformation * vec3(v2, 0)).xy;
-		v3					 = (transformation * vec3(v3, 0)).xy;
+		v0                   = (transformation * vec3(v0, 0)).xy;
+		v1                   = (transformation * vec3(v1, 0)).xy;
+		v2                   = (transformation * vec3(v2, 0)).xy;
+		v3                   = (transformation * vec3(v3, 0)).xy;
 	}
 
-	quad.v[0]	 = v0;
-	quad.t[0]	 = vec2(texture_rect.min.x, texture_rect.min.y);
+	quad.v[0]     = v0;
+	quad.t[0]     = vec2(texture_rect.min.x, texture_rect.min.y);
 	quad.color[0] = quad_top_colors[0];
 
-	quad.v[1]	 = v1;
-	quad.t[1]	 = vec2(texture_rect.min.x, texture_rect.max.y);
+	quad.v[1]     = v1;
+	quad.t[1]     = vec2(texture_rect.min.x, texture_rect.max.y);
 	quad.color[1] = quad_top_colors[1];
 
-	quad.v[2]	 = v2;
-	quad.t[2]	 = vec2(texture_rect.max.x, texture_rect.max.y);
+	quad.v[2]     = v2;
+	quad.t[2]     = vec2(texture_rect.max.x, texture_rect.max.y);
 	quad.color[2] = quad_top_colors[2];
 
-	quad.v[3]	 = v3;
-	quad.t[3]	 = vec2(texture_rect.max.x, texture_rect.min.y);
+	quad.v[3]     = v3;
+	quad.t[3]     = vec2(texture_rect.max.x, texture_rect.min.y);
 	quad.color[3] = quad_top_colors[3];
 
 	quad.texture = quad_top_texture;

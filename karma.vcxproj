@@ -60,7 +60,7 @@
     <TargetName>$(ProjectName)_$(Platform)_$(Configuration)</TargetName>
     <RunCodeAnalysis>false</RunCodeAnalysis>
     <PreBuildEventUseInBuild>true</PreBuildEventUseInBuild>
-    <EnableMicrosoftCodeAnalysis>false</EnableMicrosoftCodeAnalysis>
+    <EnableMicrosoftCodeAnalysis>true</EnableMicrosoftCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Developer|x64'">
     <OutDir>$(SolutionDir)run_tree\</OutDir>
@@ -68,7 +68,7 @@
     <TargetName>$(ProjectName)_$(Platform)_$(Configuration)</TargetName>
     <RunCodeAnalysis>false</RunCodeAnalysis>
     <PreBuildEventUseInBuild>true</PreBuildEventUseInBuild>
-    <EnableMicrosoftCodeAnalysis>false</EnableMicrosoftCodeAnalysis>
+    <EnableMicrosoftCodeAnalysis>true</EnableMicrosoftCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>$(SolutionDir)run_tree\</OutDir>
@@ -76,7 +76,7 @@
     <TargetName>$(ProjectName)</TargetName>
     <RunCodeAnalysis>false</RunCodeAnalysis>
     <PreBuildEventUseInBuild>true</PreBuildEventUseInBuild>
-    <EnableMicrosoftCodeAnalysis>false</EnableMicrosoftCodeAnalysis>
+    <EnableMicrosoftCodeAnalysis>true</EnableMicrosoftCodeAnalysis>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>

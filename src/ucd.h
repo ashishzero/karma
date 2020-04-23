@@ -162,9 +162,7 @@ enum Ucd_Script : uint32_t {
 	Ucd_Script_COUNT,
 };
 
-
 Ucd_Script ucd_script(uint32_t codepoint);
-
 
 enum Ucd_Script_Ext : uint32_t {
 	Ucd_Script_Ext_UNKNOWN,
@@ -228,9 +226,7 @@ enum Ucd_Script_Ext : uint32_t {
 	Ucd_Script_Ext_COUNT,
 };
 
-
 Ucd_Script_Ext ucd_script_ext(uint32_t codepoint);
-
 
 enum Ucd_Block : uint32_t {
 	Ucd_Block_UNKNOWN,
@@ -545,9 +541,7 @@ enum Ucd_Block : uint32_t {
 	Ucd_Block_COUNT,
 };
 
-
 Ucd_Block ucd_block(uint32_t codepoint);
-
 
 enum Ucd_Indic_Syllable : uint32_t {
 	Ucd_Indic_Syllable_UNKNOWN,
@@ -589,9 +583,7 @@ enum Ucd_Indic_Syllable : uint32_t {
 	Ucd_Indic_Syllable_COUNT,
 };
 
-
 Ucd_Indic_Syllable ucd_indic_syllable(uint32_t codepoint);
-
 
 enum Ucd_Indic_Position : uint32_t {
 	Ucd_Indic_Position_UNKNOWN,
@@ -613,9 +605,7 @@ enum Ucd_Indic_Position : uint32_t {
 	Ucd_Indic_Position_COUNT,
 };
 
-
 Ucd_Indic_Position ucd_indic_position(uint32_t codepoint);
-
 
 enum Ucd_Grapheme_Property : uint32_t {
 	Ucd_Grapheme_Property_UNKNOWN,
@@ -635,7 +625,4 @@ enum Ucd_Grapheme_Property : uint32_t {
 	Ucd_Grapheme_Property_COUNT,
 };
 
-
 Ucd_Grapheme_Property ucd_grapheme_property(uint32_t codepoint);
-
-

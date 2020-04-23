@@ -96,12 +96,12 @@ enum Key : u32 {
 };
 
 enum Key_Mod : u32 {
-	Key_Mod_NONE		= bit(0),
+	Key_Mod_NONE        = bit(0),
 	Key_Mod_LEFT_SHIFT  = bit(1),
 	Key_Mod_RIGHT_SHIFT = bit(2),
 	Key_Mod_LEFT_CTRL   = bit(3),
 	Key_Mod_RIGHT_CTRL  = bit(4),
-	Key_Mod_LEFT_ALT	= bit(5),
+	Key_Mod_LEFT_ALT    = bit(5),
 	Key_Mod_RIGHT_ALT   = bit(6),
 
 	Key_Mod_CTRL  = Key_Mod_LEFT_CTRL | Key_Mod_RIGHT_CTRL,
@@ -131,8 +131,8 @@ enum Event_Type : u32 {
 	Event_Type_WINDOW_ACTIVE   = bit(1),
 	Event_Type_WINDOW_INACTIVE = bit(2),
 	Event_Type_WINDOW_RESIZE   = bit(3),
-	Event_Type_EXIT			   = bit(4),
-	Event_Type_APPLICATION	 = Event_Type_WINDOW_ACTIVE | Event_Type_WINDOW_INACTIVE | Event_Type_WINDOW_RESIZE | Event_Type_EXIT,
+	Event_Type_EXIT            = bit(4),
+	Event_Type_APPLICATION     = Event_Type_WINDOW_ACTIVE | Event_Type_WINDOW_INACTIVE | Event_Type_WINDOW_RESIZE | Event_Type_EXIT,
 
 	Event_Type_KEY_DOWN = bit(5),
 	Event_Type_KEY_UP   = bit(6),
@@ -140,17 +140,17 @@ enum Event_Type : u32 {
 
 	Event_Type_MOUSE_BUTTON_DOWN = bit(7),
 	Event_Type_MOUSE_BUTTON_UP   = bit(8),
-	Event_Type_MOUSE_WHEEL		 = bit(9),
-	Event_Type_MOUSE_CURSOR		 = bit(10),
-	Event_Type_MOUSE_AXIS		 = bit(11),
-	Event_Type_MOUSE_BUTTON		 = Event_Type_MOUSE_BUTTON_DOWN | Event_Type_MOUSE_BUTTON_UP,
-	Event_Type_MOUSE			 = Event_Type_MOUSE_BUTTON_DOWN | Event_Type_MOUSE_BUTTON_UP | Event_Type_MOUSE_WHEEL | Event_Type_MOUSE_CURSOR | Event_Type_MOUSE_AXIS,
+	Event_Type_MOUSE_WHEEL       = bit(9),
+	Event_Type_MOUSE_CURSOR      = bit(10),
+	Event_Type_MOUSE_AXIS        = bit(11),
+	Event_Type_MOUSE_BUTTON      = Event_Type_MOUSE_BUTTON_DOWN | Event_Type_MOUSE_BUTTON_UP,
+	Event_Type_MOUSE             = Event_Type_MOUSE_BUTTON_DOWN | Event_Type_MOUSE_BUTTON_UP | Event_Type_MOUSE_WHEEL | Event_Type_MOUSE_CURSOR | Event_Type_MOUSE_AXIS,
 
 	Event_Type_TEXT_INPUT = bit(12),
 
 	Event_Type_CONTROLLER_JOIN  = bit(13),
 	Event_Type_CONTROLLER_LEAVE = bit(14),
-	Event_Type_CONTROLLER		= Event_Type_CONTROLLER_JOIN | Event_Type_CONTROLLER_LEAVE,
+	Event_Type_CONTROLLER       = Event_Type_CONTROLLER_JOIN | Event_Type_CONTROLLER_LEAVE,
 };
 typedef u32 Event_Types;
 
@@ -199,17 +199,19 @@ struct Event {
 	Event_Types type;
 
 	union {
-		Key_Event			key;
+		Key_Event           key;
 		Mouse_Button_Event  mouse_button;
 		Mouse_Wheel_Event   mouse_wheel;
 		Mouse_Cursor_Event  mouse_cursor;
-		Mouse_Axis_Event	mouse_axis;
+		Mouse_Axis_Event    mouse_axis;
 		Window_Resize_Event window;
-		Text_Event			text;
-		Controller_Event	controller;
+		Text_Event          text;
+		Controller_Event    controller;
 	};
 
-	inline Event() { type = Event_Type_NONE; }
+	inline Event() {
+		type = Event_Type_NONE;
+	}
 };
 
 enum Gamepad {
@@ -246,7 +248,7 @@ struct System_Find_File_Info {
 	String path;
 	String name;
 	String extension;
-	u64	size;
+	u64    size;
 };
 
 enum File_Operation {
@@ -318,7 +320,7 @@ enum {
 //
 
 Array_View<u8> system_read_entire_file(const String path);
-bool		   system_write_entire_file(const String path, Array_View<u8> content);
+bool           system_write_entire_file(const String path, Array_View<u8> content);
 
 bool system_open_file(const String path, File_Operation op, System_File *file);
 void system_close_file(System_File *file);
@@ -331,7 +333,7 @@ int   system_fullscreen_state(int toggle);
 int   system_maximize_state(int toggle);
 
 System_Window_State system_get_window_state();
-bool				system_set_window_state(System_Window_State state);
+bool                system_set_window_state(System_Window_State state);
 
 void system_set_capture();
 void system_release_capture();
@@ -352,19 +354,19 @@ void   system_exit_process(int result);
 
 bool system_poll_events(Event *event);
 
-State	 system_button(Button button);
+State    system_button(Button button);
 Key_Mods system_get_key_mods();
-Vec2s	 system_get_cursor_position();
+Vec2s    system_get_cursor_position();
 
-u32				  system_max_controllers();
-bool			  system_controller_is_available(u32 index);
-void			  system_controller_vibrate(u32 index, r32 left_motor, r32 right_motor);
+u32               system_max_controllers();
+bool              system_controller_is_available(u32 index);
+void              system_controller_vibrate(u32 index, r32 left_motor, r32 right_motor);
 const Controller &system_get_controller_state(u32 index);
-State			  system_controller_button(u32 index, Gamepad button);
-r32				  system_controller_left_trigger(u32 index);
-r32				  system_controller_right_trigger(u32 index);
-Vec2			  system_controller_left_thumb(u32 index);
-Vec2			  system_controller_right_thumb(u32 index);
+State             system_controller_button(u32 index, Gamepad button);
+r32               system_controller_left_trigger(u32 index);
+r32               system_controller_right_trigger(u32 index);
+Vec2              system_controller_left_thumb(u32 index);
+Vec2              system_controller_right_thumb(u32 index);
 
 u64 system_get_counter();
 u64 system_get_frequency();

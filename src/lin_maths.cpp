@@ -249,7 +249,7 @@ Vec4 vec4_normalize(Vec4 v) {
 
 r32 vec2_angle_between(Vec2 a, Vec2 b) {
 	r32 dot = vec2_dot(a, b);
-	dot		= clamp(-1.0f, 1.0f, dot);
+	dot     = clamp(-1.0f, 1.0f, dot);
 	return acosf(dot);
 }
 r32 vec2_angle_between_normalize(Vec2 a, Vec2 b) {
@@ -259,7 +259,7 @@ r32 vec2_angle_between_normalize(Vec2 a, Vec2 b) {
 }
 r32 vec3_angle_between(Vec3 a, Vec3 b) {
 	r32 dot = vec3_dot(a, b);
-	dot		= clamp(-1.0f, 1.0f, dot);
+	dot     = clamp(-1.0f, 1.0f, dot);
 	return acosf(dot);
 }
 r32 vec3_angle_between_normalize(Vec3 a, Vec3 b) {
@@ -269,7 +269,7 @@ r32 vec3_angle_between_normalize(Vec3 a, Vec3 b) {
 }
 r32 vec4_angle_between(Vec4 a, Vec4 b) {
 	r32 dot = vec4_dot(a, b);
-	dot		= clamp(-1.0f, 1.0f, dot);
+	dot     = clamp(-1.0f, 1.0f, dot);
 	return acosf(dot);
 }
 r32 vec4_angle_between_normalize(Vec4 a, Vec4 b) {
@@ -356,119 +356,119 @@ Mat4 mat4_inverse(const Mat4 &mat) {
 	Mat4 result;
 
 	result.m[0] = mat.m[5] * mat.m[10] * mat.m[15] -
-				  mat.m[5] * mat.m[11] * mat.m[14] -
-				  mat.m[9] * mat.m[6] * mat.m[15] +
-				  mat.m[9] * mat.m[7] * mat.m[14] +
-				  mat.m[13] * mat.m[6] * mat.m[11] -
-				  mat.m[13] * mat.m[7] * mat.m[10];
+		mat.m[5] * mat.m[11] * mat.m[14] -
+		mat.m[9] * mat.m[6] * mat.m[15] +
+		mat.m[9] * mat.m[7] * mat.m[14] +
+		mat.m[13] * mat.m[6] * mat.m[11] -
+		mat.m[13] * mat.m[7] * mat.m[10];
 
 	result.m[4] = -mat.m[4] * mat.m[10] * mat.m[15] +
-				  mat.m[4] * mat.m[11] * mat.m[14] +
-				  mat.m[8] * mat.m[6] * mat.m[15] -
-				  mat.m[8] * mat.m[7] * mat.m[14] -
-				  mat.m[12] * mat.m[6] * mat.m[11] +
-				  mat.m[12] * mat.m[7] * mat.m[10];
+		mat.m[4] * mat.m[11] * mat.m[14] +
+		mat.m[8] * mat.m[6] * mat.m[15] -
+		mat.m[8] * mat.m[7] * mat.m[14] -
+		mat.m[12] * mat.m[6] * mat.m[11] +
+		mat.m[12] * mat.m[7] * mat.m[10];
 
 	result.m[8] = mat.m[4] * mat.m[9] * mat.m[15] -
-				  mat.m[4] * mat.m[11] * mat.m[13] -
-				  mat.m[8] * mat.m[5] * mat.m[15] +
-				  mat.m[8] * mat.m[7] * mat.m[13] +
-				  mat.m[12] * mat.m[5] * mat.m[11] -
-				  mat.m[12] * mat.m[7] * mat.m[9];
+		mat.m[4] * mat.m[11] * mat.m[13] -
+		mat.m[8] * mat.m[5] * mat.m[15] +
+		mat.m[8] * mat.m[7] * mat.m[13] +
+		mat.m[12] * mat.m[5] * mat.m[11] -
+		mat.m[12] * mat.m[7] * mat.m[9];
 
 	result.m[12] = -mat.m[4] * mat.m[9] * mat.m[14] +
-				   mat.m[4] * mat.m[10] * mat.m[13] +
-				   mat.m[8] * mat.m[5] * mat.m[14] -
-				   mat.m[8] * mat.m[6] * mat.m[13] -
-				   mat.m[12] * mat.m[5] * mat.m[10] +
-				   mat.m[12] * mat.m[6] * mat.m[9];
+		mat.m[4] * mat.m[10] * mat.m[13] +
+		mat.m[8] * mat.m[5] * mat.m[14] -
+		mat.m[8] * mat.m[6] * mat.m[13] -
+		mat.m[12] * mat.m[5] * mat.m[10] +
+		mat.m[12] * mat.m[6] * mat.m[9];
 
 	result.m[1] = -mat.m[1] * mat.m[10] * mat.m[15] +
-				  mat.m[1] * mat.m[11] * mat.m[14] +
-				  mat.m[9] * mat.m[2] * mat.m[15] -
-				  mat.m[9] * mat.m[3] * mat.m[14] -
-				  mat.m[13] * mat.m[2] * mat.m[11] +
-				  mat.m[13] * mat.m[3] * mat.m[10];
+		mat.m[1] * mat.m[11] * mat.m[14] +
+		mat.m[9] * mat.m[2] * mat.m[15] -
+		mat.m[9] * mat.m[3] * mat.m[14] -
+		mat.m[13] * mat.m[2] * mat.m[11] +
+		mat.m[13] * mat.m[3] * mat.m[10];
 
 	result.m[5] = mat.m[0] * mat.m[10] * mat.m[15] -
-				  mat.m[0] * mat.m[11] * mat.m[14] -
-				  mat.m[8] * mat.m[2] * mat.m[15] +
-				  mat.m[8] * mat.m[3] * mat.m[14] +
-				  mat.m[12] * mat.m[2] * mat.m[11] -
-				  mat.m[12] * mat.m[3] * mat.m[10];
+		mat.m[0] * mat.m[11] * mat.m[14] -
+		mat.m[8] * mat.m[2] * mat.m[15] +
+		mat.m[8] * mat.m[3] * mat.m[14] +
+		mat.m[12] * mat.m[2] * mat.m[11] -
+		mat.m[12] * mat.m[3] * mat.m[10];
 
 	result.m[9] = -mat.m[0] * mat.m[9] * mat.m[15] +
-				  mat.m[0] * mat.m[11] * mat.m[13] +
-				  mat.m[8] * mat.m[1] * mat.m[15] -
-				  mat.m[8] * mat.m[3] * mat.m[13] -
-				  mat.m[12] * mat.m[1] * mat.m[11] +
-				  mat.m[12] * mat.m[3] * mat.m[9];
+		mat.m[0] * mat.m[11] * mat.m[13] +
+		mat.m[8] * mat.m[1] * mat.m[15] -
+		mat.m[8] * mat.m[3] * mat.m[13] -
+		mat.m[12] * mat.m[1] * mat.m[11] +
+		mat.m[12] * mat.m[3] * mat.m[9];
 
 	result.m[13] = mat.m[0] * mat.m[9] * mat.m[14] -
-				   mat.m[0] * mat.m[10] * mat.m[13] -
-				   mat.m[8] * mat.m[1] * mat.m[14] +
-				   mat.m[8] * mat.m[2] * mat.m[13] +
-				   mat.m[12] * mat.m[1] * mat.m[10] -
-				   mat.m[12] * mat.m[2] * mat.m[9];
+		mat.m[0] * mat.m[10] * mat.m[13] -
+		mat.m[8] * mat.m[1] * mat.m[14] +
+		mat.m[8] * mat.m[2] * mat.m[13] +
+		mat.m[12] * mat.m[1] * mat.m[10] -
+		mat.m[12] * mat.m[2] * mat.m[9];
 
 	result.m[2] = mat.m[1] * mat.m[6] * mat.m[15] -
-				  mat.m[1] * mat.m[7] * mat.m[14] -
-				  mat.m[5] * mat.m[2] * mat.m[15] +
-				  mat.m[5] * mat.m[3] * mat.m[14] +
-				  mat.m[13] * mat.m[2] * mat.m[7] -
-				  mat.m[13] * mat.m[3] * mat.m[6];
+		mat.m[1] * mat.m[7] * mat.m[14] -
+		mat.m[5] * mat.m[2] * mat.m[15] +
+		mat.m[5] * mat.m[3] * mat.m[14] +
+		mat.m[13] * mat.m[2] * mat.m[7] -
+		mat.m[13] * mat.m[3] * mat.m[6];
 
 	result.m[6] = -mat.m[0] * mat.m[6] * mat.m[15] +
-				  mat.m[0] * mat.m[7] * mat.m[14] +
-				  mat.m[4] * mat.m[2] * mat.m[15] -
-				  mat.m[4] * mat.m[3] * mat.m[14] -
-				  mat.m[12] * mat.m[2] * mat.m[7] +
-				  mat.m[12] * mat.m[3] * mat.m[6];
+		mat.m[0] * mat.m[7] * mat.m[14] +
+		mat.m[4] * mat.m[2] * mat.m[15] -
+		mat.m[4] * mat.m[3] * mat.m[14] -
+		mat.m[12] * mat.m[2] * mat.m[7] +
+		mat.m[12] * mat.m[3] * mat.m[6];
 
 	result.m[10] = mat.m[0] * mat.m[5] * mat.m[15] -
-				   mat.m[0] * mat.m[7] * mat.m[13] -
-				   mat.m[4] * mat.m[1] * mat.m[15] +
-				   mat.m[4] * mat.m[3] * mat.m[13] +
-				   mat.m[12] * mat.m[1] * mat.m[7] -
-				   mat.m[12] * mat.m[3] * mat.m[5];
+		mat.m[0] * mat.m[7] * mat.m[13] -
+		mat.m[4] * mat.m[1] * mat.m[15] +
+		mat.m[4] * mat.m[3] * mat.m[13] +
+		mat.m[12] * mat.m[1] * mat.m[7] -
+		mat.m[12] * mat.m[3] * mat.m[5];
 
 	result.m[14] = -mat.m[0] * mat.m[5] * mat.m[14] +
-				   mat.m[0] * mat.m[6] * mat.m[13] +
-				   mat.m[4] * mat.m[1] * mat.m[14] -
-				   mat.m[4] * mat.m[2] * mat.m[13] -
-				   mat.m[12] * mat.m[1] * mat.m[6] +
-				   mat.m[12] * mat.m[2] * mat.m[5];
+		mat.m[0] * mat.m[6] * mat.m[13] +
+		mat.m[4] * mat.m[1] * mat.m[14] -
+		mat.m[4] * mat.m[2] * mat.m[13] -
+		mat.m[12] * mat.m[1] * mat.m[6] +
+		mat.m[12] * mat.m[2] * mat.m[5];
 
 	result.m[3] = -mat.m[1] * mat.m[6] * mat.m[11] +
-				  mat.m[1] * mat.m[7] * mat.m[10] +
-				  mat.m[5] * mat.m[2] * mat.m[11] -
-				  mat.m[5] * mat.m[3] * mat.m[10] -
-				  mat.m[9] * mat.m[2] * mat.m[7] +
-				  mat.m[9] * mat.m[3] * mat.m[6];
+		mat.m[1] * mat.m[7] * mat.m[10] +
+		mat.m[5] * mat.m[2] * mat.m[11] -
+		mat.m[5] * mat.m[3] * mat.m[10] -
+		mat.m[9] * mat.m[2] * mat.m[7] +
+		mat.m[9] * mat.m[3] * mat.m[6];
 
 	result.m[7] = mat.m[0] * mat.m[6] * mat.m[11] -
-				  mat.m[0] * mat.m[7] * mat.m[10] -
-				  mat.m[4] * mat.m[2] * mat.m[11] +
-				  mat.m[4] * mat.m[3] * mat.m[10] +
-				  mat.m[8] * mat.m[2] * mat.m[7] -
-				  mat.m[8] * mat.m[3] * mat.m[6];
+		mat.m[0] * mat.m[7] * mat.m[10] -
+		mat.m[4] * mat.m[2] * mat.m[11] +
+		mat.m[4] * mat.m[3] * mat.m[10] +
+		mat.m[8] * mat.m[2] * mat.m[7] -
+		mat.m[8] * mat.m[3] * mat.m[6];
 
 	result.m[11] = -mat.m[0] * mat.m[5] * mat.m[11] +
-				   mat.m[0] * mat.m[7] * mat.m[9] +
-				   mat.m[4] * mat.m[1] * mat.m[11] -
-				   mat.m[4] * mat.m[3] * mat.m[9] -
-				   mat.m[8] * mat.m[1] * mat.m[7] +
-				   mat.m[8] * mat.m[3] * mat.m[5];
+		mat.m[0] * mat.m[7] * mat.m[9] +
+		mat.m[4] * mat.m[1] * mat.m[11] -
+		mat.m[4] * mat.m[3] * mat.m[9] -
+		mat.m[8] * mat.m[1] * mat.m[7] +
+		mat.m[8] * mat.m[3] * mat.m[5];
 
 	result.m[15] = mat.m[0] * mat.m[5] * mat.m[10] -
-				   mat.m[0] * mat.m[6] * mat.m[9] -
-				   mat.m[4] * mat.m[1] * mat.m[10] +
-				   mat.m[4] * mat.m[2] * mat.m[9] +
-				   mat.m[8] * mat.m[1] * mat.m[6] -
-				   mat.m[8] * mat.m[2] * mat.m[5];
+		mat.m[0] * mat.m[6] * mat.m[9] -
+		mat.m[4] * mat.m[1] * mat.m[10] +
+		mat.m[4] * mat.m[2] * mat.m[9] +
+		mat.m[8] * mat.m[1] * mat.m[6] -
+		mat.m[8] * mat.m[2] * mat.m[5];
 
 	r32 det = mat.m[0] * result.m[0] + mat.m[1] * result.m[4] + mat.m[2] * result.m[8] + mat.m[3] * result.m[12];
-	det		= 1.0f / det;
+	det     = 1.0f / det;
 	for (int i = 0; i < 4; i++)
 		result.rows[i] = result.rows[i] * det;
 	return result;
@@ -580,8 +580,8 @@ Mat3 mat3_translation(Vec2 t) {
 
 Mat3 mat3_rotation(r32 angle) {
 	Mat3 m;
-	r32  c	= cosf(angle);
-	r32  s	= sinf(angle);
+	r32  c    = cosf(angle);
+	r32  s    = sinf(angle);
 	m.rows[0] = vec3(c, -s, 0.0f);
 	m.rows[1] = vec3(s, c, 0.0f);
 	m.rows[2] = vec3(0.0f, 0.0f, 1.0f);
@@ -589,7 +589,7 @@ Mat3 mat3_rotation(r32 angle) {
 }
 
 Mat3 mat3_lookat(Vec2 from, Vec2 to, Vec2 forward) {
-	Vec2 dir	   = vec2_normalize(to - from);
+	Vec2 dir       = vec2_normalize(to - from);
 	r32  cos_theta = vec2_dot(dir, forward);
 	r32  sin_theta = sqrtf(1.0f - cos_theta * cos_theta);
 
@@ -737,15 +737,15 @@ Vec3 mat4_forward(const Mat4 &m) {
 
 bool mat3_equals(const Mat3 &a, const Mat3 &b, r32 tolerance) {
 	return vec3_equals(a.rows[0], b.rows[0], tolerance) &&
-		   vec3_equals(a.rows[1], b.rows[1], tolerance) &&
-		   vec3_equals(a.rows[2], b.rows[2], tolerance);
+		vec3_equals(a.rows[1], b.rows[1], tolerance) &&
+		vec3_equals(a.rows[2], b.rows[2], tolerance);
 }
 
 bool mat4_equals(const Mat4 &a, const Mat4 &b, r32 tolerance) {
 	return vec4_equals(a.rows[0], b.rows[0], tolerance) &&
-		   vec4_equals(a.rows[1], b.rows[1], tolerance) &&
-		   vec4_equals(a.rows[2], b.rows[2], tolerance) &&
-		   vec4_equals(a.rows[3], b.rows[3], tolerance);
+		vec4_equals(a.rows[1], b.rows[1], tolerance) &&
+		vec4_equals(a.rows[2], b.rows[2], tolerance) &&
+		vec4_equals(a.rows[3], b.rows[3], tolerance);
 }
 
 Mat3 mat4_to_mat3(const Mat4 &mat) {
@@ -834,7 +834,7 @@ void quat_get_angle_axis(Quat q, r32 *angle, Vec3 *axis) {
 	r32 len = sqrtf(q.i * q.i + q.j * q.j + q.k * q.k);
 	if (len > EPSILON_FLOAT) {
 		*angle  = 2.0f * atan2f(len, q.real);
-		len		= 1.0f / len;
+		len     = 1.0f / len;
 		axis->x = q.i * len;
 		axis->y = q.j * len;
 		axis->z = q.k * len;
@@ -992,7 +992,7 @@ Vec3 quat_get_euler_angles(Quat q) {
 
 	r32 sinr_cosp = 2.0f * (q.w * q.x + q.y * q.z);
 	r32 cosr_cosp = 1.0f - 2.0f * (q.x * q.x + q.y * q.y);
-	angles.z	  = atan2f(sinr_cosp, cosr_cosp);
+	angles.z      = atan2f(sinr_cosp, cosr_cosp);
 
 	r32 sinp = 2.0f * (q.w * q.y - q.z * q.x);
 	if (fabsf(sinp) >= 1.0f) {
@@ -1004,7 +1004,7 @@ Vec3 quat_get_euler_angles(Quat q) {
 
 	r32 siny_cosp = 2.0f * (q.w * q.z + q.x * q.y);
 	r32 cosy_cosp = 1.0f - 2.0f * (q.y * q.y + q.z * q.z);
-	angles.y	  = atan2f(siny_cosp, cosy_cosp);
+	angles.y      = atan2f(siny_cosp, cosy_cosp);
 
 	return angles;
 }
@@ -1019,7 +1019,7 @@ Quat quat_between(Vec3 from, Vec3 to) {
 
 Quat quat_between(Quat a, Quat b) {
 	Quat t = quat_conjugate(a);
-	t	  = t * (1.0f / quat_dot(t, t));
+	t      = t * (1.0f / quat_dot(t, t));
 	return quat_mul(t, b);
 }
 
@@ -1077,24 +1077,24 @@ Color3 hsv_to_rgb(Color_HSV col) {
 		r32 b = col.v * (1 - (col.s * f));
 		r32 c = col.v * (1 - (col.s * (1 - f)));
 		switch (i) {
-		case 0:
-			result = { col.v, c, a };
-			break;
-		case 1:
-			result = { b, col.v, a };
-			break;
-		case 2:
-			result = { a, col.v, c };
-			break;
-		case 3:
-			result = { a, b, col.v };
-			break;
-		case 4:
-			result = { c, a, col.v };
-			break;
-		case 5:
-			result = { col.v, a, b };
-			break;
+			case 0:
+				result = { col.v, c, a };
+				break;
+			case 1:
+				result = { b, col.v, a };
+				break;
+			case 2:
+				result = { a, col.v, c };
+				break;
+			case 3:
+				result = { a, b, col.v };
+				break;
+			case 4:
+				result = { c, a, col.v };
+				break;
+			case 5:
+				result = { col.v, a, b };
+				break;
 		}
 	}
 
@@ -1107,7 +1107,7 @@ Color_HSV rgb_to_hsv(Color3 c) {
 	r32 d   = max - min;
 
 	Color_HSV result = {};
-	result.v		 = max;
+	result.v         = max;
 
 	if (max)
 		result.s = d / max;
@@ -1192,8 +1192,8 @@ Quat slerp(Quat from, Quat to, r32 t) {
 		return result;
 	}
 
-	r32 theta_0		= acosf(dot);
-	r32 theta		= theta_0 * t;
+	r32 theta_0     = acosf(dot);
+	r32 theta       = theta_0 * t;
 	r32 sin_theta   = sinf(theta);
 	r32 sin_theta_0 = sinf(theta_0);
 

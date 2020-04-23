@@ -12,7 +12,7 @@
 int system_main();
 
 thread_local Thread_Context context;
-static String __shared_impl_crt_main_cmd_line__;
+static String               __shared_impl_crt_main_cmd_line__;
 
 void *operator new(ptrsize size, Allocator allocator) {
 	return mallocate(size, allocator);
@@ -40,12 +40,12 @@ inline String get_command_line() {
 	return __shared_impl_crt_main_cmd_line__;
 }
 
-int main(int argc, char * argv[]) {
-	auto thread_id				= std::this_thread::get_id();
-	context.id					= *(u64 *)&thread_id;
-	context.allocator.proc		= malloc_allocator;
-	context.allocator.data		= 0;
-	context.temp_memory			= {};
+int main(int argc, char *argv[]) {
+	auto thread_id         = std::this_thread::get_id();
+	context.id             = *(u64 *)&thread_id;
+	context.allocator.proc = malloc_allocator;
+	context.allocator.data = 0;
+	context.temp_memory    = {};
 
 	void *ptr = malloc(TEMPORARY_MEMORY_SIZE);
 	if (ptr == 0) {

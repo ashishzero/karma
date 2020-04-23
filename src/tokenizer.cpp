@@ -16,12 +16,12 @@ bool is_binary_numeral(u32 codepoint) {
 	return codepoint == '0' || codepoint == '1';
 }
 
-bool parse_integer(const String string, s64 * out) {
+bool parse_integer(const String string, s64 *out) {
 	if (!string) return false;
 
 	s64 index = 0;
 
-	u8 code = string[index];
+	u8  code = string[index];
 	s64 sign = code == '-' ? -1 : 1;
 	if (code == '-' || code == '+') index += 1;
 
@@ -34,17 +34,32 @@ bool parse_integer(const String string, s64 * out) {
 
 		if (index < string.count) {
 			switch (string[index]) {
-			case 'x': index += 1; base = 16; break;
-			case 'h': index += 1; base = 16; break;
-			case 'd': index += 1; base = 10; break;
-			case 'o': index += 1; base = 8; break;
-			case 'b': index += 1; base = 2; break;
+				case 'x':
+					index += 1;
+					base = 16;
+					break;
+				case 'h':
+					index += 1;
+					base = 16;
+					break;
+				case 'd':
+					index += 1;
+					base = 10;
+					break;
+				case 'o':
+					index += 1;
+					base = 8;
+					break;
+				case 'b':
+					index += 1;
+					base = 2;
+					break;
 			}
 		}
 	}
 
 	s64 value = 0;
-	s32 one = 0;
+	s32 one   = 0;
 
 	for (; index < string.count; index += 1) {
 		code = string[index];
@@ -56,34 +71,29 @@ bool parse_integer(const String string, s64 * out) {
 				value = value * base + (code - '0');
 			else
 				break;
-		}
-		else if (base == 16) {
+		} else if (base == 16) {
 			if (code >= 'a' && code <= 'f') {
 				value = value * base + (code - 'a') + 10;
-			}
-			else if (code >= 'A' && code <= 'F') {
+			} else if (code >= 'A' && code <= 'F') {
 				value = value * base + (code - 'A') + 10;
-			}
-			else {
+			} else {
 				break;
 			}
-		}
-		else {
+		} else {
 			break;
 		}
-
 	}
 
 	*out = sign * value;
 	return index >= string.count;
 }
 
-bool parse_real(const String string, r64 * out) {
+bool parse_real(const String string, r64 *out) {
 	if (!string) return false;
 
 	s64 index = 0;
 
-	u8 code = string[index];
+	u8  code = string[index];
 	r64 sign = code == '-' ? -1 : 1;
 	if (code == '-' || code == '+') index += 1;
 
@@ -122,7 +132,7 @@ bool parse_real(const String string, r64 * out) {
 		index += 1;
 
 		if (index < string.count) {
-			code = string[index];
+			code          = string[index];
 			bool negative = (code == '-');
 
 			if (code == '-' || code == '+') index += 1;
@@ -140,38 +150,40 @@ bool parse_real(const String string, r64 * out) {
 
 			r64 p = pow(10, exp);
 
-			if (negative) value /= p; else value *= p;
-		}
-		else {
+			if (negative)
+				value /= p;
+			else
+				value *= p;
+		} else {
 			exponent_fail = true;
 		}
 	}
 
 	if (index < string.count && (code == 'f' || code == 'F')) index += 1;
 
-	*out = sign * value;
+	*out        = sign * value;
 	bool result = !(invalid_num || period_fail || exponent_fail || (index < string.count));
 	return result;
 }
 
 struct Tokenizer_State {
-	String				content;
-	ptrsize				row;
-	ptrsize				column;
-	String_Iter			at[3];
-	bool				can_continue;
+	String              content;
+	ptrsize             row;
+	ptrsize             column;
+	String_Iter         at[3];
+	bool                can_continue;
 	Tokenization_Status status;
 };
 
-void tokenizer_error(Tokenizer_State * tokenizer, Tokenization_Result result, ptrsize row, ptrsize column, ptrsize offset) {
+void tokenizer_error(Tokenizer_State *tokenizer, Tokenization_Result result, ptrsize row, ptrsize column, ptrsize offset) {
 	tokenizer->status.result = result;
-	tokenizer->status.row = row;
+	tokenizer->status.row    = row;
 	tokenizer->status.column = column;
 	tokenizer->status.offset = offset;
-	tokenizer->can_continue = false;
+	tokenizer->can_continue  = false;
 }
 
-void tokenizer_advance(Tokenizer_State * tokenizer, int count) {
+void tokenizer_advance(Tokenizer_State *tokenizer, int count) {
 	if (tokenizer->can_continue) {
 		for (int i = 0; i < count; ++i) {
 			tokenizer->column += 1;
@@ -185,7 +197,7 @@ void tokenizer_advance(Tokenizer_State * tokenizer, int count) {
 	}
 }
 
-bool tokenizer_check_and_advance_newline(Tokenizer_State * tokenizer) {
+bool tokenizer_check_and_advance_newline(Tokenizer_State *tokenizer) {
 	if (tokenizer->at[0].codepoint.code == '\r' || tokenizer->at[0].codepoint.code == '\n') {
 		if (tokenizer->at[0].codepoint.code == '\r' && tokenizer->at[1].codepoint.code == '\n') {
 			tokenizer_advance(tokenizer, 1);
@@ -201,7 +213,7 @@ bool tokenizer_check_and_advance_newline(Tokenizer_State * tokenizer) {
 	return false;
 }
 
-bool tokenizer_check_and_advance_comments(Tokenizer_State * tokenizer) {
+bool tokenizer_check_and_advance_comments(Tokenizer_State *tokenizer) {
 	if (tokenizer->at[0].codepoint.code == '/') {
 		if (tokenizer->at[1].codepoint.code == '/') {
 			tokenizer_advance(tokenizer, 2);
@@ -213,13 +225,12 @@ bool tokenizer_check_and_advance_comments(Tokenizer_State * tokenizer) {
 			}
 
 			return true;
-		}
-		else if (tokenizer->at[1].codepoint.code == '*') {
+		} else if (tokenizer->at[1].codepoint.code == '*') {
 			tokenizer_advance(tokenizer, 2);
 
-			ptrsize err_row = tokenizer->row;
-			ptrsize err_col = tokenizer->column;
-			s64 err_offset  = tokenizer->at[0].index;
+			ptrsize err_row    = tokenizer->row;
+			ptrsize err_col    = tokenizer->column;
+			s64     err_offset = tokenizer->at[0].index;
 
 			// comment block
 			bool comment_ended = false;
@@ -236,11 +247,11 @@ bool tokenizer_check_and_advance_comments(Tokenizer_State * tokenizer) {
 			}
 
 			Token token;
-			token.kind = Token_Kind_NONE;
-			token.row = tokenizer->row;
-			token.column = tokenizer->column;
+			token.kind    = Token_Kind_NONE;
+			token.row     = tokenizer->row;
+			token.column  = tokenizer->column;
 			token.content = String(tokenizer->content.data + tokenizer->at[0].index, tokenizer->content.count - tokenizer->at[0].index);
-			token.value = Value();
+			token.value   = Value();
 
 			if (!comment_ended) tokenizer_error(tokenizer, Tokenization_Result_ERROR_COMMENT_BLOCK_NO_END, err_row, err_col, err_offset);
 
@@ -251,22 +262,22 @@ bool tokenizer_check_and_advance_comments(Tokenizer_State * tokenizer) {
 	return false;
 }
 
-Token tokenizer_next_token(Tokenizer_State * tokenizer) {
+Token tokenizer_next_token(Tokenizer_State *tokenizer) {
 	Token token;
 	token.kind = Token_Kind_NONE;
 
-	s64 index = tokenizer->at[0].index;
+	s64 index    = tokenizer->at[0].index;
 	token.column = tokenizer->column;
-	token.row = tokenizer->row;
-	s64 count = 0;
+	token.row    = tokenizer->row;
+	s64 count    = 0;
 
 	while (tokenizer->can_continue) {
 		if (tokenizer_check_and_advance_comments(tokenizer) || tokenizer_check_and_advance_newline(tokenizer)) {
 			if (count) break;
 
-			index = tokenizer->at[0].index;
+			index        = tokenizer->at[0].index;
 			token.column = tokenizer->column;
-			token.row = tokenizer->row;
+			token.row    = tokenizer->row;
 			continue;
 		}
 
@@ -275,15 +286,14 @@ Token tokenizer_next_token(Tokenizer_State * tokenizer) {
 		auto c = tokenizer->at[2].codepoint.code;
 
 		if (tokenizer->at[0].codepoint.size_in_bytes == 1) {
-
 			if (a == '\f' || a == ' ' || a == '\t') {
 				tokenizer_advance(tokenizer, 1);
 
 				if (count) break;
 
-				index = tokenizer->at[0].index;
+				index        = tokenizer->at[0].index;
 				token.column = tokenizer->column;
-				token.row = tokenizer->row;
+				token.row    = tokenizer->row;
 				continue;
 			}
 
@@ -291,123 +301,145 @@ Token tokenizer_next_token(Tokenizer_State * tokenizer) {
 				int tok_counts = 0;
 
 				if (b == '=') {
-
 					switch (a) {
-					case '=': token.kind = Token_Kind_COMPARE_EQUALS; tok_counts = 2; break;
-					case '!': token.kind = Token_Kind_COMPARE_NOT_EQUALS; tok_counts = 2; break;
-					case '<': token.kind = Token_Kind_COMPARE_LESS_THAN_EQUALS; tok_counts = 2; break;
-					case '>': token.kind = Token_Kind_COMPARE_GREATER_THAN_EQUALS; tok_counts = 2; break;
-					case '+': token.kind = Token_Kind_PLUS_EQUALS; tok_counts = 2; break;
-					case '-': token.kind = Token_Kind_MINUS_EQUALS; tok_counts = 2; break;
-					case '*': token.kind = Token_Kind_MUL_EQUALS; tok_counts = 2; break;
-					case '/': token.kind = Token_Kind_DIV_EQUALS; tok_counts = 2; break;
-					case '%': token.kind = Token_Kind_MOD_EQUALS; tok_counts = 2; break;
-					case '&': token.kind = Token_Kind_AND_EQUALS; tok_counts = 2; break;
-					case '|': token.kind = Token_Kind_OR_EQUALS; tok_counts = 2; break;
-					case '^': token.kind = Token_Kind_XOR_EQUALS; tok_counts = 2; break;
+						case '=':
+							token.kind = Token_Kind_COMPARE_EQUALS;
+							tok_counts = 2;
+							break;
+						case '!':
+							token.kind = Token_Kind_COMPARE_NOT_EQUALS;
+							tok_counts = 2;
+							break;
+						case '<':
+							token.kind = Token_Kind_COMPARE_LESS_THAN_EQUALS;
+							tok_counts = 2;
+							break;
+						case '>':
+							token.kind = Token_Kind_COMPARE_GREATER_THAN_EQUALS;
+							tok_counts = 2;
+							break;
+						case '+':
+							token.kind = Token_Kind_PLUS_EQUALS;
+							tok_counts = 2;
+							break;
+						case '-':
+							token.kind = Token_Kind_MINUS_EQUALS;
+							tok_counts = 2;
+							break;
+						case '*':
+							token.kind = Token_Kind_MUL_EQUALS;
+							tok_counts = 2;
+							break;
+						case '/':
+							token.kind = Token_Kind_DIV_EQUALS;
+							tok_counts = 2;
+							break;
+						case '%':
+							token.kind = Token_Kind_MOD_EQUALS;
+							tok_counts = 2;
+							break;
+						case '&':
+							token.kind = Token_Kind_AND_EQUALS;
+							tok_counts = 2;
+							break;
+						case '|':
+							token.kind = Token_Kind_OR_EQUALS;
+							tok_counts = 2;
+							break;
+						case '^':
+							token.kind = Token_Kind_XOR_EQUALS;
+							tok_counts = 2;
+							break;
 					}
 
-				}
-				else if (a == '&' && b == '&') {
+				} else if (a == '&' && b == '&') {
 					token.kind = Token_Kind_LOGICAL_AND;
 					tok_counts = 2;
-				}
-				else if (a == '|' && b == '|') {
+				} else if (a == '|' && b == '|') {
 					token.kind = Token_Kind_LOGICAL_OR;
 					tok_counts = 2;
-				}
-				else if (a == '<' && b == '<') {
+				} else if (a == '<' && b == '<') {
 					token.kind = Token_Kind_LEFT_SHIFT;
 					tok_counts = 2;
-				}
-				else if (a == '>' && b == '>') {
+				} else if (a == '>' && b == '>') {
 					token.kind = Token_Kind_RIGHT_SHIFT;
 					tok_counts = 2;
-				}
-				else if (a == '+' && b == '+') {
+				} else if (a == '+' && b == '+') {
 					token.kind = Token_Kind_PLUS_PLUS;
 					tok_counts = 2;
-				}
-				else if (a == '-' && b == '-') {
+				} else if (a == '-' && b == '-') {
 					token.kind = Token_Kind_MINUS_MINUS;
 					tok_counts = 2;
-				}
-				else if (a == '-' && b == '>') {
+				} else if (a == '-' && b == '>') {
 					token.kind = Token_Kind_DASH_ARROW;
 					tok_counts = 2;
-				}
-				else if (a == '=' && b == '>') {
+				} else if (a == '=' && b == '>') {
 					token.kind = Token_Kind_EQUAL_ARROW;
 					tok_counts = 2;
-				}
-				else if (a == ':' && b == ':') {
+				} else if (a == ':' && b == ':') {
 					token.kind = Token_Kind_DOUBLE_COLON;
 					tok_counts = 2;
-				}
-				else {
+				} else {
 					if (a == '+' || a == '-' || a == '.') {
 						if (is_numeral(b)) {
 							count = 2;
 							tokenizer_advance(tokenizer, 2);
 							continue;
-						}
-						else if (b == '.' && is_numeral(c)) {
+						} else if (b == '.' && is_numeral(c)) {
 							count = 3;
 							tokenizer_advance(tokenizer, 3);
 							continue;
 						}
 					}
-
 				}
 
 				if (tok_counts) {
-					count = tok_counts;
+					count       = tok_counts;
 					token.value = String(tokenizer->content.data + index, count);
 					tokenizer_advance(tokenizer, tok_counts);
 					break;
 				}
-
 			}
 
 			Token_Kind kind = Token_Kind_NONE;
 
 			switch (a) {
-			case '@': kind = Token_Kind_AT; break;
-			case '#': kind = Token_Kind_HASH; break;
-			case '$': kind = Token_Kind_DOLLAR; break;
-			case '(': kind = Token_Kind_OPEN_BRACKET; break;
-			case ')': kind = Token_Kind_CLOSE_BRACKET; break;
-			case '{': kind = Token_Kind_OPEN_CURLY_BRACKET; break;
-			case '}': kind = Token_Kind_CLOSE_CURLY_BRACKET; break;
-			case '[': kind = Token_Kind_OPEN_SQUARE_BRACKET; break;
-			case ']': kind = Token_Kind_CLOSE_SQUARE_BRACKET; break;
-			case ':': kind = Token_Kind_COLON; break;
-			case ';': kind = Token_Kind_SEMICOLON; break;
-			case ',': kind = Token_Kind_COMMA; break;
-			case '.': kind = Token_Kind_PERIOD; break;
-			case '?': kind = Token_Kind_QUESTION_MARK; break;
-			case '~': kind = Token_Kind_TILDE; break;
-			case '`': kind = Token_Kind_BACK_TICK; break;
-			case '!': kind = Token_Kind_EXCLAMATION; break;
-			case '%': kind = Token_Kind_PERCENT; break;
-			case '^': kind = Token_Kind_CARET; break;
-			case '|': kind = Token_Kind_PIPE; break;
-			case '&': kind = Token_Kind_AMPERSAND; break;
-			case '*': kind = Token_Kind_ASTRICK; break;
-			case '=': kind = Token_Kind_EQUALS; break;
-			case '<': kind = Token_Kind_LESS_THAN; break;
-			case '>': kind = Token_Kind_GREATER_THAN; break;
-			case '+': kind = Token_Kind_PLUS; break;
-			case '-': kind = Token_Kind_MINUS; break;
-			case '/': kind = Token_Kind_SLASH; break;
-			case '\\': kind = Token_Kind_BACK_SLASH; break;
-			case '\0': kind = Token_Kind_NULL; break;
+				case '@': kind = Token_Kind_AT; break;
+				case '#': kind = Token_Kind_HASH; break;
+				case '$': kind = Token_Kind_DOLLAR; break;
+				case '(': kind = Token_Kind_OPEN_BRACKET; break;
+				case ')': kind = Token_Kind_CLOSE_BRACKET; break;
+				case '{': kind = Token_Kind_OPEN_CURLY_BRACKET; break;
+				case '}': kind = Token_Kind_CLOSE_CURLY_BRACKET; break;
+				case '[': kind = Token_Kind_OPEN_SQUARE_BRACKET; break;
+				case ']': kind = Token_Kind_CLOSE_SQUARE_BRACKET; break;
+				case ':': kind = Token_Kind_COLON; break;
+				case ';': kind = Token_Kind_SEMICOLON; break;
+				case ',': kind = Token_Kind_COMMA; break;
+				case '.': kind = Token_Kind_PERIOD; break;
+				case '?': kind = Token_Kind_QUESTION_MARK; break;
+				case '~': kind = Token_Kind_TILDE; break;
+				case '`': kind = Token_Kind_BACK_TICK; break;
+				case '!': kind = Token_Kind_EXCLAMATION; break;
+				case '%': kind = Token_Kind_PERCENT; break;
+				case '^': kind = Token_Kind_CARET; break;
+				case '|': kind = Token_Kind_PIPE; break;
+				case '&': kind = Token_Kind_AMPERSAND; break;
+				case '*': kind = Token_Kind_ASTRICK; break;
+				case '=': kind = Token_Kind_EQUALS; break;
+				case '<': kind = Token_Kind_LESS_THAN; break;
+				case '>': kind = Token_Kind_GREATER_THAN; break;
+				case '+': kind = Token_Kind_PLUS; break;
+				case '-': kind = Token_Kind_MINUS; break;
+				case '/': kind = Token_Kind_SLASH; break;
+				case '\\': kind = Token_Kind_BACK_SLASH; break;
+				case '\0': kind = Token_Kind_NULL; break;
 			}
 
 			if (kind != Token_Kind_NONE) {
 				if (!count) {
-					count = 1;
-					token.kind = kind;
+					count       = 1;
+					token.kind  = kind;
 					token.value = tokenizer->at[0].codepoint;
 					tokenizer_advance(tokenizer, 1);
 				}
@@ -424,7 +456,7 @@ Token tokenizer_next_token(Tokenizer_State * tokenizer) {
 				s64 err_offset = tokenizer->at[0].index;
 
 				bool end_found = false;
-				count = 1;
+				count          = 1;
 				tokenizer_advance(tokenizer, 1);
 
 				while (tokenizer->can_continue) {
@@ -451,7 +483,6 @@ Token tokenizer_next_token(Tokenizer_State * tokenizer) {
 
 				break;
 			}
-
 		}
 
 		count += tokenizer->at[0].codepoint.size_in_bytes;
@@ -461,48 +492,42 @@ Token tokenizer_next_token(Tokenizer_State * tokenizer) {
 	token.content = String(tokenizer->content.data + index, count);
 
 	if (token.kind == Token_Kind_NONE) {
-
 		if (count) {
-			r64 rval; s64 ival;
+			r64 rval;
+			s64 ival;
 			if (parse_integer(token.content, &ival)) {
-				token.kind = Token_Kind_INTEGER_LITERAL;
+				token.kind  = Token_Kind_INTEGER_LITERAL;
 				token.value = ival;
-			}
-			else if (parse_real(token.content, &rval)) {
-				token.kind = Token_Kind_REAL_LITERAL;
+			} else if (parse_real(token.content, &rval)) {
+				token.kind  = Token_Kind_REAL_LITERAL;
 				token.value = rval;
-			}
-			else {
+			} else {
 				if (string_match(token.content, "true")) {
-					token.kind = Token_Kind_INTEGER_LITERAL;
+					token.kind  = Token_Kind_INTEGER_LITERAL;
 					token.value = (s64)1;
-				}
-				else if (string_match(token.content, "false")) {
-					token.kind = Token_Kind_INTEGER_LITERAL;
+				} else if (string_match(token.content, "false")) {
+					token.kind  = Token_Kind_INTEGER_LITERAL;
 					token.value = (s64)0;
-				}
-				else {
-					token.kind = Token_Kind_IDENTIFIER;
+				} else {
+					token.kind  = Token_Kind_IDENTIFIER;
 					token.value = token.content;
 				}
 			}
-		}
-		else {
-			token.kind = Token_Kind_END_OF_STREAM;
+		} else {
+			token.kind    = Token_Kind_END_OF_STREAM;
 			token.content = String(tokenizer->content.data + tokenizer->content.count, 0);
-			token.value = token.content;
+			token.value   = token.content;
 		}
-
 	}
 
 	return token;
 }
 
-Array_View<Token> tokenize(String string, Tokenization_Status * status) {
+Array_View<Token> tokenize(String string, Tokenization_Status *status) {
 	Tokenizer_State tokenizer = {};
-	tokenizer.content = string;
-	tokenizer.row = 1;
-	tokenizer.column = 1;
+	tokenizer.content         = string;
+	tokenizer.row             = 1;
+	tokenizer.column          = 1;
 
 	string_iter_next(string, tokenizer.at + 0);
 	tokenizer.at[1] = tokenizer.at[0];
@@ -510,7 +535,7 @@ Array_View<Token> tokenize(String string, Tokenization_Status * status) {
 	tokenizer.at[2] = tokenizer.at[1];
 	string_iter_next(string, tokenizer.at + 2);
 
-	tokenizer.can_continue = true;
+	tokenizer.can_continue  = true;
 	tokenizer.status.result = Tokenization_Result_SUCCESS;
 
 	Array<Token> tokens;

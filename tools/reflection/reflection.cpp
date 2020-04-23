@@ -5,9 +5,9 @@
 #include <clang-c/Index.h>
 
 #ifdef TARGET_WINDOWS
-#pragma comment(lib, "libclang.lib")
+#	pragma comment(lib, "libclang.lib")
 #else
-#error "Platform currently not supported"
+#	error "Platform currently not supported"
 #endif
 
 #if 0
@@ -31,10 +31,12 @@ CXChildVisitResult cursor_type_printer(CXCursor cursor, CXCursor parent, CXClien
 }
 #endif
 
-void reflection_of_enum_info(Ostream * stream, CXCursor cursor, const char * name, Array_View<CXCursor> enums, s64 min, s64 max, bool sequential) {
-	auto type_decl = clang_getEnumDeclIntegerType(cursor);
+void reflection_of_enum_info(Ostream *stream, CXCursor cursor, const char *name, Array_View<CXCursor> enums, s64 min, s64 max, bool sequential) {
+	auto type_decl          = clang_getEnumDeclIntegerType(cursor);
 	auto type_decl_spelling = clang_getTypeSpelling(type_decl);
-	defer { clang_disposeString(type_decl_spelling); };
+	defer {
+		clang_disposeString(type_decl_spelling);
+	};
 
 	ostream_write_formatted(stream, "enum %s : %s;\n", name, clang_getCString(type_decl_spelling));
 	ostream_write_formatted(stream, "template <> struct Enum_Info<%s> {\n", name);
@@ -44,8 +46,7 @@ void reflection_of_enum_info(Ostream * stream, CXCursor cursor, const char * nam
 
 	if (sequential) {
 		ostream_write_formatted(stream, "\tstatic const %s index_value(s64 index) { return (%s)(index + %zd); }\n", name, name, clang_getEnumConstantDeclValue(enums[0]));
-	}
-	else {
+	} else {
 		ostream_write_formatted(stream, "\tstatic const %s index_value(s64 index) {\n", name);
 		ostream_write_formatted(stream, "\t\tstatic const %s enum_values[] = {\n", name);
 		for (s64 index = 0; index < enums.count; ++index) {
@@ -66,12 +67,11 @@ void reflection_of_enum_info(Ostream * stream, CXCursor cursor, const char * nam
 		}
 		ostream_write_formatted(stream, "\t\t};\n");
 		ostream_write_formatted(stream, "\t\treturn strings[value - %d];\n\t}\n", clang_getEnumConstantDeclValue(enums[0]));
-	}
-	else {
+	} else {
 		ostream_write_formatted(stream, "\tstatic const String string(%s value) {\n", name);
 		for (s64 index = 0; index < enums.count; ++index) {
-			auto spelling = clang_getCursorSpelling(enums[index]);
-			const char * mem = clang_getCString(spelling);
+			auto        spelling = clang_getCursorSpelling(enums[index]);
+			const char *mem      = clang_getCString(spelling);
 			ostream_write_formatted(stream, "\t\tif (%d == value) return \"%s\";\n", clang_getEnumConstantDeclValue(enums[index]), mem);
 			clang_disposeString(spelling);
 		}
@@ -82,7 +82,7 @@ void reflection_of_enum_info(Ostream * stream, CXCursor cursor, const char * nam
 	ostream_write_formatted(stream, "};\n\n");
 }
 
-void reflection_of_enum(Ostream * stream, const char * name) {
+void reflection_of_enum(Ostream *stream, const char *name) {
 	ostream_write_formatted(stream, "template <> struct Reflect<%s> {\n", name);
 	ostream_write_formatted(stream, "\tstatic constexpr Type_Id id = Type_Id_ENUM;\n");
 
@@ -91,22 +91,26 @@ void reflection_of_enum(Ostream * stream, const char * name) {
 	ostream_write_formatted(stream, "\t\treturn &i;\n\t}\n};\n\n");
 }
 
-void reflection_of_attrs(Ostream * stream, CXCursor cursor) {
-	auto spelling = clang_getCursorSpelling(cursor);
-	const char * name = clang_getCString(spelling);
-	defer { clang_disposeString(spelling); };
+void reflection_of_attrs(Ostream *stream, CXCursor cursor) {
+	auto        spelling = clang_getCursorSpelling(cursor);
+	const char *name     = clang_getCString(spelling);
+	defer {
+		clang_disposeString(spelling);
+	};
 
 	ostream_write_formatted(stream, "\t\tstatic const String attrs_%s[] = {\n", name);
 
-	clang_visitChildren(cursor,
-		[] (CXCursor cursor, CXCursor parent, CXClientData stream) -> CXChildVisitResult {
+	clang_visitChildren(
+		cursor,
+		[](CXCursor cursor, CXCursor parent, CXClientData stream) -> CXChildVisitResult {
 			if (clang_getCursorKind(cursor) == CXCursor_AnnotateAttr) {
 				auto attrs = clang_getCursorSpelling(cursor);
 				ostream_write_formatted((Ostream *)stream, "\t\t\t%s\n", clang_getCString(attrs));
 				clang_disposeString(attrs);
 			}
 			return CXChildVisit_Continue;
-		}, stream);
+		},
+		stream);
 
 	ostream_write_formatted(stream, "\t\t};\n\n");
 }
@@ -122,29 +126,32 @@ CXChildVisitResult visit_members_of_anonymous_type(CXCursor cursor, CXCursor par
 	return CXChildVisit_Continue;
 }
 
-void reflection_of_anonymous_struct(Ostream * stream, CXCursor cursor, const char * name, int type_index) {
+void reflection_of_anonymous_struct(Ostream *stream, CXCursor cursor, const char *name, int type_index) {
 	Array<CXCursor> members;
 	clang_visitChildren(cursor, visit_members_of_anonymous_type, &members);
-	defer { array_free(&members); };
+	defer {
+		array_free(&members);
+	};
 
 	auto size = clang_Type_getSizeOf(clang_getCursorType(cursor));
 
 	if (members.count == 0) {
 		ostream_write_formatted(stream, "\t\tstatic const Type_Info_Struct _i_anonymous_struct_%d(%zd, \"%s::anonymous struct\", 0, 0, 0);\n",
-			type_index, size, name);
+								type_index, size, name);
 		return;
 	}
 
 	Array<bool> has_attrs;
 	array_resize(&has_attrs, members.count);
-	defer { array_free(&has_attrs); };
+	defer {
+		array_free(&has_attrs);
+	};
 
 	for (s64 index = 0; index < members.count; ++index) {
 		if (clang_Cursor_hasAttrs(members[index])) {
 			array_add(&has_attrs, true);
 			reflection_of_attrs(stream, members[index]);
-		}
-		else {
+		} else {
 			array_add(&has_attrs, false);
 		}
 	}
@@ -155,11 +162,11 @@ void reflection_of_anonymous_struct(Ostream * stream, CXCursor cursor, const cha
 
 	for (s64 index = 0; index < members.count; ++index) {
 		auto spelling = clang_getCursorSpelling(members[index]);
-		auto member = clang_getCString(spelling);
+		auto member   = clang_getCString(spelling);
 
-		auto member_type = clang_getCursorType(members[index]);
+		auto member_type   = clang_getCursorType(members[index]);
 		auto type_spelling = clang_getTypeSpelling(member_type);
-		auto type_string = clang_getCString(type_spelling);
+		auto type_string   = clang_getCString(type_spelling);
 
 		auto offset = clang_Cursor_getOffsetOfField(members[index]) / 8;
 		ostream_write_formatted(stream, "\t\t\t{ \"%s\", %zd, ", member, offset);
@@ -179,32 +186,35 @@ void reflection_of_anonymous_struct(Ostream * stream, CXCursor cursor, const cha
 	ostream_write_formatted(stream, "\t\t};\n");
 
 	ostream_write_formatted(stream, "\t\tstatic const Type_Info_Struct _i_anonymous_struct_%d(%zd, \"%s::anonymous struct\", static_count(_anonymous_struct_members%d), _anonymous_struct_members%d, 0);\n",
-		type_index, size, name, type_index, type_index);
+							type_index, size, name, type_index, type_index);
 }
 
-void reflection_of_anonymous_union(Ostream * stream, CXCursor cursor, const char * name, int type_index) {
+void reflection_of_anonymous_union(Ostream *stream, CXCursor cursor, const char *name, int type_index) {
 	Array<CXCursor> members;
 	clang_visitChildren(cursor, visit_members_of_anonymous_type, &members);
-	defer { array_free(&members); };
+	defer {
+		array_free(&members);
+	};
 
 	auto size = clang_Type_getSizeOf(clang_getCursorType(cursor));
 
 	if (members.count == 0) {
 		ostream_write_formatted(stream, "\t\tstatic const Type_Info_Union _i_anonymous_union_%d(%zd, \"%s::anonymous union\", 0, 0);\n",
-			type_index, size, name);
+								type_index, size, name);
 		return;
 	}
 
 	Array<bool> has_attrs;
 	array_resize(&has_attrs, members.count);
-	defer { array_free(&has_attrs); };
+	defer {
+		array_free(&has_attrs);
+	};
 
 	for (s64 index = 0; index < members.count; ++index) {
 		if (clang_Cursor_hasAttrs(members[index])) {
 			array_add(&has_attrs, true);
 			reflection_of_attrs(stream, members[index]);
-		}
-		else {
+		} else {
 			array_add(&has_attrs, false);
 		}
 	}
@@ -215,11 +225,11 @@ void reflection_of_anonymous_union(Ostream * stream, CXCursor cursor, const char
 
 	for (s64 index = 0; index < members.count; ++index) {
 		auto spelling = clang_getCursorSpelling(members[index]);
-		auto member = clang_getCString(spelling);
+		auto member   = clang_getCString(spelling);
 
-		auto member_type = clang_getCursorType(members[index]);
+		auto member_type   = clang_getCursorType(members[index]);
 		auto type_spelling = clang_getTypeSpelling(member_type);
-		auto type_string = clang_getCString(type_spelling);
+		auto type_string   = clang_getCString(type_spelling);
 
 		ostream_write_formatted(stream, "\t\t\t{ \"%s\", ", member);
 
@@ -238,15 +248,17 @@ void reflection_of_anonymous_union(Ostream * stream, CXCursor cursor, const char
 	ostream_write_formatted(stream, "\t\t};\n");
 
 	ostream_write_formatted(stream, "\t\tstatic const Type_Info_Union _i_anonymous_union_%d(%zd, \"%s::anonymous union\", static_count(_anonymous_union_members_%d), _anonymous_union_members_%d);\n",
-		type_index, size, name, type_index, type_index);
+							type_index, size, name, type_index, type_index);
 }
 
-void reflection_of_struct(Ostream * stream, CXCursor cursor, Array_View<CXCursor> members, const char * base) {
+void reflection_of_struct(Ostream *stream, CXCursor cursor, Array_View<CXCursor> members, const char *base) {
 	auto type = clang_getCursorType(cursor);
 
-	auto spelling = clang_getTypeSpelling(type);
-	const char * name = clang_getCString(spelling);
-	defer { clang_disposeString(spelling); };
+	auto        spelling = clang_getTypeSpelling(type);
+	const char *name     = clang_getCString(spelling);
+	defer {
+		clang_disposeString(spelling);
+	};
 
 	auto size = clang_Type_getSizeOf(type);
 
@@ -259,8 +271,7 @@ void reflection_of_struct(Ostream * stream, CXCursor cursor, Array_View<CXCursor
 	if (members.count == 0) {
 		if (base == 0) {
 			ostream_write_formatted(stream, "\t\tstatic const Type_Info_Struct i(%zd, \"%s\", 0, 0, 0);\n", size, name);
-		}
-		else {
+		} else {
 			ostream_write_formatted(stream, "\t\tstatic const Type_Info_Struct i(%zd, \"%s\", 0, 0, Reflect<%s>::info());\n", size, name, base);
 		}
 		ostream_write_formatted(stream, "\t\treturn &i;\n\t}\n};\n\n");
@@ -269,14 +280,15 @@ void reflection_of_struct(Ostream * stream, CXCursor cursor, Array_View<CXCursor
 
 	Array<bool> has_attrs;
 	array_resize(&has_attrs, members.count);
-	defer { array_free(&has_attrs); };
+	defer {
+		array_free(&has_attrs);
+	};
 
 	for (s64 index = 0; index < members.count; ++index) {
 		if (clang_Cursor_isAnonymous(members[index])) {
 			if (clang_getCursorKind(members[index]) == CXCursor_StructDecl) {
 				reflection_of_anonymous_struct(stream, members[index], name, (int)index);
-			}
-			else if (clang_getCursorKind(members[index]) == CXCursor_UnionDecl) {
+			} else if (clang_getCursorKind(members[index]) == CXCursor_UnionDecl) {
 				reflection_of_anonymous_union(stream, members[index], name, (int)index);
 			}
 		}
@@ -284,8 +296,7 @@ void reflection_of_struct(Ostream * stream, CXCursor cursor, Array_View<CXCursor
 		if (clang_Cursor_hasAttrs(members[index])) {
 			array_add(&has_attrs, true);
 			reflection_of_attrs(stream, members[index]);
-		}
-		else {
+		} else {
 			array_add(&has_attrs, false);
 		}
 	}
@@ -296,12 +307,12 @@ void reflection_of_struct(Ostream * stream, CXCursor cursor, Array_View<CXCursor
 		auto is_anonymous = clang_Cursor_isAnonymous(members[index]);
 
 		auto spelling = clang_getCursorSpelling(members[index]);
-		auto member = clang_getCString(spelling);
+		auto member   = clang_getCString(spelling);
 		if (is_anonymous) member = "anonymous";
 
-		auto member_type = clang_getCursorType(members[index]);
+		auto member_type   = clang_getCursorType(members[index]);
 		auto type_spelling = clang_getTypeSpelling(member_type);
-		auto type_string = clang_getCString(type_spelling);
+		auto type_string   = clang_getCString(type_spelling);
 
 		auto offset = clang_Cursor_getOffsetOfField(members[index]) / 8;
 		ostream_write_formatted(stream, "\t\t\t{ \"%s\", %zd, ", member, offset);
@@ -314,8 +325,7 @@ void reflection_of_struct(Ostream * stream, CXCursor cursor, Array_View<CXCursor
 
 		if (!is_anonymous) {
 			ostream_write_formatted(stream, "Reflect<%s>::info() },\n", type_string);
-		}
-		else {
+		} else {
 			if (clang_getCursorKind(members[index]) == CXCursor_UnionDecl)
 				ostream_write_formatted(stream, "&_i_anonymous_union_%d },\n", (int)index);
 			else if (clang_getCursorKind(members[index]) == CXCursor_StructDecl)
@@ -331,21 +341,23 @@ void reflection_of_struct(Ostream * stream, CXCursor cursor, Array_View<CXCursor
 	ostream_write_formatted(stream, "\t\t};\n");
 
 	if (base == 0) {
-		ostream_write_formatted(stream, 
-			"\t\tstatic const Type_Info_Struct i(%zd, \"%s\", static_count(struct_members), struct_members, 0);\n", 
-			size, name);
+		ostream_write_formatted(stream,
+								"\t\tstatic const Type_Info_Struct i(%zd, \"%s\", static_count(struct_members), struct_members, 0);\n",
+								size, name);
 	} else {
-		ostream_write_formatted(stream, 
-			"\t\tstatic const Type_Info_Struct i(%zd, \"%s\", static_count(struct_members), struct_members, Reflect<%s>::info());\n", 
-			size, name, base);
+		ostream_write_formatted(stream,
+								"\t\tstatic const Type_Info_Struct i(%zd, \"%s\", static_count(struct_members), struct_members, Reflect<%s>::info());\n",
+								size, name, base);
 	}
 	ostream_write_formatted(stream, "\t\treturn &i;\n\t}\n};\n\n");
 }
 
-void reflection_of_union(Ostream * stream, CXCursor cursor, Array_View<CXCursor> members) {
-	auto spelling = clang_getCursorSpelling(cursor);
-	const char * name = clang_getCString(spelling);
-	defer { clang_disposeString(spelling); };
+void reflection_of_union(Ostream *stream, CXCursor cursor, Array_View<CXCursor> members) {
+	auto        spelling = clang_getCursorSpelling(cursor);
+	const char *name     = clang_getCString(spelling);
+	defer {
+		clang_disposeString(spelling);
+	};
 
 	auto type = clang_getCursorType(cursor);
 	auto size = clang_Type_getSizeOf(type);
@@ -364,14 +376,15 @@ void reflection_of_union(Ostream * stream, CXCursor cursor, Array_View<CXCursor>
 
 	Array<bool> has_attrs;
 	array_resize(&has_attrs, members.count);
-	defer { array_free(&has_attrs); };
+	defer {
+		array_free(&has_attrs);
+	};
 
 	for (s64 index = 0; index < members.count; ++index) {
 		if (clang_Cursor_isAnonymous(members[index])) {
 			if (clang_getCursorKind(members[index]) == CXCursor_StructDecl) {
 				reflection_of_anonymous_struct(stream, members[index], name, (int)index);
-			}
-			else if (clang_getCursorKind(members[index]) == CXCursor_UnionDecl) {
+			} else if (clang_getCursorKind(members[index]) == CXCursor_UnionDecl) {
 				reflection_of_anonymous_union(stream, members[index], name, (int)index);
 			}
 		}
@@ -379,8 +392,7 @@ void reflection_of_union(Ostream * stream, CXCursor cursor, Array_View<CXCursor>
 		if (clang_Cursor_hasAttrs(members[index])) {
 			array_add(&has_attrs, true);
 			reflection_of_attrs(stream, members[index]);
-		}
-		else {
+		} else {
 			array_add(&has_attrs, false);
 		}
 	}
@@ -391,12 +403,12 @@ void reflection_of_union(Ostream * stream, CXCursor cursor, Array_View<CXCursor>
 		auto is_anonymous = clang_Cursor_isAnonymous(members[index]);
 
 		auto spelling = clang_getCursorSpelling(members[index]);
-		auto member = clang_getCString(spelling);
+		auto member   = clang_getCString(spelling);
 		if (is_anonymous) member = "anonymous";
 
-		auto member_type = clang_getCursorType(members[index]);
+		auto member_type   = clang_getCursorType(members[index]);
 		auto type_spelling = clang_getTypeSpelling(member_type);
-		auto type_string = clang_getCString(type_spelling);
+		auto type_string   = clang_getCString(type_spelling);
 
 		ostream_write_formatted(stream, "\t\t\t{ \"%s\", ", member);
 
@@ -408,8 +420,7 @@ void reflection_of_union(Ostream * stream, CXCursor cursor, Array_View<CXCursor>
 
 		if (!is_anonymous) {
 			ostream_write_formatted(stream, "Reflect<%s>::info() },\n", type_string);
-		}
-		else {
+		} else {
 			if (clang_getCursorKind(members[index]) == CXCursor_UnionDecl)
 				ostream_write_formatted(stream, "&_i_anonymous_union_%d }, \n", (int)index);
 			else if (clang_getCursorKind(members[index]) == CXCursor_StructDecl)
@@ -424,41 +435,50 @@ void reflection_of_union(Ostream * stream, CXCursor cursor, Array_View<CXCursor>
 
 	ostream_write_formatted(stream, "\t\t};\n");
 
-	ostream_write_formatted(stream, 
-		"\t\tstatic const Type_Info_Union i(%zd, \"%s\", static_count(union_members), union_members);\n", size, name);
+	ostream_write_formatted(stream,
+							"\t\tstatic const Type_Info_Union i(%zd, \"%s\", static_count(union_members), union_members);\n", size, name);
 	ostream_write_formatted(stream, "\t\treturn &i;\n\t}\n};\n\n");
 }
 
-void reflection_of_templated_struct(Ostream * stream, CXCursor cursor, Array_View<CXCursor> members, const char * base) {
+void reflection_of_templated_struct(Ostream *stream, CXCursor cursor, Array_View<CXCursor> members, const char *base) {
 	auto type = clang_getCursorType(cursor);
 
-	auto spelling = clang_getCursorSpelling(cursor);
-	const char * name = clang_getCString(spelling);
-	defer { clang_disposeString(spelling); };
+	auto        spelling = clang_getCursorSpelling(cursor);
+	const char *name     = clang_getCString(spelling);
+	defer {
+		clang_disposeString(spelling);
+	};
 
-	const char * t_type = 0;
-	const char * t_call = 0;
+	const char *t_type = 0;
+	const char *t_call = 0;
 
 	{
 		Array<CXCursor> template_type_params;
-		defer { array_free(&template_type_params); };
+		defer {
+			array_free(&template_type_params);
+		};
 
-		clang_visitChildren(cursor,
-			[] (CXCursor cursor, CXCursor parent, CXClientData client_data) -> CXChildVisitResult {
+		clang_visitChildren(
+			cursor,
+			[](CXCursor cursor, CXCursor parent, CXClientData client_data) -> CXChildVisitResult {
 				if (clang_getCursorKind(cursor) == CXCursor_TemplateTypeParameter) {
 					auto arr = (Array<CXCursor> *)client_data;
 					array_add(arr, cursor);
 					return CXChildVisit_Continue;
 				}
 				return CXChildVisit_Break;
-			}, &template_type_params);
+			},
+			&template_type_params);
 
 		Ostream t_type_stream, t_call_stream;
-		defer { ostream_free(&t_type_stream); ostream_free(&t_call_stream); };
+		defer {
+			ostream_free(&t_type_stream);
+			ostream_free(&t_call_stream);
+		};
 
 		for (s64 i = 0; i < template_type_params.count; ++i) {
-			auto s = clang_getCursorSpelling(template_type_params[i]);
-			const char * string = clang_getCString(s);
+			auto        s      = clang_getCursorSpelling(template_type_params[i]);
+			const char *string = clang_getCString(s);
 			ostream_write_formatted(&t_type_stream, "typename %s", string);
 			ostream_write_formatted(&t_call_stream, "%s", string);
 			if (i < template_type_params.count - 1) {
@@ -473,7 +493,10 @@ void reflection_of_templated_struct(Ostream * stream, CXCursor cursor, Array_Vie
 	}
 
 	if (t_type == 0 || t_call == 0) return;
-	defer { mfree(t_type); mfree(t_call); };
+	defer {
+		mfree(t_type);
+		mfree(t_call);
+	};
 
 	ostream_write_formatted(stream, "template <%s> struct Reflect<%s<%s>> {\n", t_type, name, t_call);
 	ostream_write_formatted(stream, "\tstatic constexpr Type_Id id = Type_Id_STRUCT;\n");
@@ -484,8 +507,7 @@ void reflection_of_templated_struct(Ostream * stream, CXCursor cursor, Array_Vie
 	if (members.count == 0) {
 		if (base == 0) {
 			ostream_write_formatted(stream, "\t\tstatic const Type_Info_Struct i(sizeof(Templated_Type), \"%s\", 0, 0, 0);\n", name);
-		}
-		else {
+		} else {
 			ostream_write_formatted(stream, "\t\tstatic const Type_Info_Struct i(sizeof(Templated_Type), \"%s\", 0, 0, Reflect<%s>::info());\n", name, base);
 		}
 		ostream_write_formatted(stream, "\t\treturn &i;\n\t}\n};\n\n");
@@ -494,14 +516,15 @@ void reflection_of_templated_struct(Ostream * stream, CXCursor cursor, Array_Vie
 
 	Array<bool> has_attrs;
 	array_resize(&has_attrs, members.count);
-	defer { array_free(&has_attrs); };
+	defer {
+		array_free(&has_attrs);
+	};
 
 	for (s64 index = 0; index < members.count; ++index) {
 		if (clang_Cursor_hasAttrs(members[index])) {
 			array_add(&has_attrs, true);
 			reflection_of_attrs(stream, members[index]);
-		}
-		else {
+		} else {
 			array_add(&has_attrs, false);
 		}
 	}
@@ -510,11 +533,11 @@ void reflection_of_templated_struct(Ostream * stream, CXCursor cursor, Array_Vie
 
 	for (s64 index = 0; index < members.count; ++index) {
 		auto spelling = clang_getCursorSpelling(members[index]);
-		auto member = clang_getCString(spelling);
+		auto member   = clang_getCString(spelling);
 
-		auto member_type = clang_getCursorType(members[index]);
+		auto member_type   = clang_getCursorType(members[index]);
 		auto type_spelling = clang_getTypeSpelling(member_type);
-		auto type_string = clang_getCString(type_spelling);
+		auto type_string   = clang_getCString(type_spelling);
 
 		ostream_write_formatted(stream, "\t\t\t{ \"%s\", offsetof(Templated_Type, %s), ", member, member);
 
@@ -533,13 +556,13 @@ void reflection_of_templated_struct(Ostream * stream, CXCursor cursor, Array_Vie
 	ostream_write_formatted(stream, "\t\t};\n");
 
 	if (base == 0) {
-		ostream_write_formatted(stream, 
-			"\t\tstatic const Type_Info_Struct i(sizeof(Templated_Type), \"%s<%s>\", static_count(struct_members), struct_members, 0);\n", 
-			name, t_call);
+		ostream_write_formatted(stream,
+								"\t\tstatic const Type_Info_Struct i(sizeof(Templated_Type), \"%s<%s>\", static_count(struct_members), struct_members, 0);\n",
+								name, t_call);
 	} else {
-		ostream_write_formatted(stream, 
-			"\t\tstatic const Type_Info_Struct i(sizeof(Templated_Type), \"%s<%s>\", static_count(struct_members), struct_members, Reflect<%s>::info());\n", 
-			name, t_call, base);
+		ostream_write_formatted(stream,
+								"\t\tstatic const Type_Info_Struct i(sizeof(Templated_Type), \"%s<%s>\", static_count(struct_members), struct_members, Reflect<%s>::info());\n",
+								name, t_call, base);
 	}
 	ostream_write_formatted(stream, "\t\treturn &i;\n\t}\n};\n\n");
 }
@@ -566,7 +589,7 @@ void ast_visit_enum(CXCursor cursor) {
 	auto out = (Output_Info *)context.data;
 
 	Array<CXCursor> members;
-	auto spelling = clang_getTypeSpelling(clang_getCursorType(cursor));
+	auto            spelling = clang_getTypeSpelling(clang_getCursorType(cursor));
 	defer {
 		clang_disposeString(spelling);
 		array_free(&members);
@@ -575,46 +598,48 @@ void ast_visit_enum(CXCursor cursor) {
 	clang_visitChildren(cursor, visit_enum_members, &members);
 
 	bool sequential = true;
-	s64 min = 0, max = 0;
+	s64  min = 0, max = 0;
 
 	if (members) {
 		auto a = clang_getEnumConstantDeclValue(members[0]);
-		max = a;
-		min = a;
+		max    = a;
+		min    = a;
 		if (sequential) {
 			for (s64 index = 1; index < members.count; ++index) {
 				auto b = clang_getEnumConstantDeclValue(members[index]);
-				min = b < min ? b : min;
-				max = b > max ? b : max;
+				min    = b < min ? b : min;
+				max    = b > max ? b : max;
 				if (a + 1 != b) sequential = false;
 				a = b;
 			}
 		}
 	}
 
-	const char * name = clang_getCString(spelling);
+	const char *name = clang_getCString(spelling);
 	reflection_of_enum_info(&out->reflected_enum, cursor, name, members, min, max, sequential);
 	reflection_of_enum(&out->reflected_enum, name);
 }
 
-bool struct_check_for_base(CXCursor derived, CXCursor * out) {
+bool struct_check_for_base(CXCursor derived, CXCursor *out) {
 	struct Result {
-		bool found;
+		bool     found;
 		CXCursor cursor;
 	};
 
 	Result result;
 	result.found = false;
 
-	clang_visitChildren(derived,
-		[] (CXCursor cursor, CXCursor parent, CXClientData client_data) -> CXChildVisitResult {
+	clang_visitChildren(
+		derived,
+		[](CXCursor cursor, CXCursor parent, CXClientData client_data) -> CXChildVisitResult {
 			if (clang_getCursorKind(cursor) == CXCursor_CXXBaseSpecifier) {
-				auto out = (Result *)client_data;
+				auto out    = (Result *)client_data;
 				out->cursor = cursor;
-				out->found = true;
+				out->found  = true;
 			}
 			return CXChildVisit_Continue;
-		}, &result);
+		},
+		&result);
 
 	if (result.found) *out = result.cursor;
 	return result.found;
@@ -626,29 +651,23 @@ CXChildVisitResult visit_members(CXCursor cursor, CXCursor parent, CXClientData 
 	if (kind == CXCursor_FieldDecl) {
 		auto members = (Array<CXCursor> *)client_data;
 		array_add(members, cursor);
-	}
-	else if (kind == CXCursor_EnumDecl) {
+	} else if (kind == CXCursor_EnumDecl) {
 		ast_visit_enum(cursor);
-	}
-	else if (kind == CXCursor_StructDecl) {
+	} else if (kind == CXCursor_StructDecl) {
 		if (clang_Cursor_isAnonymous(cursor)) {
 			auto members = (Array<CXCursor> *)client_data;
 			array_add(members, cursor);
-		}
-		else {
+		} else {
 			ast_visit_struct(cursor);
 		}
-	}
-	else if (kind == CXCursor_UnionDecl) {
+	} else if (kind == CXCursor_UnionDecl) {
 		if (clang_Cursor_isAnonymous(cursor)) {
 			auto members = (Array<CXCursor> *)client_data;
 			array_add(members, cursor);
-		}
-		else {
+		} else {
 			ast_visit_union(cursor);
 		}
-	}
-	else if (kind == CXCursor_ClassTemplate) {
+	} else if (kind == CXCursor_ClassTemplate) {
 		ast_visit_tempalted_struct(cursor);
 	}
 
@@ -659,16 +678,18 @@ void ast_visit_struct(CXCursor cursor) {
 	auto out = (Output_Info *)context.data;
 
 	Array<CXCursor> members;
-	defer { array_free(&members); };
+	defer {
+		array_free(&members);
+	};
 
 	clang_visitChildren(cursor, visit_members, &members);
 
-	CXCursor base_cursor;
-	CXString base_spelling;
-	const char * base = 0;
+	CXCursor    base_cursor;
+	CXString    base_spelling;
+	const char *base = 0;
 	if (struct_check_for_base(cursor, &base_cursor)) {
 		base_spelling = clang_getCursorSpelling(base_cursor);
-		base = clang_getCString(base_spelling);
+		base          = clang_getCString(base_spelling);
 	}
 
 	reflection_of_struct(&out->reflected_struct, cursor, members, base);
@@ -680,7 +701,9 @@ void ast_visit_union(CXCursor cursor) {
 	auto out = (Output_Info *)context.data;
 
 	Array<CXCursor> members;
-	defer { array_free(&members); };
+	defer {
+		array_free(&members);
+	};
 	clang_visitChildren(cursor, visit_members, &members);
 
 	reflection_of_union(&out->reflected_struct, cursor, members);
@@ -690,16 +713,18 @@ void ast_visit_tempalted_struct(CXCursor cursor) {
 	auto out = (Output_Info *)context.data;
 
 	Array<CXCursor> members;
-	defer { array_free(&members); };
+	defer {
+		array_free(&members);
+	};
 
 	clang_visitChildren(cursor, visit_members, &members);
 
-	CXCursor base_cursor;
-	CXString base_spelling;
-	const char * base = 0;
+	CXCursor    base_cursor;
+	CXString    base_spelling;
+	const char *base = 0;
 	if (struct_check_for_base(cursor, &base_cursor)) {
 		base_spelling = clang_getCursorSpelling(base_cursor);
-		base = clang_getCString(base_spelling);
+		base          = clang_getCString(base_spelling);
 	}
 
 	reflection_of_templated_struct(&out->reflected_struct, cursor, members, base);
@@ -709,7 +734,7 @@ void ast_visit_tempalted_struct(CXCursor cursor) {
 
 CXChildVisitResult ast_visitor(CXCursor cursor, CXCursor parent, CXClientData client_data) {
 	auto kind = clang_getCursorKind(cursor);
-	auto out = (Output_Info *)context.data;
+	auto out  = (Output_Info *)context.data;
 
 	// Ignore Global ananymous structs/unions
 	if (clang_Cursor_isAnonymous(cursor)) return CXChildVisit_Continue;
@@ -717,29 +742,29 @@ CXChildVisitResult ast_visitor(CXCursor cursor, CXCursor parent, CXClientData cl
 	if (!clang_isCursorDefinition(cursor)) return CXChildVisit_Continue;
 
 	switch (kind) {
-	case CXCursor_EnumDecl: {
-		ast_visit_enum(cursor);
+		case CXCursor_EnumDecl: {
+			ast_visit_enum(cursor);
 
-		return CXChildVisit_Continue;
-	} break;
+			return CXChildVisit_Continue;
+		} break;
 
-	case CXCursor_StructDecl: {
-		ast_visit_struct(cursor);
+		case CXCursor_StructDecl: {
+			ast_visit_struct(cursor);
 
-		return CXChildVisit_Continue;
-	} break;
+			return CXChildVisit_Continue;
+		} break;
 
-	case CXCursor_UnionDecl: {
-		ast_visit_union(cursor);
+		case CXCursor_UnionDecl: {
+			ast_visit_union(cursor);
 
-		return CXChildVisit_Continue;
-	} break;
+			return CXChildVisit_Continue;
+		} break;
 
-	case CXCursor_ClassTemplate: {
-		ast_visit_tempalted_struct(cursor);
-	
-		return CXChildVisit_Continue;
-	} break;
+		case CXCursor_ClassTemplate: {
+			ast_visit_tempalted_struct(cursor);
+
+			return CXChildVisit_Continue;
+		} break;
 	}
 
 	return CXChildVisit_Continue;
@@ -754,14 +779,14 @@ CXChildVisitResult ast_visitor(CXCursor cursor, CXCursor parent, CXClientData cl
  *		-help: Displays usage information
 */
 
-constexpr int KARMA_REFLECTION_VERSION_MAJOR  = 1;
-constexpr int KARMA_REFLECTION_VERSION_MINOR  = 0;
-constexpr int KARMA_REFLECTION_VERSION_PATCH  = 0;
+constexpr int KARMA_REFLECTION_VERSION_MAJOR = 1;
+constexpr int KARMA_REFLECTION_VERSION_MINOR = 0;
+constexpr int KARMA_REFLECTION_VERSION_PATCH = 0;
 
 void command_line_print_help() {
 	auto spelling = clang_getClangVersion();
-	printf("Karma Reflection (version %d.%d.%d) ", 
-		KARMA_REFLECTION_VERSION_MAJOR, KARMA_REFLECTION_VERSION_MINOR, KARMA_REFLECTION_VERSION_PATCH);
+	printf("Karma Reflection (version %d.%d.%d) ",
+		   KARMA_REFLECTION_VERSION_MAJOR, KARMA_REFLECTION_VERSION_MINOR, KARMA_REFLECTION_VERSION_PATCH);
 	printf("(%s)\n", clang_getCString(spelling));
 	printf("\t-include:'{include_directory_path}'                optional\n");
 	printf("\t-defination:'{PREPROCESSOR_DEFINATION [VALUE]}'    optional\n");
@@ -772,14 +797,16 @@ void command_line_print_help() {
 }
 
 void command_line_error_print_location(String string, ptrsize location) {
-	printf("\t"); 
-	for (s64 i = 0; i < string.count; ++i) printf("%c", string[i]);
+	printf("\t");
+	for (s64 i = 0; i < string.count; ++i)
+		printf("%c", string[i]);
 	printf("\n\t");
-	for (ptrsize i = 0; i < location-1; ++i) printf(" ");
+	for (ptrsize i = 0; i < location - 1; ++i)
+		printf(" ");
 	printf("^\n");
 }
 
-bool parse_command_line(String command_line, Array<char*> * options, Array<char *> * files, char ** output) {
+bool parse_command_line(String command_line, Array<char *> *options, Array<char *> *files, char **output) {
 	// Skipping first string because it is path to executable
 	// In windows if path to executable has space then the path is inclosed in quotes
 	String search_for;
@@ -794,12 +821,14 @@ bool parse_command_line(String command_line, Array<char*> * options, Array<char 
 		return false;
 	}
 
-	String string = string_substring(command_line, find_res.start_index, command_line.count - find_res.start_index);
+	String string     = string_substring(command_line, find_res.start_index, command_line.count - find_res.start_index);
 	String executable = string_substring(command_line, 0, find_res.start_index + 1);
 
 	Tokenization_Status status;
-	auto tokens = tokenize(string, &status);
-	defer { mfree(tokens.data); };
+	auto                tokens = tokenize(string, &status);
+	defer {
+		mfree(tokens.data);
+	};
 
 	if (status.result != Tokenization_Result_SUCCESS) {
 		fprintf(stderr, "Error parsing command line arguments at %zd\n", status.column);
@@ -830,7 +859,7 @@ bool parse_command_line(String command_line, Array<char*> * options, Array<char 
 	*output = 0;
 
 	s64 i = 0;
-	for (i = 0; i + 2 < tokens.count; i+=3) {
+	for (i = 0; i + 2 < tokens.count; i += 3) {
 		auto key   = tokens[i + 0];
 		auto colon = tokens[i + 1];
 		auto value = tokens[i + 2];
@@ -859,31 +888,25 @@ bool parse_command_line(String command_line, Array<char*> * options, Array<char 
 		if (string_match(key.content, "include")) {
 			String option = string_tconcat("-I", value.value.string);
 			array_add(options, tto_cstring(option));
-		}
-		else if (string_match(key.content, "defination")) {
+		} else if (string_match(key.content, "defination")) {
 			String option = string_tconcat("-D", value.value.string);
 			array_add(options, tto_cstring(option));
-		}
-		else if (string_match(key.content, "build")) {
+		} else if (string_match(key.content, "build")) {
 			array_add(files, tto_cstring(value.value.string));
-		}
-		else if (string_match(key.content, "output")) {
+		} else if (string_match(key.content, "output")) {
 			if (*output == 0) {
 				*output = tto_cstring(value.value.string);
-			}
-			else {
+			} else {
 				fprintf(stderr, "Only output file is accepted!\n");
 				command_line_error_print_location(string, key.column);
 				return false;
 			}
-		}
-		else if (string_match(key.content, "help")) {
+		} else if (string_match(key.content, "help")) {
 			fprintf(stderr, "Unexpected option 'help'. 'help' can only be used alone.\n");
 			command_line_error_print_location(string, key.column);
 			printf("USAGE: %s help", tto_cstring(executable));
 			return false;
-		}
-		else {
+		} else {
 			fprintf(stderr, "Unrecognized identifier '%s'\n", tto_cstring(key.content));
 			command_line_error_print_location(string, key.column);
 			printf("USAGE: %s help", tto_cstring(executable));
@@ -914,8 +937,8 @@ bool parse_command_line(String command_line, Array<char*> * options, Array<char 
 }
 
 int system_main() {
-	Array<char*> options, files;
-	char * out_file = 0;
+	Array<char *> options, files;
+	char *        out_file = 0;
 	if (!parse_command_line(get_command_line(), &options, &files, &out_file)) {
 		return -1;
 	}
@@ -924,8 +947,8 @@ int system_main() {
 
 	u32 flags = CXTranslationUnit_None;
 
-	Output_Info out = { };
-	context.data = &out;
+	Output_Info out = {};
+	context.data    = &out;
 
 	for (s64 file_index = 0; file_index < files.count; ++file_index) {
 		printf("Reflecting '%s'...", files[file_index]);
@@ -938,7 +961,7 @@ int system_main() {
 
 			auto location = clang_getDiagnosticLocation(diag);
 
-			CXFile file;
+			CXFile       file;
 			unsigned int line, column, offset;
 			clang_getSpellingLocation(location, &file, &line, &column, &offset);
 			auto file_spelling = clang_File_tryGetRealPathName(file);
@@ -966,7 +989,7 @@ int system_main() {
 		clang_disposeTranslationUnit(unit);
 	}
 
-	String reflected_enum = ostream_build_string(&out.reflected_enum, true);
+	String reflected_enum   = ostream_build_string(&out.reflected_enum, true);
 	String reflected_struct = ostream_build_string(&out.reflected_struct, true);
 
 	ostream_free(&out.reflected_enum);
@@ -979,8 +1002,10 @@ int system_main() {
 
 	printf("Exporting '%s'...", out_file);
 
-	FILE * header = fopen(out_file, "wb");
-	defer { fclose(header); };
+	FILE *header = fopen(out_file, "wb");
+	defer {
+		fclose(header);
+	};
 
 	fprintf(header, "#pragma once\n");
 	fprintf(header, "#include \"reflection.h\"\n\n");

@@ -22,17 +22,18 @@ enum Texture_Filter {
 };
 
 struct Sampler_Params {
-	Texture_Wrap wrap_s; // default: TextureWrap_REPEAT
-	Texture_Wrap wrap_t; // default: TextureWrap_REPEAT
-	Texture_Filter min_filter; // default: TextureFilter_NEAREST
-	Texture_Filter mag_filter; // default: TextureFilter_LINEAR
-	bool gen_mipmaps; // default: false
+	Texture_Wrap   wrap_s;      // default: TextureWrap_REPEAT
+	Texture_Wrap   wrap_t;      // default: TextureWrap_REPEAT
+	Texture_Filter min_filter;  // default: TextureFilter_NEAREST
+	Texture_Filter mag_filter;  // default: TextureFilter_LINEAR
+	bool           gen_mipmaps; // default: false
 	// NOTE : Unused if channels is 1
 	bool srgb; // default: false
 };
 
 enum Buffer_Type {
-	Buffer_Type_DYNAMIC, Buffer_Type_STATIC
+	Buffer_Type_DYNAMIC,
+	Buffer_Type_STATIC
 };
 
 enum Color_Format {
@@ -50,17 +51,17 @@ enum Depth_Format {
 };
 
 struct Framebuffer {
-	int width, height;
+	int          width, height;
 	Color_Format color_format;
 	Depth_Format depth_format;
-	Handle id;
-	Handle color;
-	Handle depth;
+	Handle       id;
+	Handle       color;
+	Handle       depth;
 };
 
 struct Texture2d {
-	Handle handle = {};
-	Mm_Rect rect = {};
+	Handle  handle = {};
+	Mm_Rect rect   = {};
 };
 
 struct Render_Region {
@@ -69,16 +70,17 @@ struct Render_Region {
 };
 
 enum Clear_Flag_Bit : u32 {
-	Clear_Flag_NONE		= bit(0),
-	Clear_Flag_COLOR	= bit(1),
-	Clear_Flag_DEPTH	= bit(2),
-	Clear_Flag_STENCIL	= bit(3),
-	Clear_Flag_ALL		= Clear_Flag_COLOR | Clear_Flag_DEPTH | Clear_Flag_STENCIL
+	Clear_Flag_NONE    = bit(0),
+	Clear_Flag_COLOR   = bit(1),
+	Clear_Flag_DEPTH   = bit(2),
+	Clear_Flag_STENCIL = bit(3),
+	Clear_Flag_ALL     = Clear_Flag_COLOR | Clear_Flag_DEPTH | Clear_Flag_STENCIL
 };
 typedef u32 Clear_Flag;
 
 enum Camera_View_Kind {
-	PERSPECTIVE, ORTHOGRAPHIC
+	PERSPECTIVE,
+	ORTHOGRAPHIC
 };
 
 struct Camera_View_Perspective {
@@ -101,29 +103,29 @@ struct Camera_View {
 	Camera_View_Kind kind;
 
 	union {
-		Camera_View_Perspective perspective;
+		Camera_View_Perspective  perspective;
 		Camera_View_Orthographic orthographic;
 	};
 };
 
 inline Camera_View perspective_view(float fov, float ar, float n, float f) {
 	Camera_View view;
-	view.kind = PERSPECTIVE;
+	view.kind                      = PERSPECTIVE;
 	view.perspective.field_of_view = fov;
-	view.perspective.aspect_ratio = ar;
-	view.perspective.near_plane = n;
-	view.perspective.far_plane = f;
+	view.perspective.aspect_ratio  = ar;
+	view.perspective.near_plane    = n;
+	view.perspective.far_plane     = f;
 	return view;
 }
 
 inline Camera_View orthographic_view(float left, float right, float top, float bottom, float near = -1, float far = 1) {
 	Camera_View view;
-	view.kind = ORTHOGRAPHIC;
-	view.orthographic.left = left;
-	view.orthographic.right = right;
-	view.orthographic.top = top;
+	view.kind                = ORTHOGRAPHIC;
+	view.orthographic.left   = left;
+	view.orthographic.right  = right;
+	view.orthographic.top    = top;
 	view.orthographic.bottom = bottom;
-	view.orthographic.near = near;
-	view.orthographic.far = far;
+	view.orthographic.near   = near;
+	view.orthographic.far    = far;
 	return view;
 }

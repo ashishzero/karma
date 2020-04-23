@@ -8,11 +8,21 @@ inline u8 *move_ahead(u8 **ptr, int bytes) {
 	*ptr  = *ptr + bytes;
 	return r;
 }
-inline u8  get_u8(u8 **ptr) { return *move_ahead(ptr, 1); }
-inline s8  get_s8(u8 **ptr) { return *((s8 *)move_ahead(ptr, 1)); }
-inline u16 get_u16_be(u8 **ptr) { return bswap16p_be(move_ahead(ptr, 2)); }
-inline u32 get_u32_be(u8 **ptr) { return bswap32p_be(move_ahead(ptr, 4)); }
-inline u64 get_u64_be(u8 **ptr) { return bswap64p_be(move_ahead(ptr, 8)); }
+inline u8 get_u8(u8 **ptr) {
+	return *move_ahead(ptr, 1);
+}
+inline s8 get_s8(u8 **ptr) {
+	return *((s8 *)move_ahead(ptr, 1));
+}
+inline u16 get_u16_be(u8 **ptr) {
+	return bswap16p_be(move_ahead(ptr, 2));
+}
+inline u32 get_u32_be(u8 **ptr) {
+	return bswap32p_be(move_ahead(ptr, 4));
+}
+inline u64 get_u64_be(u8 **ptr) {
+	return bswap64p_be(move_ahead(ptr, 8));
+}
 inline s16 get_s16_be(u8 **ptr) {
 	auto r = bswap16p_be(move_ahead(ptr, 2));
 	return *((s16 *)&r);
@@ -26,9 +36,15 @@ inline s64 get_s64_be(u8 **ptr) {
 	return *((s64 *)&r);
 }
 
-inline u16 get_u16_le(u8 **ptr) { return bswap16p_le(move_ahead(ptr, 2)); }
-inline u32 get_u32_le(u8 **ptr) { return bswap32p_le(move_ahead(ptr, 4)); }
-inline u64 get_u64_le(u8 **ptr) { return bswap64p_le(move_ahead(ptr, 8)); }
+inline u16 get_u16_le(u8 **ptr) {
+	return bswap16p_le(move_ahead(ptr, 2));
+}
+inline u32 get_u32_le(u8 **ptr) {
+	return bswap32p_le(move_ahead(ptr, 4));
+}
+inline u64 get_u64_le(u8 **ptr) {
+	return bswap64p_le(move_ahead(ptr, 8));
+}
 inline s16 get_s16_le(u8 **ptr) {
 	auto r = bswap16p_le(move_ahead(ptr, 2));
 	return *((s16 *)&r);
@@ -54,8 +70,8 @@ struct Istream {
 
 inline Istream istream(void *ptr, size_t length) {
 	Istream res;
-	res.base	= (u8 *)ptr;
-	res.end		= res.base + length;
+	res.base    = (u8 *)ptr;
+	res.end     = res.base + length;
 	res.current = res.base;
 	return res;
 }
@@ -96,7 +112,7 @@ struct Ostream {
 	Bucket  head;
 	Bucket *tail = &head;
 
-	Allocator allocator		 = context.allocator;
+	Allocator allocator = context.allocator;
 };
 
 inline void ostream_write_buffer(Ostream *stream, const void *ptr, s64 size) {
@@ -108,9 +124,9 @@ inline void ostream_write_buffer(Ostream *stream, const void *ptr, s64 size) {
 		memcpy(stream->tail->data + stream->tail->filled, data + size - left, write);
 		stream->tail->filled += write;
 		left -= write;
-		stream->tail->next		 = new (stream->allocator) Ostream::Bucket;
+		stream->tail->next       = new (stream->allocator) Ostream::Bucket;
 		stream->tail->next->prev = stream->tail;
-		stream->tail			 = stream->tail->next;
+		stream->tail             = stream->tail->next;
 	}
 
 	if (left) {
@@ -121,7 +137,7 @@ inline void ostream_write_buffer(Ostream *stream, const void *ptr, s64 size) {
 
 template <typename T>
 inline void ostream_write(Ostream *stream, const T &v) {
-	ostream_write_buffer(stream, (void*)&v, sizeof(T));
+	ostream_write_buffer(stream, (void *)&v, sizeof(T));
 }
 
 inline void ostream_write_formatted(Ostream *stream, const char *fmt, ...) {
@@ -129,9 +145,11 @@ inline void ostream_write_formatted(Ostream *stream, const char *fmt, ...) {
 
 	va_list ap;
 	va_start(ap, fmt);
-	stbsp_vsprintfcb([](char const *buf, void *user, int len) -> char * { 
-		ostream_write_buffer((Ostream *)user, buf, len); return (char*)buf; }, 
-		stream, working_buffer, fmt, ap);
+	stbsp_vsprintfcb([](char const *buf, void *user, int len) -> char * {
+		ostream_write_buffer((Ostream *)user, buf, len);
+		return (char *)buf;
+	},
+					 stream, working_buffer, fmt, ap);
 	va_end(ap);
 }
 
@@ -165,6 +183,6 @@ inline void ostream_free(Ostream *stream) {
 		buk = prev;
 	}
 
-	stream->tail		= &stream->head;
+	stream->tail        = &stream->head;
 	stream->head.filled = 0;
 }

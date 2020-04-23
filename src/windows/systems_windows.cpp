@@ -21,49 +21,49 @@
 // XInput Header File
 //
 
-#define XINPUT_DEVTYPE_GAMEPAD 0x01
+#define XINPUT_DEVTYPE_GAMEPAD    0x01
 #define XINPUT_DEVSUBTYPE_GAMEPAD 0x01
 
-#define XINPUT_DEVSUBTYPE_UNKNOWN 0x00
-#define XINPUT_DEVSUBTYPE_WHEEL 0x02
-#define XINPUT_DEVSUBTYPE_ARCADE_STICK 0x03
-#define XINPUT_DEVSUBTYPE_FLIGHT_STICK 0x04
-#define XINPUT_DEVSUBTYPE_DANCE_PAD 0x05
-#define XINPUT_DEVSUBTYPE_GUITAR 0x06
+#define XINPUT_DEVSUBTYPE_UNKNOWN          0x00
+#define XINPUT_DEVSUBTYPE_WHEEL            0x02
+#define XINPUT_DEVSUBTYPE_ARCADE_STICK     0x03
+#define XINPUT_DEVSUBTYPE_FLIGHT_STICK     0x04
+#define XINPUT_DEVSUBTYPE_DANCE_PAD        0x05
+#define XINPUT_DEVSUBTYPE_GUITAR           0x06
 #define XINPUT_DEVSUBTYPE_GUITAR_ALTERNATE 0x07
-#define XINPUT_DEVSUBTYPE_DRUM_KIT 0x08
-#define XINPUT_DEVSUBTYPE_GUITAR_BASS 0x0B
-#define XINPUT_DEVSUBTYPE_ARCADE_PAD 0x13
+#define XINPUT_DEVSUBTYPE_DRUM_KIT         0x08
+#define XINPUT_DEVSUBTYPE_GUITAR_BASS      0x0B
+#define XINPUT_DEVSUBTYPE_ARCADE_PAD       0x13
 
 #define XINPUT_CAPS_VOICE_SUPPORTED 0x0004
-#define XINPUT_CAPS_FFB_SUPPORTED 0x0001
-#define XINPUT_CAPS_WIRELESS 0x0002
-#define XINPUT_CAPS_PMD_SUPPORTED 0x0008
-#define XINPUT_CAPS_NO_NAVIGATION 0x0010
+#define XINPUT_CAPS_FFB_SUPPORTED   0x0001
+#define XINPUT_CAPS_WIRELESS        0x0002
+#define XINPUT_CAPS_PMD_SUPPORTED   0x0008
+#define XINPUT_CAPS_NO_NAVIGATION   0x0010
 
-#define XINPUT_GAMEPAD_DPAD_UP 0x0001
-#define XINPUT_GAMEPAD_DPAD_DOWN 0x0002
-#define XINPUT_GAMEPAD_DPAD_LEFT 0x0004
-#define XINPUT_GAMEPAD_DPAD_RIGHT 0x0008
-#define XINPUT_GAMEPAD_START 0x0010
-#define XINPUT_GAMEPAD_BACK 0x0020
-#define XINPUT_GAMEPAD_LEFT_THUMB 0x0040
-#define XINPUT_GAMEPAD_RIGHT_THUMB 0x0080
-#define XINPUT_GAMEPAD_LEFT_SHOULDER 0x0100
+#define XINPUT_GAMEPAD_DPAD_UP        0x0001
+#define XINPUT_GAMEPAD_DPAD_DOWN      0x0002
+#define XINPUT_GAMEPAD_DPAD_LEFT      0x0004
+#define XINPUT_GAMEPAD_DPAD_RIGHT     0x0008
+#define XINPUT_GAMEPAD_START          0x0010
+#define XINPUT_GAMEPAD_BACK           0x0020
+#define XINPUT_GAMEPAD_LEFT_THUMB     0x0040
+#define XINPUT_GAMEPAD_RIGHT_THUMB    0x0080
+#define XINPUT_GAMEPAD_LEFT_SHOULDER  0x0100
 #define XINPUT_GAMEPAD_RIGHT_SHOULDER 0x0200
-#define XINPUT_GAMEPAD_A 0x1000
-#define XINPUT_GAMEPAD_B 0x2000
-#define XINPUT_GAMEPAD_X 0x4000
-#define XINPUT_GAMEPAD_Y 0x8000
+#define XINPUT_GAMEPAD_A              0x1000
+#define XINPUT_GAMEPAD_B              0x2000
+#define XINPUT_GAMEPAD_X              0x4000
+#define XINPUT_GAMEPAD_Y              0x8000
 
-#define XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE 7849
+#define XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE  7849
 #define XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE 8689
-#define XINPUT_GAMEPAD_TRIGGER_THRESHOLD 30
+#define XINPUT_GAMEPAD_TRIGGER_THRESHOLD    30
 
 #define XINPUT_GAMEPAD_TRIGGER_MIN 0
 #define XINPUT_GAMEPAD_TRIGGER_MAX 255
-#define XINPUT_GAMEPAD_THUMB_MIN -32768
-#define XINPUT_GAMEPAD_THUMB_MAX 32767
+#define XINPUT_GAMEPAD_THUMB_MIN   -32768
+#define XINPUT_GAMEPAD_THUMB_MAX   32767
 
 #define XINPUT_FLAG_GAMEPAD 0x00000001
 
@@ -71,58 +71,58 @@
 #define BATTERY_DEVTYPE_HEADSET 0x01
 
 #define BATTERY_TYPE_DISCONNECTED 0x00
-#define BATTERY_TYPE_WIRED 0x01
-#define BATTERY_TYPE_ALKALINE 0x02
-#define BATTERY_TYPE_NIMH 0x03
-#define BATTERY_TYPE_UNKNOWN 0xFF
+#define BATTERY_TYPE_WIRED        0x01
+#define BATTERY_TYPE_ALKALINE     0x02
+#define BATTERY_TYPE_NIMH         0x03
+#define BATTERY_TYPE_UNKNOWN      0xFF
 
-#define BATTERY_LEVEL_EMPTY 0x00
-#define BATTERY_LEVEL_LOW 0x01
+#define BATTERY_LEVEL_EMPTY  0x00
+#define BATTERY_LEVEL_LOW    0x01
 #define BATTERY_LEVEL_MEDIUM 0x02
-#define BATTERY_LEVEL_FULL 0x03
+#define BATTERY_LEVEL_FULL   0x03
 
 #define XUSER_MAX_COUNT 4
 #define XUSER_INDEX_ANY 0x000000FF
 
-#define VK_PAD_A 0x5800
-#define VK_PAD_B 0x5801
-#define VK_PAD_X 0x5802
-#define VK_PAD_Y 0x5803
+#define VK_PAD_A         0x5800
+#define VK_PAD_B         0x5801
+#define VK_PAD_X         0x5802
+#define VK_PAD_Y         0x5803
 #define VK_PAD_RSHOULDER 0x5804
 #define VK_PAD_LSHOULDER 0x5805
-#define VK_PAD_LTRIGGER 0x5806
-#define VK_PAD_RTRIGGER 0x5807
+#define VK_PAD_LTRIGGER  0x5806
+#define VK_PAD_RTRIGGER  0x5807
 
-#define VK_PAD_DPAD_UP 0x5810
-#define VK_PAD_DPAD_DOWN 0x5811
-#define VK_PAD_DPAD_LEFT 0x5812
-#define VK_PAD_DPAD_RIGHT 0x5813
-#define VK_PAD_START 0x5814
-#define VK_PAD_BACK 0x5815
+#define VK_PAD_DPAD_UP      0x5810
+#define VK_PAD_DPAD_DOWN    0x5811
+#define VK_PAD_DPAD_LEFT    0x5812
+#define VK_PAD_DPAD_RIGHT   0x5813
+#define VK_PAD_START        0x5814
+#define VK_PAD_BACK         0x5815
 #define VK_PAD_LTHUMB_PRESS 0x5816
 #define VK_PAD_RTHUMB_PRESS 0x5817
 
-#define VK_PAD_LTHUMB_UP 0x5820
-#define VK_PAD_LTHUMB_DOWN 0x5821
-#define VK_PAD_LTHUMB_RIGHT 0x5822
-#define VK_PAD_LTHUMB_LEFT 0x5823
-#define VK_PAD_LTHUMB_UPLEFT 0x5824
-#define VK_PAD_LTHUMB_UPRIGHT 0x5825
+#define VK_PAD_LTHUMB_UP        0x5820
+#define VK_PAD_LTHUMB_DOWN      0x5821
+#define VK_PAD_LTHUMB_RIGHT     0x5822
+#define VK_PAD_LTHUMB_LEFT      0x5823
+#define VK_PAD_LTHUMB_UPLEFT    0x5824
+#define VK_PAD_LTHUMB_UPRIGHT   0x5825
 #define VK_PAD_LTHUMB_DOWNRIGHT 0x5826
-#define VK_PAD_LTHUMB_DOWNLEFT 0x5827
+#define VK_PAD_LTHUMB_DOWNLEFT  0x5827
 
-#define VK_PAD_RTHUMB_UP 0x5830
-#define VK_PAD_RTHUMB_DOWN 0x5831
-#define VK_PAD_RTHUMB_RIGHT 0x5832
-#define VK_PAD_RTHUMB_LEFT 0x5833
-#define VK_PAD_RTHUMB_UPLEFT 0x5834
-#define VK_PAD_RTHUMB_UPRIGHT 0x5835
+#define VK_PAD_RTHUMB_UP        0x5830
+#define VK_PAD_RTHUMB_DOWN      0x5831
+#define VK_PAD_RTHUMB_RIGHT     0x5832
+#define VK_PAD_RTHUMB_LEFT      0x5833
+#define VK_PAD_RTHUMB_UPLEFT    0x5834
+#define VK_PAD_RTHUMB_UPRIGHT   0x5835
 #define VK_PAD_RTHUMB_DOWNRIGHT 0x5836
-#define VK_PAD_RTHUMB_DOWNLEFT 0x5837
+#define VK_PAD_RTHUMB_DOWNLEFT  0x5837
 
 #define XINPUT_KEYSTROKE_KEYDOWN 0x0001
-#define XINPUT_KEYSTROKE_KEYUP 0x0002
-#define XINPUT_KEYSTROKE_REPEAT 0x0004
+#define XINPUT_KEYSTROKE_KEYUP   0x0002
+#define XINPUT_KEYSTROKE_REPEAT  0x0004
 
 #define XINPUT_GAMEPAD_VIBRATION_MAX 65535
 
@@ -137,7 +137,7 @@ typedef struct _XINPUT_GAMEPAD {
 } XINPUT_GAMEPAD, *PXINPUT_GAMEPAD;
 
 typedef struct _XINPUT_STATE {
-	DWORD		   dwPacketNumber;
+	DWORD          dwPacketNumber;
 	XINPUT_GAMEPAD Gamepad;
 } XINPUT_STATE, *PXINPUT_STATE;
 
@@ -147,9 +147,9 @@ typedef struct _XINPUT_VIBRATION {
 } XINPUT_VIBRATION, *PXINPUT_VIBRATION;
 
 typedef struct _XINPUT_CAPABILITIES {
-	BYTE			 Type;
-	BYTE			 SubType;
-	WORD			 Flags;
+	BYTE             Type;
+	BYTE             SubType;
+	WORD             Flags;
 	XINPUT_GAMEPAD   Gamepad;
 	XINPUT_VIBRATION Vibration;
 } XINPUT_CAPABILITIES, *PXINPUT_CAPABILITIES;
@@ -174,19 +174,31 @@ typedef DWORD (*Proc_XInput_Get_Audio_Device_Ids)(DWORD dwUserIndex, LPWSTR pRen
 typedef DWORD (*Proc_XInput_Get_Battery_Information)(DWORD dwUserIndex, BYTE devType, XINPUT_BATTERY_INFORMATION *pBatteryInformation);
 typedef DWORD (*Proc_XInput_Get_Keystroke)(DWORD dwUserIndex, DWORD dwReserved, PXINPUT_KEYSTROKE pKeystroke);
 
-static Proc_XInput_Get_State			   XInputGetState;
-static Proc_XInput_Set_State			   XInputSetState;
-static Proc_XInput_Get_Capabilities		   XInputGetCapabilities;
-static Proc_XInput_Get_Audio_Device_Ids	XInputGetAudioDeviceIds;
+static Proc_XInput_Get_State               XInputGetState;
+static Proc_XInput_Set_State               XInputSetState;
+static Proc_XInput_Get_Capabilities        XInputGetCapabilities;
+static Proc_XInput_Get_Audio_Device_Ids    XInputGetAudioDeviceIds;
 static Proc_XInput_Get_Battery_Information XInputGetBatteryInformation;
-static Proc_XInput_Get_Keystroke		   XInputGetKeystroke;
+static Proc_XInput_Get_Keystroke           XInputGetKeystroke;
 
-static DWORD xinput_get_state_stub(DWORD, XINPUT_STATE *) { return ERROR_DEVICE_NOT_CONNECTED; }
-static DWORD xinput_set_state_stub(DWORD, XINPUT_VIBRATION *) { return ERROR_DEVICE_NOT_CONNECTED; }
-static DWORD xinput_get_capacilities_stub(DWORD, DWORD, XINPUT_CAPABILITIES *) { return ERROR_DEVICE_NOT_CONNECTED; }
-static DWORD xinput_get_audio_device_ids_stub(DWORD, LPWSTR, UINT *, LPWSTR, UINT *) { return ERROR_DEVICE_NOT_CONNECTED; }
-static DWORD xinput_get_battery_information_stub(DWORD, BYTE, XINPUT_BATTERY_INFORMATION *) { return ERROR_EMPTY; }
-static DWORD xinput_get_keystroke_stub(DWORD, DWORD, PXINPUT_KEYSTROKE) { return ERROR_EMPTY; }
+static DWORD xinput_get_state_stub(DWORD, XINPUT_STATE *) {
+	return ERROR_DEVICE_NOT_CONNECTED;
+}
+static DWORD xinput_set_state_stub(DWORD, XINPUT_VIBRATION *) {
+	return ERROR_DEVICE_NOT_CONNECTED;
+}
+static DWORD xinput_get_capacilities_stub(DWORD, DWORD, XINPUT_CAPABILITIES *) {
+	return ERROR_DEVICE_NOT_CONNECTED;
+}
+static DWORD xinput_get_audio_device_ids_stub(DWORD, LPWSTR, UINT *, LPWSTR, UINT *) {
+	return ERROR_DEVICE_NOT_CONNECTED;
+}
+static DWORD xinput_get_battery_information_stub(DWORD, BYTE, XINPUT_BATTERY_INFORMATION *) {
+	return ERROR_EMPTY;
+}
+static DWORD xinput_get_keystroke_stub(DWORD, DWORD, PXINPUT_KEYSTROKE) {
+	return ERROR_EMPTY;
+}
 
 struct Win32_Controller {
 	DWORD packet_number;
@@ -199,20 +211,20 @@ struct Win32_Controller {
 
 thread_local Thread_Context context;
 
-static HWND			   window_handle;
+static HWND            window_handle;
 static WINDOWPLACEMENT windowed_placement;
 
 static constexpr int WINDOWS_MAX_KEYS = 256;
-static Key			 windows_key_map[WINDOWS_MAX_KEYS]; // This number should be enough
+static Key           windows_key_map[WINDOWS_MAX_KEYS]; // This number should be enough
 
 static constexpr int WINDOWS_MAX_EVENTS = 65535; // this number should be enough
-static Event		 windows_event_queue[WINDOWS_MAX_EVENTS];
-static u32			 windows_event_queue_push_index;
-static u32			 windows_event_pop_index;
+static Event         windows_event_queue[WINDOWS_MAX_EVENTS];
+static u32           windows_event_queue_push_index;
+static u32           windows_event_pop_index;
 static volatile u32  windows_event_count;
 
 static Win32_Controller windows_controllers_state[XUSER_MAX_COUNT];
-static Controller		controllers[XUSER_MAX_COUNT];
+static Controller       controllers[XUSER_MAX_COUNT];
 
 static void win32_check_for_error_info(const Compile_Info &compile_info) {
 	DWORD error = GetLastError();
@@ -237,7 +249,7 @@ static void win32_check_for_error_info(const Compile_Info &compile_info) {
 Array_View<u8> system_read_entire_file(const String path) {
 	Array_View<u8> result = {};
 
-	auto	 length = path.count + 1;
+	auto     length = path.count + 1;
 	wchar_t *wpath  = (wchar_t *)tallocate(length * sizeof(wchar_t));
 	MultiByteToWideChar(CP_UTF8, 0, (char *)path.data, (int)path.count, wpath, (int)length);
 	wpath[path.count] = 0;
@@ -246,7 +258,9 @@ Array_View<u8> system_read_entire_file(const String path) {
 	win32_check_for_error();
 
 	if (handle != INVALID_HANDLE_VALUE) {
-		defer { CloseHandle(handle); };
+		defer {
+			CloseHandle(handle);
+		};
 
 		LARGE_INTEGER file_size;
 		GetFileSizeEx(handle, &file_size);
@@ -261,7 +275,7 @@ Array_View<u8> system_read_entire_file(const String path) {
 		}
 
 		DWORD read_bytes = 0;
-		u8 *  end_ptr	= (u8 *)buffer + file_size.QuadPart;
+		u8 *  end_ptr    = (u8 *)buffer + file_size.QuadPart;
 		for (u8 *read_ptr = (u8 *)buffer;
 			 read_ptr < end_ptr;
 			 read_ptr += read_bytes) {
@@ -290,14 +304,16 @@ Array_View<u8> system_read_entire_file(const String path) {
 }
 
 bool system_write_entire_file(const String path, Array_View<u8> content) {
-	auto	 length = path.count + 1;
+	auto     length = path.count + 1;
 	wchar_t *wpath  = (wchar_t *)tallocate(length * sizeof(wchar_t));
 	MultiByteToWideChar(CP_UTF8, 0, (char *)path.data, (int)path.count, wpath, (int)length);
 	wpath[length] = 0;
 
 	auto handle = CreateFileW(wpath, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
 	if (handle != INVALID_HANDLE_VALUE) {
-		defer { CloseHandle(handle); };
+		defer {
+			CloseHandle(handle);
+		};
 
 		// this is done because WriteFile can with blocks of DWORD and not LARGE_INTEGER
 		DWORD write_size = 0;
@@ -308,11 +324,10 @@ bool system_write_entire_file(const String path, Array_View<u8> content) {
 		}
 
 		DWORD written_bytes = 0;
-		u8 *  end_ptr		= content.data + content.count;
+		u8 *  end_ptr       = content.data + content.count;
 		for (u8 *write_ptr = content.data;
 			 write_ptr < end_ptr;
 			 write_ptr += written_bytes) {
-
 			DWORD left_size = (DWORD)(content.count - (s64)written_bytes);
 			if (write_size > left_size) {
 				write_size = left_size;
@@ -320,7 +335,7 @@ bool system_write_entire_file(const String path, Array_View<u8> content) {
 
 			// resetting *written_bytes* because docs says to (for next loop)
 			written_bytes = 0;
-			BOOL res	  = WriteFile(handle, write_ptr, write_size, &written_bytes, 0);
+			BOOL res      = WriteFile(handle, write_ptr, write_size, &written_bytes, 0);
 			if (res) {
 				if (written_bytes == content.count) break;
 			} else {
@@ -334,14 +349,14 @@ bool system_write_entire_file(const String path, Array_View<u8> content) {
 
 ptrsize isystem_get_file_pointer(Handle handle) {
 	LARGE_INTEGER result;
-	auto		  res = GetFileSizeEx(handle.hptr, &result);
+	auto          res = GetFileSizeEx(handle.hptr, &result);
 	assert(res); // invalid file may result assertion here
 	return result.QuadPart;
 }
 
 bool isystem_set_file_pointer(Handle handle, ptrsize position, File_Position start_position) {
 	LARGE_INTEGER move_distance = {};
-	move_distance.QuadPart		= position;
+	move_distance.QuadPart      = position;
 	DWORD method;
 	if (start_position == File_Position_BEG)
 		method = FILE_BEGIN;
@@ -362,7 +377,7 @@ bool isystem_read_file(Handle handle, ptrsize size, u8 *buffer) {
 	}
 
 	DWORD read_bytes = 0;
-	u8 *  end_ptr	= buffer + size;
+	u8 *  end_ptr    = buffer + size;
 	for (u8 *read_ptr = buffer;
 		 read_ptr < end_ptr;
 		 read_ptr += read_bytes) {
@@ -397,11 +412,10 @@ bool isystem_write_file(Handle handle, void *ptr, ptrsize size) {
 	}
 
 	DWORD written_bytes = 0;
-	u8 *  end_ptr		= content + size;
+	u8 *  end_ptr       = content + size;
 	for (u8 *write_ptr = content;
 		 write_ptr < end_ptr;
 		 write_ptr += written_bytes) {
-
 		DWORD left_size = (DWORD)(size - (s64)written_bytes);
 		if (write_size > left_size) {
 			write_size = left_size;
@@ -409,7 +423,7 @@ bool isystem_write_file(Handle handle, void *ptr, ptrsize size) {
 
 		// resetting *written_bytes* because docs says to (for next loop)
 		written_bytes = 0;
-		BOOL res	  = WriteFile(handle.hptr, write_ptr, write_size, &written_bytes, 0);
+		BOOL res      = WriteFile(handle.hptr, write_ptr, write_size, &written_bytes, 0);
 		if (res) {
 			if (written_bytes == size) break;
 		} else {
@@ -426,25 +440,25 @@ bool system_open_file(const String path, File_Operation options, System_File *fi
 
 	*file = {};
 	if (options == File_Operation_READ) {
-		access	 = GENERIC_READ;
+		access     = GENERIC_READ;
 		creation   = OPEN_EXISTING;
 		file->read = isystem_read_file;
 	} else if (options == File_Operation_APPEND) {
-		access		= GENERIC_WRITE;
-		creation	= OPEN_EXISTING;
+		access      = GENERIC_WRITE;
+		creation    = OPEN_EXISTING;
 		file->write = isystem_write_file;
 	} else if (options == File_Operation_READ_WRITE) {
-		access		= GENERIC_READ | GENERIC_WRITE;
-		creation	= OPEN_EXISTING;
+		access      = GENERIC_READ | GENERIC_WRITE;
+		creation    = OPEN_EXISTING;
 		file->read  = isystem_read_file;
 		file->write = isystem_write_file;
 	} else {
-		access		= GENERIC_WRITE;
-		creation	= CREATE_ALWAYS;
+		access      = GENERIC_WRITE;
+		creation    = CREATE_ALWAYS;
 		file->write = isystem_write_file;
 	}
 
-	auto	 length = path.count + 1;
+	auto     length = path.count + 1;
 	wchar_t *wpath  = (wchar_t *)tallocate(length * sizeof(wchar_t));
 	MultiByteToWideChar(CP_UTF8, 0, (char *)path.data, (int)path.count, wpath, (int)length);
 	wpath[length] = 0;
@@ -482,28 +496,27 @@ Array_View<System_Find_File_Info> system_find_files(const String search, bool re
 
 	array_add(&find_directories, search);
 
-	String				 search_param  = {};
+	String               search_param  = {};
 	String_Search_Result search_result = string_isearch_reverse(search, "/");
 	if (search_result.found) {
 		search_param = string_substring(search, search_result.start_index, search.count - search_result.start_index);
 	}
 
 	for (s64 index = 0; index < find_directories.count; ++index) {
-
 		u8 *tp = get_temporary_allocator_point();
 
-		int		 length			= (int)find_directories[index].count + 1;
+		int      length         = (int)find_directories[index].count + 1;
 		wchar_t *find_directory = (wchar_t *)tallocate(length * sizeof(wchar_t));
 		MultiByteToWideChar(CP_UTF8, 0, (const char *)find_directories[index].data, (int)find_directories[index].count, find_directory, length);
 		find_directory[length] = 0;
 
 		WIN32_FIND_DATAW data;
-		HANDLE			 handle = FindFirstFileW(find_directory, &data);
+		HANDLE           handle = FindFirstFileW(find_directory, &data);
 
 		set_temporary_allocator_point(tp);
 
 		if (handle != INVALID_HANDLE_VALUE) {
-			String				 directory	 = {};
+			String               directory     = {};
 			String_Search_Result search_result = string_isearch_reverse(find_directories[index], "/");
 			if (search_result.found) {
 				directory = string_substring(find_directories[index], 0, search_result.start_index + 1);
@@ -511,14 +524,13 @@ Array_View<System_Find_File_Info> system_find_files(const String search, bool re
 
 			System_Find_File_Info file = {};
 			do {
-
 				if (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
 					if (wcscmp(data.cFileName, L".") != 0 && wcscmp(data.cFileName, L"..") != 0 && recursive) {
 						String new_dir;
 
 						size_t file_len = wcslen(data.cFileName);
 						new_dir.count   = file_len + directory.count + search_param.count;
-						new_dir.data	= (u8 *)mallocate(new_dir.count);
+						new_dir.data    = (u8 *)mallocate(new_dir.count);
 
 						memcpy(new_dir.data, directory.data, directory.count);
 						WideCharToMultiByte(CP_UTF8, 0, data.cFileName, -1, (char *)new_dir.data + directory.count, (int)(new_dir.count - directory.count), 0, 0);
@@ -578,7 +590,7 @@ Vec2s system_get_client_size() {
 
 int system_fullscreen_state(int toggle) {
 	LONG_PTR style   = GetWindowLongPtrW(window_handle, GWL_STYLE);
-	bool	 is_full = !(style & WS_OVERLAPPEDWINDOW);
+	bool     is_full = !(style & WS_OVERLAPPEDWINDOW);
 
 	if (toggle == SYSTEM_TOGGLE) {
 		if (is_full)
@@ -590,39 +602,39 @@ int system_fullscreen_state(int toggle) {
 	windowed_placement.length = sizeof(WINDOWPLACEMENT);
 
 	switch (toggle) {
-	case SYSTEM_ENABLE: {
-		if (!is_full) {
-			MONITORINFO mi = { sizeof(mi) };
-			if (GetWindowPlacement(window_handle, &windowed_placement) &&
-				GetMonitorInfoW(MonitorFromWindow(window_handle,
-												  MONITOR_DEFAULTTONEAREST),
-								&mi)) {
-				SetWindowLongPtrW(window_handle, GWL_STYLE, style & ~WS_OVERLAPPEDWINDOW);
-				SetWindowPos(window_handle, HWND_TOP,
-							 mi.rcMonitor.left, mi.rcMonitor.top,
-							 mi.rcMonitor.right - mi.rcMonitor.left,
-							 mi.rcMonitor.bottom - mi.rcMonitor.top,
-							 SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+		case SYSTEM_ENABLE: {
+			if (!is_full) {
+				MONITORINFO mi = { sizeof(mi) };
+				if (GetWindowPlacement(window_handle, &windowed_placement) &&
+					GetMonitorInfoW(MonitorFromWindow(window_handle,
+													  MONITOR_DEFAULTTONEAREST),
+									&mi)) {
+					SetWindowLongPtrW(window_handle, GWL_STYLE, style & ~WS_OVERLAPPEDWINDOW);
+					SetWindowPos(window_handle, HWND_TOP,
+								 mi.rcMonitor.left, mi.rcMonitor.top,
+								 mi.rcMonitor.right - mi.rcMonitor.left,
+								 mi.rcMonitor.bottom - mi.rcMonitor.top,
+								 SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+				}
 			}
-		}
-		return SYSTEM_ENABLE;
-	} break;
+			return SYSTEM_ENABLE;
+		} break;
 
-	case SYSTEM_DISABLE: {
-		if (is_full) {
-			SetWindowLongPtrW(window_handle, GWL_STYLE, style | WS_OVERLAPPEDWINDOW);
-			SetWindowPlacement(window_handle, &windowed_placement);
-			SetWindowPos(window_handle, 0, 0, 0, 0, 0,
-						 SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER |
-						  SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
-		}
-		return SYSTEM_DISABLE;
-	} break;
-	case SYSTEM_QUERY: {
-		return (is_full ? SYSTEM_ENABLE : SYSTEM_DISABLE);
-	} break;
+		case SYSTEM_DISABLE: {
+			if (is_full) {
+				SetWindowLongPtrW(window_handle, GWL_STYLE, style | WS_OVERLAPPEDWINDOW);
+				SetWindowPlacement(window_handle, &windowed_placement);
+				SetWindowPos(window_handle, 0, 0, 0, 0, 0,
+							 SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER |
+								 SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+			}
+			return SYSTEM_DISABLE;
+		} break;
+		case SYSTEM_QUERY: {
+			return (is_full ? SYSTEM_ENABLE : SYSTEM_DISABLE);
+		} break;
 
-		invalid_default_case();
+			invalid_default_case();
 	}
 
 	return SYSTEM_QUERY; // i don't know what to return here so...
@@ -630,7 +642,7 @@ int system_fullscreen_state(int toggle) {
 
 int system_maximize_state(int toggle) {
 	WINDOWPLACEMENT wnd_placement = {};
-	wnd_placement.length		  = sizeof(WINDOWPLACEMENT);
+	wnd_placement.length          = sizeof(WINDOWPLACEMENT);
 	GetWindowPlacement(window_handle, &wnd_placement);
 	bool is_maximized = (wnd_placement.showCmd == SW_SHOWMAXIMIZED);
 
@@ -642,26 +654,26 @@ int system_maximize_state(int toggle) {
 	}
 
 	switch (toggle) {
-	case SYSTEM_ENABLE: {
-		if (!is_maximized) {
-			wnd_placement.showCmd = SW_SHOWMAXIMIZED;
-			SetWindowPlacement(window_handle, &wnd_placement);
-		}
-		return SYSTEM_ENABLE;
-	} break;
+		case SYSTEM_ENABLE: {
+			if (!is_maximized) {
+				wnd_placement.showCmd = SW_SHOWMAXIMIZED;
+				SetWindowPlacement(window_handle, &wnd_placement);
+			}
+			return SYSTEM_ENABLE;
+		} break;
 
-	case SYSTEM_DISABLE: {
-		if (is_maximized) {
-			wnd_placement.showCmd = SW_SHOWNORMAL;
-			SetWindowPlacement(window_handle, &wnd_placement);
-		}
-		return SYSTEM_DISABLE;
-	} break;
-	case SYSTEM_QUERY: {
-		return (is_maximized ? SYSTEM_ENABLE : SYSTEM_DISABLE);
-	} break;
+		case SYSTEM_DISABLE: {
+			if (is_maximized) {
+				wnd_placement.showCmd = SW_SHOWNORMAL;
+				SetWindowPlacement(window_handle, &wnd_placement);
+			}
+			return SYSTEM_DISABLE;
+		} break;
+		case SYSTEM_QUERY: {
+			return (is_maximized ? SYSTEM_ENABLE : SYSTEM_DISABLE);
+		} break;
 
-		invalid_default_case();
+			invalid_default_case();
 	}
 
 	return SYSTEM_QUERY; // i don't know what to return here so...
@@ -671,7 +683,7 @@ System_Window_State system_get_window_state() {
 	System_Window_State state = {};
 
 	WINDOWPLACEMENT *placement = (WINDOWPLACEMENT *)mallocate(sizeof(*placement));
-	placement->length		   = sizeof(*placement);
+	placement->length          = sizeof(*placement);
 	if (GetWindowPlacement(window_handle, placement)) {
 		state.handle = placement;
 		state.size   = sizeof(*placement);
@@ -719,39 +731,39 @@ void system_hide_cursor() {
 void system_set_cursor_kind(Cursor_Kind kind) {
 	HANDLE handle = INVALID_HANDLE_VALUE;
 	switch (kind) {
-	case Cursor_Kind_ARROW:
-		handle = LoadImageW(0, MAKEINTRESOURCEW(OCR_NORMAL), IMAGE_CURSOR, 0, 0, LR_SHARED);
-		break;
+		case Cursor_Kind_ARROW:
+			handle = LoadImageW(0, MAKEINTRESOURCEW(OCR_NORMAL), IMAGE_CURSOR, 0, 0, LR_SHARED);
+			break;
 
-	case Cursor_Kind_IBEAM:
-		handle = LoadImageW(0, MAKEINTRESOURCEW(OCR_IBEAM), IMAGE_CURSOR, 0, 0, LR_SHARED);
-		break;
+		case Cursor_Kind_IBEAM:
+			handle = LoadImageW(0, MAKEINTRESOURCEW(OCR_IBEAM), IMAGE_CURSOR, 0, 0, LR_SHARED);
+			break;
 
-	case Cursor_Kind_SIZE_ALL:
-		handle = LoadImageW(0, MAKEINTRESOURCEW(OCR_SIZEALL), IMAGE_CURSOR, 0, 0, LR_SHARED);
-		break;
+		case Cursor_Kind_SIZE_ALL:
+			handle = LoadImageW(0, MAKEINTRESOURCEW(OCR_SIZEALL), IMAGE_CURSOR, 0, 0, LR_SHARED);
+			break;
 
-	case Cursor_Kind_SIZE_NS:
-		handle = LoadImageW(0, MAKEINTRESOURCEW(OCR_SIZENS), IMAGE_CURSOR, 0, 0, LR_SHARED);
-		break;
+		case Cursor_Kind_SIZE_NS:
+			handle = LoadImageW(0, MAKEINTRESOURCEW(OCR_SIZENS), IMAGE_CURSOR, 0, 0, LR_SHARED);
+			break;
 
-	case Cursor_Kind_SIZE_EW:
-		handle = LoadImageW(0, MAKEINTRESOURCEW(OCR_SIZEWE), IMAGE_CURSOR, 0, 0, LR_SHARED);
-		break;
+		case Cursor_Kind_SIZE_EW:
+			handle = LoadImageW(0, MAKEINTRESOURCEW(OCR_SIZEWE), IMAGE_CURSOR, 0, 0, LR_SHARED);
+			break;
 
-	case Cursor_Kind_SIZE_NESW:
-		handle = LoadImageW(0, MAKEINTRESOURCEW(OCR_SIZENESW), IMAGE_CURSOR, 0, 0, LR_SHARED);
-		break;
+		case Cursor_Kind_SIZE_NESW:
+			handle = LoadImageW(0, MAKEINTRESOURCEW(OCR_SIZENESW), IMAGE_CURSOR, 0, 0, LR_SHARED);
+			break;
 
-	case Cursor_Kind_SIZE_NWSE:
-		handle = LoadImageW(0, MAKEINTRESOURCEW(OCR_SIZENWSE), IMAGE_CURSOR, 0, 0, LR_SHARED);
-		break;
+		case Cursor_Kind_SIZE_NWSE:
+			handle = LoadImageW(0, MAKEINTRESOURCEW(OCR_SIZENWSE), IMAGE_CURSOR, 0, 0, LR_SHARED);
+			break;
 
-	case Cursor_Kind_HAND:
-		handle = LoadImageW(0, MAKEINTRESOURCEW(OCR_HAND), IMAGE_CURSOR, 0, 0, LR_SHARED);
-		break;
+		case Cursor_Kind_HAND:
+			handle = LoadImageW(0, MAKEINTRESOURCEW(OCR_HAND), IMAGE_CURSOR, 0, 0, LR_SHARED);
+			break;
 
-		invalid_default_case();
+			invalid_default_case();
 	}
 	SetCursor((HCURSOR)handle);
 }
@@ -768,7 +780,7 @@ String system_get_clipboard_text() {
 			HANDLE   buffer  = GetClipboardData(CF_UNICODETEXT);
 			wchar_t *wstring = (wchar_t *)GlobalLock(buffer);
 			char *   string  = 0;
-			int		 length  = 0;
+			int      length  = 0;
 			if (wstring) {
 				length = WideCharToMultiByte(CP_UTF8, 0, wstring, -1, 0, 0, 0, 0);
 				string = (char *)mallocate(length);
@@ -779,7 +791,7 @@ String system_get_clipboard_text() {
 			return String(string, length);
 		}
 	}
-	return String{};
+	return String {};
 }
 
 void system_set_clipboard_text(const String string) {
@@ -842,8 +854,8 @@ void win32_map_keys() {
 
 	windows_key_map[VK_RETURN]  = Key_RETURN;
 	windows_key_map[VK_ESCAPE]  = Key_ESCAPE;
-	windows_key_map[VK_BACK]	= Key_BACKSPACE;
-	windows_key_map[VK_TAB]		= Key_TAB;
+	windows_key_map[VK_BACK]    = Key_BACKSPACE;
+	windows_key_map[VK_TAB]     = Key_TAB;
 	windows_key_map[VK_SPACE]   = Key_SPACE;
 	windows_key_map[VK_SHIFT]   = Key_SHIFT;
 	windows_key_map[VK_CONTROL] = Key_CTRL;
@@ -863,21 +875,21 @@ void win32_map_keys() {
 
 	windows_key_map[VK_SNAPSHOT] = Key_PRINT_SCREEN;
 	windows_key_map[VK_INSERT]   = Key_INSERT;
-	windows_key_map[VK_HOME]	 = Key_HOME;
-	windows_key_map[VK_PRIOR]	= Key_PAGE_UP;
-	windows_key_map[VK_NEXT]	 = Key_PAGE_DOWN;
+	windows_key_map[VK_HOME]     = Key_HOME;
+	windows_key_map[VK_PRIOR]    = Key_PAGE_UP;
+	windows_key_map[VK_NEXT]     = Key_PAGE_DOWN;
 	windows_key_map[VK_DELETE]   = Key_DELETE;
-	windows_key_map[VK_END]		 = Key_END;
-	windows_key_map[VK_RIGHT]	= Key_RIGHT;
-	windows_key_map[VK_LEFT]	 = Key_LEFT;
-	windows_key_map[VK_DOWN]	 = Key_DOWN;
-	windows_key_map[VK_UP]		 = Key_UP;
+	windows_key_map[VK_END]      = Key_END;
+	windows_key_map[VK_RIGHT]    = Key_RIGHT;
+	windows_key_map[VK_LEFT]     = Key_LEFT;
+	windows_key_map[VK_DOWN]     = Key_DOWN;
+	windows_key_map[VK_UP]       = Key_UP;
 	windows_key_map[VK_DIVIDE]   = Key_DIVIDE;
 	windows_key_map[VK_MULTIPLY] = Key_MULTIPLY;
-	windows_key_map[VK_ADD]		 = Key_PLUS;
+	windows_key_map[VK_ADD]      = Key_PLUS;
 	windows_key_map[VK_SUBTRACT] = Key_MINUS;
 	windows_key_map[VK_DECIMAL]  = Key_PERIOD;
-	windows_key_map[VK_OEM_3]	= Key_BACK_TICK;
+	windows_key_map[VK_OEM_3]    = Key_BACK_TICK;
 
 	windows_key_map[VK_NUMPAD0] = Key_PAD_0;
 	windows_key_map[VK_NUMPAD1] = Key_PAD_1;
@@ -897,15 +909,15 @@ Key win32_get_mapped_key(WPARAM wparam) {
 }
 
 void win32_mouse_button_event(Mouse_Button_Event *event, WPARAM wparam, LPARAM lparam) {
-	Vec2s wr		= system_get_client_size();
-	int   x			= GET_X_LPARAM(lparam);
-	int   y			= GET_Y_LPARAM(lparam);
+	Vec2s wr        = system_get_client_size();
+	int   x         = GET_X_LPARAM(lparam);
+	int   y         = GET_Y_LPARAM(lparam);
 	event->position = vec2s(x, wr.y - y); // inverting y
 }
 
 void win32_push_event(Event event) {
 	windows_event_queue[windows_event_queue_push_index] = event;
-	windows_event_queue_push_index						= (windows_event_queue_push_index + 1) % WINDOWS_MAX_EVENTS;
+	windows_event_queue_push_index                      = (windows_event_queue_push_index + 1) % WINDOWS_MAX_EVENTS;
 	MemoryBarrier();
 	_ReadWriteBarrier();
 	InterlockedExchangeAdd(&windows_event_count, 1);
@@ -915,7 +927,7 @@ Event win32_pop_event() {
 	InterlockedExchangeSubtract(&windows_event_count, 1);
 	MemoryBarrier();
 	_ReadWriteBarrier();
-	Event event				= windows_event_queue[windows_event_pop_index];
+	Event event             = windows_event_queue[windows_event_pop_index];
 	windows_event_pop_index = (windows_event_pop_index + 1) % WINDOWS_MAX_EVENTS;
 	return event;
 }
@@ -925,237 +937,236 @@ static LRESULT CALLBACK win32_wnd_proc(HWND wnd, UINT msg, WPARAM wparam, LPARAM
 	LRESULT result = 0;
 
 	switch (msg) {
-	case WM_ACTIVATE: {
-		int low = LOWORD(wparam);
+		case WM_ACTIVATE: {
+			int low = LOWORD(wparam);
 
-		if (low == WA_ACTIVE || low == WA_CLICKACTIVE)
-			event.type = Event_Type_WINDOW_ACTIVE;
-		else
-			event.type = Event_Type_WINDOW_INACTIVE;
+			if (low == WA_ACTIVE || low == WA_CLICKACTIVE)
+				event.type = Event_Type_WINDOW_ACTIVE;
+			else
+				event.type = Event_Type_WINDOW_INACTIVE;
 
-		result = DefWindowProcW(wnd, msg, wparam, lparam);
-	} break;
+			result = DefWindowProcW(wnd, msg, wparam, lparam);
+		} break;
 
-	case WM_SIZE: {
-		int x = LOWORD(lparam);
-		int y = HIWORD(lparam);
+		case WM_SIZE: {
+			int x = LOWORD(lparam);
+			int y = HIWORD(lparam);
 
-		// need to re-set clip rectangle after resize
-		RECT rc;
-		GetClientRect(window_handle, &rc);
+			// need to re-set clip rectangle after resize
+			RECT rc;
+			GetClientRect(window_handle, &rc);
 
-		CURSORINFO info;
-		info.cbSize = sizeof(info);
-		if (GetCursorInfo(&info) && (info.flags == 0)) {
-			POINT pt  = { rc.left, rc.top };
-			POINT pt2 = { rc.right, rc.bottom };
-			ClientToScreen(window_handle, &pt);
-			ClientToScreen(window_handle, &pt2);
-			SetRect(&rc, pt.x, pt.y, pt2.x, pt2.y);
-			ClipCursor(&rc);
-			int c_x = rc.left + (rc.right - rc.left) / 2;
-			int c_y = rc.top + (rc.bottom - rc.top) / 2;
-			SetCursorPos(c_x, c_y);
-		}
+			CURSORINFO info;
+			info.cbSize = sizeof(info);
+			if (GetCursorInfo(&info) && (info.flags == 0)) {
+				POINT pt  = { rc.left, rc.top };
+				POINT pt2 = { rc.right, rc.bottom };
+				ClientToScreen(window_handle, &pt);
+				ClientToScreen(window_handle, &pt2);
+				SetRect(&rc, pt.x, pt.y, pt2.x, pt2.y);
+				ClipCursor(&rc);
+				int c_x = rc.left + (rc.right - rc.left) / 2;
+				int c_y = rc.top + (rc.bottom - rc.top) / 2;
+				SetCursorPos(c_x, c_y);
+			}
 
-		if (x > 0 && y > 0) {
-			HDC dc = GetDC(wnd);
-			SwapBuffers(dc);
-			ReleaseDC(wnd, dc);
-		}
+			if (x > 0 && y > 0) {
+				HDC dc = GetDC(wnd);
+				SwapBuffers(dc);
+				ReleaseDC(wnd, dc);
+			}
 
-		event.type			   = Event_Type_WINDOW_RESIZE;
-		event.window.dimension = vec2s(x, y);
-	} break;
+			event.type             = Event_Type_WINDOW_RESIZE;
+			event.window.dimension = vec2s(x, y);
+		} break;
 
-	case WM_DPICHANGED: {
-		RECT *const suggested_rect = (RECT *)lparam;
-		auto		left		   = suggested_rect->left;
-		auto		top			   = suggested_rect->top;
-		auto		width		   = suggested_rect->right - suggested_rect->left;
-		auto		height		   = suggested_rect->bottom - suggested_rect->top;
-		SetWindowPos(wnd, 0, left, top, width, height, SWP_NOZORDER | SWP_NOACTIVATE);
-	} break;
+		case WM_DPICHANGED: {
+			RECT *const suggested_rect = (RECT *)lparam;
+			auto        left           = suggested_rect->left;
+			auto        top            = suggested_rect->top;
+			auto        width          = suggested_rect->right - suggested_rect->left;
+			auto        height         = suggested_rect->bottom - suggested_rect->top;
+			SetWindowPos(wnd, 0, left, top, width, height, SWP_NOZORDER | SWP_NOACTIVATE);
+		} break;
 
-	case WM_CLOSE: {
-		PostQuitMessage(0);
-	} break;
+		case WM_CLOSE: {
+			PostQuitMessage(0);
+		} break;
 
-	case WM_DESTROY: {
+		case WM_DESTROY: {
+		} break;
 
-	} break;
+		case WM_LBUTTONDOWN: {
+			event.type                = Event_Type_MOUSE_BUTTON_DOWN;
+			event.mouse_button.symbol = Button_LEFT;
+			event.mouse_button.state  = State_DOWN;
+			win32_mouse_button_event(&event.mouse_button, wparam, lparam);
+		} break;
 
-	case WM_LBUTTONDOWN: {
-		event.type				  = Event_Type_MOUSE_BUTTON_DOWN;
-		event.mouse_button.symbol = Button_LEFT;
-		event.mouse_button.state  = State_DOWN;
-		win32_mouse_button_event(&event.mouse_button, wparam, lparam);
-	} break;
+		case WM_LBUTTONUP: {
+			event.type                = Event_Type_MOUSE_BUTTON_UP;
+			event.mouse_button.symbol = Button_LEFT;
+			event.mouse_button.state  = State_UP;
+			win32_mouse_button_event(&event.mouse_button, wparam, lparam);
+		} break;
 
-	case WM_LBUTTONUP: {
-		event.type				  = Event_Type_MOUSE_BUTTON_UP;
-		event.mouse_button.symbol = Button_LEFT;
-		event.mouse_button.state  = State_UP;
-		win32_mouse_button_event(&event.mouse_button, wparam, lparam);
-	} break;
+		case WM_MBUTTONDOWN: {
+			event.type                = Event_Type_MOUSE_BUTTON_DOWN;
+			event.mouse_button.symbol = Button_MIDDLE;
+			event.mouse_button.state  = State_DOWN;
+			win32_mouse_button_event(&event.mouse_button, wparam, lparam);
+		} break;
 
-	case WM_MBUTTONDOWN: {
-		event.type				  = Event_Type_MOUSE_BUTTON_DOWN;
-		event.mouse_button.symbol = Button_MIDDLE;
-		event.mouse_button.state  = State_DOWN;
-		win32_mouse_button_event(&event.mouse_button, wparam, lparam);
-	} break;
+		case WM_MBUTTONUP: {
+			event.type                = Event_Type_MOUSE_BUTTON_UP;
+			event.mouse_button.symbol = Button_MIDDLE;
+			event.mouse_button.state  = State_UP;
+			win32_mouse_button_event(&event.mouse_button, wparam, lparam);
+		} break;
 
-	case WM_MBUTTONUP: {
-		event.type				  = Event_Type_MOUSE_BUTTON_UP;
-		event.mouse_button.symbol = Button_MIDDLE;
-		event.mouse_button.state  = State_UP;
-		win32_mouse_button_event(&event.mouse_button, wparam, lparam);
-	} break;
+		case WM_RBUTTONDOWN: {
+			event.type                = Event_Type_MOUSE_BUTTON_DOWN;
+			event.mouse_button.symbol = Button_RIGHT;
+			event.mouse_button.state  = State_DOWN;
+			win32_mouse_button_event(&event.mouse_button, wparam, lparam);
+		} break;
 
-	case WM_RBUTTONDOWN: {
-		event.type				  = Event_Type_MOUSE_BUTTON_DOWN;
-		event.mouse_button.symbol = Button_RIGHT;
-		event.mouse_button.state  = State_DOWN;
-		win32_mouse_button_event(&event.mouse_button, wparam, lparam);
-	} break;
+		case WM_RBUTTONUP: {
+			event.type                = Event_Type_MOUSE_BUTTON_UP;
+			event.mouse_button.symbol = Button_RIGHT;
+			event.mouse_button.state  = State_UP;
+			win32_mouse_button_event(&event.mouse_button, wparam, lparam);
+		} break;
 
-	case WM_RBUTTONUP: {
-		event.type				  = Event_Type_MOUSE_BUTTON_UP;
-		event.mouse_button.symbol = Button_RIGHT;
-		event.mouse_button.state  = State_UP;
-		win32_mouse_button_event(&event.mouse_button, wparam, lparam);
-	} break;
+		case WM_XBUTTONDOWN: {
+			event.type                = Event_Type_MOUSE_BUTTON_DOWN;
+			event.mouse_button.symbol = ((wparam & MK_XBUTTON1) == MK_XBUTTON1) ? Button_X1 : Button_X2;
+			event.mouse_button.state  = State_DOWN;
+			win32_mouse_button_event(&event.mouse_button, wparam, lparam);
+		} break;
 
-	case WM_XBUTTONDOWN: {
-		event.type				  = Event_Type_MOUSE_BUTTON_DOWN;
-		event.mouse_button.symbol = ((wparam & MK_XBUTTON1) == MK_XBUTTON1) ? Button_X1 : Button_X2;
-		event.mouse_button.state  = State_DOWN;
-		win32_mouse_button_event(&event.mouse_button, wparam, lparam);
-	} break;
+		case WM_XBUTTONUP: {
+			event.type                = Event_Type_MOUSE_BUTTON_UP;
+			event.mouse_button.symbol = ((wparam & MK_XBUTTON1) == MK_XBUTTON1) ? Button_X1 : Button_X2;
+			event.mouse_button.state  = State_UP;
+			win32_mouse_button_event(&event.mouse_button, wparam, lparam);
+		} break;
 
-	case WM_XBUTTONUP: {
-		event.type				  = Event_Type_MOUSE_BUTTON_UP;
-		event.mouse_button.symbol = ((wparam & MK_XBUTTON1) == MK_XBUTTON1) ? Button_X1 : Button_X2;
-		event.mouse_button.state  = State_UP;
-		win32_mouse_button_event(&event.mouse_button, wparam, lparam);
-	} break;
+		case WM_MOUSEMOVE: {
+			RECT rc;
+			GetClientRect(window_handle, &rc);
+			Vec2s wr = vec2s(rc.right - rc.left, rc.bottom - rc.top);
 
-	case WM_MOUSEMOVE: {
-		RECT rc;
-		GetClientRect(window_handle, &rc);
-		Vec2s wr = vec2s(rc.right - rc.left, rc.bottom - rc.top);
+			event.type = Event_Type_MOUSE_CURSOR;
+			int x      = GET_X_LPARAM(lparam);
+			int ny     = GET_Y_LPARAM(lparam);
+			int y      = wr.y - ny; // inverting y
 
-		event.type = Event_Type_MOUSE_CURSOR;
-		int x	  = GET_X_LPARAM(lparam);
-		int ny	 = GET_Y_LPARAM(lparam);
-		int y	  = wr.y - ny; // inverting y
+			CURSORINFO info;
+			info.cbSize = sizeof(info);
+			if (GetCursorInfo(&info) && (info.flags == 0)) {
+				POINT pt  = { rc.left, rc.top };
+				POINT pt2 = { rc.right, rc.bottom };
+				ClientToScreen(window_handle, &pt);
+				ClientToScreen(window_handle, &pt2);
+				SetRect(&rc, pt.x, pt.y, pt2.x, pt2.y);
+				ClipCursor(&rc);
+				int c_x = rc.left + (rc.right - rc.left) / 2;
+				int c_y = rc.top + (rc.bottom - rc.top) / 2;
+				SetCursorPos(c_x, c_y);
+			}
+		} break;
 
-		CURSORINFO info;
-		info.cbSize = sizeof(info);
-		if (GetCursorInfo(&info) && (info.flags == 0)) {
-			POINT pt  = { rc.left, rc.top };
-			POINT pt2 = { rc.right, rc.bottom };
-			ClientToScreen(window_handle, &pt);
-			ClientToScreen(window_handle, &pt2);
-			SetRect(&rc, pt.x, pt.y, pt2.x, pt2.y);
-			ClipCursor(&rc);
-			int c_x = rc.left + (rc.right - rc.left) / 2;
-			int c_y = rc.top + (rc.bottom - rc.top) / 2;
-			SetCursorPos(c_x, c_y);
-		}
-	} break;
+		case WM_MOUSEWHEEL: {
+			event.type                   = Event_Type_MOUSE_WHEEL;
+			event.mouse_wheel.horizontal = 0;
+			event.mouse_wheel.vertical   = GET_WHEEL_DELTA_WPARAM(wparam);
+		} break;
 
-	case WM_MOUSEWHEEL: {
-		event.type					 = Event_Type_MOUSE_WHEEL;
-		event.mouse_wheel.horizontal = 0;
-		event.mouse_wheel.vertical   = GET_WHEEL_DELTA_WPARAM(wparam);
-	} break;
+		case WM_MOUSEHWHEEL: {
+			event.type                   = Event_Type_MOUSE_WHEEL;
+			event.mouse_wheel.vertical   = 0;
+			event.mouse_wheel.horizontal = GET_WHEEL_DELTA_WPARAM(wparam);
+		} break;
 
-	case WM_MOUSEHWHEEL: {
-		event.type					 = Event_Type_MOUSE_WHEEL;
-		event.mouse_wheel.vertical   = 0;
-		event.mouse_wheel.horizontal = GET_WHEEL_DELTA_WPARAM(wparam);
-	} break;
+		case WM_INPUT: {
+			if (GET_RAWINPUT_CODE_WPARAM(wparam) == RIM_INPUT) {
+				UINT size;
+				GetRawInputData((HRAWINPUT)lparam, RID_INPUT, 0, &size, sizeof(RAWINPUTHEADER));
 
-	case WM_INPUT: {
-		if (GET_RAWINPUT_CODE_WPARAM(wparam) == RIM_INPUT) {
-			UINT size;
-			GetRawInputData((HRAWINPUT)lparam, RID_INPUT, 0, &size, sizeof(RAWINPUTHEADER));
+				RAWINPUT *input = (RAWINPUT *)tallocate(size);
+				if (GetRawInputData((HRAWINPUT)lparam, RID_INPUT, input, &size, sizeof(RAWINPUTHEADER)) == size &&
+					input->header.dwType == RIM_TYPEMOUSE) {
+					MONITORINFO monitor_info;
+					monitor_info.cbSize = sizeof(monitor_info);
 
-			RAWINPUT *input = (RAWINPUT *)tallocate(size);
-			if (GetRawInputData((HRAWINPUT)lparam, RID_INPUT, input, &size, sizeof(RAWINPUTHEADER)) == size &&
-				input->header.dwType == RIM_TYPEMOUSE) {
-				MONITORINFO monitor_info;
-				monitor_info.cbSize = sizeof(monitor_info);
+					if (GetMonitorInfoW(MonitorFromWindow(wnd, MONITOR_DEFAULTTONEAREST), &monitor_info)) {
+						LONG monitor_w = monitor_info.rcMonitor.right - monitor_info.rcMonitor.left;
+						LONG monitor_h = monitor_info.rcMonitor.bottom - monitor_info.rcMonitor.top;
 
-				if (GetMonitorInfoW(MonitorFromWindow(wnd, MONITOR_DEFAULTTONEAREST), &monitor_info)) {
-					LONG monitor_w = monitor_info.rcMonitor.right - monitor_info.rcMonitor.left;
-					LONG monitor_h = monitor_info.rcMonitor.bottom - monitor_info.rcMonitor.top;
+						LONG xrel = input->data.mouse.lLastX;
+						LONG yrel = -input->data.mouse.lLastY;
 
-					LONG xrel = input->data.mouse.lLastX;
-					LONG yrel = -input->data.mouse.lLastY;
-
-					event.type		   = Event_Type_MOUSE_AXIS;
-					event.mouse_axis.x = (float)xrel / (float)monitor_w;
-					event.mouse_axis.y = (float)yrel / (float)monitor_h;
+						event.type         = Event_Type_MOUSE_AXIS;
+						event.mouse_axis.x = (float)xrel / (float)monitor_w;
+						event.mouse_axis.y = (float)yrel / (float)monitor_h;
+					}
 				}
 			}
+			result = DefWindowProcW(wnd, msg, wparam, lparam);
+		} break;
+
+		case WM_SYSKEYDOWN: {
+			if (wparam == VK_F10) {
+				event.type       = Event_Type_KEY_DOWN;
+				event.key.symbol = Key_F10;
+				event.key.state  = State_DOWN;
+				event.key.repeat = ((lparam & bit(30)) == bit(30));
+			}
+			result = DefWindowProcW(wnd, msg, wparam, lparam);
+		} break;
+
+		case WM_SYSKEYUP: {
+			if (wparam == VK_F10) {
+				event.type       = Event_Type_KEY_UP;
+				event.key.symbol = Key_F10;
+				event.key.state  = State_UP;
+				event.key.repeat = ((lparam & bit(30)) == bit(30));
+			}
+			result = DefWindowProcW(wnd, msg, wparam, lparam);
+		} break;
+
+		case WM_KEYDOWN: {
+			Key key = win32_get_mapped_key(wparam);
+			if (key != Key_UNKNOWN) {
+				event.type       = Event_Type_KEY_DOWN;
+				event.key.symbol = key;
+				event.key.state  = State_DOWN;
+				event.key.repeat = ((lparam & bit(30)) == bit(30));
+			}
+		} break;
+
+		case WM_KEYUP: {
+			Key key = win32_get_mapped_key(wparam);
+			if (key != Key_UNKNOWN) {
+				event.type       = Event_Type_KEY_UP;
+				event.key.symbol = key;
+				event.key.state  = State_UP;
+				event.key.repeat = ((lparam & bit(30)) == bit(30));
+			}
+		} break;
+
+		case WM_CHAR: {
+			event.type          = Event_Type_TEXT_INPUT;
+			wchar_t text        = (wchar_t)wparam;
+			char    text_utf[4] = {};
+			WideCharToMultiByte(CP_UTF8, 0, &text, 1, (char *)text_utf, sizeof(text_utf), 0, 0);
+			event.text.codepoint = utf8_to_utf32((u8 *)text_utf);
+		} break;
+
+		default: {
+			result = DefWindowProcW(wnd, msg, wparam, lparam);
 		}
-		result = DefWindowProcW(wnd, msg, wparam, lparam);
-	} break;
-
-	case WM_SYSKEYDOWN: {
-		if (wparam == VK_F10) {
-			event.type		 = Event_Type_KEY_DOWN;
-			event.key.symbol = Key_F10;
-			event.key.state  = State_DOWN;
-			event.key.repeat = ((lparam & bit(30)) == bit(30));
-		}
-		result = DefWindowProcW(wnd, msg, wparam, lparam);
-	} break;
-
-	case WM_SYSKEYUP: {
-		if (wparam == VK_F10) {
-			event.type		 = Event_Type_KEY_UP;
-			event.key.symbol = Key_F10;
-			event.key.state  = State_UP;
-			event.key.repeat = ((lparam & bit(30)) == bit(30));
-		}
-		result = DefWindowProcW(wnd, msg, wparam, lparam);
-	} break;
-
-	case WM_KEYDOWN: {
-		Key key = win32_get_mapped_key(wparam);
-		if (key != Key_UNKNOWN) {
-			event.type		 = Event_Type_KEY_DOWN;
-			event.key.symbol = key;
-			event.key.state  = State_DOWN;
-			event.key.repeat = ((lparam & bit(30)) == bit(30));
-		}
-	} break;
-
-	case WM_KEYUP: {
-		Key key = win32_get_mapped_key(wparam);
-		if (key != Key_UNKNOWN) {
-			event.type		 = Event_Type_KEY_UP;
-			event.key.symbol = key;
-			event.key.state  = State_UP;
-			event.key.repeat = ((lparam & bit(30)) == bit(30));
-		}
-	} break;
-
-	case WM_CHAR: {
-		event.type			= Event_Type_TEXT_INPUT;
-		wchar_t text		= (wchar_t)wparam;
-		char	text_utf[4] = {};
-		WideCharToMultiByte(CP_UTF8, 0, &text, 1, (char *)text_utf, sizeof(text_utf), 0, 0);
-		event.text.codepoint = utf8_to_utf32((u8 *)text_utf);
-	} break;
-
-	default: {
-		result = DefWindowProcW(wnd, msg, wparam, lparam);
-	}
 	}
 
 	if (event.type != Event_Type_NONE) {
@@ -1167,10 +1178,10 @@ static LRESULT CALLBACK win32_wnd_proc(HWND wnd, UINT msg, WPARAM wparam, LPARAM
 
 String system_get_command_line() {
 	wchar_t *cmd_line = GetCommandLineW();
-	int len = WideCharToMultiByte(CP_UTF8, 0, cmd_line, -1, 0, 0, 0, 0);
-	String result;
+	int      len      = WideCharToMultiByte(CP_UTF8, 0, cmd_line, -1, 0, 0, 0, 0);
+	String   result;
 	// No need to free this because this function only get called once usually
-	result.data = (u8 *)HeapAlloc(GetProcessHeap(), 0, len);
+	result.data  = (u8 *)HeapAlloc(GetProcessHeap(), 0, len);
 	result.count = WideCharToMultiByte(CP_UTF8, 0, cmd_line, -1, (char *)result.data, len, 0, 0);
 	return result;
 }
@@ -1183,25 +1194,25 @@ Handle system_create_window(const char *title, s32 width, s32 height, System_Win
 	HINSTANCE instance = GetModuleHandleW(0);
 
 	WNDCLASSEXW wnd_class   = {};
-	wnd_class.cbSize		= sizeof(wnd_class);
-	wnd_class.style			= CS_HREDRAW | CS_VREDRAW;
+	wnd_class.cbSize        = sizeof(wnd_class);
+	wnd_class.style         = CS_HREDRAW | CS_VREDRAW;
 	wnd_class.lpfnWndProc   = win32_wnd_proc;
-	wnd_class.hInstance		= instance;
+	wnd_class.hInstance     = instance;
 	wnd_class.lpszClassName = L"Karma";
-	wnd_class.hIcon			= (HICON)LoadImageW(instance, MAKEINTRESOURCEW(IDI_ICON1), IMAGE_ICON, 0, 0, LR_SHARED);
-	wnd_class.hIconSm		= (HICON)LoadImageW(instance, MAKEINTRESOURCEW(IDI_ICON1), IMAGE_ICON, 0, 0, LR_DEFAULTSIZE | LR_SHARED);
-	wnd_class.hCursor		= (HCURSOR)LoadImageW(0, MAKEINTRESOURCEW(OCR_NORMAL), IMAGE_CURSOR, 0, 0, LR_SHARED);
+	wnd_class.hIcon         = (HICON)LoadImageW(instance, MAKEINTRESOURCEW(IDI_ICON1), IMAGE_ICON, 0, 0, LR_SHARED);
+	wnd_class.hIconSm       = (HICON)LoadImageW(instance, MAKEINTRESOURCEW(IDI_ICON1), IMAGE_ICON, 0, 0, LR_DEFAULTSIZE | LR_SHARED);
+	wnd_class.hCursor       = (HCURSOR)LoadImageW(0, MAKEINTRESOURCEW(OCR_NORMAL), IMAGE_CURSOR, 0, 0, LR_SHARED);
 	RegisterClassExW(&wnd_class);
 
 	DWORD wnd_styles = WS_OVERLAPPEDWINDOW;
-	RECT  wrc		 = {};
-	wrc.right		 = width;
-	wrc.bottom		 = height;
+	RECT  wrc        = {};
+	wrc.right        = width;
+	wrc.bottom       = height;
 	AdjustWindowRectExForDpi(&wrc, wnd_styles, FALSE, 0, DPI_AWARENESS_PER_MONITOR_AWARE);
 	width  = wrc.right - wrc.left;
 	height = wrc.bottom - wrc.top;
 
-	int		 length = MultiByteToWideChar(CP_UTF8, 0, title, -1, 0, 0);
+	int      length = MultiByteToWideChar(CP_UTF8, 0, title, -1, 0, 0);
 	wchar_t *wtitle = (wchar_t *)tallocate(length);
 	MultiByteToWideChar(CP_UTF8, 0, title, -1, wtitle, length);
 
@@ -1217,8 +1228,8 @@ Handle system_create_window(const char *title, s32 width, s32 height, System_Win
 
 	RAWINPUTDEVICE device;
 	device.usUsagePage = 0x1;
-	device.usUsage	 = 0x2;
-	device.dwFlags	 = 0;
+	device.usUsage     = 0x2;
+	device.dwFlags     = 0;
 	device.hwndTarget  = window_handle;
 
 	if (!RegisterRawInputDevices(&device, 1, sizeof(device))) {
@@ -1261,7 +1272,7 @@ void system_exit_process(int result) {
 }
 
 static inline Vec2 xinput_axis_deadzone_correction(SHORT x, SHORT y, SHORT deadzone) {
-	r32 mag		 = sqrtf((r32)(x * x + y * y));
+	r32 mag      = sqrtf((r32)(x * x + y * y));
 	r32 norm_x   = mag ? (r32)x / mag : 0;
 	r32 norm_y   = mag ? (r32)y / mag : 0;
 	r32 norm_mag = 0.0f;
@@ -1307,7 +1318,7 @@ bool system_poll_events(Event *event) {
 			if (windows_controllers_state[user_index].packet_number != state.dwPacketNumber) {
 				if (!windows_controllers_state[user_index].connected) {
 					Event cevent;
-					cevent.type				= Event_Type_CONTROLLER_JOIN;
+					cevent.type             = Event_Type_CONTROLLER_JOIN;
 					cevent.controller.index = user_index;
 					win32_push_event(cevent);
 					windows_controllers_state[user_index].connected = true;
@@ -1333,12 +1344,12 @@ bool system_poll_events(Event *event) {
 
 				controller->left_trigger  = xinput_trigger_deadzone_correction(state.Gamepad.bLeftTrigger, XINPUT_GAMEPAD_TRIGGER_THRESHOLD);
 				controller->right_trigger = xinput_trigger_deadzone_correction(state.Gamepad.bRightTrigger, XINPUT_GAMEPAD_TRIGGER_THRESHOLD);
-				controller->left_thumb	= xinput_axis_deadzone_correction(state.Gamepad.sThumbLX, state.Gamepad.sThumbLY, XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
+				controller->left_thumb    = xinput_axis_deadzone_correction(state.Gamepad.sThumbLX, state.Gamepad.sThumbLY, XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
 				controller->right_thumb   = xinput_axis_deadzone_correction(state.Gamepad.sThumbRX, state.Gamepad.sThumbRY, XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE);
 			}
 		} else if (windows_controllers_state[user_index].connected) {
 			Event cevent;
-			cevent.type				= Event_Type_CONTROLLER_LEAVE;
+			cevent.type             = Event_Type_CONTROLLER_LEAVE;
 			cevent.controller.index = user_index;
 			win32_push_event(cevent);
 			windows_controllers_state[user_index].connected = false;
@@ -1358,18 +1369,18 @@ bool system_poll_events(Event *event) {
 
 State system_button(Button button) {
 	switch (button) {
-	case Button_LEFT:
-		return (GetAsyncKeyState(VK_LBUTTON) & 0x8000) ? State_DOWN : State_UP;
-	case Button_MIDDLE:
-		return (GetAsyncKeyState(VK_MBUTTON) & 0x8000) ? State_DOWN : State_UP;
-	case Button_RIGHT:
-		return (GetAsyncKeyState(VK_RBUTTON) & 0x8000) ? State_DOWN : State_UP;
-	case Button_X1:
-		return (GetAsyncKeyState(VK_XBUTTON1) & 0x8000) ? State_DOWN : State_UP;
-	case Button_X2:
-		return (GetAsyncKeyState(VK_XBUTTON2) & 0x8000) ? State_DOWN : State_UP;
+		case Button_LEFT:
+			return (GetAsyncKeyState(VK_LBUTTON) & 0x8000) ? State_DOWN : State_UP;
+		case Button_MIDDLE:
+			return (GetAsyncKeyState(VK_MBUTTON) & 0x8000) ? State_DOWN : State_UP;
+		case Button_RIGHT:
+			return (GetAsyncKeyState(VK_RBUTTON) & 0x8000) ? State_DOWN : State_UP;
+		case Button_X1:
+			return (GetAsyncKeyState(VK_XBUTTON1) & 0x8000) ? State_DOWN : State_UP;
+		case Button_X2:
+			return (GetAsyncKeyState(VK_XBUTTON2) & 0x8000) ? State_DOWN : State_UP;
 
-		invalid_default_case();
+			invalid_default_case();
 	}
 	return State_UP;
 }
@@ -1457,8 +1468,8 @@ u64 system_get_frequency() {
 }
 
 void system_fatal_error(const String msg) {
-	auto	 write_len = msg.count;
-	wchar_t *pool	  = (wchar_t *)mallocate(msg.count + 1);
+	auto     write_len = msg.count;
+	wchar_t *pool      = (wchar_t *)mallocate(msg.count + 1);
 	MultiByteToWideChar(CP_UTF8, 0, (const char *)msg.data, (int)write_len, pool, (int)msg.count + 1);
 	pool[write_len] = 0;
 
@@ -1468,8 +1479,8 @@ void system_fatal_error(const String msg) {
 }
 
 void system_display_critical_message(const String msg) {
-	auto	 write_len = msg.count;
-	wchar_t *pool	  = (wchar_t *)mallocate(msg.count + 1);
+	auto     write_len = msg.count;
+	wchar_t *pool      = (wchar_t *)mallocate(msg.count + 1);
 	MultiByteToWideChar(CP_UTF8, 0, (const char *)msg.data, (int)write_len, pool, (int)msg.count + 1);
 	pool[write_len] = 0;
 
@@ -1516,12 +1527,12 @@ void win32_initialize_xinput() {
 	}
 
 	if (xinput) {
-		XInputGetState				= (Proc_XInput_Get_State)GetProcAddress(xinput, "XInputGetState");
-		XInputSetState				= (Proc_XInput_Set_State)GetProcAddress(xinput, "XInputSetState");
-		XInputGetCapabilities		= (Proc_XInput_Get_Capabilities)GetProcAddress(xinput, "XInputGetCapabilities");
-		XInputGetAudioDeviceIds		= (Proc_XInput_Get_Audio_Device_Ids)GetProcAddress(xinput, "XInputGetAudioDeviceIds");
+		XInputGetState              = (Proc_XInput_Get_State)GetProcAddress(xinput, "XInputGetState");
+		XInputSetState              = (Proc_XInput_Set_State)GetProcAddress(xinput, "XInputSetState");
+		XInputGetCapabilities       = (Proc_XInput_Get_Capabilities)GetProcAddress(xinput, "XInputGetCapabilities");
+		XInputGetAudioDeviceIds     = (Proc_XInput_Get_Audio_Device_Ids)GetProcAddress(xinput, "XInputGetAudioDeviceIds");
 		XInputGetBatteryInformation = (Proc_XInput_Get_Battery_Information)GetProcAddress(xinput, "XInputGetBatteryInformation");
-		XInputGetKeystroke			= (Proc_XInput_Get_Keystroke)GetProcAddress(xinput, "XInputGetKeystroke");
+		XInputGetKeystroke          = (Proc_XInput_Get_Keystroke)GetProcAddress(xinput, "XInputGetKeystroke");
 	}
 
 	if (!XInputGetState) XInputGetState = xinput_get_state_stub;
@@ -1539,10 +1550,10 @@ int wWinMain(HINSTANCE instance, HINSTANCE prev_instance, LPWSTR cmd_line, int s
 	(void)cmd_line;
 	(void)show_cmd;
 
-#if defined(BUILD_DEBUG) || defined(BUILD_DEVELOPER)
+#	if defined(BUILD_DEBUG) || defined(BUILD_DEVELOPER)
 	AllocConsole();
 	SetConsoleOutputCP(CP_UTF8);
-#endif
+#	endif
 
 	win32_map_keys();
 
@@ -1556,9 +1567,9 @@ int wWinMain(HINSTANCE instance, HINSTANCE prev_instance, LPWSTR cmd_line, int s
 
 	SetThreadDescription(GetCurrentThread(), L"Main");
 
-	context.id					= GetCurrentThreadId();
-	context.allocator.proc		= system_allocator;
-	context.allocator.data		= 0;
+	context.id             = GetCurrentThreadId();
+	context.allocator.proc = system_allocator;
+	context.allocator.data = 0;
 
 	void *ptr = VirtualAlloc(0, static_cast<SIZE_T>(TEMPORARY_MEMORY_SIZE), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 	if (ptr == 0) {
@@ -1581,14 +1592,14 @@ int wWinMain(HINSTANCE instance, HINSTANCE prev_instance, LPWSTR cmd_line, int s
 
 #else
 
-int main(int argc, char * argv []) {
+int main(int argc, char *argv[]) {
 	win32_map_keys();
 
 	SetThreadDescription(GetCurrentThread(), L"Main");
 
-	context.id					= GetCurrentThreadId();
-	context.allocator.proc		= system_allocator;
-	context.allocator.data		= 0;
+	context.id             = GetCurrentThreadId();
+	context.allocator.proc = system_allocator;
+	context.allocator.data = 0;
 
 	void *ptr = VirtualAlloc(0, static_cast<SIZE_T>(TEMPORARY_MEMORY_SIZE), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 	if (ptr == 0) {
@@ -1610,7 +1621,7 @@ int main(int argc, char * argv []) {
 #endif
 
 void system_log(int type, const char *title, ANALYSE_PRINTF_FORMAT_STRING(const char *fmt), ...) {
-	char	pool[STB_SPRINTF_MIN];
+	char    pool[STB_SPRINTF_MIN];
 	wchar_t msg[STB_SPRINTF_MIN + 1];
 
 	struct Ctx {

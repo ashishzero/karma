@@ -14,10 +14,10 @@ enum Value_Kind {
 struct Value {
 	Value_Kind kind;
 
-	r64 real;
-	s64 integer;
+	r64             real;
+	s64             integer;
 	Utf32_Codepoint codepoint;
-	String string;
+	String          string;
 
 	inline Value() {
 		kind = Value_Kind_NONE;
@@ -29,28 +29,27 @@ struct Value {
 	}
 
 	inline Value(s64 data) {
-		kind = Value_Kind_INTEGER;
+		kind    = Value_Kind_INTEGER;
 		integer = data;
 	}
 
 	inline Value(Utf32_Codepoint data) {
-		kind = Value_Kind_CODEPOINT;
+		kind      = Value_Kind_CODEPOINT;
 		codepoint = data;
 	}
 
 	inline Value(String data) {
-		kind = Value_Kind_STRING;
+		kind   = Value_Kind_STRING;
 		string = data;
 	}
-
 };
 
 bool is_numeral(u32 codepoint);
 bool is_hex_numeral(u32 codepoint);
 bool is_oct_numeral(u32 codepoint);
 bool is_binary_numeral(u32 codepoint);
-bool parse_integer(const String string, s64 * out);
-bool parse_real(const String string, r64 * out);
+bool parse_integer(const String string, s64 *out);
+bool parse_real(const String string, r64 *out);
 
 enum Token_Kind {
 	Token_Kind_NONE = 0,
@@ -122,11 +121,11 @@ enum Token_Kind {
 };
 
 struct Token {
-	Token_Kind	kind;
-	String		content;
-	ptrsize		row;
-	ptrsize		column;
-	Value	value;
+	Token_Kind kind;
+	String     content;
+	ptrsize    row;
+	ptrsize    column;
+	Value      value;
 };
 
 enum Tokenization_Result {
@@ -137,9 +136,9 @@ enum Tokenization_Result {
 
 struct Tokenization_Status {
 	Tokenization_Result result;
-	ptrsize				row;
-	ptrsize				column;
-	s64					offset;
+	ptrsize             row;
+	ptrsize             column;
+	s64                 offset;
 };
 
-Array_View<Token> tokenize(String string, Tokenization_Status * status);
+Array_View<Token> tokenize(String string, Tokenization_Status *status);

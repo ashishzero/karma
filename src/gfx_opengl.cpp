@@ -3,6 +3,7 @@
 #include "stream.h"
 #include "string.h"
 #include "systems.h"
+#include "reflection.h"
 
 static const GLenum COLOR_INTERNAL_FORMATS[] = {
 	0, GL_R32F, GL_RG32F, GL_RGB32F, GL_RGBA32F
@@ -16,8 +17,8 @@ static const GLenum INDEX_TYPE[] = {
 
 enum Render_Option : u32 {
 	Render_Option_DEPTH_TEST = 0x1,
-	Render_Option_BLEND		 = 0x2,
-	Render_Option_CULL		 = 0x4,
+	Render_Option_BLEND      = 0x2,
+	Render_Option_CULL       = 0x4,
 };
 typedef u32 Render_Options;
 
@@ -33,8 +34,8 @@ struct Uniform {
 };
 
 constexpr int MAX_IN_ATTRIBUTE_LAYOUT = 10;
-constexpr int MAX_UNIFORM			  = 10;
-constexpr int MAX_TEXTURES			  = 5;
+constexpr int MAX_UNIFORM             = 10;
+constexpr int MAX_TEXTURES            = 5;
 
 struct Shader {
 	GLuint id;
@@ -42,21 +43,21 @@ struct Shader {
 	Render_Options option;
 
 	Attribute_Layout in_attributes[MAX_IN_ATTRIBUTE_LAYOUT];
-	u32				 in_attribute_count;
-	ptrsize			 stride;
+	u32              in_attribute_count;
+	ptrsize          stride;
 
 	Uniform uniforms[MAX_UNIFORM];
-	u32		uniform_count;
+	u32     uniform_count;
 
 	Uniform textures[MAX_TEXTURES];
-	u32		texture_count;
+	u32     texture_count;
 };
 
 constexpr int QUAD_TEXTURE_SLOT = 0;
 
 struct Gfx_Platform_OpenGL : public Gfx_Platform {
 	Handle platform_handle;
-	s32	multisamples;
+	s32    multisamples;
 
 	s32 framebuffer_w;
 	s32 framebuffer_h;
@@ -66,7 +67,7 @@ struct Gfx_Platform_OpenGL : public Gfx_Platform {
 	GLuint depth_renderbuffer;
 	GLuint framebuffer;
 
-	Shader *current_shader			  = 0;
+	Shader *current_shader            = 0;
 	GLenum  current_render_index_type = 0;
 
 	int (*set_swap_interval_func)(int interval);
@@ -88,7 +89,7 @@ struct Gfx_Platform_OpenGL : public Gfx_Platform {
 	virtual Handle create_query() final;
 	virtual void   destroy_query(Handle query) final;
 	virtual void   begin_query(Handle query) final;
-	virtual r32	   end_query(Handle query) final;
+	virtual r32    end_query(Handle query) final;
 
 	virtual Handle create_texture2d(s32 w, s32 h, s32 n, const u8 *pixels, Sampler_Params *params = 0) final;
 	virtual void   update_texture2d(Handle texture, s32 xoffset, s32 yoffset, s32 w, s32 h, s32 n, u8 *pixels) final;
@@ -109,7 +110,7 @@ struct Gfx_Platform_OpenGL : public Gfx_Platform {
 	virtual void destroy_index_buffer(Handle handle) final;
 
 	virtual Framebuffer create_framebuffer(s32 width, s32 height, Color_Format color, Depth_Format depth) final;
-	virtual void		destroy_framebuffer(Framebuffer framebuffer) final;
+	virtual void        destroy_framebuffer(Framebuffer framebuffer) final;
 
 	virtual Handle create_shader(String src) final;
 	virtual void   destroy_shader(Handle shader) final;
@@ -136,11 +137,11 @@ struct Gfx_Platform_OpenGL : public Gfx_Platform {
 	bool load_library(s32 vsync);
 	void swap_buffers();
 
-	static void debug_output(GLenum		   source,
-							 GLenum		   type,
-							 GLuint		   id,
-							 GLenum		   severity,
-							 GLsizei	   msgLength,
+	static void debug_output(GLenum        source,
+							 GLenum        type,
+							 GLuint        id,
+							 GLenum        severity,
+							 GLsizei       msgLength,
 							 const GLchar *message,
 							 const void *  user_param);
 };
@@ -148,9 +149,13 @@ struct Gfx_Platform_OpenGL : public Gfx_Platform {
 Gfx_Platform *create_opengl_context(Handle platform, s32 vsync, s32 multisamples, s32 framebuffer_w, s32 framebuffer_h) {
 	static Gfx_Platform_OpenGL gfx;
 
+	assert(static_count(COLOR_INTERNAL_FORMATS) == enum_count<Color_Format>());
+	assert(static_count(COLOR_FORMATS) == enum_count<Color_Format>());
+	assert(static_count(INDEX_TYPE) == enum_count<Render_Index_Type>());
+
 	// NOTE: set these, they are used by *load_library* function
 	gfx.platform_handle = platform;
-	gfx.multisamples	= multisamples;
+	gfx.multisamples    = multisamples;
 
 	if (!gfx.load_library(vsync)) {
 		gfx.backend = Render_Backend_NONE;
@@ -300,55 +305,55 @@ Handle Gfx_Platform_OpenGL::create_texture2d(s32 w, s32 h, s32 n, const u8 *pixe
 
 	GLenum min_filter  = GL_NEAREST;
 	GLenum mag_filter  = GL_LINEAR;
-	GLenum wrap_s	  = GL_REPEAT;
-	GLenum wrap_t	  = GL_REPEAT;
+	GLenum wrap_s      = GL_REPEAT;
+	GLenum wrap_t      = GL_REPEAT;
 	bool   gen_mipmaps = false;
-	bool   srgb		   = false;
+	bool   srgb        = false;
 
 	if (params) {
 		switch (params->min_filter) {
-		case Texture_Filter_LINEAR:
-			min_filter = GL_LINEAR;
-			break;
-		case Texture_Filter_NEAREST:
-			min_filter = GL_NEAREST;
-			break;
-			invalid_default_case();
+			case Texture_Filter_LINEAR:
+				min_filter = GL_LINEAR;
+				break;
+			case Texture_Filter_NEAREST:
+				min_filter = GL_NEAREST;
+				break;
+				invalid_default_case();
 		}
 		switch (params->mag_filter) {
-		case Texture_Filter_LINEAR:
-			mag_filter = GL_LINEAR;
-			break;
-		case Texture_Filter_NEAREST:
-			mag_filter = GL_NEAREST;
-			break;
-			invalid_default_case();
+			case Texture_Filter_LINEAR:
+				mag_filter = GL_LINEAR;
+				break;
+			case Texture_Filter_NEAREST:
+				mag_filter = GL_NEAREST;
+				break;
+				invalid_default_case();
 		}
 		switch (params->wrap_s) {
-		case Texture_Wrap_CLAMP:
-			wrap_s = GL_CLAMP_TO_EDGE;
-			break;
-		case Texture_Wrap_REPEAT:
-			wrap_s = GL_REPEAT;
-			break;
-			invalid_default_case();
+			case Texture_Wrap_CLAMP:
+				wrap_s = GL_CLAMP_TO_EDGE;
+				break;
+			case Texture_Wrap_REPEAT:
+				wrap_s = GL_REPEAT;
+				break;
+				invalid_default_case();
 		}
 		switch (params->wrap_t) {
-		case Texture_Wrap_CLAMP:
-			wrap_t = GL_CLAMP_TO_EDGE;
-			break;
-		case Texture_Wrap_REPEAT:
-			wrap_t = GL_REPEAT;
-			break;
-			invalid_default_case();
+			case Texture_Wrap_CLAMP:
+				wrap_t = GL_CLAMP_TO_EDGE;
+				break;
+			case Texture_Wrap_REPEAT:
+				wrap_t = GL_REPEAT;
+				break;
+				invalid_default_case();
 		}
 		gen_mipmaps = params->gen_mipmaps;
-		srgb		= params->srgb;
+		srgb        = params->srgb;
 	}
 
 	GLenum format, internal_format;
 	if (n == 1) {
-		format			= GL_RED;
+		format          = GL_RED;
 		internal_format = GL_RED;
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	} else if (n == 3) {
@@ -381,7 +386,7 @@ Handle Gfx_Platform_OpenGL::create_texture2d(s32 w, s32 h, s32 n, const u8 *pixe
 	}
 
 	Handle hres = {};
-	hres.h32	= texid;
+	hres.h32    = texid;
 	return hres;
 }
 
@@ -422,7 +427,7 @@ Handle Gfx_Platform_OpenGL::create_vertex_buffer(Buffer_Type type, u32 size, voi
 	glBufferData(GL_ARRAY_BUFFER, size, data, usage);
 
 	Handle result = {};
-	result.h32	= id;
+	result.h32    = id;
 	return result;
 }
 
@@ -442,7 +447,7 @@ Handle Gfx_Platform_OpenGL::create_index_buffer(Buffer_Type type, u32 size, void
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, data, usage);
 
 	Handle result = {};
-	result.h32	= id;
+	result.h32    = id;
 	return result;
 }
 
@@ -538,13 +543,13 @@ Framebuffer Gfx_Platform_OpenGL::create_framebuffer(int width, int height, Color
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	Framebuffer f;
-	f.id.h32	   = id;
+	f.id.h32       = id;
 	f.color_format = color;
 	f.depth_format = depth;
-	f.color.h32	= color_map;
-	f.depth.h32	= depth_map;
-	f.width		   = width;
-	f.height	   = height;
+	f.color.h32    = color_map;
+	f.depth.h32    = depth_map;
+	f.width        = width;
+	f.height       = height;
 	return f;
 }
 
@@ -566,7 +571,7 @@ Handle Gfx_Platform_OpenGL::create_shader(String src) {
 	Shader *shader = new Shader;
 
 	Istream stream  = istream(src.data, src.count);
-	auto	options = *istream_consume(&stream, Render_Options);
+	auto    options = *istream_consume(&stream, Render_Options);
 
 	struct Attr_Info {
 		int index;
@@ -578,7 +583,7 @@ Handle Gfx_Platform_OpenGL::create_shader(String src) {
 	atts.data  = (Attr_Info *)istream_consume_size(&stream, sizeof(Attr_Info) * atts.count);
 
 	shader->in_attribute_count = (u32)atts.count;
-	shader->stride			   = 0;
+	shader->stride             = 0;
 	assert(shader->in_attribute_count < MAX_IN_ATTRIBUTE_LAYOUT);
 
 	foreach (index, a, atts) {
@@ -591,7 +596,7 @@ Handle Gfx_Platform_OpenGL::create_shader(String src) {
 	String vertex_src, fragment_src;
 
 	vertex_src.count   = *istream_consume(&stream, s64);
-	vertex_src.data	= (u8 *)istream_consume_size(&stream, vertex_src.count);
+	vertex_src.data    = (u8 *)istream_consume_size(&stream, vertex_src.count);
 	fragment_src.count = *istream_consume(&stream, s64);
 	fragment_src.data  = (u8 *)istream_consume_size(&stream, fragment_src.count);
 
@@ -619,7 +624,7 @@ Handle Gfx_Platform_OpenGL::create_shader(String src) {
 		return result;
 	}
 
-	shader->id	 = program;
+	shader->id     = program;
 	shader->option = options;
 
 	String string;
@@ -627,21 +632,21 @@ Handle Gfx_Platform_OpenGL::create_shader(String src) {
 	shader->uniform_count = (u32)(*istream_consume(&stream, s64));
 	assert(shader->uniform_count < MAX_UNIFORM);
 	for (u32 i = 0; i < shader->uniform_count; ++i) {
-		string.count				 = *istream_consume(&stream, s64);
-		string.data					 = (u8 *)istream_consume_size(&stream, string.count);
-		const char *name			 = tto_cstring(string);
+		string.count                 = *istream_consume(&stream, s64);
+		string.data                  = (u8 *)istream_consume_size(&stream, string.count);
+		const char *name             = tto_cstring(string);
 		shader->uniforms[i].location = glGetUniformLocation(shader->id, name);
-		shader->uniforms[i].type	 = *istream_consume(&stream, int);
+		shader->uniforms[i].type     = *istream_consume(&stream, int);
 	}
 
 	shader->texture_count = (u32)(*istream_consume(&stream, s64));
 	assert(shader->texture_count < MAX_UNIFORM);
 	for (u32 i = 0; i < shader->texture_count; ++i) {
-		string.count				 = *istream_consume(&stream, s64);
-		string.data					 = (u8 *)istream_consume_size(&stream, string.count);
-		const char *name			 = tto_cstring(string);
+		string.count                 = *istream_consume(&stream, s64);
+		string.data                  = (u8 *)istream_consume_size(&stream, string.count);
+		const char *name             = tto_cstring(string);
 		shader->textures[i].location = glGetUniformLocation(shader->id, name);
-		shader->textures[i].type	 = *istream_consume(&stream, int);
+		shader->textures[i].type     = *istream_consume(&stream, int);
 	}
 
 	Handle handle = {};
@@ -711,37 +716,37 @@ void Gfx_Platform_OpenGL::begin(Handle hshader, u8 *data, ptrsize size) {
 	for (u32 i = 0; i < shader->uniform_count; ++i) {
 		auto &u = shader->uniforms[i];
 
-		r32 * data;
+		r32 *data;
 
 		switch (u.type) {
-		case 1:
-			data = istream_consume(&stream, r32);
-			glUniform1fv(u.location, 1, data);
-			break;
+			case 1:
+				data = istream_consume(&stream, r32);
+				glUniform1fv(u.location, 1, data);
+				break;
 
-		case 2:
-			data = (r32 *)(istream_consume(&stream, Vec2));
-			glUniform2fv(u.location, 1, data);
-			break;
+			case 2:
+				data = (r32 *)(istream_consume(&stream, Vec2));
+				glUniform2fv(u.location, 1, data);
+				break;
 
-		case 3:
-			data = (r32 *)(istream_consume(&stream, Vec3));
-			glUniform3fv(u.location, 1, data);
-			break;
+			case 3:
+				data = (r32 *)(istream_consume(&stream, Vec3));
+				glUniform3fv(u.location, 1, data);
+				break;
 
-		case 4:
-			data = (r32 *)(istream_consume(&stream, Vec4));
-			glUniform4fv(u.location, 1, data);
-			break;
+			case 4:
+				data = (r32 *)(istream_consume(&stream, Vec4));
+				glUniform4fv(u.location, 1, data);
+				break;
 
-		case 16:
-			data = (r32 *)(istream_consume(&stream, Mat4));
-			glUniformMatrix4fv(u.location, 1, GL_TRUE, data);
-			break;
+			case 16:
+				data = (r32 *)(istream_consume(&stream, Mat4));
+				glUniformMatrix4fv(u.location, 1, GL_TRUE, data);
+				break;
 
-		default:
-			invalid_code_path();
-			break;
+			default:
+				invalid_code_path();
+				break;
 		}
 	}
 
@@ -785,10 +790,10 @@ void Gfx_Platform_OpenGL::draw_indexed(ptrsize count, ptrsize offset) {
 }
 
 Gfx_Platform_Info Gfx_Platform_OpenGL::get_info() {
-	Gfx_Platform_Info info	= {};
-	info.vendor				  = glGetString(GL_VENDOR);
-	info.renderer			  = glGetString(GL_RENDERER);
-	info.version			  = glGetString(GL_VERSION);
+	Gfx_Platform_Info info    = {};
+	info.vendor               = glGetString(GL_VENDOR);
+	info.renderer             = glGetString(GL_RENDERER);
+	info.version              = glGetString(GL_VERSION);
 	info.shading_lang_version = glGetString(GL_SHADING_LANGUAGE_VERSION);
 	return info;
 }
@@ -830,69 +835,69 @@ void Gfx_Platform_OpenGL::debug_output(GLenum source, GLenum type, GLuint id, GL
 	const char *srcstr  = 0;
 	const char *typestr = 0;
 	const char *svrstr  = 0;
-	int			log		= LOG_INFO;
+	int         log     = LOG_INFO;
 
 	switch (source) {
-	case GL_DEBUG_SOURCE_API_ARB:
-		srcstr = "API";
-		break;
-	case GL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB:
-		srcstr = "ARB";
-		break;
-	case GL_DEBUG_SOURCE_SHADER_COMPILER_ARB:
-		srcstr = "COMPILER";
-		break;
-	case GL_DEBUG_SOURCE_THIRD_PARTY_ARB:
-		srcstr = "3RD PARTY";
-		break;
-	case GL_DEBUG_SOURCE_APPLICATION_ARB:
-		srcstr = "APP";
-		break;
-	case GL_DEBUG_SOURCE_OTHER_ARB:
-		srcstr = "OTHER";
-		break;
-	default:
-		srcstr = "UNKNOWN";
+		case GL_DEBUG_SOURCE_API_ARB:
+			srcstr = "API";
+			break;
+		case GL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB:
+			srcstr = "ARB";
+			break;
+		case GL_DEBUG_SOURCE_SHADER_COMPILER_ARB:
+			srcstr = "COMPILER";
+			break;
+		case GL_DEBUG_SOURCE_THIRD_PARTY_ARB:
+			srcstr = "3RD PARTY";
+			break;
+		case GL_DEBUG_SOURCE_APPLICATION_ARB:
+			srcstr = "APP";
+			break;
+		case GL_DEBUG_SOURCE_OTHER_ARB:
+			srcstr = "OTHER";
+			break;
+		default:
+			srcstr = "UNKNOWN";
 	}
 
 	switch (type) {
-	case GL_DEBUG_TYPE_ERROR_ARB:
-		typestr = "ERROR";
-		break;
-	case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB:
-		typestr = "DEPRECATED BEHAVIOR";
-		break;
-	case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB:
-		typestr = "UNDEFINED BEHAVIOR";
-		break;
-	case GL_DEBUG_TYPE_PORTABILITY_ARB:
-		typestr = "PORTABILITY";
-		break;
-	case GL_DEBUG_TYPE_PERFORMANCE_ARB:
-		typestr = "PERFORMANCE";
-		break;
-	case GL_DEBUG_TYPE_OTHER_ARB:
-		typestr = "OTHER";
-		break;
-	default:
-		typestr = "UNKNOWN";
+		case GL_DEBUG_TYPE_ERROR_ARB:
+			typestr = "ERROR";
+			break;
+		case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB:
+			typestr = "DEPRECATED BEHAVIOR";
+			break;
+		case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB:
+			typestr = "UNDEFINED BEHAVIOR";
+			break;
+		case GL_DEBUG_TYPE_PORTABILITY_ARB:
+			typestr = "PORTABILITY";
+			break;
+		case GL_DEBUG_TYPE_PERFORMANCE_ARB:
+			typestr = "PERFORMANCE";
+			break;
+		case GL_DEBUG_TYPE_OTHER_ARB:
+			typestr = "OTHER";
+			break;
+		default:
+			typestr = "UNKNOWN";
 	}
 
 	switch (severity) {
-	case GL_DEBUG_SEVERITY_HIGH_ARB:
-		svrstr = "HIGH";
-		log	= LOG_ERROR;
-		break;
-	case GL_DEBUG_SEVERITY_MEDIUM_ARB:
-		svrstr = "MEDIUM";
-		log	= LOG_WARNING;
-		break;
-	case GL_DEBUG_SEVERITY_LOW_ARB:
-		svrstr = "LOW";
-		log	= LOG_WARNING;
-		break;
-	default:
-		svrstr = "UNKNOWN";
+		case GL_DEBUG_SEVERITY_HIGH_ARB:
+			svrstr = "HIGH";
+			log    = LOG_ERROR;
+			break;
+		case GL_DEBUG_SEVERITY_MEDIUM_ARB:
+			svrstr = "MEDIUM";
+			log    = LOG_WARNING;
+			break;
+		case GL_DEBUG_SEVERITY_LOW_ARB:
+			svrstr = "LOW";
+			log    = LOG_WARNING;
+			break;
+		default:
+			svrstr = "UNKNOWN";
 	}
 
 	system_log(LOG_WARNING, "Gfx:OpenGL", "=======================================");
@@ -933,16 +938,20 @@ bool Gfx_Platform_OpenGL::load_library(s32 vsync) {
 		system_log(LOG_WARNING, "Platform", "OpenGL module could not be loaded");
 		return false;
 	}
-	defer { FreeLibrary(opengl); };
+	defer {
+		FreeLibrary(opengl);
+	};
 
 	WNDCLASSEXW wnd_class   = {};
-	wnd_class.cbSize		= sizeof(wnd_class);
-	wnd_class.style			= CS_HREDRAW | CS_VREDRAW;
+	wnd_class.cbSize        = sizeof(wnd_class);
+	wnd_class.style         = CS_HREDRAW | CS_VREDRAW;
 	wnd_class.lpfnWndProc   = DefWindowProcW;
-	wnd_class.hInstance		= GetModuleHandleW(0);
+	wnd_class.hInstance     = GetModuleHandleW(0);
 	wnd_class.lpszClassName = L"OpenGLDummyWindow";
 	RegisterClassExW(&wnd_class);
-	defer { UnregisterClassW(L"OpenGLDummyWindow", GetModuleHandleW(0)); };
+	defer {
+		UnregisterClassW(L"OpenGLDummyWindow", GetModuleHandleW(0));
+	};
 
 	HWND dummy_wnd = CreateWindowExW(0, L"OpenGLDummyWindow", L"OpenGLDummyWindow", 0,
 									 CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
@@ -959,14 +968,14 @@ bool Gfx_Platform_OpenGL::load_library(s32 vsync) {
 	};
 
 	PIXELFORMATDESCRIPTOR dummy_pixel_format = {};
-	dummy_pixel_format.nSize				 = sizeof(dummy_pixel_format);
-	dummy_pixel_format.nVersion				 = 1;
-	dummy_pixel_format.dwFlags				 = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
-	dummy_pixel_format.iPixelType			 = PFD_TYPE_RGBA;
-	dummy_pixel_format.cColorBits			 = 32;
-	dummy_pixel_format.cDepthBits			 = 24;
-	dummy_pixel_format.cStencilBits			 = 8;
-	int pfi									 = ChoosePixelFormat(dummy_dc, &dummy_pixel_format);
+	dummy_pixel_format.nSize                 = sizeof(dummy_pixel_format);
+	dummy_pixel_format.nVersion              = 1;
+	dummy_pixel_format.dwFlags               = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+	dummy_pixel_format.iPixelType            = PFD_TYPE_RGBA;
+	dummy_pixel_format.cColorBits            = 32;
+	dummy_pixel_format.cDepthBits            = 24;
+	dummy_pixel_format.cStencilBits          = 8;
+	int pfi                                  = ChoosePixelFormat(dummy_dc, &dummy_pixel_format);
 	if (pfi == 0) {
 		// TODO: Handle win32 error!!!
 		system_log(LOG_WARNING, "Platform",
@@ -974,7 +983,7 @@ bool Gfx_Platform_OpenGL::load_library(s32 vsync) {
 	}
 
 	PIXELFORMATDESCRIPTOR suggested_pixel_format;
-	int					  num_pixel_fmts = DescribePixelFormat(dummy_dc, pfi, sizeof(suggested_pixel_format), &suggested_pixel_format);
+	int                   num_pixel_fmts = DescribePixelFormat(dummy_dc, pfi, sizeof(suggested_pixel_format), &suggested_pixel_format);
 	if (num_pixel_fmts == 0) {
 		// TODO: Handle win32 error!!!
 		system_log(LOG_WARNING, "Platform", "OpenGL Pixel formats could not be described for dummy window");
@@ -987,14 +996,14 @@ bool Gfx_Platform_OpenGL::load_library(s32 vsync) {
 		return false;
 	}
 
-	typedef HGLRC		  WGLCreateContextFunc(HDC arg);
+	typedef HGLRC         WGLCreateContextFunc(HDC arg);
 	WGLCreateContextFunc *wgl_create_context;
-	typedef BOOL		  WGLMakeCurrent(HDC, HGLRC);
-	WGLMakeCurrent *	  wgl_make_current;
-	typedef PROC		  WGLGetProcAddress(LPCSTR arg);
+	typedef BOOL          WGLMakeCurrent(HDC, HGLRC);
+	WGLMakeCurrent *      wgl_make_current;
+	typedef PROC          WGLGetProcAddress(LPCSTR arg);
 	WGLGetProcAddress *   wgl_get_proc_address;
-	typedef BOOL		  WGLDeleteContext(HGLRC arg);
-	WGLDeleteContext *	wgl_delete_context;
+	typedef BOOL          WGLDeleteContext(HGLRC arg);
+	WGLDeleteContext *    wgl_delete_context;
 
 	wgl_create_context = (WGLCreateContextFunc *)GetProcAddress(opengl, "wglCreateContext");
 	if (!wgl_create_context) {
@@ -1036,12 +1045,12 @@ bool Gfx_Platform_OpenGL::load_library(s32 vsync) {
 		return false;
 	}
 
-	typedef HGLRC WINAPI			WGLCreateContextAttribsARBFunc(HDC hdc, HGLRC hShareContext, const int *attribList);
+	typedef HGLRC WINAPI            WGLCreateContextAttribsARBFunc(HDC hdc, HGLRC hShareContext, const int *attribList);
 	WGLCreateContextAttribsARBFunc *wgl_create_context_attribs_arb;
-	typedef BOOL WINAPI			 WGLChoosePixelFormatARBFunc(HDC hdc, const int *piAttribIList, const float *pfAttribFList, u32 nMaxFormats, int *piFormats, u32 *nNumFormats);
-	WGLChoosePixelFormatARBFunc *wgl_choose_pixel_format_arb;
-	typedef BOOL				 WGLSwapIntervalEXTFunc(int interval);
-	typedef int					 WGLGetSwapIntervalEXTFunc();
+	typedef BOOL WINAPI             WGLChoosePixelFormatARBFunc(HDC hdc, const int *piAttribIList, const float *pfAttribFList, u32 nMaxFormats, int *piFormats, u32 *nNumFormats);
+	WGLChoosePixelFormatARBFunc *   wgl_choose_pixel_format_arb;
+	typedef BOOL                    WGLSwapIntervalEXTFunc(int interval);
+	typedef int                     WGLGetSwapIntervalEXTFunc();
 
 	wgl_create_context_attribs_arb = (WGLCreateContextAttribsARBFunc *)wgl_get_proc_address("wglCreateContextAttribsARB");
 	if (!wgl_create_context_attribs_arb) {
@@ -1058,22 +1067,22 @@ bool Gfx_Platform_OpenGL::load_library(s32 vsync) {
 	set_swap_interval_func = (WGLSwapIntervalEXTFunc *)wgl_get_proc_address("wglSwapIntervalEXT");
 	get_swap_interval_func = (WGLGetSwapIntervalEXTFunc *)wgl_get_proc_address("wglGetSwapIntervalEXT");
 
-	const int WGL_DRAW_TO_WINDOW_ARB		   = 0x2001;
-	const int WGL_SUPPORT_OPENGL_ARB		   = 0x2010;
-	const int WGL_DOUBLE_BUFFER_ARB			   = 0x2011;
-	const int WGL_PIXEL_TYPE_ARB			   = 0x2013;
-	const int WGL_TYPE_RGBA_ARB				   = 0x202B;
-	const int WGL_COLOR_BITS_ARB			   = 0x2014;
-	const int WGL_DEPTH_BITS_ARB			   = 0x2022;
-	const int WGL_STENCIL_BITS_ARB			   = 0x2023;
-	const int WGL_CONTEXT_MAJOR_VERSION_ARB	= 0x2091;
-	const int WGL_CONTEXT_MINOR_VERSION_ARB	= 0x2092;
-	const int WGL_CONTEXT_LAYER_PLANE_ARB	  = 0x2093;
-	const int WGL_CONTEXT_FLAGS_ARB			   = 0x2094;
-	const int WGL_CONTEXT_PROFILE_MASK_ARB	 = 0x9126;
-	const int WGL_CONTEXT_DEBUG_BIT_ARB		   = 0x0001;
-	const int WGL_SAMPLE_BUFFERS_ARB		   = 0x2041;
-	const int WGL_SAMPLES_ARB				   = 0x2042;
+	const int WGL_DRAW_TO_WINDOW_ARB           = 0x2001;
+	const int WGL_SUPPORT_OPENGL_ARB           = 0x2010;
+	const int WGL_DOUBLE_BUFFER_ARB            = 0x2011;
+	const int WGL_PIXEL_TYPE_ARB               = 0x2013;
+	const int WGL_TYPE_RGBA_ARB                = 0x202B;
+	const int WGL_COLOR_BITS_ARB               = 0x2014;
+	const int WGL_DEPTH_BITS_ARB               = 0x2022;
+	const int WGL_STENCIL_BITS_ARB             = 0x2023;
+	const int WGL_CONTEXT_MAJOR_VERSION_ARB    = 0x2091;
+	const int WGL_CONTEXT_MINOR_VERSION_ARB    = 0x2092;
+	const int WGL_CONTEXT_LAYER_PLANE_ARB      = 0x2093;
+	const int WGL_CONTEXT_FLAGS_ARB            = 0x2094;
+	const int WGL_CONTEXT_PROFILE_MASK_ARB     = 0x9126;
+	const int WGL_CONTEXT_DEBUG_BIT_ARB        = 0x0001;
+	const int WGL_SAMPLE_BUFFERS_ARB           = 0x2041;
+	const int WGL_SAMPLES_ARB                  = 0x2042;
 	const int WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB = 0x20A9;
 	const int WGL_CONTEXT_CORE_PROFILE_BIT_ARB = 0x0001;
 

@@ -13,7 +13,7 @@ Utf32_Codepoint utf8_to_utf32(const utf8 *character) {
 	u8  size_in_bytes;
 
 	if ((*character & 0x80) == 0) {
-		codepoint	 = (int)character[0];
+		codepoint     = (int)character[0];
 		size_in_bytes = 1;
 	} else if ((*character & 0xe0) == 0xc0) {
 		codepoint = ((int)(character[0] & 0x1f) << 6);
@@ -32,7 +32,7 @@ Utf32_Codepoint utf8_to_utf32(const utf8 *character) {
 		size_in_bytes = 4;
 	}
 
-	return Utf32_Codepoint{ codepoint, size_in_bytes };
+	return Utf32_Codepoint { codepoint, size_in_bytes };
 }
 
 u8 utf32_to_utf8(utf32 codepoint, utf8 buffer[4]) {
@@ -40,22 +40,22 @@ u8 utf32_to_utf8(utf32 codepoint, utf8 buffer[4]) {
 
 	if (codepoint < 0x0080) {
 		buffer[0] = codepoint & 0x007f;
-		bytes = 1;
+		bytes     = 1;
 	} else if (codepoint < 0x0800) {
 		buffer[0] = ((codepoint >> 6) & 0x1f) | 0xc0;
 		buffer[1] = (codepoint & 0x3f) | 0x80;
-		bytes = 2;
+		bytes     = 2;
 	} else if (codepoint < 0x10000) {
 		buffer[0] = ((codepoint >> 12) & 0x0f) | 0xe0;
 		buffer[1] = ((codepoint >> 6) & 0x3f) | 0x80;
 		buffer[2] = (codepoint & 0x3f) | 0x80;
-		bytes = 3;
+		bytes     = 3;
 	} else {
 		buffer[0] = ((codepoint >> 18) & 0xf7);
 		buffer[1] = ((codepoint >> 12) & 0x3f) | 0x80;
 		buffer[2] = ((codepoint >> 6) & 0x3f) | 0x80;
 		buffer[3] = (codepoint & 0x3f) | 0x80;
-		bytes = 4;
+		bytes     = 4;
 	}
 
 	return bytes;
@@ -93,7 +93,7 @@ bool string_match(const String a, const String b) {
 }
 
 int string_compare(const String a, const String b) {
-	s64 len		= a.count < b.count ? a.count : b.count;
+	s64 len     = a.count < b.count ? a.count : b.count;
 	int compare = 0;
 
 	for (s64 i = 0; i < len; ++i) {
@@ -144,7 +144,7 @@ String_Search_Result string_isearch(const String string, const String item) {
 			matcher.data  = string.data + i;
 			matcher.count = item.count;
 			if (string_match(matcher, item)) {
-				result.found	   = true;
+				result.found       = true;
 				result.start_index = i;
 				return result;
 			}
@@ -161,12 +161,12 @@ String_Search_Result string_isearch_reverse(const String string, const String it
 	result.found = false;
 
 	String matcher;
-	s64	start = string.count - item.count;
+	s64    start = string.count - item.count;
 	for (s64 i = start; i >= 0; --i) {
 		matcher.data  = string.data + i;
 		matcher.count = item.count;
 		if (string_match(matcher, item)) {
-			result.found	   = true;
+			result.found       = true;
 			result.start_index = i;
 			return result;
 		}
@@ -261,19 +261,19 @@ char *to_cstring(String string) {
 }
 
 String string_copy(String string) {
-	u8 * data = new u8[string.count];
+	u8 *data = new u8[string.count];
 	memcpy(data, string.data, string.count);
 	return String(data, string.count);
 }
 
 String string_tcopy(String string) {
-	u8 * data = (u8 *)tallocate(string.count);
+	u8 *data = (u8 *)tallocate(string.count);
 	memcpy(data, string.data, string.count);
 	return String(data, string.count);
 }
 
 String string_concat(String a, String b) {
-	u8 * data = new u8[a.count + b.count];
+	u8 *data = new u8[a.count + b.count];
 	memcpy(data, a.data, a.count);
 	memcpy(data + a.count, b.data, b.count);
 	return String(data, a.count + b.count);
@@ -281,13 +281,13 @@ String string_concat(String a, String b) {
 
 String string_concat(Array_View<String> strings) {
 	s64 len = 0;
-	foreach(index, string, strings) {
+	foreach (index, string, strings) {
 		len += string.count;
 	}
-	u8 * data = new u8[len];
+	u8 *data = new u8[len];
 
 	s64 pos = 0;
-	foreach(index, string, strings) {
+	foreach (index, string, strings) {
 		memcpy(data + pos, string.data, string.count);
 		pos += string.count;
 	}
@@ -295,7 +295,7 @@ String string_concat(Array_View<String> strings) {
 }
 
 String string_tconcat(String a, String b) {
-	u8 * data = (u8 *)tallocate(a.count + b.count);
+	u8 *data = (u8 *)tallocate(a.count + b.count);
 	memcpy(data, a.data, a.count);
 	memcpy(data + a.count, b.data, b.count);
 	return String(data, a.count + b.count);
@@ -303,13 +303,13 @@ String string_tconcat(String a, String b) {
 
 String string_tconcat(Array_View<String> strings) {
 	s64 len = 0;
-	foreach(index, string, strings) {
+	foreach (index, string, strings) {
 		len += string.count;
 	}
-	u8 * data = (u8 *)tallocate(len);
+	u8 *data = (u8 *)tallocate(len);
 
 	s64 pos = 0;
-	foreach(index, string, strings) {
+	foreach (index, string, strings) {
 		memcpy(data + pos, string.data, string.count);
 		pos += string.count;
 	}

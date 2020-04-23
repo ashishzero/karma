@@ -32,9 +32,8 @@
 // uncomment to exclude systems from build process
 // #define EXCLUDE_SYSTEMS_BUILD
 
-
-#define BUILD_RENDERER_NONE 0
-#define BUILD_RENDERER_ALL 1
+#define BUILD_RENDERER_NONE   0
+#define BUILD_RENDERER_ALL    1
 #define BUILD_RENDERER_OPENGL 2
 
 /*
@@ -83,8 +82,8 @@
 #include "gfx_renderer.cpp"
 
 #if defined(BUILD_DEBUG) || defined(BUILD_DEVELOPER)
-#include "tokenizer.cpp"
-#include "prebuild.cpp"
+#	include "tokenizer.cpp"
+#	include "prebuild.cpp"
 #endif
 
 //
@@ -93,15 +92,15 @@
 
 #ifndef RUN_REFLECTION
 
-#ifndef EXCLUDE_SYSTEMS_BUILD
+#	ifndef EXCLUDE_SYSTEMS_BUILD
 
-#if defined(TARGET_WINDOWS)
-#include "windows/systems_windows.cpp"
-#else
-#error "Platform not supported!"
-#endif
+#		if defined(TARGET_WINDOWS)
+#			include "windows/systems_windows.cpp"
+#		else
+#			error "Platform not supported!"
+#		endif
 
-#endif
+#	endif
 
 #endif
 
@@ -110,21 +109,21 @@
 //
 
 #ifndef BUILD_RENDERER_TYPE
-#define BUILD_RENDERER_TYPE BUILD_RENDERER_ALL
+#	define BUILD_RENDERER_TYPE BUILD_RENDERER_ALL
 #endif
 
 #if BUILD_RENDERER_TYPE == BUILD_RENDERER_ALL
-#define INCLUDE_OPENGL_RENDERER
+#	define INCLUDE_OPENGL_RENDERER
 #endif
 
 #if BUILD_RENDERER_TYPE == BUILD_RENDERER_OPENGL
-#define INCLUDE_OPENGL_RENDERER
+#	define INCLUDE_OPENGL_RENDERER
 #endif
 
 #ifdef INCLUDE_OPENGL_RENDERER
-#include "gfx_opengl.cpp"
+#	include "gfx_opengl.cpp"
 #endif
 
 #ifndef RUN_REFLECTION
-#include "type_info.h"
+#	include "type_info.h"
 #endif
