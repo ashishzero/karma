@@ -262,7 +262,6 @@ void reflection_of_struct(Ostream *stream, CXCursor cursor, Array_View<CXCursor>
 
 	auto size = clang_Type_getSizeOf(type);
 
-	//ostream_write_formatted(stream, "struct %s;\n", name);
 	ostream_write_formatted(stream, "template <> struct Reflect<%s> {\n", name);
 	ostream_write_formatted(stream, "\tstatic constexpr Type_Id id = Type_Id_STRUCT;\n");
 
@@ -362,7 +361,6 @@ void reflection_of_union(Ostream *stream, CXCursor cursor, Array_View<CXCursor> 
 	auto type = clang_getCursorType(cursor);
 	auto size = clang_Type_getSizeOf(type);
 
-	//ostream_write_formatted(stream, "union %s;\n", name);
 	ostream_write_formatted(stream, "template <> struct Reflect<%s> {\n", name);
 	ostream_write_formatted(stream, "\tstatic constexpr Type_Id id = Type_Id_UNION;\n");
 
