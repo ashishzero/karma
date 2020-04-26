@@ -385,7 +385,7 @@ Token tokenizer_next_token(Tokenizer_State *tokenizer) {
 							count = 2;
 							tokenizer_advance(tokenizer, 2);
 							continue;
-						} else if (b == '.' && is_numeral(c)) {
+						} else if (a != '.' && b == '.' && is_numeral(c)) {
 							count = 3;
 							tokenizer_advance(tokenizer, 3);
 							continue;

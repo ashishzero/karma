@@ -1,5 +1,5 @@
 
-#include "string.h"
+#include "length_string.h"
 
 s64 string_utf8_length(const String str) {
 	s64 length = 0;

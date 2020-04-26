@@ -2536,6 +2536,63 @@ template <> struct Reflect<Ucd_Block> {
 	}
 };
 
+enum Ucd_Prop : uint32_t;
+template <> struct Enum_Info<Ucd_Prop> {
+	static constexpr size_t get_count() { return 36; }
+	static constexpr s64 get_min_value() { return 0; }
+	static constexpr s64 get_max_value() { return 35; }
+	static const Ucd_Prop index_value(s64 index) { return (Ucd_Prop)(index + 0); }
+	static const String string(Ucd_Prop value) {
+		static const String strings[] = {
+			"Ucd_Prop_UNKNOWN",
+			"Ucd_Prop_WHITE_SPACE",
+			"Ucd_Prop_BIDI_CONTROL",
+			"Ucd_Prop_JOIN_CONTROL",
+			"Ucd_Prop_DASH",
+			"Ucd_Prop_HYPHEN",
+			"Ucd_Prop_QUOTATION_MARK",
+			"Ucd_Prop_TERMINAL_PUNCTUATION",
+			"Ucd_Prop_OTHER_MATH",
+			"Ucd_Prop_HEX_DIGIT",
+			"Ucd_Prop_ASCII_HEX_DIGIT",
+			"Ucd_Prop_OTHER_ALPHABETIC",
+			"Ucd_Prop_IDEOGRAPHIC",
+			"Ucd_Prop_DIACRITIC",
+			"Ucd_Prop_EXTENDER",
+			"Ucd_Prop_OTHER_LOWERCASE",
+			"Ucd_Prop_OTHER_UPPERCASE",
+			"Ucd_Prop_NONCHARACTER_CODE_POINT",
+			"Ucd_Prop_OTHER_GRAPHEME_EXTEND",
+			"Ucd_Prop_IDS_BINARY_OPERATOR",
+			"Ucd_Prop_IDS_TRINARY_OPERATOR",
+			"Ucd_Prop_RADICAL",
+			"Ucd_Prop_UNIFIED_IDEOGRAPH",
+			"Ucd_Prop_OTHER_DEFAULT_IGNORABLE_CODE_POINT",
+			"Ucd_Prop_DEPRECATED",
+			"Ucd_Prop_SOFT_DOTTED",
+			"Ucd_Prop_LOGICAL_ORDER_EXCEPTION",
+			"Ucd_Prop_OTHER_ID_START",
+			"Ucd_Prop_OTHER_ID_CONTINUE",
+			"Ucd_Prop_SENTENCE_TERMINAL",
+			"Ucd_Prop_VARIATION_SELECTOR",
+			"Ucd_Prop_PATTERN_WHITE_SPACE",
+			"Ucd_Prop_PATTERN_SYNTAX",
+			"Ucd_Prop_PREPENDED_CONCATENATION_MARK",
+			"Ucd_Prop_REGIONAL_INDICATOR",
+			"Ucd_Prop_COUNT",
+		};
+		return strings[value - 0];
+	}
+};
+
+template <> struct Reflect<Ucd_Prop> {
+	static constexpr Type_Id id = Type_Id_ENUM;
+	static const Type_Info * const info() {
+		static const Type_Info_Enum i(sizeof(Ucd_Prop), "Ucd_Prop", enum_count<Ucd_Prop>());
+		return &i;
+	}
+};
+
 enum Ucd_Indic_Syllable : uint32_t;
 template <> struct Enum_Info<Ucd_Indic_Syllable> {
 	static constexpr size_t get_count() { return 37; }

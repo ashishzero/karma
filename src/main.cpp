@@ -7,6 +7,10 @@
 #include "systems.h"
 #include "utility.h"
 
+#pragma comment(lib, "W:/harfbuzz/msbuild-x64/Release/harfbuzz.lib")
+
+#include "../../harfbuzz/src/hb.h"
+
 // TEMP
 #ifdef BUILD_RELEASE
 #	define STB_IMAGE_IMPLEMENTATION
@@ -94,6 +98,22 @@ int system_main() {
 	//const String string = u8"The cake is a lie";
 
 	Font_Shape font_shape = font_shape_string(&font, string);
+
+	hb_buffer_t *hb_buffer;
+	hb_buffer = hb_buffer_create();
+	hb_buffer_add_utf8(hb_buffer, (char *)string.data, -1, 0, -1);
+	hb_buffer_set_direction(hb_buffer, HB_DIRECTION_LTR);
+	hb_buffer_set_script(hb_buffer, HB_SCRIPT_DEVANAGARI);
+	hb_buffer_set_language(hb_buffer, hb_language_from_string("san", -1));
+
+	auto hb_blob = hb_blob_create_from_file("c:/windows/fonts/mangal.ttf");
+	auto hb_face = hb_face_create(hb_blob, 0);
+
+	hb_font_t *hb_font = hb_font_create(hb_face);
+	hb_shape(hb_font, hb_buffer, 0, 0);
+	unsigned int         hb_glyph_count;
+	hb_glyph_info_t *    hb_info = hb_buffer_get_glyph_infos(hb_buffer, &hb_glyph_count);
+	hb_glyph_position_t *hb_pos  = hb_buffer_get_glyph_positions(hb_buffer, &hb_glyph_count);
 
 #if 0
 	struct Render_Glyph {
@@ -235,94 +255,203 @@ int system_main() {
 		ImGui::UpdateFrame(frame_time, event_time, simulate_time, render_time, gpu_time);
 
 		ImGui::Begin("Font");
-		Vec2  p         = ImGui::GetCursorScreenPos();
-		auto *draw_list = ImGui::GetWindowDrawList();
+		Vec2  display_position = ImGui::GetCursorScreenPos();
+		auto *draw_list        = ImGui::GetWindowDrawList();
 
 		static bool  draw_points = false, draw_baseline = true, draw_regions = false;
 		static float scale = 1.0f / 20.0f;
 
-		p += vec2(170, 350);
+		auto p = display_position + vec2(170, 350);
 
-		if (draw_baseline)
-			draw_list->AddLine(vec2(0, p.y), vec2(window_w, p.y), 0xffffff00);
-		//p.x -= 150;
+		{
+			if (draw_baseline)
+				draw_list->AddLine(vec2(0, p.y), vec2(window_w, p.y), 0xffffff00);
+			//p.x -= 150;
 
-		int x0, y0, x1, y1;
-		u16 prev_id = 0;
-		for (u32 id = 0; id < font_shape.glyph_count; ++id) {
-			stbtt_vertex *vertices = 0;
-			defer {
-				STBTT_free(vertices, font.info.userdata);
-			};
-			int num_verts = stbtt_GetGlyphShape(&font.info, font_shape.glyph_infos[id].id, &vertices);
+			int x0, y0, x1, y1;
+			u16 prev_id = 0;
+			for (u32 id = 0; id < font_shape.glyph_count; ++id) {
+				stbtt_vertex *vertices = 0;
+				defer {
+					STBTT_free(vertices, font.info.userdata);
+				};
+				int num_verts = stbtt_GetGlyphShape(&font.info, font_shape.glyph_infos[id].id, &vertices);
 
-			int advance, left_side_bearing;
-			stbtt_GetGlyphHMetrics(&font.info, font_shape.glyph_infos[id].id, &advance, &left_side_bearing);
+				int advance, left_side_bearing;
+				stbtt_GetGlyphHMetrics(&font.info, font_shape.glyph_infos[id].id, &advance, &left_side_bearing);
 
-			if (stbtt_GetGlyphBox(&font.info, font_shape.glyph_infos[id].id, &x0, &y0, &x1, &y1)) {
-				Vec2 rmin = vec2(p.x + x0 * scale, p.y - y0 * scale);
-				Vec2 rmax = vec2(p.x + x1 * scale, p.y - y1 * scale);
-				if (draw_regions) {
-					draw_list->AddRect(rmin, rmax, 0xffffffff);
-				}
-				if (region_index == id) {
-					rect_min_target = rmin;
-					rect_max_target = rmax;
-					line_beg_target = vec2(p.x, p.y - 100);
-					line_end_target = vec2(p.x + advance * scale, p.y - 100);
-					draw_list->AddRect(rect_min, rect_max, 0xff00ffff);
-					draw_list->AddLine(line_beg, line_end, 0xff0e00ff, 3);
-				}
-			}
+				if (stbtt_GetGlyphBox(&font.info, font_shape.glyph_infos[id].id, &x0, &y0, &x1, &y1)) {
+					Vec2 rmin = vec2(p.x + x0 * scale, p.y - y0 * scale);
+					Vec2 rmax = vec2(p.x + x1 * scale, p.y - y1 * scale);
 
-			Vec2  pos          = {};
-			int   num_segments = 12;
-			float x = 0, y = 0, cx = 0, cy = 0, cx1, cy1;
-			for (int i = 0; i < num_verts; ++i) {
-				x   = (r32)vertices[i].x * scale;
-				y   = -(r32)vertices[i].y * scale;
-				cx  = (r32)vertices[i].cx * scale;
-				cy  = -(r32)vertices[i].cy * scale;
-				cx1 = (r32)vertices[i].cx1 * scale;
-				cy1 = -(r32)vertices[i].cy1 * scale;
-
-				if (draw_points)
-					draw_list->AddRectFilled(p + vec2(x - 2, y - 2), p + vec2(x + 2, y + 2), 0xff0000ff);
-
-				switch (vertices[i].type) {
-					case STBTT_vmove:
-						break;
-
-					case STBTT_vline: {
-						Vec2 a = p + pos, b = p + vec2(x, y);
-						draw_list->AddLine(a, b, 0xffff00ff);
-					} break;
-
-					case STBTT_vcurve: {
-						Vec2 p1 = p + pos, p2 = vec2(p.x + cx, p.y + cy), p3 = vec2(p.x + x, p.y + y);
-						draw_list->PathLineTo(p1);
-						p1           = draw_list->_Path.back();
-						float t_step = 1.0f / (float)num_segments;
-						for (int i_step = 1; i_step <= num_segments; i_step++) {
-							auto resp = bezier_quadratic(p1, p2, p3, t_step * i_step);
-							draw_list->_Path.push_back(resp);
+					bool is_inside = false;
+					if (point_inside_rect(mm_rect(rmin.x, rmax.y, rmax.x, rmin.y), ImGui::GetMousePos())) {
+						is_inside = true;
+						if (ImGui::GetIO().MouseDown[ImGuiMouseButton_Left]) {
+							region_index = id;
 						}
-						draw_list->PathStroke(0xffff00ff, false, 1);
-					} break;
+					}
 
-					case STBTT_vcubic: {
-						draw_list->AddBezierCurve(p + pos, p + vec2(cx, cy), p + vec2(cx1, cy1), p + vec2(x, y), 0xffff00ff, 1, num_segments);
-					} break;
-
-						invalid_default_case();
+					if (draw_regions || is_inside) {
+						if (is_inside)
+							draw_list->AddRect(rmin, rmax, 0xff000fff, 0, 15, 2);
+						else
+							draw_list->AddRect(rmin, rmax, 0xffffffff);
+					}
+					if (region_index == id) {
+						rect_min_target = rmin;
+						rect_max_target = rmax;
+						line_beg_target = vec2(p.x, p.y - 100);
+						line_end_target = vec2(p.x + advance * scale, p.y - 100);
+						draw_list->AddRect(rect_min, rect_max, 0xff00ffff);
+						draw_list->AddLine(line_beg, line_end, 0xff0e00ff, 3);
+					}
 				}
 
-				pos = { x, y };
-			}
+				Vec2  pos          = {};
+				int   num_segments = 12;
+				float x = 0, y = 0, cx = 0, cy = 0, cx1, cy1;
+				for (int i = 0; i < num_verts; ++i) {
+					x   = (r32)vertices[i].x * scale;
+					y   = -(r32)vertices[i].y * scale;
+					cx  = (r32)vertices[i].cx * scale;
+					cy  = -(r32)vertices[i].cy * scale;
+					cx1 = (r32)vertices[i].cx1 * scale;
+					cy1 = -(r32)vertices[i].cy1 * scale;
 
-			p.x += (r32)(advance)*scale;
+					if (draw_points)
+						draw_list->AddRectFilled(p + vec2(x - 2, y - 2), p + vec2(x + 2, y + 2), 0xff0000ff);
+
+					switch (vertices[i].type) {
+						case STBTT_vmove:
+							break;
+
+						case STBTT_vline: {
+							Vec2 a = p + pos, b = p + vec2(x, y);
+							draw_list->AddLine(a, b, 0xffff00ff);
+						} break;
+
+						case STBTT_vcurve: {
+							Vec2 p1 = p + pos, p2 = vec2(p.x + cx, p.y + cy), p3 = vec2(p.x + x, p.y + y);
+							draw_list->PathLineTo(p1);
+							p1           = draw_list->_Path.back();
+							float t_step = 1.0f / (float)num_segments;
+							for (int i_step = 1; i_step <= num_segments; i_step++) {
+								auto resp = bezier_quadratic(p1, p2, p3, t_step * i_step);
+								draw_list->_Path.push_back(resp);
+							}
+							draw_list->PathStroke(0xffff00ff, false, 1);
+						} break;
+
+						case STBTT_vcubic: {
+							draw_list->AddBezierCurve(p + pos, p + vec2(cx, cy), p + vec2(cx1, cy1), p + vec2(x, y), 0xffff00ff, 1, num_segments);
+						} break;
+
+							invalid_default_case();
+					}
+
+					pos = { x, y };
+				}
+
+				p.x += (r32)(advance)*scale;
+			}
 		}
 
+		p = display_position + vec2(170, 350 + 150);
+		{
+			if (draw_baseline)
+				draw_list->AddLine(vec2(0, p.y), vec2(window_w, p.y), 0xffffff00);
+
+			int x0, y0, x1, y1;
+			u16 prev_id = 0;
+			for (u32 id = 0; id < hb_glyph_count; ++id) {
+				stbtt_vertex *vertices = 0;
+				defer {
+					STBTT_free(vertices, font.info.userdata);
+				};
+				int num_verts = stbtt_GetGlyphShape(&font.info, hb_info[id].codepoint, &vertices);
+
+				int advance, left_side_bearing;
+				stbtt_GetGlyphHMetrics(&font.info, font_shape.glyph_infos[id].id, &advance, &left_side_bearing);
+
+				if (stbtt_GetGlyphBox(&font.info, font_shape.glyph_infos[id].id, &x0, &y0, &x1, &y1)) {
+					Vec2 rmin = vec2(p.x + x0 * scale, p.y - y0 * scale);
+					Vec2 rmax = vec2(p.x + x1 * scale, p.y - y1 * scale);
+
+					bool is_inside = false;
+					if (point_inside_rect(mm_rect(rmin.x, rmax.y, rmax.x, rmin.y), ImGui::GetMousePos())) {
+						is_inside = true;
+						if (ImGui::GetIO().MouseDown[ImGuiMouseButton_Left]) {
+							region_index = id;
+						}
+					}
+
+					if (draw_regions || is_inside) {
+						if (is_inside)
+							draw_list->AddRect(rmin, rmax, 0xff000fff, 0, 15, 2);
+						else
+							draw_list->AddRect(rmin, rmax, 0xffffffff);
+					}
+					if (region_index == id) {
+						rect_min_target = rmin;
+						rect_max_target = rmax;
+						line_beg_target = vec2(p.x, p.y - 100);
+						line_end_target = vec2(p.x + advance * scale, p.y - 100);
+						draw_list->AddRect(rect_min, rect_max, 0xff00ffff);
+						draw_list->AddLine(line_beg, line_end, 0xff0e00ff, 3);
+					}
+				}
+
+				Vec2  pos          = {};
+				int   num_segments = 12;
+				float x = 0, y = 0, cx = 0, cy = 0, cx1, cy1;
+				for (int i = 0; i < num_verts; ++i) {
+					x   = (r32)vertices[i].x * scale;
+					y   = -(r32)vertices[i].y * scale;
+					cx  = (r32)vertices[i].cx * scale;
+					cy  = -(r32)vertices[i].cy * scale;
+					cx1 = (r32)vertices[i].cx1 * scale;
+					cy1 = -(r32)vertices[i].cy1 * scale;
+
+					if (draw_points)
+						draw_list->AddRectFilled(p + vec2(x - 2, y - 2), p + vec2(x + 2, y + 2), 0xff0000ff);
+
+					switch (vertices[i].type) {
+						case STBTT_vmove:
+							break;
+
+						case STBTT_vline: {
+							Vec2 a = p + pos, b = p + vec2(x, y);
+							draw_list->AddLine(a, b, 0xffff00ff);
+						} break;
+
+						case STBTT_vcurve: {
+							Vec2 p1 = p + pos, p2 = vec2(p.x + cx, p.y + cy), p3 = vec2(p.x + x, p.y + y);
+							draw_list->PathLineTo(p1);
+							p1           = draw_list->_Path.back();
+							float t_step = 1.0f / (float)num_segments;
+							for (int i_step = 1; i_step <= num_segments; i_step++) {
+								auto resp = bezier_quadratic(p1, p2, p3, t_step * i_step);
+								draw_list->_Path.push_back(resp);
+							}
+							draw_list->PathStroke(0xffff00ff, false, 1);
+						} break;
+
+						case STBTT_vcubic: {
+							draw_list->AddBezierCurve(p + pos, p + vec2(cx, cy), p + vec2(cx1, cy1), p + vec2(x, y), 0xffff00ff, 1, num_segments);
+						} break;
+
+							invalid_default_case();
+					}
+
+					pos = { x, y };
+				}
+
+				p.x += (r32)(advance)*scale;
+			}
+		}
+
+#if 0
 		utf8 buffer[50];
 		ImGui::BeginChild("Child");
 		for (u32 id = 0; id < font_shape.glyph_count; ++id) {
@@ -341,6 +470,18 @@ int system_main() {
 			if (ImGui::IsItemClicked()) region_index = id;
 		}
 		ImGui::EndChild();
+#endif
+		ImGui::BeginChild("Child");
+		{
+			String_Iter iter;
+			utf8        pool[4];
+			while (string_iter_next(string, &iter)) {
+				pool[utf32_to_utf8(iter.codepoint.code, pool)] = 0;
+				ImGui::Text("U+%x [ %s ]", iter.codepoint, pool);
+			}
+		}
+		ImGui::EndChild();
+
 		ImGui::End();
 
 		ImGui::Begin("Options");
@@ -349,22 +490,21 @@ int system_main() {
 		ImGui::Checkbox("Baseline", &draw_baseline);
 		ImGui::DragFloat("Scale", &scale, 0.0001f, 0, 1);
 
-		int codepoint_index = 0;
-		for (u32 id = 0; id < font_shape.glyph_count; ++id) {
-			auto   count = font_shape.glyph_infos[id].codepoint_count;
-			Colorh color = id == region_index ? colorh(0xff00ffff) : colorh(0xffffffff);
-			for (int i = 0; i < count; ++i, ++codepoint_index) {
-				auto &codepoint                                    = font_shape.codepoints[codepoint_index];
-				buffer[utf32_to_utf8(codepoint.codepoint, buffer)] = 0;
-				auto syllable                                      = ucd_indic_syllable(codepoint.codepoint);
-				ImGui::TextColored(hex_to_color4(color), "[%d] U+%x  %s : %s, %s (%d)",
-								   codepoint_index, codepoint.codepoint, buffer,
-								   enum_string(syllable).data + reflect_info(syllable)->name.count + 1,
-								   enum_string(codepoint.prop).data + reflect_info(codepoint.prop)->name.count + 1,
-								   codepoint.value);
+		auto g_counts = font_shape.glyph_count > hb_glyph_count ? font_shape.glyph_count : hb_glyph_count;
 
-				if (ImGui::IsItemClicked()) region_index = id;
-			}
+		int codepoint_index = 0;
+		for (u32 id = 0; id < g_counts; ++id) {
+			Colorh color = id == region_index ? colorh(0xff00ffff) : colorh(0xffffffff);
+
+			int v0, v1, c0, c1;
+			v0 = id < font_shape.glyph_count ? font_shape.glyph_infos[id].id : -1;
+			v1 = id < hb_glyph_count ? hb_info[id].codepoint : -1;
+			c0 = id < font_shape.glyph_count ? font_shape.glyph_infos[id].cluster : -1;
+			c1 = id < hb_glyph_count ? hb_info[id].cluster : -1;
+
+			ImGui::TextColored(hex_to_color4(color), "%d(%d)  %d(%d)", v0, c0, v1, c1);
+
+			if (ImGui::IsItemClicked()) region_index = id;
 		}
 
 		ImGui::End();

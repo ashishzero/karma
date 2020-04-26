@@ -750,7 +750,7 @@ void Gfx_Platform_OpenGL::begin(Handle hshader, u8 *data, ptrsize size) {
 		}
 	}
 
-	assert(istream_eof(stream));
+	assert(istream_eof(&stream));
 }
 
 void Gfx_Platform_OpenGL::end() {

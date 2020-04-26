@@ -17,9 +17,9 @@
 //---- Define assertion handler. Defaults to calling assert().
 // If your macro uses multiple statements, make sure is enclosed in a 'do { .. } while (0)' block so it can be used as a single statement.
 #if defined(BUILD_DEBUG) || defined(BUILD_INTERNAL)
-#define IM_ASSERT(_EXPR)  runtime_assert(_EXPR)
+#	define IM_ASSERT(_EXPR) runtime_assert(_EXPR)
 #else
-#define IM_ASSERT(_EXPR)  ((void)(_EXPR))     // Disable asserts
+#	define IM_ASSERT(_EXPR) ((void)(_EXPR)) // Disable asserts
 #endif
 
 //---- Define attributes of all API symbols declarations, e.g. for DLL under Windows
@@ -69,14 +69,25 @@
 //---- Define constructor and implicit cast operators to convert back<>forth between your math types and ImVec2/ImVec4.
 // This will be inlined as part of ImVec2 and ImVec4 class declarations.
 #include "../lin_maths.h"
-#define IM_VEC2_CLASS_EXTRA                                                 \
-        ImVec2(const Vec2& f) { x = f.x; y = f.y; }                       \
-        operator Vec2() const { return vec2(x,y); }
+#define IM_VEC2_CLASS_EXTRA \
+	ImVec2(const Vec2 &f) { \
+		x = f.x;            \
+		y = f.y;            \
+	}                       \
+	operator Vec2() const { \
+		return vec2(x, y);  \
+	}
 
-#define IM_VEC4_CLASS_EXTRA                                                 \
-        ImVec4(const Vec4& f) { x = f.x; y = f.y; z = f.z; w = f.w; }     \
-        operator Vec4() const { return vec4(x,y,z,w); }
-
+#define IM_VEC4_CLASS_EXTRA      \
+	ImVec4(const Vec4 &f) {      \
+		x = f.x;                 \
+		y = f.y;                 \
+		z = f.z;                 \
+		w = f.w;                 \
+	}                            \
+	operator Vec4() const {      \
+		return vec4(x, y, z, w); \
+	}
 
 //---- Use 32-bit vertex indices (default is 16-bit) is one way to allow large meshes with more than 64K vertices.
 // Your renderer back-end will need to support it (most example renderer back-ends support both 16/32-bit indices).
@@ -92,7 +103,7 @@
 
 //---- Debug Tools: Macro to break in Debugger
 // (use 'Metrics->Tools->Item Picker' to pick widgets with the mouse and break into them for easy debugging.)
-#define IM_DEBUG_BREAK  trigger_breakpoint
+#define IM_DEBUG_BREAK trigger_breakpoint
 //#define IM_DEBUG_BREAK  __debugbreak()
 
 //---- Debug Tools: Have the Item Picker break in the ItemAdd() function instead of ItemHoverable(),
@@ -108,9 +119,9 @@
 #include "../systems.h"
 
 namespace ImGui {
-	void Initialize();
-	void Shutdown();
-	bool HandleEvent(const Event &event);
-	void UpdateFrame(r32 dt, r32 event_time, r32 simulate_time, r32 render_time, r32 gpu_time);
-	void RenderFrame();
-}
+void Initialize();
+void Shutdown();
+bool HandleEvent(const Event &event);
+void UpdateFrame(r32 dt, r32 event_time, r32 simulate_time, r32 render_time, r32 gpu_time);
+void RenderFrame();
+} // namespace ImGui

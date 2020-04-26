@@ -1312,6 +1312,12 @@ Vec2 rotate_around(Vec2 point, Vec2 center, r32 angle) {
 //
 //
 
+bool point_inside_rect(Mm_Rect rect, Vec2 point) {
+	if (point.x < rect.min.x || point.y < rect.min.y) return false;
+	if (point.x > rect.max.x || point.y > rect.max.y) return false;
+	return true;
+}
+
 bool aabb_vs_aabb(const Mm_Rect &a, const Mm_Rect &b) {
 	if (a.max.x < b.min.x || a.min.x > b.max.x) return false;
 	if (a.max.y < b.min.y || a.min.y > b.max.y) return false;

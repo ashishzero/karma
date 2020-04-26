@@ -1154,6 +1154,7 @@ void glyph_range_add_no_bound_check(Glyph_Range *range, u32 id, u32 codepoint, i
 	range->infos[range->count].id              = id;
 	range->infos[range->count].codepoints[0]   = codepoint;
 	range->infos[range->count].codepoint_count = 1;
+	range->infos[range->count].cluster         = cluster;
 	range->count += 1;
 }
 
@@ -1988,6 +1989,7 @@ Font_Shape font_shape_string(Dynamic_Font *font, String string) {
 	}
 
 	// Clustering
+#if 1
 	int cluster_value = 0;
 	for (s64 i = 0; i < codepoints.count; ++i) {
 		bool should_inc;
@@ -2027,11 +2029,12 @@ Font_Shape font_shape_string(Dynamic_Font *font, String string) {
 		codepoints[i].value    = cluster_value;
 		codepoints[i].syllable = ucd_indic_syllable(codepoints[i].codepoint);
 	}
+#endif
 
 	// Devanagari Clustering
 	const utf32 DEVANAGARI_RA    = 0x0930;
 	const utf32 DEVANAGARI_VIRMA = 0x094D;
-#if 0
+#if 1
 	s64 consume;
 	for (s64 i = 0; i < codepoints.count; i += consume) {
 		consume = 1;
@@ -2047,11 +2050,10 @@ Font_Shape font_shape_string(Dynamic_Font *font, String string) {
 			if (i + 2 < codepoints.count) {
 				if (codepoints[i].codepoint == DEVANAGARI_RA &&
 					codepoints[i + 2].syllable == Ucd_Indic_Syllable_CONSONANT) {
-
-					auto consonant	  = codepoints[i + 2];
+					auto consonant    = codepoints[i + 2];
 					codepoints[i + 2] = codepoints[i + 1];
 					codepoints[i + 1] = codepoints[i];
-					codepoints[i]	  = consonant;
+					codepoints[i]     = consonant;
 
 					consume += 2;
 				}
@@ -2063,7 +2065,7 @@ Font_Shape font_shape_string(Dynamic_Font *font, String string) {
 	// Converting codepoints to glyph indices
 	for (s32 i = 0; i < codepoints.count; ++i) {
 		auto id = (u32)stbtt_FindGlyphIndex(&font->info, (int)codepoints[i].codepoint);
-		glyph_range_add_no_bound_check(&range, id, codepoints[i].codepoint, 0);
+		glyph_range_add_no_bound_check(&range, id, codepoints[i].codepoint, codepoints[i].value);
 	}
 
 	static Feature_Tag features[] = {

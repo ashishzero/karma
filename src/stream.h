@@ -90,8 +90,25 @@ inline void *istream_consume_size(Istream *b, size_t size) {
 }
 #define istream_consume(stream, type) (type *)istream_consume_size(stream, sizeof(type))
 
-inline bool istream_eof(Istream &b) {
-	return b.current >= b.end;
+inline bool istream_eof(Istream *b) {
+	return b->current >= b->end;
+}
+
+inline String istream_consume_line(Istream *b) {
+	String string;
+
+	u8 *ptr    = b->current;
+	s64 length = 0;
+	while (!istream_eof(b)) {
+		auto c = *istream_consume(b, u8);
+		if (c == '\n' || c == '\r') break;
+		length += 1;
+	}
+
+	string.data  = ptr;
+	string.count = length;
+
+	return string;
 }
 
 //
