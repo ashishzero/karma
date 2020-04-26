@@ -1,6 +1,5 @@
 #include "src/shared_crt_impl.hpp"
 #include "src/stream.h"
-#include "src/tokenizer.cpp"
 #include <ctype.h>
 
 static FILE *header;
