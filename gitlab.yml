@@ -1,0 +1,4 @@
+#Enable LFS
+lfs:
+        enabled: true
+
