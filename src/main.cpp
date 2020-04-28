@@ -17,11 +17,11 @@
 #endif
 #include "stb_image.h"
 
+#include "reflection.h"
 #include "opentype.h"
 
 #include "stream.h"
 
-#include "reflection.h"
 
 #define timed_begin(x) u64 timed_counter_##x = system_get_counter()
 #define timed_end(x)   ((1000000.0f * (r32)(system_get_counter() - timed_counter_##x)) / (r32)system_get_frequency()) / 1000.0f
@@ -93,7 +93,13 @@ int system_main() {
 	auto bytes     = utf32_to_utf8(codepoint, buffer);
 
 	//const String string = u8"र्ज्ञ श्वरश्;न्निध्यंर";
-	const String string = u8"र्क;र्र्;र्ज्ञ";
+	//const String string = u8"श्;न्नि";
+	//const String string = u8"र्क;र्र्;र्ज्ञ;ग्ध;ठ्र;त्र्;हि";
+	//const String string = u8"र्कग्धठ्र;काँ;त्र्य;रु";
+	//const String string = u8";कि;की;";
+	//const String string = u8"श्;रुकिकीत्रिर्ज्ञ;र्कर्र";
+	const String string = u8"ऩ;श्;र्ज्ञ;र्कर्र";
+	//const String string = u8"र्कर्रर्ज्ञ";
 	//const String string = u8"देहांते तव +-*/ सान्निध्यं देहि मे परमेश्"; //श्वर ";
 	//const String string = u8"The cake is a lie";
 
@@ -188,12 +194,12 @@ int system_main() {
 			}
 
 			if ((event.type & Event_Type_KEY_DOWN) && event.key.symbol == Key_DOWN) {
-				region_index = (region_index + 1) % font_shape.glyph_count;
+				region_index = (region_index + 1) % font_shape.codepoints.count;
 				break;
 			}
 
 			if ((event.type & Event_Type_KEY_DOWN) && event.key.symbol == Key_UP) {
-				region_index = region_index > 0 ? region_index - 1 : font_shape.glyph_count - 1;
+				region_index = region_index > 0 ? region_index - 1 : (u32)font_shape.codepoints.count - 1;
 				break;
 			}
 		}
@@ -270,17 +276,17 @@ int system_main() {
 
 			int x0, y0, x1, y1;
 			u16 prev_id = 0;
-			for (u32 id = 0; id < font_shape.glyph_count; ++id) {
+			for (u32 id = 0; id < font_shape.codepoints.count; ++id) {
 				stbtt_vertex *vertices = 0;
 				defer {
 					STBTT_free(vertices, font.info.userdata);
 				};
-				int num_verts = stbtt_GetGlyphShape(&font.info, font_shape.glyph_infos[id].id, &vertices);
+				int num_verts = stbtt_GetGlyphShape(&font.info, font_shape.codepoints[id].glyph_id, &vertices);
 
 				int advance, left_side_bearing;
-				stbtt_GetGlyphHMetrics(&font.info, font_shape.glyph_infos[id].id, &advance, &left_side_bearing);
+				stbtt_GetGlyphHMetrics(&font.info, font_shape.codepoints[id].glyph_id, &advance, &left_side_bearing);
 
-				if (stbtt_GetGlyphBox(&font.info, font_shape.glyph_infos[id].id, &x0, &y0, &x1, &y1)) {
+				if (stbtt_GetGlyphBox(&font.info, font_shape.codepoints[id].glyph_id, &x0, &y0, &x1, &y1)) {
 					Vec2 rmin = vec2(p.x + x0 * scale, p.y - y0 * scale);
 					Vec2 rmax = vec2(p.x + x1 * scale, p.y - y1 * scale);
 
@@ -308,6 +314,8 @@ int system_main() {
 					}
 				}
 
+				u32 draw_color = font_shape.codepoints[id].base ? 0xff00ffef : 0xffff00ff;
+
 				Vec2  pos          = {};
 				int   num_segments = 12;
 				float x = 0, y = 0, cx = 0, cy = 0, cx1, cy1;
@@ -320,7 +328,7 @@ int system_main() {
 					cy1 = -(r32)vertices[i].cy1 * scale;
 
 					if (draw_points)
-						draw_list->AddRectFilled(p + vec2(x - 2, y - 2), p + vec2(x + 2, y + 2), 0xff0000ff);
+						draw_list->AddRectFilled(p + vec2(x - 2, y - 2), p + vec2(x + 2, y + 2), draw_color);
 
 					switch (vertices[i].type) {
 						case STBTT_vmove:
@@ -328,7 +336,7 @@ int system_main() {
 
 						case STBTT_vline: {
 							Vec2 a = p + pos, b = p + vec2(x, y);
-							draw_list->AddLine(a, b, 0xffff00ff);
+							draw_list->AddLine(a, b, draw_color);
 						} break;
 
 						case STBTT_vcurve: {
@@ -340,17 +348,17 @@ int system_main() {
 								auto resp = bezier_quadratic(p1, p2, p3, t_step * i_step);
 								draw_list->_Path.push_back(resp);
 							}
-							draw_list->PathStroke(0xffff00ff, false, 1);
+							draw_list->PathStroke(draw_color, false, 1);
 						} break;
 
 						case STBTT_vcubic: {
-							draw_list->AddBezierCurve(p + pos, p + vec2(cx, cy), p + vec2(cx1, cy1), p + vec2(x, y), 0xffff00ff, 1, num_segments);
+							draw_list->AddBezierCurve(p + pos, p + vec2(cx, cy), p + vec2(cx1, cy1), p + vec2(x, y), draw_color, 1, num_segments);
 						} break;
 
 							invalid_default_case();
 					}
 
-					pos = { x, y };
+					pos = vec2(x, y);
 				}
 
 				p.x += (r32)(advance)*scale;
@@ -372,9 +380,9 @@ int system_main() {
 				int num_verts = stbtt_GetGlyphShape(&font.info, hb_info[id].codepoint, &vertices);
 
 				int advance, left_side_bearing;
-				stbtt_GetGlyphHMetrics(&font.info, font_shape.glyph_infos[id].id, &advance, &left_side_bearing);
+				stbtt_GetGlyphHMetrics(&font.info, hb_info[id].codepoint, &advance, &left_side_bearing);
 
-				if (stbtt_GetGlyphBox(&font.info, font_shape.glyph_infos[id].id, &x0, &y0, &x1, &y1)) {
+				if (stbtt_GetGlyphBox(&font.info, hb_info[id].codepoint, &x0, &y0, &x1, &y1)) {
 					Vec2 rmin = vec2(p.x + x0 * scale, p.y - y0 * scale);
 					Vec2 rmax = vec2(p.x + x1 * scale, p.y - y1 * scale);
 
@@ -402,6 +410,8 @@ int system_main() {
 					}
 				}
 
+				u32 draw_color = 0xffff00ff;
+
 				Vec2  pos          = {};
 				int   num_segments = 12;
 				float x = 0, y = 0, cx = 0, cy = 0, cx1, cy1;
@@ -414,7 +424,7 @@ int system_main() {
 					cy1 = -(r32)vertices[i].cy1 * scale;
 
 					if (draw_points)
-						draw_list->AddRectFilled(p + vec2(x - 2, y - 2), p + vec2(x + 2, y + 2), 0xff0000ff);
+						draw_list->AddRectFilled(p + vec2(x - 2, y - 2), p + vec2(x + 2, y + 2), draw_color);
 
 					switch (vertices[i].type) {
 						case STBTT_vmove:
@@ -422,7 +432,7 @@ int system_main() {
 
 						case STBTT_vline: {
 							Vec2 a = p + pos, b = p + vec2(x, y);
-							draw_list->AddLine(a, b, 0xffff00ff);
+							draw_list->AddLine(a, b, draw_color);
 						} break;
 
 						case STBTT_vcurve: {
@@ -434,17 +444,17 @@ int system_main() {
 								auto resp = bezier_quadratic(p1, p2, p3, t_step * i_step);
 								draw_list->_Path.push_back(resp);
 							}
-							draw_list->PathStroke(0xffff00ff, false, 1);
+							draw_list->PathStroke(draw_color, false, 1);
 						} break;
 
 						case STBTT_vcubic: {
-							draw_list->AddBezierCurve(p + pos, p + vec2(cx, cy), p + vec2(cx1, cy1), p + vec2(x, y), 0xffff00ff, 1, num_segments);
+							draw_list->AddBezierCurve(p + pos, p + vec2(cx, cy), p + vec2(cx1, cy1), p + vec2(x, y), draw_color, 1, num_segments);
 						} break;
 
 							invalid_default_case();
 					}
 
-					pos = { x, y };
+					pos = vec2(x, y);
 				}
 
 				p.x += (r32)(advance)*scale;
@@ -475,9 +485,14 @@ int system_main() {
 		{
 			String_Iter iter;
 			utf8        pool[4];
-			while (string_iter_next(string, &iter)) {
-				pool[utf32_to_utf8(iter.codepoint.code, pool)] = 0;
-				ImGui::Text("U+%x [ %s ]", iter.codepoint, pool);
+			for (s64 ii = 0; ii < font_shape.originals.count; ++ii) {
+				pool[utf32_to_utf8(font_shape.originals[ii].codepoint, pool)] = 0;
+				ImGui::Text("%d U+%04x [ %s ] - %d", 
+					(int)ii, font_shape.originals[ii].codepoint, pool, font_shape.originals[ii].value);
+				if (font_shape.originals[ii].base) {
+					ImGui::SameLine();
+					ImGui::TextUnformatted("  (base)");
+				}
 			}
 		}
 		ImGui::EndChild();
@@ -490,16 +505,16 @@ int system_main() {
 		ImGui::Checkbox("Baseline", &draw_baseline);
 		ImGui::DragFloat("Scale", &scale, 0.0001f, 0, 1);
 
-		auto g_counts = font_shape.glyph_count > hb_glyph_count ? font_shape.glyph_count : hb_glyph_count;
+		auto g_counts = font_shape.codepoints.count > hb_glyph_count ? font_shape.codepoints.count : hb_glyph_count;
 
 		int codepoint_index = 0;
 		for (u32 id = 0; id < g_counts; ++id) {
 			Colorh color = id == region_index ? colorh(0xff00ffff) : colorh(0xffffffff);
 
 			int v0, v1, c0, c1;
-			v0 = id < font_shape.glyph_count ? font_shape.glyph_infos[id].id : -1;
+			v0 = id < font_shape.codepoints.count ? font_shape.codepoints[id].glyph_id : -1;
 			v1 = id < hb_glyph_count ? hb_info[id].codepoint : -1;
-			c0 = id < font_shape.glyph_count ? font_shape.glyph_infos[id].cluster : -1;
+			c0 = id < font_shape.codepoints.count ? font_shape.codepoints[id].value : -1;
 			c1 = id < hb_glyph_count ? hb_info[id].cluster : -1;
 
 			ImGui::TextColored(hex_to_color4(color), "%d(%d)  %d(%d)", v0, c0, v1, c1);

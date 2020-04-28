@@ -1,5 +1,4 @@
 #include "src/shared_crt_impl.hpp"
-#include "src/stream.h"
 #include <ctype.h>
 
 static FILE *header;
@@ -111,6 +110,10 @@ bool parse_for_fmt_range_type_category(const char *file, String line, Fmt_Range_
 void ucd_generate_fmt_range_type_category(const char *file_name, const char *name) {
 	const String file    = tprintf("../../res/ucd/%s", file_name);
 	String       content = read_entire_file(file);
+	defer {
+		mfree(content.data);
+	};
+
 	if (content) {
 		auto stream = istream(content);
 
@@ -165,21 +168,122 @@ void ucd_generate_fmt_range_type_category(const char *file_name, const char *nam
 	}
 }
 
+struct Unicode_Data {
+	String codepoint;
+	String information;
+	String category;
+	String decomposed;
+	String name;
+};
+
+bool parse_for_unicode_data(String line, Unicode_Data *data) {
+	int terminators[14];
+
+	String_Search_Result find_res;
+	int                  search_index = 0;
+	for (int put_index = 0; put_index < static_count(terminators); ++put_index) {
+		find_res = string_isearch(line, ";", search_index);
+		if (find_res.found) {
+			terminators[put_index] = (int)find_res.start_index;
+			search_index = (int)find_res.start_index + 1;
+		} else {
+			return false;
+		}
+	}
+
+	data->codepoint   = string_substring(line, 0, terminators[0]);
+	data->information = string_substring(line, terminators[0] + 1, terminators[1] - terminators[0] - 1);
+	data->category    = string_substring(line, terminators[1] + 1, terminators[2] - terminators[1] - 1);
+	data->decomposed  = string_substring(line, terminators[4] + 1, terminators[5] - terminators[4] - 1);
+	data->name        = string_substring(line, terminators[9] + 1, terminators[10] - terminators[9] - 1);
+
+	return true;
+}
+
+void ucd_generate_unicode_data(const char *file_name) {
+	const String file    = tprintf("../../res/ucd/%s", file_name);
+	String       content = read_entire_file(file);
+	defer {
+		mfree(content.data);
+	};
+
+	if (content) {
+		Array<Unicode_Data> unicode_data;
+
+		auto stream = istream(content);
+
+		Unicode_Data data;
+		while (!istream_eof(&stream)) {
+			if (parse_for_unicode_data(istream_consume_line(&stream), &data)) {
+				array_add(&unicode_data, data);
+			}
+		}
+
+		fprintf(header, "int unicode_normalize(uint32_t codepoint, uint32_t **normals);\n\n");
+
+		fprintf(source, "int unicode_normalize(uint32_t codepoint, uint32_t **normals) {\n");
+
+		Ostream switch_code;
+		Ostream normals_code;
+
+		for (s64 index = 0; index < unicode_data.count; ++index) {
+			if (unicode_data[index].decomposed) {
+				char *name_of_decomposed = lower_caps(unicode_data[index].information);
+				ostream_write_formatted(&normals_code, "\tstatic uint32_t %s [] = { ", name_of_decomposed);
+				String_Iter iter;
+				while (string_iter_next(unicode_data[index].decomposed, &iter)) {
+					if (iter.index == 0) ostream_write_formatted(&normals_code, "0x");
+					if (iter.codepoint.code == ' ') {
+						ostream_write_formatted(&normals_code, ", 0x");
+					} else if (iter.codepoint.code == '<') {
+						while (string_iter_next(unicode_data[index].decomposed, &iter)) {
+							if (iter.codepoint.code == ' ') break;
+						}
+					} else {
+						utf8 utf8_string[5];
+						utf8_string[utf32_to_utf8(iter.codepoint.code, utf8_string)] = 0;
+						ostream_write_formatted(&normals_code, "%s", utf8_string);
+					}
+				}
+				ostream_write_formatted(&normals_code, " };\n");
+
+				ostream_write_formatted(&switch_code, "\t\tcase 0x%s:\n\t\t\t*normals = %s;\n\t\t\treturn static_count(%s);\n",
+										tto_cstring(unicode_data[index].codepoint), name_of_decomposed, name_of_decomposed);
+			}
+		}
+
+		String switch_string  = ostream_build_string(&switch_code, true);
+		String normals_string = ostream_build_string(&normals_code, true);
+		ostream_free(&switch_code);
+		ostream_free(&normals_code);
+
+		fprintf(source, "%s", normals_string.data);
+		fprintf(source, "\n\tswitch (codepoint) {\n");
+		fprintf(source, "%s", switch_string.data);
+		fprintf(source, "\t}\n\treturn 0;\n}\n\n");
+
+		mfree(switch_string.data);
+		mfree(normals_string.data);
+	}
+}
+
 int system_main() {
-	header = fopen("../../src/ucd.h", "wb");
-	source = fopen("../../src/ucd.cpp", "wb");
+	header = fopen("../../src/unicode.h", "wb");
+	source = fopen("../../src/unicode.cpp", "wb");
 
 	fprintf(header, "#pragma once\n");
 	fprintf(header, "#include <stdint.h>\n\n");
-	fprintf(source, "#include \"ucd.h\"\n\n");
+	fprintf(source, "#include \"unicode.h\"\n\n");
 
-	ucd_generate_fmt_range_type_category("Scripts.txt", "Ucd_Script");
-	ucd_generate_fmt_range_type_category("ScriptExtensions.txt", "Ucd_Script_Ext");
-	ucd_generate_fmt_range_type_category("Blocks.txt", "Ucd_Block");
-	ucd_generate_fmt_range_type_category("PropList.txt", "Ucd_Prop");
-	ucd_generate_fmt_range_type_category("IndicSyllabicCategory.txt", "Ucd_Indic_Syllable");
-	ucd_generate_fmt_range_type_category("IndicPositionalCategory.txt", "Ucd_Indic_Position");
-	ucd_generate_fmt_range_type_category("auxiliary/GraphemeBreakProperty.txt", "Ucd_Grapheme_Property");
+	ucd_generate_fmt_range_type_category("Scripts.txt", "Unicode_Script");
+	ucd_generate_fmt_range_type_category("ScriptExtensions.txt", "Unicode_Script_Ext");
+	ucd_generate_fmt_range_type_category("Blocks.txt", "Unicode_Block");
+	ucd_generate_fmt_range_type_category("PropList.txt", "Unicode_Prop");
+	ucd_generate_fmt_range_type_category("IndicSyllabicCategory.txt", "Unicode_Indic_Syllable");
+	ucd_generate_fmt_range_type_category("IndicPositionalCategory.txt", "Unicode_Indic_Position");
+	ucd_generate_fmt_range_type_category("auxiliary/GraphemeBreakProperty.txt", "Unicode_Grapheme_Property");
+
+	ucd_generate_unicode_data("UnicodeData.txt");
 
 	fclose(header);
 	fclose(source);

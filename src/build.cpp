@@ -72,12 +72,9 @@
 
 #include "lin_maths.cpp"
 
-#include "string.h"
-#define STB_SPRINTF_IMPLEMENTATION
-#include "stb_sprintf.h"
 #include "length_string.cpp"
 
-#include "ucd.cpp"
+#include "unicode.cpp"
 
 #include "gfx_renderer.cpp"
 
@@ -124,6 +121,9 @@
 #	include "gfx_opengl.cpp"
 #endif
 
+//
+// Reflection
+//
 #ifndef RUN_REFLECTION
 #	include "type_info.h"
 #endif

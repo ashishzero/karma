@@ -2,7 +2,6 @@
 #include "reflection.h"
 
 
-enum Allocation_Type : int;
 template <> struct Enum_Info<Allocation_Type> {
 	static constexpr size_t get_count() { return 3; }
 	static constexpr s64 get_min_value() { return 0; }
@@ -26,7 +25,6 @@ template <> struct Reflect<Allocation_Type> {
 	}
 };
 
-enum Render_Backend : int;
 template <> struct Enum_Info<Render_Backend> {
 	static constexpr size_t get_count() { return 3; }
 	static constexpr s64 get_min_value() { return 0; }
@@ -50,7 +48,6 @@ template <> struct Reflect<Render_Backend> {
 	}
 };
 
-enum Texture_Wrap : int;
 template <> struct Enum_Info<Texture_Wrap> {
 	static constexpr size_t get_count() { return 2; }
 	static constexpr s64 get_min_value() { return 0; }
@@ -73,7 +70,6 @@ template <> struct Reflect<Texture_Wrap> {
 	}
 };
 
-enum Texture_Filter : int;
 template <> struct Enum_Info<Texture_Filter> {
 	static constexpr size_t get_count() { return 2; }
 	static constexpr s64 get_min_value() { return 0; }
@@ -96,7 +92,6 @@ template <> struct Reflect<Texture_Filter> {
 	}
 };
 
-enum Buffer_Type : int;
 template <> struct Enum_Info<Buffer_Type> {
 	static constexpr size_t get_count() { return 2; }
 	static constexpr s64 get_min_value() { return 0; }
@@ -119,7 +114,6 @@ template <> struct Reflect<Buffer_Type> {
 	}
 };
 
-enum Color_Format : int;
 template <> struct Enum_Info<Color_Format> {
 	static constexpr size_t get_count() { return 5; }
 	static constexpr s64 get_min_value() { return 0; }
@@ -145,7 +139,6 @@ template <> struct Reflect<Color_Format> {
 	}
 };
 
-enum Depth_Format : int;
 template <> struct Enum_Info<Depth_Format> {
 	static constexpr size_t get_count() { return 3; }
 	static constexpr s64 get_min_value() { return 0; }
@@ -169,7 +162,6 @@ template <> struct Reflect<Depth_Format> {
 	}
 };
 
-enum Clear_Flag_Bit : u32;
 template <> struct Enum_Info<Clear_Flag_Bit> {
 	static constexpr size_t get_count() { return 5; }
 	static constexpr s64 get_min_value() { return 1; }
@@ -205,7 +197,6 @@ template <> struct Reflect<Clear_Flag_Bit> {
 	}
 };
 
-enum Camera_View_Kind : int;
 template <> struct Enum_Info<Camera_View_Kind> {
 	static constexpr size_t get_count() { return 2; }
 	static constexpr s64 get_min_value() { return 0; }
@@ -228,7 +219,6 @@ template <> struct Reflect<Camera_View_Kind> {
 	}
 };
 
-enum Key : u32;
 template <> struct Enum_Info<Key> {
 	static constexpr size_t get_count() { return 84; }
 	static constexpr s64 get_min_value() { return 0; }
@@ -333,7 +323,6 @@ template <> struct Reflect<Key> {
 	}
 };
 
-enum Key_Mod : u32;
 template <> struct Enum_Info<Key_Mod> {
 	static constexpr size_t get_count() { return 10; }
 	static constexpr s64 get_min_value() { return 1; }
@@ -379,7 +368,6 @@ template <> struct Reflect<Key_Mod> {
 	}
 };
 
-enum Button : u32;
 template <> struct Enum_Info<Button> {
 	static constexpr size_t get_count() { return 7; }
 	static constexpr s64 get_min_value() { return 0; }
@@ -407,7 +395,6 @@ template <> struct Reflect<Button> {
 	}
 };
 
-enum Event_Type : u32;
 template <> struct Enum_Info<Event_Type> {
 	static constexpr size_t get_count() { return 20; }
 	static constexpr s64 get_min_value() { return 1; }
@@ -473,7 +460,6 @@ template <> struct Reflect<Event_Type> {
 	}
 };
 
-enum State : int;
 template <> struct Enum_Info<State> {
 	static constexpr size_t get_count() { return 2; }
 	static constexpr s64 get_min_value() { return 0; }
@@ -496,7 +482,6 @@ template <> struct Reflect<State> {
 	}
 };
 
-enum Gamepad : int;
 template <> struct Enum_Info<Gamepad> {
 	static constexpr size_t get_count() { return 15; }
 	static constexpr s64 get_min_value() { return 0; }
@@ -532,7 +517,6 @@ template <> struct Reflect<Gamepad> {
 	}
 };
 
-enum File_Operation : int;
 template <> struct Enum_Info<File_Operation> {
 	static constexpr size_t get_count() { return 4; }
 	static constexpr s64 get_min_value() { return 0; }
@@ -557,7 +541,6 @@ template <> struct Reflect<File_Operation> {
 	}
 };
 
-enum File_Position : int;
 template <> struct Enum_Info<File_Position> {
 	static constexpr size_t get_count() { return 3; }
 	static constexpr s64 get_min_value() { return 0; }
@@ -581,7 +564,6 @@ template <> struct Reflect<File_Position> {
 	}
 };
 
-enum System_Window_Show : int;
 template <> struct Enum_Info<System_Window_Show> {
 	static constexpr size_t get_count() { return 3; }
 	static constexpr s64 get_min_value() { return 0; }
@@ -605,7 +587,6 @@ template <> struct Reflect<System_Window_Show> {
 	}
 };
 
-enum Cursor_Kind : int;
 template <> struct Enum_Info<Cursor_Kind> {
 	static constexpr size_t get_count() { return 8; }
 	static constexpr s64 get_min_value() { return 0; }
@@ -634,7 +615,6 @@ template <> struct Reflect<Cursor_Kind> {
 	}
 };
 
-enum ImGuiWindowFlags_ : int;
 template <> struct Enum_Info<ImGuiWindowFlags_> {
 	static constexpr size_t get_count() { return 32; }
 	static constexpr s64 get_min_value() { return 0; }
@@ -724,7 +704,6 @@ template <> struct Reflect<ImGuiWindowFlags_> {
 	}
 };
 
-enum ImGuiInputTextFlags_ : int;
 template <> struct Enum_Info<ImGuiInputTextFlags_> {
 	static constexpr size_t get_count() { return 22; }
 	static constexpr s64 get_min_value() { return 0; }
@@ -794,7 +773,6 @@ template <> struct Reflect<ImGuiInputTextFlags_> {
 	}
 };
 
-enum ImGuiTreeNodeFlags_ : int;
 template <> struct Enum_Info<ImGuiTreeNodeFlags_> {
 	static constexpr size_t get_count() { return 16; }
 	static constexpr s64 get_min_value() { return 0; }
@@ -852,7 +830,6 @@ template <> struct Reflect<ImGuiTreeNodeFlags_> {
 	}
 };
 
-enum ImGuiSelectableFlags_ : int;
 template <> struct Enum_Info<ImGuiSelectableFlags_> {
 	static constexpr size_t get_count() { return 6; }
 	static constexpr s64 get_min_value() { return 0; }
@@ -890,7 +867,6 @@ template <> struct Reflect<ImGuiSelectableFlags_> {
 	}
 };
 
-enum ImGuiComboFlags_ : int;
 template <> struct Enum_Info<ImGuiComboFlags_> {
 	static constexpr size_t get_count() { return 9; }
 	static constexpr s64 get_min_value() { return 0; }
@@ -934,7 +910,6 @@ template <> struct Reflect<ImGuiComboFlags_> {
 	}
 };
 
-enum ImGuiTabBarFlags_ : int;
 template <> struct Enum_Info<ImGuiTabBarFlags_> {
 	static constexpr size_t get_count() { return 11; }
 	static constexpr s64 get_min_value() { return 0; }
@@ -982,7 +957,6 @@ template <> struct Reflect<ImGuiTabBarFlags_> {
 	}
 };
 
-enum ImGuiTabItemFlags_ : int;
 template <> struct Enum_Info<ImGuiTabItemFlags_> {
 	static constexpr size_t get_count() { return 5; }
 	static constexpr s64 get_min_value() { return 0; }
@@ -1018,7 +992,6 @@ template <> struct Reflect<ImGuiTabItemFlags_> {
 	}
 };
 
-enum ImGuiFocusedFlags_ : int;
 template <> struct Enum_Info<ImGuiFocusedFlags_> {
 	static constexpr size_t get_count() { return 5; }
 	static constexpr s64 get_min_value() { return 0; }
@@ -1054,7 +1027,6 @@ template <> struct Reflect<ImGuiFocusedFlags_> {
 	}
 };
 
-enum ImGuiHoveredFlags_ : int;
 template <> struct Enum_Info<ImGuiHoveredFlags_> {
 	static constexpr size_t get_count() { return 10; }
 	static constexpr s64 get_min_value() { return 0; }
@@ -1100,7 +1072,6 @@ template <> struct Reflect<ImGuiHoveredFlags_> {
 	}
 };
 
-enum ImGuiDockNodeFlags_ : int;
 template <> struct Enum_Info<ImGuiDockNodeFlags_> {
 	static constexpr size_t get_count() { return 7; }
 	static constexpr s64 get_min_value() { return 0; }
@@ -1140,7 +1111,6 @@ template <> struct Reflect<ImGuiDockNodeFlags_> {
 	}
 };
 
-enum ImGuiDragDropFlags_ : int;
 template <> struct Enum_Info<ImGuiDragDropFlags_> {
 	static constexpr size_t get_count() { return 11; }
 	static constexpr s64 get_min_value() { return 0; }
@@ -1188,7 +1158,6 @@ template <> struct Reflect<ImGuiDragDropFlags_> {
 	}
 };
 
-enum ImGuiDataType_ : int;
 template <> struct Enum_Info<ImGuiDataType_> {
 	static constexpr size_t get_count() { return 11; }
 	static constexpr s64 get_min_value() { return 0; }
@@ -1220,7 +1189,6 @@ template <> struct Reflect<ImGuiDataType_> {
 	}
 };
 
-enum ImGuiDir_ : int;
 template <> struct Enum_Info<ImGuiDir_> {
 	static constexpr size_t get_count() { return 6; }
 	static constexpr s64 get_min_value() { return -1; }
@@ -1247,7 +1215,6 @@ template <> struct Reflect<ImGuiDir_> {
 	}
 };
 
-enum ImGuiKey_ : int;
 template <> struct Enum_Info<ImGuiKey_> {
 	static constexpr size_t get_count() { return 23; }
 	static constexpr s64 get_min_value() { return 0; }
@@ -1291,7 +1258,6 @@ template <> struct Reflect<ImGuiKey_> {
 	}
 };
 
-enum ImGuiKeyModFlags_ : int;
 template <> struct Enum_Info<ImGuiKeyModFlags_> {
 	static constexpr size_t get_count() { return 5; }
 	static constexpr s64 get_min_value() { return 0; }
@@ -1327,7 +1293,6 @@ template <> struct Reflect<ImGuiKeyModFlags_> {
 	}
 };
 
-enum ImGuiNavInput_ : int;
 template <> struct Enum_Info<ImGuiNavInput_> {
 	static constexpr size_t get_count() { return 23; }
 	static constexpr s64 get_min_value() { return 0; }
@@ -1399,7 +1364,6 @@ template <> struct Reflect<ImGuiNavInput_> {
 	}
 };
 
-enum ImGuiConfigFlags_ : int;
 template <> struct Enum_Info<ImGuiConfigFlags_> {
 	static constexpr size_t get_count() { return 13; }
 	static constexpr s64 get_min_value() { return 0; }
@@ -1451,7 +1415,6 @@ template <> struct Reflect<ImGuiConfigFlags_> {
 	}
 };
 
-enum ImGuiBackendFlags_ : int;
 template <> struct Enum_Info<ImGuiBackendFlags_> {
 	static constexpr size_t get_count() { return 8; }
 	static constexpr s64 get_min_value() { return 0; }
@@ -1493,7 +1456,6 @@ template <> struct Reflect<ImGuiBackendFlags_> {
 	}
 };
 
-enum ImGuiCol_ : int;
 template <> struct Enum_Info<ImGuiCol_> {
 	static constexpr size_t get_count() { return 51; }
 	static constexpr s64 get_min_value() { return 0; }
@@ -1565,7 +1527,6 @@ template <> struct Reflect<ImGuiCol_> {
 	}
 };
 
-enum ImGuiStyleVar_ : int;
 template <> struct Enum_Info<ImGuiStyleVar_> {
 	static constexpr size_t get_count() { return 24; }
 	static constexpr s64 get_min_value() { return 0; }
@@ -1610,7 +1571,6 @@ template <> struct Reflect<ImGuiStyleVar_> {
 	}
 };
 
-enum ImGuiColorEditFlags_ : int;
 template <> struct Enum_Info<ImGuiColorEditFlags_> {
 	static constexpr size_t get_count() { return 29; }
 	static constexpr s64 get_min_value() { return 0; }
@@ -1694,7 +1654,6 @@ template <> struct Reflect<ImGuiColorEditFlags_> {
 	}
 };
 
-enum ImGuiMouseButton_ : int;
 template <> struct Enum_Info<ImGuiMouseButton_> {
 	static constexpr size_t get_count() { return 4; }
 	static constexpr s64 get_min_value() { return 0; }
@@ -1728,7 +1687,6 @@ template <> struct Reflect<ImGuiMouseButton_> {
 	}
 };
 
-enum ImGuiMouseCursor_ : int;
 template <> struct Enum_Info<ImGuiMouseCursor_> {
 	static constexpr size_t get_count() { return 11; }
 	static constexpr s64 get_min_value() { return -1; }
@@ -1760,7 +1718,6 @@ template <> struct Reflect<ImGuiMouseCursor_> {
 	}
 };
 
-enum ImGuiCond_ : int;
 template <> struct Enum_Info<ImGuiCond_> {
 	static constexpr size_t get_count() { return 4; }
 	static constexpr s64 get_min_value() { return 1; }
@@ -1794,7 +1751,6 @@ template <> struct Reflect<ImGuiCond_> {
 	}
 };
 
-enum ImDrawCornerFlags_ : int;
 template <> struct Enum_Info<ImDrawCornerFlags_> {
 	static constexpr size_t get_count() { return 10; }
 	static constexpr s64 get_min_value() { return 0; }
@@ -1840,7 +1796,6 @@ template <> struct Reflect<ImDrawCornerFlags_> {
 	}
 };
 
-enum ImDrawListFlags_ : int;
 template <> struct Enum_Info<ImDrawListFlags_> {
 	static constexpr size_t get_count() { return 4; }
 	static constexpr s64 get_min_value() { return 0; }
@@ -1874,7 +1829,6 @@ template <> struct Reflect<ImDrawListFlags_> {
 	}
 };
 
-enum ImFontAtlasFlags_ : int;
 template <> struct Enum_Info<ImFontAtlasFlags_> {
 	static constexpr size_t get_count() { return 3; }
 	static constexpr s64 get_min_value() { return 0; }
@@ -1898,7 +1852,6 @@ template <> struct Reflect<ImFontAtlasFlags_> {
 	}
 };
 
-enum ImGuiViewportFlags_ : int;
 template <> struct Enum_Info<ImGuiViewportFlags_> {
 	static constexpr size_t get_count() { return 11; }
 	static constexpr s64 get_min_value() { return 0; }
@@ -1946,790 +1899,821 @@ template <> struct Reflect<ImGuiViewportFlags_> {
 	}
 };
 
-enum Ucd_Script : uint32_t;
-template <> struct Enum_Info<Ucd_Script> {
+template <> struct Enum_Info<Type_Id> {
+	static constexpr size_t get_count() { return 19; }
+	static constexpr s64 get_min_value() { return 0; }
+	static constexpr s64 get_max_value() { return 18; }
+	static const Type_Id index_value(s64 index) { return (Type_Id)(index + 0); }
+	static const String string(Type_Id value) {
+		static const String strings[] = {
+			"Type_Id_UNKNOWN",
+			"Type_Id_S8",
+			"Type_Id_S16",
+			"Type_Id_S32",
+			"Type_Id_S64",
+			"Type_Id_U8",
+			"Type_Id_U16",
+			"Type_Id_U32",
+			"Type_Id_U64",
+			"Type_Id_R32",
+			"Type_Id_R64",
+			"Type_Id_CHAR",
+			"Type_Id_VOID",
+			"Type_Id_POINTER",
+			"Type_Id_FUNCTION",
+			"Type_Id_ENUM",
+			"Type_Id_STRUCT",
+			"Type_Id_UNION",
+			"Type_Id_STATIC_ARRAY",
+		};
+		return strings[value - 0];
+	}
+};
+
+template <> struct Reflect<Type_Id> {
+	static constexpr Type_Id id = Type_Id_ENUM;
+	static const Type_Info * const info() {
+		static const Type_Info_Enum i(sizeof(Type_Id), "Type_Id", enum_count<Type_Id>());
+		return &i;
+	}
+};
+
+template <> struct Enum_Info<Unicode_Script> {
 	static constexpr size_t get_count() { return 158; }
 	static constexpr s64 get_min_value() { return 0; }
 	static constexpr s64 get_max_value() { return 157; }
-	static const Ucd_Script index_value(s64 index) { return (Ucd_Script)(index + 0); }
-	static const String string(Ucd_Script value) {
+	static const Unicode_Script index_value(s64 index) { return (Unicode_Script)(index + 0); }
+	static const String string(Unicode_Script value) {
 		static const String strings[] = {
-			"Ucd_Script_UNKNOWN",
-			"Ucd_Script_COMMON",
-			"Ucd_Script_LATIN",
-			"Ucd_Script_GREEK",
-			"Ucd_Script_CYRILLIC",
-			"Ucd_Script_ARMENIAN",
-			"Ucd_Script_HEBREW",
-			"Ucd_Script_ARABIC",
-			"Ucd_Script_SYRIAC",
-			"Ucd_Script_THAANA",
-			"Ucd_Script_DEVANAGARI",
-			"Ucd_Script_BENGALI",
-			"Ucd_Script_GURMUKHI",
-			"Ucd_Script_GUJARATI",
-			"Ucd_Script_ORIYA",
-			"Ucd_Script_TAMIL",
-			"Ucd_Script_TELUGU",
-			"Ucd_Script_KANNADA",
-			"Ucd_Script_MALAYALAM",
-			"Ucd_Script_SINHALA",
-			"Ucd_Script_THAI",
-			"Ucd_Script_LAO",
-			"Ucd_Script_TIBETAN",
-			"Ucd_Script_MYANMAR",
-			"Ucd_Script_GEORGIAN",
-			"Ucd_Script_HANGUL",
-			"Ucd_Script_ETHIOPIC",
-			"Ucd_Script_CHEROKEE",
-			"Ucd_Script_CANADIAN_ABORIGINAL",
-			"Ucd_Script_OGHAM",
-			"Ucd_Script_RUNIC",
-			"Ucd_Script_KHMER",
-			"Ucd_Script_MONGOLIAN",
-			"Ucd_Script_HIRAGANA",
-			"Ucd_Script_KATAKANA",
-			"Ucd_Script_BOPOMOFO",
-			"Ucd_Script_HAN",
-			"Ucd_Script_YI",
-			"Ucd_Script_OLD_ITALIC",
-			"Ucd_Script_GOTHIC",
-			"Ucd_Script_DESERET",
-			"Ucd_Script_INHERITED",
-			"Ucd_Script_TAGALOG",
-			"Ucd_Script_HANUNOO",
-			"Ucd_Script_BUHID",
-			"Ucd_Script_TAGBANWA",
-			"Ucd_Script_LIMBU",
-			"Ucd_Script_TAI_LE",
-			"Ucd_Script_LINEAR_B",
-			"Ucd_Script_UGARITIC",
-			"Ucd_Script_SHAVIAN",
-			"Ucd_Script_OSMANYA",
-			"Ucd_Script_CYPRIOT",
-			"Ucd_Script_BRAILLE",
-			"Ucd_Script_BUGINESE",
-			"Ucd_Script_COPTIC",
-			"Ucd_Script_NEW_TAI_LUE",
-			"Ucd_Script_GLAGOLITIC",
-			"Ucd_Script_TIFINAGH",
-			"Ucd_Script_SYLOTI_NAGRI",
-			"Ucd_Script_OLD_PERSIAN",
-			"Ucd_Script_KHAROSHTHI",
-			"Ucd_Script_BALINESE",
-			"Ucd_Script_CUNEIFORM",
-			"Ucd_Script_PHOENICIAN",
-			"Ucd_Script_PHAGS_PA",
-			"Ucd_Script_NKO",
-			"Ucd_Script_SUNDANESE",
-			"Ucd_Script_LEPCHA",
-			"Ucd_Script_OL_CHIKI",
-			"Ucd_Script_VAI",
-			"Ucd_Script_SAURASHTRA",
-			"Ucd_Script_KAYAH_LI",
-			"Ucd_Script_REJANG",
-			"Ucd_Script_LYCIAN",
-			"Ucd_Script_CARIAN",
-			"Ucd_Script_LYDIAN",
-			"Ucd_Script_CHAM",
-			"Ucd_Script_TAI_THAM",
-			"Ucd_Script_TAI_VIET",
-			"Ucd_Script_AVESTAN",
-			"Ucd_Script_EGYPTIAN_HIEROGLYPHS",
-			"Ucd_Script_SAMARITAN",
-			"Ucd_Script_LISU",
-			"Ucd_Script_BAMUM",
-			"Ucd_Script_JAVANESE",
-			"Ucd_Script_MEETEI_MAYEK",
-			"Ucd_Script_IMPERIAL_ARAMAIC",
-			"Ucd_Script_OLD_SOUTH_ARABIAN",
-			"Ucd_Script_INSCRIPTIONAL_PARTHIAN",
-			"Ucd_Script_INSCRIPTIONAL_PAHLAVI",
-			"Ucd_Script_OLD_TURKIC",
-			"Ucd_Script_KAITHI",
-			"Ucd_Script_BATAK",
-			"Ucd_Script_BRAHMI",
-			"Ucd_Script_MANDAIC",
-			"Ucd_Script_CHAKMA",
-			"Ucd_Script_MEROITIC_CURSIVE",
-			"Ucd_Script_MEROITIC_HIEROGLYPHS",
-			"Ucd_Script_MIAO",
-			"Ucd_Script_SHARADA",
-			"Ucd_Script_SORA_SOMPENG",
-			"Ucd_Script_TAKRI",
-			"Ucd_Script_CAUCASIAN_ALBANIAN",
-			"Ucd_Script_BASSA_VAH",
-			"Ucd_Script_DUPLOYAN",
-			"Ucd_Script_ELBASAN",
-			"Ucd_Script_GRANTHA",
-			"Ucd_Script_PAHAWH_HMONG",
-			"Ucd_Script_KHOJKI",
-			"Ucd_Script_LINEAR_A",
-			"Ucd_Script_MAHAJANI",
-			"Ucd_Script_MANICHAEAN",
-			"Ucd_Script_MENDE_KIKAKUI",
-			"Ucd_Script_MODI",
-			"Ucd_Script_MRO",
-			"Ucd_Script_OLD_NORTH_ARABIAN",
-			"Ucd_Script_NABATAEAN",
-			"Ucd_Script_PALMYRENE",
-			"Ucd_Script_PAU_CIN_HAU",
-			"Ucd_Script_OLD_PERMIC",
-			"Ucd_Script_PSALTER_PAHLAVI",
-			"Ucd_Script_SIDDHAM",
-			"Ucd_Script_KHUDAWADI",
-			"Ucd_Script_TIRHUTA",
-			"Ucd_Script_WARANG_CITI",
-			"Ucd_Script_AHOM",
-			"Ucd_Script_ANATOLIAN_HIEROGLYPHS",
-			"Ucd_Script_HATRAN",
-			"Ucd_Script_MULTANI",
-			"Ucd_Script_OLD_HUNGARIAN",
-			"Ucd_Script_SIGNWRITING",
-			"Ucd_Script_ADLAM",
-			"Ucd_Script_BHAIKSUKI",
-			"Ucd_Script_MARCHEN",
-			"Ucd_Script_NEWA",
-			"Ucd_Script_OSAGE",
-			"Ucd_Script_TANGUT",
-			"Ucd_Script_MASARAM_GONDI",
-			"Ucd_Script_NUSHU",
-			"Ucd_Script_SOYOMBO",
-			"Ucd_Script_ZANABAZAR_SQUARE",
-			"Ucd_Script_DOGRA",
-			"Ucd_Script_GUNJALA_GONDI",
-			"Ucd_Script_MAKASAR",
-			"Ucd_Script_MEDEFAIDRIN",
-			"Ucd_Script_HANIFI_ROHINGYA",
-			"Ucd_Script_SOGDIAN",
-			"Ucd_Script_OLD_SOGDIAN",
-			"Ucd_Script_ELYMAIC",
-			"Ucd_Script_NANDINAGARI",
-			"Ucd_Script_NYIAKENG_PUACHUE_HMONG",
-			"Ucd_Script_WANCHO",
-			"Ucd_Script_CHORASMIAN",
-			"Ucd_Script_DIVES_AKURU",
-			"Ucd_Script_KHITAN_SMALL_SCRIPT",
-			"Ucd_Script_YEZIDI",
-			"Ucd_Script_COUNT",
+			"Unicode_Script_UNKNOWN",
+			"Unicode_Script_COMMON",
+			"Unicode_Script_LATIN",
+			"Unicode_Script_GREEK",
+			"Unicode_Script_CYRILLIC",
+			"Unicode_Script_ARMENIAN",
+			"Unicode_Script_HEBREW",
+			"Unicode_Script_ARABIC",
+			"Unicode_Script_SYRIAC",
+			"Unicode_Script_THAANA",
+			"Unicode_Script_DEVANAGARI",
+			"Unicode_Script_BENGALI",
+			"Unicode_Script_GURMUKHI",
+			"Unicode_Script_GUJARATI",
+			"Unicode_Script_ORIYA",
+			"Unicode_Script_TAMIL",
+			"Unicode_Script_TELUGU",
+			"Unicode_Script_KANNADA",
+			"Unicode_Script_MALAYALAM",
+			"Unicode_Script_SINHALA",
+			"Unicode_Script_THAI",
+			"Unicode_Script_LAO",
+			"Unicode_Script_TIBETAN",
+			"Unicode_Script_MYANMAR",
+			"Unicode_Script_GEORGIAN",
+			"Unicode_Script_HANGUL",
+			"Unicode_Script_ETHIOPIC",
+			"Unicode_Script_CHEROKEE",
+			"Unicode_Script_CANADIAN_ABORIGINAL",
+			"Unicode_Script_OGHAM",
+			"Unicode_Script_RUNIC",
+			"Unicode_Script_KHMER",
+			"Unicode_Script_MONGOLIAN",
+			"Unicode_Script_HIRAGANA",
+			"Unicode_Script_KATAKANA",
+			"Unicode_Script_BOPOMOFO",
+			"Unicode_Script_HAN",
+			"Unicode_Script_YI",
+			"Unicode_Script_OLD_ITALIC",
+			"Unicode_Script_GOTHIC",
+			"Unicode_Script_DESERET",
+			"Unicode_Script_INHERITED",
+			"Unicode_Script_TAGALOG",
+			"Unicode_Script_HANUNOO",
+			"Unicode_Script_BUHID",
+			"Unicode_Script_TAGBANWA",
+			"Unicode_Script_LIMBU",
+			"Unicode_Script_TAI_LE",
+			"Unicode_Script_LINEAR_B",
+			"Unicode_Script_UGARITIC",
+			"Unicode_Script_SHAVIAN",
+			"Unicode_Script_OSMANYA",
+			"Unicode_Script_CYPRIOT",
+			"Unicode_Script_BRAILLE",
+			"Unicode_Script_BUGINESE",
+			"Unicode_Script_COPTIC",
+			"Unicode_Script_NEW_TAI_LUE",
+			"Unicode_Script_GLAGOLITIC",
+			"Unicode_Script_TIFINAGH",
+			"Unicode_Script_SYLOTI_NAGRI",
+			"Unicode_Script_OLD_PERSIAN",
+			"Unicode_Script_KHAROSHTHI",
+			"Unicode_Script_BALINESE",
+			"Unicode_Script_CUNEIFORM",
+			"Unicode_Script_PHOENICIAN",
+			"Unicode_Script_PHAGS_PA",
+			"Unicode_Script_NKO",
+			"Unicode_Script_SUNDANESE",
+			"Unicode_Script_LEPCHA",
+			"Unicode_Script_OL_CHIKI",
+			"Unicode_Script_VAI",
+			"Unicode_Script_SAURASHTRA",
+			"Unicode_Script_KAYAH_LI",
+			"Unicode_Script_REJANG",
+			"Unicode_Script_LYCIAN",
+			"Unicode_Script_CARIAN",
+			"Unicode_Script_LYDIAN",
+			"Unicode_Script_CHAM",
+			"Unicode_Script_TAI_THAM",
+			"Unicode_Script_TAI_VIET",
+			"Unicode_Script_AVESTAN",
+			"Unicode_Script_EGYPTIAN_HIEROGLYPHS",
+			"Unicode_Script_SAMARITAN",
+			"Unicode_Script_LISU",
+			"Unicode_Script_BAMUM",
+			"Unicode_Script_JAVANESE",
+			"Unicode_Script_MEETEI_MAYEK",
+			"Unicode_Script_IMPERIAL_ARAMAIC",
+			"Unicode_Script_OLD_SOUTH_ARABIAN",
+			"Unicode_Script_INSCRIPTIONAL_PARTHIAN",
+			"Unicode_Script_INSCRIPTIONAL_PAHLAVI",
+			"Unicode_Script_OLD_TURKIC",
+			"Unicode_Script_KAITHI",
+			"Unicode_Script_BATAK",
+			"Unicode_Script_BRAHMI",
+			"Unicode_Script_MANDAIC",
+			"Unicode_Script_CHAKMA",
+			"Unicode_Script_MEROITIC_CURSIVE",
+			"Unicode_Script_MEROITIC_HIEROGLYPHS",
+			"Unicode_Script_MIAO",
+			"Unicode_Script_SHARADA",
+			"Unicode_Script_SORA_SOMPENG",
+			"Unicode_Script_TAKRI",
+			"Unicode_Script_CAUCASIAN_ALBANIAN",
+			"Unicode_Script_BASSA_VAH",
+			"Unicode_Script_DUPLOYAN",
+			"Unicode_Script_ELBASAN",
+			"Unicode_Script_GRANTHA",
+			"Unicode_Script_PAHAWH_HMONG",
+			"Unicode_Script_KHOJKI",
+			"Unicode_Script_LINEAR_A",
+			"Unicode_Script_MAHAJANI",
+			"Unicode_Script_MANICHAEAN",
+			"Unicode_Script_MENDE_KIKAKUI",
+			"Unicode_Script_MODI",
+			"Unicode_Script_MRO",
+			"Unicode_Script_OLD_NORTH_ARABIAN",
+			"Unicode_Script_NABATAEAN",
+			"Unicode_Script_PALMYRENE",
+			"Unicode_Script_PAU_CIN_HAU",
+			"Unicode_Script_OLD_PERMIC",
+			"Unicode_Script_PSALTER_PAHLAVI",
+			"Unicode_Script_SIDDHAM",
+			"Unicode_Script_KHUDAWADI",
+			"Unicode_Script_TIRHUTA",
+			"Unicode_Script_WARANG_CITI",
+			"Unicode_Script_AHOM",
+			"Unicode_Script_ANATOLIAN_HIEROGLYPHS",
+			"Unicode_Script_HATRAN",
+			"Unicode_Script_MULTANI",
+			"Unicode_Script_OLD_HUNGARIAN",
+			"Unicode_Script_SIGNWRITING",
+			"Unicode_Script_ADLAM",
+			"Unicode_Script_BHAIKSUKI",
+			"Unicode_Script_MARCHEN",
+			"Unicode_Script_NEWA",
+			"Unicode_Script_OSAGE",
+			"Unicode_Script_TANGUT",
+			"Unicode_Script_MASARAM_GONDI",
+			"Unicode_Script_NUSHU",
+			"Unicode_Script_SOYOMBO",
+			"Unicode_Script_ZANABAZAR_SQUARE",
+			"Unicode_Script_DOGRA",
+			"Unicode_Script_GUNJALA_GONDI",
+			"Unicode_Script_MAKASAR",
+			"Unicode_Script_MEDEFAIDRIN",
+			"Unicode_Script_HANIFI_ROHINGYA",
+			"Unicode_Script_SOGDIAN",
+			"Unicode_Script_OLD_SOGDIAN",
+			"Unicode_Script_ELYMAIC",
+			"Unicode_Script_NANDINAGARI",
+			"Unicode_Script_NYIAKENG_PUACHUE_HMONG",
+			"Unicode_Script_WANCHO",
+			"Unicode_Script_CHORASMIAN",
+			"Unicode_Script_DIVES_AKURU",
+			"Unicode_Script_KHITAN_SMALL_SCRIPT",
+			"Unicode_Script_YEZIDI",
+			"Unicode_Script_COUNT",
 		};
 		return strings[value - 0];
 	}
 };
 
-template <> struct Reflect<Ucd_Script> {
+template <> struct Reflect<Unicode_Script> {
 	static constexpr Type_Id id = Type_Id_ENUM;
 	static const Type_Info * const info() {
-		static const Type_Info_Enum i(sizeof(Ucd_Script), "Ucd_Script", enum_count<Ucd_Script>());
+		static const Type_Info_Enum i(sizeof(Unicode_Script), "Unicode_Script", enum_count<Unicode_Script>());
 		return &i;
 	}
 };
 
-enum Ucd_Script_Ext : uint32_t;
-template <> struct Enum_Info<Ucd_Script_Ext> {
+template <> struct Enum_Info<Unicode_Script_Ext> {
 	static constexpr size_t get_count() { return 59; }
 	static constexpr s64 get_min_value() { return 0; }
 	static constexpr s64 get_max_value() { return 58; }
-	static const Ucd_Script_Ext index_value(s64 index) { return (Ucd_Script_Ext)(index + 0); }
-	static const String string(Ucd_Script_Ext value) {
+	static const Unicode_Script_Ext index_value(s64 index) { return (Unicode_Script_Ext)(index + 0); }
+	static const String string(Unicode_Script_Ext value) {
 		static const String strings[] = {
-			"Ucd_Script_Ext_UNKNOWN",
-			"Ucd_Script_Ext_BENG",
-			"Ucd_Script_Ext_DEVA",
-			"Ucd_Script_Ext_DUPL",
-			"Ucd_Script_Ext_GREK",
-			"Ucd_Script_Ext_HANI",
-			"Ucd_Script_Ext_LATN",
-			"Ucd_Script_Ext_NAND",
-			"Ucd_Script_Ext_ARAB_COPT",
-			"Ucd_Script_Ext_ARAB_ROHG",
-			"Ucd_Script_Ext_ARAB_SYRC",
-			"Ucd_Script_Ext_ARAB_THAA",
-			"Ucd_Script_Ext_BENG_DEVA",
-			"Ucd_Script_Ext_BOPO_HANI",
-			"Ucd_Script_Ext_BUGI_JAVA",
-			"Ucd_Script_Ext_CPRT_LINB",
-			"Ucd_Script_Ext_CYRL_GLAG",
-			"Ucd_Script_Ext_CYRL_LATN",
-			"Ucd_Script_Ext_CYRL_PERM",
-			"Ucd_Script_Ext_CYRL_SYRC",
-			"Ucd_Script_Ext_DEVA_GRAN",
-			"Ucd_Script_Ext_DEVA_NAND",
-			"Ucd_Script_Ext_DEVA_SHRD",
-			"Ucd_Script_Ext_DEVA_TAML",
-			"Ucd_Script_Ext_GEOR_LATN",
-			"Ucd_Script_Ext_GRAN_TAML",
-			"Ucd_Script_Ext_GUJR_KHOJ",
-			"Ucd_Script_Ext_GURU_MULT",
-			"Ucd_Script_Ext_HANI_LATN",
-			"Ucd_Script_Ext_HIRA_KANA",
-			"Ucd_Script_Ext_KNDA_NAND",
-			"Ucd_Script_Ext_LATN_MONG",
-			"Ucd_Script_Ext_MONG_PHAG",
-			"Ucd_Script_Ext_ARAB_SYRC_THAA",
-			"Ucd_Script_Ext_ARAB_THAA_YEZI",
-			"Ucd_Script_Ext_BENG_CAKM_SYLO",
-			"Ucd_Script_Ext_CAKM_MYMR_TALE",
-			"Ucd_Script_Ext_CPRT_LINA_LINB",
-			"Ucd_Script_Ext_DEVA_GRAN_KNDA",
-			"Ucd_Script_Ext_DEVA_GRAN_LATN",
-			"Ucd_Script_Ext_HANI_HIRA_KANA",
-			"Ucd_Script_Ext_KALI_LATN_MYMR",
-			"Ucd_Script_Ext_BENG_DEVA_GRAN_KNDA",
-			"Ucd_Script_Ext_BUHD_HANO_TAGB_TGLG",
-			"Ucd_Script_Ext_DEVA_DOGR_KTHI_MAHJ",
-			"Ucd_Script_Ext_ARAB_ROHG_SYRC_THAA_YEZI",
-			"Ucd_Script_Ext_BOPO_HANG_HANI_HIRA_KANA",
-			"Ucd_Script_Ext_BOPO_HANG_HANI_HIRA_KANA_YIII",
-			"Ucd_Script_Ext_DEVA_KNDA_MLYM_ORYA_TAML_TELU",
-			"Ucd_Script_Ext_ADLM_ARAB_MAND_MANI_PHLP_ROHG_SOGD_SYRC",
-			"Ucd_Script_Ext_BENG_DEVA_GRAN_KNDA_NAND_ORYA_TELU_TIRH",
-			"Ucd_Script_Ext_DEVA_DOGR_GUJR_GURU_KHOJ_KTHI_MAHJ_MODI_SIND_TAKR_TIRH",
-			"Ucd_Script_Ext_BENG_DEVA_GRAN_GUJR_GURU_KNDA_LATN_MLYM_ORYA_TAML_TELU_TIRH",
-			"Ucd_Script_Ext_BENG_DEVA_GRAN_GUJR_GURU_KNDA_LATN_MLYM_ORYA_SHRD_TAML_TELU_TIRH",
-			"Ucd_Script_Ext_DEVA_DOGR_GUJR_GURU_KHOJ_KNDA_KTHI_MAHJ_MODI_NAND_SIND_TAKR_TIRH",
-			"Ucd_Script_Ext_DEVA_DOGR_GUJR_GURU_KHOJ_KNDA_KTHI_MAHJ_MLYM_MODI_NAND_SIND_TAKR_TIRH",
-			"Ucd_Script_Ext_BENG_DEVA_DOGR_GONG_GONM_GRAN_GUJR_GURU_KNDA_MAHJ_MLYM_NAND_ORYA_SIND_SINH_SYLO_TAKR_TAML_TELU_TIRH",
-			"Ucd_Script_Ext_BENG_DEVA_DOGR_GONG_GONM_GRAN_GUJR_GURU_KNDA_LIMB_MAHJ_MLYM_NAND_ORYA_SIND_SINH_SYLO_TAKR_TAML_TELU_TIRH",
-			"Ucd_Script_Ext_COUNT",
+			"Unicode_Script_Ext_UNKNOWN",
+			"Unicode_Script_Ext_BENG",
+			"Unicode_Script_Ext_DEVA",
+			"Unicode_Script_Ext_DUPL",
+			"Unicode_Script_Ext_GREK",
+			"Unicode_Script_Ext_HANI",
+			"Unicode_Script_Ext_LATN",
+			"Unicode_Script_Ext_NAND",
+			"Unicode_Script_Ext_ARAB_COPT",
+			"Unicode_Script_Ext_ARAB_ROHG",
+			"Unicode_Script_Ext_ARAB_SYRC",
+			"Unicode_Script_Ext_ARAB_THAA",
+			"Unicode_Script_Ext_BENG_DEVA",
+			"Unicode_Script_Ext_BOPO_HANI",
+			"Unicode_Script_Ext_BUGI_JAVA",
+			"Unicode_Script_Ext_CPRT_LINB",
+			"Unicode_Script_Ext_CYRL_GLAG",
+			"Unicode_Script_Ext_CYRL_LATN",
+			"Unicode_Script_Ext_CYRL_PERM",
+			"Unicode_Script_Ext_CYRL_SYRC",
+			"Unicode_Script_Ext_DEVA_GRAN",
+			"Unicode_Script_Ext_DEVA_NAND",
+			"Unicode_Script_Ext_DEVA_SHRD",
+			"Unicode_Script_Ext_DEVA_TAML",
+			"Unicode_Script_Ext_GEOR_LATN",
+			"Unicode_Script_Ext_GRAN_TAML",
+			"Unicode_Script_Ext_GUJR_KHOJ",
+			"Unicode_Script_Ext_GURU_MULT",
+			"Unicode_Script_Ext_HANI_LATN",
+			"Unicode_Script_Ext_HIRA_KANA",
+			"Unicode_Script_Ext_KNDA_NAND",
+			"Unicode_Script_Ext_LATN_MONG",
+			"Unicode_Script_Ext_MONG_PHAG",
+			"Unicode_Script_Ext_ARAB_SYRC_THAA",
+			"Unicode_Script_Ext_ARAB_THAA_YEZI",
+			"Unicode_Script_Ext_BENG_CAKM_SYLO",
+			"Unicode_Script_Ext_CAKM_MYMR_TALE",
+			"Unicode_Script_Ext_CPRT_LINA_LINB",
+			"Unicode_Script_Ext_DEVA_GRAN_KNDA",
+			"Unicode_Script_Ext_DEVA_GRAN_LATN",
+			"Unicode_Script_Ext_HANI_HIRA_KANA",
+			"Unicode_Script_Ext_KALI_LATN_MYMR",
+			"Unicode_Script_Ext_BENG_DEVA_GRAN_KNDA",
+			"Unicode_Script_Ext_BUHD_HANO_TAGB_TGLG",
+			"Unicode_Script_Ext_DEVA_DOGR_KTHI_MAHJ",
+			"Unicode_Script_Ext_ARAB_ROHG_SYRC_THAA_YEZI",
+			"Unicode_Script_Ext_BOPO_HANG_HANI_HIRA_KANA",
+			"Unicode_Script_Ext_BOPO_HANG_HANI_HIRA_KANA_YIII",
+			"Unicode_Script_Ext_DEVA_KNDA_MLYM_ORYA_TAML_TELU",
+			"Unicode_Script_Ext_ADLM_ARAB_MAND_MANI_PHLP_ROHG_SOGD_SYRC",
+			"Unicode_Script_Ext_BENG_DEVA_GRAN_KNDA_NAND_ORYA_TELU_TIRH",
+			"Unicode_Script_Ext_DEVA_DOGR_GUJR_GURU_KHOJ_KTHI_MAHJ_MODI_SIND_TAKR_TIRH",
+			"Unicode_Script_Ext_BENG_DEVA_GRAN_GUJR_GURU_KNDA_LATN_MLYM_ORYA_TAML_TELU_TIRH",
+			"Unicode_Script_Ext_BENG_DEVA_GRAN_GUJR_GURU_KNDA_LATN_MLYM_ORYA_SHRD_TAML_TELU_TIRH",
+			"Unicode_Script_Ext_DEVA_DOGR_GUJR_GURU_KHOJ_KNDA_KTHI_MAHJ_MODI_NAND_SIND_TAKR_TIRH",
+			"Unicode_Script_Ext_DEVA_DOGR_GUJR_GURU_KHOJ_KNDA_KTHI_MAHJ_MLYM_MODI_NAND_SIND_TAKR_TIRH",
+			"Unicode_Script_Ext_BENG_DEVA_DOGR_GONG_GONM_GRAN_GUJR_GURU_KNDA_MAHJ_MLYM_NAND_ORYA_SIND_SINH_SYLO_TAKR_TAML_TELU_TIRH",
+			"Unicode_Script_Ext_BENG_DEVA_DOGR_GONG_GONM_GRAN_GUJR_GURU_KNDA_LIMB_MAHJ_MLYM_NAND_ORYA_SIND_SINH_SYLO_TAKR_TAML_TELU_TIRH",
+			"Unicode_Script_Ext_COUNT",
 		};
 		return strings[value - 0];
 	}
 };
 
-template <> struct Reflect<Ucd_Script_Ext> {
+template <> struct Reflect<Unicode_Script_Ext> {
 	static constexpr Type_Id id = Type_Id_ENUM;
 	static const Type_Info * const info() {
-		static const Type_Info_Enum i(sizeof(Ucd_Script_Ext), "Ucd_Script_Ext", enum_count<Ucd_Script_Ext>());
+		static const Type_Info_Enum i(sizeof(Unicode_Script_Ext), "Unicode_Script_Ext", enum_count<Unicode_Script_Ext>());
 		return &i;
 	}
 };
 
-enum Ucd_Block : uint32_t;
-template <> struct Enum_Info<Ucd_Block> {
+template <> struct Enum_Info<Unicode_Block> {
 	static constexpr size_t get_count() { return 310; }
 	static constexpr s64 get_min_value() { return 0; }
 	static constexpr s64 get_max_value() { return 309; }
-	static const Ucd_Block index_value(s64 index) { return (Ucd_Block)(index + 0); }
-	static const String string(Ucd_Block value) {
+	static const Unicode_Block index_value(s64 index) { return (Unicode_Block)(index + 0); }
+	static const String string(Unicode_Block value) {
 		static const String strings[] = {
-			"Ucd_Block_UNKNOWN",
-			"Ucd_Block_BASIC_LATIN",
-			"Ucd_Block_LATIN_1_SUPPLEMENT",
-			"Ucd_Block_LATIN_EXTENDED_A",
-			"Ucd_Block_LATIN_EXTENDED_B",
-			"Ucd_Block_IPA_EXTENSIONS",
-			"Ucd_Block_SPACING_MODIFIER_LETTERS",
-			"Ucd_Block_COMBINING_DIACRITICAL_MARKS",
-			"Ucd_Block_GREEK_AND_COPTIC",
-			"Ucd_Block_CYRILLIC",
-			"Ucd_Block_CYRILLIC_SUPPLEMENT",
-			"Ucd_Block_ARMENIAN",
-			"Ucd_Block_HEBREW",
-			"Ucd_Block_ARABIC",
-			"Ucd_Block_SYRIAC",
-			"Ucd_Block_ARABIC_SUPPLEMENT",
-			"Ucd_Block_THAANA",
-			"Ucd_Block_NKO",
-			"Ucd_Block_SAMARITAN",
-			"Ucd_Block_MANDAIC",
-			"Ucd_Block_SYRIAC_SUPPLEMENT",
-			"Ucd_Block_ARABIC_EXTENDED_A",
-			"Ucd_Block_DEVANAGARI",
-			"Ucd_Block_BENGALI",
-			"Ucd_Block_GURMUKHI",
-			"Ucd_Block_GUJARATI",
-			"Ucd_Block_ORIYA",
-			"Ucd_Block_TAMIL",
-			"Ucd_Block_TELUGU",
-			"Ucd_Block_KANNADA",
-			"Ucd_Block_MALAYALAM",
-			"Ucd_Block_SINHALA",
-			"Ucd_Block_THAI",
-			"Ucd_Block_LAO",
-			"Ucd_Block_TIBETAN",
-			"Ucd_Block_MYANMAR",
-			"Ucd_Block_GEORGIAN",
-			"Ucd_Block_HANGUL_JAMO",
-			"Ucd_Block_ETHIOPIC",
-			"Ucd_Block_ETHIOPIC_SUPPLEMENT",
-			"Ucd_Block_CHEROKEE",
-			"Ucd_Block_UNIFIED_CANADIAN_ABORIGINAL_SYLLABICS",
-			"Ucd_Block_OGHAM",
-			"Ucd_Block_RUNIC",
-			"Ucd_Block_TAGALOG",
-			"Ucd_Block_HANUNOO",
-			"Ucd_Block_BUHID",
-			"Ucd_Block_TAGBANWA",
-			"Ucd_Block_KHMER",
-			"Ucd_Block_MONGOLIAN",
-			"Ucd_Block_UNIFIED_CANADIAN_ABORIGINAL_SYLLABICS_EXTENDED",
-			"Ucd_Block_LIMBU",
-			"Ucd_Block_TAI_LE",
-			"Ucd_Block_NEW_TAI_LUE",
-			"Ucd_Block_KHMER_SYMBOLS",
-			"Ucd_Block_BUGINESE",
-			"Ucd_Block_TAI_THAM",
-			"Ucd_Block_COMBINING_DIACRITICAL_MARKS_EXTENDED",
-			"Ucd_Block_BALINESE",
-			"Ucd_Block_SUNDANESE",
-			"Ucd_Block_BATAK",
-			"Ucd_Block_LEPCHA",
-			"Ucd_Block_OL_CHIKI",
-			"Ucd_Block_CYRILLIC_EXTENDED_C",
-			"Ucd_Block_GEORGIAN_EXTENDED",
-			"Ucd_Block_SUNDANESE_SUPPLEMENT",
-			"Ucd_Block_VEDIC_EXTENSIONS",
-			"Ucd_Block_PHONETIC_EXTENSIONS",
-			"Ucd_Block_PHONETIC_EXTENSIONS_SUPPLEMENT",
-			"Ucd_Block_COMBINING_DIACRITICAL_MARKS_SUPPLEMENT",
-			"Ucd_Block_LATIN_EXTENDED_ADDITIONAL",
-			"Ucd_Block_GREEK_EXTENDED",
-			"Ucd_Block_GENERAL_PUNCTUATION",
-			"Ucd_Block_SUPERSCRIPTS_AND_SUBSCRIPTS",
-			"Ucd_Block_CURRENCY_SYMBOLS",
-			"Ucd_Block_COMBINING_DIACRITICAL_MARKS_FOR_SYMBOLS",
-			"Ucd_Block_LETTERLIKE_SYMBOLS",
-			"Ucd_Block_NUMBER_FORMS",
-			"Ucd_Block_ARROWS",
-			"Ucd_Block_MATHEMATICAL_OPERATORS",
-			"Ucd_Block_MISCELLANEOUS_TECHNICAL",
-			"Ucd_Block_CONTROL_PICTURES",
-			"Ucd_Block_OPTICAL_CHARACTER_RECOGNITION",
-			"Ucd_Block_ENCLOSED_ALPHANUMERICS",
-			"Ucd_Block_BOX_DRAWING",
-			"Ucd_Block_BLOCK_ELEMENTS",
-			"Ucd_Block_GEOMETRIC_SHAPES",
-			"Ucd_Block_MISCELLANEOUS_SYMBOLS",
-			"Ucd_Block_DINGBATS",
-			"Ucd_Block_MISCELLANEOUS_MATHEMATICAL_SYMBOLS_A",
-			"Ucd_Block_SUPPLEMENTAL_ARROWS_A",
-			"Ucd_Block_BRAILLE_PATTERNS",
-			"Ucd_Block_SUPPLEMENTAL_ARROWS_B",
-			"Ucd_Block_MISCELLANEOUS_MATHEMATICAL_SYMBOLS_B",
-			"Ucd_Block_SUPPLEMENTAL_MATHEMATICAL_OPERATORS",
-			"Ucd_Block_MISCELLANEOUS_SYMBOLS_AND_ARROWS",
-			"Ucd_Block_GLAGOLITIC",
-			"Ucd_Block_LATIN_EXTENDED_C",
-			"Ucd_Block_COPTIC",
-			"Ucd_Block_GEORGIAN_SUPPLEMENT",
-			"Ucd_Block_TIFINAGH",
-			"Ucd_Block_ETHIOPIC_EXTENDED",
-			"Ucd_Block_CYRILLIC_EXTENDED_A",
-			"Ucd_Block_SUPPLEMENTAL_PUNCTUATION",
-			"Ucd_Block_CJK_RADICALS_SUPPLEMENT",
-			"Ucd_Block_KANGXI_RADICALS",
-			"Ucd_Block_IDEOGRAPHIC_DESCRIPTION_CHARACTERS",
-			"Ucd_Block_CJK_SYMBOLS_AND_PUNCTUATION",
-			"Ucd_Block_HIRAGANA",
-			"Ucd_Block_KATAKANA",
-			"Ucd_Block_BOPOMOFO",
-			"Ucd_Block_HANGUL_COMPATIBILITY_JAMO",
-			"Ucd_Block_KANBUN",
-			"Ucd_Block_BOPOMOFO_EXTENDED",
-			"Ucd_Block_CJK_STROKES",
-			"Ucd_Block_KATAKANA_PHONETIC_EXTENSIONS",
-			"Ucd_Block_ENCLOSED_CJK_LETTERS_AND_MONTHS",
-			"Ucd_Block_CJK_COMPATIBILITY",
-			"Ucd_Block_CJK_UNIFIED_IDEOGRAPHS_EXTENSION_A",
-			"Ucd_Block_YIJING_HEXAGRAM_SYMBOLS",
-			"Ucd_Block_CJK_UNIFIED_IDEOGRAPHS",
-			"Ucd_Block_YI_SYLLABLES",
-			"Ucd_Block_YI_RADICALS",
-			"Ucd_Block_LISU",
-			"Ucd_Block_VAI",
-			"Ucd_Block_CYRILLIC_EXTENDED_B",
-			"Ucd_Block_BAMUM",
-			"Ucd_Block_MODIFIER_TONE_LETTERS",
-			"Ucd_Block_LATIN_EXTENDED_D",
-			"Ucd_Block_SYLOTI_NAGRI",
-			"Ucd_Block_COMMON_INDIC_NUMBER_FORMS",
-			"Ucd_Block_PHAGS_PA",
-			"Ucd_Block_SAURASHTRA",
-			"Ucd_Block_DEVANAGARI_EXTENDED",
-			"Ucd_Block_KAYAH_LI",
-			"Ucd_Block_REJANG",
-			"Ucd_Block_HANGUL_JAMO_EXTENDED_A",
-			"Ucd_Block_JAVANESE",
-			"Ucd_Block_MYANMAR_EXTENDED_B",
-			"Ucd_Block_CHAM",
-			"Ucd_Block_MYANMAR_EXTENDED_A",
-			"Ucd_Block_TAI_VIET",
-			"Ucd_Block_MEETEI_MAYEK_EXTENSIONS",
-			"Ucd_Block_ETHIOPIC_EXTENDED_A",
-			"Ucd_Block_LATIN_EXTENDED_E",
-			"Ucd_Block_CHEROKEE_SUPPLEMENT",
-			"Ucd_Block_MEETEI_MAYEK",
-			"Ucd_Block_HANGUL_SYLLABLES",
-			"Ucd_Block_HANGUL_JAMO_EXTENDED_B",
-			"Ucd_Block_HIGH_SURROGATES",
-			"Ucd_Block_HIGH_PRIVATE_USE_SURROGATES",
-			"Ucd_Block_LOW_SURROGATES",
-			"Ucd_Block_PRIVATE_USE_AREA",
-			"Ucd_Block_CJK_COMPATIBILITY_IDEOGRAPHS",
-			"Ucd_Block_ALPHABETIC_PRESENTATION_FORMS",
-			"Ucd_Block_ARABIC_PRESENTATION_FORMS_A",
-			"Ucd_Block_VARIATION_SELECTORS",
-			"Ucd_Block_VERTICAL_FORMS",
-			"Ucd_Block_COMBINING_HALF_MARKS",
-			"Ucd_Block_CJK_COMPATIBILITY_FORMS",
-			"Ucd_Block_SMALL_FORM_VARIANTS",
-			"Ucd_Block_ARABIC_PRESENTATION_FORMS_B",
-			"Ucd_Block_HALFWIDTH_AND_FULLWIDTH_FORMS",
-			"Ucd_Block_SPECIALS",
-			"Ucd_Block_LINEAR_B_SYLLABARY",
-			"Ucd_Block_LINEAR_B_IDEOGRAMS",
-			"Ucd_Block_AEGEAN_NUMBERS",
-			"Ucd_Block_ANCIENT_GREEK_NUMBERS",
-			"Ucd_Block_ANCIENT_SYMBOLS",
-			"Ucd_Block_PHAISTOS_DISC",
-			"Ucd_Block_LYCIAN",
-			"Ucd_Block_CARIAN",
-			"Ucd_Block_COPTIC_EPACT_NUMBERS",
-			"Ucd_Block_OLD_ITALIC",
-			"Ucd_Block_GOTHIC",
-			"Ucd_Block_OLD_PERMIC",
-			"Ucd_Block_UGARITIC",
-			"Ucd_Block_OLD_PERSIAN",
-			"Ucd_Block_DESERET",
-			"Ucd_Block_SHAVIAN",
-			"Ucd_Block_OSMANYA",
-			"Ucd_Block_OSAGE",
-			"Ucd_Block_ELBASAN",
-			"Ucd_Block_CAUCASIAN_ALBANIAN",
-			"Ucd_Block_LINEAR_A",
-			"Ucd_Block_CYPRIOT_SYLLABARY",
-			"Ucd_Block_IMPERIAL_ARAMAIC",
-			"Ucd_Block_PALMYRENE",
-			"Ucd_Block_NABATAEAN",
-			"Ucd_Block_HATRAN",
-			"Ucd_Block_PHOENICIAN",
-			"Ucd_Block_LYDIAN",
-			"Ucd_Block_MEROITIC_HIEROGLYPHS",
-			"Ucd_Block_MEROITIC_CURSIVE",
-			"Ucd_Block_KHAROSHTHI",
-			"Ucd_Block_OLD_SOUTH_ARABIAN",
-			"Ucd_Block_OLD_NORTH_ARABIAN",
-			"Ucd_Block_MANICHAEAN",
-			"Ucd_Block_AVESTAN",
-			"Ucd_Block_INSCRIPTIONAL_PARTHIAN",
-			"Ucd_Block_INSCRIPTIONAL_PAHLAVI",
-			"Ucd_Block_PSALTER_PAHLAVI",
-			"Ucd_Block_OLD_TURKIC",
-			"Ucd_Block_OLD_HUNGARIAN",
-			"Ucd_Block_HANIFI_ROHINGYA",
-			"Ucd_Block_RUMI_NUMERAL_SYMBOLS",
-			"Ucd_Block_YEZIDI",
-			"Ucd_Block_OLD_SOGDIAN",
-			"Ucd_Block_SOGDIAN",
-			"Ucd_Block_CHORASMIAN",
-			"Ucd_Block_ELYMAIC",
-			"Ucd_Block_BRAHMI",
-			"Ucd_Block_KAITHI",
-			"Ucd_Block_SORA_SOMPENG",
-			"Ucd_Block_CHAKMA",
-			"Ucd_Block_MAHAJANI",
-			"Ucd_Block_SHARADA",
-			"Ucd_Block_SINHALA_ARCHAIC_NUMBERS",
-			"Ucd_Block_KHOJKI",
-			"Ucd_Block_MULTANI",
-			"Ucd_Block_KHUDAWADI",
-			"Ucd_Block_GRANTHA",
-			"Ucd_Block_NEWA",
-			"Ucd_Block_TIRHUTA",
-			"Ucd_Block_SIDDHAM",
-			"Ucd_Block_MODI",
-			"Ucd_Block_MONGOLIAN_SUPPLEMENT",
-			"Ucd_Block_TAKRI",
-			"Ucd_Block_AHOM",
-			"Ucd_Block_DOGRA",
-			"Ucd_Block_WARANG_CITI",
-			"Ucd_Block_DIVES_AKURU",
-			"Ucd_Block_NANDINAGARI",
-			"Ucd_Block_ZANABAZAR_SQUARE",
-			"Ucd_Block_SOYOMBO",
-			"Ucd_Block_PAU_CIN_HAU",
-			"Ucd_Block_BHAIKSUKI",
-			"Ucd_Block_MARCHEN",
-			"Ucd_Block_MASARAM_GONDI",
-			"Ucd_Block_GUNJALA_GONDI",
-			"Ucd_Block_MAKASAR",
-			"Ucd_Block_LISU_SUPPLEMENT",
-			"Ucd_Block_TAMIL_SUPPLEMENT",
-			"Ucd_Block_CUNEIFORM",
-			"Ucd_Block_CUNEIFORM_NUMBERS_AND_PUNCTUATION",
-			"Ucd_Block_EARLY_DYNASTIC_CUNEIFORM",
-			"Ucd_Block_EGYPTIAN_HIEROGLYPHS",
-			"Ucd_Block_EGYPTIAN_HIEROGLYPH_FORMAT_CONTROLS",
-			"Ucd_Block_ANATOLIAN_HIEROGLYPHS",
-			"Ucd_Block_BAMUM_SUPPLEMENT",
-			"Ucd_Block_MRO",
-			"Ucd_Block_BASSA_VAH",
-			"Ucd_Block_PAHAWH_HMONG",
-			"Ucd_Block_MEDEFAIDRIN",
-			"Ucd_Block_MIAO",
-			"Ucd_Block_IDEOGRAPHIC_SYMBOLS_AND_PUNCTUATION",
-			"Ucd_Block_TANGUT",
-			"Ucd_Block_TANGUT_COMPONENTS",
-			"Ucd_Block_KHITAN_SMALL_SCRIPT",
-			"Ucd_Block_TANGUT_SUPPLEMENT",
-			"Ucd_Block_KANA_SUPPLEMENT",
-			"Ucd_Block_KANA_EXTENDED_A",
-			"Ucd_Block_SMALL_KANA_EXTENSION",
-			"Ucd_Block_NUSHU",
-			"Ucd_Block_DUPLOYAN",
-			"Ucd_Block_SHORTHAND_FORMAT_CONTROLS",
-			"Ucd_Block_BYZANTINE_MUSICAL_SYMBOLS",
-			"Ucd_Block_MUSICAL_SYMBOLS",
-			"Ucd_Block_ANCIENT_GREEK_MUSICAL_NOTATION",
-			"Ucd_Block_MAYAN_NUMERALS",
-			"Ucd_Block_TAI_XUAN_JING_SYMBOLS",
-			"Ucd_Block_COUNTING_ROD_NUMERALS",
-			"Ucd_Block_MATHEMATICAL_ALPHANUMERIC_SYMBOLS",
-			"Ucd_Block_SUTTON_SIGNWRITING",
-			"Ucd_Block_GLAGOLITIC_SUPPLEMENT",
-			"Ucd_Block_NYIAKENG_PUACHUE_HMONG",
-			"Ucd_Block_WANCHO",
-			"Ucd_Block_MENDE_KIKAKUI",
-			"Ucd_Block_ADLAM",
-			"Ucd_Block_INDIC_SIYAQ_NUMBERS",
-			"Ucd_Block_OTTOMAN_SIYAQ_NUMBERS",
-			"Ucd_Block_ARABIC_MATHEMATICAL_ALPHABETIC_SYMBOLS",
-			"Ucd_Block_MAHJONG_TILES",
-			"Ucd_Block_DOMINO_TILES",
-			"Ucd_Block_PLAYING_CARDS",
-			"Ucd_Block_ENCLOSED_ALPHANUMERIC_SUPPLEMENT",
-			"Ucd_Block_ENCLOSED_IDEOGRAPHIC_SUPPLEMENT",
-			"Ucd_Block_MISCELLANEOUS_SYMBOLS_AND_PICTOGRAPHS",
-			"Ucd_Block_EMOTICONS",
-			"Ucd_Block_ORNAMENTAL_DINGBATS",
-			"Ucd_Block_TRANSPORT_AND_MAP_SYMBOLS",
-			"Ucd_Block_ALCHEMICAL_SYMBOLS",
-			"Ucd_Block_GEOMETRIC_SHAPES_EXTENDED",
-			"Ucd_Block_SUPPLEMENTAL_ARROWS_C",
-			"Ucd_Block_SUPPLEMENTAL_SYMBOLS_AND_PICTOGRAPHS",
-			"Ucd_Block_CHESS_SYMBOLS",
-			"Ucd_Block_SYMBOLS_AND_PICTOGRAPHS_EXTENDED_A",
-			"Ucd_Block_SYMBOLS_FOR_LEGACY_COMPUTING",
-			"Ucd_Block_CJK_UNIFIED_IDEOGRAPHS_EXTENSION_B",
-			"Ucd_Block_CJK_UNIFIED_IDEOGRAPHS_EXTENSION_C",
-			"Ucd_Block_CJK_UNIFIED_IDEOGRAPHS_EXTENSION_D",
-			"Ucd_Block_CJK_UNIFIED_IDEOGRAPHS_EXTENSION_E",
-			"Ucd_Block_CJK_UNIFIED_IDEOGRAPHS_EXTENSION_F",
-			"Ucd_Block_CJK_COMPATIBILITY_IDEOGRAPHS_SUPPLEMENT",
-			"Ucd_Block_CJK_UNIFIED_IDEOGRAPHS_EXTENSION_G",
-			"Ucd_Block_TAGS",
-			"Ucd_Block_VARIATION_SELECTORS_SUPPLEMENT",
-			"Ucd_Block_SUPPLEMENTARY_PRIVATE_USE_AREA_A",
-			"Ucd_Block_SUPPLEMENTARY_PRIVATE_USE_AREA_B",
-			"Ucd_Block_COUNT",
+			"Unicode_Block_UNKNOWN",
+			"Unicode_Block_BASIC_LATIN",
+			"Unicode_Block_LATIN_1_SUPPLEMENT",
+			"Unicode_Block_LATIN_EXTENDED_A",
+			"Unicode_Block_LATIN_EXTENDED_B",
+			"Unicode_Block_IPA_EXTENSIONS",
+			"Unicode_Block_SPACING_MODIFIER_LETTERS",
+			"Unicode_Block_COMBINING_DIACRITICAL_MARKS",
+			"Unicode_Block_GREEK_AND_COPTIC",
+			"Unicode_Block_CYRILLIC",
+			"Unicode_Block_CYRILLIC_SUPPLEMENT",
+			"Unicode_Block_ARMENIAN",
+			"Unicode_Block_HEBREW",
+			"Unicode_Block_ARABIC",
+			"Unicode_Block_SYRIAC",
+			"Unicode_Block_ARABIC_SUPPLEMENT",
+			"Unicode_Block_THAANA",
+			"Unicode_Block_NKO",
+			"Unicode_Block_SAMARITAN",
+			"Unicode_Block_MANDAIC",
+			"Unicode_Block_SYRIAC_SUPPLEMENT",
+			"Unicode_Block_ARABIC_EXTENDED_A",
+			"Unicode_Block_DEVANAGARI",
+			"Unicode_Block_BENGALI",
+			"Unicode_Block_GURMUKHI",
+			"Unicode_Block_GUJARATI",
+			"Unicode_Block_ORIYA",
+			"Unicode_Block_TAMIL",
+			"Unicode_Block_TELUGU",
+			"Unicode_Block_KANNADA",
+			"Unicode_Block_MALAYALAM",
+			"Unicode_Block_SINHALA",
+			"Unicode_Block_THAI",
+			"Unicode_Block_LAO",
+			"Unicode_Block_TIBETAN",
+			"Unicode_Block_MYANMAR",
+			"Unicode_Block_GEORGIAN",
+			"Unicode_Block_HANGUL_JAMO",
+			"Unicode_Block_ETHIOPIC",
+			"Unicode_Block_ETHIOPIC_SUPPLEMENT",
+			"Unicode_Block_CHEROKEE",
+			"Unicode_Block_UNIFIED_CANADIAN_ABORIGINAL_SYLLABICS",
+			"Unicode_Block_OGHAM",
+			"Unicode_Block_RUNIC",
+			"Unicode_Block_TAGALOG",
+			"Unicode_Block_HANUNOO",
+			"Unicode_Block_BUHID",
+			"Unicode_Block_TAGBANWA",
+			"Unicode_Block_KHMER",
+			"Unicode_Block_MONGOLIAN",
+			"Unicode_Block_UNIFIED_CANADIAN_ABORIGINAL_SYLLABICS_EXTENDED",
+			"Unicode_Block_LIMBU",
+			"Unicode_Block_TAI_LE",
+			"Unicode_Block_NEW_TAI_LUE",
+			"Unicode_Block_KHMER_SYMBOLS",
+			"Unicode_Block_BUGINESE",
+			"Unicode_Block_TAI_THAM",
+			"Unicode_Block_COMBINING_DIACRITICAL_MARKS_EXTENDED",
+			"Unicode_Block_BALINESE",
+			"Unicode_Block_SUNDANESE",
+			"Unicode_Block_BATAK",
+			"Unicode_Block_LEPCHA",
+			"Unicode_Block_OL_CHIKI",
+			"Unicode_Block_CYRILLIC_EXTENDED_C",
+			"Unicode_Block_GEORGIAN_EXTENDED",
+			"Unicode_Block_SUNDANESE_SUPPLEMENT",
+			"Unicode_Block_VEDIC_EXTENSIONS",
+			"Unicode_Block_PHONETIC_EXTENSIONS",
+			"Unicode_Block_PHONETIC_EXTENSIONS_SUPPLEMENT",
+			"Unicode_Block_COMBINING_DIACRITICAL_MARKS_SUPPLEMENT",
+			"Unicode_Block_LATIN_EXTENDED_ADDITIONAL",
+			"Unicode_Block_GREEK_EXTENDED",
+			"Unicode_Block_GENERAL_PUNCTUATION",
+			"Unicode_Block_SUPERSCRIPTS_AND_SUBSCRIPTS",
+			"Unicode_Block_CURRENCY_SYMBOLS",
+			"Unicode_Block_COMBINING_DIACRITICAL_MARKS_FOR_SYMBOLS",
+			"Unicode_Block_LETTERLIKE_SYMBOLS",
+			"Unicode_Block_NUMBER_FORMS",
+			"Unicode_Block_ARROWS",
+			"Unicode_Block_MATHEMATICAL_OPERATORS",
+			"Unicode_Block_MISCELLANEOUS_TECHNICAL",
+			"Unicode_Block_CONTROL_PICTURES",
+			"Unicode_Block_OPTICAL_CHARACTER_RECOGNITION",
+			"Unicode_Block_ENCLOSED_ALPHANUMERICS",
+			"Unicode_Block_BOX_DRAWING",
+			"Unicode_Block_BLOCK_ELEMENTS",
+			"Unicode_Block_GEOMETRIC_SHAPES",
+			"Unicode_Block_MISCELLANEOUS_SYMBOLS",
+			"Unicode_Block_DINGBATS",
+			"Unicode_Block_MISCELLANEOUS_MATHEMATICAL_SYMBOLS_A",
+			"Unicode_Block_SUPPLEMENTAL_ARROWS_A",
+			"Unicode_Block_BRAILLE_PATTERNS",
+			"Unicode_Block_SUPPLEMENTAL_ARROWS_B",
+			"Unicode_Block_MISCELLANEOUS_MATHEMATICAL_SYMBOLS_B",
+			"Unicode_Block_SUPPLEMENTAL_MATHEMATICAL_OPERATORS",
+			"Unicode_Block_MISCELLANEOUS_SYMBOLS_AND_ARROWS",
+			"Unicode_Block_GLAGOLITIC",
+			"Unicode_Block_LATIN_EXTENDED_C",
+			"Unicode_Block_COPTIC",
+			"Unicode_Block_GEORGIAN_SUPPLEMENT",
+			"Unicode_Block_TIFINAGH",
+			"Unicode_Block_ETHIOPIC_EXTENDED",
+			"Unicode_Block_CYRILLIC_EXTENDED_A",
+			"Unicode_Block_SUPPLEMENTAL_PUNCTUATION",
+			"Unicode_Block_CJK_RADICALS_SUPPLEMENT",
+			"Unicode_Block_KANGXI_RADICALS",
+			"Unicode_Block_IDEOGRAPHIC_DESCRIPTION_CHARACTERS",
+			"Unicode_Block_CJK_SYMBOLS_AND_PUNCTUATION",
+			"Unicode_Block_HIRAGANA",
+			"Unicode_Block_KATAKANA",
+			"Unicode_Block_BOPOMOFO",
+			"Unicode_Block_HANGUL_COMPATIBILITY_JAMO",
+			"Unicode_Block_KANBUN",
+			"Unicode_Block_BOPOMOFO_EXTENDED",
+			"Unicode_Block_CJK_STROKES",
+			"Unicode_Block_KATAKANA_PHONETIC_EXTENSIONS",
+			"Unicode_Block_ENCLOSED_CJK_LETTERS_AND_MONTHS",
+			"Unicode_Block_CJK_COMPATIBILITY",
+			"Unicode_Block_CJK_UNIFIED_IDEOGRAPHS_EXTENSION_A",
+			"Unicode_Block_YIJING_HEXAGRAM_SYMBOLS",
+			"Unicode_Block_CJK_UNIFIED_IDEOGRAPHS",
+			"Unicode_Block_YI_SYLLABLES",
+			"Unicode_Block_YI_RADICALS",
+			"Unicode_Block_LISU",
+			"Unicode_Block_VAI",
+			"Unicode_Block_CYRILLIC_EXTENDED_B",
+			"Unicode_Block_BAMUM",
+			"Unicode_Block_MODIFIER_TONE_LETTERS",
+			"Unicode_Block_LATIN_EXTENDED_D",
+			"Unicode_Block_SYLOTI_NAGRI",
+			"Unicode_Block_COMMON_INDIC_NUMBER_FORMS",
+			"Unicode_Block_PHAGS_PA",
+			"Unicode_Block_SAURASHTRA",
+			"Unicode_Block_DEVANAGARI_EXTENDED",
+			"Unicode_Block_KAYAH_LI",
+			"Unicode_Block_REJANG",
+			"Unicode_Block_HANGUL_JAMO_EXTENDED_A",
+			"Unicode_Block_JAVANESE",
+			"Unicode_Block_MYANMAR_EXTENDED_B",
+			"Unicode_Block_CHAM",
+			"Unicode_Block_MYANMAR_EXTENDED_A",
+			"Unicode_Block_TAI_VIET",
+			"Unicode_Block_MEETEI_MAYEK_EXTENSIONS",
+			"Unicode_Block_ETHIOPIC_EXTENDED_A",
+			"Unicode_Block_LATIN_EXTENDED_E",
+			"Unicode_Block_CHEROKEE_SUPPLEMENT",
+			"Unicode_Block_MEETEI_MAYEK",
+			"Unicode_Block_HANGUL_SYLLABLES",
+			"Unicode_Block_HANGUL_JAMO_EXTENDED_B",
+			"Unicode_Block_HIGH_SURROGATES",
+			"Unicode_Block_HIGH_PRIVATE_USE_SURROGATES",
+			"Unicode_Block_LOW_SURROGATES",
+			"Unicode_Block_PRIVATE_USE_AREA",
+			"Unicode_Block_CJK_COMPATIBILITY_IDEOGRAPHS",
+			"Unicode_Block_ALPHABETIC_PRESENTATION_FORMS",
+			"Unicode_Block_ARABIC_PRESENTATION_FORMS_A",
+			"Unicode_Block_VARIATION_SELECTORS",
+			"Unicode_Block_VERTICAL_FORMS",
+			"Unicode_Block_COMBINING_HALF_MARKS",
+			"Unicode_Block_CJK_COMPATIBILITY_FORMS",
+			"Unicode_Block_SMALL_FORM_VARIANTS",
+			"Unicode_Block_ARABIC_PRESENTATION_FORMS_B",
+			"Unicode_Block_HALFWIDTH_AND_FULLWIDTH_FORMS",
+			"Unicode_Block_SPECIALS",
+			"Unicode_Block_LINEAR_B_SYLLABARY",
+			"Unicode_Block_LINEAR_B_IDEOGRAMS",
+			"Unicode_Block_AEGEAN_NUMBERS",
+			"Unicode_Block_ANCIENT_GREEK_NUMBERS",
+			"Unicode_Block_ANCIENT_SYMBOLS",
+			"Unicode_Block_PHAISTOS_DISC",
+			"Unicode_Block_LYCIAN",
+			"Unicode_Block_CARIAN",
+			"Unicode_Block_COPTIC_EPACT_NUMBERS",
+			"Unicode_Block_OLD_ITALIC",
+			"Unicode_Block_GOTHIC",
+			"Unicode_Block_OLD_PERMIC",
+			"Unicode_Block_UGARITIC",
+			"Unicode_Block_OLD_PERSIAN",
+			"Unicode_Block_DESERET",
+			"Unicode_Block_SHAVIAN",
+			"Unicode_Block_OSMANYA",
+			"Unicode_Block_OSAGE",
+			"Unicode_Block_ELBASAN",
+			"Unicode_Block_CAUCASIAN_ALBANIAN",
+			"Unicode_Block_LINEAR_A",
+			"Unicode_Block_CYPRIOT_SYLLABARY",
+			"Unicode_Block_IMPERIAL_ARAMAIC",
+			"Unicode_Block_PALMYRENE",
+			"Unicode_Block_NABATAEAN",
+			"Unicode_Block_HATRAN",
+			"Unicode_Block_PHOENICIAN",
+			"Unicode_Block_LYDIAN",
+			"Unicode_Block_MEROITIC_HIEROGLYPHS",
+			"Unicode_Block_MEROITIC_CURSIVE",
+			"Unicode_Block_KHAROSHTHI",
+			"Unicode_Block_OLD_SOUTH_ARABIAN",
+			"Unicode_Block_OLD_NORTH_ARABIAN",
+			"Unicode_Block_MANICHAEAN",
+			"Unicode_Block_AVESTAN",
+			"Unicode_Block_INSCRIPTIONAL_PARTHIAN",
+			"Unicode_Block_INSCRIPTIONAL_PAHLAVI",
+			"Unicode_Block_PSALTER_PAHLAVI",
+			"Unicode_Block_OLD_TURKIC",
+			"Unicode_Block_OLD_HUNGARIAN",
+			"Unicode_Block_HANIFI_ROHINGYA",
+			"Unicode_Block_RUMI_NUMERAL_SYMBOLS",
+			"Unicode_Block_YEZIDI",
+			"Unicode_Block_OLD_SOGDIAN",
+			"Unicode_Block_SOGDIAN",
+			"Unicode_Block_CHORASMIAN",
+			"Unicode_Block_ELYMAIC",
+			"Unicode_Block_BRAHMI",
+			"Unicode_Block_KAITHI",
+			"Unicode_Block_SORA_SOMPENG",
+			"Unicode_Block_CHAKMA",
+			"Unicode_Block_MAHAJANI",
+			"Unicode_Block_SHARADA",
+			"Unicode_Block_SINHALA_ARCHAIC_NUMBERS",
+			"Unicode_Block_KHOJKI",
+			"Unicode_Block_MULTANI",
+			"Unicode_Block_KHUDAWADI",
+			"Unicode_Block_GRANTHA",
+			"Unicode_Block_NEWA",
+			"Unicode_Block_TIRHUTA",
+			"Unicode_Block_SIDDHAM",
+			"Unicode_Block_MODI",
+			"Unicode_Block_MONGOLIAN_SUPPLEMENT",
+			"Unicode_Block_TAKRI",
+			"Unicode_Block_AHOM",
+			"Unicode_Block_DOGRA",
+			"Unicode_Block_WARANG_CITI",
+			"Unicode_Block_DIVES_AKURU",
+			"Unicode_Block_NANDINAGARI",
+			"Unicode_Block_ZANABAZAR_SQUARE",
+			"Unicode_Block_SOYOMBO",
+			"Unicode_Block_PAU_CIN_HAU",
+			"Unicode_Block_BHAIKSUKI",
+			"Unicode_Block_MARCHEN",
+			"Unicode_Block_MASARAM_GONDI",
+			"Unicode_Block_GUNJALA_GONDI",
+			"Unicode_Block_MAKASAR",
+			"Unicode_Block_LISU_SUPPLEMENT",
+			"Unicode_Block_TAMIL_SUPPLEMENT",
+			"Unicode_Block_CUNEIFORM",
+			"Unicode_Block_CUNEIFORM_NUMBERS_AND_PUNCTUATION",
+			"Unicode_Block_EARLY_DYNASTIC_CUNEIFORM",
+			"Unicode_Block_EGYPTIAN_HIEROGLYPHS",
+			"Unicode_Block_EGYPTIAN_HIEROGLYPH_FORMAT_CONTROLS",
+			"Unicode_Block_ANATOLIAN_HIEROGLYPHS",
+			"Unicode_Block_BAMUM_SUPPLEMENT",
+			"Unicode_Block_MRO",
+			"Unicode_Block_BASSA_VAH",
+			"Unicode_Block_PAHAWH_HMONG",
+			"Unicode_Block_MEDEFAIDRIN",
+			"Unicode_Block_MIAO",
+			"Unicode_Block_IDEOGRAPHIC_SYMBOLS_AND_PUNCTUATION",
+			"Unicode_Block_TANGUT",
+			"Unicode_Block_TANGUT_COMPONENTS",
+			"Unicode_Block_KHITAN_SMALL_SCRIPT",
+			"Unicode_Block_TANGUT_SUPPLEMENT",
+			"Unicode_Block_KANA_SUPPLEMENT",
+			"Unicode_Block_KANA_EXTENDED_A",
+			"Unicode_Block_SMALL_KANA_EXTENSION",
+			"Unicode_Block_NUSHU",
+			"Unicode_Block_DUPLOYAN",
+			"Unicode_Block_SHORTHAND_FORMAT_CONTROLS",
+			"Unicode_Block_BYZANTINE_MUSICAL_SYMBOLS",
+			"Unicode_Block_MUSICAL_SYMBOLS",
+			"Unicode_Block_ANCIENT_GREEK_MUSICAL_NOTATION",
+			"Unicode_Block_MAYAN_NUMERALS",
+			"Unicode_Block_TAI_XUAN_JING_SYMBOLS",
+			"Unicode_Block_COUNTING_ROD_NUMERALS",
+			"Unicode_Block_MATHEMATICAL_ALPHANUMERIC_SYMBOLS",
+			"Unicode_Block_SUTTON_SIGNWRITING",
+			"Unicode_Block_GLAGOLITIC_SUPPLEMENT",
+			"Unicode_Block_NYIAKENG_PUACHUE_HMONG",
+			"Unicode_Block_WANCHO",
+			"Unicode_Block_MENDE_KIKAKUI",
+			"Unicode_Block_ADLAM",
+			"Unicode_Block_INDIC_SIYAQ_NUMBERS",
+			"Unicode_Block_OTTOMAN_SIYAQ_NUMBERS",
+			"Unicode_Block_ARABIC_MATHEMATICAL_ALPHABETIC_SYMBOLS",
+			"Unicode_Block_MAHJONG_TILES",
+			"Unicode_Block_DOMINO_TILES",
+			"Unicode_Block_PLAYING_CARDS",
+			"Unicode_Block_ENCLOSED_ALPHANUMERIC_SUPPLEMENT",
+			"Unicode_Block_ENCLOSED_IDEOGRAPHIC_SUPPLEMENT",
+			"Unicode_Block_MISCELLANEOUS_SYMBOLS_AND_PICTOGRAPHS",
+			"Unicode_Block_EMOTICONS",
+			"Unicode_Block_ORNAMENTAL_DINGBATS",
+			"Unicode_Block_TRANSPORT_AND_MAP_SYMBOLS",
+			"Unicode_Block_ALCHEMICAL_SYMBOLS",
+			"Unicode_Block_GEOMETRIC_SHAPES_EXTENDED",
+			"Unicode_Block_SUPPLEMENTAL_ARROWS_C",
+			"Unicode_Block_SUPPLEMENTAL_SYMBOLS_AND_PICTOGRAPHS",
+			"Unicode_Block_CHESS_SYMBOLS",
+			"Unicode_Block_SYMBOLS_AND_PICTOGRAPHS_EXTENDED_A",
+			"Unicode_Block_SYMBOLS_FOR_LEGACY_COMPUTING",
+			"Unicode_Block_CJK_UNIFIED_IDEOGRAPHS_EXTENSION_B",
+			"Unicode_Block_CJK_UNIFIED_IDEOGRAPHS_EXTENSION_C",
+			"Unicode_Block_CJK_UNIFIED_IDEOGRAPHS_EXTENSION_D",
+			"Unicode_Block_CJK_UNIFIED_IDEOGRAPHS_EXTENSION_E",
+			"Unicode_Block_CJK_UNIFIED_IDEOGRAPHS_EXTENSION_F",
+			"Unicode_Block_CJK_COMPATIBILITY_IDEOGRAPHS_SUPPLEMENT",
+			"Unicode_Block_CJK_UNIFIED_IDEOGRAPHS_EXTENSION_G",
+			"Unicode_Block_TAGS",
+			"Unicode_Block_VARIATION_SELECTORS_SUPPLEMENT",
+			"Unicode_Block_SUPPLEMENTARY_PRIVATE_USE_AREA_A",
+			"Unicode_Block_SUPPLEMENTARY_PRIVATE_USE_AREA_B",
+			"Unicode_Block_COUNT",
 		};
 		return strings[value - 0];
 	}
 };
 
-template <> struct Reflect<Ucd_Block> {
+template <> struct Reflect<Unicode_Block> {
 	static constexpr Type_Id id = Type_Id_ENUM;
 	static const Type_Info * const info() {
-		static const Type_Info_Enum i(sizeof(Ucd_Block), "Ucd_Block", enum_count<Ucd_Block>());
+		static const Type_Info_Enum i(sizeof(Unicode_Block), "Unicode_Block", enum_count<Unicode_Block>());
 		return &i;
 	}
 };
 
-enum Ucd_Prop : uint32_t;
-template <> struct Enum_Info<Ucd_Prop> {
+template <> struct Enum_Info<Unicode_Prop> {
 	static constexpr size_t get_count() { return 36; }
 	static constexpr s64 get_min_value() { return 0; }
 	static constexpr s64 get_max_value() { return 35; }
-	static const Ucd_Prop index_value(s64 index) { return (Ucd_Prop)(index + 0); }
-	static const String string(Ucd_Prop value) {
+	static const Unicode_Prop index_value(s64 index) { return (Unicode_Prop)(index + 0); }
+	static const String string(Unicode_Prop value) {
 		static const String strings[] = {
-			"Ucd_Prop_UNKNOWN",
-			"Ucd_Prop_WHITE_SPACE",
-			"Ucd_Prop_BIDI_CONTROL",
-			"Ucd_Prop_JOIN_CONTROL",
-			"Ucd_Prop_DASH",
-			"Ucd_Prop_HYPHEN",
-			"Ucd_Prop_QUOTATION_MARK",
-			"Ucd_Prop_TERMINAL_PUNCTUATION",
-			"Ucd_Prop_OTHER_MATH",
-			"Ucd_Prop_HEX_DIGIT",
-			"Ucd_Prop_ASCII_HEX_DIGIT",
-			"Ucd_Prop_OTHER_ALPHABETIC",
-			"Ucd_Prop_IDEOGRAPHIC",
-			"Ucd_Prop_DIACRITIC",
-			"Ucd_Prop_EXTENDER",
-			"Ucd_Prop_OTHER_LOWERCASE",
-			"Ucd_Prop_OTHER_UPPERCASE",
-			"Ucd_Prop_NONCHARACTER_CODE_POINT",
-			"Ucd_Prop_OTHER_GRAPHEME_EXTEND",
-			"Ucd_Prop_IDS_BINARY_OPERATOR",
-			"Ucd_Prop_IDS_TRINARY_OPERATOR",
-			"Ucd_Prop_RADICAL",
-			"Ucd_Prop_UNIFIED_IDEOGRAPH",
-			"Ucd_Prop_OTHER_DEFAULT_IGNORABLE_CODE_POINT",
-			"Ucd_Prop_DEPRECATED",
-			"Ucd_Prop_SOFT_DOTTED",
-			"Ucd_Prop_LOGICAL_ORDER_EXCEPTION",
-			"Ucd_Prop_OTHER_ID_START",
-			"Ucd_Prop_OTHER_ID_CONTINUE",
-			"Ucd_Prop_SENTENCE_TERMINAL",
-			"Ucd_Prop_VARIATION_SELECTOR",
-			"Ucd_Prop_PATTERN_WHITE_SPACE",
-			"Ucd_Prop_PATTERN_SYNTAX",
-			"Ucd_Prop_PREPENDED_CONCATENATION_MARK",
-			"Ucd_Prop_REGIONAL_INDICATOR",
-			"Ucd_Prop_COUNT",
+			"Unicode_Prop_UNKNOWN",
+			"Unicode_Prop_WHITE_SPACE",
+			"Unicode_Prop_BIDI_CONTROL",
+			"Unicode_Prop_JOIN_CONTROL",
+			"Unicode_Prop_DASH",
+			"Unicode_Prop_HYPHEN",
+			"Unicode_Prop_QUOTATION_MARK",
+			"Unicode_Prop_TERMINAL_PUNCTUATION",
+			"Unicode_Prop_OTHER_MATH",
+			"Unicode_Prop_HEX_DIGIT",
+			"Unicode_Prop_ASCII_HEX_DIGIT",
+			"Unicode_Prop_OTHER_ALPHABETIC",
+			"Unicode_Prop_IDEOGRAPHIC",
+			"Unicode_Prop_DIACRITIC",
+			"Unicode_Prop_EXTENDER",
+			"Unicode_Prop_OTHER_LOWERCASE",
+			"Unicode_Prop_OTHER_UPPERCASE",
+			"Unicode_Prop_NONCHARACTER_CODE_POINT",
+			"Unicode_Prop_OTHER_GRAPHEME_EXTEND",
+			"Unicode_Prop_IDS_BINARY_OPERATOR",
+			"Unicode_Prop_IDS_TRINARY_OPERATOR",
+			"Unicode_Prop_RADICAL",
+			"Unicode_Prop_UNIFIED_IDEOGRAPH",
+			"Unicode_Prop_OTHER_DEFAULT_IGNORABLE_CODE_POINT",
+			"Unicode_Prop_DEPRECATED",
+			"Unicode_Prop_SOFT_DOTTED",
+			"Unicode_Prop_LOGICAL_ORDER_EXCEPTION",
+			"Unicode_Prop_OTHER_ID_START",
+			"Unicode_Prop_OTHER_ID_CONTINUE",
+			"Unicode_Prop_SENTENCE_TERMINAL",
+			"Unicode_Prop_VARIATION_SELECTOR",
+			"Unicode_Prop_PATTERN_WHITE_SPACE",
+			"Unicode_Prop_PATTERN_SYNTAX",
+			"Unicode_Prop_PREPENDED_CONCATENATION_MARK",
+			"Unicode_Prop_REGIONAL_INDICATOR",
+			"Unicode_Prop_COUNT",
 		};
 		return strings[value - 0];
 	}
 };
 
-template <> struct Reflect<Ucd_Prop> {
+template <> struct Reflect<Unicode_Prop> {
 	static constexpr Type_Id id = Type_Id_ENUM;
 	static const Type_Info * const info() {
-		static const Type_Info_Enum i(sizeof(Ucd_Prop), "Ucd_Prop", enum_count<Ucd_Prop>());
+		static const Type_Info_Enum i(sizeof(Unicode_Prop), "Unicode_Prop", enum_count<Unicode_Prop>());
 		return &i;
 	}
 };
 
-enum Ucd_Indic_Syllable : uint32_t;
-template <> struct Enum_Info<Ucd_Indic_Syllable> {
+template <> struct Enum_Info<Unicode_Indic_Syllable> {
 	static constexpr size_t get_count() { return 37; }
 	static constexpr s64 get_min_value() { return 0; }
 	static constexpr s64 get_max_value() { return 36; }
-	static const Ucd_Indic_Syllable index_value(s64 index) { return (Ucd_Indic_Syllable)(index + 0); }
-	static const String string(Ucd_Indic_Syllable value) {
+	static const Unicode_Indic_Syllable index_value(s64 index) { return (Unicode_Indic_Syllable)(index + 0); }
+	static const String string(Unicode_Indic_Syllable value) {
 		static const String strings[] = {
-			"Ucd_Indic_Syllable_UNKNOWN",
-			"Ucd_Indic_Syllable_BINDU",
-			"Ucd_Indic_Syllable_VISARGA",
-			"Ucd_Indic_Syllable_AVAGRAHA",
-			"Ucd_Indic_Syllable_NUKTA",
-			"Ucd_Indic_Syllable_VIRAMA",
-			"Ucd_Indic_Syllable_PURE_KILLER",
-			"Ucd_Indic_Syllable_INVISIBLE_STACKER",
-			"Ucd_Indic_Syllable_VOWEL_INDEPENDENT",
-			"Ucd_Indic_Syllable_VOWEL_DEPENDENT",
-			"Ucd_Indic_Syllable_VOWEL",
-			"Ucd_Indic_Syllable_CONSONANT_PLACEHOLDER",
-			"Ucd_Indic_Syllable_CONSONANT",
-			"Ucd_Indic_Syllable_CONSONANT_DEAD",
-			"Ucd_Indic_Syllable_CONSONANT_WITH_STACKER",
-			"Ucd_Indic_Syllable_CONSONANT_PREFIXED",
-			"Ucd_Indic_Syllable_CONSONANT_PRECEDING_REPHA",
-			"Ucd_Indic_Syllable_CONSONANT_INITIAL_POSTFIXED",
-			"Ucd_Indic_Syllable_CONSONANT_SUCCEEDING_REPHA",
-			"Ucd_Indic_Syllable_CONSONANT_SUBJOINED",
-			"Ucd_Indic_Syllable_CONSONANT_MEDIAL",
-			"Ucd_Indic_Syllable_CONSONANT_FINAL",
-			"Ucd_Indic_Syllable_CONSONANT_HEAD_LETTER",
-			"Ucd_Indic_Syllable_MODIFYING_LETTER",
-			"Ucd_Indic_Syllable_TONE_LETTER",
-			"Ucd_Indic_Syllable_TONE_MARK",
-			"Ucd_Indic_Syllable_GEMINATION_MARK",
-			"Ucd_Indic_Syllable_CANTILLATION_MARK",
-			"Ucd_Indic_Syllable_REGISTER_SHIFTER",
-			"Ucd_Indic_Syllable_SYLLABLE_MODIFIER",
-			"Ucd_Indic_Syllable_CONSONANT_KILLER",
-			"Ucd_Indic_Syllable_NON_JOINER",
-			"Ucd_Indic_Syllable_JOINER",
-			"Ucd_Indic_Syllable_NUMBER_JOINER",
-			"Ucd_Indic_Syllable_NUMBER",
-			"Ucd_Indic_Syllable_BRAHMI_JOINING_NUMBER",
-			"Ucd_Indic_Syllable_COUNT",
+			"Unicode_Indic_Syllable_UNKNOWN",
+			"Unicode_Indic_Syllable_BINDU",
+			"Unicode_Indic_Syllable_VISARGA",
+			"Unicode_Indic_Syllable_AVAGRAHA",
+			"Unicode_Indic_Syllable_NUKTA",
+			"Unicode_Indic_Syllable_VIRAMA",
+			"Unicode_Indic_Syllable_PURE_KILLER",
+			"Unicode_Indic_Syllable_INVISIBLE_STACKER",
+			"Unicode_Indic_Syllable_VOWEL_INDEPENDENT",
+			"Unicode_Indic_Syllable_VOWEL_DEPENDENT",
+			"Unicode_Indic_Syllable_VOWEL",
+			"Unicode_Indic_Syllable_CONSONANT_PLACEHOLDER",
+			"Unicode_Indic_Syllable_CONSONANT",
+			"Unicode_Indic_Syllable_CONSONANT_DEAD",
+			"Unicode_Indic_Syllable_CONSONANT_WITH_STACKER",
+			"Unicode_Indic_Syllable_CONSONANT_PREFIXED",
+			"Unicode_Indic_Syllable_CONSONANT_PRECEDING_REPHA",
+			"Unicode_Indic_Syllable_CONSONANT_INITIAL_POSTFIXED",
+			"Unicode_Indic_Syllable_CONSONANT_SUCCEEDING_REPHA",
+			"Unicode_Indic_Syllable_CONSONANT_SUBJOINED",
+			"Unicode_Indic_Syllable_CONSONANT_MEDIAL",
+			"Unicode_Indic_Syllable_CONSONANT_FINAL",
+			"Unicode_Indic_Syllable_CONSONANT_HEAD_LETTER",
+			"Unicode_Indic_Syllable_MODIFYING_LETTER",
+			"Unicode_Indic_Syllable_TONE_LETTER",
+			"Unicode_Indic_Syllable_TONE_MARK",
+			"Unicode_Indic_Syllable_GEMINATION_MARK",
+			"Unicode_Indic_Syllable_CANTILLATION_MARK",
+			"Unicode_Indic_Syllable_REGISTER_SHIFTER",
+			"Unicode_Indic_Syllable_SYLLABLE_MODIFIER",
+			"Unicode_Indic_Syllable_CONSONANT_KILLER",
+			"Unicode_Indic_Syllable_NON_JOINER",
+			"Unicode_Indic_Syllable_JOINER",
+			"Unicode_Indic_Syllable_NUMBER_JOINER",
+			"Unicode_Indic_Syllable_NUMBER",
+			"Unicode_Indic_Syllable_BRAHMI_JOINING_NUMBER",
+			"Unicode_Indic_Syllable_COUNT",
 		};
 		return strings[value - 0];
 	}
 };
 
-template <> struct Reflect<Ucd_Indic_Syllable> {
+template <> struct Reflect<Unicode_Indic_Syllable> {
 	static constexpr Type_Id id = Type_Id_ENUM;
 	static const Type_Info * const info() {
-		static const Type_Info_Enum i(sizeof(Ucd_Indic_Syllable), "Ucd_Indic_Syllable", enum_count<Ucd_Indic_Syllable>());
+		static const Type_Info_Enum i(sizeof(Unicode_Indic_Syllable), "Unicode_Indic_Syllable", enum_count<Unicode_Indic_Syllable>());
 		return &i;
 	}
 };
 
-enum Ucd_Indic_Position : uint32_t;
-template <> struct Enum_Info<Ucd_Indic_Position> {
+template <> struct Enum_Info<Unicode_Indic_Position> {
 	static constexpr size_t get_count() { return 17; }
 	static constexpr s64 get_min_value() { return 0; }
 	static constexpr s64 get_max_value() { return 16; }
-	static const Ucd_Indic_Position index_value(s64 index) { return (Ucd_Indic_Position)(index + 0); }
-	static const String string(Ucd_Indic_Position value) {
+	static const Unicode_Indic_Position index_value(s64 index) { return (Unicode_Indic_Position)(index + 0); }
+	static const String string(Unicode_Indic_Position value) {
 		static const String strings[] = {
-			"Ucd_Indic_Position_UNKNOWN",
-			"Ucd_Indic_Position_RIGHT",
-			"Ucd_Indic_Position_LEFT",
-			"Ucd_Indic_Position_VISUAL_ORDER_LEFT",
-			"Ucd_Indic_Position_LEFT_AND_RIGHT",
-			"Ucd_Indic_Position_TOP",
-			"Ucd_Indic_Position_BOTTOM",
-			"Ucd_Indic_Position_TOP_AND_BOTTOM",
-			"Ucd_Indic_Position_TOP_AND_RIGHT",
-			"Ucd_Indic_Position_TOP_AND_LEFT",
-			"Ucd_Indic_Position_TOP_AND_LEFT_AND_RIGHT",
-			"Ucd_Indic_Position_BOTTOM_AND_RIGHT",
-			"Ucd_Indic_Position_BOTTOM_AND_LEFT",
-			"Ucd_Indic_Position_TOP_AND_BOTTOM_AND_RIGHT",
-			"Ucd_Indic_Position_TOP_AND_BOTTOM_AND_LEFT",
-			"Ucd_Indic_Position_OVERSTRUCK",
-			"Ucd_Indic_Position_COUNT",
+			"Unicode_Indic_Position_UNKNOWN",
+			"Unicode_Indic_Position_RIGHT",
+			"Unicode_Indic_Position_LEFT",
+			"Unicode_Indic_Position_VISUAL_ORDER_LEFT",
+			"Unicode_Indic_Position_LEFT_AND_RIGHT",
+			"Unicode_Indic_Position_TOP",
+			"Unicode_Indic_Position_BOTTOM",
+			"Unicode_Indic_Position_TOP_AND_BOTTOM",
+			"Unicode_Indic_Position_TOP_AND_RIGHT",
+			"Unicode_Indic_Position_TOP_AND_LEFT",
+			"Unicode_Indic_Position_TOP_AND_LEFT_AND_RIGHT",
+			"Unicode_Indic_Position_BOTTOM_AND_RIGHT",
+			"Unicode_Indic_Position_BOTTOM_AND_LEFT",
+			"Unicode_Indic_Position_TOP_AND_BOTTOM_AND_RIGHT",
+			"Unicode_Indic_Position_TOP_AND_BOTTOM_AND_LEFT",
+			"Unicode_Indic_Position_OVERSTRUCK",
+			"Unicode_Indic_Position_COUNT",
 		};
 		return strings[value - 0];
 	}
 };
 
-template <> struct Reflect<Ucd_Indic_Position> {
+template <> struct Reflect<Unicode_Indic_Position> {
 	static constexpr Type_Id id = Type_Id_ENUM;
 	static const Type_Info * const info() {
-		static const Type_Info_Enum i(sizeof(Ucd_Indic_Position), "Ucd_Indic_Position", enum_count<Ucd_Indic_Position>());
+		static const Type_Info_Enum i(sizeof(Unicode_Indic_Position), "Unicode_Indic_Position", enum_count<Unicode_Indic_Position>());
 		return &i;
 	}
 };
 
-enum Ucd_Grapheme_Property : uint32_t;
-template <> struct Enum_Info<Ucd_Grapheme_Property> {
+template <> struct Enum_Info<Unicode_Grapheme_Property> {
 	static constexpr size_t get_count() { return 15; }
 	static constexpr s64 get_min_value() { return 0; }
 	static constexpr s64 get_max_value() { return 14; }
-	static const Ucd_Grapheme_Property index_value(s64 index) { return (Ucd_Grapheme_Property)(index + 0); }
-	static const String string(Ucd_Grapheme_Property value) {
+	static const Unicode_Grapheme_Property index_value(s64 index) { return (Unicode_Grapheme_Property)(index + 0); }
+	static const String string(Unicode_Grapheme_Property value) {
 		static const String strings[] = {
-			"Ucd_Grapheme_Property_UNKNOWN",
-			"Ucd_Grapheme_Property_PREPEND",
-			"Ucd_Grapheme_Property_CR",
-			"Ucd_Grapheme_Property_LF",
-			"Ucd_Grapheme_Property_CONTROL",
-			"Ucd_Grapheme_Property_EXTEND",
-			"Ucd_Grapheme_Property_REGIONAL_INDICATOR",
-			"Ucd_Grapheme_Property_SPACINGMARK",
-			"Ucd_Grapheme_Property_L",
-			"Ucd_Grapheme_Property_V",
-			"Ucd_Grapheme_Property_T",
-			"Ucd_Grapheme_Property_LV",
-			"Ucd_Grapheme_Property_LVT",
-			"Ucd_Grapheme_Property_ZWJ",
-			"Ucd_Grapheme_Property_COUNT",
+			"Unicode_Grapheme_Property_UNKNOWN",
+			"Unicode_Grapheme_Property_PREPEND",
+			"Unicode_Grapheme_Property_CR",
+			"Unicode_Grapheme_Property_LF",
+			"Unicode_Grapheme_Property_CONTROL",
+			"Unicode_Grapheme_Property_EXTEND",
+			"Unicode_Grapheme_Property_REGIONAL_INDICATOR",
+			"Unicode_Grapheme_Property_SPACINGMARK",
+			"Unicode_Grapheme_Property_L",
+			"Unicode_Grapheme_Property_V",
+			"Unicode_Grapheme_Property_T",
+			"Unicode_Grapheme_Property_LV",
+			"Unicode_Grapheme_Property_LVT",
+			"Unicode_Grapheme_Property_ZWJ",
+			"Unicode_Grapheme_Property_COUNT",
 		};
 		return strings[value - 0];
 	}
 };
 
-template <> struct Reflect<Ucd_Grapheme_Property> {
+template <> struct Reflect<Unicode_Grapheme_Property> {
 	static constexpr Type_Id id = Type_Id_ENUM;
 	static const Type_Info * const info() {
-		static const Type_Info_Enum i(sizeof(Ucd_Grapheme_Property), "Ucd_Grapheme_Property", enum_count<Ucd_Grapheme_Property>());
+		static const Type_Info_Enum i(sizeof(Unicode_Grapheme_Property), "Unicode_Grapheme_Property", enum_count<Unicode_Grapheme_Property>());
 		return &i;
 	}
 };
 
-enum Lookup_Flag_Bit : u16;
 template <> struct Enum_Info<Lookup_Flag_Bit> {
 	static constexpr size_t get_count() { return 7; }
-	static constexpr s64 get_min_value() { return -256; }
-	static constexpr s64 get_max_value() { return 224; }
+	static constexpr s64 get_min_value() { return 1; }
+	static constexpr s64 get_max_value() { return 65280; }
 	static const Lookup_Flag_Bit index_value(s64 index) {
 		static const Lookup_Flag_Bit enum_values[] = {
 			(Lookup_Flag_Bit)1,
@@ -2738,7 +2722,7 @@ template <> struct Enum_Info<Lookup_Flag_Bit> {
 			(Lookup_Flag_Bit)8,
 			(Lookup_Flag_Bit)16,
 			(Lookup_Flag_Bit)224,
-			(Lookup_Flag_Bit)-256,
+			(Lookup_Flag_Bit)65280,
 		};
 		assert(index >= 0 && index < static_count(enum_values));
 		return enum_values[index];
@@ -2750,7 +2734,7 @@ template <> struct Enum_Info<Lookup_Flag_Bit> {
 		if (8 == value) return "Lookup_Flag_IGNORE_MARKS";
 		if (16 == value) return "Lookup_Flag_USE_MARK_FILTERING_SET";
 		if (224 == value) return "Lookup_Flag_RESERVED";
-		if (-256 == value) return "Lookup_Flag_MARK_ATTACHMENT_TYPE";
+		if (65280 == value) return "Lookup_Flag_MARK_ATTACHMENT_TYPE";
 
 		invalid_code_path();
 		return "";
@@ -2765,7 +2749,6 @@ template <> struct Reflect<Lookup_Flag_Bit> {
 	}
 };
 
-enum Script_Tag : u32;
 template <> struct Enum_Info<Script_Tag> {
 	static constexpr size_t get_count() { return 160; }
 	static constexpr s64 get_min_value() { return 538995065; }
@@ -3111,7 +3094,6 @@ template <> struct Reflect<Script_Tag> {
 	}
 };
 
-enum Feature_Tag : u32;
 template <> struct Enum_Info<Feature_Tag> {
 	static constexpr size_t get_count() { return 141; }
 	static constexpr s64 get_min_value() { return 808547187; }
@@ -3419,7 +3401,6 @@ template <> struct Reflect<Feature_Tag> {
 	}
 };
 
-enum Lang_Tag : u32;
 template <> struct Enum_Info<Lang_Tag> {
 	static constexpr size_t get_count() { return 602; }
 	static constexpr s64 get_min_value() { return 537477463; }
@@ -4649,7 +4630,6 @@ template <> struct Reflect<Lang_Tag> {
 	}
 };
 
-enum Font_Gpos : u16;
 template <> struct Enum_Info<Font_Gpos> {
 	static constexpr size_t get_count() { return 11; }
 	static constexpr s64 get_min_value() { return 0; }
@@ -4681,7 +4661,6 @@ template <> struct Reflect<Font_Gpos> {
 	}
 };
 
-enum Font_Gsub : u16;
 template <> struct Enum_Info<Font_Gsub> {
 	static constexpr size_t get_count() { return 10; }
 	static constexpr s64 get_min_value() { return 0; }
@@ -4712,47 +4691,58 @@ template <> struct Reflect<Font_Gsub> {
 	}
 };
 
-enum Type_Id : int;
-template <> struct Enum_Info<Type_Id> {
-	static constexpr size_t get_count() { return 19; }
+template <> struct Enum_Info<Devanagari> {
+	static constexpr size_t get_count() { return 7; }
 	static constexpr s64 get_min_value() { return 0; }
-	static constexpr s64 get_max_value() { return 18; }
-	static const Type_Id index_value(s64 index) { return (Type_Id)(index + 0); }
-	static const String string(Type_Id value) {
+	static constexpr s64 get_max_value() { return 6; }
+	static const Devanagari index_value(s64 index) { return (Devanagari)(index + 0); }
+	static const String string(Devanagari value) {
 		static const String strings[] = {
-			"Type_Id_UNKNOWN",
-			"Type_Id_S8",
-			"Type_Id_S16",
-			"Type_Id_S32",
-			"Type_Id_S64",
-			"Type_Id_U8",
-			"Type_Id_U16",
-			"Type_Id_U32",
-			"Type_Id_U64",
-			"Type_Id_R32",
-			"Type_Id_R64",
-			"Type_Id_CHAR",
-			"Type_Id_VOID",
-			"Type_Id_POINTER",
-			"Type_Id_FUNCTION",
-			"Type_Id_ENUM",
-			"Type_Id_STRUCT",
-			"Type_Id_UNION",
-			"Type_Id_STATIC_ARRAY",
+			"Devanagari_RELF",
+			"Devanagari_HALF_CONSONANT",
+			"Devanagari_MAIN_CONSONANT",
+			"Devanagari_BELOW_BASE_CONSONANT",
+			"Devanagari_POST_BASE_CONSONANT",
+			"Devanagari_PRE_BASE_CONSONANT",
+			"Devanagari_MATRAS_AND_SIGN",
 		};
 		return strings[value - 0];
 	}
 };
 
-template <> struct Reflect<Type_Id> {
+template <> struct Reflect<Devanagari> {
 	static constexpr Type_Id id = Type_Id_ENUM;
 	static const Type_Info * const info() {
-		static const Type_Info_Enum i(sizeof(Type_Id), "Type_Id", enum_count<Type_Id>());
+		static const Type_Info_Enum i(sizeof(Devanagari), "Devanagari", enum_count<Devanagari>());
 		return &i;
 	}
 };
 
-enum Render_Index_Type : int;
+template <> struct Enum_Info<Glyph_Type> {
+	static constexpr size_t get_count() { return 5; }
+	static constexpr s64 get_min_value() { return 0; }
+	static constexpr s64 get_max_value() { return 4; }
+	static const Glyph_Type index_value(s64 index) { return (Glyph_Type)(index + 0); }
+	static const String string(Glyph_Type value) {
+		static const String strings[] = {
+			"Glyph_Type_UNKNOWN",
+			"Glyph_Type_BASE",
+			"Glyph_Type_LIGATURE",
+			"Glyph_Type_MARK",
+			"Glyph_Type_COMPONENT",
+		};
+		return strings[value - 0];
+	}
+};
+
+template <> struct Reflect<Glyph_Type> {
+	static constexpr Type_Id id = Type_Id_ENUM;
+	static const Type_Info * const info() {
+		static const Type_Info_Enum i(sizeof(Glyph_Type), "Glyph_Type", enum_count<Glyph_Type>());
+		return &i;
+	}
+};
+
 template <> struct Enum_Info<Render_Index_Type> {
 	static constexpr size_t get_count() { return 4; }
 	static constexpr s64 get_min_value() { return 0; }
@@ -4777,7 +4767,6 @@ template <> struct Reflect<Render_Index_Type> {
 	}
 };
 
-enum Render_Option : u32;
 template <> struct Enum_Info<Render_Option> {
 	static constexpr size_t get_count() { return 3; }
 	static constexpr s64 get_min_value() { return 1; }
@@ -4809,7 +4798,6 @@ template <> struct Reflect<Render_Option> {
 	}
 };
 
-enum DPI_AWARENESS : int;
 template <> struct Enum_Info<DPI_AWARENESS> {
 	static constexpr size_t get_count() { return 4; }
 	static constexpr s64 get_min_value() { return -1; }
@@ -4834,7 +4822,6 @@ template <> struct Reflect<DPI_AWARENESS> {
 	}
 };
 
-enum DPI_HOSTING_BEHAVIOR : int;
 template <> struct Enum_Info<DPI_HOSTING_BEHAVIOR> {
 	static constexpr size_t get_count() { return 3; }
 	static constexpr s64 get_min_value() { return -1; }
@@ -6333,289 +6320,6 @@ template <> struct Reflect<Rng> {
 	}
 };
 
-template <> struct Reflect<stbtt__csctx> {
-	static constexpr Type_Id id = Type_Id_STRUCT;
-	static const Type_Info * const info() {
-		static const Struct_Member struct_members[] = {
-			{ "bounds", 0, 0, 0, Reflect<int>::info() },
-			{ "started", 4, 0, 0, Reflect<int>::info() },
-			{ "first_x", 8, 0, 0, Reflect<float>::info() },
-			{ "first_y", 12, 0, 0, Reflect<float>::info() },
-			{ "x", 16, 0, 0, Reflect<float>::info() },
-			{ "y", 20, 0, 0, Reflect<float>::info() },
-			{ "min_x", 24, 0, 0, Reflect<s32>::info() },
-			{ "max_x", 28, 0, 0, Reflect<s32>::info() },
-			{ "min_y", 32, 0, 0, Reflect<s32>::info() },
-			{ "max_y", 36, 0, 0, Reflect<s32>::info() },
-			{ "pvertices", 40, 0, 0, Reflect<stbtt_vertex *>::info() },
-			{ "num_vertices", 48, 0, 0, Reflect<int>::info() },
-		};
-		static const Type_Info_Struct i(56, "stbtt__csctx", static_count(struct_members), struct_members, 0);
-		return &i;
-	}
-};
-
-template <> struct Reflect<stbtt__hheap_chunk> {
-	static constexpr Type_Id id = Type_Id_STRUCT;
-	static const Type_Info * const info() {
-		static const Struct_Member struct_members[] = {
-			{ "next", 0, 0, 0, Reflect<struct stbtt__hheap_chunk *>::info() },
-		};
-		static const Type_Info_Struct i(8, "stbtt__hheap_chunk", static_count(struct_members), struct_members, 0);
-		return &i;
-	}
-};
-
-template <> struct Reflect<stbtt__hheap> {
-	static constexpr Type_Id id = Type_Id_STRUCT;
-	static const Type_Info * const info() {
-		static const Struct_Member struct_members[] = {
-			{ "head", 0, 0, 0, Reflect<struct stbtt__hheap_chunk *>::info() },
-			{ "first_free", 8, 0, 0, Reflect<void *>::info() },
-			{ "num_remaining_in_head_chunk", 16, 0, 0, Reflect<int>::info() },
-		};
-		static const Type_Info_Struct i(24, "stbtt__hheap", static_count(struct_members), struct_members, 0);
-		return &i;
-	}
-};
-
-template <> struct Reflect<stbtt__edge> {
-	static constexpr Type_Id id = Type_Id_STRUCT;
-	static const Type_Info * const info() {
-		static const Struct_Member struct_members[] = {
-			{ "x0", 0, 0, 0, Reflect<float>::info() },
-			{ "y0", 4, 0, 0, Reflect<float>::info() },
-			{ "x1", 8, 0, 0, Reflect<float>::info() },
-			{ "y1", 12, 0, 0, Reflect<float>::info() },
-			{ "invert", 16, 0, 0, Reflect<int>::info() },
-		};
-		static const Type_Info_Struct i(20, "stbtt__edge", static_count(struct_members), struct_members, 0);
-		return &i;
-	}
-};
-
-template <> struct Reflect<stbtt__active_edge> {
-	static constexpr Type_Id id = Type_Id_STRUCT;
-	static const Type_Info * const info() {
-		static const Struct_Member struct_members[] = {
-			{ "next", 0, 0, 0, Reflect<struct stbtt__active_edge *>::info() },
-			{ "fx", 8, 0, 0, Reflect<float>::info() },
-			{ "fdx", 12, 0, 0, Reflect<float>::info() },
-			{ "fdy", 16, 0, 0, Reflect<float>::info() },
-			{ "direction", 20, 0, 0, Reflect<float>::info() },
-			{ "sy", 24, 0, 0, Reflect<float>::info() },
-			{ "ey", 28, 0, 0, Reflect<float>::info() },
-		};
-		static const Type_Info_Struct i(32, "stbtt__active_edge", static_count(struct_members), struct_members, 0);
-		return &i;
-	}
-};
-
-template <> struct Reflect<stbtt__point> {
-	static constexpr Type_Id id = Type_Id_STRUCT;
-	static const Type_Info * const info() {
-		static const Struct_Member struct_members[] = {
-			{ "x", 0, 0, 0, Reflect<float>::info() },
-			{ "y", 4, 0, 0, Reflect<float>::info() },
-		};
-		static const Type_Info_Struct i(8, "stbtt__point", static_count(struct_members), struct_members, 0);
-		return &i;
-	}
-};
-
-template <> struct Reflect<stbrp_context> {
-	static constexpr Type_Id id = Type_Id_STRUCT;
-	static const Type_Info * const info() {
-		static const Struct_Member struct_members[] = {
-			{ "width", 0, 0, 0, Reflect<int>::info() },
-			{ "height", 4, 0, 0, Reflect<int>::info() },
-			{ "x", 8, 0, 0, Reflect<int>::info() },
-			{ "y", 12, 0, 0, Reflect<int>::info() },
-			{ "bottom_y", 16, 0, 0, Reflect<int>::info() },
-		};
-		static const Type_Info_Struct i(20, "stbrp_context", static_count(struct_members), struct_members, 0);
-		return &i;
-	}
-};
-
-template <> struct Reflect<stbrp_node> {
-	static constexpr Type_Id id = Type_Id_STRUCT;
-	static const Type_Info * const info() {
-		static const Struct_Member struct_members[] = {
-			{ "x", 0, 0, 0, Reflect<unsigned char>::info() },
-		};
-		static const Type_Info_Struct i(1, "stbrp_node", static_count(struct_members), struct_members, 0);
-		return &i;
-	}
-};
-
-template <> struct Reflect<stbrp_rect> {
-	static constexpr Type_Id id = Type_Id_STRUCT;
-	static const Type_Info * const info() {
-		static const Struct_Member struct_members[] = {
-			{ "x", 0, 0, 0, Reflect<stbrp_coord>::info() },
-			{ "y", 4, 0, 0, Reflect<stbrp_coord>::info() },
-			{ "id", 8, 0, 0, Reflect<int>::info() },
-			{ "w", 12, 0, 0, Reflect<int>::info() },
-			{ "h", 16, 0, 0, Reflect<int>::info() },
-			{ "was_packed", 20, 0, 0, Reflect<int>::info() },
-		};
-		static const Type_Info_Struct i(24, "stbrp_rect", static_count(struct_members), struct_members, 0);
-		return &i;
-	}
-};
-
-template <> struct Reflect<Feature_Indices> {
-	static constexpr Type_Id id = Type_Id_STRUCT;
-	static const Type_Info * const info() {
-		static const Struct_Member struct_members[] = {
-			{ "count", 0, 0, 0, Reflect<u16>::info() },
-			{ "ptr", 8, 0, 0, Reflect<u16 *>::info() },
-		};
-		static const Type_Info_Struct i(16, "Feature_Indices", static_count(struct_members), struct_members, 0);
-		return &i;
-	}
-};
-
-template <> struct Reflect<Feature_List> {
-	static constexpr Type_Id id = Type_Id_STRUCT;
-	static const Type_Info * const info() {
-		static const Struct_Member struct_members[] = {
-			{ "ptr", 0, 0, 0, Reflect<u8 *>::info() },
-			{ "count", 8, 0, 0, Reflect<u16>::info() },
-			{ "records", 16, 0, 0, Reflect<u8 *>::info() },
-			{ "indices", 24, 0, 0, Reflect<Feature_Indices>::info() },
-		};
-		static const Type_Info_Struct i(40, "Feature_List", static_count(struct_members), struct_members, 0);
-		return &i;
-	}
-};
-
-template <> struct Reflect<Lookup_List> {
-	static constexpr Type_Id id = Type_Id_STRUCT;
-	static const Type_Info * const info() {
-		static const Struct_Member struct_members[] = {
-			{ "ptr", 0, 0, 0, Reflect<u8 *>::info() },
-			{ "count", 8, 0, 0, Reflect<u16>::info() },
-			{ "lookups", 16, 0, 0, Reflect<u8 *>::info() },
-		};
-		static const Type_Info_Struct i(24, "Lookup_List", static_count(struct_members), struct_members, 0);
-		return &i;
-	}
-};
-
-template <> struct Reflect<Dynamic_Font> {
-	static constexpr Type_Id id = Type_Id_STRUCT;
-	static const Type_Info * const info() {
-		static const Struct_Member struct_members[] = {
-			{ "info", 0, 0, 0, Reflect<stbtt_fontinfo>::info() },
-			{ "glyph_class_defination", 176, 0, 0, Reflect<void *>::info() },
-			{ "mark_attach_class_defination", 184, 0, 0, Reflect<void *>::info() },
-			{ "mark_glyph_set", 192, 0, 0, Reflect<void *>::info() },
-			{ "gsub_feature", 200, 0, 0, Reflect<Feature_List>::info() },
-			{ "gsub_lookup", 240, 0, 0, Reflect<Lookup_List>::info() },
-		};
-		static const Type_Info_Struct i(264, "Dynamic_Font", static_count(struct_members), struct_members, 0);
-		return &i;
-	}
-};
-
-template <> struct Reflect<Glyph_Info> {
-	static constexpr Type_Id id = Type_Id_STRUCT;
-	static const Type_Info * const info() {
-		static const Struct_Member struct_members[] = {
-			{ "id", 0, 0, 0, Reflect<u32>::info() },
-			{ "cluster", 4, 0, 0, Reflect<int>::info() },
-			{ "codepoints", 8, 0, 0, Reflect<u32 [10]>::info() },
-			{ "codepoint_count", 48, 0, 0, Reflect<int>::info() },
-		};
-		static const Type_Info_Struct i(52, "Glyph_Info", static_count(struct_members), struct_members, 0);
-		return &i;
-	}
-};
-
-template <> struct Reflect<Glyph_Range> {
-	static constexpr Type_Id id = Type_Id_STRUCT;
-	static const Type_Info * const info() {
-		static const Struct_Member struct_members[] = {
-			{ "infos", 0, 0, 0, Reflect<Glyph_Info *>::info() },
-			{ "count", 8, 0, 0, Reflect<s32>::info() },
-			{ "current", 12, 0, 0, Reflect<s32>::info() },
-			{ "max", 16, 0, 0, Reflect<s32>::info() },
-			{ "skip", 20, 0, 0, Reflect<s32>::info() },
-		};
-		static const Type_Info_Struct i(24, "Glyph_Range", static_count(struct_members), struct_members, 0);
-		return &i;
-	}
-};
-
-template <> struct Reflect<Grapheme_Cluster> {
-	static constexpr Type_Id id = Type_Id_STRUCT;
-	static const Type_Info * const info() {
-		static const Struct_Member struct_members[] = {
-			{ "codepoint", 0, 0, 0, Reflect<utf32>::info() },
-			{ "prop", 4, 0, 0, Reflect<Ucd_Grapheme_Property>::info() },
-			{ "syllable", 8, 0, 0, Reflect<Ucd_Indic_Syllable>::info() },
-			{ "value", 12, 0, 0, Reflect<int>::info() },
-		};
-		static const Type_Info_Struct i(16, "Grapheme_Cluster", static_count(struct_members), struct_members, 0);
-		return &i;
-	}
-};
-
-template <> struct Reflect<Font_Shape> {
-	static constexpr Type_Id id = Type_Id_STRUCT;
-	static const Type_Info * const info() {
-		static const Struct_Member struct_members[] = {
-			{ "glyph_infos", 0, 0, 0, Reflect<Glyph_Info *>::info() },
-			{ "codepoints", 8, 0, 0, Reflect<Array_View<Grapheme_Cluster>>::info() },
-			{ "glyph_count", 24, 0, 0, Reflect<u32>::info() },
-		};
-		static const Type_Info_Struct i(32, "Font_Shape", static_count(struct_members), struct_members, 0);
-		return &i;
-	}
-};
-
-template <> struct Reflect<Istream> {
-	static constexpr Type_Id id = Type_Id_STRUCT;
-	static const Type_Info * const info() {
-		static const Struct_Member struct_members[] = {
-			{ "base", 0, 0, 0, Reflect<u8 *>::info() },
-			{ "end", 8, 0, 0, Reflect<u8 *>::info() },
-			{ "current", 16, 0, 0, Reflect<u8 *>::info() },
-		};
-		static const Type_Info_Struct i(24, "Istream", static_count(struct_members), struct_members, 0);
-		return &i;
-	}
-};
-
-template <> struct Reflect<Ostream::Bucket> {
-	static constexpr Type_Id id = Type_Id_STRUCT;
-	static const Type_Info * const info() {
-		static const Struct_Member struct_members[] = {
-			{ "data", 0, 0, 0, Reflect<u8 [4096]>::info() },
-			{ "filled", 4096, 0, 0, Reflect<s64>::info() },
-			{ "prev", 4104, 0, 0, Reflect<Ostream::Bucket *>::info() },
-			{ "next", 4112, 0, 0, Reflect<Ostream::Bucket *>::info() },
-		};
-		static const Type_Info_Struct i(4120, "Ostream::Bucket", static_count(struct_members), struct_members, 0);
-		return &i;
-	}
-};
-
-template <> struct Reflect<Ostream> {
-	static constexpr Type_Id id = Type_Id_STRUCT;
-	static const Type_Info * const info() {
-		static const Struct_Member struct_members[] = {
-			{ "head", 0, 0, 0, Reflect<Ostream::Bucket>::info() },
-			{ "tail", 4120, 0, 0, Reflect<Ostream::Bucket *>::info() },
-			{ "allocator", 4128, 0, 0, Reflect<Allocator>::info() },
-		};
-		static const Type_Info_Struct i(4144, "Ostream", static_count(struct_members), struct_members, 0);
-		return &i;
-	}
-};
-
 template <> struct Reflect<Type_Info> {
 	static constexpr Type_Id id = Type_Id_STRUCT;
 	static const Type_Info * const info() {
@@ -6841,6 +6545,274 @@ template <> struct Reflect<Reflect<r64>> {
 	static constexpr Type_Id id = Type_Id_STRUCT;
 	static const Type_Info * const info() {
 		static const Type_Info_Struct i(1, "Reflect<r64>", 0, 0, 0);
+		return &i;
+	}
+};
+
+template <> struct Reflect<stbtt__csctx> {
+	static constexpr Type_Id id = Type_Id_STRUCT;
+	static const Type_Info * const info() {
+		static const Struct_Member struct_members[] = {
+			{ "bounds", 0, 0, 0, Reflect<int>::info() },
+			{ "started", 4, 0, 0, Reflect<int>::info() },
+			{ "first_x", 8, 0, 0, Reflect<float>::info() },
+			{ "first_y", 12, 0, 0, Reflect<float>::info() },
+			{ "x", 16, 0, 0, Reflect<float>::info() },
+			{ "y", 20, 0, 0, Reflect<float>::info() },
+			{ "min_x", 24, 0, 0, Reflect<s32>::info() },
+			{ "max_x", 28, 0, 0, Reflect<s32>::info() },
+			{ "min_y", 32, 0, 0, Reflect<s32>::info() },
+			{ "max_y", 36, 0, 0, Reflect<s32>::info() },
+			{ "pvertices", 40, 0, 0, Reflect<stbtt_vertex *>::info() },
+			{ "num_vertices", 48, 0, 0, Reflect<int>::info() },
+		};
+		static const Type_Info_Struct i(56, "stbtt__csctx", static_count(struct_members), struct_members, 0);
+		return &i;
+	}
+};
+
+template <> struct Reflect<stbtt__hheap_chunk> {
+	static constexpr Type_Id id = Type_Id_STRUCT;
+	static const Type_Info * const info() {
+		static const Struct_Member struct_members[] = {
+			{ "next", 0, 0, 0, Reflect<struct stbtt__hheap_chunk *>::info() },
+		};
+		static const Type_Info_Struct i(8, "stbtt__hheap_chunk", static_count(struct_members), struct_members, 0);
+		return &i;
+	}
+};
+
+template <> struct Reflect<stbtt__hheap> {
+	static constexpr Type_Id id = Type_Id_STRUCT;
+	static const Type_Info * const info() {
+		static const Struct_Member struct_members[] = {
+			{ "head", 0, 0, 0, Reflect<struct stbtt__hheap_chunk *>::info() },
+			{ "first_free", 8, 0, 0, Reflect<void *>::info() },
+			{ "num_remaining_in_head_chunk", 16, 0, 0, Reflect<int>::info() },
+		};
+		static const Type_Info_Struct i(24, "stbtt__hheap", static_count(struct_members), struct_members, 0);
+		return &i;
+	}
+};
+
+template <> struct Reflect<stbtt__edge> {
+	static constexpr Type_Id id = Type_Id_STRUCT;
+	static const Type_Info * const info() {
+		static const Struct_Member struct_members[] = {
+			{ "x0", 0, 0, 0, Reflect<float>::info() },
+			{ "y0", 4, 0, 0, Reflect<float>::info() },
+			{ "x1", 8, 0, 0, Reflect<float>::info() },
+			{ "y1", 12, 0, 0, Reflect<float>::info() },
+			{ "invert", 16, 0, 0, Reflect<int>::info() },
+		};
+		static const Type_Info_Struct i(20, "stbtt__edge", static_count(struct_members), struct_members, 0);
+		return &i;
+	}
+};
+
+template <> struct Reflect<stbtt__active_edge> {
+	static constexpr Type_Id id = Type_Id_STRUCT;
+	static const Type_Info * const info() {
+		static const Struct_Member struct_members[] = {
+			{ "next", 0, 0, 0, Reflect<struct stbtt__active_edge *>::info() },
+			{ "fx", 8, 0, 0, Reflect<float>::info() },
+			{ "fdx", 12, 0, 0, Reflect<float>::info() },
+			{ "fdy", 16, 0, 0, Reflect<float>::info() },
+			{ "direction", 20, 0, 0, Reflect<float>::info() },
+			{ "sy", 24, 0, 0, Reflect<float>::info() },
+			{ "ey", 28, 0, 0, Reflect<float>::info() },
+		};
+		static const Type_Info_Struct i(32, "stbtt__active_edge", static_count(struct_members), struct_members, 0);
+		return &i;
+	}
+};
+
+template <> struct Reflect<stbtt__point> {
+	static constexpr Type_Id id = Type_Id_STRUCT;
+	static const Type_Info * const info() {
+		static const Struct_Member struct_members[] = {
+			{ "x", 0, 0, 0, Reflect<float>::info() },
+			{ "y", 4, 0, 0, Reflect<float>::info() },
+		};
+		static const Type_Info_Struct i(8, "stbtt__point", static_count(struct_members), struct_members, 0);
+		return &i;
+	}
+};
+
+template <> struct Reflect<stbrp_context> {
+	static constexpr Type_Id id = Type_Id_STRUCT;
+	static const Type_Info * const info() {
+		static const Struct_Member struct_members[] = {
+			{ "width", 0, 0, 0, Reflect<int>::info() },
+			{ "height", 4, 0, 0, Reflect<int>::info() },
+			{ "x", 8, 0, 0, Reflect<int>::info() },
+			{ "y", 12, 0, 0, Reflect<int>::info() },
+			{ "bottom_y", 16, 0, 0, Reflect<int>::info() },
+		};
+		static const Type_Info_Struct i(20, "stbrp_context", static_count(struct_members), struct_members, 0);
+		return &i;
+	}
+};
+
+template <> struct Reflect<stbrp_node> {
+	static constexpr Type_Id id = Type_Id_STRUCT;
+	static const Type_Info * const info() {
+		static const Struct_Member struct_members[] = {
+			{ "x", 0, 0, 0, Reflect<unsigned char>::info() },
+		};
+		static const Type_Info_Struct i(1, "stbrp_node", static_count(struct_members), struct_members, 0);
+		return &i;
+	}
+};
+
+template <> struct Reflect<stbrp_rect> {
+	static constexpr Type_Id id = Type_Id_STRUCT;
+	static const Type_Info * const info() {
+		static const Struct_Member struct_members[] = {
+			{ "x", 0, 0, 0, Reflect<stbrp_coord>::info() },
+			{ "y", 4, 0, 0, Reflect<stbrp_coord>::info() },
+			{ "id", 8, 0, 0, Reflect<int>::info() },
+			{ "w", 12, 0, 0, Reflect<int>::info() },
+			{ "h", 16, 0, 0, Reflect<int>::info() },
+			{ "was_packed", 20, 0, 0, Reflect<int>::info() },
+		};
+		static const Type_Info_Struct i(24, "stbrp_rect", static_count(struct_members), struct_members, 0);
+		return &i;
+	}
+};
+
+template <> struct Reflect<Feature_Indices> {
+	static constexpr Type_Id id = Type_Id_STRUCT;
+	static const Type_Info * const info() {
+		static const Struct_Member struct_members[] = {
+			{ "count", 0, 0, 0, Reflect<u16>::info() },
+			{ "ptr", 8, 0, 0, Reflect<u16 *>::info() },
+		};
+		static const Type_Info_Struct i(16, "Feature_Indices", static_count(struct_members), struct_members, 0);
+		return &i;
+	}
+};
+
+template <> struct Reflect<Feature_List> {
+	static constexpr Type_Id id = Type_Id_STRUCT;
+	static const Type_Info * const info() {
+		static const Struct_Member struct_members[] = {
+			{ "ptr", 0, 0, 0, Reflect<u8 *>::info() },
+			{ "count", 8, 0, 0, Reflect<u16>::info() },
+			{ "records", 16, 0, 0, Reflect<u8 *>::info() },
+			{ "indices", 24, 0, 0, Reflect<Feature_Indices>::info() },
+		};
+		static const Type_Info_Struct i(40, "Feature_List", static_count(struct_members), struct_members, 0);
+		return &i;
+	}
+};
+
+template <> struct Reflect<Lookup_List> {
+	static constexpr Type_Id id = Type_Id_STRUCT;
+	static const Type_Info * const info() {
+		static const Struct_Member struct_members[] = {
+			{ "ptr", 0, 0, 0, Reflect<u8 *>::info() },
+			{ "count", 8, 0, 0, Reflect<u16>::info() },
+			{ "lookups", 16, 0, 0, Reflect<u8 *>::info() },
+		};
+		static const Type_Info_Struct i(24, "Lookup_List", static_count(struct_members), struct_members, 0);
+		return &i;
+	}
+};
+
+template <> struct Reflect<Dynamic_Font> {
+	static constexpr Type_Id id = Type_Id_STRUCT;
+	static const Type_Info * const info() {
+		static const Struct_Member struct_members[] = {
+			{ "info", 0, 0, 0, Reflect<stbtt_fontinfo>::info() },
+			{ "glyph_class_defination", 176, 0, 0, Reflect<void *>::info() },
+			{ "mark_attach_class_defination", 184, 0, 0, Reflect<void *>::info() },
+			{ "mark_glyph_set", 192, 0, 0, Reflect<void *>::info() },
+			{ "gsub_feature", 200, 0, 0, Reflect<Feature_List>::info() },
+			{ "gsub_lookup", 240, 0, 0, Reflect<Lookup_List>::info() },
+		};
+		static const Type_Info_Struct i(264, "Dynamic_Font", static_count(struct_members), struct_members, 0);
+		return &i;
+	}
+};
+
+template <> struct Reflect<Glyph_Cluster> {
+	static constexpr Type_Id id = Type_Id_STRUCT;
+	static const Type_Info * const info() {
+		static const Struct_Member struct_members[] = {
+			{ "codepoint", 0, 0, 0, Reflect<utf32>::info() },
+			{ "glyph_id", 4, 0, 0, Reflect<u32>::info() },
+			{ "syllable", 8, 0, 0, Reflect<Unicode_Indic_Syllable>::info() },
+			{ "position", 12, 0, 0, Reflect<Unicode_Indic_Position>::info() },
+			{ "base", 16, 0, 0, Reflect<bool>::info() },
+			{ "type", 20, 0, 0, Reflect<Devanagari>::info() },
+			{ "value", 24, 0, 0, Reflect<int>::info() },
+		};
+		static const Type_Info_Struct i(28, "Glyph_Cluster", static_count(struct_members), struct_members, 0);
+		return &i;
+	}
+};
+
+template <> struct Reflect<Font_Shape> {
+	static constexpr Type_Id id = Type_Id_STRUCT;
+	static const Type_Info * const info() {
+		static const Struct_Member struct_members[] = {
+			{ "codepoints", 0, 0, 0, Reflect<Array_View<Glyph_Cluster>>::info() },
+			{ "originals", 16, 0, 0, Reflect<Array_View<Glyph_Cluster>>::info() },
+		};
+		static const Type_Info_Struct i(32, "Font_Shape", static_count(struct_members), struct_members, 0);
+		return &i;
+	}
+};
+
+template <> struct Reflect<Glyph_Range> {
+	static constexpr Type_Id id = Type_Id_STRUCT;
+	static const Type_Info * const info() {
+		static const Struct_Member struct_members[] = {
+			{ "index", 0, 0, 0, Reflect<s64>::info() },
+			{ "clusters", 8, 0, 0, Reflect<Array<Glyph_Cluster>>::info() },
+		};
+		static const Type_Info_Struct i(48, "Glyph_Range", static_count(struct_members), struct_members, 0);
+		return &i;
+	}
+};
+
+template <> struct Reflect<Istream> {
+	static constexpr Type_Id id = Type_Id_STRUCT;
+	static const Type_Info * const info() {
+		static const Struct_Member struct_members[] = {
+			{ "base", 0, 0, 0, Reflect<u8 *>::info() },
+			{ "end", 8, 0, 0, Reflect<u8 *>::info() },
+			{ "current", 16, 0, 0, Reflect<u8 *>::info() },
+		};
+		static const Type_Info_Struct i(24, "Istream", static_count(struct_members), struct_members, 0);
+		return &i;
+	}
+};
+
+template <> struct Reflect<Ostream::Bucket> {
+	static constexpr Type_Id id = Type_Id_STRUCT;
+	static const Type_Info * const info() {
+		static const Struct_Member struct_members[] = {
+			{ "data", 0, 0, 0, Reflect<u8 [4096]>::info() },
+			{ "filled", 4096, 0, 0, Reflect<s64>::info() },
+			{ "prev", 4104, 0, 0, Reflect<Ostream::Bucket *>::info() },
+			{ "next", 4112, 0, 0, Reflect<Ostream::Bucket *>::info() },
+		};
+		static const Type_Info_Struct i(4120, "Ostream::Bucket", static_count(struct_members), struct_members, 0);
+		return &i;
+	}
+};
+
+template <> struct Reflect<Ostream> {
+	static constexpr Type_Id id = Type_Id_STRUCT;
+	static const Type_Info * const info() {
+		static const Struct_Member struct_members[] = {
+			{ "head", 0, 0, 0, Reflect<Ostream::Bucket>::info() },
+			{ "tail", 4120, 0, 0, Reflect<Ostream::Bucket *>::info() },
+			{ "allocator", 4128, 0, 0, Reflect<Allocator>::info() },
+		};
+		static const Type_Info_Struct i(4144, "Ostream", static_count(struct_members), struct_members, 0);
 		return &i;
 	}
 };

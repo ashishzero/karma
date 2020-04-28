@@ -233,7 +233,7 @@ static void win32_check_for_error_info(const Compile_Info &compile_info) {
 		FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
 					   NULL, error, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
 					   (LPSTR)&message, 0, NULL);
-		system_log(LOG_ERROR, "Platform", "File: %s, Line: %d (%s), Function: %s", compile_info.file, compile_info.line, compile_info.current_function);
+		system_log(LOG_ERROR, "Platform", "File: %s, Line: %d, Function: %s", compile_info.file, compile_info.line, compile_info.current_function);
 		system_log(LOG_ERROR, "Platform", "Message: %s", message);
 		LocalFree(message);
 		trigger_breakpoint();
@@ -919,14 +919,14 @@ void win32_push_event(Event event) {
 	windows_event_queue[windows_event_queue_push_index] = event;
 	windows_event_queue_push_index                      = (windows_event_queue_push_index + 1) % WINDOWS_MAX_EVENTS;
 	MemoryBarrier();
-	_ReadWriteBarrier();
+	_ReadWriteBarrier(); // TODO: deprecated
 	InterlockedExchangeAdd(&windows_event_count, 1);
 }
 
 Event win32_pop_event() {
 	InterlockedExchangeSubtract(&windows_event_count, 1);
 	MemoryBarrier();
-	_ReadWriteBarrier();
+	_ReadWriteBarrier(); // TODO: deprecated
 	Event event             = windows_event_queue[windows_event_pop_index];
 	windows_event_pop_index = (windows_event_pop_index + 1) % WINDOWS_MAX_EVENTS;
 	return event;
@@ -1545,11 +1545,7 @@ void win32_initialize_xinput() {
 
 #ifndef SYSTEMS_RUN_WITH_CRT
 
-int wWinMain(HINSTANCE instance, HINSTANCE prev_instance, LPWSTR cmd_line, int show_cmd) {
-	(void)prev_instance;
-	(void)cmd_line;
-	(void)show_cmd;
-
+int __stdcall wWinMain(HINSTANCE instance, HINSTANCE prev_instance, LPWSTR cmd_line, int show_cmd) {
 #	if defined(BUILD_DEBUG) || defined(BUILD_DEVELOPER)
 	AllocConsole();
 	SetConsoleOutputCP(CP_UTF8);

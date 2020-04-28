@@ -54,9 +54,6 @@
     <ClCompile Include="src\imgui\imconfig.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\ucd.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\tokenizer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -66,10 +63,13 @@
     <ClCompile Include="src\prebuild.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\lin_maths.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="src\length_string.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\lin_maths.cpp">
+    <ClCompile Include="src\unicode.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -140,9 +140,6 @@
     <ClInclude Include="src\opentype.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\ucd.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\tokenizer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -155,9 +152,6 @@
     <ClInclude Include="src\karma.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\length_string.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\lin_maths.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -167,6 +161,12 @@
     <ClInclude Include="src\type_info.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\length_string.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\unicode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitattributes" />
@@ -174,6 +174,7 @@
     <None Include="readme.md" />
     <None Include="res\shaders\quad.glsl" />
     <None Include=".clang-format" />
+    <None Include="..\harfbuzz\msbuild-x64\harfbuzz.sln" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="todo.txt" />

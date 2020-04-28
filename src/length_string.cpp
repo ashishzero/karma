@@ -1,5 +1,7 @@
 
 #include "length_string.h"
+#define STB_SPRINTF_IMPLEMENTATION
+#include "stb_sprintf.h"
 
 s64 string_utf8_length(const String str) {
 	s64 length = 0;
@@ -134,18 +136,18 @@ String string_substring(const String string, s64 index, s64 count) {
 	return sub;
 }
 
-String_Search_Result string_isearch(const String string, const String item) {
+String_Search_Result string_isearch(const String string, const String item, s64 index) {
 	String_Search_Result result = {};
 
-	if (string.count >= item.count) {
-		s64 end = string.count - item.count;
+	if (string.count - index >= item.count) {
+		s64 end = string.count - index - item.count + 1;
 		for (s64 i = 0; i < end; ++i) {
 			String matcher;
-			matcher.data  = string.data + i;
+			matcher.data  = string.data + index + i;
 			matcher.count = item.count;
 			if (string_match(matcher, item)) {
 				result.found       = true;
-				result.start_index = i;
+				result.start_index = index + i;
 				return result;
 			}
 		}

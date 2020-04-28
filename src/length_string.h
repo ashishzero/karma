@@ -2,9 +2,6 @@
 
 #include "karma.h"
 
-#define STB_SPRINTF_MIN 512
-#include "stb_sprintf.h"
-
 constexpr u32 HIGH_SURROGATE_CODEPOINT_FIRST = 0xD800;
 constexpr u32 HIGH_SURROGATE_CODEPOINT_LAST  = 0xDBFF;
 constexpr u32 LOW_SURROGATE_CODEPOINT_FIRST  = 0xDC00;
@@ -31,12 +28,14 @@ u8                   utf32_to_utf8(utf32 codepoint, utf8 buffer[4]);
 bool                 codepoint_is_surrogate(utf32 codepoint);
 bool                 string_iter_continue(const String string, String_Iter *iter);
 bool                 string_iter_next(const String string, String_Iter *iter);
+
+// TODO: Implement these with Unicode String Normalization!
 bool                 string_match(const String a, const String b);
 int                  string_compare(const String a, const String b);
 bool                 string_starts_with(const String a, const String b);
 bool                 string_ends_with(const String a, const String b);
 String               string_substring(const String string, s64 index, s64 count);
-String_Search_Result string_isearch(const String string, const String item);
+String_Search_Result string_isearch(const String string, const String item, s64 index = 0);
 String_Search_Result string_isearch_reverse(const String string, const String item);
 
 String sprintf(String string, ANALYSE_PRINTF_FORMAT_STRING(const char *fmt), ...) ANALYSE_PRINTF_FORMAT(2, 3);

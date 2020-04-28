@@ -1066,7 +1066,7 @@ Color3 hex_to_color3(Colorh c) {
 }
 
 Color3 hsv_to_rgb(Color_HSV col) {
-	Color3 result = { col.v, col.v, col.v };
+	Color3 result = vec3(col.v, col.v, col.v);
 
 	if (col.s) {
 		if (col.h == 1.0f) col.h = 0;
@@ -1078,22 +1078,22 @@ Color3 hsv_to_rgb(Color_HSV col) {
 		r32 c = col.v * (1 - (col.s * (1 - f)));
 		switch (i) {
 			case 0:
-				result = { col.v, c, a };
+				result = vec3(col.v, c, a);
 				break;
 			case 1:
-				result = { b, col.v, a };
+				result = vec3(b, col.v, a);
 				break;
 			case 2:
-				result = { a, col.v, c };
+				result = vec3(a, col.v, c);
 				break;
 			case 3:
-				result = { a, b, col.v };
+				result = vec3(a, b, col.v);
 				break;
 			case 4:
-				result = { c, a, col.v };
+				result = vec3(c, a, col.v);
 				break;
 			case 5:
-				result = { col.v, a, b };
+				result = vec3(col.v, a, b);
 				break;
 		}
 	}

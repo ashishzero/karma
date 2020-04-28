@@ -558,7 +558,7 @@ struct Array_View {
 		return count;
 	}
 
-	inline T &operator[](s64 index) {
+	inline T &operator[](s64 index) const {
 		assert(index < count);
 		return data[index];
 	}

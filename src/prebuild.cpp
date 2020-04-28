@@ -174,7 +174,7 @@ void generate_glsl_shader(const String file, const String out) {
 									array_add(&attribute, a);
 								} else {
 									system_log(LOG_ERROR, "Prebuild:GLSL", "%zu:%zu Unknown type '%s'",
-											   tto_cstring(type_id.content));
+											   type_id.row, type_id.column, tto_cstring(type_id.content));
 								}
 							}
 						}
@@ -196,7 +196,7 @@ void generate_glsl_shader(const String file, const String out) {
 									array_add(&textures, Uniform { name_id.content, type });
 								} else {
 									system_log(LOG_ERROR, "Prebuild:GLSL", "%zu:%zu Unknown type '%s'",
-											   tto_cstring(type_id.content));
+											   type_id.row, type_id.column, tto_cstring(type_id.content));
 								}
 							}
 						}

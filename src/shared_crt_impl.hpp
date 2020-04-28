@@ -1,9 +1,7 @@
 #pragma once
 #define _CRT_SECURE_NO_WARNINGS
 #include "karma.h"
-#include "length_string.h"
-#define STB_SPRINTF_IMPLEMENTATION
-#include "stb_sprintf.h"
+#include "stream.h"
 #include "length_string.cpp"
 #include <stdio.h>
 #include <stdlib.h>

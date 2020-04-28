@@ -2,6 +2,7 @@
 
 #include "karma.h"
 #include "string.h"
+#include "stb_sprintf.h"
 
 inline u8 *move_ahead(u8 **ptr, int bytes) {
 	u8 *r = *ptr;
@@ -158,7 +159,7 @@ inline void ostream_write(Ostream *stream, const T &v) {
 }
 
 inline void ostream_write_formatted(Ostream *stream, const char *fmt, ...) {
-	char working_buffer[STB_SPRINTF_MIN];
+	char working_buffer[512]; // TODO: This MUST equal STB_SPRINTF_MIN, move this to length_string.cpp
 
 	va_list ap;
 	va_start(ap, fmt);

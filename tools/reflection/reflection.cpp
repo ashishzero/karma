@@ -38,7 +38,6 @@ void reflection_of_enum_info(Ostream *stream, CXCursor cursor, const char *name,
 		clang_disposeString(type_decl_spelling);
 	};
 
-	ostream_write_formatted(stream, "enum %s : %s;\n", name, clang_getCString(type_decl_spelling));
 	ostream_write_formatted(stream, "template <> struct Enum_Info<%s> {\n", name);
 	ostream_write_formatted(stream, "\tstatic constexpr size_t get_count() { return %u; }\n", enums.count);
 	ostream_write_formatted(stream, "\tstatic constexpr s64 get_min_value() { return %zd; }\n", min);
@@ -763,6 +762,9 @@ CXChildVisitResult ast_visitor(CXCursor cursor, CXCursor parent, CXClientData cl
 
 			return CXChildVisit_Continue;
 		} break;
+
+		default: {
+		} break;
 	}
 
 	return CXChildVisit_Continue;
@@ -943,7 +945,7 @@ int system_main() {
 
 	CXIndex index = clang_createIndex(0, 0);
 
-	u32 flags = CXTranslationUnit_None;
+	u32 flags = CXTranslationUnit_SkipFunctionBodies;
 
 	Output_Info out = {};
 	context.data    = &out;
