@@ -16,13 +16,22 @@
 │   ├── imgui			# Contain files used by IMGUI
 │   ├── *				# Debugging files and executables
 ├── src					# Karma source code
-│   ├── data			# Data required for executable
-│   ├── imgui			# Contain files used by IMGUI
-│   ├── *				# Debugging files and executables
+│   ├── .generated		# Generated files by Reflection
+│		├── readme.txt	# Instructions how to generate reflection of code and use it
+│   ├── glad			# External library (https://github.com/Dav1dde/glad)
+│   ├── imgui			# External library (https://github.com/ocornut/imgui)
+│   ├── pcg				# External library (https://github.com/imneme/pcg-c-basic)
+│   ├── opengl			# OpenGL specific code
+│   ├── windows			# Windows specific code
+│   ├── prebuild.bat	# Windows Batch file for Reflection (more at .generated/readme.txt)
+│   ├── *.cpp, *.h		# Source and header CPP files
+├── tools				# Tools that are used by Karma
+│   ├── reflection		# Generated files by Reflection
+│   ├── ucd				# Unicode Database To Code Generator
 ├── *.vcxproj*			# Visual Studio Project Files
 ├── readme.md
 ├── todo.txt
-├── package.json
 ├── .gitattributes
 └── .gitignore
 ```
+
