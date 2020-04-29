@@ -12709,17213 +12709,17213 @@ int unicode_normalize(uint32_t codepoint, uint32_t **normals) {
 	switch (codepoint) {
 		case 0x00A0:
 			*normals = no_break_space;
-			return static_count(no_break_space);
+			return 1;
 		case 0x00A8:
 			*normals = diaeresis;
-			return static_count(diaeresis);
+			return 2;
 		case 0x00AA:
 			*normals = feminine_ordinal_indicator;
-			return static_count(feminine_ordinal_indicator);
+			return 1;
 		case 0x00AF:
 			*normals = macron;
-			return static_count(macron);
+			return 2;
 		case 0x00B2:
 			*normals = superscript_two;
-			return static_count(superscript_two);
+			return 1;
 		case 0x00B3:
 			*normals = superscript_three;
-			return static_count(superscript_three);
+			return 1;
 		case 0x00B4:
 			*normals = acute_accent;
-			return static_count(acute_accent);
+			return 2;
 		case 0x00B5:
 			*normals = micro_sign;
-			return static_count(micro_sign);
+			return 1;
 		case 0x00B8:
 			*normals = cedilla;
-			return static_count(cedilla);
+			return 2;
 		case 0x00B9:
 			*normals = superscript_one;
-			return static_count(superscript_one);
+			return 1;
 		case 0x00BA:
 			*normals = masculine_ordinal_indicator;
-			return static_count(masculine_ordinal_indicator);
+			return 1;
 		case 0x00BC:
 			*normals = vulgar_fraction_one_quarter;
-			return static_count(vulgar_fraction_one_quarter);
+			return 3;
 		case 0x00BD:
 			*normals = vulgar_fraction_one_half;
-			return static_count(vulgar_fraction_one_half);
+			return 3;
 		case 0x00BE:
 			*normals = vulgar_fraction_three_quarters;
-			return static_count(vulgar_fraction_three_quarters);
+			return 3;
 		case 0x00C0:
 			*normals = latin_capital_letter_a_with_grave;
-			return static_count(latin_capital_letter_a_with_grave);
+			return 2;
 		case 0x00C1:
 			*normals = latin_capital_letter_a_with_acute;
-			return static_count(latin_capital_letter_a_with_acute);
+			return 2;
 		case 0x00C2:
 			*normals = latin_capital_letter_a_with_circumflex;
-			return static_count(latin_capital_letter_a_with_circumflex);
+			return 2;
 		case 0x00C3:
 			*normals = latin_capital_letter_a_with_tilde;
-			return static_count(latin_capital_letter_a_with_tilde);
+			return 2;
 		case 0x00C4:
 			*normals = latin_capital_letter_a_with_diaeresis;
-			return static_count(latin_capital_letter_a_with_diaeresis);
+			return 2;
 		case 0x00C5:
 			*normals = latin_capital_letter_a_with_ring_above;
-			return static_count(latin_capital_letter_a_with_ring_above);
+			return 2;
 		case 0x00C7:
 			*normals = latin_capital_letter_c_with_cedilla;
-			return static_count(latin_capital_letter_c_with_cedilla);
+			return 2;
 		case 0x00C8:
 			*normals = latin_capital_letter_e_with_grave;
-			return static_count(latin_capital_letter_e_with_grave);
+			return 2;
 		case 0x00C9:
 			*normals = latin_capital_letter_e_with_acute;
-			return static_count(latin_capital_letter_e_with_acute);
+			return 2;
 		case 0x00CA:
 			*normals = latin_capital_letter_e_with_circumflex;
-			return static_count(latin_capital_letter_e_with_circumflex);
+			return 2;
 		case 0x00CB:
 			*normals = latin_capital_letter_e_with_diaeresis;
-			return static_count(latin_capital_letter_e_with_diaeresis);
+			return 2;
 		case 0x00CC:
 			*normals = latin_capital_letter_i_with_grave;
-			return static_count(latin_capital_letter_i_with_grave);
+			return 2;
 		case 0x00CD:
 			*normals = latin_capital_letter_i_with_acute;
-			return static_count(latin_capital_letter_i_with_acute);
+			return 2;
 		case 0x00CE:
 			*normals = latin_capital_letter_i_with_circumflex;
-			return static_count(latin_capital_letter_i_with_circumflex);
+			return 2;
 		case 0x00CF:
 			*normals = latin_capital_letter_i_with_diaeresis;
-			return static_count(latin_capital_letter_i_with_diaeresis);
+			return 2;
 		case 0x00D1:
 			*normals = latin_capital_letter_n_with_tilde;
-			return static_count(latin_capital_letter_n_with_tilde);
+			return 2;
 		case 0x00D2:
 			*normals = latin_capital_letter_o_with_grave;
-			return static_count(latin_capital_letter_o_with_grave);
+			return 2;
 		case 0x00D3:
 			*normals = latin_capital_letter_o_with_acute;
-			return static_count(latin_capital_letter_o_with_acute);
+			return 2;
 		case 0x00D4:
 			*normals = latin_capital_letter_o_with_circumflex;
-			return static_count(latin_capital_letter_o_with_circumflex);
+			return 2;
 		case 0x00D5:
 			*normals = latin_capital_letter_o_with_tilde;
-			return static_count(latin_capital_letter_o_with_tilde);
+			return 2;
 		case 0x00D6:
 			*normals = latin_capital_letter_o_with_diaeresis;
-			return static_count(latin_capital_letter_o_with_diaeresis);
+			return 2;
 		case 0x00D9:
 			*normals = latin_capital_letter_u_with_grave;
-			return static_count(latin_capital_letter_u_with_grave);
+			return 2;
 		case 0x00DA:
 			*normals = latin_capital_letter_u_with_acute;
-			return static_count(latin_capital_letter_u_with_acute);
+			return 2;
 		case 0x00DB:
 			*normals = latin_capital_letter_u_with_circumflex;
-			return static_count(latin_capital_letter_u_with_circumflex);
+			return 2;
 		case 0x00DC:
 			*normals = latin_capital_letter_u_with_diaeresis;
-			return static_count(latin_capital_letter_u_with_diaeresis);
+			return 2;
 		case 0x00DD:
 			*normals = latin_capital_letter_y_with_acute;
-			return static_count(latin_capital_letter_y_with_acute);
+			return 2;
 		case 0x00E0:
 			*normals = latin_small_letter_a_with_grave;
-			return static_count(latin_small_letter_a_with_grave);
+			return 2;
 		case 0x00E1:
 			*normals = latin_small_letter_a_with_acute;
-			return static_count(latin_small_letter_a_with_acute);
+			return 2;
 		case 0x00E2:
 			*normals = latin_small_letter_a_with_circumflex;
-			return static_count(latin_small_letter_a_with_circumflex);
+			return 2;
 		case 0x00E3:
 			*normals = latin_small_letter_a_with_tilde;
-			return static_count(latin_small_letter_a_with_tilde);
+			return 2;
 		case 0x00E4:
 			*normals = latin_small_letter_a_with_diaeresis;
-			return static_count(latin_small_letter_a_with_diaeresis);
+			return 2;
 		case 0x00E5:
 			*normals = latin_small_letter_a_with_ring_above;
-			return static_count(latin_small_letter_a_with_ring_above);
+			return 2;
 		case 0x00E7:
 			*normals = latin_small_letter_c_with_cedilla;
-			return static_count(latin_small_letter_c_with_cedilla);
+			return 2;
 		case 0x00E8:
 			*normals = latin_small_letter_e_with_grave;
-			return static_count(latin_small_letter_e_with_grave);
+			return 2;
 		case 0x00E9:
 			*normals = latin_small_letter_e_with_acute;
-			return static_count(latin_small_letter_e_with_acute);
+			return 2;
 		case 0x00EA:
 			*normals = latin_small_letter_e_with_circumflex;
-			return static_count(latin_small_letter_e_with_circumflex);
+			return 2;
 		case 0x00EB:
 			*normals = latin_small_letter_e_with_diaeresis;
-			return static_count(latin_small_letter_e_with_diaeresis);
+			return 2;
 		case 0x00EC:
 			*normals = latin_small_letter_i_with_grave;
-			return static_count(latin_small_letter_i_with_grave);
+			return 2;
 		case 0x00ED:
 			*normals = latin_small_letter_i_with_acute;
-			return static_count(latin_small_letter_i_with_acute);
+			return 2;
 		case 0x00EE:
 			*normals = latin_small_letter_i_with_circumflex;
-			return static_count(latin_small_letter_i_with_circumflex);
+			return 2;
 		case 0x00EF:
 			*normals = latin_small_letter_i_with_diaeresis;
-			return static_count(latin_small_letter_i_with_diaeresis);
+			return 2;
 		case 0x00F1:
 			*normals = latin_small_letter_n_with_tilde;
-			return static_count(latin_small_letter_n_with_tilde);
+			return 2;
 		case 0x00F2:
 			*normals = latin_small_letter_o_with_grave;
-			return static_count(latin_small_letter_o_with_grave);
+			return 2;
 		case 0x00F3:
 			*normals = latin_small_letter_o_with_acute;
-			return static_count(latin_small_letter_o_with_acute);
+			return 2;
 		case 0x00F4:
 			*normals = latin_small_letter_o_with_circumflex;
-			return static_count(latin_small_letter_o_with_circumflex);
+			return 2;
 		case 0x00F5:
 			*normals = latin_small_letter_o_with_tilde;
-			return static_count(latin_small_letter_o_with_tilde);
+			return 2;
 		case 0x00F6:
 			*normals = latin_small_letter_o_with_diaeresis;
-			return static_count(latin_small_letter_o_with_diaeresis);
+			return 2;
 		case 0x00F9:
 			*normals = latin_small_letter_u_with_grave;
-			return static_count(latin_small_letter_u_with_grave);
+			return 2;
 		case 0x00FA:
 			*normals = latin_small_letter_u_with_acute;
-			return static_count(latin_small_letter_u_with_acute);
+			return 2;
 		case 0x00FB:
 			*normals = latin_small_letter_u_with_circumflex;
-			return static_count(latin_small_letter_u_with_circumflex);
+			return 2;
 		case 0x00FC:
 			*normals = latin_small_letter_u_with_diaeresis;
-			return static_count(latin_small_letter_u_with_diaeresis);
+			return 2;
 		case 0x00FD:
 			*normals = latin_small_letter_y_with_acute;
-			return static_count(latin_small_letter_y_with_acute);
+			return 2;
 		case 0x00FF:
 			*normals = latin_small_letter_y_with_diaeresis;
-			return static_count(latin_small_letter_y_with_diaeresis);
+			return 2;
 		case 0x0100:
 			*normals = latin_capital_letter_a_with_macron;
-			return static_count(latin_capital_letter_a_with_macron);
+			return 2;
 		case 0x0101:
 			*normals = latin_small_letter_a_with_macron;
-			return static_count(latin_small_letter_a_with_macron);
+			return 2;
 		case 0x0102:
 			*normals = latin_capital_letter_a_with_breve;
-			return static_count(latin_capital_letter_a_with_breve);
+			return 2;
 		case 0x0103:
 			*normals = latin_small_letter_a_with_breve;
-			return static_count(latin_small_letter_a_with_breve);
+			return 2;
 		case 0x0104:
 			*normals = latin_capital_letter_a_with_ogonek;
-			return static_count(latin_capital_letter_a_with_ogonek);
+			return 2;
 		case 0x0105:
 			*normals = latin_small_letter_a_with_ogonek;
-			return static_count(latin_small_letter_a_with_ogonek);
+			return 2;
 		case 0x0106:
 			*normals = latin_capital_letter_c_with_acute;
-			return static_count(latin_capital_letter_c_with_acute);
+			return 2;
 		case 0x0107:
 			*normals = latin_small_letter_c_with_acute;
-			return static_count(latin_small_letter_c_with_acute);
+			return 2;
 		case 0x0108:
 			*normals = latin_capital_letter_c_with_circumflex;
-			return static_count(latin_capital_letter_c_with_circumflex);
+			return 2;
 		case 0x0109:
 			*normals = latin_small_letter_c_with_circumflex;
-			return static_count(latin_small_letter_c_with_circumflex);
+			return 2;
 		case 0x010A:
 			*normals = latin_capital_letter_c_with_dot_above;
-			return static_count(latin_capital_letter_c_with_dot_above);
+			return 2;
 		case 0x010B:
 			*normals = latin_small_letter_c_with_dot_above;
-			return static_count(latin_small_letter_c_with_dot_above);
+			return 2;
 		case 0x010C:
 			*normals = latin_capital_letter_c_with_caron;
-			return static_count(latin_capital_letter_c_with_caron);
+			return 2;
 		case 0x010D:
 			*normals = latin_small_letter_c_with_caron;
-			return static_count(latin_small_letter_c_with_caron);
+			return 2;
 		case 0x010E:
 			*normals = latin_capital_letter_d_with_caron;
-			return static_count(latin_capital_letter_d_with_caron);
+			return 2;
 		case 0x010F:
 			*normals = latin_small_letter_d_with_caron;
-			return static_count(latin_small_letter_d_with_caron);
+			return 2;
 		case 0x0112:
 			*normals = latin_capital_letter_e_with_macron;
-			return static_count(latin_capital_letter_e_with_macron);
+			return 2;
 		case 0x0113:
 			*normals = latin_small_letter_e_with_macron;
-			return static_count(latin_small_letter_e_with_macron);
+			return 2;
 		case 0x0114:
 			*normals = latin_capital_letter_e_with_breve;
-			return static_count(latin_capital_letter_e_with_breve);
+			return 2;
 		case 0x0115:
 			*normals = latin_small_letter_e_with_breve;
-			return static_count(latin_small_letter_e_with_breve);
+			return 2;
 		case 0x0116:
 			*normals = latin_capital_letter_e_with_dot_above;
-			return static_count(latin_capital_letter_e_with_dot_above);
+			return 2;
 		case 0x0117:
 			*normals = latin_small_letter_e_with_dot_above;
-			return static_count(latin_small_letter_e_with_dot_above);
+			return 2;
 		case 0x0118:
 			*normals = latin_capital_letter_e_with_ogonek;
-			return static_count(latin_capital_letter_e_with_ogonek);
+			return 2;
 		case 0x0119:
 			*normals = latin_small_letter_e_with_ogonek;
-			return static_count(latin_small_letter_e_with_ogonek);
+			return 2;
 		case 0x011A:
 			*normals = latin_capital_letter_e_with_caron;
-			return static_count(latin_capital_letter_e_with_caron);
+			return 2;
 		case 0x011B:
 			*normals = latin_small_letter_e_with_caron;
-			return static_count(latin_small_letter_e_with_caron);
+			return 2;
 		case 0x011C:
 			*normals = latin_capital_letter_g_with_circumflex;
-			return static_count(latin_capital_letter_g_with_circumflex);
+			return 2;
 		case 0x011D:
 			*normals = latin_small_letter_g_with_circumflex;
-			return static_count(latin_small_letter_g_with_circumflex);
+			return 2;
 		case 0x011E:
 			*normals = latin_capital_letter_g_with_breve;
-			return static_count(latin_capital_letter_g_with_breve);
+			return 2;
 		case 0x011F:
 			*normals = latin_small_letter_g_with_breve;
-			return static_count(latin_small_letter_g_with_breve);
+			return 2;
 		case 0x0120:
 			*normals = latin_capital_letter_g_with_dot_above;
-			return static_count(latin_capital_letter_g_with_dot_above);
+			return 2;
 		case 0x0121:
 			*normals = latin_small_letter_g_with_dot_above;
-			return static_count(latin_small_letter_g_with_dot_above);
+			return 2;
 		case 0x0122:
 			*normals = latin_capital_letter_g_with_cedilla;
-			return static_count(latin_capital_letter_g_with_cedilla);
+			return 2;
 		case 0x0123:
 			*normals = latin_small_letter_g_with_cedilla;
-			return static_count(latin_small_letter_g_with_cedilla);
+			return 2;
 		case 0x0124:
 			*normals = latin_capital_letter_h_with_circumflex;
-			return static_count(latin_capital_letter_h_with_circumflex);
+			return 2;
 		case 0x0125:
 			*normals = latin_small_letter_h_with_circumflex;
-			return static_count(latin_small_letter_h_with_circumflex);
+			return 2;
 		case 0x0128:
 			*normals = latin_capital_letter_i_with_tilde;
-			return static_count(latin_capital_letter_i_with_tilde);
+			return 2;
 		case 0x0129:
 			*normals = latin_small_letter_i_with_tilde;
-			return static_count(latin_small_letter_i_with_tilde);
+			return 2;
 		case 0x012A:
 			*normals = latin_capital_letter_i_with_macron;
-			return static_count(latin_capital_letter_i_with_macron);
+			return 2;
 		case 0x012B:
 			*normals = latin_small_letter_i_with_macron;
-			return static_count(latin_small_letter_i_with_macron);
+			return 2;
 		case 0x012C:
 			*normals = latin_capital_letter_i_with_breve;
-			return static_count(latin_capital_letter_i_with_breve);
+			return 2;
 		case 0x012D:
 			*normals = latin_small_letter_i_with_breve;
-			return static_count(latin_small_letter_i_with_breve);
+			return 2;
 		case 0x012E:
 			*normals = latin_capital_letter_i_with_ogonek;
-			return static_count(latin_capital_letter_i_with_ogonek);
+			return 2;
 		case 0x012F:
 			*normals = latin_small_letter_i_with_ogonek;
-			return static_count(latin_small_letter_i_with_ogonek);
+			return 2;
 		case 0x0130:
 			*normals = latin_capital_letter_i_with_dot_above;
-			return static_count(latin_capital_letter_i_with_dot_above);
+			return 2;
 		case 0x0132:
 			*normals = latin_capital_ligature_ij;
-			return static_count(latin_capital_ligature_ij);
+			return 2;
 		case 0x0133:
 			*normals = latin_small_ligature_ij;
-			return static_count(latin_small_ligature_ij);
+			return 2;
 		case 0x0134:
 			*normals = latin_capital_letter_j_with_circumflex;
-			return static_count(latin_capital_letter_j_with_circumflex);
+			return 2;
 		case 0x0135:
 			*normals = latin_small_letter_j_with_circumflex;
-			return static_count(latin_small_letter_j_with_circumflex);
+			return 2;
 		case 0x0136:
 			*normals = latin_capital_letter_k_with_cedilla;
-			return static_count(latin_capital_letter_k_with_cedilla);
+			return 2;
 		case 0x0137:
 			*normals = latin_small_letter_k_with_cedilla;
-			return static_count(latin_small_letter_k_with_cedilla);
+			return 2;
 		case 0x0139:
 			*normals = latin_capital_letter_l_with_acute;
-			return static_count(latin_capital_letter_l_with_acute);
+			return 2;
 		case 0x013A:
 			*normals = latin_small_letter_l_with_acute;
-			return static_count(latin_small_letter_l_with_acute);
+			return 2;
 		case 0x013B:
 			*normals = latin_capital_letter_l_with_cedilla;
-			return static_count(latin_capital_letter_l_with_cedilla);
+			return 2;
 		case 0x013C:
 			*normals = latin_small_letter_l_with_cedilla;
-			return static_count(latin_small_letter_l_with_cedilla);
+			return 2;
 		case 0x013D:
 			*normals = latin_capital_letter_l_with_caron;
-			return static_count(latin_capital_letter_l_with_caron);
+			return 2;
 		case 0x013E:
 			*normals = latin_small_letter_l_with_caron;
-			return static_count(latin_small_letter_l_with_caron);
+			return 2;
 		case 0x013F:
 			*normals = latin_capital_letter_l_with_middle_dot;
-			return static_count(latin_capital_letter_l_with_middle_dot);
+			return 2;
 		case 0x0140:
 			*normals = latin_small_letter_l_with_middle_dot;
-			return static_count(latin_small_letter_l_with_middle_dot);
+			return 2;
 		case 0x0143:
 			*normals = latin_capital_letter_n_with_acute;
-			return static_count(latin_capital_letter_n_with_acute);
+			return 2;
 		case 0x0144:
 			*normals = latin_small_letter_n_with_acute;
-			return static_count(latin_small_letter_n_with_acute);
+			return 2;
 		case 0x0145:
 			*normals = latin_capital_letter_n_with_cedilla;
-			return static_count(latin_capital_letter_n_with_cedilla);
+			return 2;
 		case 0x0146:
 			*normals = latin_small_letter_n_with_cedilla;
-			return static_count(latin_small_letter_n_with_cedilla);
+			return 2;
 		case 0x0147:
 			*normals = latin_capital_letter_n_with_caron;
-			return static_count(latin_capital_letter_n_with_caron);
+			return 2;
 		case 0x0148:
 			*normals = latin_small_letter_n_with_caron;
-			return static_count(latin_small_letter_n_with_caron);
+			return 2;
 		case 0x0149:
 			*normals = latin_small_letter_n_preceded_by_apostrophe;
-			return static_count(latin_small_letter_n_preceded_by_apostrophe);
+			return 2;
 		case 0x014C:
 			*normals = latin_capital_letter_o_with_macron;
-			return static_count(latin_capital_letter_o_with_macron);
+			return 2;
 		case 0x014D:
 			*normals = latin_small_letter_o_with_macron;
-			return static_count(latin_small_letter_o_with_macron);
+			return 2;
 		case 0x014E:
 			*normals = latin_capital_letter_o_with_breve;
-			return static_count(latin_capital_letter_o_with_breve);
+			return 2;
 		case 0x014F:
 			*normals = latin_small_letter_o_with_breve;
-			return static_count(latin_small_letter_o_with_breve);
+			return 2;
 		case 0x0150:
 			*normals = latin_capital_letter_o_with_double_acute;
-			return static_count(latin_capital_letter_o_with_double_acute);
+			return 2;
 		case 0x0151:
 			*normals = latin_small_letter_o_with_double_acute;
-			return static_count(latin_small_letter_o_with_double_acute);
+			return 2;
 		case 0x0154:
 			*normals = latin_capital_letter_r_with_acute;
-			return static_count(latin_capital_letter_r_with_acute);
+			return 2;
 		case 0x0155:
 			*normals = latin_small_letter_r_with_acute;
-			return static_count(latin_small_letter_r_with_acute);
+			return 2;
 		case 0x0156:
 			*normals = latin_capital_letter_r_with_cedilla;
-			return static_count(latin_capital_letter_r_with_cedilla);
+			return 2;
 		case 0x0157:
 			*normals = latin_small_letter_r_with_cedilla;
-			return static_count(latin_small_letter_r_with_cedilla);
+			return 2;
 		case 0x0158:
 			*normals = latin_capital_letter_r_with_caron;
-			return static_count(latin_capital_letter_r_with_caron);
+			return 2;
 		case 0x0159:
 			*normals = latin_small_letter_r_with_caron;
-			return static_count(latin_small_letter_r_with_caron);
+			return 2;
 		case 0x015A:
 			*normals = latin_capital_letter_s_with_acute;
-			return static_count(latin_capital_letter_s_with_acute);
+			return 2;
 		case 0x015B:
 			*normals = latin_small_letter_s_with_acute;
-			return static_count(latin_small_letter_s_with_acute);
+			return 2;
 		case 0x015C:
 			*normals = latin_capital_letter_s_with_circumflex;
-			return static_count(latin_capital_letter_s_with_circumflex);
+			return 2;
 		case 0x015D:
 			*normals = latin_small_letter_s_with_circumflex;
-			return static_count(latin_small_letter_s_with_circumflex);
+			return 2;
 		case 0x015E:
 			*normals = latin_capital_letter_s_with_cedilla;
-			return static_count(latin_capital_letter_s_with_cedilla);
+			return 2;
 		case 0x015F:
 			*normals = latin_small_letter_s_with_cedilla;
-			return static_count(latin_small_letter_s_with_cedilla);
+			return 2;
 		case 0x0160:
 			*normals = latin_capital_letter_s_with_caron;
-			return static_count(latin_capital_letter_s_with_caron);
+			return 2;
 		case 0x0161:
 			*normals = latin_small_letter_s_with_caron;
-			return static_count(latin_small_letter_s_with_caron);
+			return 2;
 		case 0x0162:
 			*normals = latin_capital_letter_t_with_cedilla;
-			return static_count(latin_capital_letter_t_with_cedilla);
+			return 2;
 		case 0x0163:
 			*normals = latin_small_letter_t_with_cedilla;
-			return static_count(latin_small_letter_t_with_cedilla);
+			return 2;
 		case 0x0164:
 			*normals = latin_capital_letter_t_with_caron;
-			return static_count(latin_capital_letter_t_with_caron);
+			return 2;
 		case 0x0165:
 			*normals = latin_small_letter_t_with_caron;
-			return static_count(latin_small_letter_t_with_caron);
+			return 2;
 		case 0x0168:
 			*normals = latin_capital_letter_u_with_tilde;
-			return static_count(latin_capital_letter_u_with_tilde);
+			return 2;
 		case 0x0169:
 			*normals = latin_small_letter_u_with_tilde;
-			return static_count(latin_small_letter_u_with_tilde);
+			return 2;
 		case 0x016A:
 			*normals = latin_capital_letter_u_with_macron;
-			return static_count(latin_capital_letter_u_with_macron);
+			return 2;
 		case 0x016B:
 			*normals = latin_small_letter_u_with_macron;
-			return static_count(latin_small_letter_u_with_macron);
+			return 2;
 		case 0x016C:
 			*normals = latin_capital_letter_u_with_breve;
-			return static_count(latin_capital_letter_u_with_breve);
+			return 2;
 		case 0x016D:
 			*normals = latin_small_letter_u_with_breve;
-			return static_count(latin_small_letter_u_with_breve);
+			return 2;
 		case 0x016E:
 			*normals = latin_capital_letter_u_with_ring_above;
-			return static_count(latin_capital_letter_u_with_ring_above);
+			return 2;
 		case 0x016F:
 			*normals = latin_small_letter_u_with_ring_above;
-			return static_count(latin_small_letter_u_with_ring_above);
+			return 2;
 		case 0x0170:
 			*normals = latin_capital_letter_u_with_double_acute;
-			return static_count(latin_capital_letter_u_with_double_acute);
+			return 2;
 		case 0x0171:
 			*normals = latin_small_letter_u_with_double_acute;
-			return static_count(latin_small_letter_u_with_double_acute);
+			return 2;
 		case 0x0172:
 			*normals = latin_capital_letter_u_with_ogonek;
-			return static_count(latin_capital_letter_u_with_ogonek);
+			return 2;
 		case 0x0173:
 			*normals = latin_small_letter_u_with_ogonek;
-			return static_count(latin_small_letter_u_with_ogonek);
+			return 2;
 		case 0x0174:
 			*normals = latin_capital_letter_w_with_circumflex;
-			return static_count(latin_capital_letter_w_with_circumflex);
+			return 2;
 		case 0x0175:
 			*normals = latin_small_letter_w_with_circumflex;
-			return static_count(latin_small_letter_w_with_circumflex);
+			return 2;
 		case 0x0176:
 			*normals = latin_capital_letter_y_with_circumflex;
-			return static_count(latin_capital_letter_y_with_circumflex);
+			return 2;
 		case 0x0177:
 			*normals = latin_small_letter_y_with_circumflex;
-			return static_count(latin_small_letter_y_with_circumflex);
+			return 2;
 		case 0x0178:
 			*normals = latin_capital_letter_y_with_diaeresis;
-			return static_count(latin_capital_letter_y_with_diaeresis);
+			return 2;
 		case 0x0179:
 			*normals = latin_capital_letter_z_with_acute;
-			return static_count(latin_capital_letter_z_with_acute);
+			return 2;
 		case 0x017A:
 			*normals = latin_small_letter_z_with_acute;
-			return static_count(latin_small_letter_z_with_acute);
+			return 2;
 		case 0x017B:
 			*normals = latin_capital_letter_z_with_dot_above;
-			return static_count(latin_capital_letter_z_with_dot_above);
+			return 2;
 		case 0x017C:
 			*normals = latin_small_letter_z_with_dot_above;
-			return static_count(latin_small_letter_z_with_dot_above);
+			return 2;
 		case 0x017D:
 			*normals = latin_capital_letter_z_with_caron;
-			return static_count(latin_capital_letter_z_with_caron);
+			return 2;
 		case 0x017E:
 			*normals = latin_small_letter_z_with_caron;
-			return static_count(latin_small_letter_z_with_caron);
+			return 2;
 		case 0x017F:
 			*normals = latin_small_letter_long_s;
-			return static_count(latin_small_letter_long_s);
+			return 1;
 		case 0x01A0:
 			*normals = latin_capital_letter_o_with_horn;
-			return static_count(latin_capital_letter_o_with_horn);
+			return 2;
 		case 0x01A1:
 			*normals = latin_small_letter_o_with_horn;
-			return static_count(latin_small_letter_o_with_horn);
+			return 2;
 		case 0x01AF:
 			*normals = latin_capital_letter_u_with_horn;
-			return static_count(latin_capital_letter_u_with_horn);
+			return 2;
 		case 0x01B0:
 			*normals = latin_small_letter_u_with_horn;
-			return static_count(latin_small_letter_u_with_horn);
+			return 2;
 		case 0x01C4:
 			*normals = latin_capital_letter_dz_with_caron;
-			return static_count(latin_capital_letter_dz_with_caron);
+			return 2;
 		case 0x01C5:
 			*normals = latin_capital_letter_d_with_small_letter_z_with_caron;
-			return static_count(latin_capital_letter_d_with_small_letter_z_with_caron);
+			return 2;
 		case 0x01C6:
 			*normals = latin_small_letter_dz_with_caron;
-			return static_count(latin_small_letter_dz_with_caron);
+			return 2;
 		case 0x01C7:
 			*normals = latin_capital_letter_lj;
-			return static_count(latin_capital_letter_lj);
+			return 2;
 		case 0x01C8:
 			*normals = latin_capital_letter_l_with_small_letter_j;
-			return static_count(latin_capital_letter_l_with_small_letter_j);
+			return 2;
 		case 0x01C9:
 			*normals = latin_small_letter_lj;
-			return static_count(latin_small_letter_lj);
+			return 2;
 		case 0x01CA:
 			*normals = latin_capital_letter_nj;
-			return static_count(latin_capital_letter_nj);
+			return 2;
 		case 0x01CB:
 			*normals = latin_capital_letter_n_with_small_letter_j;
-			return static_count(latin_capital_letter_n_with_small_letter_j);
+			return 2;
 		case 0x01CC:
 			*normals = latin_small_letter_nj;
-			return static_count(latin_small_letter_nj);
+			return 2;
 		case 0x01CD:
 			*normals = latin_capital_letter_a_with_caron;
-			return static_count(latin_capital_letter_a_with_caron);
+			return 2;
 		case 0x01CE:
 			*normals = latin_small_letter_a_with_caron;
-			return static_count(latin_small_letter_a_with_caron);
+			return 2;
 		case 0x01CF:
 			*normals = latin_capital_letter_i_with_caron;
-			return static_count(latin_capital_letter_i_with_caron);
+			return 2;
 		case 0x01D0:
 			*normals = latin_small_letter_i_with_caron;
-			return static_count(latin_small_letter_i_with_caron);
+			return 2;
 		case 0x01D1:
 			*normals = latin_capital_letter_o_with_caron;
-			return static_count(latin_capital_letter_o_with_caron);
+			return 2;
 		case 0x01D2:
 			*normals = latin_small_letter_o_with_caron;
-			return static_count(latin_small_letter_o_with_caron);
+			return 2;
 		case 0x01D3:
 			*normals = latin_capital_letter_u_with_caron;
-			return static_count(latin_capital_letter_u_with_caron);
+			return 2;
 		case 0x01D4:
 			*normals = latin_small_letter_u_with_caron;
-			return static_count(latin_small_letter_u_with_caron);
+			return 2;
 		case 0x01D5:
 			*normals = latin_capital_letter_u_with_diaeresis_and_macron;
-			return static_count(latin_capital_letter_u_with_diaeresis_and_macron);
+			return 2;
 		case 0x01D6:
 			*normals = latin_small_letter_u_with_diaeresis_and_macron;
-			return static_count(latin_small_letter_u_with_diaeresis_and_macron);
+			return 2;
 		case 0x01D7:
 			*normals = latin_capital_letter_u_with_diaeresis_and_acute;
-			return static_count(latin_capital_letter_u_with_diaeresis_and_acute);
+			return 2;
 		case 0x01D8:
 			*normals = latin_small_letter_u_with_diaeresis_and_acute;
-			return static_count(latin_small_letter_u_with_diaeresis_and_acute);
+			return 2;
 		case 0x01D9:
 			*normals = latin_capital_letter_u_with_diaeresis_and_caron;
-			return static_count(latin_capital_letter_u_with_diaeresis_and_caron);
+			return 2;
 		case 0x01DA:
 			*normals = latin_small_letter_u_with_diaeresis_and_caron;
-			return static_count(latin_small_letter_u_with_diaeresis_and_caron);
+			return 2;
 		case 0x01DB:
 			*normals = latin_capital_letter_u_with_diaeresis_and_grave;
-			return static_count(latin_capital_letter_u_with_diaeresis_and_grave);
+			return 2;
 		case 0x01DC:
 			*normals = latin_small_letter_u_with_diaeresis_and_grave;
-			return static_count(latin_small_letter_u_with_diaeresis_and_grave);
+			return 2;
 		case 0x01DE:
 			*normals = latin_capital_letter_a_with_diaeresis_and_macron;
-			return static_count(latin_capital_letter_a_with_diaeresis_and_macron);
+			return 2;
 		case 0x01DF:
 			*normals = latin_small_letter_a_with_diaeresis_and_macron;
-			return static_count(latin_small_letter_a_with_diaeresis_and_macron);
+			return 2;
 		case 0x01E0:
 			*normals = latin_capital_letter_a_with_dot_above_and_macron;
-			return static_count(latin_capital_letter_a_with_dot_above_and_macron);
+			return 2;
 		case 0x01E1:
 			*normals = latin_small_letter_a_with_dot_above_and_macron;
-			return static_count(latin_small_letter_a_with_dot_above_and_macron);
+			return 2;
 		case 0x01E2:
 			*normals = latin_capital_letter_ae_with_macron;
-			return static_count(latin_capital_letter_ae_with_macron);
+			return 2;
 		case 0x01E3:
 			*normals = latin_small_letter_ae_with_macron;
-			return static_count(latin_small_letter_ae_with_macron);
+			return 2;
 		case 0x01E6:
 			*normals = latin_capital_letter_g_with_caron;
-			return static_count(latin_capital_letter_g_with_caron);
+			return 2;
 		case 0x01E7:
 			*normals = latin_small_letter_g_with_caron;
-			return static_count(latin_small_letter_g_with_caron);
+			return 2;
 		case 0x01E8:
 			*normals = latin_capital_letter_k_with_caron;
-			return static_count(latin_capital_letter_k_with_caron);
+			return 2;
 		case 0x01E9:
 			*normals = latin_small_letter_k_with_caron;
-			return static_count(latin_small_letter_k_with_caron);
+			return 2;
 		case 0x01EA:
 			*normals = latin_capital_letter_o_with_ogonek;
-			return static_count(latin_capital_letter_o_with_ogonek);
+			return 2;
 		case 0x01EB:
 			*normals = latin_small_letter_o_with_ogonek;
-			return static_count(latin_small_letter_o_with_ogonek);
+			return 2;
 		case 0x01EC:
 			*normals = latin_capital_letter_o_with_ogonek_and_macron;
-			return static_count(latin_capital_letter_o_with_ogonek_and_macron);
+			return 2;
 		case 0x01ED:
 			*normals = latin_small_letter_o_with_ogonek_and_macron;
-			return static_count(latin_small_letter_o_with_ogonek_and_macron);
+			return 2;
 		case 0x01EE:
 			*normals = latin_capital_letter_ezh_with_caron;
-			return static_count(latin_capital_letter_ezh_with_caron);
+			return 2;
 		case 0x01EF:
 			*normals = latin_small_letter_ezh_with_caron;
-			return static_count(latin_small_letter_ezh_with_caron);
+			return 2;
 		case 0x01F0:
 			*normals = latin_small_letter_j_with_caron;
-			return static_count(latin_small_letter_j_with_caron);
+			return 2;
 		case 0x01F1:
 			*normals = latin_capital_letter_dz;
-			return static_count(latin_capital_letter_dz);
+			return 2;
 		case 0x01F2:
 			*normals = latin_capital_letter_d_with_small_letter_z;
-			return static_count(latin_capital_letter_d_with_small_letter_z);
+			return 2;
 		case 0x01F3:
 			*normals = latin_small_letter_dz;
-			return static_count(latin_small_letter_dz);
+			return 2;
 		case 0x01F4:
 			*normals = latin_capital_letter_g_with_acute;
-			return static_count(latin_capital_letter_g_with_acute);
+			return 2;
 		case 0x01F5:
 			*normals = latin_small_letter_g_with_acute;
-			return static_count(latin_small_letter_g_with_acute);
+			return 2;
 		case 0x01F8:
 			*normals = latin_capital_letter_n_with_grave;
-			return static_count(latin_capital_letter_n_with_grave);
+			return 2;
 		case 0x01F9:
 			*normals = latin_small_letter_n_with_grave;
-			return static_count(latin_small_letter_n_with_grave);
+			return 2;
 		case 0x01FA:
 			*normals = latin_capital_letter_a_with_ring_above_and_acute;
-			return static_count(latin_capital_letter_a_with_ring_above_and_acute);
+			return 2;
 		case 0x01FB:
 			*normals = latin_small_letter_a_with_ring_above_and_acute;
-			return static_count(latin_small_letter_a_with_ring_above_and_acute);
+			return 2;
 		case 0x01FC:
 			*normals = latin_capital_letter_ae_with_acute;
-			return static_count(latin_capital_letter_ae_with_acute);
+			return 2;
 		case 0x01FD:
 			*normals = latin_small_letter_ae_with_acute;
-			return static_count(latin_small_letter_ae_with_acute);
+			return 2;
 		case 0x01FE:
 			*normals = latin_capital_letter_o_with_stroke_and_acute;
-			return static_count(latin_capital_letter_o_with_stroke_and_acute);
+			return 2;
 		case 0x01FF:
 			*normals = latin_small_letter_o_with_stroke_and_acute;
-			return static_count(latin_small_letter_o_with_stroke_and_acute);
+			return 2;
 		case 0x0200:
 			*normals = latin_capital_letter_a_with_double_grave;
-			return static_count(latin_capital_letter_a_with_double_grave);
+			return 2;
 		case 0x0201:
 			*normals = latin_small_letter_a_with_double_grave;
-			return static_count(latin_small_letter_a_with_double_grave);
+			return 2;
 		case 0x0202:
 			*normals = latin_capital_letter_a_with_inverted_breve;
-			return static_count(latin_capital_letter_a_with_inverted_breve);
+			return 2;
 		case 0x0203:
 			*normals = latin_small_letter_a_with_inverted_breve;
-			return static_count(latin_small_letter_a_with_inverted_breve);
+			return 2;
 		case 0x0204:
 			*normals = latin_capital_letter_e_with_double_grave;
-			return static_count(latin_capital_letter_e_with_double_grave);
+			return 2;
 		case 0x0205:
 			*normals = latin_small_letter_e_with_double_grave;
-			return static_count(latin_small_letter_e_with_double_grave);
+			return 2;
 		case 0x0206:
 			*normals = latin_capital_letter_e_with_inverted_breve;
-			return static_count(latin_capital_letter_e_with_inverted_breve);
+			return 2;
 		case 0x0207:
 			*normals = latin_small_letter_e_with_inverted_breve;
-			return static_count(latin_small_letter_e_with_inverted_breve);
+			return 2;
 		case 0x0208:
 			*normals = latin_capital_letter_i_with_double_grave;
-			return static_count(latin_capital_letter_i_with_double_grave);
+			return 2;
 		case 0x0209:
 			*normals = latin_small_letter_i_with_double_grave;
-			return static_count(latin_small_letter_i_with_double_grave);
+			return 2;
 		case 0x020A:
 			*normals = latin_capital_letter_i_with_inverted_breve;
-			return static_count(latin_capital_letter_i_with_inverted_breve);
+			return 2;
 		case 0x020B:
 			*normals = latin_small_letter_i_with_inverted_breve;
-			return static_count(latin_small_letter_i_with_inverted_breve);
+			return 2;
 		case 0x020C:
 			*normals = latin_capital_letter_o_with_double_grave;
-			return static_count(latin_capital_letter_o_with_double_grave);
+			return 2;
 		case 0x020D:
 			*normals = latin_small_letter_o_with_double_grave;
-			return static_count(latin_small_letter_o_with_double_grave);
+			return 2;
 		case 0x020E:
 			*normals = latin_capital_letter_o_with_inverted_breve;
-			return static_count(latin_capital_letter_o_with_inverted_breve);
+			return 2;
 		case 0x020F:
 			*normals = latin_small_letter_o_with_inverted_breve;
-			return static_count(latin_small_letter_o_with_inverted_breve);
+			return 2;
 		case 0x0210:
 			*normals = latin_capital_letter_r_with_double_grave;
-			return static_count(latin_capital_letter_r_with_double_grave);
+			return 2;
 		case 0x0211:
 			*normals = latin_small_letter_r_with_double_grave;
-			return static_count(latin_small_letter_r_with_double_grave);
+			return 2;
 		case 0x0212:
 			*normals = latin_capital_letter_r_with_inverted_breve;
-			return static_count(latin_capital_letter_r_with_inverted_breve);
+			return 2;
 		case 0x0213:
 			*normals = latin_small_letter_r_with_inverted_breve;
-			return static_count(latin_small_letter_r_with_inverted_breve);
+			return 2;
 		case 0x0214:
 			*normals = latin_capital_letter_u_with_double_grave;
-			return static_count(latin_capital_letter_u_with_double_grave);
+			return 2;
 		case 0x0215:
 			*normals = latin_small_letter_u_with_double_grave;
-			return static_count(latin_small_letter_u_with_double_grave);
+			return 2;
 		case 0x0216:
 			*normals = latin_capital_letter_u_with_inverted_breve;
-			return static_count(latin_capital_letter_u_with_inverted_breve);
+			return 2;
 		case 0x0217:
 			*normals = latin_small_letter_u_with_inverted_breve;
-			return static_count(latin_small_letter_u_with_inverted_breve);
+			return 2;
 		case 0x0218:
 			*normals = latin_capital_letter_s_with_comma_below;
-			return static_count(latin_capital_letter_s_with_comma_below);
+			return 2;
 		case 0x0219:
 			*normals = latin_small_letter_s_with_comma_below;
-			return static_count(latin_small_letter_s_with_comma_below);
+			return 2;
 		case 0x021A:
 			*normals = latin_capital_letter_t_with_comma_below;
-			return static_count(latin_capital_letter_t_with_comma_below);
+			return 2;
 		case 0x021B:
 			*normals = latin_small_letter_t_with_comma_below;
-			return static_count(latin_small_letter_t_with_comma_below);
+			return 2;
 		case 0x021E:
 			*normals = latin_capital_letter_h_with_caron;
-			return static_count(latin_capital_letter_h_with_caron);
+			return 2;
 		case 0x021F:
 			*normals = latin_small_letter_h_with_caron;
-			return static_count(latin_small_letter_h_with_caron);
+			return 2;
 		case 0x0226:
 			*normals = latin_capital_letter_a_with_dot_above;
-			return static_count(latin_capital_letter_a_with_dot_above);
+			return 2;
 		case 0x0227:
 			*normals = latin_small_letter_a_with_dot_above;
-			return static_count(latin_small_letter_a_with_dot_above);
+			return 2;
 		case 0x0228:
 			*normals = latin_capital_letter_e_with_cedilla;
-			return static_count(latin_capital_letter_e_with_cedilla);
+			return 2;
 		case 0x0229:
 			*normals = latin_small_letter_e_with_cedilla;
-			return static_count(latin_small_letter_e_with_cedilla);
+			return 2;
 		case 0x022A:
 			*normals = latin_capital_letter_o_with_diaeresis_and_macron;
-			return static_count(latin_capital_letter_o_with_diaeresis_and_macron);
+			return 2;
 		case 0x022B:
 			*normals = latin_small_letter_o_with_diaeresis_and_macron;
-			return static_count(latin_small_letter_o_with_diaeresis_and_macron);
+			return 2;
 		case 0x022C:
 			*normals = latin_capital_letter_o_with_tilde_and_macron;
-			return static_count(latin_capital_letter_o_with_tilde_and_macron);
+			return 2;
 		case 0x022D:
 			*normals = latin_small_letter_o_with_tilde_and_macron;
-			return static_count(latin_small_letter_o_with_tilde_and_macron);
+			return 2;
 		case 0x022E:
 			*normals = latin_capital_letter_o_with_dot_above;
-			return static_count(latin_capital_letter_o_with_dot_above);
+			return 2;
 		case 0x022F:
 			*normals = latin_small_letter_o_with_dot_above;
-			return static_count(latin_small_letter_o_with_dot_above);
+			return 2;
 		case 0x0230:
 			*normals = latin_capital_letter_o_with_dot_above_and_macron;
-			return static_count(latin_capital_letter_o_with_dot_above_and_macron);
+			return 2;
 		case 0x0231:
 			*normals = latin_small_letter_o_with_dot_above_and_macron;
-			return static_count(latin_small_letter_o_with_dot_above_and_macron);
+			return 2;
 		case 0x0232:
 			*normals = latin_capital_letter_y_with_macron;
-			return static_count(latin_capital_letter_y_with_macron);
+			return 2;
 		case 0x0233:
 			*normals = latin_small_letter_y_with_macron;
-			return static_count(latin_small_letter_y_with_macron);
+			return 2;
 		case 0x02B0:
 			*normals = modifier_letter_small_h;
-			return static_count(modifier_letter_small_h);
+			return 1;
 		case 0x02B1:
 			*normals = modifier_letter_small_h_with_hook;
-			return static_count(modifier_letter_small_h_with_hook);
+			return 1;
 		case 0x02B2:
 			*normals = modifier_letter_small_j;
-			return static_count(modifier_letter_small_j);
+			return 1;
 		case 0x02B3:
 			*normals = modifier_letter_small_r;
-			return static_count(modifier_letter_small_r);
+			return 1;
 		case 0x02B4:
 			*normals = modifier_letter_small_turned_r;
-			return static_count(modifier_letter_small_turned_r);
+			return 1;
 		case 0x02B5:
 			*normals = modifier_letter_small_turned_r_with_hook;
-			return static_count(modifier_letter_small_turned_r_with_hook);
+			return 1;
 		case 0x02B6:
 			*normals = modifier_letter_small_capital_inverted_r;
-			return static_count(modifier_letter_small_capital_inverted_r);
+			return 1;
 		case 0x02B7:
 			*normals = modifier_letter_small_w;
-			return static_count(modifier_letter_small_w);
+			return 1;
 		case 0x02B8:
 			*normals = modifier_letter_small_y;
-			return static_count(modifier_letter_small_y);
+			return 1;
 		case 0x02D8:
 			*normals = breve;
-			return static_count(breve);
+			return 2;
 		case 0x02D9:
 			*normals = dot_above;
-			return static_count(dot_above);
+			return 2;
 		case 0x02DA:
 			*normals = ring_above;
-			return static_count(ring_above);
+			return 2;
 		case 0x02DB:
 			*normals = ogonek;
-			return static_count(ogonek);
+			return 2;
 		case 0x02DC:
 			*normals = small_tilde;
-			return static_count(small_tilde);
+			return 2;
 		case 0x02DD:
 			*normals = double_acute_accent;
-			return static_count(double_acute_accent);
+			return 2;
 		case 0x02E0:
 			*normals = modifier_letter_small_gamma;
-			return static_count(modifier_letter_small_gamma);
+			return 1;
 		case 0x02E1:
 			*normals = modifier_letter_small_l;
-			return static_count(modifier_letter_small_l);
+			return 1;
 		case 0x02E2:
 			*normals = modifier_letter_small_s;
-			return static_count(modifier_letter_small_s);
+			return 1;
 		case 0x02E3:
 			*normals = modifier_letter_small_x;
-			return static_count(modifier_letter_small_x);
+			return 1;
 		case 0x02E4:
 			*normals = modifier_letter_small_reversed_glottal_stop;
-			return static_count(modifier_letter_small_reversed_glottal_stop);
+			return 1;
 		case 0x0340:
 			*normals = combining_grave_tone_mark;
-			return static_count(combining_grave_tone_mark);
+			return 1;
 		case 0x0341:
 			*normals = combining_acute_tone_mark;
-			return static_count(combining_acute_tone_mark);
+			return 1;
 		case 0x0343:
 			*normals = combining_greek_koronis;
-			return static_count(combining_greek_koronis);
+			return 1;
 		case 0x0344:
 			*normals = combining_greek_dialytika_tonos;
-			return static_count(combining_greek_dialytika_tonos);
+			return 2;
 		case 0x0374:
 			*normals = greek_numeral_sign;
-			return static_count(greek_numeral_sign);
+			return 1;
 		case 0x037A:
 			*normals = greek_ypogegrammeni;
-			return static_count(greek_ypogegrammeni);
+			return 2;
 		case 0x037E:
 			*normals = greek_question_mark;
-			return static_count(greek_question_mark);
+			return 1;
 		case 0x0384:
 			*normals = greek_tonos;
-			return static_count(greek_tonos);
+			return 2;
 		case 0x0385:
 			*normals = greek_dialytika_tonos;
-			return static_count(greek_dialytika_tonos);
+			return 2;
 		case 0x0386:
 			*normals = greek_capital_letter_alpha_with_tonos;
-			return static_count(greek_capital_letter_alpha_with_tonos);
+			return 2;
 		case 0x0387:
 			*normals = greek_ano_teleia;
-			return static_count(greek_ano_teleia);
+			return 1;
 		case 0x0388:
 			*normals = greek_capital_letter_epsilon_with_tonos;
-			return static_count(greek_capital_letter_epsilon_with_tonos);
+			return 2;
 		case 0x0389:
 			*normals = greek_capital_letter_eta_with_tonos;
-			return static_count(greek_capital_letter_eta_with_tonos);
+			return 2;
 		case 0x038A:
 			*normals = greek_capital_letter_iota_with_tonos;
-			return static_count(greek_capital_letter_iota_with_tonos);
+			return 2;
 		case 0x038C:
 			*normals = greek_capital_letter_omicron_with_tonos;
-			return static_count(greek_capital_letter_omicron_with_tonos);
+			return 2;
 		case 0x038E:
 			*normals = greek_capital_letter_upsilon_with_tonos;
-			return static_count(greek_capital_letter_upsilon_with_tonos);
+			return 2;
 		case 0x038F:
 			*normals = greek_capital_letter_omega_with_tonos;
-			return static_count(greek_capital_letter_omega_with_tonos);
+			return 2;
 		case 0x0390:
 			*normals = greek_small_letter_iota_with_dialytika_and_tonos;
-			return static_count(greek_small_letter_iota_with_dialytika_and_tonos);
+			return 2;
 		case 0x03AA:
 			*normals = greek_capital_letter_iota_with_dialytika;
-			return static_count(greek_capital_letter_iota_with_dialytika);
+			return 2;
 		case 0x03AB:
 			*normals = greek_capital_letter_upsilon_with_dialytika;
-			return static_count(greek_capital_letter_upsilon_with_dialytika);
+			return 2;
 		case 0x03AC:
 			*normals = greek_small_letter_alpha_with_tonos;
-			return static_count(greek_small_letter_alpha_with_tonos);
+			return 2;
 		case 0x03AD:
 			*normals = greek_small_letter_epsilon_with_tonos;
-			return static_count(greek_small_letter_epsilon_with_tonos);
+			return 2;
 		case 0x03AE:
 			*normals = greek_small_letter_eta_with_tonos;
-			return static_count(greek_small_letter_eta_with_tonos);
+			return 2;
 		case 0x03AF:
 			*normals = greek_small_letter_iota_with_tonos;
-			return static_count(greek_small_letter_iota_with_tonos);
+			return 2;
 		case 0x03B0:
 			*normals = greek_small_letter_upsilon_with_dialytika_and_tonos;
-			return static_count(greek_small_letter_upsilon_with_dialytika_and_tonos);
+			return 2;
 		case 0x03CA:
 			*normals = greek_small_letter_iota_with_dialytika;
-			return static_count(greek_small_letter_iota_with_dialytika);
+			return 2;
 		case 0x03CB:
 			*normals = greek_small_letter_upsilon_with_dialytika;
-			return static_count(greek_small_letter_upsilon_with_dialytika);
+			return 2;
 		case 0x03CC:
 			*normals = greek_small_letter_omicron_with_tonos;
-			return static_count(greek_small_letter_omicron_with_tonos);
+			return 2;
 		case 0x03CD:
 			*normals = greek_small_letter_upsilon_with_tonos;
-			return static_count(greek_small_letter_upsilon_with_tonos);
+			return 2;
 		case 0x03CE:
 			*normals = greek_small_letter_omega_with_tonos;
-			return static_count(greek_small_letter_omega_with_tonos);
+			return 2;
 		case 0x03D0:
 			*normals = greek_beta_symbol;
-			return static_count(greek_beta_symbol);
+			return 1;
 		case 0x03D1:
 			*normals = greek_theta_symbol;
-			return static_count(greek_theta_symbol);
+			return 1;
 		case 0x03D2:
 			*normals = greek_upsilon_with_hook_symbol;
-			return static_count(greek_upsilon_with_hook_symbol);
+			return 1;
 		case 0x03D3:
 			*normals = greek_upsilon_with_acute_and_hook_symbol;
-			return static_count(greek_upsilon_with_acute_and_hook_symbol);
+			return 2;
 		case 0x03D4:
 			*normals = greek_upsilon_with_diaeresis_and_hook_symbol;
-			return static_count(greek_upsilon_with_diaeresis_and_hook_symbol);
+			return 2;
 		case 0x03D5:
 			*normals = greek_phi_symbol;
-			return static_count(greek_phi_symbol);
+			return 1;
 		case 0x03D6:
 			*normals = greek_pi_symbol;
-			return static_count(greek_pi_symbol);
+			return 1;
 		case 0x03F0:
 			*normals = greek_kappa_symbol;
-			return static_count(greek_kappa_symbol);
+			return 1;
 		case 0x03F1:
 			*normals = greek_rho_symbol;
-			return static_count(greek_rho_symbol);
+			return 1;
 		case 0x03F2:
 			*normals = greek_lunate_sigma_symbol;
-			return static_count(greek_lunate_sigma_symbol);
+			return 1;
 		case 0x03F4:
 			*normals = greek_capital_theta_symbol;
-			return static_count(greek_capital_theta_symbol);
+			return 1;
 		case 0x03F5:
 			*normals = greek_lunate_epsilon_symbol;
-			return static_count(greek_lunate_epsilon_symbol);
+			return 1;
 		case 0x03F9:
 			*normals = greek_capital_lunate_sigma_symbol;
-			return static_count(greek_capital_lunate_sigma_symbol);
+			return 1;
 		case 0x0400:
 			*normals = cyrillic_capital_letter_ie_with_grave;
-			return static_count(cyrillic_capital_letter_ie_with_grave);
+			return 2;
 		case 0x0401:
 			*normals = cyrillic_capital_letter_io;
-			return static_count(cyrillic_capital_letter_io);
+			return 2;
 		case 0x0403:
 			*normals = cyrillic_capital_letter_gje;
-			return static_count(cyrillic_capital_letter_gje);
+			return 2;
 		case 0x0407:
 			*normals = cyrillic_capital_letter_yi;
-			return static_count(cyrillic_capital_letter_yi);
+			return 2;
 		case 0x040C:
 			*normals = cyrillic_capital_letter_kje;
-			return static_count(cyrillic_capital_letter_kje);
+			return 2;
 		case 0x040D:
 			*normals = cyrillic_capital_letter_i_with_grave;
-			return static_count(cyrillic_capital_letter_i_with_grave);
+			return 2;
 		case 0x040E:
 			*normals = cyrillic_capital_letter_short_u;
-			return static_count(cyrillic_capital_letter_short_u);
+			return 2;
 		case 0x0419:
 			*normals = cyrillic_capital_letter_short_i;
-			return static_count(cyrillic_capital_letter_short_i);
+			return 2;
 		case 0x0439:
 			*normals = cyrillic_small_letter_short_i;
-			return static_count(cyrillic_small_letter_short_i);
+			return 2;
 		case 0x0450:
 			*normals = cyrillic_small_letter_ie_with_grave;
-			return static_count(cyrillic_small_letter_ie_with_grave);
+			return 2;
 		case 0x0451:
 			*normals = cyrillic_small_letter_io;
-			return static_count(cyrillic_small_letter_io);
+			return 2;
 		case 0x0453:
 			*normals = cyrillic_small_letter_gje;
-			return static_count(cyrillic_small_letter_gje);
+			return 2;
 		case 0x0457:
 			*normals = cyrillic_small_letter_yi;
-			return static_count(cyrillic_small_letter_yi);
+			return 2;
 		case 0x045C:
 			*normals = cyrillic_small_letter_kje;
-			return static_count(cyrillic_small_letter_kje);
+			return 2;
 		case 0x045D:
 			*normals = cyrillic_small_letter_i_with_grave;
-			return static_count(cyrillic_small_letter_i_with_grave);
+			return 2;
 		case 0x045E:
 			*normals = cyrillic_small_letter_short_u;
-			return static_count(cyrillic_small_letter_short_u);
+			return 2;
 		case 0x0476:
 			*normals = cyrillic_capital_letter_izhitsa_with_double_grave_accent;
-			return static_count(cyrillic_capital_letter_izhitsa_with_double_grave_accent);
+			return 2;
 		case 0x0477:
 			*normals = cyrillic_small_letter_izhitsa_with_double_grave_accent;
-			return static_count(cyrillic_small_letter_izhitsa_with_double_grave_accent);
+			return 2;
 		case 0x04C1:
 			*normals = cyrillic_capital_letter_zhe_with_breve;
-			return static_count(cyrillic_capital_letter_zhe_with_breve);
+			return 2;
 		case 0x04C2:
 			*normals = cyrillic_small_letter_zhe_with_breve;
-			return static_count(cyrillic_small_letter_zhe_with_breve);
+			return 2;
 		case 0x04D0:
 			*normals = cyrillic_capital_letter_a_with_breve;
-			return static_count(cyrillic_capital_letter_a_with_breve);
+			return 2;
 		case 0x04D1:
 			*normals = cyrillic_small_letter_a_with_breve;
-			return static_count(cyrillic_small_letter_a_with_breve);
+			return 2;
 		case 0x04D2:
 			*normals = cyrillic_capital_letter_a_with_diaeresis;
-			return static_count(cyrillic_capital_letter_a_with_diaeresis);
+			return 2;
 		case 0x04D3:
 			*normals = cyrillic_small_letter_a_with_diaeresis;
-			return static_count(cyrillic_small_letter_a_with_diaeresis);
+			return 2;
 		case 0x04D6:
 			*normals = cyrillic_capital_letter_ie_with_breve;
-			return static_count(cyrillic_capital_letter_ie_with_breve);
+			return 2;
 		case 0x04D7:
 			*normals = cyrillic_small_letter_ie_with_breve;
-			return static_count(cyrillic_small_letter_ie_with_breve);
+			return 2;
 		case 0x04DA:
 			*normals = cyrillic_capital_letter_schwa_with_diaeresis;
-			return static_count(cyrillic_capital_letter_schwa_with_diaeresis);
+			return 2;
 		case 0x04DB:
 			*normals = cyrillic_small_letter_schwa_with_diaeresis;
-			return static_count(cyrillic_small_letter_schwa_with_diaeresis);
+			return 2;
 		case 0x04DC:
 			*normals = cyrillic_capital_letter_zhe_with_diaeresis;
-			return static_count(cyrillic_capital_letter_zhe_with_diaeresis);
+			return 2;
 		case 0x04DD:
 			*normals = cyrillic_small_letter_zhe_with_diaeresis;
-			return static_count(cyrillic_small_letter_zhe_with_diaeresis);
+			return 2;
 		case 0x04DE:
 			*normals = cyrillic_capital_letter_ze_with_diaeresis;
-			return static_count(cyrillic_capital_letter_ze_with_diaeresis);
+			return 2;
 		case 0x04DF:
 			*normals = cyrillic_small_letter_ze_with_diaeresis;
-			return static_count(cyrillic_small_letter_ze_with_diaeresis);
+			return 2;
 		case 0x04E2:
 			*normals = cyrillic_capital_letter_i_with_macron;
-			return static_count(cyrillic_capital_letter_i_with_macron);
+			return 2;
 		case 0x04E3:
 			*normals = cyrillic_small_letter_i_with_macron;
-			return static_count(cyrillic_small_letter_i_with_macron);
+			return 2;
 		case 0x04E4:
 			*normals = cyrillic_capital_letter_i_with_diaeresis;
-			return static_count(cyrillic_capital_letter_i_with_diaeresis);
+			return 2;
 		case 0x04E5:
 			*normals = cyrillic_small_letter_i_with_diaeresis;
-			return static_count(cyrillic_small_letter_i_with_diaeresis);
+			return 2;
 		case 0x04E6:
 			*normals = cyrillic_capital_letter_o_with_diaeresis;
-			return static_count(cyrillic_capital_letter_o_with_diaeresis);
+			return 2;
 		case 0x04E7:
 			*normals = cyrillic_small_letter_o_with_diaeresis;
-			return static_count(cyrillic_small_letter_o_with_diaeresis);
+			return 2;
 		case 0x04EA:
 			*normals = cyrillic_capital_letter_barred_o_with_diaeresis;
-			return static_count(cyrillic_capital_letter_barred_o_with_diaeresis);
+			return 2;
 		case 0x04EB:
 			*normals = cyrillic_small_letter_barred_o_with_diaeresis;
-			return static_count(cyrillic_small_letter_barred_o_with_diaeresis);
+			return 2;
 		case 0x04EC:
 			*normals = cyrillic_capital_letter_e_with_diaeresis;
-			return static_count(cyrillic_capital_letter_e_with_diaeresis);
+			return 2;
 		case 0x04ED:
 			*normals = cyrillic_small_letter_e_with_diaeresis;
-			return static_count(cyrillic_small_letter_e_with_diaeresis);
+			return 2;
 		case 0x04EE:
 			*normals = cyrillic_capital_letter_u_with_macron;
-			return static_count(cyrillic_capital_letter_u_with_macron);
+			return 2;
 		case 0x04EF:
 			*normals = cyrillic_small_letter_u_with_macron;
-			return static_count(cyrillic_small_letter_u_with_macron);
+			return 2;
 		case 0x04F0:
 			*normals = cyrillic_capital_letter_u_with_diaeresis;
-			return static_count(cyrillic_capital_letter_u_with_diaeresis);
+			return 2;
 		case 0x04F1:
 			*normals = cyrillic_small_letter_u_with_diaeresis;
-			return static_count(cyrillic_small_letter_u_with_diaeresis);
+			return 2;
 		case 0x04F2:
 			*normals = cyrillic_capital_letter_u_with_double_acute;
-			return static_count(cyrillic_capital_letter_u_with_double_acute);
+			return 2;
 		case 0x04F3:
 			*normals = cyrillic_small_letter_u_with_double_acute;
-			return static_count(cyrillic_small_letter_u_with_double_acute);
+			return 2;
 		case 0x04F4:
 			*normals = cyrillic_capital_letter_che_with_diaeresis;
-			return static_count(cyrillic_capital_letter_che_with_diaeresis);
+			return 2;
 		case 0x04F5:
 			*normals = cyrillic_small_letter_che_with_diaeresis;
-			return static_count(cyrillic_small_letter_che_with_diaeresis);
+			return 2;
 		case 0x04F8:
 			*normals = cyrillic_capital_letter_yeru_with_diaeresis;
-			return static_count(cyrillic_capital_letter_yeru_with_diaeresis);
+			return 2;
 		case 0x04F9:
 			*normals = cyrillic_small_letter_yeru_with_diaeresis;
-			return static_count(cyrillic_small_letter_yeru_with_diaeresis);
+			return 2;
 		case 0x0587:
 			*normals = armenian_small_ligature_ech_yiwn;
-			return static_count(armenian_small_ligature_ech_yiwn);
+			return 2;
 		case 0x0622:
 			*normals = arabic_letter_alef_with_madda_above;
-			return static_count(arabic_letter_alef_with_madda_above);
+			return 2;
 		case 0x0623:
 			*normals = arabic_letter_alef_with_hamza_above;
-			return static_count(arabic_letter_alef_with_hamza_above);
+			return 2;
 		case 0x0624:
 			*normals = arabic_letter_waw_with_hamza_above;
-			return static_count(arabic_letter_waw_with_hamza_above);
+			return 2;
 		case 0x0625:
 			*normals = arabic_letter_alef_with_hamza_below;
-			return static_count(arabic_letter_alef_with_hamza_below);
+			return 2;
 		case 0x0626:
 			*normals = arabic_letter_yeh_with_hamza_above;
-			return static_count(arabic_letter_yeh_with_hamza_above);
+			return 2;
 		case 0x0675:
 			*normals = arabic_letter_high_hamza_alef;
-			return static_count(arabic_letter_high_hamza_alef);
+			return 2;
 		case 0x0676:
 			*normals = arabic_letter_high_hamza_waw;
-			return static_count(arabic_letter_high_hamza_waw);
+			return 2;
 		case 0x0677:
 			*normals = arabic_letter_u_with_hamza_above;
-			return static_count(arabic_letter_u_with_hamza_above);
+			return 2;
 		case 0x0678:
 			*normals = arabic_letter_high_hamza_yeh;
-			return static_count(arabic_letter_high_hamza_yeh);
+			return 2;
 		case 0x06C0:
 			*normals = arabic_letter_heh_with_yeh_above;
-			return static_count(arabic_letter_heh_with_yeh_above);
+			return 2;
 		case 0x06C2:
 			*normals = arabic_letter_heh_goal_with_hamza_above;
-			return static_count(arabic_letter_heh_goal_with_hamza_above);
+			return 2;
 		case 0x06D3:
 			*normals = arabic_letter_yeh_barree_with_hamza_above;
-			return static_count(arabic_letter_yeh_barree_with_hamza_above);
+			return 2;
 		case 0x0929:
 			*normals = devanagari_letter_nnna;
-			return static_count(devanagari_letter_nnna);
+			return 2;
 		case 0x0931:
 			*normals = devanagari_letter_rra;
-			return static_count(devanagari_letter_rra);
+			return 2;
 		case 0x0934:
 			*normals = devanagari_letter_llla;
-			return static_count(devanagari_letter_llla);
+			return 2;
 		case 0x0958:
 			*normals = devanagari_letter_qa;
-			return static_count(devanagari_letter_qa);
+			return 2;
 		case 0x0959:
 			*normals = devanagari_letter_khha;
-			return static_count(devanagari_letter_khha);
+			return 2;
 		case 0x095A:
 			*normals = devanagari_letter_ghha;
-			return static_count(devanagari_letter_ghha);
+			return 2;
 		case 0x095B:
 			*normals = devanagari_letter_za;
-			return static_count(devanagari_letter_za);
+			return 2;
 		case 0x095C:
 			*normals = devanagari_letter_dddha;
-			return static_count(devanagari_letter_dddha);
+			return 2;
 		case 0x095D:
 			*normals = devanagari_letter_rha;
-			return static_count(devanagari_letter_rha);
+			return 2;
 		case 0x095E:
 			*normals = devanagari_letter_fa;
-			return static_count(devanagari_letter_fa);
+			return 2;
 		case 0x095F:
 			*normals = devanagari_letter_yya;
-			return static_count(devanagari_letter_yya);
+			return 2;
 		case 0x09CB:
 			*normals = bengali_vowel_sign_o;
-			return static_count(bengali_vowel_sign_o);
+			return 2;
 		case 0x09CC:
 			*normals = bengali_vowel_sign_au;
-			return static_count(bengali_vowel_sign_au);
+			return 2;
 		case 0x09DC:
 			*normals = bengali_letter_rra;
-			return static_count(bengali_letter_rra);
+			return 2;
 		case 0x09DD:
 			*normals = bengali_letter_rha;
-			return static_count(bengali_letter_rha);
+			return 2;
 		case 0x09DF:
 			*normals = bengali_letter_yya;
-			return static_count(bengali_letter_yya);
+			return 2;
 		case 0x0A33:
 			*normals = gurmukhi_letter_lla;
-			return static_count(gurmukhi_letter_lla);
+			return 2;
 		case 0x0A36:
 			*normals = gurmukhi_letter_sha;
-			return static_count(gurmukhi_letter_sha);
+			return 2;
 		case 0x0A59:
 			*normals = gurmukhi_letter_khha;
-			return static_count(gurmukhi_letter_khha);
+			return 2;
 		case 0x0A5A:
 			*normals = gurmukhi_letter_ghha;
-			return static_count(gurmukhi_letter_ghha);
+			return 2;
 		case 0x0A5B:
 			*normals = gurmukhi_letter_za;
-			return static_count(gurmukhi_letter_za);
+			return 2;
 		case 0x0A5E:
 			*normals = gurmukhi_letter_fa;
-			return static_count(gurmukhi_letter_fa);
+			return 2;
 		case 0x0B48:
 			*normals = oriya_vowel_sign_ai;
-			return static_count(oriya_vowel_sign_ai);
+			return 2;
 		case 0x0B4B:
 			*normals = oriya_vowel_sign_o;
-			return static_count(oriya_vowel_sign_o);
+			return 2;
 		case 0x0B4C:
 			*normals = oriya_vowel_sign_au;
-			return static_count(oriya_vowel_sign_au);
+			return 2;
 		case 0x0B5C:
 			*normals = oriya_letter_rra;
-			return static_count(oriya_letter_rra);
+			return 2;
 		case 0x0B5D:
 			*normals = oriya_letter_rha;
-			return static_count(oriya_letter_rha);
+			return 2;
 		case 0x0B94:
 			*normals = tamil_letter_au;
-			return static_count(tamil_letter_au);
+			return 2;
 		case 0x0BCA:
 			*normals = tamil_vowel_sign_o;
-			return static_count(tamil_vowel_sign_o);
+			return 2;
 		case 0x0BCB:
 			*normals = tamil_vowel_sign_oo;
-			return static_count(tamil_vowel_sign_oo);
+			return 2;
 		case 0x0BCC:
 			*normals = tamil_vowel_sign_au;
-			return static_count(tamil_vowel_sign_au);
+			return 2;
 		case 0x0C48:
 			*normals = telugu_vowel_sign_ai;
-			return static_count(telugu_vowel_sign_ai);
+			return 2;
 		case 0x0CC0:
 			*normals = kannada_vowel_sign_ii;
-			return static_count(kannada_vowel_sign_ii);
+			return 2;
 		case 0x0CC7:
 			*normals = kannada_vowel_sign_ee;
-			return static_count(kannada_vowel_sign_ee);
+			return 2;
 		case 0x0CC8:
 			*normals = kannada_vowel_sign_ai;
-			return static_count(kannada_vowel_sign_ai);
+			return 2;
 		case 0x0CCA:
 			*normals = kannada_vowel_sign_o;
-			return static_count(kannada_vowel_sign_o);
+			return 2;
 		case 0x0CCB:
 			*normals = kannada_vowel_sign_oo;
-			return static_count(kannada_vowel_sign_oo);
+			return 2;
 		case 0x0D4A:
 			*normals = malayalam_vowel_sign_o;
-			return static_count(malayalam_vowel_sign_o);
+			return 2;
 		case 0x0D4B:
 			*normals = malayalam_vowel_sign_oo;
-			return static_count(malayalam_vowel_sign_oo);
+			return 2;
 		case 0x0D4C:
 			*normals = malayalam_vowel_sign_au;
-			return static_count(malayalam_vowel_sign_au);
+			return 2;
 		case 0x0DDA:
 			*normals = sinhala_vowel_sign_diga_kombuva;
-			return static_count(sinhala_vowel_sign_diga_kombuva);
+			return 2;
 		case 0x0DDC:
 			*normals = sinhala_vowel_sign_kombuva_haa_aela_pilla;
-			return static_count(sinhala_vowel_sign_kombuva_haa_aela_pilla);
+			return 2;
 		case 0x0DDD:
 			*normals = sinhala_vowel_sign_kombuva_haa_diga_aela_pilla;
-			return static_count(sinhala_vowel_sign_kombuva_haa_diga_aela_pilla);
+			return 2;
 		case 0x0DDE:
 			*normals = sinhala_vowel_sign_kombuva_haa_gayanukitta;
-			return static_count(sinhala_vowel_sign_kombuva_haa_gayanukitta);
+			return 2;
 		case 0x0E33:
 			*normals = thai_character_sara_am;
-			return static_count(thai_character_sara_am);
+			return 2;
 		case 0x0EB3:
 			*normals = lao_vowel_sign_am;
-			return static_count(lao_vowel_sign_am);
+			return 2;
 		case 0x0EDC:
 			*normals = lao_ho_no;
-			return static_count(lao_ho_no);
+			return 2;
 		case 0x0EDD:
 			*normals = lao_ho_mo;
-			return static_count(lao_ho_mo);
+			return 2;
 		case 0x0F0C:
 			*normals = tibetan_mark_delimiter_tsheg_bstar;
-			return static_count(tibetan_mark_delimiter_tsheg_bstar);
+			return 1;
 		case 0x0F43:
 			*normals = tibetan_letter_gha;
-			return static_count(tibetan_letter_gha);
+			return 2;
 		case 0x0F4D:
 			*normals = tibetan_letter_ddha;
-			return static_count(tibetan_letter_ddha);
+			return 2;
 		case 0x0F52:
 			*normals = tibetan_letter_dha;
-			return static_count(tibetan_letter_dha);
+			return 2;
 		case 0x0F57:
 			*normals = tibetan_letter_bha;
-			return static_count(tibetan_letter_bha);
+			return 2;
 		case 0x0F5C:
 			*normals = tibetan_letter_dzha;
-			return static_count(tibetan_letter_dzha);
+			return 2;
 		case 0x0F69:
 			*normals = tibetan_letter_kssa;
-			return static_count(tibetan_letter_kssa);
+			return 2;
 		case 0x0F73:
 			*normals = tibetan_vowel_sign_ii;
-			return static_count(tibetan_vowel_sign_ii);
+			return 2;
 		case 0x0F75:
 			*normals = tibetan_vowel_sign_uu;
-			return static_count(tibetan_vowel_sign_uu);
+			return 2;
 		case 0x0F76:
 			*normals = tibetan_vowel_sign_vocalic_r;
-			return static_count(tibetan_vowel_sign_vocalic_r);
+			return 2;
 		case 0x0F77:
 			*normals = tibetan_vowel_sign_vocalic_rr;
-			return static_count(tibetan_vowel_sign_vocalic_rr);
+			return 2;
 		case 0x0F78:
 			*normals = tibetan_vowel_sign_vocalic_l;
-			return static_count(tibetan_vowel_sign_vocalic_l);
+			return 2;
 		case 0x0F79:
 			*normals = tibetan_vowel_sign_vocalic_ll;
-			return static_count(tibetan_vowel_sign_vocalic_ll);
+			return 2;
 		case 0x0F81:
 			*normals = tibetan_vowel_sign_reversed_ii;
-			return static_count(tibetan_vowel_sign_reversed_ii);
+			return 2;
 		case 0x0F93:
 			*normals = tibetan_subjoined_letter_gha;
-			return static_count(tibetan_subjoined_letter_gha);
+			return 2;
 		case 0x0F9D:
 			*normals = tibetan_subjoined_letter_ddha;
-			return static_count(tibetan_subjoined_letter_ddha);
+			return 2;
 		case 0x0FA2:
 			*normals = tibetan_subjoined_letter_dha;
-			return static_count(tibetan_subjoined_letter_dha);
+			return 2;
 		case 0x0FA7:
 			*normals = tibetan_subjoined_letter_bha;
-			return static_count(tibetan_subjoined_letter_bha);
+			return 2;
 		case 0x0FAC:
 			*normals = tibetan_subjoined_letter_dzha;
-			return static_count(tibetan_subjoined_letter_dzha);
+			return 2;
 		case 0x0FB9:
 			*normals = tibetan_subjoined_letter_kssa;
-			return static_count(tibetan_subjoined_letter_kssa);
+			return 2;
 		case 0x1026:
 			*normals = myanmar_letter_uu;
-			return static_count(myanmar_letter_uu);
+			return 2;
 		case 0x10FC:
 			*normals = modifier_letter_georgian_nar;
-			return static_count(modifier_letter_georgian_nar);
+			return 1;
 		case 0x1B06:
 			*normals = balinese_letter_akara_tedung;
-			return static_count(balinese_letter_akara_tedung);
+			return 2;
 		case 0x1B08:
 			*normals = balinese_letter_ikara_tedung;
-			return static_count(balinese_letter_ikara_tedung);
+			return 2;
 		case 0x1B0A:
 			*normals = balinese_letter_ukara_tedung;
-			return static_count(balinese_letter_ukara_tedung);
+			return 2;
 		case 0x1B0C:
 			*normals = balinese_letter_ra_repa_tedung;
-			return static_count(balinese_letter_ra_repa_tedung);
+			return 2;
 		case 0x1B0E:
 			*normals = balinese_letter_la_lenga_tedung;
-			return static_count(balinese_letter_la_lenga_tedung);
+			return 2;
 		case 0x1B12:
 			*normals = balinese_letter_okara_tedung;
-			return static_count(balinese_letter_okara_tedung);
+			return 2;
 		case 0x1B3B:
 			*normals = balinese_vowel_sign_ra_repa_tedung;
-			return static_count(balinese_vowel_sign_ra_repa_tedung);
+			return 2;
 		case 0x1B3D:
 			*normals = balinese_vowel_sign_la_lenga_tedung;
-			return static_count(balinese_vowel_sign_la_lenga_tedung);
+			return 2;
 		case 0x1B40:
 			*normals = balinese_vowel_sign_taling_tedung;
-			return static_count(balinese_vowel_sign_taling_tedung);
+			return 2;
 		case 0x1B41:
 			*normals = balinese_vowel_sign_taling_repa_tedung;
-			return static_count(balinese_vowel_sign_taling_repa_tedung);
+			return 2;
 		case 0x1B43:
 			*normals = balinese_vowel_sign_pepet_tedung;
-			return static_count(balinese_vowel_sign_pepet_tedung);
+			return 2;
 		case 0x1D2C:
 			*normals = modifier_letter_capital_a;
-			return static_count(modifier_letter_capital_a);
+			return 1;
 		case 0x1D2D:
 			*normals = modifier_letter_capital_ae;
-			return static_count(modifier_letter_capital_ae);
+			return 1;
 		case 0x1D2E:
 			*normals = modifier_letter_capital_b;
-			return static_count(modifier_letter_capital_b);
+			return 1;
 		case 0x1D30:
 			*normals = modifier_letter_capital_d;
-			return static_count(modifier_letter_capital_d);
+			return 1;
 		case 0x1D31:
 			*normals = modifier_letter_capital_e;
-			return static_count(modifier_letter_capital_e);
+			return 1;
 		case 0x1D32:
 			*normals = modifier_letter_capital_reversed_e;
-			return static_count(modifier_letter_capital_reversed_e);
+			return 1;
 		case 0x1D33:
 			*normals = modifier_letter_capital_g;
-			return static_count(modifier_letter_capital_g);
+			return 1;
 		case 0x1D34:
 			*normals = modifier_letter_capital_h;
-			return static_count(modifier_letter_capital_h);
+			return 1;
 		case 0x1D35:
 			*normals = modifier_letter_capital_i;
-			return static_count(modifier_letter_capital_i);
+			return 1;
 		case 0x1D36:
 			*normals = modifier_letter_capital_j;
-			return static_count(modifier_letter_capital_j);
+			return 1;
 		case 0x1D37:
 			*normals = modifier_letter_capital_k;
-			return static_count(modifier_letter_capital_k);
+			return 1;
 		case 0x1D38:
 			*normals = modifier_letter_capital_l;
-			return static_count(modifier_letter_capital_l);
+			return 1;
 		case 0x1D39:
 			*normals = modifier_letter_capital_m;
-			return static_count(modifier_letter_capital_m);
+			return 1;
 		case 0x1D3A:
 			*normals = modifier_letter_capital_n;
-			return static_count(modifier_letter_capital_n);
+			return 1;
 		case 0x1D3C:
 			*normals = modifier_letter_capital_o;
-			return static_count(modifier_letter_capital_o);
+			return 1;
 		case 0x1D3D:
 			*normals = modifier_letter_capital_ou;
-			return static_count(modifier_letter_capital_ou);
+			return 1;
 		case 0x1D3E:
 			*normals = modifier_letter_capital_p;
-			return static_count(modifier_letter_capital_p);
+			return 1;
 		case 0x1D3F:
 			*normals = modifier_letter_capital_r;
-			return static_count(modifier_letter_capital_r);
+			return 1;
 		case 0x1D40:
 			*normals = modifier_letter_capital_t;
-			return static_count(modifier_letter_capital_t);
+			return 1;
 		case 0x1D41:
 			*normals = modifier_letter_capital_u;
-			return static_count(modifier_letter_capital_u);
+			return 1;
 		case 0x1D42:
 			*normals = modifier_letter_capital_w;
-			return static_count(modifier_letter_capital_w);
+			return 1;
 		case 0x1D43:
 			*normals = modifier_letter_small_a;
-			return static_count(modifier_letter_small_a);
+			return 1;
 		case 0x1D44:
 			*normals = modifier_letter_small_turned_a;
-			return static_count(modifier_letter_small_turned_a);
+			return 1;
 		case 0x1D45:
 			*normals = modifier_letter_small_alpha;
-			return static_count(modifier_letter_small_alpha);
+			return 1;
 		case 0x1D46:
 			*normals = modifier_letter_small_turned_ae;
-			return static_count(modifier_letter_small_turned_ae);
+			return 1;
 		case 0x1D47:
 			*normals = modifier_letter_small_b;
-			return static_count(modifier_letter_small_b);
+			return 1;
 		case 0x1D48:
 			*normals = modifier_letter_small_d;
-			return static_count(modifier_letter_small_d);
+			return 1;
 		case 0x1D49:
 			*normals = modifier_letter_small_e;
-			return static_count(modifier_letter_small_e);
+			return 1;
 		case 0x1D4A:
 			*normals = modifier_letter_small_schwa;
-			return static_count(modifier_letter_small_schwa);
+			return 1;
 		case 0x1D4B:
 			*normals = modifier_letter_small_open_e;
-			return static_count(modifier_letter_small_open_e);
+			return 1;
 		case 0x1D4C:
 			*normals = modifier_letter_small_turned_open_e;
-			return static_count(modifier_letter_small_turned_open_e);
+			return 1;
 		case 0x1D4D:
 			*normals = modifier_letter_small_g;
-			return static_count(modifier_letter_small_g);
+			return 1;
 		case 0x1D4F:
 			*normals = modifier_letter_small_k;
-			return static_count(modifier_letter_small_k);
+			return 1;
 		case 0x1D50:
 			*normals = modifier_letter_small_m;
-			return static_count(modifier_letter_small_m);
+			return 1;
 		case 0x1D51:
 			*normals = modifier_letter_small_eng;
-			return static_count(modifier_letter_small_eng);
+			return 1;
 		case 0x1D52:
 			*normals = modifier_letter_small_o;
-			return static_count(modifier_letter_small_o);
+			return 1;
 		case 0x1D53:
 			*normals = modifier_letter_small_open_o;
-			return static_count(modifier_letter_small_open_o);
+			return 1;
 		case 0x1D54:
 			*normals = modifier_letter_small_top_half_o;
-			return static_count(modifier_letter_small_top_half_o);
+			return 1;
 		case 0x1D55:
 			*normals = modifier_letter_small_bottom_half_o;
-			return static_count(modifier_letter_small_bottom_half_o);
+			return 1;
 		case 0x1D56:
 			*normals = modifier_letter_small_p;
-			return static_count(modifier_letter_small_p);
+			return 1;
 		case 0x1D57:
 			*normals = modifier_letter_small_t;
-			return static_count(modifier_letter_small_t);
+			return 1;
 		case 0x1D58:
 			*normals = modifier_letter_small_u;
-			return static_count(modifier_letter_small_u);
+			return 1;
 		case 0x1D59:
 			*normals = modifier_letter_small_sideways_u;
-			return static_count(modifier_letter_small_sideways_u);
+			return 1;
 		case 0x1D5A:
 			*normals = modifier_letter_small_turned_m;
-			return static_count(modifier_letter_small_turned_m);
+			return 1;
 		case 0x1D5B:
 			*normals = modifier_letter_small_v;
-			return static_count(modifier_letter_small_v);
+			return 1;
 		case 0x1D5C:
 			*normals = modifier_letter_small_ain;
-			return static_count(modifier_letter_small_ain);
+			return 1;
 		case 0x1D5D:
 			*normals = modifier_letter_small_beta;
-			return static_count(modifier_letter_small_beta);
+			return 1;
 		case 0x1D5E:
 			*normals = modifier_letter_small_greek_gamma;
-			return static_count(modifier_letter_small_greek_gamma);
+			return 1;
 		case 0x1D5F:
 			*normals = modifier_letter_small_delta;
-			return static_count(modifier_letter_small_delta);
+			return 1;
 		case 0x1D60:
 			*normals = modifier_letter_small_greek_phi;
-			return static_count(modifier_letter_small_greek_phi);
+			return 1;
 		case 0x1D61:
 			*normals = modifier_letter_small_chi;
-			return static_count(modifier_letter_small_chi);
+			return 1;
 		case 0x1D62:
 			*normals = latin_subscript_small_letter_i;
-			return static_count(latin_subscript_small_letter_i);
+			return 1;
 		case 0x1D63:
 			*normals = latin_subscript_small_letter_r;
-			return static_count(latin_subscript_small_letter_r);
+			return 1;
 		case 0x1D64:
 			*normals = latin_subscript_small_letter_u;
-			return static_count(latin_subscript_small_letter_u);
+			return 1;
 		case 0x1D65:
 			*normals = latin_subscript_small_letter_v;
-			return static_count(latin_subscript_small_letter_v);
+			return 1;
 		case 0x1D66:
 			*normals = greek_subscript_small_letter_beta;
-			return static_count(greek_subscript_small_letter_beta);
+			return 1;
 		case 0x1D67:
 			*normals = greek_subscript_small_letter_gamma;
-			return static_count(greek_subscript_small_letter_gamma);
+			return 1;
 		case 0x1D68:
 			*normals = greek_subscript_small_letter_rho;
-			return static_count(greek_subscript_small_letter_rho);
+			return 1;
 		case 0x1D69:
 			*normals = greek_subscript_small_letter_phi;
-			return static_count(greek_subscript_small_letter_phi);
+			return 1;
 		case 0x1D6A:
 			*normals = greek_subscript_small_letter_chi;
-			return static_count(greek_subscript_small_letter_chi);
+			return 1;
 		case 0x1D78:
 			*normals = modifier_letter_cyrillic_en;
-			return static_count(modifier_letter_cyrillic_en);
+			return 1;
 		case 0x1D9B:
 			*normals = modifier_letter_small_turned_alpha;
-			return static_count(modifier_letter_small_turned_alpha);
+			return 1;
 		case 0x1D9C:
 			*normals = modifier_letter_small_c;
-			return static_count(modifier_letter_small_c);
+			return 1;
 		case 0x1D9D:
 			*normals = modifier_letter_small_c_with_curl;
-			return static_count(modifier_letter_small_c_with_curl);
+			return 1;
 		case 0x1D9E:
 			*normals = modifier_letter_small_eth;
-			return static_count(modifier_letter_small_eth);
+			return 1;
 		case 0x1D9F:
 			*normals = modifier_letter_small_reversed_open_e;
-			return static_count(modifier_letter_small_reversed_open_e);
+			return 1;
 		case 0x1DA0:
 			*normals = modifier_letter_small_f;
-			return static_count(modifier_letter_small_f);
+			return 1;
 		case 0x1DA1:
 			*normals = modifier_letter_small_dotless_j_with_stroke;
-			return static_count(modifier_letter_small_dotless_j_with_stroke);
+			return 1;
 		case 0x1DA2:
 			*normals = modifier_letter_small_script_g;
-			return static_count(modifier_letter_small_script_g);
+			return 1;
 		case 0x1DA3:
 			*normals = modifier_letter_small_turned_h;
-			return static_count(modifier_letter_small_turned_h);
+			return 1;
 		case 0x1DA4:
 			*normals = modifier_letter_small_i_with_stroke;
-			return static_count(modifier_letter_small_i_with_stroke);
+			return 1;
 		case 0x1DA5:
 			*normals = modifier_letter_small_iota;
-			return static_count(modifier_letter_small_iota);
+			return 1;
 		case 0x1DA6:
 			*normals = modifier_letter_small_capital_i;
-			return static_count(modifier_letter_small_capital_i);
+			return 1;
 		case 0x1DA7:
 			*normals = modifier_letter_small_capital_i_with_stroke;
-			return static_count(modifier_letter_small_capital_i_with_stroke);
+			return 1;
 		case 0x1DA8:
 			*normals = modifier_letter_small_j_with_crossed_tail;
-			return static_count(modifier_letter_small_j_with_crossed_tail);
+			return 1;
 		case 0x1DA9:
 			*normals = modifier_letter_small_l_with_retroflex_hook;
-			return static_count(modifier_letter_small_l_with_retroflex_hook);
+			return 1;
 		case 0x1DAA:
 			*normals = modifier_letter_small_l_with_palatal_hook;
-			return static_count(modifier_letter_small_l_with_palatal_hook);
+			return 1;
 		case 0x1DAB:
 			*normals = modifier_letter_small_capital_l;
-			return static_count(modifier_letter_small_capital_l);
+			return 1;
 		case 0x1DAC:
 			*normals = modifier_letter_small_m_with_hook;
-			return static_count(modifier_letter_small_m_with_hook);
+			return 1;
 		case 0x1DAD:
 			*normals = modifier_letter_small_turned_m_with_long_leg;
-			return static_count(modifier_letter_small_turned_m_with_long_leg);
+			return 1;
 		case 0x1DAE:
 			*normals = modifier_letter_small_n_with_left_hook;
-			return static_count(modifier_letter_small_n_with_left_hook);
+			return 1;
 		case 0x1DAF:
 			*normals = modifier_letter_small_n_with_retroflex_hook;
-			return static_count(modifier_letter_small_n_with_retroflex_hook);
+			return 1;
 		case 0x1DB0:
 			*normals = modifier_letter_small_capital_n;
-			return static_count(modifier_letter_small_capital_n);
+			return 1;
 		case 0x1DB1:
 			*normals = modifier_letter_small_barred_o;
-			return static_count(modifier_letter_small_barred_o);
+			return 1;
 		case 0x1DB2:
 			*normals = modifier_letter_small_phi;
-			return static_count(modifier_letter_small_phi);
+			return 1;
 		case 0x1DB3:
 			*normals = modifier_letter_small_s_with_hook;
-			return static_count(modifier_letter_small_s_with_hook);
+			return 1;
 		case 0x1DB4:
 			*normals = modifier_letter_small_esh;
-			return static_count(modifier_letter_small_esh);
+			return 1;
 		case 0x1DB5:
 			*normals = modifier_letter_small_t_with_palatal_hook;
-			return static_count(modifier_letter_small_t_with_palatal_hook);
+			return 1;
 		case 0x1DB6:
 			*normals = modifier_letter_small_u_bar;
-			return static_count(modifier_letter_small_u_bar);
+			return 1;
 		case 0x1DB7:
 			*normals = modifier_letter_small_upsilon;
-			return static_count(modifier_letter_small_upsilon);
+			return 1;
 		case 0x1DB8:
 			*normals = modifier_letter_small_capital_u;
-			return static_count(modifier_letter_small_capital_u);
+			return 1;
 		case 0x1DB9:
 			*normals = modifier_letter_small_v_with_hook;
-			return static_count(modifier_letter_small_v_with_hook);
+			return 1;
 		case 0x1DBA:
 			*normals = modifier_letter_small_turned_v;
-			return static_count(modifier_letter_small_turned_v);
+			return 1;
 		case 0x1DBB:
 			*normals = modifier_letter_small_z;
-			return static_count(modifier_letter_small_z);
+			return 1;
 		case 0x1DBC:
 			*normals = modifier_letter_small_z_with_retroflex_hook;
-			return static_count(modifier_letter_small_z_with_retroflex_hook);
+			return 1;
 		case 0x1DBD:
 			*normals = modifier_letter_small_z_with_curl;
-			return static_count(modifier_letter_small_z_with_curl);
+			return 1;
 		case 0x1DBE:
 			*normals = modifier_letter_small_ezh;
-			return static_count(modifier_letter_small_ezh);
+			return 1;
 		case 0x1DBF:
 			*normals = modifier_letter_small_theta;
-			return static_count(modifier_letter_small_theta);
+			return 1;
 		case 0x1E00:
 			*normals = latin_capital_letter_a_with_ring_below;
-			return static_count(latin_capital_letter_a_with_ring_below);
+			return 2;
 		case 0x1E01:
 			*normals = latin_small_letter_a_with_ring_below;
-			return static_count(latin_small_letter_a_with_ring_below);
+			return 2;
 		case 0x1E02:
 			*normals = latin_capital_letter_b_with_dot_above;
-			return static_count(latin_capital_letter_b_with_dot_above);
+			return 2;
 		case 0x1E03:
 			*normals = latin_small_letter_b_with_dot_above;
-			return static_count(latin_small_letter_b_with_dot_above);
+			return 2;
 		case 0x1E04:
 			*normals = latin_capital_letter_b_with_dot_below;
-			return static_count(latin_capital_letter_b_with_dot_below);
+			return 2;
 		case 0x1E05:
 			*normals = latin_small_letter_b_with_dot_below;
-			return static_count(latin_small_letter_b_with_dot_below);
+			return 2;
 		case 0x1E06:
 			*normals = latin_capital_letter_b_with_line_below;
-			return static_count(latin_capital_letter_b_with_line_below);
+			return 2;
 		case 0x1E07:
 			*normals = latin_small_letter_b_with_line_below;
-			return static_count(latin_small_letter_b_with_line_below);
+			return 2;
 		case 0x1E08:
 			*normals = latin_capital_letter_c_with_cedilla_and_acute;
-			return static_count(latin_capital_letter_c_with_cedilla_and_acute);
+			return 2;
 		case 0x1E09:
 			*normals = latin_small_letter_c_with_cedilla_and_acute;
-			return static_count(latin_small_letter_c_with_cedilla_and_acute);
+			return 2;
 		case 0x1E0A:
 			*normals = latin_capital_letter_d_with_dot_above;
-			return static_count(latin_capital_letter_d_with_dot_above);
+			return 2;
 		case 0x1E0B:
 			*normals = latin_small_letter_d_with_dot_above;
-			return static_count(latin_small_letter_d_with_dot_above);
+			return 2;
 		case 0x1E0C:
 			*normals = latin_capital_letter_d_with_dot_below;
-			return static_count(latin_capital_letter_d_with_dot_below);
+			return 2;
 		case 0x1E0D:
 			*normals = latin_small_letter_d_with_dot_below;
-			return static_count(latin_small_letter_d_with_dot_below);
+			return 2;
 		case 0x1E0E:
 			*normals = latin_capital_letter_d_with_line_below;
-			return static_count(latin_capital_letter_d_with_line_below);
+			return 2;
 		case 0x1E0F:
 			*normals = latin_small_letter_d_with_line_below;
-			return static_count(latin_small_letter_d_with_line_below);
+			return 2;
 		case 0x1E10:
 			*normals = latin_capital_letter_d_with_cedilla;
-			return static_count(latin_capital_letter_d_with_cedilla);
+			return 2;
 		case 0x1E11:
 			*normals = latin_small_letter_d_with_cedilla;
-			return static_count(latin_small_letter_d_with_cedilla);
+			return 2;
 		case 0x1E12:
 			*normals = latin_capital_letter_d_with_circumflex_below;
-			return static_count(latin_capital_letter_d_with_circumflex_below);
+			return 2;
 		case 0x1E13:
 			*normals = latin_small_letter_d_with_circumflex_below;
-			return static_count(latin_small_letter_d_with_circumflex_below);
+			return 2;
 		case 0x1E14:
 			*normals = latin_capital_letter_e_with_macron_and_grave;
-			return static_count(latin_capital_letter_e_with_macron_and_grave);
+			return 2;
 		case 0x1E15:
 			*normals = latin_small_letter_e_with_macron_and_grave;
-			return static_count(latin_small_letter_e_with_macron_and_grave);
+			return 2;
 		case 0x1E16:
 			*normals = latin_capital_letter_e_with_macron_and_acute;
-			return static_count(latin_capital_letter_e_with_macron_and_acute);
+			return 2;
 		case 0x1E17:
 			*normals = latin_small_letter_e_with_macron_and_acute;
-			return static_count(latin_small_letter_e_with_macron_and_acute);
+			return 2;
 		case 0x1E18:
 			*normals = latin_capital_letter_e_with_circumflex_below;
-			return static_count(latin_capital_letter_e_with_circumflex_below);
+			return 2;
 		case 0x1E19:
 			*normals = latin_small_letter_e_with_circumflex_below;
-			return static_count(latin_small_letter_e_with_circumflex_below);
+			return 2;
 		case 0x1E1A:
 			*normals = latin_capital_letter_e_with_tilde_below;
-			return static_count(latin_capital_letter_e_with_tilde_below);
+			return 2;
 		case 0x1E1B:
 			*normals = latin_small_letter_e_with_tilde_below;
-			return static_count(latin_small_letter_e_with_tilde_below);
+			return 2;
 		case 0x1E1C:
 			*normals = latin_capital_letter_e_with_cedilla_and_breve;
-			return static_count(latin_capital_letter_e_with_cedilla_and_breve);
+			return 2;
 		case 0x1E1D:
 			*normals = latin_small_letter_e_with_cedilla_and_breve;
-			return static_count(latin_small_letter_e_with_cedilla_and_breve);
+			return 2;
 		case 0x1E1E:
 			*normals = latin_capital_letter_f_with_dot_above;
-			return static_count(latin_capital_letter_f_with_dot_above);
+			return 2;
 		case 0x1E1F:
 			*normals = latin_small_letter_f_with_dot_above;
-			return static_count(latin_small_letter_f_with_dot_above);
+			return 2;
 		case 0x1E20:
 			*normals = latin_capital_letter_g_with_macron;
-			return static_count(latin_capital_letter_g_with_macron);
+			return 2;
 		case 0x1E21:
 			*normals = latin_small_letter_g_with_macron;
-			return static_count(latin_small_letter_g_with_macron);
+			return 2;
 		case 0x1E22:
 			*normals = latin_capital_letter_h_with_dot_above;
-			return static_count(latin_capital_letter_h_with_dot_above);
+			return 2;
 		case 0x1E23:
 			*normals = latin_small_letter_h_with_dot_above;
-			return static_count(latin_small_letter_h_with_dot_above);
+			return 2;
 		case 0x1E24:
 			*normals = latin_capital_letter_h_with_dot_below;
-			return static_count(latin_capital_letter_h_with_dot_below);
+			return 2;
 		case 0x1E25:
 			*normals = latin_small_letter_h_with_dot_below;
-			return static_count(latin_small_letter_h_with_dot_below);
+			return 2;
 		case 0x1E26:
 			*normals = latin_capital_letter_h_with_diaeresis;
-			return static_count(latin_capital_letter_h_with_diaeresis);
+			return 2;
 		case 0x1E27:
 			*normals = latin_small_letter_h_with_diaeresis;
-			return static_count(latin_small_letter_h_with_diaeresis);
+			return 2;
 		case 0x1E28:
 			*normals = latin_capital_letter_h_with_cedilla;
-			return static_count(latin_capital_letter_h_with_cedilla);
+			return 2;
 		case 0x1E29:
 			*normals = latin_small_letter_h_with_cedilla;
-			return static_count(latin_small_letter_h_with_cedilla);
+			return 2;
 		case 0x1E2A:
 			*normals = latin_capital_letter_h_with_breve_below;
-			return static_count(latin_capital_letter_h_with_breve_below);
+			return 2;
 		case 0x1E2B:
 			*normals = latin_small_letter_h_with_breve_below;
-			return static_count(latin_small_letter_h_with_breve_below);
+			return 2;
 		case 0x1E2C:
 			*normals = latin_capital_letter_i_with_tilde_below;
-			return static_count(latin_capital_letter_i_with_tilde_below);
+			return 2;
 		case 0x1E2D:
 			*normals = latin_small_letter_i_with_tilde_below;
-			return static_count(latin_small_letter_i_with_tilde_below);
+			return 2;
 		case 0x1E2E:
 			*normals = latin_capital_letter_i_with_diaeresis_and_acute;
-			return static_count(latin_capital_letter_i_with_diaeresis_and_acute);
+			return 2;
 		case 0x1E2F:
 			*normals = latin_small_letter_i_with_diaeresis_and_acute;
-			return static_count(latin_small_letter_i_with_diaeresis_and_acute);
+			return 2;
 		case 0x1E30:
 			*normals = latin_capital_letter_k_with_acute;
-			return static_count(latin_capital_letter_k_with_acute);
+			return 2;
 		case 0x1E31:
 			*normals = latin_small_letter_k_with_acute;
-			return static_count(latin_small_letter_k_with_acute);
+			return 2;
 		case 0x1E32:
 			*normals = latin_capital_letter_k_with_dot_below;
-			return static_count(latin_capital_letter_k_with_dot_below);
+			return 2;
 		case 0x1E33:
 			*normals = latin_small_letter_k_with_dot_below;
-			return static_count(latin_small_letter_k_with_dot_below);
+			return 2;
 		case 0x1E34:
 			*normals = latin_capital_letter_k_with_line_below;
-			return static_count(latin_capital_letter_k_with_line_below);
+			return 2;
 		case 0x1E35:
 			*normals = latin_small_letter_k_with_line_below;
-			return static_count(latin_small_letter_k_with_line_below);
+			return 2;
 		case 0x1E36:
 			*normals = latin_capital_letter_l_with_dot_below;
-			return static_count(latin_capital_letter_l_with_dot_below);
+			return 2;
 		case 0x1E37:
 			*normals = latin_small_letter_l_with_dot_below;
-			return static_count(latin_small_letter_l_with_dot_below);
+			return 2;
 		case 0x1E38:
 			*normals = latin_capital_letter_l_with_dot_below_and_macron;
-			return static_count(latin_capital_letter_l_with_dot_below_and_macron);
+			return 2;
 		case 0x1E39:
 			*normals = latin_small_letter_l_with_dot_below_and_macron;
-			return static_count(latin_small_letter_l_with_dot_below_and_macron);
+			return 2;
 		case 0x1E3A:
 			*normals = latin_capital_letter_l_with_line_below;
-			return static_count(latin_capital_letter_l_with_line_below);
+			return 2;
 		case 0x1E3B:
 			*normals = latin_small_letter_l_with_line_below;
-			return static_count(latin_small_letter_l_with_line_below);
+			return 2;
 		case 0x1E3C:
 			*normals = latin_capital_letter_l_with_circumflex_below;
-			return static_count(latin_capital_letter_l_with_circumflex_below);
+			return 2;
 		case 0x1E3D:
 			*normals = latin_small_letter_l_with_circumflex_below;
-			return static_count(latin_small_letter_l_with_circumflex_below);
+			return 2;
 		case 0x1E3E:
 			*normals = latin_capital_letter_m_with_acute;
-			return static_count(latin_capital_letter_m_with_acute);
+			return 2;
 		case 0x1E3F:
 			*normals = latin_small_letter_m_with_acute;
-			return static_count(latin_small_letter_m_with_acute);
+			return 2;
 		case 0x1E40:
 			*normals = latin_capital_letter_m_with_dot_above;
-			return static_count(latin_capital_letter_m_with_dot_above);
+			return 2;
 		case 0x1E41:
 			*normals = latin_small_letter_m_with_dot_above;
-			return static_count(latin_small_letter_m_with_dot_above);
+			return 2;
 		case 0x1E42:
 			*normals = latin_capital_letter_m_with_dot_below;
-			return static_count(latin_capital_letter_m_with_dot_below);
+			return 2;
 		case 0x1E43:
 			*normals = latin_small_letter_m_with_dot_below;
-			return static_count(latin_small_letter_m_with_dot_below);
+			return 2;
 		case 0x1E44:
 			*normals = latin_capital_letter_n_with_dot_above;
-			return static_count(latin_capital_letter_n_with_dot_above);
+			return 2;
 		case 0x1E45:
 			*normals = latin_small_letter_n_with_dot_above;
-			return static_count(latin_small_letter_n_with_dot_above);
+			return 2;
 		case 0x1E46:
 			*normals = latin_capital_letter_n_with_dot_below;
-			return static_count(latin_capital_letter_n_with_dot_below);
+			return 2;
 		case 0x1E47:
 			*normals = latin_small_letter_n_with_dot_below;
-			return static_count(latin_small_letter_n_with_dot_below);
+			return 2;
 		case 0x1E48:
 			*normals = latin_capital_letter_n_with_line_below;
-			return static_count(latin_capital_letter_n_with_line_below);
+			return 2;
 		case 0x1E49:
 			*normals = latin_small_letter_n_with_line_below;
-			return static_count(latin_small_letter_n_with_line_below);
+			return 2;
 		case 0x1E4A:
 			*normals = latin_capital_letter_n_with_circumflex_below;
-			return static_count(latin_capital_letter_n_with_circumflex_below);
+			return 2;
 		case 0x1E4B:
 			*normals = latin_small_letter_n_with_circumflex_below;
-			return static_count(latin_small_letter_n_with_circumflex_below);
+			return 2;
 		case 0x1E4C:
 			*normals = latin_capital_letter_o_with_tilde_and_acute;
-			return static_count(latin_capital_letter_o_with_tilde_and_acute);
+			return 2;
 		case 0x1E4D:
 			*normals = latin_small_letter_o_with_tilde_and_acute;
-			return static_count(latin_small_letter_o_with_tilde_and_acute);
+			return 2;
 		case 0x1E4E:
 			*normals = latin_capital_letter_o_with_tilde_and_diaeresis;
-			return static_count(latin_capital_letter_o_with_tilde_and_diaeresis);
+			return 2;
 		case 0x1E4F:
 			*normals = latin_small_letter_o_with_tilde_and_diaeresis;
-			return static_count(latin_small_letter_o_with_tilde_and_diaeresis);
+			return 2;
 		case 0x1E50:
 			*normals = latin_capital_letter_o_with_macron_and_grave;
-			return static_count(latin_capital_letter_o_with_macron_and_grave);
+			return 2;
 		case 0x1E51:
 			*normals = latin_small_letter_o_with_macron_and_grave;
-			return static_count(latin_small_letter_o_with_macron_and_grave);
+			return 2;
 		case 0x1E52:
 			*normals = latin_capital_letter_o_with_macron_and_acute;
-			return static_count(latin_capital_letter_o_with_macron_and_acute);
+			return 2;
 		case 0x1E53:
 			*normals = latin_small_letter_o_with_macron_and_acute;
-			return static_count(latin_small_letter_o_with_macron_and_acute);
+			return 2;
 		case 0x1E54:
 			*normals = latin_capital_letter_p_with_acute;
-			return static_count(latin_capital_letter_p_with_acute);
+			return 2;
 		case 0x1E55:
 			*normals = latin_small_letter_p_with_acute;
-			return static_count(latin_small_letter_p_with_acute);
+			return 2;
 		case 0x1E56:
 			*normals = latin_capital_letter_p_with_dot_above;
-			return static_count(latin_capital_letter_p_with_dot_above);
+			return 2;
 		case 0x1E57:
 			*normals = latin_small_letter_p_with_dot_above;
-			return static_count(latin_small_letter_p_with_dot_above);
+			return 2;
 		case 0x1E58:
 			*normals = latin_capital_letter_r_with_dot_above;
-			return static_count(latin_capital_letter_r_with_dot_above);
+			return 2;
 		case 0x1E59:
 			*normals = latin_small_letter_r_with_dot_above;
-			return static_count(latin_small_letter_r_with_dot_above);
+			return 2;
 		case 0x1E5A:
 			*normals = latin_capital_letter_r_with_dot_below;
-			return static_count(latin_capital_letter_r_with_dot_below);
+			return 2;
 		case 0x1E5B:
 			*normals = latin_small_letter_r_with_dot_below;
-			return static_count(latin_small_letter_r_with_dot_below);
+			return 2;
 		case 0x1E5C:
 			*normals = latin_capital_letter_r_with_dot_below_and_macron;
-			return static_count(latin_capital_letter_r_with_dot_below_and_macron);
+			return 2;
 		case 0x1E5D:
 			*normals = latin_small_letter_r_with_dot_below_and_macron;
-			return static_count(latin_small_letter_r_with_dot_below_and_macron);
+			return 2;
 		case 0x1E5E:
 			*normals = latin_capital_letter_r_with_line_below;
-			return static_count(latin_capital_letter_r_with_line_below);
+			return 2;
 		case 0x1E5F:
 			*normals = latin_small_letter_r_with_line_below;
-			return static_count(latin_small_letter_r_with_line_below);
+			return 2;
 		case 0x1E60:
 			*normals = latin_capital_letter_s_with_dot_above;
-			return static_count(latin_capital_letter_s_with_dot_above);
+			return 2;
 		case 0x1E61:
 			*normals = latin_small_letter_s_with_dot_above;
-			return static_count(latin_small_letter_s_with_dot_above);
+			return 2;
 		case 0x1E62:
 			*normals = latin_capital_letter_s_with_dot_below;
-			return static_count(latin_capital_letter_s_with_dot_below);
+			return 2;
 		case 0x1E63:
 			*normals = latin_small_letter_s_with_dot_below;
-			return static_count(latin_small_letter_s_with_dot_below);
+			return 2;
 		case 0x1E64:
 			*normals = latin_capital_letter_s_with_acute_and_dot_above;
-			return static_count(latin_capital_letter_s_with_acute_and_dot_above);
+			return 2;
 		case 0x1E65:
 			*normals = latin_small_letter_s_with_acute_and_dot_above;
-			return static_count(latin_small_letter_s_with_acute_and_dot_above);
+			return 2;
 		case 0x1E66:
 			*normals = latin_capital_letter_s_with_caron_and_dot_above;
-			return static_count(latin_capital_letter_s_with_caron_and_dot_above);
+			return 2;
 		case 0x1E67:
 			*normals = latin_small_letter_s_with_caron_and_dot_above;
-			return static_count(latin_small_letter_s_with_caron_and_dot_above);
+			return 2;
 		case 0x1E68:
 			*normals = latin_capital_letter_s_with_dot_below_and_dot_above;
-			return static_count(latin_capital_letter_s_with_dot_below_and_dot_above);
+			return 2;
 		case 0x1E69:
 			*normals = latin_small_letter_s_with_dot_below_and_dot_above;
-			return static_count(latin_small_letter_s_with_dot_below_and_dot_above);
+			return 2;
 		case 0x1E6A:
 			*normals = latin_capital_letter_t_with_dot_above;
-			return static_count(latin_capital_letter_t_with_dot_above);
+			return 2;
 		case 0x1E6B:
 			*normals = latin_small_letter_t_with_dot_above;
-			return static_count(latin_small_letter_t_with_dot_above);
+			return 2;
 		case 0x1E6C:
 			*normals = latin_capital_letter_t_with_dot_below;
-			return static_count(latin_capital_letter_t_with_dot_below);
+			return 2;
 		case 0x1E6D:
 			*normals = latin_small_letter_t_with_dot_below;
-			return static_count(latin_small_letter_t_with_dot_below);
+			return 2;
 		case 0x1E6E:
 			*normals = latin_capital_letter_t_with_line_below;
-			return static_count(latin_capital_letter_t_with_line_below);
+			return 2;
 		case 0x1E6F:
 			*normals = latin_small_letter_t_with_line_below;
-			return static_count(latin_small_letter_t_with_line_below);
+			return 2;
 		case 0x1E70:
 			*normals = latin_capital_letter_t_with_circumflex_below;
-			return static_count(latin_capital_letter_t_with_circumflex_below);
+			return 2;
 		case 0x1E71:
 			*normals = latin_small_letter_t_with_circumflex_below;
-			return static_count(latin_small_letter_t_with_circumflex_below);
+			return 2;
 		case 0x1E72:
 			*normals = latin_capital_letter_u_with_diaeresis_below;
-			return static_count(latin_capital_letter_u_with_diaeresis_below);
+			return 2;
 		case 0x1E73:
 			*normals = latin_small_letter_u_with_diaeresis_below;
-			return static_count(latin_small_letter_u_with_diaeresis_below);
+			return 2;
 		case 0x1E74:
 			*normals = latin_capital_letter_u_with_tilde_below;
-			return static_count(latin_capital_letter_u_with_tilde_below);
+			return 2;
 		case 0x1E75:
 			*normals = latin_small_letter_u_with_tilde_below;
-			return static_count(latin_small_letter_u_with_tilde_below);
+			return 2;
 		case 0x1E76:
 			*normals = latin_capital_letter_u_with_circumflex_below;
-			return static_count(latin_capital_letter_u_with_circumflex_below);
+			return 2;
 		case 0x1E77:
 			*normals = latin_small_letter_u_with_circumflex_below;
-			return static_count(latin_small_letter_u_with_circumflex_below);
+			return 2;
 		case 0x1E78:
 			*normals = latin_capital_letter_u_with_tilde_and_acute;
-			return static_count(latin_capital_letter_u_with_tilde_and_acute);
+			return 2;
 		case 0x1E79:
 			*normals = latin_small_letter_u_with_tilde_and_acute;
-			return static_count(latin_small_letter_u_with_tilde_and_acute);
+			return 2;
 		case 0x1E7A:
 			*normals = latin_capital_letter_u_with_macron_and_diaeresis;
-			return static_count(latin_capital_letter_u_with_macron_and_diaeresis);
+			return 2;
 		case 0x1E7B:
 			*normals = latin_small_letter_u_with_macron_and_diaeresis;
-			return static_count(latin_small_letter_u_with_macron_and_diaeresis);
+			return 2;
 		case 0x1E7C:
 			*normals = latin_capital_letter_v_with_tilde;
-			return static_count(latin_capital_letter_v_with_tilde);
+			return 2;
 		case 0x1E7D:
 			*normals = latin_small_letter_v_with_tilde;
-			return static_count(latin_small_letter_v_with_tilde);
+			return 2;
 		case 0x1E7E:
 			*normals = latin_capital_letter_v_with_dot_below;
-			return static_count(latin_capital_letter_v_with_dot_below);
+			return 2;
 		case 0x1E7F:
 			*normals = latin_small_letter_v_with_dot_below;
-			return static_count(latin_small_letter_v_with_dot_below);
+			return 2;
 		case 0x1E80:
 			*normals = latin_capital_letter_w_with_grave;
-			return static_count(latin_capital_letter_w_with_grave);
+			return 2;
 		case 0x1E81:
 			*normals = latin_small_letter_w_with_grave;
-			return static_count(latin_small_letter_w_with_grave);
+			return 2;
 		case 0x1E82:
 			*normals = latin_capital_letter_w_with_acute;
-			return static_count(latin_capital_letter_w_with_acute);
+			return 2;
 		case 0x1E83:
 			*normals = latin_small_letter_w_with_acute;
-			return static_count(latin_small_letter_w_with_acute);
+			return 2;
 		case 0x1E84:
 			*normals = latin_capital_letter_w_with_diaeresis;
-			return static_count(latin_capital_letter_w_with_diaeresis);
+			return 2;
 		case 0x1E85:
 			*normals = latin_small_letter_w_with_diaeresis;
-			return static_count(latin_small_letter_w_with_diaeresis);
+			return 2;
 		case 0x1E86:
 			*normals = latin_capital_letter_w_with_dot_above;
-			return static_count(latin_capital_letter_w_with_dot_above);
+			return 2;
 		case 0x1E87:
 			*normals = latin_small_letter_w_with_dot_above;
-			return static_count(latin_small_letter_w_with_dot_above);
+			return 2;
 		case 0x1E88:
 			*normals = latin_capital_letter_w_with_dot_below;
-			return static_count(latin_capital_letter_w_with_dot_below);
+			return 2;
 		case 0x1E89:
 			*normals = latin_small_letter_w_with_dot_below;
-			return static_count(latin_small_letter_w_with_dot_below);
+			return 2;
 		case 0x1E8A:
 			*normals = latin_capital_letter_x_with_dot_above;
-			return static_count(latin_capital_letter_x_with_dot_above);
+			return 2;
 		case 0x1E8B:
 			*normals = latin_small_letter_x_with_dot_above;
-			return static_count(latin_small_letter_x_with_dot_above);
+			return 2;
 		case 0x1E8C:
 			*normals = latin_capital_letter_x_with_diaeresis;
-			return static_count(latin_capital_letter_x_with_diaeresis);
+			return 2;
 		case 0x1E8D:
 			*normals = latin_small_letter_x_with_diaeresis;
-			return static_count(latin_small_letter_x_with_diaeresis);
+			return 2;
 		case 0x1E8E:
 			*normals = latin_capital_letter_y_with_dot_above;
-			return static_count(latin_capital_letter_y_with_dot_above);
+			return 2;
 		case 0x1E8F:
 			*normals = latin_small_letter_y_with_dot_above;
-			return static_count(latin_small_letter_y_with_dot_above);
+			return 2;
 		case 0x1E90:
 			*normals = latin_capital_letter_z_with_circumflex;
-			return static_count(latin_capital_letter_z_with_circumflex);
+			return 2;
 		case 0x1E91:
 			*normals = latin_small_letter_z_with_circumflex;
-			return static_count(latin_small_letter_z_with_circumflex);
+			return 2;
 		case 0x1E92:
 			*normals = latin_capital_letter_z_with_dot_below;
-			return static_count(latin_capital_letter_z_with_dot_below);
+			return 2;
 		case 0x1E93:
 			*normals = latin_small_letter_z_with_dot_below;
-			return static_count(latin_small_letter_z_with_dot_below);
+			return 2;
 		case 0x1E94:
 			*normals = latin_capital_letter_z_with_line_below;
-			return static_count(latin_capital_letter_z_with_line_below);
+			return 2;
 		case 0x1E95:
 			*normals = latin_small_letter_z_with_line_below;
-			return static_count(latin_small_letter_z_with_line_below);
+			return 2;
 		case 0x1E96:
 			*normals = latin_small_letter_h_with_line_below;
-			return static_count(latin_small_letter_h_with_line_below);
+			return 2;
 		case 0x1E97:
 			*normals = latin_small_letter_t_with_diaeresis;
-			return static_count(latin_small_letter_t_with_diaeresis);
+			return 2;
 		case 0x1E98:
 			*normals = latin_small_letter_w_with_ring_above;
-			return static_count(latin_small_letter_w_with_ring_above);
+			return 2;
 		case 0x1E99:
 			*normals = latin_small_letter_y_with_ring_above;
-			return static_count(latin_small_letter_y_with_ring_above);
+			return 2;
 		case 0x1E9A:
 			*normals = latin_small_letter_a_with_right_half_ring;
-			return static_count(latin_small_letter_a_with_right_half_ring);
+			return 2;
 		case 0x1E9B:
 			*normals = latin_small_letter_long_s_with_dot_above;
-			return static_count(latin_small_letter_long_s_with_dot_above);
+			return 2;
 		case 0x1EA0:
 			*normals = latin_capital_letter_a_with_dot_below;
-			return static_count(latin_capital_letter_a_with_dot_below);
+			return 2;
 		case 0x1EA1:
 			*normals = latin_small_letter_a_with_dot_below;
-			return static_count(latin_small_letter_a_with_dot_below);
+			return 2;
 		case 0x1EA2:
 			*normals = latin_capital_letter_a_with_hook_above;
-			return static_count(latin_capital_letter_a_with_hook_above);
+			return 2;
 		case 0x1EA3:
 			*normals = latin_small_letter_a_with_hook_above;
-			return static_count(latin_small_letter_a_with_hook_above);
+			return 2;
 		case 0x1EA4:
 			*normals = latin_capital_letter_a_with_circumflex_and_acute;
-			return static_count(latin_capital_letter_a_with_circumflex_and_acute);
+			return 2;
 		case 0x1EA5:
 			*normals = latin_small_letter_a_with_circumflex_and_acute;
-			return static_count(latin_small_letter_a_with_circumflex_and_acute);
+			return 2;
 		case 0x1EA6:
 			*normals = latin_capital_letter_a_with_circumflex_and_grave;
-			return static_count(latin_capital_letter_a_with_circumflex_and_grave);
+			return 2;
 		case 0x1EA7:
 			*normals = latin_small_letter_a_with_circumflex_and_grave;
-			return static_count(latin_small_letter_a_with_circumflex_and_grave);
+			return 2;
 		case 0x1EA8:
 			*normals = latin_capital_letter_a_with_circumflex_and_hook_above;
-			return static_count(latin_capital_letter_a_with_circumflex_and_hook_above);
+			return 2;
 		case 0x1EA9:
 			*normals = latin_small_letter_a_with_circumflex_and_hook_above;
-			return static_count(latin_small_letter_a_with_circumflex_and_hook_above);
+			return 2;
 		case 0x1EAA:
 			*normals = latin_capital_letter_a_with_circumflex_and_tilde;
-			return static_count(latin_capital_letter_a_with_circumflex_and_tilde);
+			return 2;
 		case 0x1EAB:
 			*normals = latin_small_letter_a_with_circumflex_and_tilde;
-			return static_count(latin_small_letter_a_with_circumflex_and_tilde);
+			return 2;
 		case 0x1EAC:
 			*normals = latin_capital_letter_a_with_circumflex_and_dot_below;
-			return static_count(latin_capital_letter_a_with_circumflex_and_dot_below);
+			return 2;
 		case 0x1EAD:
 			*normals = latin_small_letter_a_with_circumflex_and_dot_below;
-			return static_count(latin_small_letter_a_with_circumflex_and_dot_below);
+			return 2;
 		case 0x1EAE:
 			*normals = latin_capital_letter_a_with_breve_and_acute;
-			return static_count(latin_capital_letter_a_with_breve_and_acute);
+			return 2;
 		case 0x1EAF:
 			*normals = latin_small_letter_a_with_breve_and_acute;
-			return static_count(latin_small_letter_a_with_breve_and_acute);
+			return 2;
 		case 0x1EB0:
 			*normals = latin_capital_letter_a_with_breve_and_grave;
-			return static_count(latin_capital_letter_a_with_breve_and_grave);
+			return 2;
 		case 0x1EB1:
 			*normals = latin_small_letter_a_with_breve_and_grave;
-			return static_count(latin_small_letter_a_with_breve_and_grave);
+			return 2;
 		case 0x1EB2:
 			*normals = latin_capital_letter_a_with_breve_and_hook_above;
-			return static_count(latin_capital_letter_a_with_breve_and_hook_above);
+			return 2;
 		case 0x1EB3:
 			*normals = latin_small_letter_a_with_breve_and_hook_above;
-			return static_count(latin_small_letter_a_with_breve_and_hook_above);
+			return 2;
 		case 0x1EB4:
 			*normals = latin_capital_letter_a_with_breve_and_tilde;
-			return static_count(latin_capital_letter_a_with_breve_and_tilde);
+			return 2;
 		case 0x1EB5:
 			*normals = latin_small_letter_a_with_breve_and_tilde;
-			return static_count(latin_small_letter_a_with_breve_and_tilde);
+			return 2;
 		case 0x1EB6:
 			*normals = latin_capital_letter_a_with_breve_and_dot_below;
-			return static_count(latin_capital_letter_a_with_breve_and_dot_below);
+			return 2;
 		case 0x1EB7:
 			*normals = latin_small_letter_a_with_breve_and_dot_below;
-			return static_count(latin_small_letter_a_with_breve_and_dot_below);
+			return 2;
 		case 0x1EB8:
 			*normals = latin_capital_letter_e_with_dot_below;
-			return static_count(latin_capital_letter_e_with_dot_below);
+			return 2;
 		case 0x1EB9:
 			*normals = latin_small_letter_e_with_dot_below;
-			return static_count(latin_small_letter_e_with_dot_below);
+			return 2;
 		case 0x1EBA:
 			*normals = latin_capital_letter_e_with_hook_above;
-			return static_count(latin_capital_letter_e_with_hook_above);
+			return 2;
 		case 0x1EBB:
 			*normals = latin_small_letter_e_with_hook_above;
-			return static_count(latin_small_letter_e_with_hook_above);
+			return 2;
 		case 0x1EBC:
 			*normals = latin_capital_letter_e_with_tilde;
-			return static_count(latin_capital_letter_e_with_tilde);
+			return 2;
 		case 0x1EBD:
 			*normals = latin_small_letter_e_with_tilde;
-			return static_count(latin_small_letter_e_with_tilde);
+			return 2;
 		case 0x1EBE:
 			*normals = latin_capital_letter_e_with_circumflex_and_acute;
-			return static_count(latin_capital_letter_e_with_circumflex_and_acute);
+			return 2;
 		case 0x1EBF:
 			*normals = latin_small_letter_e_with_circumflex_and_acute;
-			return static_count(latin_small_letter_e_with_circumflex_and_acute);
+			return 2;
 		case 0x1EC0:
 			*normals = latin_capital_letter_e_with_circumflex_and_grave;
-			return static_count(latin_capital_letter_e_with_circumflex_and_grave);
+			return 2;
 		case 0x1EC1:
 			*normals = latin_small_letter_e_with_circumflex_and_grave;
-			return static_count(latin_small_letter_e_with_circumflex_and_grave);
+			return 2;
 		case 0x1EC2:
 			*normals = latin_capital_letter_e_with_circumflex_and_hook_above;
-			return static_count(latin_capital_letter_e_with_circumflex_and_hook_above);
+			return 2;
 		case 0x1EC3:
 			*normals = latin_small_letter_e_with_circumflex_and_hook_above;
-			return static_count(latin_small_letter_e_with_circumflex_and_hook_above);
+			return 2;
 		case 0x1EC4:
 			*normals = latin_capital_letter_e_with_circumflex_and_tilde;
-			return static_count(latin_capital_letter_e_with_circumflex_and_tilde);
+			return 2;
 		case 0x1EC5:
 			*normals = latin_small_letter_e_with_circumflex_and_tilde;
-			return static_count(latin_small_letter_e_with_circumflex_and_tilde);
+			return 2;
 		case 0x1EC6:
 			*normals = latin_capital_letter_e_with_circumflex_and_dot_below;
-			return static_count(latin_capital_letter_e_with_circumflex_and_dot_below);
+			return 2;
 		case 0x1EC7:
 			*normals = latin_small_letter_e_with_circumflex_and_dot_below;
-			return static_count(latin_small_letter_e_with_circumflex_and_dot_below);
+			return 2;
 		case 0x1EC8:
 			*normals = latin_capital_letter_i_with_hook_above;
-			return static_count(latin_capital_letter_i_with_hook_above);
+			return 2;
 		case 0x1EC9:
 			*normals = latin_small_letter_i_with_hook_above;
-			return static_count(latin_small_letter_i_with_hook_above);
+			return 2;
 		case 0x1ECA:
 			*normals = latin_capital_letter_i_with_dot_below;
-			return static_count(latin_capital_letter_i_with_dot_below);
+			return 2;
 		case 0x1ECB:
 			*normals = latin_small_letter_i_with_dot_below;
-			return static_count(latin_small_letter_i_with_dot_below);
+			return 2;
 		case 0x1ECC:
 			*normals = latin_capital_letter_o_with_dot_below;
-			return static_count(latin_capital_letter_o_with_dot_below);
+			return 2;
 		case 0x1ECD:
 			*normals = latin_small_letter_o_with_dot_below;
-			return static_count(latin_small_letter_o_with_dot_below);
+			return 2;
 		case 0x1ECE:
 			*normals = latin_capital_letter_o_with_hook_above;
-			return static_count(latin_capital_letter_o_with_hook_above);
+			return 2;
 		case 0x1ECF:
 			*normals = latin_small_letter_o_with_hook_above;
-			return static_count(latin_small_letter_o_with_hook_above);
+			return 2;
 		case 0x1ED0:
 			*normals = latin_capital_letter_o_with_circumflex_and_acute;
-			return static_count(latin_capital_letter_o_with_circumflex_and_acute);
+			return 2;
 		case 0x1ED1:
 			*normals = latin_small_letter_o_with_circumflex_and_acute;
-			return static_count(latin_small_letter_o_with_circumflex_and_acute);
+			return 2;
 		case 0x1ED2:
 			*normals = latin_capital_letter_o_with_circumflex_and_grave;
-			return static_count(latin_capital_letter_o_with_circumflex_and_grave);
+			return 2;
 		case 0x1ED3:
 			*normals = latin_small_letter_o_with_circumflex_and_grave;
-			return static_count(latin_small_letter_o_with_circumflex_and_grave);
+			return 2;
 		case 0x1ED4:
 			*normals = latin_capital_letter_o_with_circumflex_and_hook_above;
-			return static_count(latin_capital_letter_o_with_circumflex_and_hook_above);
+			return 2;
 		case 0x1ED5:
 			*normals = latin_small_letter_o_with_circumflex_and_hook_above;
-			return static_count(latin_small_letter_o_with_circumflex_and_hook_above);
+			return 2;
 		case 0x1ED6:
 			*normals = latin_capital_letter_o_with_circumflex_and_tilde;
-			return static_count(latin_capital_letter_o_with_circumflex_and_tilde);
+			return 2;
 		case 0x1ED7:
 			*normals = latin_small_letter_o_with_circumflex_and_tilde;
-			return static_count(latin_small_letter_o_with_circumflex_and_tilde);
+			return 2;
 		case 0x1ED8:
 			*normals = latin_capital_letter_o_with_circumflex_and_dot_below;
-			return static_count(latin_capital_letter_o_with_circumflex_and_dot_below);
+			return 2;
 		case 0x1ED9:
 			*normals = latin_small_letter_o_with_circumflex_and_dot_below;
-			return static_count(latin_small_letter_o_with_circumflex_and_dot_below);
+			return 2;
 		case 0x1EDA:
 			*normals = latin_capital_letter_o_with_horn_and_acute;
-			return static_count(latin_capital_letter_o_with_horn_and_acute);
+			return 2;
 		case 0x1EDB:
 			*normals = latin_small_letter_o_with_horn_and_acute;
-			return static_count(latin_small_letter_o_with_horn_and_acute);
+			return 2;
 		case 0x1EDC:
 			*normals = latin_capital_letter_o_with_horn_and_grave;
-			return static_count(latin_capital_letter_o_with_horn_and_grave);
+			return 2;
 		case 0x1EDD:
 			*normals = latin_small_letter_o_with_horn_and_grave;
-			return static_count(latin_small_letter_o_with_horn_and_grave);
+			return 2;
 		case 0x1EDE:
 			*normals = latin_capital_letter_o_with_horn_and_hook_above;
-			return static_count(latin_capital_letter_o_with_horn_and_hook_above);
+			return 2;
 		case 0x1EDF:
 			*normals = latin_small_letter_o_with_horn_and_hook_above;
-			return static_count(latin_small_letter_o_with_horn_and_hook_above);
+			return 2;
 		case 0x1EE0:
 			*normals = latin_capital_letter_o_with_horn_and_tilde;
-			return static_count(latin_capital_letter_o_with_horn_and_tilde);
+			return 2;
 		case 0x1EE1:
 			*normals = latin_small_letter_o_with_horn_and_tilde;
-			return static_count(latin_small_letter_o_with_horn_and_tilde);
+			return 2;
 		case 0x1EE2:
 			*normals = latin_capital_letter_o_with_horn_and_dot_below;
-			return static_count(latin_capital_letter_o_with_horn_and_dot_below);
+			return 2;
 		case 0x1EE3:
 			*normals = latin_small_letter_o_with_horn_and_dot_below;
-			return static_count(latin_small_letter_o_with_horn_and_dot_below);
+			return 2;
 		case 0x1EE4:
 			*normals = latin_capital_letter_u_with_dot_below;
-			return static_count(latin_capital_letter_u_with_dot_below);
+			return 2;
 		case 0x1EE5:
 			*normals = latin_small_letter_u_with_dot_below;
-			return static_count(latin_small_letter_u_with_dot_below);
+			return 2;
 		case 0x1EE6:
 			*normals = latin_capital_letter_u_with_hook_above;
-			return static_count(latin_capital_letter_u_with_hook_above);
+			return 2;
 		case 0x1EE7:
 			*normals = latin_small_letter_u_with_hook_above;
-			return static_count(latin_small_letter_u_with_hook_above);
+			return 2;
 		case 0x1EE8:
 			*normals = latin_capital_letter_u_with_horn_and_acute;
-			return static_count(latin_capital_letter_u_with_horn_and_acute);
+			return 2;
 		case 0x1EE9:
 			*normals = latin_small_letter_u_with_horn_and_acute;
-			return static_count(latin_small_letter_u_with_horn_and_acute);
+			return 2;
 		case 0x1EEA:
 			*normals = latin_capital_letter_u_with_horn_and_grave;
-			return static_count(latin_capital_letter_u_with_horn_and_grave);
+			return 2;
 		case 0x1EEB:
 			*normals = latin_small_letter_u_with_horn_and_grave;
-			return static_count(latin_small_letter_u_with_horn_and_grave);
+			return 2;
 		case 0x1EEC:
 			*normals = latin_capital_letter_u_with_horn_and_hook_above;
-			return static_count(latin_capital_letter_u_with_horn_and_hook_above);
+			return 2;
 		case 0x1EED:
 			*normals = latin_small_letter_u_with_horn_and_hook_above;
-			return static_count(latin_small_letter_u_with_horn_and_hook_above);
+			return 2;
 		case 0x1EEE:
 			*normals = latin_capital_letter_u_with_horn_and_tilde;
-			return static_count(latin_capital_letter_u_with_horn_and_tilde);
+			return 2;
 		case 0x1EEF:
 			*normals = latin_small_letter_u_with_horn_and_tilde;
-			return static_count(latin_small_letter_u_with_horn_and_tilde);
+			return 2;
 		case 0x1EF0:
 			*normals = latin_capital_letter_u_with_horn_and_dot_below;
-			return static_count(latin_capital_letter_u_with_horn_and_dot_below);
+			return 2;
 		case 0x1EF1:
 			*normals = latin_small_letter_u_with_horn_and_dot_below;
-			return static_count(latin_small_letter_u_with_horn_and_dot_below);
+			return 2;
 		case 0x1EF2:
 			*normals = latin_capital_letter_y_with_grave;
-			return static_count(latin_capital_letter_y_with_grave);
+			return 2;
 		case 0x1EF3:
 			*normals = latin_small_letter_y_with_grave;
-			return static_count(latin_small_letter_y_with_grave);
+			return 2;
 		case 0x1EF4:
 			*normals = latin_capital_letter_y_with_dot_below;
-			return static_count(latin_capital_letter_y_with_dot_below);
+			return 2;
 		case 0x1EF5:
 			*normals = latin_small_letter_y_with_dot_below;
-			return static_count(latin_small_letter_y_with_dot_below);
+			return 2;
 		case 0x1EF6:
 			*normals = latin_capital_letter_y_with_hook_above;
-			return static_count(latin_capital_letter_y_with_hook_above);
+			return 2;
 		case 0x1EF7:
 			*normals = latin_small_letter_y_with_hook_above;
-			return static_count(latin_small_letter_y_with_hook_above);
+			return 2;
 		case 0x1EF8:
 			*normals = latin_capital_letter_y_with_tilde;
-			return static_count(latin_capital_letter_y_with_tilde);
+			return 2;
 		case 0x1EF9:
 			*normals = latin_small_letter_y_with_tilde;
-			return static_count(latin_small_letter_y_with_tilde);
+			return 2;
 		case 0x1F00:
 			*normals = greek_small_letter_alpha_with_psili;
-			return static_count(greek_small_letter_alpha_with_psili);
+			return 2;
 		case 0x1F01:
 			*normals = greek_small_letter_alpha_with_dasia;
-			return static_count(greek_small_letter_alpha_with_dasia);
+			return 2;
 		case 0x1F02:
 			*normals = greek_small_letter_alpha_with_psili_and_varia;
-			return static_count(greek_small_letter_alpha_with_psili_and_varia);
+			return 2;
 		case 0x1F03:
 			*normals = greek_small_letter_alpha_with_dasia_and_varia;
-			return static_count(greek_small_letter_alpha_with_dasia_and_varia);
+			return 2;
 		case 0x1F04:
 			*normals = greek_small_letter_alpha_with_psili_and_oxia;
-			return static_count(greek_small_letter_alpha_with_psili_and_oxia);
+			return 2;
 		case 0x1F05:
 			*normals = greek_small_letter_alpha_with_dasia_and_oxia;
-			return static_count(greek_small_letter_alpha_with_dasia_and_oxia);
+			return 2;
 		case 0x1F06:
 			*normals = greek_small_letter_alpha_with_psili_and_perispomeni;
-			return static_count(greek_small_letter_alpha_with_psili_and_perispomeni);
+			return 2;
 		case 0x1F07:
 			*normals = greek_small_letter_alpha_with_dasia_and_perispomeni;
-			return static_count(greek_small_letter_alpha_with_dasia_and_perispomeni);
+			return 2;
 		case 0x1F08:
 			*normals = greek_capital_letter_alpha_with_psili;
-			return static_count(greek_capital_letter_alpha_with_psili);
+			return 2;
 		case 0x1F09:
 			*normals = greek_capital_letter_alpha_with_dasia;
-			return static_count(greek_capital_letter_alpha_with_dasia);
+			return 2;
 		case 0x1F0A:
 			*normals = greek_capital_letter_alpha_with_psili_and_varia;
-			return static_count(greek_capital_letter_alpha_with_psili_and_varia);
+			return 2;
 		case 0x1F0B:
 			*normals = greek_capital_letter_alpha_with_dasia_and_varia;
-			return static_count(greek_capital_letter_alpha_with_dasia_and_varia);
+			return 2;
 		case 0x1F0C:
 			*normals = greek_capital_letter_alpha_with_psili_and_oxia;
-			return static_count(greek_capital_letter_alpha_with_psili_and_oxia);
+			return 2;
 		case 0x1F0D:
 			*normals = greek_capital_letter_alpha_with_dasia_and_oxia;
-			return static_count(greek_capital_letter_alpha_with_dasia_and_oxia);
+			return 2;
 		case 0x1F0E:
 			*normals = greek_capital_letter_alpha_with_psili_and_perispomeni;
-			return static_count(greek_capital_letter_alpha_with_psili_and_perispomeni);
+			return 2;
 		case 0x1F0F:
 			*normals = greek_capital_letter_alpha_with_dasia_and_perispomeni;
-			return static_count(greek_capital_letter_alpha_with_dasia_and_perispomeni);
+			return 2;
 		case 0x1F10:
 			*normals = greek_small_letter_epsilon_with_psili;
-			return static_count(greek_small_letter_epsilon_with_psili);
+			return 2;
 		case 0x1F11:
 			*normals = greek_small_letter_epsilon_with_dasia;
-			return static_count(greek_small_letter_epsilon_with_dasia);
+			return 2;
 		case 0x1F12:
 			*normals = greek_small_letter_epsilon_with_psili_and_varia;
-			return static_count(greek_small_letter_epsilon_with_psili_and_varia);
+			return 2;
 		case 0x1F13:
 			*normals = greek_small_letter_epsilon_with_dasia_and_varia;
-			return static_count(greek_small_letter_epsilon_with_dasia_and_varia);
+			return 2;
 		case 0x1F14:
 			*normals = greek_small_letter_epsilon_with_psili_and_oxia;
-			return static_count(greek_small_letter_epsilon_with_psili_and_oxia);
+			return 2;
 		case 0x1F15:
 			*normals = greek_small_letter_epsilon_with_dasia_and_oxia;
-			return static_count(greek_small_letter_epsilon_with_dasia_and_oxia);
+			return 2;
 		case 0x1F18:
 			*normals = greek_capital_letter_epsilon_with_psili;
-			return static_count(greek_capital_letter_epsilon_with_psili);
+			return 2;
 		case 0x1F19:
 			*normals = greek_capital_letter_epsilon_with_dasia;
-			return static_count(greek_capital_letter_epsilon_with_dasia);
+			return 2;
 		case 0x1F1A:
 			*normals = greek_capital_letter_epsilon_with_psili_and_varia;
-			return static_count(greek_capital_letter_epsilon_with_psili_and_varia);
+			return 2;
 		case 0x1F1B:
 			*normals = greek_capital_letter_epsilon_with_dasia_and_varia;
-			return static_count(greek_capital_letter_epsilon_with_dasia_and_varia);
+			return 2;
 		case 0x1F1C:
 			*normals = greek_capital_letter_epsilon_with_psili_and_oxia;
-			return static_count(greek_capital_letter_epsilon_with_psili_and_oxia);
+			return 2;
 		case 0x1F1D:
 			*normals = greek_capital_letter_epsilon_with_dasia_and_oxia;
-			return static_count(greek_capital_letter_epsilon_with_dasia_and_oxia);
+			return 2;
 		case 0x1F20:
 			*normals = greek_small_letter_eta_with_psili;
-			return static_count(greek_small_letter_eta_with_psili);
+			return 2;
 		case 0x1F21:
 			*normals = greek_small_letter_eta_with_dasia;
-			return static_count(greek_small_letter_eta_with_dasia);
+			return 2;
 		case 0x1F22:
 			*normals = greek_small_letter_eta_with_psili_and_varia;
-			return static_count(greek_small_letter_eta_with_psili_and_varia);
+			return 2;
 		case 0x1F23:
 			*normals = greek_small_letter_eta_with_dasia_and_varia;
-			return static_count(greek_small_letter_eta_with_dasia_and_varia);
+			return 2;
 		case 0x1F24:
 			*normals = greek_small_letter_eta_with_psili_and_oxia;
-			return static_count(greek_small_letter_eta_with_psili_and_oxia);
+			return 2;
 		case 0x1F25:
 			*normals = greek_small_letter_eta_with_dasia_and_oxia;
-			return static_count(greek_small_letter_eta_with_dasia_and_oxia);
+			return 2;
 		case 0x1F26:
 			*normals = greek_small_letter_eta_with_psili_and_perispomeni;
-			return static_count(greek_small_letter_eta_with_psili_and_perispomeni);
+			return 2;
 		case 0x1F27:
 			*normals = greek_small_letter_eta_with_dasia_and_perispomeni;
-			return static_count(greek_small_letter_eta_with_dasia_and_perispomeni);
+			return 2;
 		case 0x1F28:
 			*normals = greek_capital_letter_eta_with_psili;
-			return static_count(greek_capital_letter_eta_with_psili);
+			return 2;
 		case 0x1F29:
 			*normals = greek_capital_letter_eta_with_dasia;
-			return static_count(greek_capital_letter_eta_with_dasia);
+			return 2;
 		case 0x1F2A:
 			*normals = greek_capital_letter_eta_with_psili_and_varia;
-			return static_count(greek_capital_letter_eta_with_psili_and_varia);
+			return 2;
 		case 0x1F2B:
 			*normals = greek_capital_letter_eta_with_dasia_and_varia;
-			return static_count(greek_capital_letter_eta_with_dasia_and_varia);
+			return 2;
 		case 0x1F2C:
 			*normals = greek_capital_letter_eta_with_psili_and_oxia;
-			return static_count(greek_capital_letter_eta_with_psili_and_oxia);
+			return 2;
 		case 0x1F2D:
 			*normals = greek_capital_letter_eta_with_dasia_and_oxia;
-			return static_count(greek_capital_letter_eta_with_dasia_and_oxia);
+			return 2;
 		case 0x1F2E:
 			*normals = greek_capital_letter_eta_with_psili_and_perispomeni;
-			return static_count(greek_capital_letter_eta_with_psili_and_perispomeni);
+			return 2;
 		case 0x1F2F:
 			*normals = greek_capital_letter_eta_with_dasia_and_perispomeni;
-			return static_count(greek_capital_letter_eta_with_dasia_and_perispomeni);
+			return 2;
 		case 0x1F30:
 			*normals = greek_small_letter_iota_with_psili;
-			return static_count(greek_small_letter_iota_with_psili);
+			return 2;
 		case 0x1F31:
 			*normals = greek_small_letter_iota_with_dasia;
-			return static_count(greek_small_letter_iota_with_dasia);
+			return 2;
 		case 0x1F32:
 			*normals = greek_small_letter_iota_with_psili_and_varia;
-			return static_count(greek_small_letter_iota_with_psili_and_varia);
+			return 2;
 		case 0x1F33:
 			*normals = greek_small_letter_iota_with_dasia_and_varia;
-			return static_count(greek_small_letter_iota_with_dasia_and_varia);
+			return 2;
 		case 0x1F34:
 			*normals = greek_small_letter_iota_with_psili_and_oxia;
-			return static_count(greek_small_letter_iota_with_psili_and_oxia);
+			return 2;
 		case 0x1F35:
 			*normals = greek_small_letter_iota_with_dasia_and_oxia;
-			return static_count(greek_small_letter_iota_with_dasia_and_oxia);
+			return 2;
 		case 0x1F36:
 			*normals = greek_small_letter_iota_with_psili_and_perispomeni;
-			return static_count(greek_small_letter_iota_with_psili_and_perispomeni);
+			return 2;
 		case 0x1F37:
 			*normals = greek_small_letter_iota_with_dasia_and_perispomeni;
-			return static_count(greek_small_letter_iota_with_dasia_and_perispomeni);
+			return 2;
 		case 0x1F38:
 			*normals = greek_capital_letter_iota_with_psili;
-			return static_count(greek_capital_letter_iota_with_psili);
+			return 2;
 		case 0x1F39:
 			*normals = greek_capital_letter_iota_with_dasia;
-			return static_count(greek_capital_letter_iota_with_dasia);
+			return 2;
 		case 0x1F3A:
 			*normals = greek_capital_letter_iota_with_psili_and_varia;
-			return static_count(greek_capital_letter_iota_with_psili_and_varia);
+			return 2;
 		case 0x1F3B:
 			*normals = greek_capital_letter_iota_with_dasia_and_varia;
-			return static_count(greek_capital_letter_iota_with_dasia_and_varia);
+			return 2;
 		case 0x1F3C:
 			*normals = greek_capital_letter_iota_with_psili_and_oxia;
-			return static_count(greek_capital_letter_iota_with_psili_and_oxia);
+			return 2;
 		case 0x1F3D:
 			*normals = greek_capital_letter_iota_with_dasia_and_oxia;
-			return static_count(greek_capital_letter_iota_with_dasia_and_oxia);
+			return 2;
 		case 0x1F3E:
 			*normals = greek_capital_letter_iota_with_psili_and_perispomeni;
-			return static_count(greek_capital_letter_iota_with_psili_and_perispomeni);
+			return 2;
 		case 0x1F3F:
 			*normals = greek_capital_letter_iota_with_dasia_and_perispomeni;
-			return static_count(greek_capital_letter_iota_with_dasia_and_perispomeni);
+			return 2;
 		case 0x1F40:
 			*normals = greek_small_letter_omicron_with_psili;
-			return static_count(greek_small_letter_omicron_with_psili);
+			return 2;
 		case 0x1F41:
 			*normals = greek_small_letter_omicron_with_dasia;
-			return static_count(greek_small_letter_omicron_with_dasia);
+			return 2;
 		case 0x1F42:
 			*normals = greek_small_letter_omicron_with_psili_and_varia;
-			return static_count(greek_small_letter_omicron_with_psili_and_varia);
+			return 2;
 		case 0x1F43:
 			*normals = greek_small_letter_omicron_with_dasia_and_varia;
-			return static_count(greek_small_letter_omicron_with_dasia_and_varia);
+			return 2;
 		case 0x1F44:
 			*normals = greek_small_letter_omicron_with_psili_and_oxia;
-			return static_count(greek_small_letter_omicron_with_psili_and_oxia);
+			return 2;
 		case 0x1F45:
 			*normals = greek_small_letter_omicron_with_dasia_and_oxia;
-			return static_count(greek_small_letter_omicron_with_dasia_and_oxia);
+			return 2;
 		case 0x1F48:
 			*normals = greek_capital_letter_omicron_with_psili;
-			return static_count(greek_capital_letter_omicron_with_psili);
+			return 2;
 		case 0x1F49:
 			*normals = greek_capital_letter_omicron_with_dasia;
-			return static_count(greek_capital_letter_omicron_with_dasia);
+			return 2;
 		case 0x1F4A:
 			*normals = greek_capital_letter_omicron_with_psili_and_varia;
-			return static_count(greek_capital_letter_omicron_with_psili_and_varia);
+			return 2;
 		case 0x1F4B:
 			*normals = greek_capital_letter_omicron_with_dasia_and_varia;
-			return static_count(greek_capital_letter_omicron_with_dasia_and_varia);
+			return 2;
 		case 0x1F4C:
 			*normals = greek_capital_letter_omicron_with_psili_and_oxia;
-			return static_count(greek_capital_letter_omicron_with_psili_and_oxia);
+			return 2;
 		case 0x1F4D:
 			*normals = greek_capital_letter_omicron_with_dasia_and_oxia;
-			return static_count(greek_capital_letter_omicron_with_dasia_and_oxia);
+			return 2;
 		case 0x1F50:
 			*normals = greek_small_letter_upsilon_with_psili;
-			return static_count(greek_small_letter_upsilon_with_psili);
+			return 2;
 		case 0x1F51:
 			*normals = greek_small_letter_upsilon_with_dasia;
-			return static_count(greek_small_letter_upsilon_with_dasia);
+			return 2;
 		case 0x1F52:
 			*normals = greek_small_letter_upsilon_with_psili_and_varia;
-			return static_count(greek_small_letter_upsilon_with_psili_and_varia);
+			return 2;
 		case 0x1F53:
 			*normals = greek_small_letter_upsilon_with_dasia_and_varia;
-			return static_count(greek_small_letter_upsilon_with_dasia_and_varia);
+			return 2;
 		case 0x1F54:
 			*normals = greek_small_letter_upsilon_with_psili_and_oxia;
-			return static_count(greek_small_letter_upsilon_with_psili_and_oxia);
+			return 2;
 		case 0x1F55:
 			*normals = greek_small_letter_upsilon_with_dasia_and_oxia;
-			return static_count(greek_small_letter_upsilon_with_dasia_and_oxia);
+			return 2;
 		case 0x1F56:
 			*normals = greek_small_letter_upsilon_with_psili_and_perispomeni;
-			return static_count(greek_small_letter_upsilon_with_psili_and_perispomeni);
+			return 2;
 		case 0x1F57:
 			*normals = greek_small_letter_upsilon_with_dasia_and_perispomeni;
-			return static_count(greek_small_letter_upsilon_with_dasia_and_perispomeni);
+			return 2;
 		case 0x1F59:
 			*normals = greek_capital_letter_upsilon_with_dasia;
-			return static_count(greek_capital_letter_upsilon_with_dasia);
+			return 2;
 		case 0x1F5B:
 			*normals = greek_capital_letter_upsilon_with_dasia_and_varia;
-			return static_count(greek_capital_letter_upsilon_with_dasia_and_varia);
+			return 2;
 		case 0x1F5D:
 			*normals = greek_capital_letter_upsilon_with_dasia_and_oxia;
-			return static_count(greek_capital_letter_upsilon_with_dasia_and_oxia);
+			return 2;
 		case 0x1F5F:
 			*normals = greek_capital_letter_upsilon_with_dasia_and_perispomeni;
-			return static_count(greek_capital_letter_upsilon_with_dasia_and_perispomeni);
+			return 2;
 		case 0x1F60:
 			*normals = greek_small_letter_omega_with_psili;
-			return static_count(greek_small_letter_omega_with_psili);
+			return 2;
 		case 0x1F61:
 			*normals = greek_small_letter_omega_with_dasia;
-			return static_count(greek_small_letter_omega_with_dasia);
+			return 2;
 		case 0x1F62:
 			*normals = greek_small_letter_omega_with_psili_and_varia;
-			return static_count(greek_small_letter_omega_with_psili_and_varia);
+			return 2;
 		case 0x1F63:
 			*normals = greek_small_letter_omega_with_dasia_and_varia;
-			return static_count(greek_small_letter_omega_with_dasia_and_varia);
+			return 2;
 		case 0x1F64:
 			*normals = greek_small_letter_omega_with_psili_and_oxia;
-			return static_count(greek_small_letter_omega_with_psili_and_oxia);
+			return 2;
 		case 0x1F65:
 			*normals = greek_small_letter_omega_with_dasia_and_oxia;
-			return static_count(greek_small_letter_omega_with_dasia_and_oxia);
+			return 2;
 		case 0x1F66:
 			*normals = greek_small_letter_omega_with_psili_and_perispomeni;
-			return static_count(greek_small_letter_omega_with_psili_and_perispomeni);
+			return 2;
 		case 0x1F67:
 			*normals = greek_small_letter_omega_with_dasia_and_perispomeni;
-			return static_count(greek_small_letter_omega_with_dasia_and_perispomeni);
+			return 2;
 		case 0x1F68:
 			*normals = greek_capital_letter_omega_with_psili;
-			return static_count(greek_capital_letter_omega_with_psili);
+			return 2;
 		case 0x1F69:
 			*normals = greek_capital_letter_omega_with_dasia;
-			return static_count(greek_capital_letter_omega_with_dasia);
+			return 2;
 		case 0x1F6A:
 			*normals = greek_capital_letter_omega_with_psili_and_varia;
-			return static_count(greek_capital_letter_omega_with_psili_and_varia);
+			return 2;
 		case 0x1F6B:
 			*normals = greek_capital_letter_omega_with_dasia_and_varia;
-			return static_count(greek_capital_letter_omega_with_dasia_and_varia);
+			return 2;
 		case 0x1F6C:
 			*normals = greek_capital_letter_omega_with_psili_and_oxia;
-			return static_count(greek_capital_letter_omega_with_psili_and_oxia);
+			return 2;
 		case 0x1F6D:
 			*normals = greek_capital_letter_omega_with_dasia_and_oxia;
-			return static_count(greek_capital_letter_omega_with_dasia_and_oxia);
+			return 2;
 		case 0x1F6E:
 			*normals = greek_capital_letter_omega_with_psili_and_perispomeni;
-			return static_count(greek_capital_letter_omega_with_psili_and_perispomeni);
+			return 2;
 		case 0x1F6F:
 			*normals = greek_capital_letter_omega_with_dasia_and_perispomeni;
-			return static_count(greek_capital_letter_omega_with_dasia_and_perispomeni);
+			return 2;
 		case 0x1F70:
 			*normals = greek_small_letter_alpha_with_varia;
-			return static_count(greek_small_letter_alpha_with_varia);
+			return 2;
 		case 0x1F71:
 			*normals = greek_small_letter_alpha_with_oxia;
-			return static_count(greek_small_letter_alpha_with_oxia);
+			return 1;
 		case 0x1F72:
 			*normals = greek_small_letter_epsilon_with_varia;
-			return static_count(greek_small_letter_epsilon_with_varia);
+			return 2;
 		case 0x1F73:
 			*normals = greek_small_letter_epsilon_with_oxia;
-			return static_count(greek_small_letter_epsilon_with_oxia);
+			return 1;
 		case 0x1F74:
 			*normals = greek_small_letter_eta_with_varia;
-			return static_count(greek_small_letter_eta_with_varia);
+			return 2;
 		case 0x1F75:
 			*normals = greek_small_letter_eta_with_oxia;
-			return static_count(greek_small_letter_eta_with_oxia);
+			return 1;
 		case 0x1F76:
 			*normals = greek_small_letter_iota_with_varia;
-			return static_count(greek_small_letter_iota_with_varia);
+			return 2;
 		case 0x1F77:
 			*normals = greek_small_letter_iota_with_oxia;
-			return static_count(greek_small_letter_iota_with_oxia);
+			return 1;
 		case 0x1F78:
 			*normals = greek_small_letter_omicron_with_varia;
-			return static_count(greek_small_letter_omicron_with_varia);
+			return 2;
 		case 0x1F79:
 			*normals = greek_small_letter_omicron_with_oxia;
-			return static_count(greek_small_letter_omicron_with_oxia);
+			return 1;
 		case 0x1F7A:
 			*normals = greek_small_letter_upsilon_with_varia;
-			return static_count(greek_small_letter_upsilon_with_varia);
+			return 2;
 		case 0x1F7B:
 			*normals = greek_small_letter_upsilon_with_oxia;
-			return static_count(greek_small_letter_upsilon_with_oxia);
+			return 1;
 		case 0x1F7C:
 			*normals = greek_small_letter_omega_with_varia;
-			return static_count(greek_small_letter_omega_with_varia);
+			return 2;
 		case 0x1F7D:
 			*normals = greek_small_letter_omega_with_oxia;
-			return static_count(greek_small_letter_omega_with_oxia);
+			return 1;
 		case 0x1F80:
 			*normals = greek_small_letter_alpha_with_psili_and_ypogegrammeni;
-			return static_count(greek_small_letter_alpha_with_psili_and_ypogegrammeni);
+			return 2;
 		case 0x1F81:
 			*normals = greek_small_letter_alpha_with_dasia_and_ypogegrammeni;
-			return static_count(greek_small_letter_alpha_with_dasia_and_ypogegrammeni);
+			return 2;
 		case 0x1F82:
 			*normals = greek_small_letter_alpha_with_psili_and_varia_and_ypogegrammeni;
-			return static_count(greek_small_letter_alpha_with_psili_and_varia_and_ypogegrammeni);
+			return 2;
 		case 0x1F83:
 			*normals = greek_small_letter_alpha_with_dasia_and_varia_and_ypogegrammeni;
-			return static_count(greek_small_letter_alpha_with_dasia_and_varia_and_ypogegrammeni);
+			return 2;
 		case 0x1F84:
 			*normals = greek_small_letter_alpha_with_psili_and_oxia_and_ypogegrammeni;
-			return static_count(greek_small_letter_alpha_with_psili_and_oxia_and_ypogegrammeni);
+			return 2;
 		case 0x1F85:
 			*normals = greek_small_letter_alpha_with_dasia_and_oxia_and_ypogegrammeni;
-			return static_count(greek_small_letter_alpha_with_dasia_and_oxia_and_ypogegrammeni);
+			return 2;
 		case 0x1F86:
 			*normals = greek_small_letter_alpha_with_psili_and_perispomeni_and_ypogegrammeni;
-			return static_count(greek_small_letter_alpha_with_psili_and_perispomeni_and_ypogegrammeni);
+			return 2;
 		case 0x1F87:
 			*normals = greek_small_letter_alpha_with_dasia_and_perispomeni_and_ypogegrammeni;
-			return static_count(greek_small_letter_alpha_with_dasia_and_perispomeni_and_ypogegrammeni);
+			return 2;
 		case 0x1F88:
 			*normals = greek_capital_letter_alpha_with_psili_and_prosgegrammeni;
-			return static_count(greek_capital_letter_alpha_with_psili_and_prosgegrammeni);
+			return 2;
 		case 0x1F89:
 			*normals = greek_capital_letter_alpha_with_dasia_and_prosgegrammeni;
-			return static_count(greek_capital_letter_alpha_with_dasia_and_prosgegrammeni);
+			return 2;
 		case 0x1F8A:
 			*normals = greek_capital_letter_alpha_with_psili_and_varia_and_prosgegrammeni;
-			return static_count(greek_capital_letter_alpha_with_psili_and_varia_and_prosgegrammeni);
+			return 2;
 		case 0x1F8B:
 			*normals = greek_capital_letter_alpha_with_dasia_and_varia_and_prosgegrammeni;
-			return static_count(greek_capital_letter_alpha_with_dasia_and_varia_and_prosgegrammeni);
+			return 2;
 		case 0x1F8C:
 			*normals = greek_capital_letter_alpha_with_psili_and_oxia_and_prosgegrammeni;
-			return static_count(greek_capital_letter_alpha_with_psili_and_oxia_and_prosgegrammeni);
+			return 2;
 		case 0x1F8D:
 			*normals = greek_capital_letter_alpha_with_dasia_and_oxia_and_prosgegrammeni;
-			return static_count(greek_capital_letter_alpha_with_dasia_and_oxia_and_prosgegrammeni);
+			return 2;
 		case 0x1F8E:
 			*normals = greek_capital_letter_alpha_with_psili_and_perispomeni_and_prosgegrammeni;
-			return static_count(greek_capital_letter_alpha_with_psili_and_perispomeni_and_prosgegrammeni);
+			return 2;
 		case 0x1F8F:
 			*normals = greek_capital_letter_alpha_with_dasia_and_perispomeni_and_prosgegrammeni;
-			return static_count(greek_capital_letter_alpha_with_dasia_and_perispomeni_and_prosgegrammeni);
+			return 2;
 		case 0x1F90:
 			*normals = greek_small_letter_eta_with_psili_and_ypogegrammeni;
-			return static_count(greek_small_letter_eta_with_psili_and_ypogegrammeni);
+			return 2;
 		case 0x1F91:
 			*normals = greek_small_letter_eta_with_dasia_and_ypogegrammeni;
-			return static_count(greek_small_letter_eta_with_dasia_and_ypogegrammeni);
+			return 2;
 		case 0x1F92:
 			*normals = greek_small_letter_eta_with_psili_and_varia_and_ypogegrammeni;
-			return static_count(greek_small_letter_eta_with_psili_and_varia_and_ypogegrammeni);
+			return 2;
 		case 0x1F93:
 			*normals = greek_small_letter_eta_with_dasia_and_varia_and_ypogegrammeni;
-			return static_count(greek_small_letter_eta_with_dasia_and_varia_and_ypogegrammeni);
+			return 2;
 		case 0x1F94:
 			*normals = greek_small_letter_eta_with_psili_and_oxia_and_ypogegrammeni;
-			return static_count(greek_small_letter_eta_with_psili_and_oxia_and_ypogegrammeni);
+			return 2;
 		case 0x1F95:
 			*normals = greek_small_letter_eta_with_dasia_and_oxia_and_ypogegrammeni;
-			return static_count(greek_small_letter_eta_with_dasia_and_oxia_and_ypogegrammeni);
+			return 2;
 		case 0x1F96:
 			*normals = greek_small_letter_eta_with_psili_and_perispomeni_and_ypogegrammeni;
-			return static_count(greek_small_letter_eta_with_psili_and_perispomeni_and_ypogegrammeni);
+			return 2;
 		case 0x1F97:
 			*normals = greek_small_letter_eta_with_dasia_and_perispomeni_and_ypogegrammeni;
-			return static_count(greek_small_letter_eta_with_dasia_and_perispomeni_and_ypogegrammeni);
+			return 2;
 		case 0x1F98:
 			*normals = greek_capital_letter_eta_with_psili_and_prosgegrammeni;
-			return static_count(greek_capital_letter_eta_with_psili_and_prosgegrammeni);
+			return 2;
 		case 0x1F99:
 			*normals = greek_capital_letter_eta_with_dasia_and_prosgegrammeni;
-			return static_count(greek_capital_letter_eta_with_dasia_and_prosgegrammeni);
+			return 2;
 		case 0x1F9A:
 			*normals = greek_capital_letter_eta_with_psili_and_varia_and_prosgegrammeni;
-			return static_count(greek_capital_letter_eta_with_psili_and_varia_and_prosgegrammeni);
+			return 2;
 		case 0x1F9B:
 			*normals = greek_capital_letter_eta_with_dasia_and_varia_and_prosgegrammeni;
-			return static_count(greek_capital_letter_eta_with_dasia_and_varia_and_prosgegrammeni);
+			return 2;
 		case 0x1F9C:
 			*normals = greek_capital_letter_eta_with_psili_and_oxia_and_prosgegrammeni;
-			return static_count(greek_capital_letter_eta_with_psili_and_oxia_and_prosgegrammeni);
+			return 2;
 		case 0x1F9D:
 			*normals = greek_capital_letter_eta_with_dasia_and_oxia_and_prosgegrammeni;
-			return static_count(greek_capital_letter_eta_with_dasia_and_oxia_and_prosgegrammeni);
+			return 2;
 		case 0x1F9E:
 			*normals = greek_capital_letter_eta_with_psili_and_perispomeni_and_prosgegrammeni;
-			return static_count(greek_capital_letter_eta_with_psili_and_perispomeni_and_prosgegrammeni);
+			return 2;
 		case 0x1F9F:
 			*normals = greek_capital_letter_eta_with_dasia_and_perispomeni_and_prosgegrammeni;
-			return static_count(greek_capital_letter_eta_with_dasia_and_perispomeni_and_prosgegrammeni);
+			return 2;
 		case 0x1FA0:
 			*normals = greek_small_letter_omega_with_psili_and_ypogegrammeni;
-			return static_count(greek_small_letter_omega_with_psili_and_ypogegrammeni);
+			return 2;
 		case 0x1FA1:
 			*normals = greek_small_letter_omega_with_dasia_and_ypogegrammeni;
-			return static_count(greek_small_letter_omega_with_dasia_and_ypogegrammeni);
+			return 2;
 		case 0x1FA2:
 			*normals = greek_small_letter_omega_with_psili_and_varia_and_ypogegrammeni;
-			return static_count(greek_small_letter_omega_with_psili_and_varia_and_ypogegrammeni);
+			return 2;
 		case 0x1FA3:
 			*normals = greek_small_letter_omega_with_dasia_and_varia_and_ypogegrammeni;
-			return static_count(greek_small_letter_omega_with_dasia_and_varia_and_ypogegrammeni);
+			return 2;
 		case 0x1FA4:
 			*normals = greek_small_letter_omega_with_psili_and_oxia_and_ypogegrammeni;
-			return static_count(greek_small_letter_omega_with_psili_and_oxia_and_ypogegrammeni);
+			return 2;
 		case 0x1FA5:
 			*normals = greek_small_letter_omega_with_dasia_and_oxia_and_ypogegrammeni;
-			return static_count(greek_small_letter_omega_with_dasia_and_oxia_and_ypogegrammeni);
+			return 2;
 		case 0x1FA6:
 			*normals = greek_small_letter_omega_with_psili_and_perispomeni_and_ypogegrammeni;
-			return static_count(greek_small_letter_omega_with_psili_and_perispomeni_and_ypogegrammeni);
+			return 2;
 		case 0x1FA7:
 			*normals = greek_small_letter_omega_with_dasia_and_perispomeni_and_ypogegrammeni;
-			return static_count(greek_small_letter_omega_with_dasia_and_perispomeni_and_ypogegrammeni);
+			return 2;
 		case 0x1FA8:
 			*normals = greek_capital_letter_omega_with_psili_and_prosgegrammeni;
-			return static_count(greek_capital_letter_omega_with_psili_and_prosgegrammeni);
+			return 2;
 		case 0x1FA9:
 			*normals = greek_capital_letter_omega_with_dasia_and_prosgegrammeni;
-			return static_count(greek_capital_letter_omega_with_dasia_and_prosgegrammeni);
+			return 2;
 		case 0x1FAA:
 			*normals = greek_capital_letter_omega_with_psili_and_varia_and_prosgegrammeni;
-			return static_count(greek_capital_letter_omega_with_psili_and_varia_and_prosgegrammeni);
+			return 2;
 		case 0x1FAB:
 			*normals = greek_capital_letter_omega_with_dasia_and_varia_and_prosgegrammeni;
-			return static_count(greek_capital_letter_omega_with_dasia_and_varia_and_prosgegrammeni);
+			return 2;
 		case 0x1FAC:
 			*normals = greek_capital_letter_omega_with_psili_and_oxia_and_prosgegrammeni;
-			return static_count(greek_capital_letter_omega_with_psili_and_oxia_and_prosgegrammeni);
+			return 2;
 		case 0x1FAD:
 			*normals = greek_capital_letter_omega_with_dasia_and_oxia_and_prosgegrammeni;
-			return static_count(greek_capital_letter_omega_with_dasia_and_oxia_and_prosgegrammeni);
+			return 2;
 		case 0x1FAE:
 			*normals = greek_capital_letter_omega_with_psili_and_perispomeni_and_prosgegrammeni;
-			return static_count(greek_capital_letter_omega_with_psili_and_perispomeni_and_prosgegrammeni);
+			return 2;
 		case 0x1FAF:
 			*normals = greek_capital_letter_omega_with_dasia_and_perispomeni_and_prosgegrammeni;
-			return static_count(greek_capital_letter_omega_with_dasia_and_perispomeni_and_prosgegrammeni);
+			return 2;
 		case 0x1FB0:
 			*normals = greek_small_letter_alpha_with_vrachy;
-			return static_count(greek_small_letter_alpha_with_vrachy);
+			return 2;
 		case 0x1FB1:
 			*normals = greek_small_letter_alpha_with_macron;
-			return static_count(greek_small_letter_alpha_with_macron);
+			return 2;
 		case 0x1FB2:
 			*normals = greek_small_letter_alpha_with_varia_and_ypogegrammeni;
-			return static_count(greek_small_letter_alpha_with_varia_and_ypogegrammeni);
+			return 2;
 		case 0x1FB3:
 			*normals = greek_small_letter_alpha_with_ypogegrammeni;
-			return static_count(greek_small_letter_alpha_with_ypogegrammeni);
+			return 2;
 		case 0x1FB4:
 			*normals = greek_small_letter_alpha_with_oxia_and_ypogegrammeni;
-			return static_count(greek_small_letter_alpha_with_oxia_and_ypogegrammeni);
+			return 2;
 		case 0x1FB6:
 			*normals = greek_small_letter_alpha_with_perispomeni;
-			return static_count(greek_small_letter_alpha_with_perispomeni);
+			return 2;
 		case 0x1FB7:
 			*normals = greek_small_letter_alpha_with_perispomeni_and_ypogegrammeni;
-			return static_count(greek_small_letter_alpha_with_perispomeni_and_ypogegrammeni);
+			return 2;
 		case 0x1FB8:
 			*normals = greek_capital_letter_alpha_with_vrachy;
-			return static_count(greek_capital_letter_alpha_with_vrachy);
+			return 2;
 		case 0x1FB9:
 			*normals = greek_capital_letter_alpha_with_macron;
-			return static_count(greek_capital_letter_alpha_with_macron);
+			return 2;
 		case 0x1FBA:
 			*normals = greek_capital_letter_alpha_with_varia;
-			return static_count(greek_capital_letter_alpha_with_varia);
+			return 2;
 		case 0x1FBB:
 			*normals = greek_capital_letter_alpha_with_oxia;
-			return static_count(greek_capital_letter_alpha_with_oxia);
+			return 1;
 		case 0x1FBC:
 			*normals = greek_capital_letter_alpha_with_prosgegrammeni;
-			return static_count(greek_capital_letter_alpha_with_prosgegrammeni);
+			return 2;
 		case 0x1FBD:
 			*normals = greek_koronis;
-			return static_count(greek_koronis);
+			return 2;
 		case 0x1FBE:
 			*normals = greek_prosgegrammeni;
-			return static_count(greek_prosgegrammeni);
+			return 1;
 		case 0x1FBF:
 			*normals = greek_psili;
-			return static_count(greek_psili);
+			return 2;
 		case 0x1FC0:
 			*normals = greek_perispomeni;
-			return static_count(greek_perispomeni);
+			return 2;
 		case 0x1FC1:
 			*normals = greek_dialytika_and_perispomeni;
-			return static_count(greek_dialytika_and_perispomeni);
+			return 2;
 		case 0x1FC2:
 			*normals = greek_small_letter_eta_with_varia_and_ypogegrammeni;
-			return static_count(greek_small_letter_eta_with_varia_and_ypogegrammeni);
+			return 2;
 		case 0x1FC3:
 			*normals = greek_small_letter_eta_with_ypogegrammeni;
-			return static_count(greek_small_letter_eta_with_ypogegrammeni);
+			return 2;
 		case 0x1FC4:
 			*normals = greek_small_letter_eta_with_oxia_and_ypogegrammeni;
-			return static_count(greek_small_letter_eta_with_oxia_and_ypogegrammeni);
+			return 2;
 		case 0x1FC6:
 			*normals = greek_small_letter_eta_with_perispomeni;
-			return static_count(greek_small_letter_eta_with_perispomeni);
+			return 2;
 		case 0x1FC7:
 			*normals = greek_small_letter_eta_with_perispomeni_and_ypogegrammeni;
-			return static_count(greek_small_letter_eta_with_perispomeni_and_ypogegrammeni);
+			return 2;
 		case 0x1FC8:
 			*normals = greek_capital_letter_epsilon_with_varia;
-			return static_count(greek_capital_letter_epsilon_with_varia);
+			return 2;
 		case 0x1FC9:
 			*normals = greek_capital_letter_epsilon_with_oxia;
-			return static_count(greek_capital_letter_epsilon_with_oxia);
+			return 1;
 		case 0x1FCA:
 			*normals = greek_capital_letter_eta_with_varia;
-			return static_count(greek_capital_letter_eta_with_varia);
+			return 2;
 		case 0x1FCB:
 			*normals = greek_capital_letter_eta_with_oxia;
-			return static_count(greek_capital_letter_eta_with_oxia);
+			return 1;
 		case 0x1FCC:
 			*normals = greek_capital_letter_eta_with_prosgegrammeni;
-			return static_count(greek_capital_letter_eta_with_prosgegrammeni);
+			return 2;
 		case 0x1FCD:
 			*normals = greek_psili_and_varia;
-			return static_count(greek_psili_and_varia);
+			return 2;
 		case 0x1FCE:
 			*normals = greek_psili_and_oxia;
-			return static_count(greek_psili_and_oxia);
+			return 2;
 		case 0x1FCF:
 			*normals = greek_psili_and_perispomeni;
-			return static_count(greek_psili_and_perispomeni);
+			return 2;
 		case 0x1FD0:
 			*normals = greek_small_letter_iota_with_vrachy;
-			return static_count(greek_small_letter_iota_with_vrachy);
+			return 2;
 		case 0x1FD1:
 			*normals = greek_small_letter_iota_with_macron;
-			return static_count(greek_small_letter_iota_with_macron);
+			return 2;
 		case 0x1FD2:
 			*normals = greek_small_letter_iota_with_dialytika_and_varia;
-			return static_count(greek_small_letter_iota_with_dialytika_and_varia);
+			return 2;
 		case 0x1FD3:
 			*normals = greek_small_letter_iota_with_dialytika_and_oxia;
-			return static_count(greek_small_letter_iota_with_dialytika_and_oxia);
+			return 1;
 		case 0x1FD6:
 			*normals = greek_small_letter_iota_with_perispomeni;
-			return static_count(greek_small_letter_iota_with_perispomeni);
+			return 2;
 		case 0x1FD7:
 			*normals = greek_small_letter_iota_with_dialytika_and_perispomeni;
-			return static_count(greek_small_letter_iota_with_dialytika_and_perispomeni);
+			return 2;
 		case 0x1FD8:
 			*normals = greek_capital_letter_iota_with_vrachy;
-			return static_count(greek_capital_letter_iota_with_vrachy);
+			return 2;
 		case 0x1FD9:
 			*normals = greek_capital_letter_iota_with_macron;
-			return static_count(greek_capital_letter_iota_with_macron);
+			return 2;
 		case 0x1FDA:
 			*normals = greek_capital_letter_iota_with_varia;
-			return static_count(greek_capital_letter_iota_with_varia);
+			return 2;
 		case 0x1FDB:
 			*normals = greek_capital_letter_iota_with_oxia;
-			return static_count(greek_capital_letter_iota_with_oxia);
+			return 1;
 		case 0x1FDD:
 			*normals = greek_dasia_and_varia;
-			return static_count(greek_dasia_and_varia);
+			return 2;
 		case 0x1FDE:
 			*normals = greek_dasia_and_oxia;
-			return static_count(greek_dasia_and_oxia);
+			return 2;
 		case 0x1FDF:
 			*normals = greek_dasia_and_perispomeni;
-			return static_count(greek_dasia_and_perispomeni);
+			return 2;
 		case 0x1FE0:
 			*normals = greek_small_letter_upsilon_with_vrachy;
-			return static_count(greek_small_letter_upsilon_with_vrachy);
+			return 2;
 		case 0x1FE1:
 			*normals = greek_small_letter_upsilon_with_macron;
-			return static_count(greek_small_letter_upsilon_with_macron);
+			return 2;
 		case 0x1FE2:
 			*normals = greek_small_letter_upsilon_with_dialytika_and_varia;
-			return static_count(greek_small_letter_upsilon_with_dialytika_and_varia);
+			return 2;
 		case 0x1FE3:
 			*normals = greek_small_letter_upsilon_with_dialytika_and_oxia;
-			return static_count(greek_small_letter_upsilon_with_dialytika_and_oxia);
+			return 1;
 		case 0x1FE4:
 			*normals = greek_small_letter_rho_with_psili;
-			return static_count(greek_small_letter_rho_with_psili);
+			return 2;
 		case 0x1FE5:
 			*normals = greek_small_letter_rho_with_dasia;
-			return static_count(greek_small_letter_rho_with_dasia);
+			return 2;
 		case 0x1FE6:
 			*normals = greek_small_letter_upsilon_with_perispomeni;
-			return static_count(greek_small_letter_upsilon_with_perispomeni);
+			return 2;
 		case 0x1FE7:
 			*normals = greek_small_letter_upsilon_with_dialytika_and_perispomeni;
-			return static_count(greek_small_letter_upsilon_with_dialytika_and_perispomeni);
+			return 2;
 		case 0x1FE8:
 			*normals = greek_capital_letter_upsilon_with_vrachy;
-			return static_count(greek_capital_letter_upsilon_with_vrachy);
+			return 2;
 		case 0x1FE9:
 			*normals = greek_capital_letter_upsilon_with_macron;
-			return static_count(greek_capital_letter_upsilon_with_macron);
+			return 2;
 		case 0x1FEA:
 			*normals = greek_capital_letter_upsilon_with_varia;
-			return static_count(greek_capital_letter_upsilon_with_varia);
+			return 2;
 		case 0x1FEB:
 			*normals = greek_capital_letter_upsilon_with_oxia;
-			return static_count(greek_capital_letter_upsilon_with_oxia);
+			return 1;
 		case 0x1FEC:
 			*normals = greek_capital_letter_rho_with_dasia;
-			return static_count(greek_capital_letter_rho_with_dasia);
+			return 2;
 		case 0x1FED:
 			*normals = greek_dialytika_and_varia;
-			return static_count(greek_dialytika_and_varia);
+			return 2;
 		case 0x1FEE:
 			*normals = greek_dialytika_and_oxia;
-			return static_count(greek_dialytika_and_oxia);
+			return 1;
 		case 0x1FEF:
 			*normals = greek_varia;
-			return static_count(greek_varia);
+			return 1;
 		case 0x1FF2:
 			*normals = greek_small_letter_omega_with_varia_and_ypogegrammeni;
-			return static_count(greek_small_letter_omega_with_varia_and_ypogegrammeni);
+			return 2;
 		case 0x1FF3:
 			*normals = greek_small_letter_omega_with_ypogegrammeni;
-			return static_count(greek_small_letter_omega_with_ypogegrammeni);
+			return 2;
 		case 0x1FF4:
 			*normals = greek_small_letter_omega_with_oxia_and_ypogegrammeni;
-			return static_count(greek_small_letter_omega_with_oxia_and_ypogegrammeni);
+			return 2;
 		case 0x1FF6:
 			*normals = greek_small_letter_omega_with_perispomeni;
-			return static_count(greek_small_letter_omega_with_perispomeni);
+			return 2;
 		case 0x1FF7:
 			*normals = greek_small_letter_omega_with_perispomeni_and_ypogegrammeni;
-			return static_count(greek_small_letter_omega_with_perispomeni_and_ypogegrammeni);
+			return 2;
 		case 0x1FF8:
 			*normals = greek_capital_letter_omicron_with_varia;
-			return static_count(greek_capital_letter_omicron_with_varia);
+			return 2;
 		case 0x1FF9:
 			*normals = greek_capital_letter_omicron_with_oxia;
-			return static_count(greek_capital_letter_omicron_with_oxia);
+			return 1;
 		case 0x1FFA:
 			*normals = greek_capital_letter_omega_with_varia;
-			return static_count(greek_capital_letter_omega_with_varia);
+			return 2;
 		case 0x1FFB:
 			*normals = greek_capital_letter_omega_with_oxia;
-			return static_count(greek_capital_letter_omega_with_oxia);
+			return 1;
 		case 0x1FFC:
 			*normals = greek_capital_letter_omega_with_prosgegrammeni;
-			return static_count(greek_capital_letter_omega_with_prosgegrammeni);
+			return 2;
 		case 0x1FFD:
 			*normals = greek_oxia;
-			return static_count(greek_oxia);
+			return 1;
 		case 0x1FFE:
 			*normals = greek_dasia;
-			return static_count(greek_dasia);
+			return 2;
 		case 0x2000:
 			*normals = en_quad;
-			return static_count(en_quad);
+			return 1;
 		case 0x2001:
 			*normals = em_quad;
-			return static_count(em_quad);
+			return 1;
 		case 0x2002:
 			*normals = en_space;
-			return static_count(en_space);
+			return 1;
 		case 0x2003:
 			*normals = em_space;
-			return static_count(em_space);
+			return 1;
 		case 0x2004:
 			*normals = three_per_em_space;
-			return static_count(three_per_em_space);
+			return 1;
 		case 0x2005:
 			*normals = four_per_em_space;
-			return static_count(four_per_em_space);
+			return 1;
 		case 0x2006:
 			*normals = six_per_em_space;
-			return static_count(six_per_em_space);
+			return 1;
 		case 0x2007:
 			*normals = figure_space;
-			return static_count(figure_space);
+			return 1;
 		case 0x2008:
 			*normals = punctuation_space;
-			return static_count(punctuation_space);
+			return 1;
 		case 0x2009:
 			*normals = thin_space;
-			return static_count(thin_space);
+			return 1;
 		case 0x200A:
 			*normals = hair_space;
-			return static_count(hair_space);
+			return 1;
 		case 0x2011:
 			*normals = non_breaking_hyphen;
-			return static_count(non_breaking_hyphen);
+			return 1;
 		case 0x2017:
 			*normals = double_low_line;
-			return static_count(double_low_line);
+			return 2;
 		case 0x2024:
 			*normals = one_dot_leader;
-			return static_count(one_dot_leader);
+			return 1;
 		case 0x2025:
 			*normals = two_dot_leader;
-			return static_count(two_dot_leader);
+			return 2;
 		case 0x2026:
 			*normals = horizontal_ellipsis;
-			return static_count(horizontal_ellipsis);
+			return 3;
 		case 0x202F:
 			*normals = narrow_no_break_space;
-			return static_count(narrow_no_break_space);
+			return 1;
 		case 0x2033:
 			*normals = double_prime;
-			return static_count(double_prime);
+			return 2;
 		case 0x2034:
 			*normals = triple_prime;
-			return static_count(triple_prime);
+			return 3;
 		case 0x2036:
 			*normals = reversed_double_prime;
-			return static_count(reversed_double_prime);
+			return 2;
 		case 0x2037:
 			*normals = reversed_triple_prime;
-			return static_count(reversed_triple_prime);
+			return 3;
 		case 0x203C:
 			*normals = double_exclamation_mark;
-			return static_count(double_exclamation_mark);
+			return 2;
 		case 0x203E:
 			*normals = overline;
-			return static_count(overline);
+			return 2;
 		case 0x2047:
 			*normals = double_question_mark;
-			return static_count(double_question_mark);
+			return 2;
 		case 0x2048:
 			*normals = question_exclamation_mark;
-			return static_count(question_exclamation_mark);
+			return 2;
 		case 0x2049:
 			*normals = exclamation_question_mark;
-			return static_count(exclamation_question_mark);
+			return 2;
 		case 0x2057:
 			*normals = quadruple_prime;
-			return static_count(quadruple_prime);
+			return 4;
 		case 0x205F:
 			*normals = medium_mathematical_space;
-			return static_count(medium_mathematical_space);
+			return 1;
 		case 0x2070:
 			*normals = superscript_zero;
-			return static_count(superscript_zero);
+			return 1;
 		case 0x2071:
 			*normals = superscript_latin_small_letter_i;
-			return static_count(superscript_latin_small_letter_i);
+			return 1;
 		case 0x2074:
 			*normals = superscript_four;
-			return static_count(superscript_four);
+			return 1;
 		case 0x2075:
 			*normals = superscript_five;
-			return static_count(superscript_five);
+			return 1;
 		case 0x2076:
 			*normals = superscript_six;
-			return static_count(superscript_six);
+			return 1;
 		case 0x2077:
 			*normals = superscript_seven;
-			return static_count(superscript_seven);
+			return 1;
 		case 0x2078:
 			*normals = superscript_eight;
-			return static_count(superscript_eight);
+			return 1;
 		case 0x2079:
 			*normals = superscript_nine;
-			return static_count(superscript_nine);
+			return 1;
 		case 0x207A:
 			*normals = superscript_plus_sign;
-			return static_count(superscript_plus_sign);
+			return 1;
 		case 0x207B:
 			*normals = superscript_minus;
-			return static_count(superscript_minus);
+			return 1;
 		case 0x207C:
 			*normals = superscript_equals_sign;
-			return static_count(superscript_equals_sign);
+			return 1;
 		case 0x207D:
 			*normals = superscript_left_parenthesis;
-			return static_count(superscript_left_parenthesis);
+			return 1;
 		case 0x207E:
 			*normals = superscript_right_parenthesis;
-			return static_count(superscript_right_parenthesis);
+			return 1;
 		case 0x207F:
 			*normals = superscript_latin_small_letter_n;
-			return static_count(superscript_latin_small_letter_n);
+			return 1;
 		case 0x2080:
 			*normals = subscript_zero;
-			return static_count(subscript_zero);
+			return 1;
 		case 0x2081:
 			*normals = subscript_one;
-			return static_count(subscript_one);
+			return 1;
 		case 0x2082:
 			*normals = subscript_two;
-			return static_count(subscript_two);
+			return 1;
 		case 0x2083:
 			*normals = subscript_three;
-			return static_count(subscript_three);
+			return 1;
 		case 0x2084:
 			*normals = subscript_four;
-			return static_count(subscript_four);
+			return 1;
 		case 0x2085:
 			*normals = subscript_five;
-			return static_count(subscript_five);
+			return 1;
 		case 0x2086:
 			*normals = subscript_six;
-			return static_count(subscript_six);
+			return 1;
 		case 0x2087:
 			*normals = subscript_seven;
-			return static_count(subscript_seven);
+			return 1;
 		case 0x2088:
 			*normals = subscript_eight;
-			return static_count(subscript_eight);
+			return 1;
 		case 0x2089:
 			*normals = subscript_nine;
-			return static_count(subscript_nine);
+			return 1;
 		case 0x208A:
 			*normals = subscript_plus_sign;
-			return static_count(subscript_plus_sign);
+			return 1;
 		case 0x208B:
 			*normals = subscript_minus;
-			return static_count(subscript_minus);
+			return 1;
 		case 0x208C:
 			*normals = subscript_equals_sign;
-			return static_count(subscript_equals_sign);
+			return 1;
 		case 0x208D:
 			*normals = subscript_left_parenthesis;
-			return static_count(subscript_left_parenthesis);
+			return 1;
 		case 0x208E:
 			*normals = subscript_right_parenthesis;
-			return static_count(subscript_right_parenthesis);
+			return 1;
 		case 0x2090:
 			*normals = latin_subscript_small_letter_a;
-			return static_count(latin_subscript_small_letter_a);
+			return 1;
 		case 0x2091:
 			*normals = latin_subscript_small_letter_e;
-			return static_count(latin_subscript_small_letter_e);
+			return 1;
 		case 0x2092:
 			*normals = latin_subscript_small_letter_o;
-			return static_count(latin_subscript_small_letter_o);
+			return 1;
 		case 0x2093:
 			*normals = latin_subscript_small_letter_x;
-			return static_count(latin_subscript_small_letter_x);
+			return 1;
 		case 0x2094:
 			*normals = latin_subscript_small_letter_schwa;
-			return static_count(latin_subscript_small_letter_schwa);
+			return 1;
 		case 0x2095:
 			*normals = latin_subscript_small_letter_h;
-			return static_count(latin_subscript_small_letter_h);
+			return 1;
 		case 0x2096:
 			*normals = latin_subscript_small_letter_k;
-			return static_count(latin_subscript_small_letter_k);
+			return 1;
 		case 0x2097:
 			*normals = latin_subscript_small_letter_l;
-			return static_count(latin_subscript_small_letter_l);
+			return 1;
 		case 0x2098:
 			*normals = latin_subscript_small_letter_m;
-			return static_count(latin_subscript_small_letter_m);
+			return 1;
 		case 0x2099:
 			*normals = latin_subscript_small_letter_n;
-			return static_count(latin_subscript_small_letter_n);
+			return 1;
 		case 0x209A:
 			*normals = latin_subscript_small_letter_p;
-			return static_count(latin_subscript_small_letter_p);
+			return 1;
 		case 0x209B:
 			*normals = latin_subscript_small_letter_s;
-			return static_count(latin_subscript_small_letter_s);
+			return 1;
 		case 0x209C:
 			*normals = latin_subscript_small_letter_t;
-			return static_count(latin_subscript_small_letter_t);
+			return 1;
 		case 0x20A8:
 			*normals = rupee_sign;
-			return static_count(rupee_sign);
+			return 2;
 		case 0x2100:
 			*normals = account_of;
-			return static_count(account_of);
+			return 3;
 		case 0x2101:
 			*normals = addressed_to_the_subject;
-			return static_count(addressed_to_the_subject);
+			return 3;
 		case 0x2102:
 			*normals = double_struck_capital_c;
-			return static_count(double_struck_capital_c);
+			return 1;
 		case 0x2103:
 			*normals = degree_celsius;
-			return static_count(degree_celsius);
+			return 2;
 		case 0x2105:
 			*normals = care_of;
-			return static_count(care_of);
+			return 3;
 		case 0x2106:
 			*normals = cada_una;
-			return static_count(cada_una);
+			return 3;
 		case 0x2107:
 			*normals = euler_constant;
-			return static_count(euler_constant);
+			return 1;
 		case 0x2109:
 			*normals = degree_fahrenheit;
-			return static_count(degree_fahrenheit);
+			return 2;
 		case 0x210A:
 			*normals = script_small_g;
-			return static_count(script_small_g);
+			return 1;
 		case 0x210B:
 			*normals = script_capital_h;
-			return static_count(script_capital_h);
+			return 1;
 		case 0x210C:
 			*normals = black_letter_capital_h;
-			return static_count(black_letter_capital_h);
+			return 1;
 		case 0x210D:
 			*normals = double_struck_capital_h;
-			return static_count(double_struck_capital_h);
+			return 1;
 		case 0x210E:
 			*normals = planck_constant;
-			return static_count(planck_constant);
+			return 1;
 		case 0x210F:
 			*normals = planck_constant_over_two_pi;
-			return static_count(planck_constant_over_two_pi);
+			return 1;
 		case 0x2110:
 			*normals = script_capital_i;
-			return static_count(script_capital_i);
+			return 1;
 		case 0x2111:
 			*normals = black_letter_capital_i;
-			return static_count(black_letter_capital_i);
+			return 1;
 		case 0x2112:
 			*normals = script_capital_l;
-			return static_count(script_capital_l);
+			return 1;
 		case 0x2113:
 			*normals = script_small_l;
-			return static_count(script_small_l);
+			return 1;
 		case 0x2115:
 			*normals = double_struck_capital_n;
-			return static_count(double_struck_capital_n);
+			return 1;
 		case 0x2116:
 			*normals = numero_sign;
-			return static_count(numero_sign);
+			return 2;
 		case 0x2119:
 			*normals = double_struck_capital_p;
-			return static_count(double_struck_capital_p);
+			return 1;
 		case 0x211A:
 			*normals = double_struck_capital_q;
-			return static_count(double_struck_capital_q);
+			return 1;
 		case 0x211B:
 			*normals = script_capital_r;
-			return static_count(script_capital_r);
+			return 1;
 		case 0x211C:
 			*normals = black_letter_capital_r;
-			return static_count(black_letter_capital_r);
+			return 1;
 		case 0x211D:
 			*normals = double_struck_capital_r;
-			return static_count(double_struck_capital_r);
+			return 1;
 		case 0x2120:
 			*normals = service_mark;
-			return static_count(service_mark);
+			return 2;
 		case 0x2121:
 			*normals = telephone_sign;
-			return static_count(telephone_sign);
+			return 3;
 		case 0x2122:
 			*normals = trade_mark_sign;
-			return static_count(trade_mark_sign);
+			return 2;
 		case 0x2124:
 			*normals = double_struck_capital_z;
-			return static_count(double_struck_capital_z);
+			return 1;
 		case 0x2126:
 			*normals = ohm_sign;
-			return static_count(ohm_sign);
+			return 1;
 		case 0x2128:
 			*normals = black_letter_capital_z;
-			return static_count(black_letter_capital_z);
+			return 1;
 		case 0x212A:
 			*normals = kelvin_sign;
-			return static_count(kelvin_sign);
+			return 1;
 		case 0x212B:
 			*normals = angstrom_sign;
-			return static_count(angstrom_sign);
+			return 1;
 		case 0x212C:
 			*normals = script_capital_b;
-			return static_count(script_capital_b);
+			return 1;
 		case 0x212D:
 			*normals = black_letter_capital_c;
-			return static_count(black_letter_capital_c);
+			return 1;
 		case 0x212F:
 			*normals = script_small_e;
-			return static_count(script_small_e);
+			return 1;
 		case 0x2130:
 			*normals = script_capital_e;
-			return static_count(script_capital_e);
+			return 1;
 		case 0x2131:
 			*normals = script_capital_f;
-			return static_count(script_capital_f);
+			return 1;
 		case 0x2133:
 			*normals = script_capital_m;
-			return static_count(script_capital_m);
+			return 1;
 		case 0x2134:
 			*normals = script_small_o;
-			return static_count(script_small_o);
+			return 1;
 		case 0x2135:
 			*normals = alef_symbol;
-			return static_count(alef_symbol);
+			return 1;
 		case 0x2136:
 			*normals = bet_symbol;
-			return static_count(bet_symbol);
+			return 1;
 		case 0x2137:
 			*normals = gimel_symbol;
-			return static_count(gimel_symbol);
+			return 1;
 		case 0x2138:
 			*normals = dalet_symbol;
-			return static_count(dalet_symbol);
+			return 1;
 		case 0x2139:
 			*normals = information_source;
-			return static_count(information_source);
+			return 1;
 		case 0x213B:
 			*normals = facsimile_sign;
-			return static_count(facsimile_sign);
+			return 3;
 		case 0x213C:
 			*normals = double_struck_small_pi;
-			return static_count(double_struck_small_pi);
+			return 1;
 		case 0x213D:
 			*normals = double_struck_small_gamma;
-			return static_count(double_struck_small_gamma);
+			return 1;
 		case 0x213E:
 			*normals = double_struck_capital_gamma;
-			return static_count(double_struck_capital_gamma);
+			return 1;
 		case 0x213F:
 			*normals = double_struck_capital_pi;
-			return static_count(double_struck_capital_pi);
+			return 1;
 		case 0x2140:
 			*normals = double_struck_n_ary_summation;
-			return static_count(double_struck_n_ary_summation);
+			return 1;
 		case 0x2145:
 			*normals = double_struck_italic_capital_d;
-			return static_count(double_struck_italic_capital_d);
+			return 1;
 		case 0x2146:
 			*normals = double_struck_italic_small_d;
-			return static_count(double_struck_italic_small_d);
+			return 1;
 		case 0x2147:
 			*normals = double_struck_italic_small_e;
-			return static_count(double_struck_italic_small_e);
+			return 1;
 		case 0x2148:
 			*normals = double_struck_italic_small_i;
-			return static_count(double_struck_italic_small_i);
+			return 1;
 		case 0x2149:
 			*normals = double_struck_italic_small_j;
-			return static_count(double_struck_italic_small_j);
+			return 1;
 		case 0x2150:
 			*normals = vulgar_fraction_one_seventh;
-			return static_count(vulgar_fraction_one_seventh);
+			return 3;
 		case 0x2151:
 			*normals = vulgar_fraction_one_ninth;
-			return static_count(vulgar_fraction_one_ninth);
+			return 3;
 		case 0x2152:
 			*normals = vulgar_fraction_one_tenth;
-			return static_count(vulgar_fraction_one_tenth);
+			return 4;
 		case 0x2153:
 			*normals = vulgar_fraction_one_third;
-			return static_count(vulgar_fraction_one_third);
+			return 3;
 		case 0x2154:
 			*normals = vulgar_fraction_two_thirds;
-			return static_count(vulgar_fraction_two_thirds);
+			return 3;
 		case 0x2155:
 			*normals = vulgar_fraction_one_fifth;
-			return static_count(vulgar_fraction_one_fifth);
+			return 3;
 		case 0x2156:
 			*normals = vulgar_fraction_two_fifths;
-			return static_count(vulgar_fraction_two_fifths);
+			return 3;
 		case 0x2157:
 			*normals = vulgar_fraction_three_fifths;
-			return static_count(vulgar_fraction_three_fifths);
+			return 3;
 		case 0x2158:
 			*normals = vulgar_fraction_four_fifths;
-			return static_count(vulgar_fraction_four_fifths);
+			return 3;
 		case 0x2159:
 			*normals = vulgar_fraction_one_sixth;
-			return static_count(vulgar_fraction_one_sixth);
+			return 3;
 		case 0x215A:
 			*normals = vulgar_fraction_five_sixths;
-			return static_count(vulgar_fraction_five_sixths);
+			return 3;
 		case 0x215B:
 			*normals = vulgar_fraction_one_eighth;
-			return static_count(vulgar_fraction_one_eighth);
+			return 3;
 		case 0x215C:
 			*normals = vulgar_fraction_three_eighths;
-			return static_count(vulgar_fraction_three_eighths);
+			return 3;
 		case 0x215D:
 			*normals = vulgar_fraction_five_eighths;
-			return static_count(vulgar_fraction_five_eighths);
+			return 3;
 		case 0x215E:
 			*normals = vulgar_fraction_seven_eighths;
-			return static_count(vulgar_fraction_seven_eighths);
+			return 3;
 		case 0x215F:
 			*normals = fraction_numerator_one;
-			return static_count(fraction_numerator_one);
+			return 2;
 		case 0x2160:
 			*normals = roman_numeral_one;
-			return static_count(roman_numeral_one);
+			return 1;
 		case 0x2161:
 			*normals = roman_numeral_two;
-			return static_count(roman_numeral_two);
+			return 2;
 		case 0x2162:
 			*normals = roman_numeral_three;
-			return static_count(roman_numeral_three);
+			return 3;
 		case 0x2163:
 			*normals = roman_numeral_four;
-			return static_count(roman_numeral_four);
+			return 2;
 		case 0x2164:
 			*normals = roman_numeral_five;
-			return static_count(roman_numeral_five);
+			return 1;
 		case 0x2165:
 			*normals = roman_numeral_six;
-			return static_count(roman_numeral_six);
+			return 2;
 		case 0x2166:
 			*normals = roman_numeral_seven;
-			return static_count(roman_numeral_seven);
+			return 3;
 		case 0x2167:
 			*normals = roman_numeral_eight;
-			return static_count(roman_numeral_eight);
+			return 4;
 		case 0x2168:
 			*normals = roman_numeral_nine;
-			return static_count(roman_numeral_nine);
+			return 2;
 		case 0x2169:
 			*normals = roman_numeral_ten;
-			return static_count(roman_numeral_ten);
+			return 1;
 		case 0x216A:
 			*normals = roman_numeral_eleven;
-			return static_count(roman_numeral_eleven);
+			return 2;
 		case 0x216B:
 			*normals = roman_numeral_twelve;
-			return static_count(roman_numeral_twelve);
+			return 3;
 		case 0x216C:
 			*normals = roman_numeral_fifty;
-			return static_count(roman_numeral_fifty);
+			return 1;
 		case 0x216D:
 			*normals = roman_numeral_one_hundred;
-			return static_count(roman_numeral_one_hundred);
+			return 1;
 		case 0x216E:
 			*normals = roman_numeral_five_hundred;
-			return static_count(roman_numeral_five_hundred);
+			return 1;
 		case 0x216F:
 			*normals = roman_numeral_one_thousand;
-			return static_count(roman_numeral_one_thousand);
+			return 1;
 		case 0x2170:
 			*normals = small_roman_numeral_one;
-			return static_count(small_roman_numeral_one);
+			return 1;
 		case 0x2171:
 			*normals = small_roman_numeral_two;
-			return static_count(small_roman_numeral_two);
+			return 2;
 		case 0x2172:
 			*normals = small_roman_numeral_three;
-			return static_count(small_roman_numeral_three);
+			return 3;
 		case 0x2173:
 			*normals = small_roman_numeral_four;
-			return static_count(small_roman_numeral_four);
+			return 2;
 		case 0x2174:
 			*normals = small_roman_numeral_five;
-			return static_count(small_roman_numeral_five);
+			return 1;
 		case 0x2175:
 			*normals = small_roman_numeral_six;
-			return static_count(small_roman_numeral_six);
+			return 2;
 		case 0x2176:
 			*normals = small_roman_numeral_seven;
-			return static_count(small_roman_numeral_seven);
+			return 3;
 		case 0x2177:
 			*normals = small_roman_numeral_eight;
-			return static_count(small_roman_numeral_eight);
+			return 4;
 		case 0x2178:
 			*normals = small_roman_numeral_nine;
-			return static_count(small_roman_numeral_nine);
+			return 2;
 		case 0x2179:
 			*normals = small_roman_numeral_ten;
-			return static_count(small_roman_numeral_ten);
+			return 1;
 		case 0x217A:
 			*normals = small_roman_numeral_eleven;
-			return static_count(small_roman_numeral_eleven);
+			return 2;
 		case 0x217B:
 			*normals = small_roman_numeral_twelve;
-			return static_count(small_roman_numeral_twelve);
+			return 3;
 		case 0x217C:
 			*normals = small_roman_numeral_fifty;
-			return static_count(small_roman_numeral_fifty);
+			return 1;
 		case 0x217D:
 			*normals = small_roman_numeral_one_hundred;
-			return static_count(small_roman_numeral_one_hundred);
+			return 1;
 		case 0x217E:
 			*normals = small_roman_numeral_five_hundred;
-			return static_count(small_roman_numeral_five_hundred);
+			return 1;
 		case 0x217F:
 			*normals = small_roman_numeral_one_thousand;
-			return static_count(small_roman_numeral_one_thousand);
+			return 1;
 		case 0x2189:
 			*normals = vulgar_fraction_zero_thirds;
-			return static_count(vulgar_fraction_zero_thirds);
+			return 3;
 		case 0x219A:
 			*normals = leftwards_arrow_with_stroke;
-			return static_count(leftwards_arrow_with_stroke);
+			return 2;
 		case 0x219B:
 			*normals = rightwards_arrow_with_stroke;
-			return static_count(rightwards_arrow_with_stroke);
+			return 2;
 		case 0x21AE:
 			*normals = left_right_arrow_with_stroke;
-			return static_count(left_right_arrow_with_stroke);
+			return 2;
 		case 0x21CD:
 			*normals = leftwards_double_arrow_with_stroke;
-			return static_count(leftwards_double_arrow_with_stroke);
+			return 2;
 		case 0x21CE:
 			*normals = left_right_double_arrow_with_stroke;
-			return static_count(left_right_double_arrow_with_stroke);
+			return 2;
 		case 0x21CF:
 			*normals = rightwards_double_arrow_with_stroke;
-			return static_count(rightwards_double_arrow_with_stroke);
+			return 2;
 		case 0x2204:
 			*normals = there_does_not_exist;
-			return static_count(there_does_not_exist);
+			return 2;
 		case 0x2209:
 			*normals = not_an_element_of;
-			return static_count(not_an_element_of);
+			return 2;
 		case 0x220C:
 			*normals = does_not_contain_as_member;
-			return static_count(does_not_contain_as_member);
+			return 2;
 		case 0x2224:
 			*normals = does_not_divide;
-			return static_count(does_not_divide);
+			return 2;
 		case 0x2226:
 			*normals = not_parallel_to;
-			return static_count(not_parallel_to);
+			return 2;
 		case 0x222C:
 			*normals = double_integral;
-			return static_count(double_integral);
+			return 2;
 		case 0x222D:
 			*normals = triple_integral;
-			return static_count(triple_integral);
+			return 3;
 		case 0x222F:
 			*normals = surface_integral;
-			return static_count(surface_integral);
+			return 2;
 		case 0x2230:
 			*normals = volume_integral;
-			return static_count(volume_integral);
+			return 3;
 		case 0x2241:
 			*normals = not_tilde;
-			return static_count(not_tilde);
+			return 2;
 		case 0x2244:
 			*normals = not_asymptotically_equal_to;
-			return static_count(not_asymptotically_equal_to);
+			return 2;
 		case 0x2247:
 			*normals = neither_approximately_nor_actually_equal_to;
-			return static_count(neither_approximately_nor_actually_equal_to);
+			return 2;
 		case 0x2249:
 			*normals = not_almost_equal_to;
-			return static_count(not_almost_equal_to);
+			return 2;
 		case 0x2260:
 			*normals = not_equal_to;
-			return static_count(not_equal_to);
+			return 2;
 		case 0x2262:
 			*normals = not_identical_to;
-			return static_count(not_identical_to);
+			return 2;
 		case 0x226D:
 			*normals = not_equivalent_to;
-			return static_count(not_equivalent_to);
+			return 2;
 		case 0x226E:
 			*normals = not_less_than;
-			return static_count(not_less_than);
+			return 2;
 		case 0x226F:
 			*normals = not_greater_than;
-			return static_count(not_greater_than);
+			return 2;
 		case 0x2270:
 			*normals = neither_less_than_nor_equal_to;
-			return static_count(neither_less_than_nor_equal_to);
+			return 2;
 		case 0x2271:
 			*normals = neither_greater_than_nor_equal_to;
-			return static_count(neither_greater_than_nor_equal_to);
+			return 2;
 		case 0x2274:
 			*normals = neither_less_than_nor_equivalent_to;
-			return static_count(neither_less_than_nor_equivalent_to);
+			return 2;
 		case 0x2275:
 			*normals = neither_greater_than_nor_equivalent_to;
-			return static_count(neither_greater_than_nor_equivalent_to);
+			return 2;
 		case 0x2278:
 			*normals = neither_less_than_nor_greater_than;
-			return static_count(neither_less_than_nor_greater_than);
+			return 2;
 		case 0x2279:
 			*normals = neither_greater_than_nor_less_than;
-			return static_count(neither_greater_than_nor_less_than);
+			return 2;
 		case 0x2280:
 			*normals = does_not_precede;
-			return static_count(does_not_precede);
+			return 2;
 		case 0x2281:
 			*normals = does_not_succeed;
-			return static_count(does_not_succeed);
+			return 2;
 		case 0x2284:
 			*normals = not_a_subset_of;
-			return static_count(not_a_subset_of);
+			return 2;
 		case 0x2285:
 			*normals = not_a_superset_of;
-			return static_count(not_a_superset_of);
+			return 2;
 		case 0x2288:
 			*normals = neither_a_subset_of_nor_equal_to;
-			return static_count(neither_a_subset_of_nor_equal_to);
+			return 2;
 		case 0x2289:
 			*normals = neither_a_superset_of_nor_equal_to;
-			return static_count(neither_a_superset_of_nor_equal_to);
+			return 2;
 		case 0x22AC:
 			*normals = does_not_prove;
-			return static_count(does_not_prove);
+			return 2;
 		case 0x22AD:
 			*normals = not_true;
-			return static_count(not_true);
+			return 2;
 		case 0x22AE:
 			*normals = does_not_force;
-			return static_count(does_not_force);
+			return 2;
 		case 0x22AF:
 			*normals = negated_double_vertical_bar_double_right_turnstile;
-			return static_count(negated_double_vertical_bar_double_right_turnstile);
+			return 2;
 		case 0x22E0:
 			*normals = does_not_precede_or_equal;
-			return static_count(does_not_precede_or_equal);
+			return 2;
 		case 0x22E1:
 			*normals = does_not_succeed_or_equal;
-			return static_count(does_not_succeed_or_equal);
+			return 2;
 		case 0x22E2:
 			*normals = not_square_image_of_or_equal_to;
-			return static_count(not_square_image_of_or_equal_to);
+			return 2;
 		case 0x22E3:
 			*normals = not_square_original_of_or_equal_to;
-			return static_count(not_square_original_of_or_equal_to);
+			return 2;
 		case 0x22EA:
 			*normals = not_normal_subgroup_of;
-			return static_count(not_normal_subgroup_of);
+			return 2;
 		case 0x22EB:
 			*normals = does_not_contain_as_normal_subgroup;
-			return static_count(does_not_contain_as_normal_subgroup);
+			return 2;
 		case 0x22EC:
 			*normals = not_normal_subgroup_of_or_equal_to;
-			return static_count(not_normal_subgroup_of_or_equal_to);
+			return 2;
 		case 0x22ED:
 			*normals = does_not_contain_as_normal_subgroup_or_equal;
-			return static_count(does_not_contain_as_normal_subgroup_or_equal);
+			return 2;
 		case 0x2329:
 			*normals = left_pointing_angle_bracket;
-			return static_count(left_pointing_angle_bracket);
+			return 1;
 		case 0x232A:
 			*normals = right_pointing_angle_bracket;
-			return static_count(right_pointing_angle_bracket);
+			return 1;
 		case 0x2460:
 			*normals = circled_digit_one;
-			return static_count(circled_digit_one);
+			return 1;
 		case 0x2461:
 			*normals = circled_digit_two;
-			return static_count(circled_digit_two);
+			return 1;
 		case 0x2462:
 			*normals = circled_digit_three;
-			return static_count(circled_digit_three);
+			return 1;
 		case 0x2463:
 			*normals = circled_digit_four;
-			return static_count(circled_digit_four);
+			return 1;
 		case 0x2464:
 			*normals = circled_digit_five;
-			return static_count(circled_digit_five);
+			return 1;
 		case 0x2465:
 			*normals = circled_digit_six;
-			return static_count(circled_digit_six);
+			return 1;
 		case 0x2466:
 			*normals = circled_digit_seven;
-			return static_count(circled_digit_seven);
+			return 1;
 		case 0x2467:
 			*normals = circled_digit_eight;
-			return static_count(circled_digit_eight);
+			return 1;
 		case 0x2468:
 			*normals = circled_digit_nine;
-			return static_count(circled_digit_nine);
+			return 1;
 		case 0x2469:
 			*normals = circled_number_ten;
-			return static_count(circled_number_ten);
+			return 2;
 		case 0x246A:
 			*normals = circled_number_eleven;
-			return static_count(circled_number_eleven);
+			return 2;
 		case 0x246B:
 			*normals = circled_number_twelve;
-			return static_count(circled_number_twelve);
+			return 2;
 		case 0x246C:
 			*normals = circled_number_thirteen;
-			return static_count(circled_number_thirteen);
+			return 2;
 		case 0x246D:
 			*normals = circled_number_fourteen;
-			return static_count(circled_number_fourteen);
+			return 2;
 		case 0x246E:
 			*normals = circled_number_fifteen;
-			return static_count(circled_number_fifteen);
+			return 2;
 		case 0x246F:
 			*normals = circled_number_sixteen;
-			return static_count(circled_number_sixteen);
+			return 2;
 		case 0x2470:
 			*normals = circled_number_seventeen;
-			return static_count(circled_number_seventeen);
+			return 2;
 		case 0x2471:
 			*normals = circled_number_eighteen;
-			return static_count(circled_number_eighteen);
+			return 2;
 		case 0x2472:
 			*normals = circled_number_nineteen;
-			return static_count(circled_number_nineteen);
+			return 2;
 		case 0x2473:
 			*normals = circled_number_twenty;
-			return static_count(circled_number_twenty);
+			return 2;
 		case 0x2474:
 			*normals = parenthesized_digit_one;
-			return static_count(parenthesized_digit_one);
+			return 3;
 		case 0x2475:
 			*normals = parenthesized_digit_two;
-			return static_count(parenthesized_digit_two);
+			return 3;
 		case 0x2476:
 			*normals = parenthesized_digit_three;
-			return static_count(parenthesized_digit_three);
+			return 3;
 		case 0x2477:
 			*normals = parenthesized_digit_four;
-			return static_count(parenthesized_digit_four);
+			return 3;
 		case 0x2478:
 			*normals = parenthesized_digit_five;
-			return static_count(parenthesized_digit_five);
+			return 3;
 		case 0x2479:
 			*normals = parenthesized_digit_six;
-			return static_count(parenthesized_digit_six);
+			return 3;
 		case 0x247A:
 			*normals = parenthesized_digit_seven;
-			return static_count(parenthesized_digit_seven);
+			return 3;
 		case 0x247B:
 			*normals = parenthesized_digit_eight;
-			return static_count(parenthesized_digit_eight);
+			return 3;
 		case 0x247C:
 			*normals = parenthesized_digit_nine;
-			return static_count(parenthesized_digit_nine);
+			return 3;
 		case 0x247D:
 			*normals = parenthesized_number_ten;
-			return static_count(parenthesized_number_ten);
+			return 4;
 		case 0x247E:
 			*normals = parenthesized_number_eleven;
-			return static_count(parenthesized_number_eleven);
+			return 4;
 		case 0x247F:
 			*normals = parenthesized_number_twelve;
-			return static_count(parenthesized_number_twelve);
+			return 4;
 		case 0x2480:
 			*normals = parenthesized_number_thirteen;
-			return static_count(parenthesized_number_thirteen);
+			return 4;
 		case 0x2481:
 			*normals = parenthesized_number_fourteen;
-			return static_count(parenthesized_number_fourteen);
+			return 4;
 		case 0x2482:
 			*normals = parenthesized_number_fifteen;
-			return static_count(parenthesized_number_fifteen);
+			return 4;
 		case 0x2483:
 			*normals = parenthesized_number_sixteen;
-			return static_count(parenthesized_number_sixteen);
+			return 4;
 		case 0x2484:
 			*normals = parenthesized_number_seventeen;
-			return static_count(parenthesized_number_seventeen);
+			return 4;
 		case 0x2485:
 			*normals = parenthesized_number_eighteen;
-			return static_count(parenthesized_number_eighteen);
+			return 4;
 		case 0x2486:
 			*normals = parenthesized_number_nineteen;
-			return static_count(parenthesized_number_nineteen);
+			return 4;
 		case 0x2487:
 			*normals = parenthesized_number_twenty;
-			return static_count(parenthesized_number_twenty);
+			return 4;
 		case 0x2488:
 			*normals = digit_one_full_stop;
-			return static_count(digit_one_full_stop);
+			return 2;
 		case 0x2489:
 			*normals = digit_two_full_stop;
-			return static_count(digit_two_full_stop);
+			return 2;
 		case 0x248A:
 			*normals = digit_three_full_stop;
-			return static_count(digit_three_full_stop);
+			return 2;
 		case 0x248B:
 			*normals = digit_four_full_stop;
-			return static_count(digit_four_full_stop);
+			return 2;
 		case 0x248C:
 			*normals = digit_five_full_stop;
-			return static_count(digit_five_full_stop);
+			return 2;
 		case 0x248D:
 			*normals = digit_six_full_stop;
-			return static_count(digit_six_full_stop);
+			return 2;
 		case 0x248E:
 			*normals = digit_seven_full_stop;
-			return static_count(digit_seven_full_stop);
+			return 2;
 		case 0x248F:
 			*normals = digit_eight_full_stop;
-			return static_count(digit_eight_full_stop);
+			return 2;
 		case 0x2490:
 			*normals = digit_nine_full_stop;
-			return static_count(digit_nine_full_stop);
+			return 2;
 		case 0x2491:
 			*normals = number_ten_full_stop;
-			return static_count(number_ten_full_stop);
+			return 3;
 		case 0x2492:
 			*normals = number_eleven_full_stop;
-			return static_count(number_eleven_full_stop);
+			return 3;
 		case 0x2493:
 			*normals = number_twelve_full_stop;
-			return static_count(number_twelve_full_stop);
+			return 3;
 		case 0x2494:
 			*normals = number_thirteen_full_stop;
-			return static_count(number_thirteen_full_stop);
+			return 3;
 		case 0x2495:
 			*normals = number_fourteen_full_stop;
-			return static_count(number_fourteen_full_stop);
+			return 3;
 		case 0x2496:
 			*normals = number_fifteen_full_stop;
-			return static_count(number_fifteen_full_stop);
+			return 3;
 		case 0x2497:
 			*normals = number_sixteen_full_stop;
-			return static_count(number_sixteen_full_stop);
+			return 3;
 		case 0x2498:
 			*normals = number_seventeen_full_stop;
-			return static_count(number_seventeen_full_stop);
+			return 3;
 		case 0x2499:
 			*normals = number_eighteen_full_stop;
-			return static_count(number_eighteen_full_stop);
+			return 3;
 		case 0x249A:
 			*normals = number_nineteen_full_stop;
-			return static_count(number_nineteen_full_stop);
+			return 3;
 		case 0x249B:
 			*normals = number_twenty_full_stop;
-			return static_count(number_twenty_full_stop);
+			return 3;
 		case 0x249C:
 			*normals = parenthesized_latin_small_letter_a;
-			return static_count(parenthesized_latin_small_letter_a);
+			return 3;
 		case 0x249D:
 			*normals = parenthesized_latin_small_letter_b;
-			return static_count(parenthesized_latin_small_letter_b);
+			return 3;
 		case 0x249E:
 			*normals = parenthesized_latin_small_letter_c;
-			return static_count(parenthesized_latin_small_letter_c);
+			return 3;
 		case 0x249F:
 			*normals = parenthesized_latin_small_letter_d;
-			return static_count(parenthesized_latin_small_letter_d);
+			return 3;
 		case 0x24A0:
 			*normals = parenthesized_latin_small_letter_e;
-			return static_count(parenthesized_latin_small_letter_e);
+			return 3;
 		case 0x24A1:
 			*normals = parenthesized_latin_small_letter_f;
-			return static_count(parenthesized_latin_small_letter_f);
+			return 3;
 		case 0x24A2:
 			*normals = parenthesized_latin_small_letter_g;
-			return static_count(parenthesized_latin_small_letter_g);
+			return 3;
 		case 0x24A3:
 			*normals = parenthesized_latin_small_letter_h;
-			return static_count(parenthesized_latin_small_letter_h);
+			return 3;
 		case 0x24A4:
 			*normals = parenthesized_latin_small_letter_i;
-			return static_count(parenthesized_latin_small_letter_i);
+			return 3;
 		case 0x24A5:
 			*normals = parenthesized_latin_small_letter_j;
-			return static_count(parenthesized_latin_small_letter_j);
+			return 3;
 		case 0x24A6:
 			*normals = parenthesized_latin_small_letter_k;
-			return static_count(parenthesized_latin_small_letter_k);
+			return 3;
 		case 0x24A7:
 			*normals = parenthesized_latin_small_letter_l;
-			return static_count(parenthesized_latin_small_letter_l);
+			return 3;
 		case 0x24A8:
 			*normals = parenthesized_latin_small_letter_m;
-			return static_count(parenthesized_latin_small_letter_m);
+			return 3;
 		case 0x24A9:
 			*normals = parenthesized_latin_small_letter_n;
-			return static_count(parenthesized_latin_small_letter_n);
+			return 3;
 		case 0x24AA:
 			*normals = parenthesized_latin_small_letter_o;
-			return static_count(parenthesized_latin_small_letter_o);
+			return 3;
 		case 0x24AB:
 			*normals = parenthesized_latin_small_letter_p;
-			return static_count(parenthesized_latin_small_letter_p);
+			return 3;
 		case 0x24AC:
 			*normals = parenthesized_latin_small_letter_q;
-			return static_count(parenthesized_latin_small_letter_q);
+			return 3;
 		case 0x24AD:
 			*normals = parenthesized_latin_small_letter_r;
-			return static_count(parenthesized_latin_small_letter_r);
+			return 3;
 		case 0x24AE:
 			*normals = parenthesized_latin_small_letter_s;
-			return static_count(parenthesized_latin_small_letter_s);
+			return 3;
 		case 0x24AF:
 			*normals = parenthesized_latin_small_letter_t;
-			return static_count(parenthesized_latin_small_letter_t);
+			return 3;
 		case 0x24B0:
 			*normals = parenthesized_latin_small_letter_u;
-			return static_count(parenthesized_latin_small_letter_u);
+			return 3;
 		case 0x24B1:
 			*normals = parenthesized_latin_small_letter_v;
-			return static_count(parenthesized_latin_small_letter_v);
+			return 3;
 		case 0x24B2:
 			*normals = parenthesized_latin_small_letter_w;
-			return static_count(parenthesized_latin_small_letter_w);
+			return 3;
 		case 0x24B3:
 			*normals = parenthesized_latin_small_letter_x;
-			return static_count(parenthesized_latin_small_letter_x);
+			return 3;
 		case 0x24B4:
 			*normals = parenthesized_latin_small_letter_y;
-			return static_count(parenthesized_latin_small_letter_y);
+			return 3;
 		case 0x24B5:
 			*normals = parenthesized_latin_small_letter_z;
-			return static_count(parenthesized_latin_small_letter_z);
+			return 3;
 		case 0x24B6:
 			*normals = circled_latin_capital_letter_a;
-			return static_count(circled_latin_capital_letter_a);
+			return 1;
 		case 0x24B7:
 			*normals = circled_latin_capital_letter_b;
-			return static_count(circled_latin_capital_letter_b);
+			return 1;
 		case 0x24B8:
 			*normals = circled_latin_capital_letter_c;
-			return static_count(circled_latin_capital_letter_c);
+			return 1;
 		case 0x24B9:
 			*normals = circled_latin_capital_letter_d;
-			return static_count(circled_latin_capital_letter_d);
+			return 1;
 		case 0x24BA:
 			*normals = circled_latin_capital_letter_e;
-			return static_count(circled_latin_capital_letter_e);
+			return 1;
 		case 0x24BB:
 			*normals = circled_latin_capital_letter_f;
-			return static_count(circled_latin_capital_letter_f);
+			return 1;
 		case 0x24BC:
 			*normals = circled_latin_capital_letter_g;
-			return static_count(circled_latin_capital_letter_g);
+			return 1;
 		case 0x24BD:
 			*normals = circled_latin_capital_letter_h;
-			return static_count(circled_latin_capital_letter_h);
+			return 1;
 		case 0x24BE:
 			*normals = circled_latin_capital_letter_i;
-			return static_count(circled_latin_capital_letter_i);
+			return 1;
 		case 0x24BF:
 			*normals = circled_latin_capital_letter_j;
-			return static_count(circled_latin_capital_letter_j);
+			return 1;
 		case 0x24C0:
 			*normals = circled_latin_capital_letter_k;
-			return static_count(circled_latin_capital_letter_k);
+			return 1;
 		case 0x24C1:
 			*normals = circled_latin_capital_letter_l;
-			return static_count(circled_latin_capital_letter_l);
+			return 1;
 		case 0x24C2:
 			*normals = circled_latin_capital_letter_m;
-			return static_count(circled_latin_capital_letter_m);
+			return 1;
 		case 0x24C3:
 			*normals = circled_latin_capital_letter_n;
-			return static_count(circled_latin_capital_letter_n);
+			return 1;
 		case 0x24C4:
 			*normals = circled_latin_capital_letter_o;
-			return static_count(circled_latin_capital_letter_o);
+			return 1;
 		case 0x24C5:
 			*normals = circled_latin_capital_letter_p;
-			return static_count(circled_latin_capital_letter_p);
+			return 1;
 		case 0x24C6:
 			*normals = circled_latin_capital_letter_q;
-			return static_count(circled_latin_capital_letter_q);
+			return 1;
 		case 0x24C7:
 			*normals = circled_latin_capital_letter_r;
-			return static_count(circled_latin_capital_letter_r);
+			return 1;
 		case 0x24C8:
 			*normals = circled_latin_capital_letter_s;
-			return static_count(circled_latin_capital_letter_s);
+			return 1;
 		case 0x24C9:
 			*normals = circled_latin_capital_letter_t;
-			return static_count(circled_latin_capital_letter_t);
+			return 1;
 		case 0x24CA:
 			*normals = circled_latin_capital_letter_u;
-			return static_count(circled_latin_capital_letter_u);
+			return 1;
 		case 0x24CB:
 			*normals = circled_latin_capital_letter_v;
-			return static_count(circled_latin_capital_letter_v);
+			return 1;
 		case 0x24CC:
 			*normals = circled_latin_capital_letter_w;
-			return static_count(circled_latin_capital_letter_w);
+			return 1;
 		case 0x24CD:
 			*normals = circled_latin_capital_letter_x;
-			return static_count(circled_latin_capital_letter_x);
+			return 1;
 		case 0x24CE:
 			*normals = circled_latin_capital_letter_y;
-			return static_count(circled_latin_capital_letter_y);
+			return 1;
 		case 0x24CF:
 			*normals = circled_latin_capital_letter_z;
-			return static_count(circled_latin_capital_letter_z);
+			return 1;
 		case 0x24D0:
 			*normals = circled_latin_small_letter_a;
-			return static_count(circled_latin_small_letter_a);
+			return 1;
 		case 0x24D1:
 			*normals = circled_latin_small_letter_b;
-			return static_count(circled_latin_small_letter_b);
+			return 1;
 		case 0x24D2:
 			*normals = circled_latin_small_letter_c;
-			return static_count(circled_latin_small_letter_c);
+			return 1;
 		case 0x24D3:
 			*normals = circled_latin_small_letter_d;
-			return static_count(circled_latin_small_letter_d);
+			return 1;
 		case 0x24D4:
 			*normals = circled_latin_small_letter_e;
-			return static_count(circled_latin_small_letter_e);
+			return 1;
 		case 0x24D5:
 			*normals = circled_latin_small_letter_f;
-			return static_count(circled_latin_small_letter_f);
+			return 1;
 		case 0x24D6:
 			*normals = circled_latin_small_letter_g;
-			return static_count(circled_latin_small_letter_g);
+			return 1;
 		case 0x24D7:
 			*normals = circled_latin_small_letter_h;
-			return static_count(circled_latin_small_letter_h);
+			return 1;
 		case 0x24D8:
 			*normals = circled_latin_small_letter_i;
-			return static_count(circled_latin_small_letter_i);
+			return 1;
 		case 0x24D9:
 			*normals = circled_latin_small_letter_j;
-			return static_count(circled_latin_small_letter_j);
+			return 1;
 		case 0x24DA:
 			*normals = circled_latin_small_letter_k;
-			return static_count(circled_latin_small_letter_k);
+			return 1;
 		case 0x24DB:
 			*normals = circled_latin_small_letter_l;
-			return static_count(circled_latin_small_letter_l);
+			return 1;
 		case 0x24DC:
 			*normals = circled_latin_small_letter_m;
-			return static_count(circled_latin_small_letter_m);
+			return 1;
 		case 0x24DD:
 			*normals = circled_latin_small_letter_n;
-			return static_count(circled_latin_small_letter_n);
+			return 1;
 		case 0x24DE:
 			*normals = circled_latin_small_letter_o;
-			return static_count(circled_latin_small_letter_o);
+			return 1;
 		case 0x24DF:
 			*normals = circled_latin_small_letter_p;
-			return static_count(circled_latin_small_letter_p);
+			return 1;
 		case 0x24E0:
 			*normals = circled_latin_small_letter_q;
-			return static_count(circled_latin_small_letter_q);
+			return 1;
 		case 0x24E1:
 			*normals = circled_latin_small_letter_r;
-			return static_count(circled_latin_small_letter_r);
+			return 1;
 		case 0x24E2:
 			*normals = circled_latin_small_letter_s;
-			return static_count(circled_latin_small_letter_s);
+			return 1;
 		case 0x24E3:
 			*normals = circled_latin_small_letter_t;
-			return static_count(circled_latin_small_letter_t);
+			return 1;
 		case 0x24E4:
 			*normals = circled_latin_small_letter_u;
-			return static_count(circled_latin_small_letter_u);
+			return 1;
 		case 0x24E5:
 			*normals = circled_latin_small_letter_v;
-			return static_count(circled_latin_small_letter_v);
+			return 1;
 		case 0x24E6:
 			*normals = circled_latin_small_letter_w;
-			return static_count(circled_latin_small_letter_w);
+			return 1;
 		case 0x24E7:
 			*normals = circled_latin_small_letter_x;
-			return static_count(circled_latin_small_letter_x);
+			return 1;
 		case 0x24E8:
 			*normals = circled_latin_small_letter_y;
-			return static_count(circled_latin_small_letter_y);
+			return 1;
 		case 0x24E9:
 			*normals = circled_latin_small_letter_z;
-			return static_count(circled_latin_small_letter_z);
+			return 1;
 		case 0x24EA:
 			*normals = circled_digit_zero;
-			return static_count(circled_digit_zero);
+			return 1;
 		case 0x2A0C:
 			*normals = quadruple_integral_operator;
-			return static_count(quadruple_integral_operator);
+			return 4;
 		case 0x2A74:
 			*normals = double_colon_equal;
-			return static_count(double_colon_equal);
+			return 3;
 		case 0x2A75:
 			*normals = two_consecutive_equals_signs;
-			return static_count(two_consecutive_equals_signs);
+			return 2;
 		case 0x2A76:
 			*normals = three_consecutive_equals_signs;
-			return static_count(three_consecutive_equals_signs);
+			return 3;
 		case 0x2ADC:
 			*normals = forking;
-			return static_count(forking);
+			return 2;
 		case 0x2C7C:
 			*normals = latin_subscript_small_letter_j;
-			return static_count(latin_subscript_small_letter_j);
+			return 1;
 		case 0x2C7D:
 			*normals = modifier_letter_capital_v;
-			return static_count(modifier_letter_capital_v);
+			return 1;
 		case 0x2D6F:
 			*normals = tifinagh_modifier_letter_labialization_mark;
-			return static_count(tifinagh_modifier_letter_labialization_mark);
+			return 1;
 		case 0x2E9F:
 			*normals = cjk_radical_mother;
-			return static_count(cjk_radical_mother);
+			return 1;
 		case 0x2EF3:
 			*normals = cjk_radical_c_simplified_turtle;
-			return static_count(cjk_radical_c_simplified_turtle);
+			return 1;
 		case 0x2F00:
 			*normals = kangxi_radical_one;
-			return static_count(kangxi_radical_one);
+			return 1;
 		case 0x2F01:
 			*normals = kangxi_radical_line;
-			return static_count(kangxi_radical_line);
+			return 1;
 		case 0x2F02:
 			*normals = kangxi_radical_dot;
-			return static_count(kangxi_radical_dot);
+			return 1;
 		case 0x2F03:
 			*normals = kangxi_radical_slash;
-			return static_count(kangxi_radical_slash);
+			return 1;
 		case 0x2F04:
 			*normals = kangxi_radical_second;
-			return static_count(kangxi_radical_second);
+			return 1;
 		case 0x2F05:
 			*normals = kangxi_radical_hook;
-			return static_count(kangxi_radical_hook);
+			return 1;
 		case 0x2F06:
 			*normals = kangxi_radical_two;
-			return static_count(kangxi_radical_two);
+			return 1;
 		case 0x2F07:
 			*normals = kangxi_radical_lid;
-			return static_count(kangxi_radical_lid);
+			return 1;
 		case 0x2F08:
 			*normals = kangxi_radical_man;
-			return static_count(kangxi_radical_man);
+			return 1;
 		case 0x2F09:
 			*normals = kangxi_radical_legs;
-			return static_count(kangxi_radical_legs);
+			return 1;
 		case 0x2F0A:
 			*normals = kangxi_radical_enter;
-			return static_count(kangxi_radical_enter);
+			return 1;
 		case 0x2F0B:
 			*normals = kangxi_radical_eight;
-			return static_count(kangxi_radical_eight);
+			return 1;
 		case 0x2F0C:
 			*normals = kangxi_radical_down_box;
-			return static_count(kangxi_radical_down_box);
+			return 1;
 		case 0x2F0D:
 			*normals = kangxi_radical_cover;
-			return static_count(kangxi_radical_cover);
+			return 1;
 		case 0x2F0E:
 			*normals = kangxi_radical_ice;
-			return static_count(kangxi_radical_ice);
+			return 1;
 		case 0x2F0F:
 			*normals = kangxi_radical_table;
-			return static_count(kangxi_radical_table);
+			return 1;
 		case 0x2F10:
 			*normals = kangxi_radical_open_box;
-			return static_count(kangxi_radical_open_box);
+			return 1;
 		case 0x2F11:
 			*normals = kangxi_radical_knife;
-			return static_count(kangxi_radical_knife);
+			return 1;
 		case 0x2F12:
 			*normals = kangxi_radical_power;
-			return static_count(kangxi_radical_power);
+			return 1;
 		case 0x2F13:
 			*normals = kangxi_radical_wrap;
-			return static_count(kangxi_radical_wrap);
+			return 1;
 		case 0x2F14:
 			*normals = kangxi_radical_spoon;
-			return static_count(kangxi_radical_spoon);
+			return 1;
 		case 0x2F15:
 			*normals = kangxi_radical_right_open_box;
-			return static_count(kangxi_radical_right_open_box);
+			return 1;
 		case 0x2F16:
 			*normals = kangxi_radical_hiding_enclosure;
-			return static_count(kangxi_radical_hiding_enclosure);
+			return 1;
 		case 0x2F17:
 			*normals = kangxi_radical_ten;
-			return static_count(kangxi_radical_ten);
+			return 1;
 		case 0x2F18:
 			*normals = kangxi_radical_divination;
-			return static_count(kangxi_radical_divination);
+			return 1;
 		case 0x2F19:
 			*normals = kangxi_radical_seal;
-			return static_count(kangxi_radical_seal);
+			return 1;
 		case 0x2F1A:
 			*normals = kangxi_radical_cliff;
-			return static_count(kangxi_radical_cliff);
+			return 1;
 		case 0x2F1B:
 			*normals = kangxi_radical_private;
-			return static_count(kangxi_radical_private);
+			return 1;
 		case 0x2F1C:
 			*normals = kangxi_radical_again;
-			return static_count(kangxi_radical_again);
+			return 1;
 		case 0x2F1D:
 			*normals = kangxi_radical_mouth;
-			return static_count(kangxi_radical_mouth);
+			return 1;
 		case 0x2F1E:
 			*normals = kangxi_radical_enclosure;
-			return static_count(kangxi_radical_enclosure);
+			return 1;
 		case 0x2F1F:
 			*normals = kangxi_radical_earth;
-			return static_count(kangxi_radical_earth);
+			return 1;
 		case 0x2F20:
 			*normals = kangxi_radical_scholar;
-			return static_count(kangxi_radical_scholar);
+			return 1;
 		case 0x2F21:
 			*normals = kangxi_radical_go;
-			return static_count(kangxi_radical_go);
+			return 1;
 		case 0x2F22:
 			*normals = kangxi_radical_go_slowly;
-			return static_count(kangxi_radical_go_slowly);
+			return 1;
 		case 0x2F23:
 			*normals = kangxi_radical_evening;
-			return static_count(kangxi_radical_evening);
+			return 1;
 		case 0x2F24:
 			*normals = kangxi_radical_big;
-			return static_count(kangxi_radical_big);
+			return 1;
 		case 0x2F25:
 			*normals = kangxi_radical_woman;
-			return static_count(kangxi_radical_woman);
+			return 1;
 		case 0x2F26:
 			*normals = kangxi_radical_child;
-			return static_count(kangxi_radical_child);
+			return 1;
 		case 0x2F27:
 			*normals = kangxi_radical_roof;
-			return static_count(kangxi_radical_roof);
+			return 1;
 		case 0x2F28:
 			*normals = kangxi_radical_inch;
-			return static_count(kangxi_radical_inch);
+			return 1;
 		case 0x2F29:
 			*normals = kangxi_radical_small;
-			return static_count(kangxi_radical_small);
+			return 1;
 		case 0x2F2A:
 			*normals = kangxi_radical_lame;
-			return static_count(kangxi_radical_lame);
+			return 1;
 		case 0x2F2B:
 			*normals = kangxi_radical_corpse;
-			return static_count(kangxi_radical_corpse);
+			return 1;
 		case 0x2F2C:
 			*normals = kangxi_radical_sprout;
-			return static_count(kangxi_radical_sprout);
+			return 1;
 		case 0x2F2D:
 			*normals = kangxi_radical_mountain;
-			return static_count(kangxi_radical_mountain);
+			return 1;
 		case 0x2F2E:
 			*normals = kangxi_radical_river;
-			return static_count(kangxi_radical_river);
+			return 1;
 		case 0x2F2F:
 			*normals = kangxi_radical_work;
-			return static_count(kangxi_radical_work);
+			return 1;
 		case 0x2F30:
 			*normals = kangxi_radical_oneself;
-			return static_count(kangxi_radical_oneself);
+			return 1;
 		case 0x2F31:
 			*normals = kangxi_radical_turban;
-			return static_count(kangxi_radical_turban);
+			return 1;
 		case 0x2F32:
 			*normals = kangxi_radical_dry;
-			return static_count(kangxi_radical_dry);
+			return 1;
 		case 0x2F33:
 			*normals = kangxi_radical_short_thread;
-			return static_count(kangxi_radical_short_thread);
+			return 1;
 		case 0x2F34:
 			*normals = kangxi_radical_dotted_cliff;
-			return static_count(kangxi_radical_dotted_cliff);
+			return 1;
 		case 0x2F35:
 			*normals = kangxi_radical_long_stride;
-			return static_count(kangxi_radical_long_stride);
+			return 1;
 		case 0x2F36:
 			*normals = kangxi_radical_two_hands;
-			return static_count(kangxi_radical_two_hands);
+			return 1;
 		case 0x2F37:
 			*normals = kangxi_radical_shoot;
-			return static_count(kangxi_radical_shoot);
+			return 1;
 		case 0x2F38:
 			*normals = kangxi_radical_bow;
-			return static_count(kangxi_radical_bow);
+			return 1;
 		case 0x2F39:
 			*normals = kangxi_radical_snout;
-			return static_count(kangxi_radical_snout);
+			return 1;
 		case 0x2F3A:
 			*normals = kangxi_radical_bristle;
-			return static_count(kangxi_radical_bristle);
+			return 1;
 		case 0x2F3B:
 			*normals = kangxi_radical_step;
-			return static_count(kangxi_radical_step);
+			return 1;
 		case 0x2F3C:
 			*normals = kangxi_radical_heart;
-			return static_count(kangxi_radical_heart);
+			return 1;
 		case 0x2F3D:
 			*normals = kangxi_radical_halberd;
-			return static_count(kangxi_radical_halberd);
+			return 1;
 		case 0x2F3E:
 			*normals = kangxi_radical_door;
-			return static_count(kangxi_radical_door);
+			return 1;
 		case 0x2F3F:
 			*normals = kangxi_radical_hand;
-			return static_count(kangxi_radical_hand);
+			return 1;
 		case 0x2F40:
 			*normals = kangxi_radical_branch;
-			return static_count(kangxi_radical_branch);
+			return 1;
 		case 0x2F41:
 			*normals = kangxi_radical_rap;
-			return static_count(kangxi_radical_rap);
+			return 1;
 		case 0x2F42:
 			*normals = kangxi_radical_script;
-			return static_count(kangxi_radical_script);
+			return 1;
 		case 0x2F43:
 			*normals = kangxi_radical_dipper;
-			return static_count(kangxi_radical_dipper);
+			return 1;
 		case 0x2F44:
 			*normals = kangxi_radical_axe;
-			return static_count(kangxi_radical_axe);
+			return 1;
 		case 0x2F45:
 			*normals = kangxi_radical_square;
-			return static_count(kangxi_radical_square);
+			return 1;
 		case 0x2F46:
 			*normals = kangxi_radical_not;
-			return static_count(kangxi_radical_not);
+			return 1;
 		case 0x2F47:
 			*normals = kangxi_radical_sun;
-			return static_count(kangxi_radical_sun);
+			return 1;
 		case 0x2F48:
 			*normals = kangxi_radical_say;
-			return static_count(kangxi_radical_say);
+			return 1;
 		case 0x2F49:
 			*normals = kangxi_radical_moon;
-			return static_count(kangxi_radical_moon);
+			return 1;
 		case 0x2F4A:
 			*normals = kangxi_radical_tree;
-			return static_count(kangxi_radical_tree);
+			return 1;
 		case 0x2F4B:
 			*normals = kangxi_radical_lack;
-			return static_count(kangxi_radical_lack);
+			return 1;
 		case 0x2F4C:
 			*normals = kangxi_radical_stop;
-			return static_count(kangxi_radical_stop);
+			return 1;
 		case 0x2F4D:
 			*normals = kangxi_radical_death;
-			return static_count(kangxi_radical_death);
+			return 1;
 		case 0x2F4E:
 			*normals = kangxi_radical_weapon;
-			return static_count(kangxi_radical_weapon);
+			return 1;
 		case 0x2F4F:
 			*normals = kangxi_radical_do_not;
-			return static_count(kangxi_radical_do_not);
+			return 1;
 		case 0x2F50:
 			*normals = kangxi_radical_compare;
-			return static_count(kangxi_radical_compare);
+			return 1;
 		case 0x2F51:
 			*normals = kangxi_radical_fur;
-			return static_count(kangxi_radical_fur);
+			return 1;
 		case 0x2F52:
 			*normals = kangxi_radical_clan;
-			return static_count(kangxi_radical_clan);
+			return 1;
 		case 0x2F53:
 			*normals = kangxi_radical_steam;
-			return static_count(kangxi_radical_steam);
+			return 1;
 		case 0x2F54:
 			*normals = kangxi_radical_water;
-			return static_count(kangxi_radical_water);
+			return 1;
 		case 0x2F55:
 			*normals = kangxi_radical_fire;
-			return static_count(kangxi_radical_fire);
+			return 1;
 		case 0x2F56:
 			*normals = kangxi_radical_claw;
-			return static_count(kangxi_radical_claw);
+			return 1;
 		case 0x2F57:
 			*normals = kangxi_radical_father;
-			return static_count(kangxi_radical_father);
+			return 1;
 		case 0x2F58:
 			*normals = kangxi_radical_double_x;
-			return static_count(kangxi_radical_double_x);
+			return 1;
 		case 0x2F59:
 			*normals = kangxi_radical_half_tree_trunk;
-			return static_count(kangxi_radical_half_tree_trunk);
+			return 1;
 		case 0x2F5A:
 			*normals = kangxi_radical_slice;
-			return static_count(kangxi_radical_slice);
+			return 1;
 		case 0x2F5B:
 			*normals = kangxi_radical_fang;
-			return static_count(kangxi_radical_fang);
+			return 1;
 		case 0x2F5C:
 			*normals = kangxi_radical_cow;
-			return static_count(kangxi_radical_cow);
+			return 1;
 		case 0x2F5D:
 			*normals = kangxi_radical_dog;
-			return static_count(kangxi_radical_dog);
+			return 1;
 		case 0x2F5E:
 			*normals = kangxi_radical_profound;
-			return static_count(kangxi_radical_profound);
+			return 1;
 		case 0x2F5F:
 			*normals = kangxi_radical_jade;
-			return static_count(kangxi_radical_jade);
+			return 1;
 		case 0x2F60:
 			*normals = kangxi_radical_melon;
-			return static_count(kangxi_radical_melon);
+			return 1;
 		case 0x2F61:
 			*normals = kangxi_radical_tile;
-			return static_count(kangxi_radical_tile);
+			return 1;
 		case 0x2F62:
 			*normals = kangxi_radical_sweet;
-			return static_count(kangxi_radical_sweet);
+			return 1;
 		case 0x2F63:
 			*normals = kangxi_radical_life;
-			return static_count(kangxi_radical_life);
+			return 1;
 		case 0x2F64:
 			*normals = kangxi_radical_use;
-			return static_count(kangxi_radical_use);
+			return 1;
 		case 0x2F65:
 			*normals = kangxi_radical_field;
-			return static_count(kangxi_radical_field);
+			return 1;
 		case 0x2F66:
 			*normals = kangxi_radical_bolt_of_cloth;
-			return static_count(kangxi_radical_bolt_of_cloth);
+			return 1;
 		case 0x2F67:
 			*normals = kangxi_radical_sickness;
-			return static_count(kangxi_radical_sickness);
+			return 1;
 		case 0x2F68:
 			*normals = kangxi_radical_dotted_tent;
-			return static_count(kangxi_radical_dotted_tent);
+			return 1;
 		case 0x2F69:
 			*normals = kangxi_radical_white;
-			return static_count(kangxi_radical_white);
+			return 1;
 		case 0x2F6A:
 			*normals = kangxi_radical_skin;
-			return static_count(kangxi_radical_skin);
+			return 1;
 		case 0x2F6B:
 			*normals = kangxi_radical_dish;
-			return static_count(kangxi_radical_dish);
+			return 1;
 		case 0x2F6C:
 			*normals = kangxi_radical_eye;
-			return static_count(kangxi_radical_eye);
+			return 1;
 		case 0x2F6D:
 			*normals = kangxi_radical_spear;
-			return static_count(kangxi_radical_spear);
+			return 1;
 		case 0x2F6E:
 			*normals = kangxi_radical_arrow;
-			return static_count(kangxi_radical_arrow);
+			return 1;
 		case 0x2F6F:
 			*normals = kangxi_radical_stone;
-			return static_count(kangxi_radical_stone);
+			return 1;
 		case 0x2F70:
 			*normals = kangxi_radical_spirit;
-			return static_count(kangxi_radical_spirit);
+			return 1;
 		case 0x2F71:
 			*normals = kangxi_radical_track;
-			return static_count(kangxi_radical_track);
+			return 1;
 		case 0x2F72:
 			*normals = kangxi_radical_grain;
-			return static_count(kangxi_radical_grain);
+			return 1;
 		case 0x2F73:
 			*normals = kangxi_radical_cave;
-			return static_count(kangxi_radical_cave);
+			return 1;
 		case 0x2F74:
 			*normals = kangxi_radical_stand;
-			return static_count(kangxi_radical_stand);
+			return 1;
 		case 0x2F75:
 			*normals = kangxi_radical_bamboo;
-			return static_count(kangxi_radical_bamboo);
+			return 1;
 		case 0x2F76:
 			*normals = kangxi_radical_rice;
-			return static_count(kangxi_radical_rice);
+			return 1;
 		case 0x2F77:
 			*normals = kangxi_radical_silk;
-			return static_count(kangxi_radical_silk);
+			return 1;
 		case 0x2F78:
 			*normals = kangxi_radical_jar;
-			return static_count(kangxi_radical_jar);
+			return 1;
 		case 0x2F79:
 			*normals = kangxi_radical_net;
-			return static_count(kangxi_radical_net);
+			return 1;
 		case 0x2F7A:
 			*normals = kangxi_radical_sheep;
-			return static_count(kangxi_radical_sheep);
+			return 1;
 		case 0x2F7B:
 			*normals = kangxi_radical_feather;
-			return static_count(kangxi_radical_feather);
+			return 1;
 		case 0x2F7C:
 			*normals = kangxi_radical_old;
-			return static_count(kangxi_radical_old);
+			return 1;
 		case 0x2F7D:
 			*normals = kangxi_radical_and;
-			return static_count(kangxi_radical_and);
+			return 1;
 		case 0x2F7E:
 			*normals = kangxi_radical_plow;
-			return static_count(kangxi_radical_plow);
+			return 1;
 		case 0x2F7F:
 			*normals = kangxi_radical_ear;
-			return static_count(kangxi_radical_ear);
+			return 1;
 		case 0x2F80:
 			*normals = kangxi_radical_brush;
-			return static_count(kangxi_radical_brush);
+			return 1;
 		case 0x2F81:
 			*normals = kangxi_radical_meat;
-			return static_count(kangxi_radical_meat);
+			return 1;
 		case 0x2F82:
 			*normals = kangxi_radical_minister;
-			return static_count(kangxi_radical_minister);
+			return 1;
 		case 0x2F83:
 			*normals = kangxi_radical_self;
-			return static_count(kangxi_radical_self);
+			return 1;
 		case 0x2F84:
 			*normals = kangxi_radical_arrive;
-			return static_count(kangxi_radical_arrive);
+			return 1;
 		case 0x2F85:
 			*normals = kangxi_radical_mortar;
-			return static_count(kangxi_radical_mortar);
+			return 1;
 		case 0x2F86:
 			*normals = kangxi_radical_tongue;
-			return static_count(kangxi_radical_tongue);
+			return 1;
 		case 0x2F87:
 			*normals = kangxi_radical_oppose;
-			return static_count(kangxi_radical_oppose);
+			return 1;
 		case 0x2F88:
 			*normals = kangxi_radical_boat;
-			return static_count(kangxi_radical_boat);
+			return 1;
 		case 0x2F89:
 			*normals = kangxi_radical_stopping;
-			return static_count(kangxi_radical_stopping);
+			return 1;
 		case 0x2F8A:
 			*normals = kangxi_radical_color;
-			return static_count(kangxi_radical_color);
+			return 1;
 		case 0x2F8B:
 			*normals = kangxi_radical_grass;
-			return static_count(kangxi_radical_grass);
+			return 1;
 		case 0x2F8C:
 			*normals = kangxi_radical_tiger;
-			return static_count(kangxi_radical_tiger);
+			return 1;
 		case 0x2F8D:
 			*normals = kangxi_radical_insect;
-			return static_count(kangxi_radical_insect);
+			return 1;
 		case 0x2F8E:
 			*normals = kangxi_radical_blood;
-			return static_count(kangxi_radical_blood);
+			return 1;
 		case 0x2F8F:
 			*normals = kangxi_radical_walk_enclosure;
-			return static_count(kangxi_radical_walk_enclosure);
+			return 1;
 		case 0x2F90:
 			*normals = kangxi_radical_clothes;
-			return static_count(kangxi_radical_clothes);
+			return 1;
 		case 0x2F91:
 			*normals = kangxi_radical_west;
-			return static_count(kangxi_radical_west);
+			return 1;
 		case 0x2F92:
 			*normals = kangxi_radical_see;
-			return static_count(kangxi_radical_see);
+			return 1;
 		case 0x2F93:
 			*normals = kangxi_radical_horn;
-			return static_count(kangxi_radical_horn);
+			return 1;
 		case 0x2F94:
 			*normals = kangxi_radical_speech;
-			return static_count(kangxi_radical_speech);
+			return 1;
 		case 0x2F95:
 			*normals = kangxi_radical_valley;
-			return static_count(kangxi_radical_valley);
+			return 1;
 		case 0x2F96:
 			*normals = kangxi_radical_bean;
-			return static_count(kangxi_radical_bean);
+			return 1;
 		case 0x2F97:
 			*normals = kangxi_radical_pig;
-			return static_count(kangxi_radical_pig);
+			return 1;
 		case 0x2F98:
 			*normals = kangxi_radical_badger;
-			return static_count(kangxi_radical_badger);
+			return 1;
 		case 0x2F99:
 			*normals = kangxi_radical_shell;
-			return static_count(kangxi_radical_shell);
+			return 1;
 		case 0x2F9A:
 			*normals = kangxi_radical_red;
-			return static_count(kangxi_radical_red);
+			return 1;
 		case 0x2F9B:
 			*normals = kangxi_radical_run;
-			return static_count(kangxi_radical_run);
+			return 1;
 		case 0x2F9C:
 			*normals = kangxi_radical_foot;
-			return static_count(kangxi_radical_foot);
+			return 1;
 		case 0x2F9D:
 			*normals = kangxi_radical_body;
-			return static_count(kangxi_radical_body);
+			return 1;
 		case 0x2F9E:
 			*normals = kangxi_radical_cart;
-			return static_count(kangxi_radical_cart);
+			return 1;
 		case 0x2F9F:
 			*normals = kangxi_radical_bitter;
-			return static_count(kangxi_radical_bitter);
+			return 1;
 		case 0x2FA0:
 			*normals = kangxi_radical_morning;
-			return static_count(kangxi_radical_morning);
+			return 1;
 		case 0x2FA1:
 			*normals = kangxi_radical_walk;
-			return static_count(kangxi_radical_walk);
+			return 1;
 		case 0x2FA2:
 			*normals = kangxi_radical_city;
-			return static_count(kangxi_radical_city);
+			return 1;
 		case 0x2FA3:
 			*normals = kangxi_radical_wine;
-			return static_count(kangxi_radical_wine);
+			return 1;
 		case 0x2FA4:
 			*normals = kangxi_radical_distinguish;
-			return static_count(kangxi_radical_distinguish);
+			return 1;
 		case 0x2FA5:
 			*normals = kangxi_radical_village;
-			return static_count(kangxi_radical_village);
+			return 1;
 		case 0x2FA6:
 			*normals = kangxi_radical_gold;
-			return static_count(kangxi_radical_gold);
+			return 1;
 		case 0x2FA7:
 			*normals = kangxi_radical_long;
-			return static_count(kangxi_radical_long);
+			return 1;
 		case 0x2FA8:
 			*normals = kangxi_radical_gate;
-			return static_count(kangxi_radical_gate);
+			return 1;
 		case 0x2FA9:
 			*normals = kangxi_radical_mound;
-			return static_count(kangxi_radical_mound);
+			return 1;
 		case 0x2FAA:
 			*normals = kangxi_radical_slave;
-			return static_count(kangxi_radical_slave);
+			return 1;
 		case 0x2FAB:
 			*normals = kangxi_radical_short_tailed_bird;
-			return static_count(kangxi_radical_short_tailed_bird);
+			return 1;
 		case 0x2FAC:
 			*normals = kangxi_radical_rain;
-			return static_count(kangxi_radical_rain);
+			return 1;
 		case 0x2FAD:
 			*normals = kangxi_radical_blue;
-			return static_count(kangxi_radical_blue);
+			return 1;
 		case 0x2FAE:
 			*normals = kangxi_radical_wrong;
-			return static_count(kangxi_radical_wrong);
+			return 1;
 		case 0x2FAF:
 			*normals = kangxi_radical_face;
-			return static_count(kangxi_radical_face);
+			return 1;
 		case 0x2FB0:
 			*normals = kangxi_radical_leather;
-			return static_count(kangxi_radical_leather);
+			return 1;
 		case 0x2FB1:
 			*normals = kangxi_radical_tanned_leather;
-			return static_count(kangxi_radical_tanned_leather);
+			return 1;
 		case 0x2FB2:
 			*normals = kangxi_radical_leek;
-			return static_count(kangxi_radical_leek);
+			return 1;
 		case 0x2FB3:
 			*normals = kangxi_radical_sound;
-			return static_count(kangxi_radical_sound);
+			return 1;
 		case 0x2FB4:
 			*normals = kangxi_radical_leaf;
-			return static_count(kangxi_radical_leaf);
+			return 1;
 		case 0x2FB5:
 			*normals = kangxi_radical_wind;
-			return static_count(kangxi_radical_wind);
+			return 1;
 		case 0x2FB6:
 			*normals = kangxi_radical_fly;
-			return static_count(kangxi_radical_fly);
+			return 1;
 		case 0x2FB7:
 			*normals = kangxi_radical_eat;
-			return static_count(kangxi_radical_eat);
+			return 1;
 		case 0x2FB8:
 			*normals = kangxi_radical_head;
-			return static_count(kangxi_radical_head);
+			return 1;
 		case 0x2FB9:
 			*normals = kangxi_radical_fragrant;
-			return static_count(kangxi_radical_fragrant);
+			return 1;
 		case 0x2FBA:
 			*normals = kangxi_radical_horse;
-			return static_count(kangxi_radical_horse);
+			return 1;
 		case 0x2FBB:
 			*normals = kangxi_radical_bone;
-			return static_count(kangxi_radical_bone);
+			return 1;
 		case 0x2FBC:
 			*normals = kangxi_radical_tall;
-			return static_count(kangxi_radical_tall);
+			return 1;
 		case 0x2FBD:
 			*normals = kangxi_radical_hair;
-			return static_count(kangxi_radical_hair);
+			return 1;
 		case 0x2FBE:
 			*normals = kangxi_radical_fight;
-			return static_count(kangxi_radical_fight);
+			return 1;
 		case 0x2FBF:
 			*normals = kangxi_radical_sacrificial_wine;
-			return static_count(kangxi_radical_sacrificial_wine);
+			return 1;
 		case 0x2FC0:
 			*normals = kangxi_radical_cauldron;
-			return static_count(kangxi_radical_cauldron);
+			return 1;
 		case 0x2FC1:
 			*normals = kangxi_radical_ghost;
-			return static_count(kangxi_radical_ghost);
+			return 1;
 		case 0x2FC2:
 			*normals = kangxi_radical_fish;
-			return static_count(kangxi_radical_fish);
+			return 1;
 		case 0x2FC3:
 			*normals = kangxi_radical_bird;
-			return static_count(kangxi_radical_bird);
+			return 1;
 		case 0x2FC4:
 			*normals = kangxi_radical_salt;
-			return static_count(kangxi_radical_salt);
+			return 1;
 		case 0x2FC5:
 			*normals = kangxi_radical_deer;
-			return static_count(kangxi_radical_deer);
+			return 1;
 		case 0x2FC6:
 			*normals = kangxi_radical_wheat;
-			return static_count(kangxi_radical_wheat);
+			return 1;
 		case 0x2FC7:
 			*normals = kangxi_radical_hemp;
-			return static_count(kangxi_radical_hemp);
+			return 1;
 		case 0x2FC8:
 			*normals = kangxi_radical_yellow;
-			return static_count(kangxi_radical_yellow);
+			return 1;
 		case 0x2FC9:
 			*normals = kangxi_radical_millet;
-			return static_count(kangxi_radical_millet);
+			return 1;
 		case 0x2FCA:
 			*normals = kangxi_radical_black;
-			return static_count(kangxi_radical_black);
+			return 1;
 		case 0x2FCB:
 			*normals = kangxi_radical_embroidery;
-			return static_count(kangxi_radical_embroidery);
+			return 1;
 		case 0x2FCC:
 			*normals = kangxi_radical_frog;
-			return static_count(kangxi_radical_frog);
+			return 1;
 		case 0x2FCD:
 			*normals = kangxi_radical_tripod;
-			return static_count(kangxi_radical_tripod);
+			return 1;
 		case 0x2FCE:
 			*normals = kangxi_radical_drum;
-			return static_count(kangxi_radical_drum);
+			return 1;
 		case 0x2FCF:
 			*normals = kangxi_radical_rat;
-			return static_count(kangxi_radical_rat);
+			return 1;
 		case 0x2FD0:
 			*normals = kangxi_radical_nose;
-			return static_count(kangxi_radical_nose);
+			return 1;
 		case 0x2FD1:
 			*normals = kangxi_radical_even;
-			return static_count(kangxi_radical_even);
+			return 1;
 		case 0x2FD2:
 			*normals = kangxi_radical_tooth;
-			return static_count(kangxi_radical_tooth);
+			return 1;
 		case 0x2FD3:
 			*normals = kangxi_radical_dragon;
-			return static_count(kangxi_radical_dragon);
+			return 1;
 		case 0x2FD4:
 			*normals = kangxi_radical_turtle;
-			return static_count(kangxi_radical_turtle);
+			return 1;
 		case 0x2FD5:
 			*normals = kangxi_radical_flute;
-			return static_count(kangxi_radical_flute);
+			return 1;
 		case 0x3000:
 			*normals = ideographic_space;
-			return static_count(ideographic_space);
+			return 1;
 		case 0x3036:
 			*normals = circled_postal_mark;
-			return static_count(circled_postal_mark);
+			return 1;
 		case 0x3038:
 			*normals = hangzhou_numeral_ten;
-			return static_count(hangzhou_numeral_ten);
+			return 1;
 		case 0x3039:
 			*normals = hangzhou_numeral_twenty;
-			return static_count(hangzhou_numeral_twenty);
+			return 1;
 		case 0x303A:
 			*normals = hangzhou_numeral_thirty;
-			return static_count(hangzhou_numeral_thirty);
+			return 1;
 		case 0x304C:
 			*normals = hiragana_letter_ga;
-			return static_count(hiragana_letter_ga);
+			return 2;
 		case 0x304E:
 			*normals = hiragana_letter_gi;
-			return static_count(hiragana_letter_gi);
+			return 2;
 		case 0x3050:
 			*normals = hiragana_letter_gu;
-			return static_count(hiragana_letter_gu);
+			return 2;
 		case 0x3052:
 			*normals = hiragana_letter_ge;
-			return static_count(hiragana_letter_ge);
+			return 2;
 		case 0x3054:
 			*normals = hiragana_letter_go;
-			return static_count(hiragana_letter_go);
+			return 2;
 		case 0x3056:
 			*normals = hiragana_letter_za;
-			return static_count(hiragana_letter_za);
+			return 2;
 		case 0x3058:
 			*normals = hiragana_letter_zi;
-			return static_count(hiragana_letter_zi);
+			return 2;
 		case 0x305A:
 			*normals = hiragana_letter_zu;
-			return static_count(hiragana_letter_zu);
+			return 2;
 		case 0x305C:
 			*normals = hiragana_letter_ze;
-			return static_count(hiragana_letter_ze);
+			return 2;
 		case 0x305E:
 			*normals = hiragana_letter_zo;
-			return static_count(hiragana_letter_zo);
+			return 2;
 		case 0x3060:
 			*normals = hiragana_letter_da;
-			return static_count(hiragana_letter_da);
+			return 2;
 		case 0x3062:
 			*normals = hiragana_letter_di;
-			return static_count(hiragana_letter_di);
+			return 2;
 		case 0x3065:
 			*normals = hiragana_letter_du;
-			return static_count(hiragana_letter_du);
+			return 2;
 		case 0x3067:
 			*normals = hiragana_letter_de;
-			return static_count(hiragana_letter_de);
+			return 2;
 		case 0x3069:
 			*normals = hiragana_letter_do;
-			return static_count(hiragana_letter_do);
+			return 2;
 		case 0x3070:
 			*normals = hiragana_letter_ba;
-			return static_count(hiragana_letter_ba);
+			return 2;
 		case 0x3071:
 			*normals = hiragana_letter_pa;
-			return static_count(hiragana_letter_pa);
+			return 2;
 		case 0x3073:
 			*normals = hiragana_letter_bi;
-			return static_count(hiragana_letter_bi);
+			return 2;
 		case 0x3074:
 			*normals = hiragana_letter_pi;
-			return static_count(hiragana_letter_pi);
+			return 2;
 		case 0x3076:
 			*normals = hiragana_letter_bu;
-			return static_count(hiragana_letter_bu);
+			return 2;
 		case 0x3077:
 			*normals = hiragana_letter_pu;
-			return static_count(hiragana_letter_pu);
+			return 2;
 		case 0x3079:
 			*normals = hiragana_letter_be;
-			return static_count(hiragana_letter_be);
+			return 2;
 		case 0x307A:
 			*normals = hiragana_letter_pe;
-			return static_count(hiragana_letter_pe);
+			return 2;
 		case 0x307C:
 			*normals = hiragana_letter_bo;
-			return static_count(hiragana_letter_bo);
+			return 2;
 		case 0x307D:
 			*normals = hiragana_letter_po;
-			return static_count(hiragana_letter_po);
+			return 2;
 		case 0x3094:
 			*normals = hiragana_letter_vu;
-			return static_count(hiragana_letter_vu);
+			return 2;
 		case 0x309B:
 			*normals = katakana_hiragana_voiced_sound_mark;
-			return static_count(katakana_hiragana_voiced_sound_mark);
+			return 2;
 		case 0x309C:
 			*normals = katakana_hiragana_semi_voiced_sound_mark;
-			return static_count(katakana_hiragana_semi_voiced_sound_mark);
+			return 2;
 		case 0x309E:
 			*normals = hiragana_voiced_iteration_mark;
-			return static_count(hiragana_voiced_iteration_mark);
+			return 2;
 		case 0x309F:
 			*normals = hiragana_digraph_yori;
-			return static_count(hiragana_digraph_yori);
+			return 2;
 		case 0x30AC:
 			*normals = katakana_letter_ga;
-			return static_count(katakana_letter_ga);
+			return 2;
 		case 0x30AE:
 			*normals = katakana_letter_gi;
-			return static_count(katakana_letter_gi);
+			return 2;
 		case 0x30B0:
 			*normals = katakana_letter_gu;
-			return static_count(katakana_letter_gu);
+			return 2;
 		case 0x30B2:
 			*normals = katakana_letter_ge;
-			return static_count(katakana_letter_ge);
+			return 2;
 		case 0x30B4:
 			*normals = katakana_letter_go;
-			return static_count(katakana_letter_go);
+			return 2;
 		case 0x30B6:
 			*normals = katakana_letter_za;
-			return static_count(katakana_letter_za);
+			return 2;
 		case 0x30B8:
 			*normals = katakana_letter_zi;
-			return static_count(katakana_letter_zi);
+			return 2;
 		case 0x30BA:
 			*normals = katakana_letter_zu;
-			return static_count(katakana_letter_zu);
+			return 2;
 		case 0x30BC:
 			*normals = katakana_letter_ze;
-			return static_count(katakana_letter_ze);
+			return 2;
 		case 0x30BE:
 			*normals = katakana_letter_zo;
-			return static_count(katakana_letter_zo);
+			return 2;
 		case 0x30C0:
 			*normals = katakana_letter_da;
-			return static_count(katakana_letter_da);
+			return 2;
 		case 0x30C2:
 			*normals = katakana_letter_di;
-			return static_count(katakana_letter_di);
+			return 2;
 		case 0x30C5:
 			*normals = katakana_letter_du;
-			return static_count(katakana_letter_du);
+			return 2;
 		case 0x30C7:
 			*normals = katakana_letter_de;
-			return static_count(katakana_letter_de);
+			return 2;
 		case 0x30C9:
 			*normals = katakana_letter_do;
-			return static_count(katakana_letter_do);
+			return 2;
 		case 0x30D0:
 			*normals = katakana_letter_ba;
-			return static_count(katakana_letter_ba);
+			return 2;
 		case 0x30D1:
 			*normals = katakana_letter_pa;
-			return static_count(katakana_letter_pa);
+			return 2;
 		case 0x30D3:
 			*normals = katakana_letter_bi;
-			return static_count(katakana_letter_bi);
+			return 2;
 		case 0x30D4:
 			*normals = katakana_letter_pi;
-			return static_count(katakana_letter_pi);
+			return 2;
 		case 0x30D6:
 			*normals = katakana_letter_bu;
-			return static_count(katakana_letter_bu);
+			return 2;
 		case 0x30D7:
 			*normals = katakana_letter_pu;
-			return static_count(katakana_letter_pu);
+			return 2;
 		case 0x30D9:
 			*normals = katakana_letter_be;
-			return static_count(katakana_letter_be);
+			return 2;
 		case 0x30DA:
 			*normals = katakana_letter_pe;
-			return static_count(katakana_letter_pe);
+			return 2;
 		case 0x30DC:
 			*normals = katakana_letter_bo;
-			return static_count(katakana_letter_bo);
+			return 2;
 		case 0x30DD:
 			*normals = katakana_letter_po;
-			return static_count(katakana_letter_po);
+			return 2;
 		case 0x30F4:
 			*normals = katakana_letter_vu;
-			return static_count(katakana_letter_vu);
+			return 2;
 		case 0x30F7:
 			*normals = katakana_letter_va;
-			return static_count(katakana_letter_va);
+			return 2;
 		case 0x30F8:
 			*normals = katakana_letter_vi;
-			return static_count(katakana_letter_vi);
+			return 2;
 		case 0x30F9:
 			*normals = katakana_letter_ve;
-			return static_count(katakana_letter_ve);
+			return 2;
 		case 0x30FA:
 			*normals = katakana_letter_vo;
-			return static_count(katakana_letter_vo);
+			return 2;
 		case 0x30FE:
 			*normals = katakana_voiced_iteration_mark;
-			return static_count(katakana_voiced_iteration_mark);
+			return 2;
 		case 0x30FF:
 			*normals = katakana_digraph_koto;
-			return static_count(katakana_digraph_koto);
+			return 2;
 		case 0x3131:
 			*normals = hangul_letter_kiyeok;
-			return static_count(hangul_letter_kiyeok);
+			return 1;
 		case 0x3132:
 			*normals = hangul_letter_ssangkiyeok;
-			return static_count(hangul_letter_ssangkiyeok);
+			return 1;
 		case 0x3133:
 			*normals = hangul_letter_kiyeok_sios;
-			return static_count(hangul_letter_kiyeok_sios);
+			return 1;
 		case 0x3134:
 			*normals = hangul_letter_nieun;
-			return static_count(hangul_letter_nieun);
+			return 1;
 		case 0x3135:
 			*normals = hangul_letter_nieun_cieuc;
-			return static_count(hangul_letter_nieun_cieuc);
+			return 1;
 		case 0x3136:
 			*normals = hangul_letter_nieun_hieuh;
-			return static_count(hangul_letter_nieun_hieuh);
+			return 1;
 		case 0x3137:
 			*normals = hangul_letter_tikeut;
-			return static_count(hangul_letter_tikeut);
+			return 1;
 		case 0x3138:
 			*normals = hangul_letter_ssangtikeut;
-			return static_count(hangul_letter_ssangtikeut);
+			return 1;
 		case 0x3139:
 			*normals = hangul_letter_rieul;
-			return static_count(hangul_letter_rieul);
+			return 1;
 		case 0x313A:
 			*normals = hangul_letter_rieul_kiyeok;
-			return static_count(hangul_letter_rieul_kiyeok);
+			return 1;
 		case 0x313B:
 			*normals = hangul_letter_rieul_mieum;
-			return static_count(hangul_letter_rieul_mieum);
+			return 1;
 		case 0x313C:
 			*normals = hangul_letter_rieul_pieup;
-			return static_count(hangul_letter_rieul_pieup);
+			return 1;
 		case 0x313D:
 			*normals = hangul_letter_rieul_sios;
-			return static_count(hangul_letter_rieul_sios);
+			return 1;
 		case 0x313E:
 			*normals = hangul_letter_rieul_thieuth;
-			return static_count(hangul_letter_rieul_thieuth);
+			return 1;
 		case 0x313F:
 			*normals = hangul_letter_rieul_phieuph;
-			return static_count(hangul_letter_rieul_phieuph);
+			return 1;
 		case 0x3140:
 			*normals = hangul_letter_rieul_hieuh;
-			return static_count(hangul_letter_rieul_hieuh);
+			return 1;
 		case 0x3141:
 			*normals = hangul_letter_mieum;
-			return static_count(hangul_letter_mieum);
+			return 1;
 		case 0x3142:
 			*normals = hangul_letter_pieup;
-			return static_count(hangul_letter_pieup);
+			return 1;
 		case 0x3143:
 			*normals = hangul_letter_ssangpieup;
-			return static_count(hangul_letter_ssangpieup);
+			return 1;
 		case 0x3144:
 			*normals = hangul_letter_pieup_sios;
-			return static_count(hangul_letter_pieup_sios);
+			return 1;
 		case 0x3145:
 			*normals = hangul_letter_sios;
-			return static_count(hangul_letter_sios);
+			return 1;
 		case 0x3146:
 			*normals = hangul_letter_ssangsios;
-			return static_count(hangul_letter_ssangsios);
+			return 1;
 		case 0x3147:
 			*normals = hangul_letter_ieung;
-			return static_count(hangul_letter_ieung);
+			return 1;
 		case 0x3148:
 			*normals = hangul_letter_cieuc;
-			return static_count(hangul_letter_cieuc);
+			return 1;
 		case 0x3149:
 			*normals = hangul_letter_ssangcieuc;
-			return static_count(hangul_letter_ssangcieuc);
+			return 1;
 		case 0x314A:
 			*normals = hangul_letter_chieuch;
-			return static_count(hangul_letter_chieuch);
+			return 1;
 		case 0x314B:
 			*normals = hangul_letter_khieukh;
-			return static_count(hangul_letter_khieukh);
+			return 1;
 		case 0x314C:
 			*normals = hangul_letter_thieuth;
-			return static_count(hangul_letter_thieuth);
+			return 1;
 		case 0x314D:
 			*normals = hangul_letter_phieuph;
-			return static_count(hangul_letter_phieuph);
+			return 1;
 		case 0x314E:
 			*normals = hangul_letter_hieuh;
-			return static_count(hangul_letter_hieuh);
+			return 1;
 		case 0x314F:
 			*normals = hangul_letter_a;
-			return static_count(hangul_letter_a);
+			return 1;
 		case 0x3150:
 			*normals = hangul_letter_ae;
-			return static_count(hangul_letter_ae);
+			return 1;
 		case 0x3151:
 			*normals = hangul_letter_ya;
-			return static_count(hangul_letter_ya);
+			return 1;
 		case 0x3152:
 			*normals = hangul_letter_yae;
-			return static_count(hangul_letter_yae);
+			return 1;
 		case 0x3153:
 			*normals = hangul_letter_eo;
-			return static_count(hangul_letter_eo);
+			return 1;
 		case 0x3154:
 			*normals = hangul_letter_e;
-			return static_count(hangul_letter_e);
+			return 1;
 		case 0x3155:
 			*normals = hangul_letter_yeo;
-			return static_count(hangul_letter_yeo);
+			return 1;
 		case 0x3156:
 			*normals = hangul_letter_ye;
-			return static_count(hangul_letter_ye);
+			return 1;
 		case 0x3157:
 			*normals = hangul_letter_o;
-			return static_count(hangul_letter_o);
+			return 1;
 		case 0x3158:
 			*normals = hangul_letter_wa;
-			return static_count(hangul_letter_wa);
+			return 1;
 		case 0x3159:
 			*normals = hangul_letter_wae;
-			return static_count(hangul_letter_wae);
+			return 1;
 		case 0x315A:
 			*normals = hangul_letter_oe;
-			return static_count(hangul_letter_oe);
+			return 1;
 		case 0x315B:
 			*normals = hangul_letter_yo;
-			return static_count(hangul_letter_yo);
+			return 1;
 		case 0x315C:
 			*normals = hangul_letter_u;
-			return static_count(hangul_letter_u);
+			return 1;
 		case 0x315D:
 			*normals = hangul_letter_weo;
-			return static_count(hangul_letter_weo);
+			return 1;
 		case 0x315E:
 			*normals = hangul_letter_we;
-			return static_count(hangul_letter_we);
+			return 1;
 		case 0x315F:
 			*normals = hangul_letter_wi;
-			return static_count(hangul_letter_wi);
+			return 1;
 		case 0x3160:
 			*normals = hangul_letter_yu;
-			return static_count(hangul_letter_yu);
+			return 1;
 		case 0x3161:
 			*normals = hangul_letter_eu;
-			return static_count(hangul_letter_eu);
+			return 1;
 		case 0x3162:
 			*normals = hangul_letter_yi;
-			return static_count(hangul_letter_yi);
+			return 1;
 		case 0x3163:
 			*normals = hangul_letter_i;
-			return static_count(hangul_letter_i);
+			return 1;
 		case 0x3164:
 			*normals = hangul_filler;
-			return static_count(hangul_filler);
+			return 1;
 		case 0x3165:
 			*normals = hangul_letter_ssangnieun;
-			return static_count(hangul_letter_ssangnieun);
+			return 1;
 		case 0x3166:
 			*normals = hangul_letter_nieun_tikeut;
-			return static_count(hangul_letter_nieun_tikeut);
+			return 1;
 		case 0x3167:
 			*normals = hangul_letter_nieun_sios;
-			return static_count(hangul_letter_nieun_sios);
+			return 1;
 		case 0x3168:
 			*normals = hangul_letter_nieun_pansios;
-			return static_count(hangul_letter_nieun_pansios);
+			return 1;
 		case 0x3169:
 			*normals = hangul_letter_rieul_kiyeok_sios;
-			return static_count(hangul_letter_rieul_kiyeok_sios);
+			return 1;
 		case 0x316A:
 			*normals = hangul_letter_rieul_tikeut;
-			return static_count(hangul_letter_rieul_tikeut);
+			return 1;
 		case 0x316B:
 			*normals = hangul_letter_rieul_pieup_sios;
-			return static_count(hangul_letter_rieul_pieup_sios);
+			return 1;
 		case 0x316C:
 			*normals = hangul_letter_rieul_pansios;
-			return static_count(hangul_letter_rieul_pansios);
+			return 1;
 		case 0x316D:
 			*normals = hangul_letter_rieul_yeorinhieuh;
-			return static_count(hangul_letter_rieul_yeorinhieuh);
+			return 1;
 		case 0x316E:
 			*normals = hangul_letter_mieum_pieup;
-			return static_count(hangul_letter_mieum_pieup);
+			return 1;
 		case 0x316F:
 			*normals = hangul_letter_mieum_sios;
-			return static_count(hangul_letter_mieum_sios);
+			return 1;
 		case 0x3170:
 			*normals = hangul_letter_mieum_pansios;
-			return static_count(hangul_letter_mieum_pansios);
+			return 1;
 		case 0x3171:
 			*normals = hangul_letter_kapyeounmieum;
-			return static_count(hangul_letter_kapyeounmieum);
+			return 1;
 		case 0x3172:
 			*normals = hangul_letter_pieup_kiyeok;
-			return static_count(hangul_letter_pieup_kiyeok);
+			return 1;
 		case 0x3173:
 			*normals = hangul_letter_pieup_tikeut;
-			return static_count(hangul_letter_pieup_tikeut);
+			return 1;
 		case 0x3174:
 			*normals = hangul_letter_pieup_sios_kiyeok;
-			return static_count(hangul_letter_pieup_sios_kiyeok);
+			return 1;
 		case 0x3175:
 			*normals = hangul_letter_pieup_sios_tikeut;
-			return static_count(hangul_letter_pieup_sios_tikeut);
+			return 1;
 		case 0x3176:
 			*normals = hangul_letter_pieup_cieuc;
-			return static_count(hangul_letter_pieup_cieuc);
+			return 1;
 		case 0x3177:
 			*normals = hangul_letter_pieup_thieuth;
-			return static_count(hangul_letter_pieup_thieuth);
+			return 1;
 		case 0x3178:
 			*normals = hangul_letter_kapyeounpieup;
-			return static_count(hangul_letter_kapyeounpieup);
+			return 1;
 		case 0x3179:
 			*normals = hangul_letter_kapyeounssangpieup;
-			return static_count(hangul_letter_kapyeounssangpieup);
+			return 1;
 		case 0x317A:
 			*normals = hangul_letter_sios_kiyeok;
-			return static_count(hangul_letter_sios_kiyeok);
+			return 1;
 		case 0x317B:
 			*normals = hangul_letter_sios_nieun;
-			return static_count(hangul_letter_sios_nieun);
+			return 1;
 		case 0x317C:
 			*normals = hangul_letter_sios_tikeut;
-			return static_count(hangul_letter_sios_tikeut);
+			return 1;
 		case 0x317D:
 			*normals = hangul_letter_sios_pieup;
-			return static_count(hangul_letter_sios_pieup);
+			return 1;
 		case 0x317E:
 			*normals = hangul_letter_sios_cieuc;
-			return static_count(hangul_letter_sios_cieuc);
+			return 1;
 		case 0x317F:
 			*normals = hangul_letter_pansios;
-			return static_count(hangul_letter_pansios);
+			return 1;
 		case 0x3180:
 			*normals = hangul_letter_ssangieung;
-			return static_count(hangul_letter_ssangieung);
+			return 1;
 		case 0x3181:
 			*normals = hangul_letter_yesieung;
-			return static_count(hangul_letter_yesieung);
+			return 1;
 		case 0x3182:
 			*normals = hangul_letter_yesieung_sios;
-			return static_count(hangul_letter_yesieung_sios);
+			return 1;
 		case 0x3183:
 			*normals = hangul_letter_yesieung_pansios;
-			return static_count(hangul_letter_yesieung_pansios);
+			return 1;
 		case 0x3184:
 			*normals = hangul_letter_kapyeounphieuph;
-			return static_count(hangul_letter_kapyeounphieuph);
+			return 1;
 		case 0x3185:
 			*normals = hangul_letter_ssanghieuh;
-			return static_count(hangul_letter_ssanghieuh);
+			return 1;
 		case 0x3186:
 			*normals = hangul_letter_yeorinhieuh;
-			return static_count(hangul_letter_yeorinhieuh);
+			return 1;
 		case 0x3187:
 			*normals = hangul_letter_yo_ya;
-			return static_count(hangul_letter_yo_ya);
+			return 1;
 		case 0x3188:
 			*normals = hangul_letter_yo_yae;
-			return static_count(hangul_letter_yo_yae);
+			return 1;
 		case 0x3189:
 			*normals = hangul_letter_yo_i;
-			return static_count(hangul_letter_yo_i);
+			return 1;
 		case 0x318A:
 			*normals = hangul_letter_yu_yeo;
-			return static_count(hangul_letter_yu_yeo);
+			return 1;
 		case 0x318B:
 			*normals = hangul_letter_yu_ye;
-			return static_count(hangul_letter_yu_ye);
+			return 1;
 		case 0x318C:
 			*normals = hangul_letter_yu_i;
-			return static_count(hangul_letter_yu_i);
+			return 1;
 		case 0x318D:
 			*normals = hangul_letter_araea;
-			return static_count(hangul_letter_araea);
+			return 1;
 		case 0x318E:
 			*normals = hangul_letter_araeae;
-			return static_count(hangul_letter_araeae);
+			return 1;
 		case 0x3192:
 			*normals = ideographic_annotation_one_mark;
-			return static_count(ideographic_annotation_one_mark);
+			return 1;
 		case 0x3193:
 			*normals = ideographic_annotation_two_mark;
-			return static_count(ideographic_annotation_two_mark);
+			return 1;
 		case 0x3194:
 			*normals = ideographic_annotation_three_mark;
-			return static_count(ideographic_annotation_three_mark);
+			return 1;
 		case 0x3195:
 			*normals = ideographic_annotation_four_mark;
-			return static_count(ideographic_annotation_four_mark);
+			return 1;
 		case 0x3196:
 			*normals = ideographic_annotation_top_mark;
-			return static_count(ideographic_annotation_top_mark);
+			return 1;
 		case 0x3197:
 			*normals = ideographic_annotation_middle_mark;
-			return static_count(ideographic_annotation_middle_mark);
+			return 1;
 		case 0x3198:
 			*normals = ideographic_annotation_bottom_mark;
-			return static_count(ideographic_annotation_bottom_mark);
+			return 1;
 		case 0x3199:
 			*normals = ideographic_annotation_first_mark;
-			return static_count(ideographic_annotation_first_mark);
+			return 1;
 		case 0x319A:
 			*normals = ideographic_annotation_second_mark;
-			return static_count(ideographic_annotation_second_mark);
+			return 1;
 		case 0x319B:
 			*normals = ideographic_annotation_third_mark;
-			return static_count(ideographic_annotation_third_mark);
+			return 1;
 		case 0x319C:
 			*normals = ideographic_annotation_fourth_mark;
-			return static_count(ideographic_annotation_fourth_mark);
+			return 1;
 		case 0x319D:
 			*normals = ideographic_annotation_heaven_mark;
-			return static_count(ideographic_annotation_heaven_mark);
+			return 1;
 		case 0x319E:
 			*normals = ideographic_annotation_earth_mark;
-			return static_count(ideographic_annotation_earth_mark);
+			return 1;
 		case 0x319F:
 			*normals = ideographic_annotation_man_mark;
-			return static_count(ideographic_annotation_man_mark);
+			return 1;
 		case 0x3200:
 			*normals = parenthesized_hangul_kiyeok;
-			return static_count(parenthesized_hangul_kiyeok);
+			return 3;
 		case 0x3201:
 			*normals = parenthesized_hangul_nieun;
-			return static_count(parenthesized_hangul_nieun);
+			return 3;
 		case 0x3202:
 			*normals = parenthesized_hangul_tikeut;
-			return static_count(parenthesized_hangul_tikeut);
+			return 3;
 		case 0x3203:
 			*normals = parenthesized_hangul_rieul;
-			return static_count(parenthesized_hangul_rieul);
+			return 3;
 		case 0x3204:
 			*normals = parenthesized_hangul_mieum;
-			return static_count(parenthesized_hangul_mieum);
+			return 3;
 		case 0x3205:
 			*normals = parenthesized_hangul_pieup;
-			return static_count(parenthesized_hangul_pieup);
+			return 3;
 		case 0x3206:
 			*normals = parenthesized_hangul_sios;
-			return static_count(parenthesized_hangul_sios);
+			return 3;
 		case 0x3207:
 			*normals = parenthesized_hangul_ieung;
-			return static_count(parenthesized_hangul_ieung);
+			return 3;
 		case 0x3208:
 			*normals = parenthesized_hangul_cieuc;
-			return static_count(parenthesized_hangul_cieuc);
+			return 3;
 		case 0x3209:
 			*normals = parenthesized_hangul_chieuch;
-			return static_count(parenthesized_hangul_chieuch);
+			return 3;
 		case 0x320A:
 			*normals = parenthesized_hangul_khieukh;
-			return static_count(parenthesized_hangul_khieukh);
+			return 3;
 		case 0x320B:
 			*normals = parenthesized_hangul_thieuth;
-			return static_count(parenthesized_hangul_thieuth);
+			return 3;
 		case 0x320C:
 			*normals = parenthesized_hangul_phieuph;
-			return static_count(parenthesized_hangul_phieuph);
+			return 3;
 		case 0x320D:
 			*normals = parenthesized_hangul_hieuh;
-			return static_count(parenthesized_hangul_hieuh);
+			return 3;
 		case 0x320E:
 			*normals = parenthesized_hangul_kiyeok_a;
-			return static_count(parenthesized_hangul_kiyeok_a);
+			return 4;
 		case 0x320F:
 			*normals = parenthesized_hangul_nieun_a;
-			return static_count(parenthesized_hangul_nieun_a);
+			return 4;
 		case 0x3210:
 			*normals = parenthesized_hangul_tikeut_a;
-			return static_count(parenthesized_hangul_tikeut_a);
+			return 4;
 		case 0x3211:
 			*normals = parenthesized_hangul_rieul_a;
-			return static_count(parenthesized_hangul_rieul_a);
+			return 4;
 		case 0x3212:
 			*normals = parenthesized_hangul_mieum_a;
-			return static_count(parenthesized_hangul_mieum_a);
+			return 4;
 		case 0x3213:
 			*normals = parenthesized_hangul_pieup_a;
-			return static_count(parenthesized_hangul_pieup_a);
+			return 4;
 		case 0x3214:
 			*normals = parenthesized_hangul_sios_a;
-			return static_count(parenthesized_hangul_sios_a);
+			return 4;
 		case 0x3215:
 			*normals = parenthesized_hangul_ieung_a;
-			return static_count(parenthesized_hangul_ieung_a);
+			return 4;
 		case 0x3216:
 			*normals = parenthesized_hangul_cieuc_a;
-			return static_count(parenthesized_hangul_cieuc_a);
+			return 4;
 		case 0x3217:
 			*normals = parenthesized_hangul_chieuch_a;
-			return static_count(parenthesized_hangul_chieuch_a);
+			return 4;
 		case 0x3218:
 			*normals = parenthesized_hangul_khieukh_a;
-			return static_count(parenthesized_hangul_khieukh_a);
+			return 4;
 		case 0x3219:
 			*normals = parenthesized_hangul_thieuth_a;
-			return static_count(parenthesized_hangul_thieuth_a);
+			return 4;
 		case 0x321A:
 			*normals = parenthesized_hangul_phieuph_a;
-			return static_count(parenthesized_hangul_phieuph_a);
+			return 4;
 		case 0x321B:
 			*normals = parenthesized_hangul_hieuh_a;
-			return static_count(parenthesized_hangul_hieuh_a);
+			return 4;
 		case 0x321C:
 			*normals = parenthesized_hangul_cieuc_u;
-			return static_count(parenthesized_hangul_cieuc_u);
+			return 4;
 		case 0x321D:
 			*normals = parenthesized_korean_character_ojeon;
-			return static_count(parenthesized_korean_character_ojeon);
+			return 7;
 		case 0x321E:
 			*normals = parenthesized_korean_character_o_hu;
-			return static_count(parenthesized_korean_character_o_hu);
+			return 6;
 		case 0x3220:
 			*normals = parenthesized_ideograph_one;
-			return static_count(parenthesized_ideograph_one);
+			return 3;
 		case 0x3221:
 			*normals = parenthesized_ideograph_two;
-			return static_count(parenthesized_ideograph_two);
+			return 3;
 		case 0x3222:
 			*normals = parenthesized_ideograph_three;
-			return static_count(parenthesized_ideograph_three);
+			return 3;
 		case 0x3223:
 			*normals = parenthesized_ideograph_four;
-			return static_count(parenthesized_ideograph_four);
+			return 3;
 		case 0x3224:
 			*normals = parenthesized_ideograph_five;
-			return static_count(parenthesized_ideograph_five);
+			return 3;
 		case 0x3225:
 			*normals = parenthesized_ideograph_six;
-			return static_count(parenthesized_ideograph_six);
+			return 3;
 		case 0x3226:
 			*normals = parenthesized_ideograph_seven;
-			return static_count(parenthesized_ideograph_seven);
+			return 3;
 		case 0x3227:
 			*normals = parenthesized_ideograph_eight;
-			return static_count(parenthesized_ideograph_eight);
+			return 3;
 		case 0x3228:
 			*normals = parenthesized_ideograph_nine;
-			return static_count(parenthesized_ideograph_nine);
+			return 3;
 		case 0x3229:
 			*normals = parenthesized_ideograph_ten;
-			return static_count(parenthesized_ideograph_ten);
+			return 3;
 		case 0x322A:
 			*normals = parenthesized_ideograph_moon;
-			return static_count(parenthesized_ideograph_moon);
+			return 3;
 		case 0x322B:
 			*normals = parenthesized_ideograph_fire;
-			return static_count(parenthesized_ideograph_fire);
+			return 3;
 		case 0x322C:
 			*normals = parenthesized_ideograph_water;
-			return static_count(parenthesized_ideograph_water);
+			return 3;
 		case 0x322D:
 			*normals = parenthesized_ideograph_wood;
-			return static_count(parenthesized_ideograph_wood);
+			return 3;
 		case 0x322E:
 			*normals = parenthesized_ideograph_metal;
-			return static_count(parenthesized_ideograph_metal);
+			return 3;
 		case 0x322F:
 			*normals = parenthesized_ideograph_earth;
-			return static_count(parenthesized_ideograph_earth);
+			return 3;
 		case 0x3230:
 			*normals = parenthesized_ideograph_sun;
-			return static_count(parenthesized_ideograph_sun);
+			return 3;
 		case 0x3231:
 			*normals = parenthesized_ideograph_stock;
-			return static_count(parenthesized_ideograph_stock);
+			return 3;
 		case 0x3232:
 			*normals = parenthesized_ideograph_have;
-			return static_count(parenthesized_ideograph_have);
+			return 3;
 		case 0x3233:
 			*normals = parenthesized_ideograph_society;
-			return static_count(parenthesized_ideograph_society);
+			return 3;
 		case 0x3234:
 			*normals = parenthesized_ideograph_name;
-			return static_count(parenthesized_ideograph_name);
+			return 3;
 		case 0x3235:
 			*normals = parenthesized_ideograph_special;
-			return static_count(parenthesized_ideograph_special);
+			return 3;
 		case 0x3236:
 			*normals = parenthesized_ideograph_financial;
-			return static_count(parenthesized_ideograph_financial);
+			return 3;
 		case 0x3237:
 			*normals = parenthesized_ideograph_congratulation;
-			return static_count(parenthesized_ideograph_congratulation);
+			return 3;
 		case 0x3238:
 			*normals = parenthesized_ideograph_labor;
-			return static_count(parenthesized_ideograph_labor);
+			return 3;
 		case 0x3239:
 			*normals = parenthesized_ideograph_represent;
-			return static_count(parenthesized_ideograph_represent);
+			return 3;
 		case 0x323A:
 			*normals = parenthesized_ideograph_call;
-			return static_count(parenthesized_ideograph_call);
+			return 3;
 		case 0x323B:
 			*normals = parenthesized_ideograph_study;
-			return static_count(parenthesized_ideograph_study);
+			return 3;
 		case 0x323C:
 			*normals = parenthesized_ideograph_supervise;
-			return static_count(parenthesized_ideograph_supervise);
+			return 3;
 		case 0x323D:
 			*normals = parenthesized_ideograph_enterprise;
-			return static_count(parenthesized_ideograph_enterprise);
+			return 3;
 		case 0x323E:
 			*normals = parenthesized_ideograph_resource;
-			return static_count(parenthesized_ideograph_resource);
+			return 3;
 		case 0x323F:
 			*normals = parenthesized_ideograph_alliance;
-			return static_count(parenthesized_ideograph_alliance);
+			return 3;
 		case 0x3240:
 			*normals = parenthesized_ideograph_festival;
-			return static_count(parenthesized_ideograph_festival);
+			return 3;
 		case 0x3241:
 			*normals = parenthesized_ideograph_rest;
-			return static_count(parenthesized_ideograph_rest);
+			return 3;
 		case 0x3242:
 			*normals = parenthesized_ideograph_self;
-			return static_count(parenthesized_ideograph_self);
+			return 3;
 		case 0x3243:
 			*normals = parenthesized_ideograph_reach;
-			return static_count(parenthesized_ideograph_reach);
+			return 3;
 		case 0x3244:
 			*normals = circled_ideograph_question;
-			return static_count(circled_ideograph_question);
+			return 1;
 		case 0x3245:
 			*normals = circled_ideograph_kindergarten;
-			return static_count(circled_ideograph_kindergarten);
+			return 1;
 		case 0x3246:
 			*normals = circled_ideograph_school;
-			return static_count(circled_ideograph_school);
+			return 1;
 		case 0x3247:
 			*normals = circled_ideograph_koto;
-			return static_count(circled_ideograph_koto);
+			return 1;
 		case 0x3250:
 			*normals = partnership_sign;
-			return static_count(partnership_sign);
+			return 3;
 		case 0x3251:
 			*normals = circled_number_twenty_one;
-			return static_count(circled_number_twenty_one);
+			return 2;
 		case 0x3252:
 			*normals = circled_number_twenty_two;
-			return static_count(circled_number_twenty_two);
+			return 2;
 		case 0x3253:
 			*normals = circled_number_twenty_three;
-			return static_count(circled_number_twenty_three);
+			return 2;
 		case 0x3254:
 			*normals = circled_number_twenty_four;
-			return static_count(circled_number_twenty_four);
+			return 2;
 		case 0x3255:
 			*normals = circled_number_twenty_five;
-			return static_count(circled_number_twenty_five);
+			return 2;
 		case 0x3256:
 			*normals = circled_number_twenty_six;
-			return static_count(circled_number_twenty_six);
+			return 2;
 		case 0x3257:
 			*normals = circled_number_twenty_seven;
-			return static_count(circled_number_twenty_seven);
+			return 2;
 		case 0x3258:
 			*normals = circled_number_twenty_eight;
-			return static_count(circled_number_twenty_eight);
+			return 2;
 		case 0x3259:
 			*normals = circled_number_twenty_nine;
-			return static_count(circled_number_twenty_nine);
+			return 2;
 		case 0x325A:
 			*normals = circled_number_thirty;
-			return static_count(circled_number_thirty);
+			return 2;
 		case 0x325B:
 			*normals = circled_number_thirty_one;
-			return static_count(circled_number_thirty_one);
+			return 2;
 		case 0x325C:
 			*normals = circled_number_thirty_two;
-			return static_count(circled_number_thirty_two);
+			return 2;
 		case 0x325D:
 			*normals = circled_number_thirty_three;
-			return static_count(circled_number_thirty_three);
+			return 2;
 		case 0x325E:
 			*normals = circled_number_thirty_four;
-			return static_count(circled_number_thirty_four);
+			return 2;
 		case 0x325F:
 			*normals = circled_number_thirty_five;
-			return static_count(circled_number_thirty_five);
+			return 2;
 		case 0x3260:
 			*normals = circled_hangul_kiyeok;
-			return static_count(circled_hangul_kiyeok);
+			return 1;
 		case 0x3261:
 			*normals = circled_hangul_nieun;
-			return static_count(circled_hangul_nieun);
+			return 1;
 		case 0x3262:
 			*normals = circled_hangul_tikeut;
-			return static_count(circled_hangul_tikeut);
+			return 1;
 		case 0x3263:
 			*normals = circled_hangul_rieul;
-			return static_count(circled_hangul_rieul);
+			return 1;
 		case 0x3264:
 			*normals = circled_hangul_mieum;
-			return static_count(circled_hangul_mieum);
+			return 1;
 		case 0x3265:
 			*normals = circled_hangul_pieup;
-			return static_count(circled_hangul_pieup);
+			return 1;
 		case 0x3266:
 			*normals = circled_hangul_sios;
-			return static_count(circled_hangul_sios);
+			return 1;
 		case 0x3267:
 			*normals = circled_hangul_ieung;
-			return static_count(circled_hangul_ieung);
+			return 1;
 		case 0x3268:
 			*normals = circled_hangul_cieuc;
-			return static_count(circled_hangul_cieuc);
+			return 1;
 		case 0x3269:
 			*normals = circled_hangul_chieuch;
-			return static_count(circled_hangul_chieuch);
+			return 1;
 		case 0x326A:
 			*normals = circled_hangul_khieukh;
-			return static_count(circled_hangul_khieukh);
+			return 1;
 		case 0x326B:
 			*normals = circled_hangul_thieuth;
-			return static_count(circled_hangul_thieuth);
+			return 1;
 		case 0x326C:
 			*normals = circled_hangul_phieuph;
-			return static_count(circled_hangul_phieuph);
+			return 1;
 		case 0x326D:
 			*normals = circled_hangul_hieuh;
-			return static_count(circled_hangul_hieuh);
+			return 1;
 		case 0x326E:
 			*normals = circled_hangul_kiyeok_a;
-			return static_count(circled_hangul_kiyeok_a);
+			return 2;
 		case 0x326F:
 			*normals = circled_hangul_nieun_a;
-			return static_count(circled_hangul_nieun_a);
+			return 2;
 		case 0x3270:
 			*normals = circled_hangul_tikeut_a;
-			return static_count(circled_hangul_tikeut_a);
+			return 2;
 		case 0x3271:
 			*normals = circled_hangul_rieul_a;
-			return static_count(circled_hangul_rieul_a);
+			return 2;
 		case 0x3272:
 			*normals = circled_hangul_mieum_a;
-			return static_count(circled_hangul_mieum_a);
+			return 2;
 		case 0x3273:
 			*normals = circled_hangul_pieup_a;
-			return static_count(circled_hangul_pieup_a);
+			return 2;
 		case 0x3274:
 			*normals = circled_hangul_sios_a;
-			return static_count(circled_hangul_sios_a);
+			return 2;
 		case 0x3275:
 			*normals = circled_hangul_ieung_a;
-			return static_count(circled_hangul_ieung_a);
+			return 2;
 		case 0x3276:
 			*normals = circled_hangul_cieuc_a;
-			return static_count(circled_hangul_cieuc_a);
+			return 2;
 		case 0x3277:
 			*normals = circled_hangul_chieuch_a;
-			return static_count(circled_hangul_chieuch_a);
+			return 2;
 		case 0x3278:
 			*normals = circled_hangul_khieukh_a;
-			return static_count(circled_hangul_khieukh_a);
+			return 2;
 		case 0x3279:
 			*normals = circled_hangul_thieuth_a;
-			return static_count(circled_hangul_thieuth_a);
+			return 2;
 		case 0x327A:
 			*normals = circled_hangul_phieuph_a;
-			return static_count(circled_hangul_phieuph_a);
+			return 2;
 		case 0x327B:
 			*normals = circled_hangul_hieuh_a;
-			return static_count(circled_hangul_hieuh_a);
+			return 2;
 		case 0x327C:
 			*normals = circled_korean_character_chamko;
-			return static_count(circled_korean_character_chamko);
+			return 5;
 		case 0x327D:
 			*normals = circled_korean_character_jueui;
-			return static_count(circled_korean_character_jueui);
+			return 4;
 		case 0x327E:
 			*normals = circled_hangul_ieung_u;
-			return static_count(circled_hangul_ieung_u);
+			return 2;
 		case 0x3280:
 			*normals = circled_ideograph_one;
-			return static_count(circled_ideograph_one);
+			return 1;
 		case 0x3281:
 			*normals = circled_ideograph_two;
-			return static_count(circled_ideograph_two);
+			return 1;
 		case 0x3282:
 			*normals = circled_ideograph_three;
-			return static_count(circled_ideograph_three);
+			return 1;
 		case 0x3283:
 			*normals = circled_ideograph_four;
-			return static_count(circled_ideograph_four);
+			return 1;
 		case 0x3284:
 			*normals = circled_ideograph_five;
-			return static_count(circled_ideograph_five);
+			return 1;
 		case 0x3285:
 			*normals = circled_ideograph_six;
-			return static_count(circled_ideograph_six);
+			return 1;
 		case 0x3286:
 			*normals = circled_ideograph_seven;
-			return static_count(circled_ideograph_seven);
+			return 1;
 		case 0x3287:
 			*normals = circled_ideograph_eight;
-			return static_count(circled_ideograph_eight);
+			return 1;
 		case 0x3288:
 			*normals = circled_ideograph_nine;
-			return static_count(circled_ideograph_nine);
+			return 1;
 		case 0x3289:
 			*normals = circled_ideograph_ten;
-			return static_count(circled_ideograph_ten);
+			return 1;
 		case 0x328A:
 			*normals = circled_ideograph_moon;
-			return static_count(circled_ideograph_moon);
+			return 1;
 		case 0x328B:
 			*normals = circled_ideograph_fire;
-			return static_count(circled_ideograph_fire);
+			return 1;
 		case 0x328C:
 			*normals = circled_ideograph_water;
-			return static_count(circled_ideograph_water);
+			return 1;
 		case 0x328D:
 			*normals = circled_ideograph_wood;
-			return static_count(circled_ideograph_wood);
+			return 1;
 		case 0x328E:
 			*normals = circled_ideograph_metal;
-			return static_count(circled_ideograph_metal);
+			return 1;
 		case 0x328F:
 			*normals = circled_ideograph_earth;
-			return static_count(circled_ideograph_earth);
+			return 1;
 		case 0x3290:
 			*normals = circled_ideograph_sun;
-			return static_count(circled_ideograph_sun);
+			return 1;
 		case 0x3291:
 			*normals = circled_ideograph_stock;
-			return static_count(circled_ideograph_stock);
+			return 1;
 		case 0x3292:
 			*normals = circled_ideograph_have;
-			return static_count(circled_ideograph_have);
+			return 1;
 		case 0x3293:
 			*normals = circled_ideograph_society;
-			return static_count(circled_ideograph_society);
+			return 1;
 		case 0x3294:
 			*normals = circled_ideograph_name;
-			return static_count(circled_ideograph_name);
+			return 1;
 		case 0x3295:
 			*normals = circled_ideograph_special;
-			return static_count(circled_ideograph_special);
+			return 1;
 		case 0x3296:
 			*normals = circled_ideograph_financial;
-			return static_count(circled_ideograph_financial);
+			return 1;
 		case 0x3297:
 			*normals = circled_ideograph_congratulation;
-			return static_count(circled_ideograph_congratulation);
+			return 1;
 		case 0x3298:
 			*normals = circled_ideograph_labor;
-			return static_count(circled_ideograph_labor);
+			return 1;
 		case 0x3299:
 			*normals = circled_ideograph_secret;
-			return static_count(circled_ideograph_secret);
+			return 1;
 		case 0x329A:
 			*normals = circled_ideograph_male;
-			return static_count(circled_ideograph_male);
+			return 1;
 		case 0x329B:
 			*normals = circled_ideograph_female;
-			return static_count(circled_ideograph_female);
+			return 1;
 		case 0x329C:
 			*normals = circled_ideograph_suitable;
-			return static_count(circled_ideograph_suitable);
+			return 1;
 		case 0x329D:
 			*normals = circled_ideograph_excellent;
-			return static_count(circled_ideograph_excellent);
+			return 1;
 		case 0x329E:
 			*normals = circled_ideograph_print;
-			return static_count(circled_ideograph_print);
+			return 1;
 		case 0x329F:
 			*normals = circled_ideograph_attention;
-			return static_count(circled_ideograph_attention);
+			return 1;
 		case 0x32A0:
 			*normals = circled_ideograph_item;
-			return static_count(circled_ideograph_item);
+			return 1;
 		case 0x32A1:
 			*normals = circled_ideograph_rest;
-			return static_count(circled_ideograph_rest);
+			return 1;
 		case 0x32A2:
 			*normals = circled_ideograph_copy;
-			return static_count(circled_ideograph_copy);
+			return 1;
 		case 0x32A3:
 			*normals = circled_ideograph_correct;
-			return static_count(circled_ideograph_correct);
+			return 1;
 		case 0x32A4:
 			*normals = circled_ideograph_high;
-			return static_count(circled_ideograph_high);
+			return 1;
 		case 0x32A5:
 			*normals = circled_ideograph_centre;
-			return static_count(circled_ideograph_centre);
+			return 1;
 		case 0x32A6:
 			*normals = circled_ideograph_low;
-			return static_count(circled_ideograph_low);
+			return 1;
 		case 0x32A7:
 			*normals = circled_ideograph_left;
-			return static_count(circled_ideograph_left);
+			return 1;
 		case 0x32A8:
 			*normals = circled_ideograph_right;
-			return static_count(circled_ideograph_right);
+			return 1;
 		case 0x32A9:
 			*normals = circled_ideograph_medicine;
-			return static_count(circled_ideograph_medicine);
+			return 1;
 		case 0x32AA:
 			*normals = circled_ideograph_religion;
-			return static_count(circled_ideograph_religion);
+			return 1;
 		case 0x32AB:
 			*normals = circled_ideograph_study;
-			return static_count(circled_ideograph_study);
+			return 1;
 		case 0x32AC:
 			*normals = circled_ideograph_supervise;
-			return static_count(circled_ideograph_supervise);
+			return 1;
 		case 0x32AD:
 			*normals = circled_ideograph_enterprise;
-			return static_count(circled_ideograph_enterprise);
+			return 1;
 		case 0x32AE:
 			*normals = circled_ideograph_resource;
-			return static_count(circled_ideograph_resource);
+			return 1;
 		case 0x32AF:
 			*normals = circled_ideograph_alliance;
-			return static_count(circled_ideograph_alliance);
+			return 1;
 		case 0x32B0:
 			*normals = circled_ideograph_night;
-			return static_count(circled_ideograph_night);
+			return 1;
 		case 0x32B1:
 			*normals = circled_number_thirty_six;
-			return static_count(circled_number_thirty_six);
+			return 2;
 		case 0x32B2:
 			*normals = circled_number_thirty_seven;
-			return static_count(circled_number_thirty_seven);
+			return 2;
 		case 0x32B3:
 			*normals = circled_number_thirty_eight;
-			return static_count(circled_number_thirty_eight);
+			return 2;
 		case 0x32B4:
 			*normals = circled_number_thirty_nine;
-			return static_count(circled_number_thirty_nine);
+			return 2;
 		case 0x32B5:
 			*normals = circled_number_forty;
-			return static_count(circled_number_forty);
+			return 2;
 		case 0x32B6:
 			*normals = circled_number_forty_one;
-			return static_count(circled_number_forty_one);
+			return 2;
 		case 0x32B7:
 			*normals = circled_number_forty_two;
-			return static_count(circled_number_forty_two);
+			return 2;
 		case 0x32B8:
 			*normals = circled_number_forty_three;
-			return static_count(circled_number_forty_three);
+			return 2;
 		case 0x32B9:
 			*normals = circled_number_forty_four;
-			return static_count(circled_number_forty_four);
+			return 2;
 		case 0x32BA:
 			*normals = circled_number_forty_five;
-			return static_count(circled_number_forty_five);
+			return 2;
 		case 0x32BB:
 			*normals = circled_number_forty_six;
-			return static_count(circled_number_forty_six);
+			return 2;
 		case 0x32BC:
 			*normals = circled_number_forty_seven;
-			return static_count(circled_number_forty_seven);
+			return 2;
 		case 0x32BD:
 			*normals = circled_number_forty_eight;
-			return static_count(circled_number_forty_eight);
+			return 2;
 		case 0x32BE:
 			*normals = circled_number_forty_nine;
-			return static_count(circled_number_forty_nine);
+			return 2;
 		case 0x32BF:
 			*normals = circled_number_fifty;
-			return static_count(circled_number_fifty);
+			return 2;
 		case 0x32C0:
 			*normals = ideographic_telegraph_symbol_for_january;
-			return static_count(ideographic_telegraph_symbol_for_january);
+			return 2;
 		case 0x32C1:
 			*normals = ideographic_telegraph_symbol_for_february;
-			return static_count(ideographic_telegraph_symbol_for_february);
+			return 2;
 		case 0x32C2:
 			*normals = ideographic_telegraph_symbol_for_march;
-			return static_count(ideographic_telegraph_symbol_for_march);
+			return 2;
 		case 0x32C3:
 			*normals = ideographic_telegraph_symbol_for_april;
-			return static_count(ideographic_telegraph_symbol_for_april);
+			return 2;
 		case 0x32C4:
 			*normals = ideographic_telegraph_symbol_for_may;
-			return static_count(ideographic_telegraph_symbol_for_may);
+			return 2;
 		case 0x32C5:
 			*normals = ideographic_telegraph_symbol_for_june;
-			return static_count(ideographic_telegraph_symbol_for_june);
+			return 2;
 		case 0x32C6:
 			*normals = ideographic_telegraph_symbol_for_july;
-			return static_count(ideographic_telegraph_symbol_for_july);
+			return 2;
 		case 0x32C7:
 			*normals = ideographic_telegraph_symbol_for_august;
-			return static_count(ideographic_telegraph_symbol_for_august);
+			return 2;
 		case 0x32C8:
 			*normals = ideographic_telegraph_symbol_for_september;
-			return static_count(ideographic_telegraph_symbol_for_september);
+			return 2;
 		case 0x32C9:
 			*normals = ideographic_telegraph_symbol_for_october;
-			return static_count(ideographic_telegraph_symbol_for_october);
+			return 3;
 		case 0x32CA:
 			*normals = ideographic_telegraph_symbol_for_november;
-			return static_count(ideographic_telegraph_symbol_for_november);
+			return 3;
 		case 0x32CB:
 			*normals = ideographic_telegraph_symbol_for_december;
-			return static_count(ideographic_telegraph_symbol_for_december);
+			return 3;
 		case 0x32CC:
 			*normals = square_hg;
-			return static_count(square_hg);
+			return 2;
 		case 0x32CD:
 			*normals = square_erg;
-			return static_count(square_erg);
+			return 3;
 		case 0x32CE:
 			*normals = square_ev;
-			return static_count(square_ev);
+			return 2;
 		case 0x32CF:
 			*normals = limited_liability_sign;
-			return static_count(limited_liability_sign);
+			return 3;
 		case 0x32D0:
 			*normals = circled_katakana_a;
-			return static_count(circled_katakana_a);
+			return 1;
 		case 0x32D1:
 			*normals = circled_katakana_i;
-			return static_count(circled_katakana_i);
+			return 1;
 		case 0x32D2:
 			*normals = circled_katakana_u;
-			return static_count(circled_katakana_u);
+			return 1;
 		case 0x32D3:
 			*normals = circled_katakana_e;
-			return static_count(circled_katakana_e);
+			return 1;
 		case 0x32D4:
 			*normals = circled_katakana_o;
-			return static_count(circled_katakana_o);
+			return 1;
 		case 0x32D5:
 			*normals = circled_katakana_ka;
-			return static_count(circled_katakana_ka);
+			return 1;
 		case 0x32D6:
 			*normals = circled_katakana_ki;
-			return static_count(circled_katakana_ki);
+			return 1;
 		case 0x32D7:
 			*normals = circled_katakana_ku;
-			return static_count(circled_katakana_ku);
+			return 1;
 		case 0x32D8:
 			*normals = circled_katakana_ke;
-			return static_count(circled_katakana_ke);
+			return 1;
 		case 0x32D9:
 			*normals = circled_katakana_ko;
-			return static_count(circled_katakana_ko);
+			return 1;
 		case 0x32DA:
 			*normals = circled_katakana_sa;
-			return static_count(circled_katakana_sa);
+			return 1;
 		case 0x32DB:
 			*normals = circled_katakana_si;
-			return static_count(circled_katakana_si);
+			return 1;
 		case 0x32DC:
 			*normals = circled_katakana_su;
-			return static_count(circled_katakana_su);
+			return 1;
 		case 0x32DD:
 			*normals = circled_katakana_se;
-			return static_count(circled_katakana_se);
+			return 1;
 		case 0x32DE:
 			*normals = circled_katakana_so;
-			return static_count(circled_katakana_so);
+			return 1;
 		case 0x32DF:
 			*normals = circled_katakana_ta;
-			return static_count(circled_katakana_ta);
+			return 1;
 		case 0x32E0:
 			*normals = circled_katakana_ti;
-			return static_count(circled_katakana_ti);
+			return 1;
 		case 0x32E1:
 			*normals = circled_katakana_tu;
-			return static_count(circled_katakana_tu);
+			return 1;
 		case 0x32E2:
 			*normals = circled_katakana_te;
-			return static_count(circled_katakana_te);
+			return 1;
 		case 0x32E3:
 			*normals = circled_katakana_to;
-			return static_count(circled_katakana_to);
+			return 1;
 		case 0x32E4:
 			*normals = circled_katakana_na;
-			return static_count(circled_katakana_na);
+			return 1;
 		case 0x32E5:
 			*normals = circled_katakana_ni;
-			return static_count(circled_katakana_ni);
+			return 1;
 		case 0x32E6:
 			*normals = circled_katakana_nu;
-			return static_count(circled_katakana_nu);
+			return 1;
 		case 0x32E7:
 			*normals = circled_katakana_ne;
-			return static_count(circled_katakana_ne);
+			return 1;
 		case 0x32E8:
 			*normals = circled_katakana_no;
-			return static_count(circled_katakana_no);
+			return 1;
 		case 0x32E9:
 			*normals = circled_katakana_ha;
-			return static_count(circled_katakana_ha);
+			return 1;
 		case 0x32EA:
 			*normals = circled_katakana_hi;
-			return static_count(circled_katakana_hi);
+			return 1;
 		case 0x32EB:
 			*normals = circled_katakana_hu;
-			return static_count(circled_katakana_hu);
+			return 1;
 		case 0x32EC:
 			*normals = circled_katakana_he;
-			return static_count(circled_katakana_he);
+			return 1;
 		case 0x32ED:
 			*normals = circled_katakana_ho;
-			return static_count(circled_katakana_ho);
+			return 1;
 		case 0x32EE:
 			*normals = circled_katakana_ma;
-			return static_count(circled_katakana_ma);
+			return 1;
 		case 0x32EF:
 			*normals = circled_katakana_mi;
-			return static_count(circled_katakana_mi);
+			return 1;
 		case 0x32F0:
 			*normals = circled_katakana_mu;
-			return static_count(circled_katakana_mu);
+			return 1;
 		case 0x32F1:
 			*normals = circled_katakana_me;
-			return static_count(circled_katakana_me);
+			return 1;
 		case 0x32F2:
 			*normals = circled_katakana_mo;
-			return static_count(circled_katakana_mo);
+			return 1;
 		case 0x32F3:
 			*normals = circled_katakana_ya;
-			return static_count(circled_katakana_ya);
+			return 1;
 		case 0x32F4:
 			*normals = circled_katakana_yu;
-			return static_count(circled_katakana_yu);
+			return 1;
 		case 0x32F5:
 			*normals = circled_katakana_yo;
-			return static_count(circled_katakana_yo);
+			return 1;
 		case 0x32F6:
 			*normals = circled_katakana_ra;
-			return static_count(circled_katakana_ra);
+			return 1;
 		case 0x32F7:
 			*normals = circled_katakana_ri;
-			return static_count(circled_katakana_ri);
+			return 1;
 		case 0x32F8:
 			*normals = circled_katakana_ru;
-			return static_count(circled_katakana_ru);
+			return 1;
 		case 0x32F9:
 			*normals = circled_katakana_re;
-			return static_count(circled_katakana_re);
+			return 1;
 		case 0x32FA:
 			*normals = circled_katakana_ro;
-			return static_count(circled_katakana_ro);
+			return 1;
 		case 0x32FB:
 			*normals = circled_katakana_wa;
-			return static_count(circled_katakana_wa);
+			return 1;
 		case 0x32FC:
 			*normals = circled_katakana_wi;
-			return static_count(circled_katakana_wi);
+			return 1;
 		case 0x32FD:
 			*normals = circled_katakana_we;
-			return static_count(circled_katakana_we);
+			return 1;
 		case 0x32FE:
 			*normals = circled_katakana_wo;
-			return static_count(circled_katakana_wo);
+			return 1;
 		case 0x32FF:
 			*normals = square_era_name_reiwa;
-			return static_count(square_era_name_reiwa);
+			return 2;
 		case 0x3300:
 			*normals = square_apaato;
-			return static_count(square_apaato);
+			return 4;
 		case 0x3301:
 			*normals = square_aruhua;
-			return static_count(square_aruhua);
+			return 4;
 		case 0x3302:
 			*normals = square_anpea;
-			return static_count(square_anpea);
+			return 4;
 		case 0x3303:
 			*normals = square_aaru;
-			return static_count(square_aaru);
+			return 3;
 		case 0x3304:
 			*normals = square_iningu;
-			return static_count(square_iningu);
+			return 4;
 		case 0x3305:
 			*normals = square_inti;
-			return static_count(square_inti);
+			return 3;
 		case 0x3306:
 			*normals = square_uon;
-			return static_count(square_uon);
+			return 3;
 		case 0x3307:
 			*normals = square_esukuudo;
-			return static_count(square_esukuudo);
+			return 5;
 		case 0x3308:
 			*normals = square_eekaa;
-			return static_count(square_eekaa);
+			return 4;
 		case 0x3309:
 			*normals = square_onsu;
-			return static_count(square_onsu);
+			return 3;
 		case 0x330A:
 			*normals = square_oomu;
-			return static_count(square_oomu);
+			return 3;
 		case 0x330B:
 			*normals = square_kairi;
-			return static_count(square_kairi);
+			return 3;
 		case 0x330C:
 			*normals = square_karatto;
-			return static_count(square_karatto);
+			return 4;
 		case 0x330D:
 			*normals = square_karorii;
-			return static_count(square_karorii);
+			return 4;
 		case 0x330E:
 			*normals = square_garon;
-			return static_count(square_garon);
+			return 3;
 		case 0x330F:
 			*normals = square_ganma;
-			return static_count(square_ganma);
+			return 3;
 		case 0x3310:
 			*normals = square_giga;
-			return static_count(square_giga);
+			return 2;
 		case 0x3311:
 			*normals = square_ginii;
-			return static_count(square_ginii);
+			return 3;
 		case 0x3312:
 			*normals = square_kyurii;
-			return static_count(square_kyurii);
+			return 4;
 		case 0x3313:
 			*normals = square_girudaa;
-			return static_count(square_girudaa);
+			return 4;
 		case 0x3314:
 			*normals = square_kiro;
-			return static_count(square_kiro);
+			return 2;
 		case 0x3315:
 			*normals = square_kiroguramu;
-			return static_count(square_kiroguramu);
+			return 5;
 		case 0x3316:
 			*normals = square_kiromeetoru;
-			return static_count(square_kiromeetoru);
+			return 6;
 		case 0x3317:
 			*normals = square_kirowatto;
-			return static_count(square_kirowatto);
+			return 5;
 		case 0x3318:
 			*normals = square_guramu;
-			return static_count(square_guramu);
+			return 3;
 		case 0x3319:
 			*normals = square_guramuton;
-			return static_count(square_guramuton);
+			return 5;
 		case 0x331A:
 			*normals = square_kuruzeiro;
-			return static_count(square_kuruzeiro);
+			return 5;
 		case 0x331B:
 			*normals = square_kuroone;
-			return static_count(square_kuroone);
+			return 4;
 		case 0x331C:
 			*normals = square_keesu;
-			return static_count(square_keesu);
+			return 3;
 		case 0x331D:
 			*normals = square_koruna;
-			return static_count(square_koruna);
+			return 3;
 		case 0x331E:
 			*normals = square_koopo;
-			return static_count(square_koopo);
+			return 3;
 		case 0x331F:
 			*normals = square_saikuru;
-			return static_count(square_saikuru);
+			return 4;
 		case 0x3320:
 			*normals = square_santiimu;
-			return static_count(square_santiimu);
+			return 5;
 		case 0x3321:
 			*normals = square_siringu;
-			return static_count(square_siringu);
+			return 4;
 		case 0x3322:
 			*normals = square_senti;
-			return static_count(square_senti);
+			return 3;
 		case 0x3323:
 			*normals = square_sento;
-			return static_count(square_sento);
+			return 3;
 		case 0x3324:
 			*normals = square_daasu;
-			return static_count(square_daasu);
+			return 3;
 		case 0x3325:
 			*normals = square_desi;
-			return static_count(square_desi);
+			return 2;
 		case 0x3326:
 			*normals = square_doru;
-			return static_count(square_doru);
+			return 2;
 		case 0x3327:
 			*normals = square_ton;
-			return static_count(square_ton);
+			return 2;
 		case 0x3328:
 			*normals = square_nano;
-			return static_count(square_nano);
+			return 2;
 		case 0x3329:
 			*normals = square_notto;
-			return static_count(square_notto);
+			return 3;
 		case 0x332A:
 			*normals = square_haitu;
-			return static_count(square_haitu);
+			return 3;
 		case 0x332B:
 			*normals = square_paasento;
-			return static_count(square_paasento);
+			return 5;
 		case 0x332C:
 			*normals = square_paatu;
-			return static_count(square_paatu);
+			return 3;
 		case 0x332D:
 			*normals = square_baareru;
-			return static_count(square_baareru);
+			return 4;
 		case 0x332E:
 			*normals = square_piasutoru;
-			return static_count(square_piasutoru);
+			return 5;
 		case 0x332F:
 			*normals = square_pikuru;
-			return static_count(square_pikuru);
+			return 3;
 		case 0x3330:
 			*normals = square_piko;
-			return static_count(square_piko);
+			return 2;
 		case 0x3331:
 			*normals = square_biru;
-			return static_count(square_biru);
+			return 2;
 		case 0x3332:
 			*normals = square_huaraddo;
-			return static_count(square_huaraddo);
+			return 5;
 		case 0x3333:
 			*normals = square_huiito;
-			return static_count(square_huiito);
+			return 4;
 		case 0x3334:
 			*normals = square_bussyeru;
-			return static_count(square_bussyeru);
+			return 5;
 		case 0x3335:
 			*normals = square_huran;
-			return static_count(square_huran);
+			return 3;
 		case 0x3336:
 			*normals = square_hekutaaru;
-			return static_count(square_hekutaaru);
+			return 5;
 		case 0x3337:
 			*normals = square_peso;
-			return static_count(square_peso);
+			return 2;
 		case 0x3338:
 			*normals = square_penihi;
-			return static_count(square_penihi);
+			return 3;
 		case 0x3339:
 			*normals = square_herutu;
-			return static_count(square_herutu);
+			return 3;
 		case 0x333A:
 			*normals = square_pensu;
-			return static_count(square_pensu);
+			return 3;
 		case 0x333B:
 			*normals = square_peezi;
-			return static_count(square_peezi);
+			return 3;
 		case 0x333C:
 			*normals = square_beeta;
-			return static_count(square_beeta);
+			return 3;
 		case 0x333D:
 			*normals = square_pointo;
-			return static_count(square_pointo);
+			return 4;
 		case 0x333E:
 			*normals = square_boruto;
-			return static_count(square_boruto);
+			return 3;
 		case 0x333F:
 			*normals = square_hon;
-			return static_count(square_hon);
+			return 2;
 		case 0x3340:
 			*normals = square_pondo;
-			return static_count(square_pondo);
+			return 3;
 		case 0x3341:
 			*normals = square_hooru;
-			return static_count(square_hooru);
+			return 3;
 		case 0x3342:
 			*normals = square_hoon;
-			return static_count(square_hoon);
+			return 3;
 		case 0x3343:
 			*normals = square_maikuro;
-			return static_count(square_maikuro);
+			return 4;
 		case 0x3344:
 			*normals = square_mairu;
-			return static_count(square_mairu);
+			return 3;
 		case 0x3345:
 			*normals = square_mahha;
-			return static_count(square_mahha);
+			return 3;
 		case 0x3346:
 			*normals = square_maruku;
-			return static_count(square_maruku);
+			return 3;
 		case 0x3347:
 			*normals = square_mansyon;
-			return static_count(square_mansyon);
+			return 5;
 		case 0x3348:
 			*normals = square_mikuron;
-			return static_count(square_mikuron);
+			return 4;
 		case 0x3349:
 			*normals = square_miri;
-			return static_count(square_miri);
+			return 2;
 		case 0x334A:
 			*normals = square_miribaaru;
-			return static_count(square_miribaaru);
+			return 5;
 		case 0x334B:
 			*normals = square_mega;
-			return static_count(square_mega);
+			return 2;
 		case 0x334C:
 			*normals = square_megaton;
-			return static_count(square_megaton);
+			return 4;
 		case 0x334D:
 			*normals = square_meetoru;
-			return static_count(square_meetoru);
+			return 4;
 		case 0x334E:
 			*normals = square_yaado;
-			return static_count(square_yaado);
+			return 3;
 		case 0x334F:
 			*normals = square_yaaru;
-			return static_count(square_yaaru);
+			return 3;
 		case 0x3350:
 			*normals = square_yuan;
-			return static_count(square_yuan);
+			return 3;
 		case 0x3351:
 			*normals = square_rittoru;
-			return static_count(square_rittoru);
+			return 4;
 		case 0x3352:
 			*normals = square_rira;
-			return static_count(square_rira);
+			return 2;
 		case 0x3353:
 			*normals = square_rupii;
-			return static_count(square_rupii);
+			return 3;
 		case 0x3354:
 			*normals = square_ruuburu;
-			return static_count(square_ruuburu);
+			return 4;
 		case 0x3355:
 			*normals = square_remu;
-			return static_count(square_remu);
+			return 2;
 		case 0x3356:
 			*normals = square_rentogen;
-			return static_count(square_rentogen);
+			return 5;
 		case 0x3357:
 			*normals = square_watto;
-			return static_count(square_watto);
+			return 3;
 		case 0x3358:
 			*normals = ideographic_telegraph_symbol_for_hour_zero;
-			return static_count(ideographic_telegraph_symbol_for_hour_zero);
+			return 2;
 		case 0x3359:
 			*normals = ideographic_telegraph_symbol_for_hour_one;
-			return static_count(ideographic_telegraph_symbol_for_hour_one);
+			return 2;
 		case 0x335A:
 			*normals = ideographic_telegraph_symbol_for_hour_two;
-			return static_count(ideographic_telegraph_symbol_for_hour_two);
+			return 2;
 		case 0x335B:
 			*normals = ideographic_telegraph_symbol_for_hour_three;
-			return static_count(ideographic_telegraph_symbol_for_hour_three);
+			return 2;
 		case 0x335C:
 			*normals = ideographic_telegraph_symbol_for_hour_four;
-			return static_count(ideographic_telegraph_symbol_for_hour_four);
+			return 2;
 		case 0x335D:
 			*normals = ideographic_telegraph_symbol_for_hour_five;
-			return static_count(ideographic_telegraph_symbol_for_hour_five);
+			return 2;
 		case 0x335E:
 			*normals = ideographic_telegraph_symbol_for_hour_six;
-			return static_count(ideographic_telegraph_symbol_for_hour_six);
+			return 2;
 		case 0x335F:
 			*normals = ideographic_telegraph_symbol_for_hour_seven;
-			return static_count(ideographic_telegraph_symbol_for_hour_seven);
+			return 2;
 		case 0x3360:
 			*normals = ideographic_telegraph_symbol_for_hour_eight;
-			return static_count(ideographic_telegraph_symbol_for_hour_eight);
+			return 2;
 		case 0x3361:
 			*normals = ideographic_telegraph_symbol_for_hour_nine;
-			return static_count(ideographic_telegraph_symbol_for_hour_nine);
+			return 2;
 		case 0x3362:
 			*normals = ideographic_telegraph_symbol_for_hour_ten;
-			return static_count(ideographic_telegraph_symbol_for_hour_ten);
+			return 3;
 		case 0x3363:
 			*normals = ideographic_telegraph_symbol_for_hour_eleven;
-			return static_count(ideographic_telegraph_symbol_for_hour_eleven);
+			return 3;
 		case 0x3364:
 			*normals = ideographic_telegraph_symbol_for_hour_twelve;
-			return static_count(ideographic_telegraph_symbol_for_hour_twelve);
+			return 3;
 		case 0x3365:
 			*normals = ideographic_telegraph_symbol_for_hour_thirteen;
-			return static_count(ideographic_telegraph_symbol_for_hour_thirteen);
+			return 3;
 		case 0x3366:
 			*normals = ideographic_telegraph_symbol_for_hour_fourteen;
-			return static_count(ideographic_telegraph_symbol_for_hour_fourteen);
+			return 3;
 		case 0x3367:
 			*normals = ideographic_telegraph_symbol_for_hour_fifteen;
-			return static_count(ideographic_telegraph_symbol_for_hour_fifteen);
+			return 3;
 		case 0x3368:
 			*normals = ideographic_telegraph_symbol_for_hour_sixteen;
-			return static_count(ideographic_telegraph_symbol_for_hour_sixteen);
+			return 3;
 		case 0x3369:
 			*normals = ideographic_telegraph_symbol_for_hour_seventeen;
-			return static_count(ideographic_telegraph_symbol_for_hour_seventeen);
+			return 3;
 		case 0x336A:
 			*normals = ideographic_telegraph_symbol_for_hour_eighteen;
-			return static_count(ideographic_telegraph_symbol_for_hour_eighteen);
+			return 3;
 		case 0x336B:
 			*normals = ideographic_telegraph_symbol_for_hour_nineteen;
-			return static_count(ideographic_telegraph_symbol_for_hour_nineteen);
+			return 3;
 		case 0x336C:
 			*normals = ideographic_telegraph_symbol_for_hour_twenty;
-			return static_count(ideographic_telegraph_symbol_for_hour_twenty);
+			return 3;
 		case 0x336D:
 			*normals = ideographic_telegraph_symbol_for_hour_twenty_one;
-			return static_count(ideographic_telegraph_symbol_for_hour_twenty_one);
+			return 3;
 		case 0x336E:
 			*normals = ideographic_telegraph_symbol_for_hour_twenty_two;
-			return static_count(ideographic_telegraph_symbol_for_hour_twenty_two);
+			return 3;
 		case 0x336F:
 			*normals = ideographic_telegraph_symbol_for_hour_twenty_three;
-			return static_count(ideographic_telegraph_symbol_for_hour_twenty_three);
+			return 3;
 		case 0x3370:
 			*normals = ideographic_telegraph_symbol_for_hour_twenty_four;
-			return static_count(ideographic_telegraph_symbol_for_hour_twenty_four);
+			return 3;
 		case 0x3371:
 			*normals = square_hpa;
-			return static_count(square_hpa);
+			return 3;
 		case 0x3372:
 			*normals = square_da;
-			return static_count(square_da);
+			return 2;
 		case 0x3373:
 			*normals = square_au;
-			return static_count(square_au);
+			return 2;
 		case 0x3374:
 			*normals = square_bar;
-			return static_count(square_bar);
+			return 3;
 		case 0x3375:
 			*normals = square_ov;
-			return static_count(square_ov);
+			return 2;
 		case 0x3376:
 			*normals = square_pc;
-			return static_count(square_pc);
+			return 2;
 		case 0x3377:
 			*normals = square_dm;
-			return static_count(square_dm);
+			return 2;
 		case 0x3378:
 			*normals = square_dm_squared;
-			return static_count(square_dm_squared);
+			return 3;
 		case 0x3379:
 			*normals = square_dm_cubed;
-			return static_count(square_dm_cubed);
+			return 3;
 		case 0x337A:
 			*normals = square_iu;
-			return static_count(square_iu);
+			return 2;
 		case 0x337B:
 			*normals = square_era_name_heisei;
-			return static_count(square_era_name_heisei);
+			return 2;
 		case 0x337C:
 			*normals = square_era_name_syouwa;
-			return static_count(square_era_name_syouwa);
+			return 2;
 		case 0x337D:
 			*normals = square_era_name_taisyou;
-			return static_count(square_era_name_taisyou);
+			return 2;
 		case 0x337E:
 			*normals = square_era_name_meizi;
-			return static_count(square_era_name_meizi);
+			return 2;
 		case 0x337F:
 			*normals = square_corporation;
-			return static_count(square_corporation);
+			return 4;
 		case 0x3380:
 			*normals = square_pa_amps;
-			return static_count(square_pa_amps);
+			return 2;
 		case 0x3381:
 			*normals = square_na;
-			return static_count(square_na);
+			return 2;
 		case 0x3382:
 			*normals = square_mu_a;
-			return static_count(square_mu_a);
+			return 2;
 		case 0x3383:
 			*normals = square_ma;
-			return static_count(square_ma);
+			return 2;
 		case 0x3384:
 			*normals = square_ka;
-			return static_count(square_ka);
+			return 2;
 		case 0x3385:
 			*normals = square_kb;
-			return static_count(square_kb);
+			return 2;
 		case 0x3386:
 			*normals = square_mb;
-			return static_count(square_mb);
+			return 2;
 		case 0x3387:
 			*normals = square_gb;
-			return static_count(square_gb);
+			return 2;
 		case 0x3388:
 			*normals = square_cal;
-			return static_count(square_cal);
+			return 3;
 		case 0x3389:
 			*normals = square_kcal;
-			return static_count(square_kcal);
+			return 4;
 		case 0x338A:
 			*normals = square_pf;
-			return static_count(square_pf);
+			return 2;
 		case 0x338B:
 			*normals = square_nf;
-			return static_count(square_nf);
+			return 2;
 		case 0x338C:
 			*normals = square_mu_f;
-			return static_count(square_mu_f);
+			return 2;
 		case 0x338D:
 			*normals = square_mu_g;
-			return static_count(square_mu_g);
+			return 2;
 		case 0x338E:
 			*normals = square_mg;
-			return static_count(square_mg);
+			return 2;
 		case 0x338F:
 			*normals = square_kg;
-			return static_count(square_kg);
+			return 2;
 		case 0x3390:
 			*normals = square_hz;
-			return static_count(square_hz);
+			return 2;
 		case 0x3391:
 			*normals = square_khz;
-			return static_count(square_khz);
+			return 3;
 		case 0x3392:
 			*normals = square_mhz;
-			return static_count(square_mhz);
+			return 3;
 		case 0x3393:
 			*normals = square_ghz;
-			return static_count(square_ghz);
+			return 3;
 		case 0x3394:
 			*normals = square_thz;
-			return static_count(square_thz);
+			return 3;
 		case 0x3395:
 			*normals = square_mu_l;
-			return static_count(square_mu_l);
+			return 2;
 		case 0x3396:
 			*normals = square_ml;
-			return static_count(square_ml);
+			return 2;
 		case 0x3397:
 			*normals = square_dl;
-			return static_count(square_dl);
+			return 2;
 		case 0x3398:
 			*normals = square_kl;
-			return static_count(square_kl);
+			return 2;
 		case 0x3399:
 			*normals = square_fm;
-			return static_count(square_fm);
+			return 2;
 		case 0x339A:
 			*normals = square_nm;
-			return static_count(square_nm);
+			return 2;
 		case 0x339B:
 			*normals = square_mu_m;
-			return static_count(square_mu_m);
+			return 2;
 		case 0x339C:
 			*normals = square_mm;
-			return static_count(square_mm);
+			return 2;
 		case 0x339D:
 			*normals = square_cm;
-			return static_count(square_cm);
+			return 2;
 		case 0x339E:
 			*normals = square_km;
-			return static_count(square_km);
+			return 2;
 		case 0x339F:
 			*normals = square_mm_squared;
-			return static_count(square_mm_squared);
+			return 3;
 		case 0x33A0:
 			*normals = square_cm_squared;
-			return static_count(square_cm_squared);
+			return 3;
 		case 0x33A1:
 			*normals = square_m_squared;
-			return static_count(square_m_squared);
+			return 2;
 		case 0x33A2:
 			*normals = square_km_squared;
-			return static_count(square_km_squared);
+			return 3;
 		case 0x33A3:
 			*normals = square_mm_cubed;
-			return static_count(square_mm_cubed);
+			return 3;
 		case 0x33A4:
 			*normals = square_cm_cubed;
-			return static_count(square_cm_cubed);
+			return 3;
 		case 0x33A5:
 			*normals = square_m_cubed;
-			return static_count(square_m_cubed);
+			return 2;
 		case 0x33A6:
 			*normals = square_km_cubed;
-			return static_count(square_km_cubed);
+			return 3;
 		case 0x33A7:
 			*normals = square_m_over_s;
-			return static_count(square_m_over_s);
+			return 3;
 		case 0x33A8:
 			*normals = square_m_over_s_squared;
-			return static_count(square_m_over_s_squared);
+			return 4;
 		case 0x33A9:
 			*normals = square_pa;
-			return static_count(square_pa);
+			return 2;
 		case 0x33AA:
 			*normals = square_kpa;
-			return static_count(square_kpa);
+			return 3;
 		case 0x33AB:
 			*normals = square_mpa;
-			return static_count(square_mpa);
+			return 3;
 		case 0x33AC:
 			*normals = square_gpa;
-			return static_count(square_gpa);
+			return 3;
 		case 0x33AD:
 			*normals = square_rad;
-			return static_count(square_rad);
+			return 3;
 		case 0x33AE:
 			*normals = square_rad_over_s;
-			return static_count(square_rad_over_s);
+			return 5;
 		case 0x33AF:
 			*normals = square_rad_over_s_squared;
-			return static_count(square_rad_over_s_squared);
+			return 6;
 		case 0x33B0:
 			*normals = square_ps;
-			return static_count(square_ps);
+			return 2;
 		case 0x33B1:
 			*normals = square_ns;
-			return static_count(square_ns);
+			return 2;
 		case 0x33B2:
 			*normals = square_mu_s;
-			return static_count(square_mu_s);
+			return 2;
 		case 0x33B3:
 			*normals = square_ms;
-			return static_count(square_ms);
+			return 2;
 		case 0x33B4:
 			*normals = square_pv;
-			return static_count(square_pv);
+			return 2;
 		case 0x33B5:
 			*normals = square_nv;
-			return static_count(square_nv);
+			return 2;
 		case 0x33B6:
 			*normals = square_mu_v;
-			return static_count(square_mu_v);
+			return 2;
 		case 0x33B7:
 			*normals = square_mv;
-			return static_count(square_mv);
+			return 2;
 		case 0x33B8:
 			*normals = square_kv;
-			return static_count(square_kv);
+			return 2;
 		case 0x33B9:
 			*normals = square_mv_mega;
-			return static_count(square_mv_mega);
+			return 2;
 		case 0x33BA:
 			*normals = square_pw;
-			return static_count(square_pw);
+			return 2;
 		case 0x33BB:
 			*normals = square_nw;
-			return static_count(square_nw);
+			return 2;
 		case 0x33BC:
 			*normals = square_mu_w;
-			return static_count(square_mu_w);
+			return 2;
 		case 0x33BD:
 			*normals = square_mw;
-			return static_count(square_mw);
+			return 2;
 		case 0x33BE:
 			*normals = square_kw;
-			return static_count(square_kw);
+			return 2;
 		case 0x33BF:
 			*normals = square_mw_mega;
-			return static_count(square_mw_mega);
+			return 2;
 		case 0x33C0:
 			*normals = square_k_ohm;
-			return static_count(square_k_ohm);
+			return 2;
 		case 0x33C1:
 			*normals = square_m_ohm;
-			return static_count(square_m_ohm);
+			return 2;
 		case 0x33C2:
 			*normals = square_am;
-			return static_count(square_am);
+			return 4;
 		case 0x33C3:
 			*normals = square_bq;
-			return static_count(square_bq);
+			return 2;
 		case 0x33C4:
 			*normals = square_cc;
-			return static_count(square_cc);
+			return 2;
 		case 0x33C5:
 			*normals = square_cd;
-			return static_count(square_cd);
+			return 2;
 		case 0x33C6:
 			*normals = square_c_over_kg;
-			return static_count(square_c_over_kg);
+			return 4;
 		case 0x33C7:
 			*normals = square_co;
-			return static_count(square_co);
+			return 3;
 		case 0x33C8:
 			*normals = square_db;
-			return static_count(square_db);
+			return 2;
 		case 0x33C9:
 			*normals = square_gy;
-			return static_count(square_gy);
+			return 2;
 		case 0x33CA:
 			*normals = square_ha;
-			return static_count(square_ha);
+			return 2;
 		case 0x33CB:
 			*normals = square_hp;
-			return static_count(square_hp);
+			return 2;
 		case 0x33CC:
 			*normals = square_in;
-			return static_count(square_in);
+			return 2;
 		case 0x33CD:
 			*normals = square_kk;
-			return static_count(square_kk);
+			return 2;
 		case 0x33CE:
 			*normals = square_km_capital;
-			return static_count(square_km_capital);
+			return 2;
 		case 0x33CF:
 			*normals = square_kt;
-			return static_count(square_kt);
+			return 2;
 		case 0x33D0:
 			*normals = square_lm;
-			return static_count(square_lm);
+			return 2;
 		case 0x33D1:
 			*normals = square_ln;
-			return static_count(square_ln);
+			return 2;
 		case 0x33D2:
 			*normals = square_log;
-			return static_count(square_log);
+			return 3;
 		case 0x33D3:
 			*normals = square_lx;
-			return static_count(square_lx);
+			return 2;
 		case 0x33D4:
 			*normals = square_mb_small;
-			return static_count(square_mb_small);
+			return 2;
 		case 0x33D5:
 			*normals = square_mil;
-			return static_count(square_mil);
+			return 3;
 		case 0x33D6:
 			*normals = square_mol;
-			return static_count(square_mol);
+			return 3;
 		case 0x33D7:
 			*normals = square_ph;
-			return static_count(square_ph);
+			return 2;
 		case 0x33D8:
 			*normals = square_pm;
-			return static_count(square_pm);
+			return 4;
 		case 0x33D9:
 			*normals = square_ppm;
-			return static_count(square_ppm);
+			return 3;
 		case 0x33DA:
 			*normals = square_pr;
-			return static_count(square_pr);
+			return 2;
 		case 0x33DB:
 			*normals = square_sr;
-			return static_count(square_sr);
+			return 2;
 		case 0x33DC:
 			*normals = square_sv;
-			return static_count(square_sv);
+			return 2;
 		case 0x33DD:
 			*normals = square_wb;
-			return static_count(square_wb);
+			return 2;
 		case 0x33DE:
 			*normals = square_v_over_m;
-			return static_count(square_v_over_m);
+			return 3;
 		case 0x33DF:
 			*normals = square_a_over_m;
-			return static_count(square_a_over_m);
+			return 3;
 		case 0x33E0:
 			*normals = ideographic_telegraph_symbol_for_day_one;
-			return static_count(ideographic_telegraph_symbol_for_day_one);
+			return 2;
 		case 0x33E1:
 			*normals = ideographic_telegraph_symbol_for_day_two;
-			return static_count(ideographic_telegraph_symbol_for_day_two);
+			return 2;
 		case 0x33E2:
 			*normals = ideographic_telegraph_symbol_for_day_three;
-			return static_count(ideographic_telegraph_symbol_for_day_three);
+			return 2;
 		case 0x33E3:
 			*normals = ideographic_telegraph_symbol_for_day_four;
-			return static_count(ideographic_telegraph_symbol_for_day_four);
+			return 2;
 		case 0x33E4:
 			*normals = ideographic_telegraph_symbol_for_day_five;
-			return static_count(ideographic_telegraph_symbol_for_day_five);
+			return 2;
 		case 0x33E5:
 			*normals = ideographic_telegraph_symbol_for_day_six;
-			return static_count(ideographic_telegraph_symbol_for_day_six);
+			return 2;
 		case 0x33E6:
 			*normals = ideographic_telegraph_symbol_for_day_seven;
-			return static_count(ideographic_telegraph_symbol_for_day_seven);
+			return 2;
 		case 0x33E7:
 			*normals = ideographic_telegraph_symbol_for_day_eight;
-			return static_count(ideographic_telegraph_symbol_for_day_eight);
+			return 2;
 		case 0x33E8:
 			*normals = ideographic_telegraph_symbol_for_day_nine;
-			return static_count(ideographic_telegraph_symbol_for_day_nine);
+			return 2;
 		case 0x33E9:
 			*normals = ideographic_telegraph_symbol_for_day_ten;
-			return static_count(ideographic_telegraph_symbol_for_day_ten);
+			return 3;
 		case 0x33EA:
 			*normals = ideographic_telegraph_symbol_for_day_eleven;
-			return static_count(ideographic_telegraph_symbol_for_day_eleven);
+			return 3;
 		case 0x33EB:
 			*normals = ideographic_telegraph_symbol_for_day_twelve;
-			return static_count(ideographic_telegraph_symbol_for_day_twelve);
+			return 3;
 		case 0x33EC:
 			*normals = ideographic_telegraph_symbol_for_day_thirteen;
-			return static_count(ideographic_telegraph_symbol_for_day_thirteen);
+			return 3;
 		case 0x33ED:
 			*normals = ideographic_telegraph_symbol_for_day_fourteen;
-			return static_count(ideographic_telegraph_symbol_for_day_fourteen);
+			return 3;
 		case 0x33EE:
 			*normals = ideographic_telegraph_symbol_for_day_fifteen;
-			return static_count(ideographic_telegraph_symbol_for_day_fifteen);
+			return 3;
 		case 0x33EF:
 			*normals = ideographic_telegraph_symbol_for_day_sixteen;
-			return static_count(ideographic_telegraph_symbol_for_day_sixteen);
+			return 3;
 		case 0x33F0:
 			*normals = ideographic_telegraph_symbol_for_day_seventeen;
-			return static_count(ideographic_telegraph_symbol_for_day_seventeen);
+			return 3;
 		case 0x33F1:
 			*normals = ideographic_telegraph_symbol_for_day_eighteen;
-			return static_count(ideographic_telegraph_symbol_for_day_eighteen);
+			return 3;
 		case 0x33F2:
 			*normals = ideographic_telegraph_symbol_for_day_nineteen;
-			return static_count(ideographic_telegraph_symbol_for_day_nineteen);
+			return 3;
 		case 0x33F3:
 			*normals = ideographic_telegraph_symbol_for_day_twenty;
-			return static_count(ideographic_telegraph_symbol_for_day_twenty);
+			return 3;
 		case 0x33F4:
 			*normals = ideographic_telegraph_symbol_for_day_twenty_one;
-			return static_count(ideographic_telegraph_symbol_for_day_twenty_one);
+			return 3;
 		case 0x33F5:
 			*normals = ideographic_telegraph_symbol_for_day_twenty_two;
-			return static_count(ideographic_telegraph_symbol_for_day_twenty_two);
+			return 3;
 		case 0x33F6:
 			*normals = ideographic_telegraph_symbol_for_day_twenty_three;
-			return static_count(ideographic_telegraph_symbol_for_day_twenty_three);
+			return 3;
 		case 0x33F7:
 			*normals = ideographic_telegraph_symbol_for_day_twenty_four;
-			return static_count(ideographic_telegraph_symbol_for_day_twenty_four);
+			return 3;
 		case 0x33F8:
 			*normals = ideographic_telegraph_symbol_for_day_twenty_five;
-			return static_count(ideographic_telegraph_symbol_for_day_twenty_five);
+			return 3;
 		case 0x33F9:
 			*normals = ideographic_telegraph_symbol_for_day_twenty_six;
-			return static_count(ideographic_telegraph_symbol_for_day_twenty_six);
+			return 3;
 		case 0x33FA:
 			*normals = ideographic_telegraph_symbol_for_day_twenty_seven;
-			return static_count(ideographic_telegraph_symbol_for_day_twenty_seven);
+			return 3;
 		case 0x33FB:
 			*normals = ideographic_telegraph_symbol_for_day_twenty_eight;
-			return static_count(ideographic_telegraph_symbol_for_day_twenty_eight);
+			return 3;
 		case 0x33FC:
 			*normals = ideographic_telegraph_symbol_for_day_twenty_nine;
-			return static_count(ideographic_telegraph_symbol_for_day_twenty_nine);
+			return 3;
 		case 0x33FD:
 			*normals = ideographic_telegraph_symbol_for_day_thirty;
-			return static_count(ideographic_telegraph_symbol_for_day_thirty);
+			return 3;
 		case 0x33FE:
 			*normals = ideographic_telegraph_symbol_for_day_thirty_one;
-			return static_count(ideographic_telegraph_symbol_for_day_thirty_one);
+			return 3;
 		case 0x33FF:
 			*normals = square_gal;
-			return static_count(square_gal);
+			return 3;
 		case 0xA69C:
 			*normals = modifier_letter_cyrillic_hard_sign;
-			return static_count(modifier_letter_cyrillic_hard_sign);
+			return 1;
 		case 0xA69D:
 			*normals = modifier_letter_cyrillic_soft_sign;
-			return static_count(modifier_letter_cyrillic_soft_sign);
+			return 1;
 		case 0xA770:
 			*normals = modifier_letter_us;
-			return static_count(modifier_letter_us);
+			return 1;
 		case 0xA7F8:
 			*normals = modifier_letter_capital_h_with_stroke;
-			return static_count(modifier_letter_capital_h_with_stroke);
+			return 1;
 		case 0xA7F9:
 			*normals = modifier_letter_small_ligature_oe;
-			return static_count(modifier_letter_small_ligature_oe);
+			return 1;
 		case 0xAB5C:
 			*normals = modifier_letter_small_heng;
-			return static_count(modifier_letter_small_heng);
+			return 1;
 		case 0xAB5D:
 			*normals = modifier_letter_small_l_with_inverted_lazy_s;
-			return static_count(modifier_letter_small_l_with_inverted_lazy_s);
+			return 1;
 		case 0xAB5E:
 			*normals = modifier_letter_small_l_with_middle_tilde;
-			return static_count(modifier_letter_small_l_with_middle_tilde);
+			return 1;
 		case 0xAB5F:
 			*normals = modifier_letter_small_u_with_left_hook;
-			return static_count(modifier_letter_small_u_with_left_hook);
+			return 1;
 		case 0xAB69:
 			*normals = modifier_letter_small_turned_w;
-			return static_count(modifier_letter_small_turned_w);
+			return 1;
 		case 0xF900:
 			*normals = cjk_compatibility_ideograph_f900;
-			return static_count(cjk_compatibility_ideograph_f900);
+			return 1;
 		case 0xF901:
 			*normals = cjk_compatibility_ideograph_f901;
-			return static_count(cjk_compatibility_ideograph_f901);
+			return 1;
 		case 0xF902:
 			*normals = cjk_compatibility_ideograph_f902;
-			return static_count(cjk_compatibility_ideograph_f902);
+			return 1;
 		case 0xF903:
 			*normals = cjk_compatibility_ideograph_f903;
-			return static_count(cjk_compatibility_ideograph_f903);
+			return 1;
 		case 0xF904:
 			*normals = cjk_compatibility_ideograph_f904;
-			return static_count(cjk_compatibility_ideograph_f904);
+			return 1;
 		case 0xF905:
 			*normals = cjk_compatibility_ideograph_f905;
-			return static_count(cjk_compatibility_ideograph_f905);
+			return 1;
 		case 0xF906:
 			*normals = cjk_compatibility_ideograph_f906;
-			return static_count(cjk_compatibility_ideograph_f906);
+			return 1;
 		case 0xF907:
 			*normals = cjk_compatibility_ideograph_f907;
-			return static_count(cjk_compatibility_ideograph_f907);
+			return 1;
 		case 0xF908:
 			*normals = cjk_compatibility_ideograph_f908;
-			return static_count(cjk_compatibility_ideograph_f908);
+			return 1;
 		case 0xF909:
 			*normals = cjk_compatibility_ideograph_f909;
-			return static_count(cjk_compatibility_ideograph_f909);
+			return 1;
 		case 0xF90A:
 			*normals = cjk_compatibility_ideograph_f90a;
-			return static_count(cjk_compatibility_ideograph_f90a);
+			return 1;
 		case 0xF90B:
 			*normals = cjk_compatibility_ideograph_f90b;
-			return static_count(cjk_compatibility_ideograph_f90b);
+			return 1;
 		case 0xF90C:
 			*normals = cjk_compatibility_ideograph_f90c;
-			return static_count(cjk_compatibility_ideograph_f90c);
+			return 1;
 		case 0xF90D:
 			*normals = cjk_compatibility_ideograph_f90d;
-			return static_count(cjk_compatibility_ideograph_f90d);
+			return 1;
 		case 0xF90E:
 			*normals = cjk_compatibility_ideograph_f90e;
-			return static_count(cjk_compatibility_ideograph_f90e);
+			return 1;
 		case 0xF90F:
 			*normals = cjk_compatibility_ideograph_f90f;
-			return static_count(cjk_compatibility_ideograph_f90f);
+			return 1;
 		case 0xF910:
 			*normals = cjk_compatibility_ideograph_f910;
-			return static_count(cjk_compatibility_ideograph_f910);
+			return 1;
 		case 0xF911:
 			*normals = cjk_compatibility_ideograph_f911;
-			return static_count(cjk_compatibility_ideograph_f911);
+			return 1;
 		case 0xF912:
 			*normals = cjk_compatibility_ideograph_f912;
-			return static_count(cjk_compatibility_ideograph_f912);
+			return 1;
 		case 0xF913:
 			*normals = cjk_compatibility_ideograph_f913;
-			return static_count(cjk_compatibility_ideograph_f913);
+			return 1;
 		case 0xF914:
 			*normals = cjk_compatibility_ideograph_f914;
-			return static_count(cjk_compatibility_ideograph_f914);
+			return 1;
 		case 0xF915:
 			*normals = cjk_compatibility_ideograph_f915;
-			return static_count(cjk_compatibility_ideograph_f915);
+			return 1;
 		case 0xF916:
 			*normals = cjk_compatibility_ideograph_f916;
-			return static_count(cjk_compatibility_ideograph_f916);
+			return 1;
 		case 0xF917:
 			*normals = cjk_compatibility_ideograph_f917;
-			return static_count(cjk_compatibility_ideograph_f917);
+			return 1;
 		case 0xF918:
 			*normals = cjk_compatibility_ideograph_f918;
-			return static_count(cjk_compatibility_ideograph_f918);
+			return 1;
 		case 0xF919:
 			*normals = cjk_compatibility_ideograph_f919;
-			return static_count(cjk_compatibility_ideograph_f919);
+			return 1;
 		case 0xF91A:
 			*normals = cjk_compatibility_ideograph_f91a;
-			return static_count(cjk_compatibility_ideograph_f91a);
+			return 1;
 		case 0xF91B:
 			*normals = cjk_compatibility_ideograph_f91b;
-			return static_count(cjk_compatibility_ideograph_f91b);
+			return 1;
 		case 0xF91C:
 			*normals = cjk_compatibility_ideograph_f91c;
-			return static_count(cjk_compatibility_ideograph_f91c);
+			return 1;
 		case 0xF91D:
 			*normals = cjk_compatibility_ideograph_f91d;
-			return static_count(cjk_compatibility_ideograph_f91d);
+			return 1;
 		case 0xF91E:
 			*normals = cjk_compatibility_ideograph_f91e;
-			return static_count(cjk_compatibility_ideograph_f91e);
+			return 1;
 		case 0xF91F:
 			*normals = cjk_compatibility_ideograph_f91f;
-			return static_count(cjk_compatibility_ideograph_f91f);
+			return 1;
 		case 0xF920:
 			*normals = cjk_compatibility_ideograph_f920;
-			return static_count(cjk_compatibility_ideograph_f920);
+			return 1;
 		case 0xF921:
 			*normals = cjk_compatibility_ideograph_f921;
-			return static_count(cjk_compatibility_ideograph_f921);
+			return 1;
 		case 0xF922:
 			*normals = cjk_compatibility_ideograph_f922;
-			return static_count(cjk_compatibility_ideograph_f922);
+			return 1;
 		case 0xF923:
 			*normals = cjk_compatibility_ideograph_f923;
-			return static_count(cjk_compatibility_ideograph_f923);
+			return 1;
 		case 0xF924:
 			*normals = cjk_compatibility_ideograph_f924;
-			return static_count(cjk_compatibility_ideograph_f924);
+			return 1;
 		case 0xF925:
 			*normals = cjk_compatibility_ideograph_f925;
-			return static_count(cjk_compatibility_ideograph_f925);
+			return 1;
 		case 0xF926:
 			*normals = cjk_compatibility_ideograph_f926;
-			return static_count(cjk_compatibility_ideograph_f926);
+			return 1;
 		case 0xF927:
 			*normals = cjk_compatibility_ideograph_f927;
-			return static_count(cjk_compatibility_ideograph_f927);
+			return 1;
 		case 0xF928:
 			*normals = cjk_compatibility_ideograph_f928;
-			return static_count(cjk_compatibility_ideograph_f928);
+			return 1;
 		case 0xF929:
 			*normals = cjk_compatibility_ideograph_f929;
-			return static_count(cjk_compatibility_ideograph_f929);
+			return 1;
 		case 0xF92A:
 			*normals = cjk_compatibility_ideograph_f92a;
-			return static_count(cjk_compatibility_ideograph_f92a);
+			return 1;
 		case 0xF92B:
 			*normals = cjk_compatibility_ideograph_f92b;
-			return static_count(cjk_compatibility_ideograph_f92b);
+			return 1;
 		case 0xF92C:
 			*normals = cjk_compatibility_ideograph_f92c;
-			return static_count(cjk_compatibility_ideograph_f92c);
+			return 1;
 		case 0xF92D:
 			*normals = cjk_compatibility_ideograph_f92d;
-			return static_count(cjk_compatibility_ideograph_f92d);
+			return 1;
 		case 0xF92E:
 			*normals = cjk_compatibility_ideograph_f92e;
-			return static_count(cjk_compatibility_ideograph_f92e);
+			return 1;
 		case 0xF92F:
 			*normals = cjk_compatibility_ideograph_f92f;
-			return static_count(cjk_compatibility_ideograph_f92f);
+			return 1;
 		case 0xF930:
 			*normals = cjk_compatibility_ideograph_f930;
-			return static_count(cjk_compatibility_ideograph_f930);
+			return 1;
 		case 0xF931:
 			*normals = cjk_compatibility_ideograph_f931;
-			return static_count(cjk_compatibility_ideograph_f931);
+			return 1;
 		case 0xF932:
 			*normals = cjk_compatibility_ideograph_f932;
-			return static_count(cjk_compatibility_ideograph_f932);
+			return 1;
 		case 0xF933:
 			*normals = cjk_compatibility_ideograph_f933;
-			return static_count(cjk_compatibility_ideograph_f933);
+			return 1;
 		case 0xF934:
 			*normals = cjk_compatibility_ideograph_f934;
-			return static_count(cjk_compatibility_ideograph_f934);
+			return 1;
 		case 0xF935:
 			*normals = cjk_compatibility_ideograph_f935;
-			return static_count(cjk_compatibility_ideograph_f935);
+			return 1;
 		case 0xF936:
 			*normals = cjk_compatibility_ideograph_f936;
-			return static_count(cjk_compatibility_ideograph_f936);
+			return 1;
 		case 0xF937:
 			*normals = cjk_compatibility_ideograph_f937;
-			return static_count(cjk_compatibility_ideograph_f937);
+			return 1;
 		case 0xF938:
 			*normals = cjk_compatibility_ideograph_f938;
-			return static_count(cjk_compatibility_ideograph_f938);
+			return 1;
 		case 0xF939:
 			*normals = cjk_compatibility_ideograph_f939;
-			return static_count(cjk_compatibility_ideograph_f939);
+			return 1;
 		case 0xF93A:
 			*normals = cjk_compatibility_ideograph_f93a;
-			return static_count(cjk_compatibility_ideograph_f93a);
+			return 1;
 		case 0xF93B:
 			*normals = cjk_compatibility_ideograph_f93b;
-			return static_count(cjk_compatibility_ideograph_f93b);
+			return 1;
 		case 0xF93C:
 			*normals = cjk_compatibility_ideograph_f93c;
-			return static_count(cjk_compatibility_ideograph_f93c);
+			return 1;
 		case 0xF93D:
 			*normals = cjk_compatibility_ideograph_f93d;
-			return static_count(cjk_compatibility_ideograph_f93d);
+			return 1;
 		case 0xF93E:
 			*normals = cjk_compatibility_ideograph_f93e;
-			return static_count(cjk_compatibility_ideograph_f93e);
+			return 1;
 		case 0xF93F:
 			*normals = cjk_compatibility_ideograph_f93f;
-			return static_count(cjk_compatibility_ideograph_f93f);
+			return 1;
 		case 0xF940:
 			*normals = cjk_compatibility_ideograph_f940;
-			return static_count(cjk_compatibility_ideograph_f940);
+			return 1;
 		case 0xF941:
 			*normals = cjk_compatibility_ideograph_f941;
-			return static_count(cjk_compatibility_ideograph_f941);
+			return 1;
 		case 0xF942:
 			*normals = cjk_compatibility_ideograph_f942;
-			return static_count(cjk_compatibility_ideograph_f942);
+			return 1;
 		case 0xF943:
 			*normals = cjk_compatibility_ideograph_f943;
-			return static_count(cjk_compatibility_ideograph_f943);
+			return 1;
 		case 0xF944:
 			*normals = cjk_compatibility_ideograph_f944;
-			return static_count(cjk_compatibility_ideograph_f944);
+			return 1;
 		case 0xF945:
 			*normals = cjk_compatibility_ideograph_f945;
-			return static_count(cjk_compatibility_ideograph_f945);
+			return 1;
 		case 0xF946:
 			*normals = cjk_compatibility_ideograph_f946;
-			return static_count(cjk_compatibility_ideograph_f946);
+			return 1;
 		case 0xF947:
 			*normals = cjk_compatibility_ideograph_f947;
-			return static_count(cjk_compatibility_ideograph_f947);
+			return 1;
 		case 0xF948:
 			*normals = cjk_compatibility_ideograph_f948;
-			return static_count(cjk_compatibility_ideograph_f948);
+			return 1;
 		case 0xF949:
 			*normals = cjk_compatibility_ideograph_f949;
-			return static_count(cjk_compatibility_ideograph_f949);
+			return 1;
 		case 0xF94A:
 			*normals = cjk_compatibility_ideograph_f94a;
-			return static_count(cjk_compatibility_ideograph_f94a);
+			return 1;
 		case 0xF94B:
 			*normals = cjk_compatibility_ideograph_f94b;
-			return static_count(cjk_compatibility_ideograph_f94b);
+			return 1;
 		case 0xF94C:
 			*normals = cjk_compatibility_ideograph_f94c;
-			return static_count(cjk_compatibility_ideograph_f94c);
+			return 1;
 		case 0xF94D:
 			*normals = cjk_compatibility_ideograph_f94d;
-			return static_count(cjk_compatibility_ideograph_f94d);
+			return 1;
 		case 0xF94E:
 			*normals = cjk_compatibility_ideograph_f94e;
-			return static_count(cjk_compatibility_ideograph_f94e);
+			return 1;
 		case 0xF94F:
 			*normals = cjk_compatibility_ideograph_f94f;
-			return static_count(cjk_compatibility_ideograph_f94f);
+			return 1;
 		case 0xF950:
 			*normals = cjk_compatibility_ideograph_f950;
-			return static_count(cjk_compatibility_ideograph_f950);
+			return 1;
 		case 0xF951:
 			*normals = cjk_compatibility_ideograph_f951;
-			return static_count(cjk_compatibility_ideograph_f951);
+			return 1;
 		case 0xF952:
 			*normals = cjk_compatibility_ideograph_f952;
-			return static_count(cjk_compatibility_ideograph_f952);
+			return 1;
 		case 0xF953:
 			*normals = cjk_compatibility_ideograph_f953;
-			return static_count(cjk_compatibility_ideograph_f953);
+			return 1;
 		case 0xF954:
 			*normals = cjk_compatibility_ideograph_f954;
-			return static_count(cjk_compatibility_ideograph_f954);
+			return 1;
 		case 0xF955:
 			*normals = cjk_compatibility_ideograph_f955;
-			return static_count(cjk_compatibility_ideograph_f955);
+			return 1;
 		case 0xF956:
 			*normals = cjk_compatibility_ideograph_f956;
-			return static_count(cjk_compatibility_ideograph_f956);
+			return 1;
 		case 0xF957:
 			*normals = cjk_compatibility_ideograph_f957;
-			return static_count(cjk_compatibility_ideograph_f957);
+			return 1;
 		case 0xF958:
 			*normals = cjk_compatibility_ideograph_f958;
-			return static_count(cjk_compatibility_ideograph_f958);
+			return 1;
 		case 0xF959:
 			*normals = cjk_compatibility_ideograph_f959;
-			return static_count(cjk_compatibility_ideograph_f959);
+			return 1;
 		case 0xF95A:
 			*normals = cjk_compatibility_ideograph_f95a;
-			return static_count(cjk_compatibility_ideograph_f95a);
+			return 1;
 		case 0xF95B:
 			*normals = cjk_compatibility_ideograph_f95b;
-			return static_count(cjk_compatibility_ideograph_f95b);
+			return 1;
 		case 0xF95C:
 			*normals = cjk_compatibility_ideograph_f95c;
-			return static_count(cjk_compatibility_ideograph_f95c);
+			return 1;
 		case 0xF95D:
 			*normals = cjk_compatibility_ideograph_f95d;
-			return static_count(cjk_compatibility_ideograph_f95d);
+			return 1;
 		case 0xF95E:
 			*normals = cjk_compatibility_ideograph_f95e;
-			return static_count(cjk_compatibility_ideograph_f95e);
+			return 1;
 		case 0xF95F:
 			*normals = cjk_compatibility_ideograph_f95f;
-			return static_count(cjk_compatibility_ideograph_f95f);
+			return 1;
 		case 0xF960:
 			*normals = cjk_compatibility_ideograph_f960;
-			return static_count(cjk_compatibility_ideograph_f960);
+			return 1;
 		case 0xF961:
 			*normals = cjk_compatibility_ideograph_f961;
-			return static_count(cjk_compatibility_ideograph_f961);
+			return 1;
 		case 0xF962:
 			*normals = cjk_compatibility_ideograph_f962;
-			return static_count(cjk_compatibility_ideograph_f962);
+			return 1;
 		case 0xF963:
 			*normals = cjk_compatibility_ideograph_f963;
-			return static_count(cjk_compatibility_ideograph_f963);
+			return 1;
 		case 0xF964:
 			*normals = cjk_compatibility_ideograph_f964;
-			return static_count(cjk_compatibility_ideograph_f964);
+			return 1;
 		case 0xF965:
 			*normals = cjk_compatibility_ideograph_f965;
-			return static_count(cjk_compatibility_ideograph_f965);
+			return 1;
 		case 0xF966:
 			*normals = cjk_compatibility_ideograph_f966;
-			return static_count(cjk_compatibility_ideograph_f966);
+			return 1;
 		case 0xF967:
 			*normals = cjk_compatibility_ideograph_f967;
-			return static_count(cjk_compatibility_ideograph_f967);
+			return 1;
 		case 0xF968:
 			*normals = cjk_compatibility_ideograph_f968;
-			return static_count(cjk_compatibility_ideograph_f968);
+			return 1;
 		case 0xF969:
 			*normals = cjk_compatibility_ideograph_f969;
-			return static_count(cjk_compatibility_ideograph_f969);
+			return 1;
 		case 0xF96A:
 			*normals = cjk_compatibility_ideograph_f96a;
-			return static_count(cjk_compatibility_ideograph_f96a);
+			return 1;
 		case 0xF96B:
 			*normals = cjk_compatibility_ideograph_f96b;
-			return static_count(cjk_compatibility_ideograph_f96b);
+			return 1;
 		case 0xF96C:
 			*normals = cjk_compatibility_ideograph_f96c;
-			return static_count(cjk_compatibility_ideograph_f96c);
+			return 1;
 		case 0xF96D:
 			*normals = cjk_compatibility_ideograph_f96d;
-			return static_count(cjk_compatibility_ideograph_f96d);
+			return 1;
 		case 0xF96E:
 			*normals = cjk_compatibility_ideograph_f96e;
-			return static_count(cjk_compatibility_ideograph_f96e);
+			return 1;
 		case 0xF96F:
 			*normals = cjk_compatibility_ideograph_f96f;
-			return static_count(cjk_compatibility_ideograph_f96f);
+			return 1;
 		case 0xF970:
 			*normals = cjk_compatibility_ideograph_f970;
-			return static_count(cjk_compatibility_ideograph_f970);
+			return 1;
 		case 0xF971:
 			*normals = cjk_compatibility_ideograph_f971;
-			return static_count(cjk_compatibility_ideograph_f971);
+			return 1;
 		case 0xF972:
 			*normals = cjk_compatibility_ideograph_f972;
-			return static_count(cjk_compatibility_ideograph_f972);
+			return 1;
 		case 0xF973:
 			*normals = cjk_compatibility_ideograph_f973;
-			return static_count(cjk_compatibility_ideograph_f973);
+			return 1;
 		case 0xF974:
 			*normals = cjk_compatibility_ideograph_f974;
-			return static_count(cjk_compatibility_ideograph_f974);
+			return 1;
 		case 0xF975:
 			*normals = cjk_compatibility_ideograph_f975;
-			return static_count(cjk_compatibility_ideograph_f975);
+			return 1;
 		case 0xF976:
 			*normals = cjk_compatibility_ideograph_f976;
-			return static_count(cjk_compatibility_ideograph_f976);
+			return 1;
 		case 0xF977:
 			*normals = cjk_compatibility_ideograph_f977;
-			return static_count(cjk_compatibility_ideograph_f977);
+			return 1;
 		case 0xF978:
 			*normals = cjk_compatibility_ideograph_f978;
-			return static_count(cjk_compatibility_ideograph_f978);
+			return 1;
 		case 0xF979:
 			*normals = cjk_compatibility_ideograph_f979;
-			return static_count(cjk_compatibility_ideograph_f979);
+			return 1;
 		case 0xF97A:
 			*normals = cjk_compatibility_ideograph_f97a;
-			return static_count(cjk_compatibility_ideograph_f97a);
+			return 1;
 		case 0xF97B:
 			*normals = cjk_compatibility_ideograph_f97b;
-			return static_count(cjk_compatibility_ideograph_f97b);
+			return 1;
 		case 0xF97C:
 			*normals = cjk_compatibility_ideograph_f97c;
-			return static_count(cjk_compatibility_ideograph_f97c);
+			return 1;
 		case 0xF97D:
 			*normals = cjk_compatibility_ideograph_f97d;
-			return static_count(cjk_compatibility_ideograph_f97d);
+			return 1;
 		case 0xF97E:
 			*normals = cjk_compatibility_ideograph_f97e;
-			return static_count(cjk_compatibility_ideograph_f97e);
+			return 1;
 		case 0xF97F:
 			*normals = cjk_compatibility_ideograph_f97f;
-			return static_count(cjk_compatibility_ideograph_f97f);
+			return 1;
 		case 0xF980:
 			*normals = cjk_compatibility_ideograph_f980;
-			return static_count(cjk_compatibility_ideograph_f980);
+			return 1;
 		case 0xF981:
 			*normals = cjk_compatibility_ideograph_f981;
-			return static_count(cjk_compatibility_ideograph_f981);
+			return 1;
 		case 0xF982:
 			*normals = cjk_compatibility_ideograph_f982;
-			return static_count(cjk_compatibility_ideograph_f982);
+			return 1;
 		case 0xF983:
 			*normals = cjk_compatibility_ideograph_f983;
-			return static_count(cjk_compatibility_ideograph_f983);
+			return 1;
 		case 0xF984:
 			*normals = cjk_compatibility_ideograph_f984;
-			return static_count(cjk_compatibility_ideograph_f984);
+			return 1;
 		case 0xF985:
 			*normals = cjk_compatibility_ideograph_f985;
-			return static_count(cjk_compatibility_ideograph_f985);
+			return 1;
 		case 0xF986:
 			*normals = cjk_compatibility_ideograph_f986;
-			return static_count(cjk_compatibility_ideograph_f986);
+			return 1;
 		case 0xF987:
 			*normals = cjk_compatibility_ideograph_f987;
-			return static_count(cjk_compatibility_ideograph_f987);
+			return 1;
 		case 0xF988:
 			*normals = cjk_compatibility_ideograph_f988;
-			return static_count(cjk_compatibility_ideograph_f988);
+			return 1;
 		case 0xF989:
 			*normals = cjk_compatibility_ideograph_f989;
-			return static_count(cjk_compatibility_ideograph_f989);
+			return 1;
 		case 0xF98A:
 			*normals = cjk_compatibility_ideograph_f98a;
-			return static_count(cjk_compatibility_ideograph_f98a);
+			return 1;
 		case 0xF98B:
 			*normals = cjk_compatibility_ideograph_f98b;
-			return static_count(cjk_compatibility_ideograph_f98b);
+			return 1;
 		case 0xF98C:
 			*normals = cjk_compatibility_ideograph_f98c;
-			return static_count(cjk_compatibility_ideograph_f98c);
+			return 1;
 		case 0xF98D:
 			*normals = cjk_compatibility_ideograph_f98d;
-			return static_count(cjk_compatibility_ideograph_f98d);
+			return 1;
 		case 0xF98E:
 			*normals = cjk_compatibility_ideograph_f98e;
-			return static_count(cjk_compatibility_ideograph_f98e);
+			return 1;
 		case 0xF98F:
 			*normals = cjk_compatibility_ideograph_f98f;
-			return static_count(cjk_compatibility_ideograph_f98f);
+			return 1;
 		case 0xF990:
 			*normals = cjk_compatibility_ideograph_f990;
-			return static_count(cjk_compatibility_ideograph_f990);
+			return 1;
 		case 0xF991:
 			*normals = cjk_compatibility_ideograph_f991;
-			return static_count(cjk_compatibility_ideograph_f991);
+			return 1;
 		case 0xF992:
 			*normals = cjk_compatibility_ideograph_f992;
-			return static_count(cjk_compatibility_ideograph_f992);
+			return 1;
 		case 0xF993:
 			*normals = cjk_compatibility_ideograph_f993;
-			return static_count(cjk_compatibility_ideograph_f993);
+			return 1;
 		case 0xF994:
 			*normals = cjk_compatibility_ideograph_f994;
-			return static_count(cjk_compatibility_ideograph_f994);
+			return 1;
 		case 0xF995:
 			*normals = cjk_compatibility_ideograph_f995;
-			return static_count(cjk_compatibility_ideograph_f995);
+			return 1;
 		case 0xF996:
 			*normals = cjk_compatibility_ideograph_f996;
-			return static_count(cjk_compatibility_ideograph_f996);
+			return 1;
 		case 0xF997:
 			*normals = cjk_compatibility_ideograph_f997;
-			return static_count(cjk_compatibility_ideograph_f997);
+			return 1;
 		case 0xF998:
 			*normals = cjk_compatibility_ideograph_f998;
-			return static_count(cjk_compatibility_ideograph_f998);
+			return 1;
 		case 0xF999:
 			*normals = cjk_compatibility_ideograph_f999;
-			return static_count(cjk_compatibility_ideograph_f999);
+			return 1;
 		case 0xF99A:
 			*normals = cjk_compatibility_ideograph_f99a;
-			return static_count(cjk_compatibility_ideograph_f99a);
+			return 1;
 		case 0xF99B:
 			*normals = cjk_compatibility_ideograph_f99b;
-			return static_count(cjk_compatibility_ideograph_f99b);
+			return 1;
 		case 0xF99C:
 			*normals = cjk_compatibility_ideograph_f99c;
-			return static_count(cjk_compatibility_ideograph_f99c);
+			return 1;
 		case 0xF99D:
 			*normals = cjk_compatibility_ideograph_f99d;
-			return static_count(cjk_compatibility_ideograph_f99d);
+			return 1;
 		case 0xF99E:
 			*normals = cjk_compatibility_ideograph_f99e;
-			return static_count(cjk_compatibility_ideograph_f99e);
+			return 1;
 		case 0xF99F:
 			*normals = cjk_compatibility_ideograph_f99f;
-			return static_count(cjk_compatibility_ideograph_f99f);
+			return 1;
 		case 0xF9A0:
 			*normals = cjk_compatibility_ideograph_f9a0;
-			return static_count(cjk_compatibility_ideograph_f9a0);
+			return 1;
 		case 0xF9A1:
 			*normals = cjk_compatibility_ideograph_f9a1;
-			return static_count(cjk_compatibility_ideograph_f9a1);
+			return 1;
 		case 0xF9A2:
 			*normals = cjk_compatibility_ideograph_f9a2;
-			return static_count(cjk_compatibility_ideograph_f9a2);
+			return 1;
 		case 0xF9A3:
 			*normals = cjk_compatibility_ideograph_f9a3;
-			return static_count(cjk_compatibility_ideograph_f9a3);
+			return 1;
 		case 0xF9A4:
 			*normals = cjk_compatibility_ideograph_f9a4;
-			return static_count(cjk_compatibility_ideograph_f9a4);
+			return 1;
 		case 0xF9A5:
 			*normals = cjk_compatibility_ideograph_f9a5;
-			return static_count(cjk_compatibility_ideograph_f9a5);
+			return 1;
 		case 0xF9A6:
 			*normals = cjk_compatibility_ideograph_f9a6;
-			return static_count(cjk_compatibility_ideograph_f9a6);
+			return 1;
 		case 0xF9A7:
 			*normals = cjk_compatibility_ideograph_f9a7;
-			return static_count(cjk_compatibility_ideograph_f9a7);
+			return 1;
 		case 0xF9A8:
 			*normals = cjk_compatibility_ideograph_f9a8;
-			return static_count(cjk_compatibility_ideograph_f9a8);
+			return 1;
 		case 0xF9A9:
 			*normals = cjk_compatibility_ideograph_f9a9;
-			return static_count(cjk_compatibility_ideograph_f9a9);
+			return 1;
 		case 0xF9AA:
 			*normals = cjk_compatibility_ideograph_f9aa;
-			return static_count(cjk_compatibility_ideograph_f9aa);
+			return 1;
 		case 0xF9AB:
 			*normals = cjk_compatibility_ideograph_f9ab;
-			return static_count(cjk_compatibility_ideograph_f9ab);
+			return 1;
 		case 0xF9AC:
 			*normals = cjk_compatibility_ideograph_f9ac;
-			return static_count(cjk_compatibility_ideograph_f9ac);
+			return 1;
 		case 0xF9AD:
 			*normals = cjk_compatibility_ideograph_f9ad;
-			return static_count(cjk_compatibility_ideograph_f9ad);
+			return 1;
 		case 0xF9AE:
 			*normals = cjk_compatibility_ideograph_f9ae;
-			return static_count(cjk_compatibility_ideograph_f9ae);
+			return 1;
 		case 0xF9AF:
 			*normals = cjk_compatibility_ideograph_f9af;
-			return static_count(cjk_compatibility_ideograph_f9af);
+			return 1;
 		case 0xF9B0:
 			*normals = cjk_compatibility_ideograph_f9b0;
-			return static_count(cjk_compatibility_ideograph_f9b0);
+			return 1;
 		case 0xF9B1:
 			*normals = cjk_compatibility_ideograph_f9b1;
-			return static_count(cjk_compatibility_ideograph_f9b1);
+			return 1;
 		case 0xF9B2:
 			*normals = cjk_compatibility_ideograph_f9b2;
-			return static_count(cjk_compatibility_ideograph_f9b2);
+			return 1;
 		case 0xF9B3:
 			*normals = cjk_compatibility_ideograph_f9b3;
-			return static_count(cjk_compatibility_ideograph_f9b3);
+			return 1;
 		case 0xF9B4:
 			*normals = cjk_compatibility_ideograph_f9b4;
-			return static_count(cjk_compatibility_ideograph_f9b4);
+			return 1;
 		case 0xF9B5:
 			*normals = cjk_compatibility_ideograph_f9b5;
-			return static_count(cjk_compatibility_ideograph_f9b5);
+			return 1;
 		case 0xF9B6:
 			*normals = cjk_compatibility_ideograph_f9b6;
-			return static_count(cjk_compatibility_ideograph_f9b6);
+			return 1;
 		case 0xF9B7:
 			*normals = cjk_compatibility_ideograph_f9b7;
-			return static_count(cjk_compatibility_ideograph_f9b7);
+			return 1;
 		case 0xF9B8:
 			*normals = cjk_compatibility_ideograph_f9b8;
-			return static_count(cjk_compatibility_ideograph_f9b8);
+			return 1;
 		case 0xF9B9:
 			*normals = cjk_compatibility_ideograph_f9b9;
-			return static_count(cjk_compatibility_ideograph_f9b9);
+			return 1;
 		case 0xF9BA:
 			*normals = cjk_compatibility_ideograph_f9ba;
-			return static_count(cjk_compatibility_ideograph_f9ba);
+			return 1;
 		case 0xF9BB:
 			*normals = cjk_compatibility_ideograph_f9bb;
-			return static_count(cjk_compatibility_ideograph_f9bb);
+			return 1;
 		case 0xF9BC:
 			*normals = cjk_compatibility_ideograph_f9bc;
-			return static_count(cjk_compatibility_ideograph_f9bc);
+			return 1;
 		case 0xF9BD:
 			*normals = cjk_compatibility_ideograph_f9bd;
-			return static_count(cjk_compatibility_ideograph_f9bd);
+			return 1;
 		case 0xF9BE:
 			*normals = cjk_compatibility_ideograph_f9be;
-			return static_count(cjk_compatibility_ideograph_f9be);
+			return 1;
 		case 0xF9BF:
 			*normals = cjk_compatibility_ideograph_f9bf;
-			return static_count(cjk_compatibility_ideograph_f9bf);
+			return 1;
 		case 0xF9C0:
 			*normals = cjk_compatibility_ideograph_f9c0;
-			return static_count(cjk_compatibility_ideograph_f9c0);
+			return 1;
 		case 0xF9C1:
 			*normals = cjk_compatibility_ideograph_f9c1;
-			return static_count(cjk_compatibility_ideograph_f9c1);
+			return 1;
 		case 0xF9C2:
 			*normals = cjk_compatibility_ideograph_f9c2;
-			return static_count(cjk_compatibility_ideograph_f9c2);
+			return 1;
 		case 0xF9C3:
 			*normals = cjk_compatibility_ideograph_f9c3;
-			return static_count(cjk_compatibility_ideograph_f9c3);
+			return 1;
 		case 0xF9C4:
 			*normals = cjk_compatibility_ideograph_f9c4;
-			return static_count(cjk_compatibility_ideograph_f9c4);
+			return 1;
 		case 0xF9C5:
 			*normals = cjk_compatibility_ideograph_f9c5;
-			return static_count(cjk_compatibility_ideograph_f9c5);
+			return 1;
 		case 0xF9C6:
 			*normals = cjk_compatibility_ideograph_f9c6;
-			return static_count(cjk_compatibility_ideograph_f9c6);
+			return 1;
 		case 0xF9C7:
 			*normals = cjk_compatibility_ideograph_f9c7;
-			return static_count(cjk_compatibility_ideograph_f9c7);
+			return 1;
 		case 0xF9C8:
 			*normals = cjk_compatibility_ideograph_f9c8;
-			return static_count(cjk_compatibility_ideograph_f9c8);
+			return 1;
 		case 0xF9C9:
 			*normals = cjk_compatibility_ideograph_f9c9;
-			return static_count(cjk_compatibility_ideograph_f9c9);
+			return 1;
 		case 0xF9CA:
 			*normals = cjk_compatibility_ideograph_f9ca;
-			return static_count(cjk_compatibility_ideograph_f9ca);
+			return 1;
 		case 0xF9CB:
 			*normals = cjk_compatibility_ideograph_f9cb;
-			return static_count(cjk_compatibility_ideograph_f9cb);
+			return 1;
 		case 0xF9CC:
 			*normals = cjk_compatibility_ideograph_f9cc;
-			return static_count(cjk_compatibility_ideograph_f9cc);
+			return 1;
 		case 0xF9CD:
 			*normals = cjk_compatibility_ideograph_f9cd;
-			return static_count(cjk_compatibility_ideograph_f9cd);
+			return 1;
 		case 0xF9CE:
 			*normals = cjk_compatibility_ideograph_f9ce;
-			return static_count(cjk_compatibility_ideograph_f9ce);
+			return 1;
 		case 0xF9CF:
 			*normals = cjk_compatibility_ideograph_f9cf;
-			return static_count(cjk_compatibility_ideograph_f9cf);
+			return 1;
 		case 0xF9D0:
 			*normals = cjk_compatibility_ideograph_f9d0;
-			return static_count(cjk_compatibility_ideograph_f9d0);
+			return 1;
 		case 0xF9D1:
 			*normals = cjk_compatibility_ideograph_f9d1;
-			return static_count(cjk_compatibility_ideograph_f9d1);
+			return 1;
 		case 0xF9D2:
 			*normals = cjk_compatibility_ideograph_f9d2;
-			return static_count(cjk_compatibility_ideograph_f9d2);
+			return 1;
 		case 0xF9D3:
 			*normals = cjk_compatibility_ideograph_f9d3;
-			return static_count(cjk_compatibility_ideograph_f9d3);
+			return 1;
 		case 0xF9D4:
 			*normals = cjk_compatibility_ideograph_f9d4;
-			return static_count(cjk_compatibility_ideograph_f9d4);
+			return 1;
 		case 0xF9D5:
 			*normals = cjk_compatibility_ideograph_f9d5;
-			return static_count(cjk_compatibility_ideograph_f9d5);
+			return 1;
 		case 0xF9D6:
 			*normals = cjk_compatibility_ideograph_f9d6;
-			return static_count(cjk_compatibility_ideograph_f9d6);
+			return 1;
 		case 0xF9D7:
 			*normals = cjk_compatibility_ideograph_f9d7;
-			return static_count(cjk_compatibility_ideograph_f9d7);
+			return 1;
 		case 0xF9D8:
 			*normals = cjk_compatibility_ideograph_f9d8;
-			return static_count(cjk_compatibility_ideograph_f9d8);
+			return 1;
 		case 0xF9D9:
 			*normals = cjk_compatibility_ideograph_f9d9;
-			return static_count(cjk_compatibility_ideograph_f9d9);
+			return 1;
 		case 0xF9DA:
 			*normals = cjk_compatibility_ideograph_f9da;
-			return static_count(cjk_compatibility_ideograph_f9da);
+			return 1;
 		case 0xF9DB:
 			*normals = cjk_compatibility_ideograph_f9db;
-			return static_count(cjk_compatibility_ideograph_f9db);
+			return 1;
 		case 0xF9DC:
 			*normals = cjk_compatibility_ideograph_f9dc;
-			return static_count(cjk_compatibility_ideograph_f9dc);
+			return 1;
 		case 0xF9DD:
 			*normals = cjk_compatibility_ideograph_f9dd;
-			return static_count(cjk_compatibility_ideograph_f9dd);
+			return 1;
 		case 0xF9DE:
 			*normals = cjk_compatibility_ideograph_f9de;
-			return static_count(cjk_compatibility_ideograph_f9de);
+			return 1;
 		case 0xF9DF:
 			*normals = cjk_compatibility_ideograph_f9df;
-			return static_count(cjk_compatibility_ideograph_f9df);
+			return 1;
 		case 0xF9E0:
 			*normals = cjk_compatibility_ideograph_f9e0;
-			return static_count(cjk_compatibility_ideograph_f9e0);
+			return 1;
 		case 0xF9E1:
 			*normals = cjk_compatibility_ideograph_f9e1;
-			return static_count(cjk_compatibility_ideograph_f9e1);
+			return 1;
 		case 0xF9E2:
 			*normals = cjk_compatibility_ideograph_f9e2;
-			return static_count(cjk_compatibility_ideograph_f9e2);
+			return 1;
 		case 0xF9E3:
 			*normals = cjk_compatibility_ideograph_f9e3;
-			return static_count(cjk_compatibility_ideograph_f9e3);
+			return 1;
 		case 0xF9E4:
 			*normals = cjk_compatibility_ideograph_f9e4;
-			return static_count(cjk_compatibility_ideograph_f9e4);
+			return 1;
 		case 0xF9E5:
 			*normals = cjk_compatibility_ideograph_f9e5;
-			return static_count(cjk_compatibility_ideograph_f9e5);
+			return 1;
 		case 0xF9E6:
 			*normals = cjk_compatibility_ideograph_f9e6;
-			return static_count(cjk_compatibility_ideograph_f9e6);
+			return 1;
 		case 0xF9E7:
 			*normals = cjk_compatibility_ideograph_f9e7;
-			return static_count(cjk_compatibility_ideograph_f9e7);
+			return 1;
 		case 0xF9E8:
 			*normals = cjk_compatibility_ideograph_f9e8;
-			return static_count(cjk_compatibility_ideograph_f9e8);
+			return 1;
 		case 0xF9E9:
 			*normals = cjk_compatibility_ideograph_f9e9;
-			return static_count(cjk_compatibility_ideograph_f9e9);
+			return 1;
 		case 0xF9EA:
 			*normals = cjk_compatibility_ideograph_f9ea;
-			return static_count(cjk_compatibility_ideograph_f9ea);
+			return 1;
 		case 0xF9EB:
 			*normals = cjk_compatibility_ideograph_f9eb;
-			return static_count(cjk_compatibility_ideograph_f9eb);
+			return 1;
 		case 0xF9EC:
 			*normals = cjk_compatibility_ideograph_f9ec;
-			return static_count(cjk_compatibility_ideograph_f9ec);
+			return 1;
 		case 0xF9ED:
 			*normals = cjk_compatibility_ideograph_f9ed;
-			return static_count(cjk_compatibility_ideograph_f9ed);
+			return 1;
 		case 0xF9EE:
 			*normals = cjk_compatibility_ideograph_f9ee;
-			return static_count(cjk_compatibility_ideograph_f9ee);
+			return 1;
 		case 0xF9EF:
 			*normals = cjk_compatibility_ideograph_f9ef;
-			return static_count(cjk_compatibility_ideograph_f9ef);
+			return 1;
 		case 0xF9F0:
 			*normals = cjk_compatibility_ideograph_f9f0;
-			return static_count(cjk_compatibility_ideograph_f9f0);
+			return 1;
 		case 0xF9F1:
 			*normals = cjk_compatibility_ideograph_f9f1;
-			return static_count(cjk_compatibility_ideograph_f9f1);
+			return 1;
 		case 0xF9F2:
 			*normals = cjk_compatibility_ideograph_f9f2;
-			return static_count(cjk_compatibility_ideograph_f9f2);
+			return 1;
 		case 0xF9F3:
 			*normals = cjk_compatibility_ideograph_f9f3;
-			return static_count(cjk_compatibility_ideograph_f9f3);
+			return 1;
 		case 0xF9F4:
 			*normals = cjk_compatibility_ideograph_f9f4;
-			return static_count(cjk_compatibility_ideograph_f9f4);
+			return 1;
 		case 0xF9F5:
 			*normals = cjk_compatibility_ideograph_f9f5;
-			return static_count(cjk_compatibility_ideograph_f9f5);
+			return 1;
 		case 0xF9F6:
 			*normals = cjk_compatibility_ideograph_f9f6;
-			return static_count(cjk_compatibility_ideograph_f9f6);
+			return 1;
 		case 0xF9F7:
 			*normals = cjk_compatibility_ideograph_f9f7;
-			return static_count(cjk_compatibility_ideograph_f9f7);
+			return 1;
 		case 0xF9F8:
 			*normals = cjk_compatibility_ideograph_f9f8;
-			return static_count(cjk_compatibility_ideograph_f9f8);
+			return 1;
 		case 0xF9F9:
 			*normals = cjk_compatibility_ideograph_f9f9;
-			return static_count(cjk_compatibility_ideograph_f9f9);
+			return 1;
 		case 0xF9FA:
 			*normals = cjk_compatibility_ideograph_f9fa;
-			return static_count(cjk_compatibility_ideograph_f9fa);
+			return 1;
 		case 0xF9FB:
 			*normals = cjk_compatibility_ideograph_f9fb;
-			return static_count(cjk_compatibility_ideograph_f9fb);
+			return 1;
 		case 0xF9FC:
 			*normals = cjk_compatibility_ideograph_f9fc;
-			return static_count(cjk_compatibility_ideograph_f9fc);
+			return 1;
 		case 0xF9FD:
 			*normals = cjk_compatibility_ideograph_f9fd;
-			return static_count(cjk_compatibility_ideograph_f9fd);
+			return 1;
 		case 0xF9FE:
 			*normals = cjk_compatibility_ideograph_f9fe;
-			return static_count(cjk_compatibility_ideograph_f9fe);
+			return 1;
 		case 0xF9FF:
 			*normals = cjk_compatibility_ideograph_f9ff;
-			return static_count(cjk_compatibility_ideograph_f9ff);
+			return 1;
 		case 0xFA00:
 			*normals = cjk_compatibility_ideograph_fa00;
-			return static_count(cjk_compatibility_ideograph_fa00);
+			return 1;
 		case 0xFA01:
 			*normals = cjk_compatibility_ideograph_fa01;
-			return static_count(cjk_compatibility_ideograph_fa01);
+			return 1;
 		case 0xFA02:
 			*normals = cjk_compatibility_ideograph_fa02;
-			return static_count(cjk_compatibility_ideograph_fa02);
+			return 1;
 		case 0xFA03:
 			*normals = cjk_compatibility_ideograph_fa03;
-			return static_count(cjk_compatibility_ideograph_fa03);
+			return 1;
 		case 0xFA04:
 			*normals = cjk_compatibility_ideograph_fa04;
-			return static_count(cjk_compatibility_ideograph_fa04);
+			return 1;
 		case 0xFA05:
 			*normals = cjk_compatibility_ideograph_fa05;
-			return static_count(cjk_compatibility_ideograph_fa05);
+			return 1;
 		case 0xFA06:
 			*normals = cjk_compatibility_ideograph_fa06;
-			return static_count(cjk_compatibility_ideograph_fa06);
+			return 1;
 		case 0xFA07:
 			*normals = cjk_compatibility_ideograph_fa07;
-			return static_count(cjk_compatibility_ideograph_fa07);
+			return 1;
 		case 0xFA08:
 			*normals = cjk_compatibility_ideograph_fa08;
-			return static_count(cjk_compatibility_ideograph_fa08);
+			return 1;
 		case 0xFA09:
 			*normals = cjk_compatibility_ideograph_fa09;
-			return static_count(cjk_compatibility_ideograph_fa09);
+			return 1;
 		case 0xFA0A:
 			*normals = cjk_compatibility_ideograph_fa0a;
-			return static_count(cjk_compatibility_ideograph_fa0a);
+			return 1;
 		case 0xFA0B:
 			*normals = cjk_compatibility_ideograph_fa0b;
-			return static_count(cjk_compatibility_ideograph_fa0b);
+			return 1;
 		case 0xFA0C:
 			*normals = cjk_compatibility_ideograph_fa0c;
-			return static_count(cjk_compatibility_ideograph_fa0c);
+			return 1;
 		case 0xFA0D:
 			*normals = cjk_compatibility_ideograph_fa0d;
-			return static_count(cjk_compatibility_ideograph_fa0d);
+			return 1;
 		case 0xFA10:
 			*normals = cjk_compatibility_ideograph_fa10;
-			return static_count(cjk_compatibility_ideograph_fa10);
+			return 1;
 		case 0xFA12:
 			*normals = cjk_compatibility_ideograph_fa12;
-			return static_count(cjk_compatibility_ideograph_fa12);
+			return 1;
 		case 0xFA15:
 			*normals = cjk_compatibility_ideograph_fa15;
-			return static_count(cjk_compatibility_ideograph_fa15);
+			return 1;
 		case 0xFA16:
 			*normals = cjk_compatibility_ideograph_fa16;
-			return static_count(cjk_compatibility_ideograph_fa16);
+			return 1;
 		case 0xFA17:
 			*normals = cjk_compatibility_ideograph_fa17;
-			return static_count(cjk_compatibility_ideograph_fa17);
+			return 1;
 		case 0xFA18:
 			*normals = cjk_compatibility_ideograph_fa18;
-			return static_count(cjk_compatibility_ideograph_fa18);
+			return 1;
 		case 0xFA19:
 			*normals = cjk_compatibility_ideograph_fa19;
-			return static_count(cjk_compatibility_ideograph_fa19);
+			return 1;
 		case 0xFA1A:
 			*normals = cjk_compatibility_ideograph_fa1a;
-			return static_count(cjk_compatibility_ideograph_fa1a);
+			return 1;
 		case 0xFA1B:
 			*normals = cjk_compatibility_ideograph_fa1b;
-			return static_count(cjk_compatibility_ideograph_fa1b);
+			return 1;
 		case 0xFA1C:
 			*normals = cjk_compatibility_ideograph_fa1c;
-			return static_count(cjk_compatibility_ideograph_fa1c);
+			return 1;
 		case 0xFA1D:
 			*normals = cjk_compatibility_ideograph_fa1d;
-			return static_count(cjk_compatibility_ideograph_fa1d);
+			return 1;
 		case 0xFA1E:
 			*normals = cjk_compatibility_ideograph_fa1e;
-			return static_count(cjk_compatibility_ideograph_fa1e);
+			return 1;
 		case 0xFA20:
 			*normals = cjk_compatibility_ideograph_fa20;
-			return static_count(cjk_compatibility_ideograph_fa20);
+			return 1;
 		case 0xFA22:
 			*normals = cjk_compatibility_ideograph_fa22;
-			return static_count(cjk_compatibility_ideograph_fa22);
+			return 1;
 		case 0xFA25:
 			*normals = cjk_compatibility_ideograph_fa25;
-			return static_count(cjk_compatibility_ideograph_fa25);
+			return 1;
 		case 0xFA26:
 			*normals = cjk_compatibility_ideograph_fa26;
-			return static_count(cjk_compatibility_ideograph_fa26);
+			return 1;
 		case 0xFA2A:
 			*normals = cjk_compatibility_ideograph_fa2a;
-			return static_count(cjk_compatibility_ideograph_fa2a);
+			return 1;
 		case 0xFA2B:
 			*normals = cjk_compatibility_ideograph_fa2b;
-			return static_count(cjk_compatibility_ideograph_fa2b);
+			return 1;
 		case 0xFA2C:
 			*normals = cjk_compatibility_ideograph_fa2c;
-			return static_count(cjk_compatibility_ideograph_fa2c);
+			return 1;
 		case 0xFA2D:
 			*normals = cjk_compatibility_ideograph_fa2d;
-			return static_count(cjk_compatibility_ideograph_fa2d);
+			return 1;
 		case 0xFA2E:
 			*normals = cjk_compatibility_ideograph_fa2e;
-			return static_count(cjk_compatibility_ideograph_fa2e);
+			return 1;
 		case 0xFA2F:
 			*normals = cjk_compatibility_ideograph_fa2f;
-			return static_count(cjk_compatibility_ideograph_fa2f);
+			return 1;
 		case 0xFA30:
 			*normals = cjk_compatibility_ideograph_fa30;
-			return static_count(cjk_compatibility_ideograph_fa30);
+			return 1;
 		case 0xFA31:
 			*normals = cjk_compatibility_ideograph_fa31;
-			return static_count(cjk_compatibility_ideograph_fa31);
+			return 1;
 		case 0xFA32:
 			*normals = cjk_compatibility_ideograph_fa32;
-			return static_count(cjk_compatibility_ideograph_fa32);
+			return 1;
 		case 0xFA33:
 			*normals = cjk_compatibility_ideograph_fa33;
-			return static_count(cjk_compatibility_ideograph_fa33);
+			return 1;
 		case 0xFA34:
 			*normals = cjk_compatibility_ideograph_fa34;
-			return static_count(cjk_compatibility_ideograph_fa34);
+			return 1;
 		case 0xFA35:
 			*normals = cjk_compatibility_ideograph_fa35;
-			return static_count(cjk_compatibility_ideograph_fa35);
+			return 1;
 		case 0xFA36:
 			*normals = cjk_compatibility_ideograph_fa36;
-			return static_count(cjk_compatibility_ideograph_fa36);
+			return 1;
 		case 0xFA37:
 			*normals = cjk_compatibility_ideograph_fa37;
-			return static_count(cjk_compatibility_ideograph_fa37);
+			return 1;
 		case 0xFA38:
 			*normals = cjk_compatibility_ideograph_fa38;
-			return static_count(cjk_compatibility_ideograph_fa38);
+			return 1;
 		case 0xFA39:
 			*normals = cjk_compatibility_ideograph_fa39;
-			return static_count(cjk_compatibility_ideograph_fa39);
+			return 1;
 		case 0xFA3A:
 			*normals = cjk_compatibility_ideograph_fa3a;
-			return static_count(cjk_compatibility_ideograph_fa3a);
+			return 1;
 		case 0xFA3B:
 			*normals = cjk_compatibility_ideograph_fa3b;
-			return static_count(cjk_compatibility_ideograph_fa3b);
+			return 1;
 		case 0xFA3C:
 			*normals = cjk_compatibility_ideograph_fa3c;
-			return static_count(cjk_compatibility_ideograph_fa3c);
+			return 1;
 		case 0xFA3D:
 			*normals = cjk_compatibility_ideograph_fa3d;
-			return static_count(cjk_compatibility_ideograph_fa3d);
+			return 1;
 		case 0xFA3E:
 			*normals = cjk_compatibility_ideograph_fa3e;
-			return static_count(cjk_compatibility_ideograph_fa3e);
+			return 1;
 		case 0xFA3F:
 			*normals = cjk_compatibility_ideograph_fa3f;
-			return static_count(cjk_compatibility_ideograph_fa3f);
+			return 1;
 		case 0xFA40:
 			*normals = cjk_compatibility_ideograph_fa40;
-			return static_count(cjk_compatibility_ideograph_fa40);
+			return 1;
 		case 0xFA41:
 			*normals = cjk_compatibility_ideograph_fa41;
-			return static_count(cjk_compatibility_ideograph_fa41);
+			return 1;
 		case 0xFA42:
 			*normals = cjk_compatibility_ideograph_fa42;
-			return static_count(cjk_compatibility_ideograph_fa42);
+			return 1;
 		case 0xFA43:
 			*normals = cjk_compatibility_ideograph_fa43;
-			return static_count(cjk_compatibility_ideograph_fa43);
+			return 1;
 		case 0xFA44:
 			*normals = cjk_compatibility_ideograph_fa44;
-			return static_count(cjk_compatibility_ideograph_fa44);
+			return 1;
 		case 0xFA45:
 			*normals = cjk_compatibility_ideograph_fa45;
-			return static_count(cjk_compatibility_ideograph_fa45);
+			return 1;
 		case 0xFA46:
 			*normals = cjk_compatibility_ideograph_fa46;
-			return static_count(cjk_compatibility_ideograph_fa46);
+			return 1;
 		case 0xFA47:
 			*normals = cjk_compatibility_ideograph_fa47;
-			return static_count(cjk_compatibility_ideograph_fa47);
+			return 1;
 		case 0xFA48:
 			*normals = cjk_compatibility_ideograph_fa48;
-			return static_count(cjk_compatibility_ideograph_fa48);
+			return 1;
 		case 0xFA49:
 			*normals = cjk_compatibility_ideograph_fa49;
-			return static_count(cjk_compatibility_ideograph_fa49);
+			return 1;
 		case 0xFA4A:
 			*normals = cjk_compatibility_ideograph_fa4a;
-			return static_count(cjk_compatibility_ideograph_fa4a);
+			return 1;
 		case 0xFA4B:
 			*normals = cjk_compatibility_ideograph_fa4b;
-			return static_count(cjk_compatibility_ideograph_fa4b);
+			return 1;
 		case 0xFA4C:
 			*normals = cjk_compatibility_ideograph_fa4c;
-			return static_count(cjk_compatibility_ideograph_fa4c);
+			return 1;
 		case 0xFA4D:
 			*normals = cjk_compatibility_ideograph_fa4d;
-			return static_count(cjk_compatibility_ideograph_fa4d);
+			return 1;
 		case 0xFA4E:
 			*normals = cjk_compatibility_ideograph_fa4e;
-			return static_count(cjk_compatibility_ideograph_fa4e);
+			return 1;
 		case 0xFA4F:
 			*normals = cjk_compatibility_ideograph_fa4f;
-			return static_count(cjk_compatibility_ideograph_fa4f);
+			return 1;
 		case 0xFA50:
 			*normals = cjk_compatibility_ideograph_fa50;
-			return static_count(cjk_compatibility_ideograph_fa50);
+			return 1;
 		case 0xFA51:
 			*normals = cjk_compatibility_ideograph_fa51;
-			return static_count(cjk_compatibility_ideograph_fa51);
+			return 1;
 		case 0xFA52:
 			*normals = cjk_compatibility_ideograph_fa52;
-			return static_count(cjk_compatibility_ideograph_fa52);
+			return 1;
 		case 0xFA53:
 			*normals = cjk_compatibility_ideograph_fa53;
-			return static_count(cjk_compatibility_ideograph_fa53);
+			return 1;
 		case 0xFA54:
 			*normals = cjk_compatibility_ideograph_fa54;
-			return static_count(cjk_compatibility_ideograph_fa54);
+			return 1;
 		case 0xFA55:
 			*normals = cjk_compatibility_ideograph_fa55;
-			return static_count(cjk_compatibility_ideograph_fa55);
+			return 1;
 		case 0xFA56:
 			*normals = cjk_compatibility_ideograph_fa56;
-			return static_count(cjk_compatibility_ideograph_fa56);
+			return 1;
 		case 0xFA57:
 			*normals = cjk_compatibility_ideograph_fa57;
-			return static_count(cjk_compatibility_ideograph_fa57);
+			return 1;
 		case 0xFA58:
 			*normals = cjk_compatibility_ideograph_fa58;
-			return static_count(cjk_compatibility_ideograph_fa58);
+			return 1;
 		case 0xFA59:
 			*normals = cjk_compatibility_ideograph_fa59;
-			return static_count(cjk_compatibility_ideograph_fa59);
+			return 1;
 		case 0xFA5A:
 			*normals = cjk_compatibility_ideograph_fa5a;
-			return static_count(cjk_compatibility_ideograph_fa5a);
+			return 1;
 		case 0xFA5B:
 			*normals = cjk_compatibility_ideograph_fa5b;
-			return static_count(cjk_compatibility_ideograph_fa5b);
+			return 1;
 		case 0xFA5C:
 			*normals = cjk_compatibility_ideograph_fa5c;
-			return static_count(cjk_compatibility_ideograph_fa5c);
+			return 1;
 		case 0xFA5D:
 			*normals = cjk_compatibility_ideograph_fa5d;
-			return static_count(cjk_compatibility_ideograph_fa5d);
+			return 1;
 		case 0xFA5E:
 			*normals = cjk_compatibility_ideograph_fa5e;
-			return static_count(cjk_compatibility_ideograph_fa5e);
+			return 1;
 		case 0xFA5F:
 			*normals = cjk_compatibility_ideograph_fa5f;
-			return static_count(cjk_compatibility_ideograph_fa5f);
+			return 1;
 		case 0xFA60:
 			*normals = cjk_compatibility_ideograph_fa60;
-			return static_count(cjk_compatibility_ideograph_fa60);
+			return 1;
 		case 0xFA61:
 			*normals = cjk_compatibility_ideograph_fa61;
-			return static_count(cjk_compatibility_ideograph_fa61);
+			return 1;
 		case 0xFA62:
 			*normals = cjk_compatibility_ideograph_fa62;
-			return static_count(cjk_compatibility_ideograph_fa62);
+			return 1;
 		case 0xFA63:
 			*normals = cjk_compatibility_ideograph_fa63;
-			return static_count(cjk_compatibility_ideograph_fa63);
+			return 1;
 		case 0xFA64:
 			*normals = cjk_compatibility_ideograph_fa64;
-			return static_count(cjk_compatibility_ideograph_fa64);
+			return 1;
 		case 0xFA65:
 			*normals = cjk_compatibility_ideograph_fa65;
-			return static_count(cjk_compatibility_ideograph_fa65);
+			return 1;
 		case 0xFA66:
 			*normals = cjk_compatibility_ideograph_fa66;
-			return static_count(cjk_compatibility_ideograph_fa66);
+			return 1;
 		case 0xFA67:
 			*normals = cjk_compatibility_ideograph_fa67;
-			return static_count(cjk_compatibility_ideograph_fa67);
+			return 1;
 		case 0xFA68:
 			*normals = cjk_compatibility_ideograph_fa68;
-			return static_count(cjk_compatibility_ideograph_fa68);
+			return 1;
 		case 0xFA69:
 			*normals = cjk_compatibility_ideograph_fa69;
-			return static_count(cjk_compatibility_ideograph_fa69);
+			return 1;
 		case 0xFA6A:
 			*normals = cjk_compatibility_ideograph_fa6a;
-			return static_count(cjk_compatibility_ideograph_fa6a);
+			return 1;
 		case 0xFA6B:
 			*normals = cjk_compatibility_ideograph_fa6b;
-			return static_count(cjk_compatibility_ideograph_fa6b);
+			return 1;
 		case 0xFA6C:
 			*normals = cjk_compatibility_ideograph_fa6c;
-			return static_count(cjk_compatibility_ideograph_fa6c);
+			return 1;
 		case 0xFA6D:
 			*normals = cjk_compatibility_ideograph_fa6d;
-			return static_count(cjk_compatibility_ideograph_fa6d);
+			return 1;
 		case 0xFA70:
 			*normals = cjk_compatibility_ideograph_fa70;
-			return static_count(cjk_compatibility_ideograph_fa70);
+			return 1;
 		case 0xFA71:
 			*normals = cjk_compatibility_ideograph_fa71;
-			return static_count(cjk_compatibility_ideograph_fa71);
+			return 1;
 		case 0xFA72:
 			*normals = cjk_compatibility_ideograph_fa72;
-			return static_count(cjk_compatibility_ideograph_fa72);
+			return 1;
 		case 0xFA73:
 			*normals = cjk_compatibility_ideograph_fa73;
-			return static_count(cjk_compatibility_ideograph_fa73);
+			return 1;
 		case 0xFA74:
 			*normals = cjk_compatibility_ideograph_fa74;
-			return static_count(cjk_compatibility_ideograph_fa74);
+			return 1;
 		case 0xFA75:
 			*normals = cjk_compatibility_ideograph_fa75;
-			return static_count(cjk_compatibility_ideograph_fa75);
+			return 1;
 		case 0xFA76:
 			*normals = cjk_compatibility_ideograph_fa76;
-			return static_count(cjk_compatibility_ideograph_fa76);
+			return 1;
 		case 0xFA77:
 			*normals = cjk_compatibility_ideograph_fa77;
-			return static_count(cjk_compatibility_ideograph_fa77);
+			return 1;
 		case 0xFA78:
 			*normals = cjk_compatibility_ideograph_fa78;
-			return static_count(cjk_compatibility_ideograph_fa78);
+			return 1;
 		case 0xFA79:
 			*normals = cjk_compatibility_ideograph_fa79;
-			return static_count(cjk_compatibility_ideograph_fa79);
+			return 1;
 		case 0xFA7A:
 			*normals = cjk_compatibility_ideograph_fa7a;
-			return static_count(cjk_compatibility_ideograph_fa7a);
+			return 1;
 		case 0xFA7B:
 			*normals = cjk_compatibility_ideograph_fa7b;
-			return static_count(cjk_compatibility_ideograph_fa7b);
+			return 1;
 		case 0xFA7C:
 			*normals = cjk_compatibility_ideograph_fa7c;
-			return static_count(cjk_compatibility_ideograph_fa7c);
+			return 1;
 		case 0xFA7D:
 			*normals = cjk_compatibility_ideograph_fa7d;
-			return static_count(cjk_compatibility_ideograph_fa7d);
+			return 1;
 		case 0xFA7E:
 			*normals = cjk_compatibility_ideograph_fa7e;
-			return static_count(cjk_compatibility_ideograph_fa7e);
+			return 1;
 		case 0xFA7F:
 			*normals = cjk_compatibility_ideograph_fa7f;
-			return static_count(cjk_compatibility_ideograph_fa7f);
+			return 1;
 		case 0xFA80:
 			*normals = cjk_compatibility_ideograph_fa80;
-			return static_count(cjk_compatibility_ideograph_fa80);
+			return 1;
 		case 0xFA81:
 			*normals = cjk_compatibility_ideograph_fa81;
-			return static_count(cjk_compatibility_ideograph_fa81);
+			return 1;
 		case 0xFA82:
 			*normals = cjk_compatibility_ideograph_fa82;
-			return static_count(cjk_compatibility_ideograph_fa82);
+			return 1;
 		case 0xFA83:
 			*normals = cjk_compatibility_ideograph_fa83;
-			return static_count(cjk_compatibility_ideograph_fa83);
+			return 1;
 		case 0xFA84:
 			*normals = cjk_compatibility_ideograph_fa84;
-			return static_count(cjk_compatibility_ideograph_fa84);
+			return 1;
 		case 0xFA85:
 			*normals = cjk_compatibility_ideograph_fa85;
-			return static_count(cjk_compatibility_ideograph_fa85);
+			return 1;
 		case 0xFA86:
 			*normals = cjk_compatibility_ideograph_fa86;
-			return static_count(cjk_compatibility_ideograph_fa86);
+			return 1;
 		case 0xFA87:
 			*normals = cjk_compatibility_ideograph_fa87;
-			return static_count(cjk_compatibility_ideograph_fa87);
+			return 1;
 		case 0xFA88:
 			*normals = cjk_compatibility_ideograph_fa88;
-			return static_count(cjk_compatibility_ideograph_fa88);
+			return 1;
 		case 0xFA89:
 			*normals = cjk_compatibility_ideograph_fa89;
-			return static_count(cjk_compatibility_ideograph_fa89);
+			return 1;
 		case 0xFA8A:
 			*normals = cjk_compatibility_ideograph_fa8a;
-			return static_count(cjk_compatibility_ideograph_fa8a);
+			return 1;
 		case 0xFA8B:
 			*normals = cjk_compatibility_ideograph_fa8b;
-			return static_count(cjk_compatibility_ideograph_fa8b);
+			return 1;
 		case 0xFA8C:
 			*normals = cjk_compatibility_ideograph_fa8c;
-			return static_count(cjk_compatibility_ideograph_fa8c);
+			return 1;
 		case 0xFA8D:
 			*normals = cjk_compatibility_ideograph_fa8d;
-			return static_count(cjk_compatibility_ideograph_fa8d);
+			return 1;
 		case 0xFA8E:
 			*normals = cjk_compatibility_ideograph_fa8e;
-			return static_count(cjk_compatibility_ideograph_fa8e);
+			return 1;
 		case 0xFA8F:
 			*normals = cjk_compatibility_ideograph_fa8f;
-			return static_count(cjk_compatibility_ideograph_fa8f);
+			return 1;
 		case 0xFA90:
 			*normals = cjk_compatibility_ideograph_fa90;
-			return static_count(cjk_compatibility_ideograph_fa90);
+			return 1;
 		case 0xFA91:
 			*normals = cjk_compatibility_ideograph_fa91;
-			return static_count(cjk_compatibility_ideograph_fa91);
+			return 1;
 		case 0xFA92:
 			*normals = cjk_compatibility_ideograph_fa92;
-			return static_count(cjk_compatibility_ideograph_fa92);
+			return 1;
 		case 0xFA93:
 			*normals = cjk_compatibility_ideograph_fa93;
-			return static_count(cjk_compatibility_ideograph_fa93);
+			return 1;
 		case 0xFA94:
 			*normals = cjk_compatibility_ideograph_fa94;
-			return static_count(cjk_compatibility_ideograph_fa94);
+			return 1;
 		case 0xFA95:
 			*normals = cjk_compatibility_ideograph_fa95;
-			return static_count(cjk_compatibility_ideograph_fa95);
+			return 1;
 		case 0xFA96:
 			*normals = cjk_compatibility_ideograph_fa96;
-			return static_count(cjk_compatibility_ideograph_fa96);
+			return 1;
 		case 0xFA97:
 			*normals = cjk_compatibility_ideograph_fa97;
-			return static_count(cjk_compatibility_ideograph_fa97);
+			return 1;
 		case 0xFA98:
 			*normals = cjk_compatibility_ideograph_fa98;
-			return static_count(cjk_compatibility_ideograph_fa98);
+			return 1;
 		case 0xFA99:
 			*normals = cjk_compatibility_ideograph_fa99;
-			return static_count(cjk_compatibility_ideograph_fa99);
+			return 1;
 		case 0xFA9A:
 			*normals = cjk_compatibility_ideograph_fa9a;
-			return static_count(cjk_compatibility_ideograph_fa9a);
+			return 1;
 		case 0xFA9B:
 			*normals = cjk_compatibility_ideograph_fa9b;
-			return static_count(cjk_compatibility_ideograph_fa9b);
+			return 1;
 		case 0xFA9C:
 			*normals = cjk_compatibility_ideograph_fa9c;
-			return static_count(cjk_compatibility_ideograph_fa9c);
+			return 1;
 		case 0xFA9D:
 			*normals = cjk_compatibility_ideograph_fa9d;
-			return static_count(cjk_compatibility_ideograph_fa9d);
+			return 1;
 		case 0xFA9E:
 			*normals = cjk_compatibility_ideograph_fa9e;
-			return static_count(cjk_compatibility_ideograph_fa9e);
+			return 1;
 		case 0xFA9F:
 			*normals = cjk_compatibility_ideograph_fa9f;
-			return static_count(cjk_compatibility_ideograph_fa9f);
+			return 1;
 		case 0xFAA0:
 			*normals = cjk_compatibility_ideograph_faa0;
-			return static_count(cjk_compatibility_ideograph_faa0);
+			return 1;
 		case 0xFAA1:
 			*normals = cjk_compatibility_ideograph_faa1;
-			return static_count(cjk_compatibility_ideograph_faa1);
+			return 1;
 		case 0xFAA2:
 			*normals = cjk_compatibility_ideograph_faa2;
-			return static_count(cjk_compatibility_ideograph_faa2);
+			return 1;
 		case 0xFAA3:
 			*normals = cjk_compatibility_ideograph_faa3;
-			return static_count(cjk_compatibility_ideograph_faa3);
+			return 1;
 		case 0xFAA4:
 			*normals = cjk_compatibility_ideograph_faa4;
-			return static_count(cjk_compatibility_ideograph_faa4);
+			return 1;
 		case 0xFAA5:
 			*normals = cjk_compatibility_ideograph_faa5;
-			return static_count(cjk_compatibility_ideograph_faa5);
+			return 1;
 		case 0xFAA6:
 			*normals = cjk_compatibility_ideograph_faa6;
-			return static_count(cjk_compatibility_ideograph_faa6);
+			return 1;
 		case 0xFAA7:
 			*normals = cjk_compatibility_ideograph_faa7;
-			return static_count(cjk_compatibility_ideograph_faa7);
+			return 1;
 		case 0xFAA8:
 			*normals = cjk_compatibility_ideograph_faa8;
-			return static_count(cjk_compatibility_ideograph_faa8);
+			return 1;
 		case 0xFAA9:
 			*normals = cjk_compatibility_ideograph_faa9;
-			return static_count(cjk_compatibility_ideograph_faa9);
+			return 1;
 		case 0xFAAA:
 			*normals = cjk_compatibility_ideograph_faaa;
-			return static_count(cjk_compatibility_ideograph_faaa);
+			return 1;
 		case 0xFAAB:
 			*normals = cjk_compatibility_ideograph_faab;
-			return static_count(cjk_compatibility_ideograph_faab);
+			return 1;
 		case 0xFAAC:
 			*normals = cjk_compatibility_ideograph_faac;
-			return static_count(cjk_compatibility_ideograph_faac);
+			return 1;
 		case 0xFAAD:
 			*normals = cjk_compatibility_ideograph_faad;
-			return static_count(cjk_compatibility_ideograph_faad);
+			return 1;
 		case 0xFAAE:
 			*normals = cjk_compatibility_ideograph_faae;
-			return static_count(cjk_compatibility_ideograph_faae);
+			return 1;
 		case 0xFAAF:
 			*normals = cjk_compatibility_ideograph_faaf;
-			return static_count(cjk_compatibility_ideograph_faaf);
+			return 1;
 		case 0xFAB0:
 			*normals = cjk_compatibility_ideograph_fab0;
-			return static_count(cjk_compatibility_ideograph_fab0);
+			return 1;
 		case 0xFAB1:
 			*normals = cjk_compatibility_ideograph_fab1;
-			return static_count(cjk_compatibility_ideograph_fab1);
+			return 1;
 		case 0xFAB2:
 			*normals = cjk_compatibility_ideograph_fab2;
-			return static_count(cjk_compatibility_ideograph_fab2);
+			return 1;
 		case 0xFAB3:
 			*normals = cjk_compatibility_ideograph_fab3;
-			return static_count(cjk_compatibility_ideograph_fab3);
+			return 1;
 		case 0xFAB4:
 			*normals = cjk_compatibility_ideograph_fab4;
-			return static_count(cjk_compatibility_ideograph_fab4);
+			return 1;
 		case 0xFAB5:
 			*normals = cjk_compatibility_ideograph_fab5;
-			return static_count(cjk_compatibility_ideograph_fab5);
+			return 1;
 		case 0xFAB6:
 			*normals = cjk_compatibility_ideograph_fab6;
-			return static_count(cjk_compatibility_ideograph_fab6);
+			return 1;
 		case 0xFAB7:
 			*normals = cjk_compatibility_ideograph_fab7;
-			return static_count(cjk_compatibility_ideograph_fab7);
+			return 1;
 		case 0xFAB8:
 			*normals = cjk_compatibility_ideograph_fab8;
-			return static_count(cjk_compatibility_ideograph_fab8);
+			return 1;
 		case 0xFAB9:
 			*normals = cjk_compatibility_ideograph_fab9;
-			return static_count(cjk_compatibility_ideograph_fab9);
+			return 1;
 		case 0xFABA:
 			*normals = cjk_compatibility_ideograph_faba;
-			return static_count(cjk_compatibility_ideograph_faba);
+			return 1;
 		case 0xFABB:
 			*normals = cjk_compatibility_ideograph_fabb;
-			return static_count(cjk_compatibility_ideograph_fabb);
+			return 1;
 		case 0xFABC:
 			*normals = cjk_compatibility_ideograph_fabc;
-			return static_count(cjk_compatibility_ideograph_fabc);
+			return 1;
 		case 0xFABD:
 			*normals = cjk_compatibility_ideograph_fabd;
-			return static_count(cjk_compatibility_ideograph_fabd);
+			return 1;
 		case 0xFABE:
 			*normals = cjk_compatibility_ideograph_fabe;
-			return static_count(cjk_compatibility_ideograph_fabe);
+			return 1;
 		case 0xFABF:
 			*normals = cjk_compatibility_ideograph_fabf;
-			return static_count(cjk_compatibility_ideograph_fabf);
+			return 1;
 		case 0xFAC0:
 			*normals = cjk_compatibility_ideograph_fac0;
-			return static_count(cjk_compatibility_ideograph_fac0);
+			return 1;
 		case 0xFAC1:
 			*normals = cjk_compatibility_ideograph_fac1;
-			return static_count(cjk_compatibility_ideograph_fac1);
+			return 1;
 		case 0xFAC2:
 			*normals = cjk_compatibility_ideograph_fac2;
-			return static_count(cjk_compatibility_ideograph_fac2);
+			return 1;
 		case 0xFAC3:
 			*normals = cjk_compatibility_ideograph_fac3;
-			return static_count(cjk_compatibility_ideograph_fac3);
+			return 1;
 		case 0xFAC4:
 			*normals = cjk_compatibility_ideograph_fac4;
-			return static_count(cjk_compatibility_ideograph_fac4);
+			return 1;
 		case 0xFAC5:
 			*normals = cjk_compatibility_ideograph_fac5;
-			return static_count(cjk_compatibility_ideograph_fac5);
+			return 1;
 		case 0xFAC6:
 			*normals = cjk_compatibility_ideograph_fac6;
-			return static_count(cjk_compatibility_ideograph_fac6);
+			return 1;
 		case 0xFAC7:
 			*normals = cjk_compatibility_ideograph_fac7;
-			return static_count(cjk_compatibility_ideograph_fac7);
+			return 1;
 		case 0xFAC8:
 			*normals = cjk_compatibility_ideograph_fac8;
-			return static_count(cjk_compatibility_ideograph_fac8);
+			return 1;
 		case 0xFAC9:
 			*normals = cjk_compatibility_ideograph_fac9;
-			return static_count(cjk_compatibility_ideograph_fac9);
+			return 1;
 		case 0xFACA:
 			*normals = cjk_compatibility_ideograph_faca;
-			return static_count(cjk_compatibility_ideograph_faca);
+			return 1;
 		case 0xFACB:
 			*normals = cjk_compatibility_ideograph_facb;
-			return static_count(cjk_compatibility_ideograph_facb);
+			return 1;
 		case 0xFACC:
 			*normals = cjk_compatibility_ideograph_facc;
-			return static_count(cjk_compatibility_ideograph_facc);
+			return 1;
 		case 0xFACD:
 			*normals = cjk_compatibility_ideograph_facd;
-			return static_count(cjk_compatibility_ideograph_facd);
+			return 1;
 		case 0xFACE:
 			*normals = cjk_compatibility_ideograph_face;
-			return static_count(cjk_compatibility_ideograph_face);
+			return 1;
 		case 0xFACF:
 			*normals = cjk_compatibility_ideograph_facf;
-			return static_count(cjk_compatibility_ideograph_facf);
+			return 1;
 		case 0xFAD0:
 			*normals = cjk_compatibility_ideograph_fad0;
-			return static_count(cjk_compatibility_ideograph_fad0);
+			return 1;
 		case 0xFAD1:
 			*normals = cjk_compatibility_ideograph_fad1;
-			return static_count(cjk_compatibility_ideograph_fad1);
+			return 1;
 		case 0xFAD2:
 			*normals = cjk_compatibility_ideograph_fad2;
-			return static_count(cjk_compatibility_ideograph_fad2);
+			return 1;
 		case 0xFAD3:
 			*normals = cjk_compatibility_ideograph_fad3;
-			return static_count(cjk_compatibility_ideograph_fad3);
+			return 1;
 		case 0xFAD4:
 			*normals = cjk_compatibility_ideograph_fad4;
-			return static_count(cjk_compatibility_ideograph_fad4);
+			return 1;
 		case 0xFAD5:
 			*normals = cjk_compatibility_ideograph_fad5;
-			return static_count(cjk_compatibility_ideograph_fad5);
+			return 1;
 		case 0xFAD6:
 			*normals = cjk_compatibility_ideograph_fad6;
-			return static_count(cjk_compatibility_ideograph_fad6);
+			return 1;
 		case 0xFAD7:
 			*normals = cjk_compatibility_ideograph_fad7;
-			return static_count(cjk_compatibility_ideograph_fad7);
+			return 1;
 		case 0xFAD8:
 			*normals = cjk_compatibility_ideograph_fad8;
-			return static_count(cjk_compatibility_ideograph_fad8);
+			return 1;
 		case 0xFAD9:
 			*normals = cjk_compatibility_ideograph_fad9;
-			return static_count(cjk_compatibility_ideograph_fad9);
+			return 1;
 		case 0xFB00:
 			*normals = latin_small_ligature_ff;
-			return static_count(latin_small_ligature_ff);
+			return 2;
 		case 0xFB01:
 			*normals = latin_small_ligature_fi;
-			return static_count(latin_small_ligature_fi);
+			return 2;
 		case 0xFB02:
 			*normals = latin_small_ligature_fl;
-			return static_count(latin_small_ligature_fl);
+			return 2;
 		case 0xFB03:
 			*normals = latin_small_ligature_ffi;
-			return static_count(latin_small_ligature_ffi);
+			return 3;
 		case 0xFB04:
 			*normals = latin_small_ligature_ffl;
-			return static_count(latin_small_ligature_ffl);
+			return 3;
 		case 0xFB05:
 			*normals = latin_small_ligature_long_s_t;
-			return static_count(latin_small_ligature_long_s_t);
+			return 2;
 		case 0xFB06:
 			*normals = latin_small_ligature_st;
-			return static_count(latin_small_ligature_st);
+			return 2;
 		case 0xFB13:
 			*normals = armenian_small_ligature_men_now;
-			return static_count(armenian_small_ligature_men_now);
+			return 2;
 		case 0xFB14:
 			*normals = armenian_small_ligature_men_ech;
-			return static_count(armenian_small_ligature_men_ech);
+			return 2;
 		case 0xFB15:
 			*normals = armenian_small_ligature_men_ini;
-			return static_count(armenian_small_ligature_men_ini);
+			return 2;
 		case 0xFB16:
 			*normals = armenian_small_ligature_vew_now;
-			return static_count(armenian_small_ligature_vew_now);
+			return 2;
 		case 0xFB17:
 			*normals = armenian_small_ligature_men_xeh;
-			return static_count(armenian_small_ligature_men_xeh);
+			return 2;
 		case 0xFB1D:
 			*normals = hebrew_letter_yod_with_hiriq;
-			return static_count(hebrew_letter_yod_with_hiriq);
+			return 2;
 		case 0xFB1F:
 			*normals = hebrew_ligature_yiddish_yod_yod_patah;
-			return static_count(hebrew_ligature_yiddish_yod_yod_patah);
+			return 2;
 		case 0xFB20:
 			*normals = hebrew_letter_alternative_ayin;
-			return static_count(hebrew_letter_alternative_ayin);
+			return 1;
 		case 0xFB21:
 			*normals = hebrew_letter_wide_alef;
-			return static_count(hebrew_letter_wide_alef);
+			return 1;
 		case 0xFB22:
 			*normals = hebrew_letter_wide_dalet;
-			return static_count(hebrew_letter_wide_dalet);
+			return 1;
 		case 0xFB23:
 			*normals = hebrew_letter_wide_he;
-			return static_count(hebrew_letter_wide_he);
+			return 1;
 		case 0xFB24:
 			*normals = hebrew_letter_wide_kaf;
-			return static_count(hebrew_letter_wide_kaf);
+			return 1;
 		case 0xFB25:
 			*normals = hebrew_letter_wide_lamed;
-			return static_count(hebrew_letter_wide_lamed);
+			return 1;
 		case 0xFB26:
 			*normals = hebrew_letter_wide_final_mem;
-			return static_count(hebrew_letter_wide_final_mem);
+			return 1;
 		case 0xFB27:
 			*normals = hebrew_letter_wide_resh;
-			return static_count(hebrew_letter_wide_resh);
+			return 1;
 		case 0xFB28:
 			*normals = hebrew_letter_wide_tav;
-			return static_count(hebrew_letter_wide_tav);
+			return 1;
 		case 0xFB29:
 			*normals = hebrew_letter_alternative_plus_sign;
-			return static_count(hebrew_letter_alternative_plus_sign);
+			return 1;
 		case 0xFB2A:
 			*normals = hebrew_letter_shin_with_shin_dot;
-			return static_count(hebrew_letter_shin_with_shin_dot);
+			return 2;
 		case 0xFB2B:
 			*normals = hebrew_letter_shin_with_sin_dot;
-			return static_count(hebrew_letter_shin_with_sin_dot);
+			return 2;
 		case 0xFB2C:
 			*normals = hebrew_letter_shin_with_dagesh_and_shin_dot;
-			return static_count(hebrew_letter_shin_with_dagesh_and_shin_dot);
+			return 2;
 		case 0xFB2D:
 			*normals = hebrew_letter_shin_with_dagesh_and_sin_dot;
-			return static_count(hebrew_letter_shin_with_dagesh_and_sin_dot);
+			return 2;
 		case 0xFB2E:
 			*normals = hebrew_letter_alef_with_patah;
-			return static_count(hebrew_letter_alef_with_patah);
+			return 2;
 		case 0xFB2F:
 			*normals = hebrew_letter_alef_with_qamats;
-			return static_count(hebrew_letter_alef_with_qamats);
+			return 2;
 		case 0xFB30:
 			*normals = hebrew_letter_alef_with_mapiq;
-			return static_count(hebrew_letter_alef_with_mapiq);
+			return 2;
 		case 0xFB31:
 			*normals = hebrew_letter_bet_with_dagesh;
-			return static_count(hebrew_letter_bet_with_dagesh);
+			return 2;
 		case 0xFB32:
 			*normals = hebrew_letter_gimel_with_dagesh;
-			return static_count(hebrew_letter_gimel_with_dagesh);
+			return 2;
 		case 0xFB33:
 			*normals = hebrew_letter_dalet_with_dagesh;
-			return static_count(hebrew_letter_dalet_with_dagesh);
+			return 2;
 		case 0xFB34:
 			*normals = hebrew_letter_he_with_mapiq;
-			return static_count(hebrew_letter_he_with_mapiq);
+			return 2;
 		case 0xFB35:
 			*normals = hebrew_letter_vav_with_dagesh;
-			return static_count(hebrew_letter_vav_with_dagesh);
+			return 2;
 		case 0xFB36:
 			*normals = hebrew_letter_zayin_with_dagesh;
-			return static_count(hebrew_letter_zayin_with_dagesh);
+			return 2;
 		case 0xFB38:
 			*normals = hebrew_letter_tet_with_dagesh;
-			return static_count(hebrew_letter_tet_with_dagesh);
+			return 2;
 		case 0xFB39:
 			*normals = hebrew_letter_yod_with_dagesh;
-			return static_count(hebrew_letter_yod_with_dagesh);
+			return 2;
 		case 0xFB3A:
 			*normals = hebrew_letter_final_kaf_with_dagesh;
-			return static_count(hebrew_letter_final_kaf_with_dagesh);
+			return 2;
 		case 0xFB3B:
 			*normals = hebrew_letter_kaf_with_dagesh;
-			return static_count(hebrew_letter_kaf_with_dagesh);
+			return 2;
 		case 0xFB3C:
 			*normals = hebrew_letter_lamed_with_dagesh;
-			return static_count(hebrew_letter_lamed_with_dagesh);
+			return 2;
 		case 0xFB3E:
 			*normals = hebrew_letter_mem_with_dagesh;
-			return static_count(hebrew_letter_mem_with_dagesh);
+			return 2;
 		case 0xFB40:
 			*normals = hebrew_letter_nun_with_dagesh;
-			return static_count(hebrew_letter_nun_with_dagesh);
+			return 2;
 		case 0xFB41:
 			*normals = hebrew_letter_samekh_with_dagesh;
-			return static_count(hebrew_letter_samekh_with_dagesh);
+			return 2;
 		case 0xFB43:
 			*normals = hebrew_letter_final_pe_with_dagesh;
-			return static_count(hebrew_letter_final_pe_with_dagesh);
+			return 2;
 		case 0xFB44:
 			*normals = hebrew_letter_pe_with_dagesh;
-			return static_count(hebrew_letter_pe_with_dagesh);
+			return 2;
 		case 0xFB46:
 			*normals = hebrew_letter_tsadi_with_dagesh;
-			return static_count(hebrew_letter_tsadi_with_dagesh);
+			return 2;
 		case 0xFB47:
 			*normals = hebrew_letter_qof_with_dagesh;
-			return static_count(hebrew_letter_qof_with_dagesh);
+			return 2;
 		case 0xFB48:
 			*normals = hebrew_letter_resh_with_dagesh;
-			return static_count(hebrew_letter_resh_with_dagesh);
+			return 2;
 		case 0xFB49:
 			*normals = hebrew_letter_shin_with_dagesh;
-			return static_count(hebrew_letter_shin_with_dagesh);
+			return 2;
 		case 0xFB4A:
 			*normals = hebrew_letter_tav_with_dagesh;
-			return static_count(hebrew_letter_tav_with_dagesh);
+			return 2;
 		case 0xFB4B:
 			*normals = hebrew_letter_vav_with_holam;
-			return static_count(hebrew_letter_vav_with_holam);
+			return 2;
 		case 0xFB4C:
 			*normals = hebrew_letter_bet_with_rafe;
-			return static_count(hebrew_letter_bet_with_rafe);
+			return 2;
 		case 0xFB4D:
 			*normals = hebrew_letter_kaf_with_rafe;
-			return static_count(hebrew_letter_kaf_with_rafe);
+			return 2;
 		case 0xFB4E:
 			*normals = hebrew_letter_pe_with_rafe;
-			return static_count(hebrew_letter_pe_with_rafe);
+			return 2;
 		case 0xFB4F:
 			*normals = hebrew_ligature_alef_lamed;
-			return static_count(hebrew_ligature_alef_lamed);
+			return 2;
 		case 0xFB50:
 			*normals = arabic_letter_alef_wasla_isolated_form;
-			return static_count(arabic_letter_alef_wasla_isolated_form);
+			return 1;
 		case 0xFB51:
 			*normals = arabic_letter_alef_wasla_final_form;
-			return static_count(arabic_letter_alef_wasla_final_form);
+			return 1;
 		case 0xFB52:
 			*normals = arabic_letter_beeh_isolated_form;
-			return static_count(arabic_letter_beeh_isolated_form);
+			return 1;
 		case 0xFB53:
 			*normals = arabic_letter_beeh_final_form;
-			return static_count(arabic_letter_beeh_final_form);
+			return 1;
 		case 0xFB54:
 			*normals = arabic_letter_beeh_initial_form;
-			return static_count(arabic_letter_beeh_initial_form);
+			return 1;
 		case 0xFB55:
 			*normals = arabic_letter_beeh_medial_form;
-			return static_count(arabic_letter_beeh_medial_form);
+			return 1;
 		case 0xFB56:
 			*normals = arabic_letter_peh_isolated_form;
-			return static_count(arabic_letter_peh_isolated_form);
+			return 1;
 		case 0xFB57:
 			*normals = arabic_letter_peh_final_form;
-			return static_count(arabic_letter_peh_final_form);
+			return 1;
 		case 0xFB58:
 			*normals = arabic_letter_peh_initial_form;
-			return static_count(arabic_letter_peh_initial_form);
+			return 1;
 		case 0xFB59:
 			*normals = arabic_letter_peh_medial_form;
-			return static_count(arabic_letter_peh_medial_form);
+			return 1;
 		case 0xFB5A:
 			*normals = arabic_letter_beheh_isolated_form;
-			return static_count(arabic_letter_beheh_isolated_form);
+			return 1;
 		case 0xFB5B:
 			*normals = arabic_letter_beheh_final_form;
-			return static_count(arabic_letter_beheh_final_form);
+			return 1;
 		case 0xFB5C:
 			*normals = arabic_letter_beheh_initial_form;
-			return static_count(arabic_letter_beheh_initial_form);
+			return 1;
 		case 0xFB5D:
 			*normals = arabic_letter_beheh_medial_form;
-			return static_count(arabic_letter_beheh_medial_form);
+			return 1;
 		case 0xFB5E:
 			*normals = arabic_letter_tteheh_isolated_form;
-			return static_count(arabic_letter_tteheh_isolated_form);
+			return 1;
 		case 0xFB5F:
 			*normals = arabic_letter_tteheh_final_form;
-			return static_count(arabic_letter_tteheh_final_form);
+			return 1;
 		case 0xFB60:
 			*normals = arabic_letter_tteheh_initial_form;
-			return static_count(arabic_letter_tteheh_initial_form);
+			return 1;
 		case 0xFB61:
 			*normals = arabic_letter_tteheh_medial_form;
-			return static_count(arabic_letter_tteheh_medial_form);
+			return 1;
 		case 0xFB62:
 			*normals = arabic_letter_teheh_isolated_form;
-			return static_count(arabic_letter_teheh_isolated_form);
+			return 1;
 		case 0xFB63:
 			*normals = arabic_letter_teheh_final_form;
-			return static_count(arabic_letter_teheh_final_form);
+			return 1;
 		case 0xFB64:
 			*normals = arabic_letter_teheh_initial_form;
-			return static_count(arabic_letter_teheh_initial_form);
+			return 1;
 		case 0xFB65:
 			*normals = arabic_letter_teheh_medial_form;
-			return static_count(arabic_letter_teheh_medial_form);
+			return 1;
 		case 0xFB66:
 			*normals = arabic_letter_tteh_isolated_form;
-			return static_count(arabic_letter_tteh_isolated_form);
+			return 1;
 		case 0xFB67:
 			*normals = arabic_letter_tteh_final_form;
-			return static_count(arabic_letter_tteh_final_form);
+			return 1;
 		case 0xFB68:
 			*normals = arabic_letter_tteh_initial_form;
-			return static_count(arabic_letter_tteh_initial_form);
+			return 1;
 		case 0xFB69:
 			*normals = arabic_letter_tteh_medial_form;
-			return static_count(arabic_letter_tteh_medial_form);
+			return 1;
 		case 0xFB6A:
 			*normals = arabic_letter_veh_isolated_form;
-			return static_count(arabic_letter_veh_isolated_form);
+			return 1;
 		case 0xFB6B:
 			*normals = arabic_letter_veh_final_form;
-			return static_count(arabic_letter_veh_final_form);
+			return 1;
 		case 0xFB6C:
 			*normals = arabic_letter_veh_initial_form;
-			return static_count(arabic_letter_veh_initial_form);
+			return 1;
 		case 0xFB6D:
 			*normals = arabic_letter_veh_medial_form;
-			return static_count(arabic_letter_veh_medial_form);
+			return 1;
 		case 0xFB6E:
 			*normals = arabic_letter_peheh_isolated_form;
-			return static_count(arabic_letter_peheh_isolated_form);
+			return 1;
 		case 0xFB6F:
 			*normals = arabic_letter_peheh_final_form;
-			return static_count(arabic_letter_peheh_final_form);
+			return 1;
 		case 0xFB70:
 			*normals = arabic_letter_peheh_initial_form;
-			return static_count(arabic_letter_peheh_initial_form);
+			return 1;
 		case 0xFB71:
 			*normals = arabic_letter_peheh_medial_form;
-			return static_count(arabic_letter_peheh_medial_form);
+			return 1;
 		case 0xFB72:
 			*normals = arabic_letter_dyeh_isolated_form;
-			return static_count(arabic_letter_dyeh_isolated_form);
+			return 1;
 		case 0xFB73:
 			*normals = arabic_letter_dyeh_final_form;
-			return static_count(arabic_letter_dyeh_final_form);
+			return 1;
 		case 0xFB74:
 			*normals = arabic_letter_dyeh_initial_form;
-			return static_count(arabic_letter_dyeh_initial_form);
+			return 1;
 		case 0xFB75:
 			*normals = arabic_letter_dyeh_medial_form;
-			return static_count(arabic_letter_dyeh_medial_form);
+			return 1;
 		case 0xFB76:
 			*normals = arabic_letter_nyeh_isolated_form;
-			return static_count(arabic_letter_nyeh_isolated_form);
+			return 1;
 		case 0xFB77:
 			*normals = arabic_letter_nyeh_final_form;
-			return static_count(arabic_letter_nyeh_final_form);
+			return 1;
 		case 0xFB78:
 			*normals = arabic_letter_nyeh_initial_form;
-			return static_count(arabic_letter_nyeh_initial_form);
+			return 1;
 		case 0xFB79:
 			*normals = arabic_letter_nyeh_medial_form;
-			return static_count(arabic_letter_nyeh_medial_form);
+			return 1;
 		case 0xFB7A:
 			*normals = arabic_letter_tcheh_isolated_form;
-			return static_count(arabic_letter_tcheh_isolated_form);
+			return 1;
 		case 0xFB7B:
 			*normals = arabic_letter_tcheh_final_form;
-			return static_count(arabic_letter_tcheh_final_form);
+			return 1;
 		case 0xFB7C:
 			*normals = arabic_letter_tcheh_initial_form;
-			return static_count(arabic_letter_tcheh_initial_form);
+			return 1;
 		case 0xFB7D:
 			*normals = arabic_letter_tcheh_medial_form;
-			return static_count(arabic_letter_tcheh_medial_form);
+			return 1;
 		case 0xFB7E:
 			*normals = arabic_letter_tcheheh_isolated_form;
-			return static_count(arabic_letter_tcheheh_isolated_form);
+			return 1;
 		case 0xFB7F:
 			*normals = arabic_letter_tcheheh_final_form;
-			return static_count(arabic_letter_tcheheh_final_form);
+			return 1;
 		case 0xFB80:
 			*normals = arabic_letter_tcheheh_initial_form;
-			return static_count(arabic_letter_tcheheh_initial_form);
+			return 1;
 		case 0xFB81:
 			*normals = arabic_letter_tcheheh_medial_form;
-			return static_count(arabic_letter_tcheheh_medial_form);
+			return 1;
 		case 0xFB82:
 			*normals = arabic_letter_ddahal_isolated_form;
-			return static_count(arabic_letter_ddahal_isolated_form);
+			return 1;
 		case 0xFB83:
 			*normals = arabic_letter_ddahal_final_form;
-			return static_count(arabic_letter_ddahal_final_form);
+			return 1;
 		case 0xFB84:
 			*normals = arabic_letter_dahal_isolated_form;
-			return static_count(arabic_letter_dahal_isolated_form);
+			return 1;
 		case 0xFB85:
 			*normals = arabic_letter_dahal_final_form;
-			return static_count(arabic_letter_dahal_final_form);
+			return 1;
 		case 0xFB86:
 			*normals = arabic_letter_dul_isolated_form;
-			return static_count(arabic_letter_dul_isolated_form);
+			return 1;
 		case 0xFB87:
 			*normals = arabic_letter_dul_final_form;
-			return static_count(arabic_letter_dul_final_form);
+			return 1;
 		case 0xFB88:
 			*normals = arabic_letter_ddal_isolated_form;
-			return static_count(arabic_letter_ddal_isolated_form);
+			return 1;
 		case 0xFB89:
 			*normals = arabic_letter_ddal_final_form;
-			return static_count(arabic_letter_ddal_final_form);
+			return 1;
 		case 0xFB8A:
 			*normals = arabic_letter_jeh_isolated_form;
-			return static_count(arabic_letter_jeh_isolated_form);
+			return 1;
 		case 0xFB8B:
 			*normals = arabic_letter_jeh_final_form;
-			return static_count(arabic_letter_jeh_final_form);
+			return 1;
 		case 0xFB8C:
 			*normals = arabic_letter_rreh_isolated_form;
-			return static_count(arabic_letter_rreh_isolated_form);
+			return 1;
 		case 0xFB8D:
 			*normals = arabic_letter_rreh_final_form;
-			return static_count(arabic_letter_rreh_final_form);
+			return 1;
 		case 0xFB8E:
 			*normals = arabic_letter_keheh_isolated_form;
-			return static_count(arabic_letter_keheh_isolated_form);
+			return 1;
 		case 0xFB8F:
 			*normals = arabic_letter_keheh_final_form;
-			return static_count(arabic_letter_keheh_final_form);
+			return 1;
 		case 0xFB90:
 			*normals = arabic_letter_keheh_initial_form;
-			return static_count(arabic_letter_keheh_initial_form);
+			return 1;
 		case 0xFB91:
 			*normals = arabic_letter_keheh_medial_form;
-			return static_count(arabic_letter_keheh_medial_form);
+			return 1;
 		case 0xFB92:
 			*normals = arabic_letter_gaf_isolated_form;
-			return static_count(arabic_letter_gaf_isolated_form);
+			return 1;
 		case 0xFB93:
 			*normals = arabic_letter_gaf_final_form;
-			return static_count(arabic_letter_gaf_final_form);
+			return 1;
 		case 0xFB94:
 			*normals = arabic_letter_gaf_initial_form;
-			return static_count(arabic_letter_gaf_initial_form);
+			return 1;
 		case 0xFB95:
 			*normals = arabic_letter_gaf_medial_form;
-			return static_count(arabic_letter_gaf_medial_form);
+			return 1;
 		case 0xFB96:
 			*normals = arabic_letter_gueh_isolated_form;
-			return static_count(arabic_letter_gueh_isolated_form);
+			return 1;
 		case 0xFB97:
 			*normals = arabic_letter_gueh_final_form;
-			return static_count(arabic_letter_gueh_final_form);
+			return 1;
 		case 0xFB98:
 			*normals = arabic_letter_gueh_initial_form;
-			return static_count(arabic_letter_gueh_initial_form);
+			return 1;
 		case 0xFB99:
 			*normals = arabic_letter_gueh_medial_form;
-			return static_count(arabic_letter_gueh_medial_form);
+			return 1;
 		case 0xFB9A:
 			*normals = arabic_letter_ngoeh_isolated_form;
-			return static_count(arabic_letter_ngoeh_isolated_form);
+			return 1;
 		case 0xFB9B:
 			*normals = arabic_letter_ngoeh_final_form;
-			return static_count(arabic_letter_ngoeh_final_form);
+			return 1;
 		case 0xFB9C:
 			*normals = arabic_letter_ngoeh_initial_form;
-			return static_count(arabic_letter_ngoeh_initial_form);
+			return 1;
 		case 0xFB9D:
 			*normals = arabic_letter_ngoeh_medial_form;
-			return static_count(arabic_letter_ngoeh_medial_form);
+			return 1;
 		case 0xFB9E:
 			*normals = arabic_letter_noon_ghunna_isolated_form;
-			return static_count(arabic_letter_noon_ghunna_isolated_form);
+			return 1;
 		case 0xFB9F:
 			*normals = arabic_letter_noon_ghunna_final_form;
-			return static_count(arabic_letter_noon_ghunna_final_form);
+			return 1;
 		case 0xFBA0:
 			*normals = arabic_letter_rnoon_isolated_form;
-			return static_count(arabic_letter_rnoon_isolated_form);
+			return 1;
 		case 0xFBA1:
 			*normals = arabic_letter_rnoon_final_form;
-			return static_count(arabic_letter_rnoon_final_form);
+			return 1;
 		case 0xFBA2:
 			*normals = arabic_letter_rnoon_initial_form;
-			return static_count(arabic_letter_rnoon_initial_form);
+			return 1;
 		case 0xFBA3:
 			*normals = arabic_letter_rnoon_medial_form;
-			return static_count(arabic_letter_rnoon_medial_form);
+			return 1;
 		case 0xFBA4:
 			*normals = arabic_letter_heh_with_yeh_above_isolated_form;
-			return static_count(arabic_letter_heh_with_yeh_above_isolated_form);
+			return 1;
 		case 0xFBA5:
 			*normals = arabic_letter_heh_with_yeh_above_final_form;
-			return static_count(arabic_letter_heh_with_yeh_above_final_form);
+			return 1;
 		case 0xFBA6:
 			*normals = arabic_letter_heh_goal_isolated_form;
-			return static_count(arabic_letter_heh_goal_isolated_form);
+			return 1;
 		case 0xFBA7:
 			*normals = arabic_letter_heh_goal_final_form;
-			return static_count(arabic_letter_heh_goal_final_form);
+			return 1;
 		case 0xFBA8:
 			*normals = arabic_letter_heh_goal_initial_form;
-			return static_count(arabic_letter_heh_goal_initial_form);
+			return 1;
 		case 0xFBA9:
 			*normals = arabic_letter_heh_goal_medial_form;
-			return static_count(arabic_letter_heh_goal_medial_form);
+			return 1;
 		case 0xFBAA:
 			*normals = arabic_letter_heh_doachashmee_isolated_form;
-			return static_count(arabic_letter_heh_doachashmee_isolated_form);
+			return 1;
 		case 0xFBAB:
 			*normals = arabic_letter_heh_doachashmee_final_form;
-			return static_count(arabic_letter_heh_doachashmee_final_form);
+			return 1;
 		case 0xFBAC:
 			*normals = arabic_letter_heh_doachashmee_initial_form;
-			return static_count(arabic_letter_heh_doachashmee_initial_form);
+			return 1;
 		case 0xFBAD:
 			*normals = arabic_letter_heh_doachashmee_medial_form;
-			return static_count(arabic_letter_heh_doachashmee_medial_form);
+			return 1;
 		case 0xFBAE:
 			*normals = arabic_letter_yeh_barree_isolated_form;
-			return static_count(arabic_letter_yeh_barree_isolated_form);
+			return 1;
 		case 0xFBAF:
 			*normals = arabic_letter_yeh_barree_final_form;
-			return static_count(arabic_letter_yeh_barree_final_form);
+			return 1;
 		case 0xFBB0:
 			*normals = arabic_letter_yeh_barree_with_hamza_above_isolated_form;
-			return static_count(arabic_letter_yeh_barree_with_hamza_above_isolated_form);
+			return 1;
 		case 0xFBB1:
 			*normals = arabic_letter_yeh_barree_with_hamza_above_final_form;
-			return static_count(arabic_letter_yeh_barree_with_hamza_above_final_form);
+			return 1;
 		case 0xFBD3:
 			*normals = arabic_letter_ng_isolated_form;
-			return static_count(arabic_letter_ng_isolated_form);
+			return 1;
 		case 0xFBD4:
 			*normals = arabic_letter_ng_final_form;
-			return static_count(arabic_letter_ng_final_form);
+			return 1;
 		case 0xFBD5:
 			*normals = arabic_letter_ng_initial_form;
-			return static_count(arabic_letter_ng_initial_form);
+			return 1;
 		case 0xFBD6:
 			*normals = arabic_letter_ng_medial_form;
-			return static_count(arabic_letter_ng_medial_form);
+			return 1;
 		case 0xFBD7:
 			*normals = arabic_letter_u_isolated_form;
-			return static_count(arabic_letter_u_isolated_form);
+			return 1;
 		case 0xFBD8:
 			*normals = arabic_letter_u_final_form;
-			return static_count(arabic_letter_u_final_form);
+			return 1;
 		case 0xFBD9:
 			*normals = arabic_letter_oe_isolated_form;
-			return static_count(arabic_letter_oe_isolated_form);
+			return 1;
 		case 0xFBDA:
 			*normals = arabic_letter_oe_final_form;
-			return static_count(arabic_letter_oe_final_form);
+			return 1;
 		case 0xFBDB:
 			*normals = arabic_letter_yu_isolated_form;
-			return static_count(arabic_letter_yu_isolated_form);
+			return 1;
 		case 0xFBDC:
 			*normals = arabic_letter_yu_final_form;
-			return static_count(arabic_letter_yu_final_form);
+			return 1;
 		case 0xFBDD:
 			*normals = arabic_letter_u_with_hamza_above_isolated_form;
-			return static_count(arabic_letter_u_with_hamza_above_isolated_form);
+			return 1;
 		case 0xFBDE:
 			*normals = arabic_letter_ve_isolated_form;
-			return static_count(arabic_letter_ve_isolated_form);
+			return 1;
 		case 0xFBDF:
 			*normals = arabic_letter_ve_final_form;
-			return static_count(arabic_letter_ve_final_form);
+			return 1;
 		case 0xFBE0:
 			*normals = arabic_letter_kirghiz_oe_isolated_form;
-			return static_count(arabic_letter_kirghiz_oe_isolated_form);
+			return 1;
 		case 0xFBE1:
 			*normals = arabic_letter_kirghiz_oe_final_form;
-			return static_count(arabic_letter_kirghiz_oe_final_form);
+			return 1;
 		case 0xFBE2:
 			*normals = arabic_letter_kirghiz_yu_isolated_form;
-			return static_count(arabic_letter_kirghiz_yu_isolated_form);
+			return 1;
 		case 0xFBE3:
 			*normals = arabic_letter_kirghiz_yu_final_form;
-			return static_count(arabic_letter_kirghiz_yu_final_form);
+			return 1;
 		case 0xFBE4:
 			*normals = arabic_letter_e_isolated_form;
-			return static_count(arabic_letter_e_isolated_form);
+			return 1;
 		case 0xFBE5:
 			*normals = arabic_letter_e_final_form;
-			return static_count(arabic_letter_e_final_form);
+			return 1;
 		case 0xFBE6:
 			*normals = arabic_letter_e_initial_form;
-			return static_count(arabic_letter_e_initial_form);
+			return 1;
 		case 0xFBE7:
 			*normals = arabic_letter_e_medial_form;
-			return static_count(arabic_letter_e_medial_form);
+			return 1;
 		case 0xFBE8:
 			*normals = arabic_letter_uighur_kazakh_kirghiz_alef_maksura_initial_form;
-			return static_count(arabic_letter_uighur_kazakh_kirghiz_alef_maksura_initial_form);
+			return 1;
 		case 0xFBE9:
 			*normals = arabic_letter_uighur_kazakh_kirghiz_alef_maksura_medial_form;
-			return static_count(arabic_letter_uighur_kazakh_kirghiz_alef_maksura_medial_form);
+			return 1;
 		case 0xFBEA:
 			*normals = arabic_ligature_yeh_with_hamza_above_with_alef_isolated_form;
-			return static_count(arabic_ligature_yeh_with_hamza_above_with_alef_isolated_form);
+			return 2;
 		case 0xFBEB:
 			*normals = arabic_ligature_yeh_with_hamza_above_with_alef_final_form;
-			return static_count(arabic_ligature_yeh_with_hamza_above_with_alef_final_form);
+			return 2;
 		case 0xFBEC:
 			*normals = arabic_ligature_yeh_with_hamza_above_with_ae_isolated_form;
-			return static_count(arabic_ligature_yeh_with_hamza_above_with_ae_isolated_form);
+			return 2;
 		case 0xFBED:
 			*normals = arabic_ligature_yeh_with_hamza_above_with_ae_final_form;
-			return static_count(arabic_ligature_yeh_with_hamza_above_with_ae_final_form);
+			return 2;
 		case 0xFBEE:
 			*normals = arabic_ligature_yeh_with_hamza_above_with_waw_isolated_form;
-			return static_count(arabic_ligature_yeh_with_hamza_above_with_waw_isolated_form);
+			return 2;
 		case 0xFBEF:
 			*normals = arabic_ligature_yeh_with_hamza_above_with_waw_final_form;
-			return static_count(arabic_ligature_yeh_with_hamza_above_with_waw_final_form);
+			return 2;
 		case 0xFBF0:
 			*normals = arabic_ligature_yeh_with_hamza_above_with_u_isolated_form;
-			return static_count(arabic_ligature_yeh_with_hamza_above_with_u_isolated_form);
+			return 2;
 		case 0xFBF1:
 			*normals = arabic_ligature_yeh_with_hamza_above_with_u_final_form;
-			return static_count(arabic_ligature_yeh_with_hamza_above_with_u_final_form);
+			return 2;
 		case 0xFBF2:
 			*normals = arabic_ligature_yeh_with_hamza_above_with_oe_isolated_form;
-			return static_count(arabic_ligature_yeh_with_hamza_above_with_oe_isolated_form);
+			return 2;
 		case 0xFBF3:
 			*normals = arabic_ligature_yeh_with_hamza_above_with_oe_final_form;
-			return static_count(arabic_ligature_yeh_with_hamza_above_with_oe_final_form);
+			return 2;
 		case 0xFBF4:
 			*normals = arabic_ligature_yeh_with_hamza_above_with_yu_isolated_form;
-			return static_count(arabic_ligature_yeh_with_hamza_above_with_yu_isolated_form);
+			return 2;
 		case 0xFBF5:
 			*normals = arabic_ligature_yeh_with_hamza_above_with_yu_final_form;
-			return static_count(arabic_ligature_yeh_with_hamza_above_with_yu_final_form);
+			return 2;
 		case 0xFBF6:
 			*normals = arabic_ligature_yeh_with_hamza_above_with_e_isolated_form;
-			return static_count(arabic_ligature_yeh_with_hamza_above_with_e_isolated_form);
+			return 2;
 		case 0xFBF7:
 			*normals = arabic_ligature_yeh_with_hamza_above_with_e_final_form;
-			return static_count(arabic_ligature_yeh_with_hamza_above_with_e_final_form);
+			return 2;
 		case 0xFBF8:
 			*normals = arabic_ligature_yeh_with_hamza_above_with_e_initial_form;
-			return static_count(arabic_ligature_yeh_with_hamza_above_with_e_initial_form);
+			return 2;
 		case 0xFBF9:
 			*normals = arabic_ligature_uighur_kirghiz_yeh_with_hamza_above_with_alef_maksura_isolated_form;
-			return static_count(arabic_ligature_uighur_kirghiz_yeh_with_hamza_above_with_alef_maksura_isolated_form);
+			return 2;
 		case 0xFBFA:
 			*normals = arabic_ligature_uighur_kirghiz_yeh_with_hamza_above_with_alef_maksura_final_form;
-			return static_count(arabic_ligature_uighur_kirghiz_yeh_with_hamza_above_with_alef_maksura_final_form);
+			return 2;
 		case 0xFBFB:
 			*normals = arabic_ligature_uighur_kirghiz_yeh_with_hamza_above_with_alef_maksura_initial_form;
-			return static_count(arabic_ligature_uighur_kirghiz_yeh_with_hamza_above_with_alef_maksura_initial_form);
+			return 2;
 		case 0xFBFC:
 			*normals = arabic_letter_farsi_yeh_isolated_form;
-			return static_count(arabic_letter_farsi_yeh_isolated_form);
+			return 1;
 		case 0xFBFD:
 			*normals = arabic_letter_farsi_yeh_final_form;
-			return static_count(arabic_letter_farsi_yeh_final_form);
+			return 1;
 		case 0xFBFE:
 			*normals = arabic_letter_farsi_yeh_initial_form;
-			return static_count(arabic_letter_farsi_yeh_initial_form);
+			return 1;
 		case 0xFBFF:
 			*normals = arabic_letter_farsi_yeh_medial_form;
-			return static_count(arabic_letter_farsi_yeh_medial_form);
+			return 1;
 		case 0xFC00:
 			*normals = arabic_ligature_yeh_with_hamza_above_with_jeem_isolated_form;
-			return static_count(arabic_ligature_yeh_with_hamza_above_with_jeem_isolated_form);
+			return 2;
 		case 0xFC01:
 			*normals = arabic_ligature_yeh_with_hamza_above_with_hah_isolated_form;
-			return static_count(arabic_ligature_yeh_with_hamza_above_with_hah_isolated_form);
+			return 2;
 		case 0xFC02:
 			*normals = arabic_ligature_yeh_with_hamza_above_with_meem_isolated_form;
-			return static_count(arabic_ligature_yeh_with_hamza_above_with_meem_isolated_form);
+			return 2;
 		case 0xFC03:
 			*normals = arabic_ligature_yeh_with_hamza_above_with_alef_maksura_isolated_form;
-			return static_count(arabic_ligature_yeh_with_hamza_above_with_alef_maksura_isolated_form);
+			return 2;
 		case 0xFC04:
 			*normals = arabic_ligature_yeh_with_hamza_above_with_yeh_isolated_form;
-			return static_count(arabic_ligature_yeh_with_hamza_above_with_yeh_isolated_form);
+			return 2;
 		case 0xFC05:
 			*normals = arabic_ligature_beh_with_jeem_isolated_form;
-			return static_count(arabic_ligature_beh_with_jeem_isolated_form);
+			return 2;
 		case 0xFC06:
 			*normals = arabic_ligature_beh_with_hah_isolated_form;
-			return static_count(arabic_ligature_beh_with_hah_isolated_form);
+			return 2;
 		case 0xFC07:
 			*normals = arabic_ligature_beh_with_khah_isolated_form;
-			return static_count(arabic_ligature_beh_with_khah_isolated_form);
+			return 2;
 		case 0xFC08:
 			*normals = arabic_ligature_beh_with_meem_isolated_form;
-			return static_count(arabic_ligature_beh_with_meem_isolated_form);
+			return 2;
 		case 0xFC09:
 			*normals = arabic_ligature_beh_with_alef_maksura_isolated_form;
-			return static_count(arabic_ligature_beh_with_alef_maksura_isolated_form);
+			return 2;
 		case 0xFC0A:
 			*normals = arabic_ligature_beh_with_yeh_isolated_form;
-			return static_count(arabic_ligature_beh_with_yeh_isolated_form);
+			return 2;
 		case 0xFC0B:
 			*normals = arabic_ligature_teh_with_jeem_isolated_form;
-			return static_count(arabic_ligature_teh_with_jeem_isolated_form);
+			return 2;
 		case 0xFC0C:
 			*normals = arabic_ligature_teh_with_hah_isolated_form;
-			return static_count(arabic_ligature_teh_with_hah_isolated_form);
+			return 2;
 		case 0xFC0D:
 			*normals = arabic_ligature_teh_with_khah_isolated_form;
-			return static_count(arabic_ligature_teh_with_khah_isolated_form);
+			return 2;
 		case 0xFC0E:
 			*normals = arabic_ligature_teh_with_meem_isolated_form;
-			return static_count(arabic_ligature_teh_with_meem_isolated_form);
+			return 2;
 		case 0xFC0F:
 			*normals = arabic_ligature_teh_with_alef_maksura_isolated_form;
-			return static_count(arabic_ligature_teh_with_alef_maksura_isolated_form);
+			return 2;
 		case 0xFC10:
 			*normals = arabic_ligature_teh_with_yeh_isolated_form;
-			return static_count(arabic_ligature_teh_with_yeh_isolated_form);
+			return 2;
 		case 0xFC11:
 			*normals = arabic_ligature_theh_with_jeem_isolated_form;
-			return static_count(arabic_ligature_theh_with_jeem_isolated_form);
+			return 2;
 		case 0xFC12:
 			*normals = arabic_ligature_theh_with_meem_isolated_form;
-			return static_count(arabic_ligature_theh_with_meem_isolated_form);
+			return 2;
 		case 0xFC13:
 			*normals = arabic_ligature_theh_with_alef_maksura_isolated_form;
-			return static_count(arabic_ligature_theh_with_alef_maksura_isolated_form);
+			return 2;
 		case 0xFC14:
 			*normals = arabic_ligature_theh_with_yeh_isolated_form;
-			return static_count(arabic_ligature_theh_with_yeh_isolated_form);
+			return 2;
 		case 0xFC15:
 			*normals = arabic_ligature_jeem_with_hah_isolated_form;
-			return static_count(arabic_ligature_jeem_with_hah_isolated_form);
+			return 2;
 		case 0xFC16:
 			*normals = arabic_ligature_jeem_with_meem_isolated_form;
-			return static_count(arabic_ligature_jeem_with_meem_isolated_form);
+			return 2;
 		case 0xFC17:
 			*normals = arabic_ligature_hah_with_jeem_isolated_form;
-			return static_count(arabic_ligature_hah_with_jeem_isolated_form);
+			return 2;
 		case 0xFC18:
 			*normals = arabic_ligature_hah_with_meem_isolated_form;
-			return static_count(arabic_ligature_hah_with_meem_isolated_form);
+			return 2;
 		case 0xFC19:
 			*normals = arabic_ligature_khah_with_jeem_isolated_form;
-			return static_count(arabic_ligature_khah_with_jeem_isolated_form);
+			return 2;
 		case 0xFC1A:
 			*normals = arabic_ligature_khah_with_hah_isolated_form;
-			return static_count(arabic_ligature_khah_with_hah_isolated_form);
+			return 2;
 		case 0xFC1B:
 			*normals = arabic_ligature_khah_with_meem_isolated_form;
-			return static_count(arabic_ligature_khah_with_meem_isolated_form);
+			return 2;
 		case 0xFC1C:
 			*normals = arabic_ligature_seen_with_jeem_isolated_form;
-			return static_count(arabic_ligature_seen_with_jeem_isolated_form);
+			return 2;
 		case 0xFC1D:
 			*normals = arabic_ligature_seen_with_hah_isolated_form;
-			return static_count(arabic_ligature_seen_with_hah_isolated_form);
+			return 2;
 		case 0xFC1E:
 			*normals = arabic_ligature_seen_with_khah_isolated_form;
-			return static_count(arabic_ligature_seen_with_khah_isolated_form);
+			return 2;
 		case 0xFC1F:
 			*normals = arabic_ligature_seen_with_meem_isolated_form;
-			return static_count(arabic_ligature_seen_with_meem_isolated_form);
+			return 2;
 		case 0xFC20:
 			*normals = arabic_ligature_sad_with_hah_isolated_form;
-			return static_count(arabic_ligature_sad_with_hah_isolated_form);
+			return 2;
 		case 0xFC21:
 			*normals = arabic_ligature_sad_with_meem_isolated_form;
-			return static_count(arabic_ligature_sad_with_meem_isolated_form);
+			return 2;
 		case 0xFC22:
 			*normals = arabic_ligature_dad_with_jeem_isolated_form;
-			return static_count(arabic_ligature_dad_with_jeem_isolated_form);
+			return 2;
 		case 0xFC23:
 			*normals = arabic_ligature_dad_with_hah_isolated_form;
-			return static_count(arabic_ligature_dad_with_hah_isolated_form);
+			return 2;
 		case 0xFC24:
 			*normals = arabic_ligature_dad_with_khah_isolated_form;
-			return static_count(arabic_ligature_dad_with_khah_isolated_form);
+			return 2;
 		case 0xFC25:
 			*normals = arabic_ligature_dad_with_meem_isolated_form;
-			return static_count(arabic_ligature_dad_with_meem_isolated_form);
+			return 2;
 		case 0xFC26:
 			*normals = arabic_ligature_tah_with_hah_isolated_form;
-			return static_count(arabic_ligature_tah_with_hah_isolated_form);
+			return 2;
 		case 0xFC27:
 			*normals = arabic_ligature_tah_with_meem_isolated_form;
-			return static_count(arabic_ligature_tah_with_meem_isolated_form);
+			return 2;
 		case 0xFC28:
 			*normals = arabic_ligature_zah_with_meem_isolated_form;
-			return static_count(arabic_ligature_zah_with_meem_isolated_form);
+			return 2;
 		case 0xFC29:
 			*normals = arabic_ligature_ain_with_jeem_isolated_form;
-			return static_count(arabic_ligature_ain_with_jeem_isolated_form);
+			return 2;
 		case 0xFC2A:
 			*normals = arabic_ligature_ain_with_meem_isolated_form;
-			return static_count(arabic_ligature_ain_with_meem_isolated_form);
+			return 2;
 		case 0xFC2B:
 			*normals = arabic_ligature_ghain_with_jeem_isolated_form;
-			return static_count(arabic_ligature_ghain_with_jeem_isolated_form);
+			return 2;
 		case 0xFC2C:
 			*normals = arabic_ligature_ghain_with_meem_isolated_form;
-			return static_count(arabic_ligature_ghain_with_meem_isolated_form);
+			return 2;
 		case 0xFC2D:
 			*normals = arabic_ligature_feh_with_jeem_isolated_form;
-			return static_count(arabic_ligature_feh_with_jeem_isolated_form);
+			return 2;
 		case 0xFC2E:
 			*normals = arabic_ligature_feh_with_hah_isolated_form;
-			return static_count(arabic_ligature_feh_with_hah_isolated_form);
+			return 2;
 		case 0xFC2F:
 			*normals = arabic_ligature_feh_with_khah_isolated_form;
-			return static_count(arabic_ligature_feh_with_khah_isolated_form);
+			return 2;
 		case 0xFC30:
 			*normals = arabic_ligature_feh_with_meem_isolated_form;
-			return static_count(arabic_ligature_feh_with_meem_isolated_form);
+			return 2;
 		case 0xFC31:
 			*normals = arabic_ligature_feh_with_alef_maksura_isolated_form;
-			return static_count(arabic_ligature_feh_with_alef_maksura_isolated_form);
+			return 2;
 		case 0xFC32:
 			*normals = arabic_ligature_feh_with_yeh_isolated_form;
-			return static_count(arabic_ligature_feh_with_yeh_isolated_form);
+			return 2;
 		case 0xFC33:
 			*normals = arabic_ligature_qaf_with_hah_isolated_form;
-			return static_count(arabic_ligature_qaf_with_hah_isolated_form);
+			return 2;
 		case 0xFC34:
 			*normals = arabic_ligature_qaf_with_meem_isolated_form;
-			return static_count(arabic_ligature_qaf_with_meem_isolated_form);
+			return 2;
 		case 0xFC35:
 			*normals = arabic_ligature_qaf_with_alef_maksura_isolated_form;
-			return static_count(arabic_ligature_qaf_with_alef_maksura_isolated_form);
+			return 2;
 		case 0xFC36:
 			*normals = arabic_ligature_qaf_with_yeh_isolated_form;
-			return static_count(arabic_ligature_qaf_with_yeh_isolated_form);
+			return 2;
 		case 0xFC37:
 			*normals = arabic_ligature_kaf_with_alef_isolated_form;
-			return static_count(arabic_ligature_kaf_with_alef_isolated_form);
+			return 2;
 		case 0xFC38:
 			*normals = arabic_ligature_kaf_with_jeem_isolated_form;
-			return static_count(arabic_ligature_kaf_with_jeem_isolated_form);
+			return 2;
 		case 0xFC39:
 			*normals = arabic_ligature_kaf_with_hah_isolated_form;
-			return static_count(arabic_ligature_kaf_with_hah_isolated_form);
+			return 2;
 		case 0xFC3A:
 			*normals = arabic_ligature_kaf_with_khah_isolated_form;
-			return static_count(arabic_ligature_kaf_with_khah_isolated_form);
+			return 2;
 		case 0xFC3B:
 			*normals = arabic_ligature_kaf_with_lam_isolated_form;
-			return static_count(arabic_ligature_kaf_with_lam_isolated_form);
+			return 2;
 		case 0xFC3C:
 			*normals = arabic_ligature_kaf_with_meem_isolated_form;
-			return static_count(arabic_ligature_kaf_with_meem_isolated_form);
+			return 2;
 		case 0xFC3D:
 			*normals = arabic_ligature_kaf_with_alef_maksura_isolated_form;
-			return static_count(arabic_ligature_kaf_with_alef_maksura_isolated_form);
+			return 2;
 		case 0xFC3E:
 			*normals = arabic_ligature_kaf_with_yeh_isolated_form;
-			return static_count(arabic_ligature_kaf_with_yeh_isolated_form);
+			return 2;
 		case 0xFC3F:
 			*normals = arabic_ligature_lam_with_jeem_isolated_form;
-			return static_count(arabic_ligature_lam_with_jeem_isolated_form);
+			return 2;
 		case 0xFC40:
 			*normals = arabic_ligature_lam_with_hah_isolated_form;
-			return static_count(arabic_ligature_lam_with_hah_isolated_form);
+			return 2;
 		case 0xFC41:
 			*normals = arabic_ligature_lam_with_khah_isolated_form;
-			return static_count(arabic_ligature_lam_with_khah_isolated_form);
+			return 2;
 		case 0xFC42:
 			*normals = arabic_ligature_lam_with_meem_isolated_form;
-			return static_count(arabic_ligature_lam_with_meem_isolated_form);
+			return 2;
 		case 0xFC43:
 			*normals = arabic_ligature_lam_with_alef_maksura_isolated_form;
-			return static_count(arabic_ligature_lam_with_alef_maksura_isolated_form);
+			return 2;
 		case 0xFC44:
 			*normals = arabic_ligature_lam_with_yeh_isolated_form;
-			return static_count(arabic_ligature_lam_with_yeh_isolated_form);
+			return 2;
 		case 0xFC45:
 			*normals = arabic_ligature_meem_with_jeem_isolated_form;
-			return static_count(arabic_ligature_meem_with_jeem_isolated_form);
+			return 2;
 		case 0xFC46:
 			*normals = arabic_ligature_meem_with_hah_isolated_form;
-			return static_count(arabic_ligature_meem_with_hah_isolated_form);
+			return 2;
 		case 0xFC47:
 			*normals = arabic_ligature_meem_with_khah_isolated_form;
-			return static_count(arabic_ligature_meem_with_khah_isolated_form);
+			return 2;
 		case 0xFC48:
 			*normals = arabic_ligature_meem_with_meem_isolated_form;
-			return static_count(arabic_ligature_meem_with_meem_isolated_form);
+			return 2;
 		case 0xFC49:
 			*normals = arabic_ligature_meem_with_alef_maksura_isolated_form;
-			return static_count(arabic_ligature_meem_with_alef_maksura_isolated_form);
+			return 2;
 		case 0xFC4A:
 			*normals = arabic_ligature_meem_with_yeh_isolated_form;
-			return static_count(arabic_ligature_meem_with_yeh_isolated_form);
+			return 2;
 		case 0xFC4B:
 			*normals = arabic_ligature_noon_with_jeem_isolated_form;
-			return static_count(arabic_ligature_noon_with_jeem_isolated_form);
+			return 2;
 		case 0xFC4C:
 			*normals = arabic_ligature_noon_with_hah_isolated_form;
-			return static_count(arabic_ligature_noon_with_hah_isolated_form);
+			return 2;
 		case 0xFC4D:
 			*normals = arabic_ligature_noon_with_khah_isolated_form;
-			return static_count(arabic_ligature_noon_with_khah_isolated_form);
+			return 2;
 		case 0xFC4E:
 			*normals = arabic_ligature_noon_with_meem_isolated_form;
-			return static_count(arabic_ligature_noon_with_meem_isolated_form);
+			return 2;
 		case 0xFC4F:
 			*normals = arabic_ligature_noon_with_alef_maksura_isolated_form;
-			return static_count(arabic_ligature_noon_with_alef_maksura_isolated_form);
+			return 2;
 		case 0xFC50:
 			*normals = arabic_ligature_noon_with_yeh_isolated_form;
-			return static_count(arabic_ligature_noon_with_yeh_isolated_form);
+			return 2;
 		case 0xFC51:
 			*normals = arabic_ligature_heh_with_jeem_isolated_form;
-			return static_count(arabic_ligature_heh_with_jeem_isolated_form);
+			return 2;
 		case 0xFC52:
 			*normals = arabic_ligature_heh_with_meem_isolated_form;
-			return static_count(arabic_ligature_heh_with_meem_isolated_form);
+			return 2;
 		case 0xFC53:
 			*normals = arabic_ligature_heh_with_alef_maksura_isolated_form;
-			return static_count(arabic_ligature_heh_with_alef_maksura_isolated_form);
+			return 2;
 		case 0xFC54:
 			*normals = arabic_ligature_heh_with_yeh_isolated_form;
-			return static_count(arabic_ligature_heh_with_yeh_isolated_form);
+			return 2;
 		case 0xFC55:
 			*normals = arabic_ligature_yeh_with_jeem_isolated_form;
-			return static_count(arabic_ligature_yeh_with_jeem_isolated_form);
+			return 2;
 		case 0xFC56:
 			*normals = arabic_ligature_yeh_with_hah_isolated_form;
-			return static_count(arabic_ligature_yeh_with_hah_isolated_form);
+			return 2;
 		case 0xFC57:
 			*normals = arabic_ligature_yeh_with_khah_isolated_form;
-			return static_count(arabic_ligature_yeh_with_khah_isolated_form);
+			return 2;
 		case 0xFC58:
 			*normals = arabic_ligature_yeh_with_meem_isolated_form;
-			return static_count(arabic_ligature_yeh_with_meem_isolated_form);
+			return 2;
 		case 0xFC59:
 			*normals = arabic_ligature_yeh_with_alef_maksura_isolated_form;
-			return static_count(arabic_ligature_yeh_with_alef_maksura_isolated_form);
+			return 2;
 		case 0xFC5A:
 			*normals = arabic_ligature_yeh_with_yeh_isolated_form;
-			return static_count(arabic_ligature_yeh_with_yeh_isolated_form);
+			return 2;
 		case 0xFC5B:
 			*normals = arabic_ligature_thal_with_superscript_alef_isolated_form;
-			return static_count(arabic_ligature_thal_with_superscript_alef_isolated_form);
+			return 2;
 		case 0xFC5C:
 			*normals = arabic_ligature_reh_with_superscript_alef_isolated_form;
-			return static_count(arabic_ligature_reh_with_superscript_alef_isolated_form);
+			return 2;
 		case 0xFC5D:
 			*normals = arabic_ligature_alef_maksura_with_superscript_alef_isolated_form;
-			return static_count(arabic_ligature_alef_maksura_with_superscript_alef_isolated_form);
+			return 2;
 		case 0xFC5E:
 			*normals = arabic_ligature_shadda_with_dammatan_isolated_form;
-			return static_count(arabic_ligature_shadda_with_dammatan_isolated_form);
+			return 3;
 		case 0xFC5F:
 			*normals = arabic_ligature_shadda_with_kasratan_isolated_form;
-			return static_count(arabic_ligature_shadda_with_kasratan_isolated_form);
+			return 3;
 		case 0xFC60:
 			*normals = arabic_ligature_shadda_with_fatha_isolated_form;
-			return static_count(arabic_ligature_shadda_with_fatha_isolated_form);
+			return 3;
 		case 0xFC61:
 			*normals = arabic_ligature_shadda_with_damma_isolated_form;
-			return static_count(arabic_ligature_shadda_with_damma_isolated_form);
+			return 3;
 		case 0xFC62:
 			*normals = arabic_ligature_shadda_with_kasra_isolated_form;
-			return static_count(arabic_ligature_shadda_with_kasra_isolated_form);
+			return 3;
 		case 0xFC63:
 			*normals = arabic_ligature_shadda_with_superscript_alef_isolated_form;
-			return static_count(arabic_ligature_shadda_with_superscript_alef_isolated_form);
+			return 3;
 		case 0xFC64:
 			*normals = arabic_ligature_yeh_with_hamza_above_with_reh_final_form;
-			return static_count(arabic_ligature_yeh_with_hamza_above_with_reh_final_form);
+			return 2;
 		case 0xFC65:
 			*normals = arabic_ligature_yeh_with_hamza_above_with_zain_final_form;
-			return static_count(arabic_ligature_yeh_with_hamza_above_with_zain_final_form);
+			return 2;
 		case 0xFC66:
 			*normals = arabic_ligature_yeh_with_hamza_above_with_meem_final_form;
-			return static_count(arabic_ligature_yeh_with_hamza_above_with_meem_final_form);
+			return 2;
 		case 0xFC67:
 			*normals = arabic_ligature_yeh_with_hamza_above_with_noon_final_form;
-			return static_count(arabic_ligature_yeh_with_hamza_above_with_noon_final_form);
+			return 2;
 		case 0xFC68:
 			*normals = arabic_ligature_yeh_with_hamza_above_with_alef_maksura_final_form;
-			return static_count(arabic_ligature_yeh_with_hamza_above_with_alef_maksura_final_form);
+			return 2;
 		case 0xFC69:
 			*normals = arabic_ligature_yeh_with_hamza_above_with_yeh_final_form;
-			return static_count(arabic_ligature_yeh_with_hamza_above_with_yeh_final_form);
+			return 2;
 		case 0xFC6A:
 			*normals = arabic_ligature_beh_with_reh_final_form;
-			return static_count(arabic_ligature_beh_with_reh_final_form);
+			return 2;
 		case 0xFC6B:
 			*normals = arabic_ligature_beh_with_zain_final_form;
-			return static_count(arabic_ligature_beh_with_zain_final_form);
+			return 2;
 		case 0xFC6C:
 			*normals = arabic_ligature_beh_with_meem_final_form;
-			return static_count(arabic_ligature_beh_with_meem_final_form);
+			return 2;
 		case 0xFC6D:
 			*normals = arabic_ligature_beh_with_noon_final_form;
-			return static_count(arabic_ligature_beh_with_noon_final_form);
+			return 2;
 		case 0xFC6E:
 			*normals = arabic_ligature_beh_with_alef_maksura_final_form;
-			return static_count(arabic_ligature_beh_with_alef_maksura_final_form);
+			return 2;
 		case 0xFC6F:
 			*normals = arabic_ligature_beh_with_yeh_final_form;
-			return static_count(arabic_ligature_beh_with_yeh_final_form);
+			return 2;
 		case 0xFC70:
 			*normals = arabic_ligature_teh_with_reh_final_form;
-			return static_count(arabic_ligature_teh_with_reh_final_form);
+			return 2;
 		case 0xFC71:
 			*normals = arabic_ligature_teh_with_zain_final_form;
-			return static_count(arabic_ligature_teh_with_zain_final_form);
+			return 2;
 		case 0xFC72:
 			*normals = arabic_ligature_teh_with_meem_final_form;
-			return static_count(arabic_ligature_teh_with_meem_final_form);
+			return 2;
 		case 0xFC73:
 			*normals = arabic_ligature_teh_with_noon_final_form;
-			return static_count(arabic_ligature_teh_with_noon_final_form);
+			return 2;
 		case 0xFC74:
 			*normals = arabic_ligature_teh_with_alef_maksura_final_form;
-			return static_count(arabic_ligature_teh_with_alef_maksura_final_form);
+			return 2;
 		case 0xFC75:
 			*normals = arabic_ligature_teh_with_yeh_final_form;
-			return static_count(arabic_ligature_teh_with_yeh_final_form);
+			return 2;
 		case 0xFC76:
 			*normals = arabic_ligature_theh_with_reh_final_form;
-			return static_count(arabic_ligature_theh_with_reh_final_form);
+			return 2;
 		case 0xFC77:
 			*normals = arabic_ligature_theh_with_zain_final_form;
-			return static_count(arabic_ligature_theh_with_zain_final_form);
+			return 2;
 		case 0xFC78:
 			*normals = arabic_ligature_theh_with_meem_final_form;
-			return static_count(arabic_ligature_theh_with_meem_final_form);
+			return 2;
 		case 0xFC79:
 			*normals = arabic_ligature_theh_with_noon_final_form;
-			return static_count(arabic_ligature_theh_with_noon_final_form);
+			return 2;
 		case 0xFC7A:
 			*normals = arabic_ligature_theh_with_alef_maksura_final_form;
-			return static_count(arabic_ligature_theh_with_alef_maksura_final_form);
+			return 2;
 		case 0xFC7B:
 			*normals = arabic_ligature_theh_with_yeh_final_form;
-			return static_count(arabic_ligature_theh_with_yeh_final_form);
+			return 2;
 		case 0xFC7C:
 			*normals = arabic_ligature_feh_with_alef_maksura_final_form;
-			return static_count(arabic_ligature_feh_with_alef_maksura_final_form);
+			return 2;
 		case 0xFC7D:
 			*normals = arabic_ligature_feh_with_yeh_final_form;
-			return static_count(arabic_ligature_feh_with_yeh_final_form);
+			return 2;
 		case 0xFC7E:
 			*normals = arabic_ligature_qaf_with_alef_maksura_final_form;
-			return static_count(arabic_ligature_qaf_with_alef_maksura_final_form);
+			return 2;
 		case 0xFC7F:
 			*normals = arabic_ligature_qaf_with_yeh_final_form;
-			return static_count(arabic_ligature_qaf_with_yeh_final_form);
+			return 2;
 		case 0xFC80:
 			*normals = arabic_ligature_kaf_with_alef_final_form;
-			return static_count(arabic_ligature_kaf_with_alef_final_form);
+			return 2;
 		case 0xFC81:
 			*normals = arabic_ligature_kaf_with_lam_final_form;
-			return static_count(arabic_ligature_kaf_with_lam_final_form);
+			return 2;
 		case 0xFC82:
 			*normals = arabic_ligature_kaf_with_meem_final_form;
-			return static_count(arabic_ligature_kaf_with_meem_final_form);
+			return 2;
 		case 0xFC83:
 			*normals = arabic_ligature_kaf_with_alef_maksura_final_form;
-			return static_count(arabic_ligature_kaf_with_alef_maksura_final_form);
+			return 2;
 		case 0xFC84:
 			*normals = arabic_ligature_kaf_with_yeh_final_form;
-			return static_count(arabic_ligature_kaf_with_yeh_final_form);
+			return 2;
 		case 0xFC85:
 			*normals = arabic_ligature_lam_with_meem_final_form;
-			return static_count(arabic_ligature_lam_with_meem_final_form);
+			return 2;
 		case 0xFC86:
 			*normals = arabic_ligature_lam_with_alef_maksura_final_form;
-			return static_count(arabic_ligature_lam_with_alef_maksura_final_form);
+			return 2;
 		case 0xFC87:
 			*normals = arabic_ligature_lam_with_yeh_final_form;
-			return static_count(arabic_ligature_lam_with_yeh_final_form);
+			return 2;
 		case 0xFC88:
 			*normals = arabic_ligature_meem_with_alef_final_form;
-			return static_count(arabic_ligature_meem_with_alef_final_form);
+			return 2;
 		case 0xFC89:
 			*normals = arabic_ligature_meem_with_meem_final_form;
-			return static_count(arabic_ligature_meem_with_meem_final_form);
+			return 2;
 		case 0xFC8A:
 			*normals = arabic_ligature_noon_with_reh_final_form;
-			return static_count(arabic_ligature_noon_with_reh_final_form);
+			return 2;
 		case 0xFC8B:
 			*normals = arabic_ligature_noon_with_zain_final_form;
-			return static_count(arabic_ligature_noon_with_zain_final_form);
+			return 2;
 		case 0xFC8C:
 			*normals = arabic_ligature_noon_with_meem_final_form;
-			return static_count(arabic_ligature_noon_with_meem_final_form);
+			return 2;
 		case 0xFC8D:
 			*normals = arabic_ligature_noon_with_noon_final_form;
-			return static_count(arabic_ligature_noon_with_noon_final_form);
+			return 2;
 		case 0xFC8E:
 			*normals = arabic_ligature_noon_with_alef_maksura_final_form;
-			return static_count(arabic_ligature_noon_with_alef_maksura_final_form);
+			return 2;
 		case 0xFC8F:
 			*normals = arabic_ligature_noon_with_yeh_final_form;
-			return static_count(arabic_ligature_noon_with_yeh_final_form);
+			return 2;
 		case 0xFC90:
 			*normals = arabic_ligature_alef_maksura_with_superscript_alef_final_form;
-			return static_count(arabic_ligature_alef_maksura_with_superscript_alef_final_form);
+			return 2;
 		case 0xFC91:
 			*normals = arabic_ligature_yeh_with_reh_final_form;
-			return static_count(arabic_ligature_yeh_with_reh_final_form);
+			return 2;
 		case 0xFC92:
 			*normals = arabic_ligature_yeh_with_zain_final_form;
-			return static_count(arabic_ligature_yeh_with_zain_final_form);
+			return 2;
 		case 0xFC93:
 			*normals = arabic_ligature_yeh_with_meem_final_form;
-			return static_count(arabic_ligature_yeh_with_meem_final_form);
+			return 2;
 		case 0xFC94:
 			*normals = arabic_ligature_yeh_with_noon_final_form;
-			return static_count(arabic_ligature_yeh_with_noon_final_form);
+			return 2;
 		case 0xFC95:
 			*normals = arabic_ligature_yeh_with_alef_maksura_final_form;
-			return static_count(arabic_ligature_yeh_with_alef_maksura_final_form);
+			return 2;
 		case 0xFC96:
 			*normals = arabic_ligature_yeh_with_yeh_final_form;
-			return static_count(arabic_ligature_yeh_with_yeh_final_form);
+			return 2;
 		case 0xFC97:
 			*normals = arabic_ligature_yeh_with_hamza_above_with_jeem_initial_form;
-			return static_count(arabic_ligature_yeh_with_hamza_above_with_jeem_initial_form);
+			return 2;
 		case 0xFC98:
 			*normals = arabic_ligature_yeh_with_hamza_above_with_hah_initial_form;
-			return static_count(arabic_ligature_yeh_with_hamza_above_with_hah_initial_form);
+			return 2;
 		case 0xFC99:
 			*normals = arabic_ligature_yeh_with_hamza_above_with_khah_initial_form;
-			return static_count(arabic_ligature_yeh_with_hamza_above_with_khah_initial_form);
+			return 2;
 		case 0xFC9A:
 			*normals = arabic_ligature_yeh_with_hamza_above_with_meem_initial_form;
-			return static_count(arabic_ligature_yeh_with_hamza_above_with_meem_initial_form);
+			return 2;
 		case 0xFC9B:
 			*normals = arabic_ligature_yeh_with_hamza_above_with_heh_initial_form;
-			return static_count(arabic_ligature_yeh_with_hamza_above_with_heh_initial_form);
+			return 2;
 		case 0xFC9C:
 			*normals = arabic_ligature_beh_with_jeem_initial_form;
-			return static_count(arabic_ligature_beh_with_jeem_initial_form);
+			return 2;
 		case 0xFC9D:
 			*normals = arabic_ligature_beh_with_hah_initial_form;
-			return static_count(arabic_ligature_beh_with_hah_initial_form);
+			return 2;
 		case 0xFC9E:
 			*normals = arabic_ligature_beh_with_khah_initial_form;
-			return static_count(arabic_ligature_beh_with_khah_initial_form);
+			return 2;
 		case 0xFC9F:
 			*normals = arabic_ligature_beh_with_meem_initial_form;
-			return static_count(arabic_ligature_beh_with_meem_initial_form);
+			return 2;
 		case 0xFCA0:
 			*normals = arabic_ligature_beh_with_heh_initial_form;
-			return static_count(arabic_ligature_beh_with_heh_initial_form);
+			return 2;
 		case 0xFCA1:
 			*normals = arabic_ligature_teh_with_jeem_initial_form;
-			return static_count(arabic_ligature_teh_with_jeem_initial_form);
+			return 2;
 		case 0xFCA2:
 			*normals = arabic_ligature_teh_with_hah_initial_form;
-			return static_count(arabic_ligature_teh_with_hah_initial_form);
+			return 2;
 		case 0xFCA3:
 			*normals = arabic_ligature_teh_with_khah_initial_form;
-			return static_count(arabic_ligature_teh_with_khah_initial_form);
+			return 2;
 		case 0xFCA4:
 			*normals = arabic_ligature_teh_with_meem_initial_form;
-			return static_count(arabic_ligature_teh_with_meem_initial_form);
+			return 2;
 		case 0xFCA5:
 			*normals = arabic_ligature_teh_with_heh_initial_form;
-			return static_count(arabic_ligature_teh_with_heh_initial_form);
+			return 2;
 		case 0xFCA6:
 			*normals = arabic_ligature_theh_with_meem_initial_form;
-			return static_count(arabic_ligature_theh_with_meem_initial_form);
+			return 2;
 		case 0xFCA7:
 			*normals = arabic_ligature_jeem_with_hah_initial_form;
-			return static_count(arabic_ligature_jeem_with_hah_initial_form);
+			return 2;
 		case 0xFCA8:
 			*normals = arabic_ligature_jeem_with_meem_initial_form;
-			return static_count(arabic_ligature_jeem_with_meem_initial_form);
+			return 2;
 		case 0xFCA9:
 			*normals = arabic_ligature_hah_with_jeem_initial_form;
-			return static_count(arabic_ligature_hah_with_jeem_initial_form);
+			return 2;
 		case 0xFCAA:
 			*normals = arabic_ligature_hah_with_meem_initial_form;
-			return static_count(arabic_ligature_hah_with_meem_initial_form);
+			return 2;
 		case 0xFCAB:
 			*normals = arabic_ligature_khah_with_jeem_initial_form;
-			return static_count(arabic_ligature_khah_with_jeem_initial_form);
+			return 2;
 		case 0xFCAC:
 			*normals = arabic_ligature_khah_with_meem_initial_form;
-			return static_count(arabic_ligature_khah_with_meem_initial_form);
+			return 2;
 		case 0xFCAD:
 			*normals = arabic_ligature_seen_with_jeem_initial_form;
-			return static_count(arabic_ligature_seen_with_jeem_initial_form);
+			return 2;
 		case 0xFCAE:
 			*normals = arabic_ligature_seen_with_hah_initial_form;
-			return static_count(arabic_ligature_seen_with_hah_initial_form);
+			return 2;
 		case 0xFCAF:
 			*normals = arabic_ligature_seen_with_khah_initial_form;
-			return static_count(arabic_ligature_seen_with_khah_initial_form);
+			return 2;
 		case 0xFCB0:
 			*normals = arabic_ligature_seen_with_meem_initial_form;
-			return static_count(arabic_ligature_seen_with_meem_initial_form);
+			return 2;
 		case 0xFCB1:
 			*normals = arabic_ligature_sad_with_hah_initial_form;
-			return static_count(arabic_ligature_sad_with_hah_initial_form);
+			return 2;
 		case 0xFCB2:
 			*normals = arabic_ligature_sad_with_khah_initial_form;
-			return static_count(arabic_ligature_sad_with_khah_initial_form);
+			return 2;
 		case 0xFCB3:
 			*normals = arabic_ligature_sad_with_meem_initial_form;
-			return static_count(arabic_ligature_sad_with_meem_initial_form);
+			return 2;
 		case 0xFCB4:
 			*normals = arabic_ligature_dad_with_jeem_initial_form;
-			return static_count(arabic_ligature_dad_with_jeem_initial_form);
+			return 2;
 		case 0xFCB5:
 			*normals = arabic_ligature_dad_with_hah_initial_form;
-			return static_count(arabic_ligature_dad_with_hah_initial_form);
+			return 2;
 		case 0xFCB6:
 			*normals = arabic_ligature_dad_with_khah_initial_form;
-			return static_count(arabic_ligature_dad_with_khah_initial_form);
+			return 2;
 		case 0xFCB7:
 			*normals = arabic_ligature_dad_with_meem_initial_form;
-			return static_count(arabic_ligature_dad_with_meem_initial_form);
+			return 2;
 		case 0xFCB8:
 			*normals = arabic_ligature_tah_with_hah_initial_form;
-			return static_count(arabic_ligature_tah_with_hah_initial_form);
+			return 2;
 		case 0xFCB9:
 			*normals = arabic_ligature_zah_with_meem_initial_form;
-			return static_count(arabic_ligature_zah_with_meem_initial_form);
+			return 2;
 		case 0xFCBA:
 			*normals = arabic_ligature_ain_with_jeem_initial_form;
-			return static_count(arabic_ligature_ain_with_jeem_initial_form);
+			return 2;
 		case 0xFCBB:
 			*normals = arabic_ligature_ain_with_meem_initial_form;
-			return static_count(arabic_ligature_ain_with_meem_initial_form);
+			return 2;
 		case 0xFCBC:
 			*normals = arabic_ligature_ghain_with_jeem_initial_form;
-			return static_count(arabic_ligature_ghain_with_jeem_initial_form);
+			return 2;
 		case 0xFCBD:
 			*normals = arabic_ligature_ghain_with_meem_initial_form;
-			return static_count(arabic_ligature_ghain_with_meem_initial_form);
+			return 2;
 		case 0xFCBE:
 			*normals = arabic_ligature_feh_with_jeem_initial_form;
-			return static_count(arabic_ligature_feh_with_jeem_initial_form);
+			return 2;
 		case 0xFCBF:
 			*normals = arabic_ligature_feh_with_hah_initial_form;
-			return static_count(arabic_ligature_feh_with_hah_initial_form);
+			return 2;
 		case 0xFCC0:
 			*normals = arabic_ligature_feh_with_khah_initial_form;
-			return static_count(arabic_ligature_feh_with_khah_initial_form);
+			return 2;
 		case 0xFCC1:
 			*normals = arabic_ligature_feh_with_meem_initial_form;
-			return static_count(arabic_ligature_feh_with_meem_initial_form);
+			return 2;
 		case 0xFCC2:
 			*normals = arabic_ligature_qaf_with_hah_initial_form;
-			return static_count(arabic_ligature_qaf_with_hah_initial_form);
+			return 2;
 		case 0xFCC3:
 			*normals = arabic_ligature_qaf_with_meem_initial_form;
-			return static_count(arabic_ligature_qaf_with_meem_initial_form);
+			return 2;
 		case 0xFCC4:
 			*normals = arabic_ligature_kaf_with_jeem_initial_form;
-			return static_count(arabic_ligature_kaf_with_jeem_initial_form);
+			return 2;
 		case 0xFCC5:
 			*normals = arabic_ligature_kaf_with_hah_initial_form;
-			return static_count(arabic_ligature_kaf_with_hah_initial_form);
+			return 2;
 		case 0xFCC6:
 			*normals = arabic_ligature_kaf_with_khah_initial_form;
-			return static_count(arabic_ligature_kaf_with_khah_initial_form);
+			return 2;
 		case 0xFCC7:
 			*normals = arabic_ligature_kaf_with_lam_initial_form;
-			return static_count(arabic_ligature_kaf_with_lam_initial_form);
+			return 2;
 		case 0xFCC8:
 			*normals = arabic_ligature_kaf_with_meem_initial_form;
-			return static_count(arabic_ligature_kaf_with_meem_initial_form);
+			return 2;
 		case 0xFCC9:
 			*normals = arabic_ligature_lam_with_jeem_initial_form;
-			return static_count(arabic_ligature_lam_with_jeem_initial_form);
+			return 2;
 		case 0xFCCA:
 			*normals = arabic_ligature_lam_with_hah_initial_form;
-			return static_count(arabic_ligature_lam_with_hah_initial_form);
+			return 2;
 		case 0xFCCB:
 			*normals = arabic_ligature_lam_with_khah_initial_form;
-			return static_count(arabic_ligature_lam_with_khah_initial_form);
+			return 2;
 		case 0xFCCC:
 			*normals = arabic_ligature_lam_with_meem_initial_form;
-			return static_count(arabic_ligature_lam_with_meem_initial_form);
+			return 2;
 		case 0xFCCD:
 			*normals = arabic_ligature_lam_with_heh_initial_form;
-			return static_count(arabic_ligature_lam_with_heh_initial_form);
+			return 2;
 		case 0xFCCE:
 			*normals = arabic_ligature_meem_with_jeem_initial_form;
-			return static_count(arabic_ligature_meem_with_jeem_initial_form);
+			return 2;
 		case 0xFCCF:
 			*normals = arabic_ligature_meem_with_hah_initial_form;
-			return static_count(arabic_ligature_meem_with_hah_initial_form);
+			return 2;
 		case 0xFCD0:
 			*normals = arabic_ligature_meem_with_khah_initial_form;
-			return static_count(arabic_ligature_meem_with_khah_initial_form);
+			return 2;
 		case 0xFCD1:
 			*normals = arabic_ligature_meem_with_meem_initial_form;
-			return static_count(arabic_ligature_meem_with_meem_initial_form);
+			return 2;
 		case 0xFCD2:
 			*normals = arabic_ligature_noon_with_jeem_initial_form;
-			return static_count(arabic_ligature_noon_with_jeem_initial_form);
+			return 2;
 		case 0xFCD3:
 			*normals = arabic_ligature_noon_with_hah_initial_form;
-			return static_count(arabic_ligature_noon_with_hah_initial_form);
+			return 2;
 		case 0xFCD4:
 			*normals = arabic_ligature_noon_with_khah_initial_form;
-			return static_count(arabic_ligature_noon_with_khah_initial_form);
+			return 2;
 		case 0xFCD5:
 			*normals = arabic_ligature_noon_with_meem_initial_form;
-			return static_count(arabic_ligature_noon_with_meem_initial_form);
+			return 2;
 		case 0xFCD6:
 			*normals = arabic_ligature_noon_with_heh_initial_form;
-			return static_count(arabic_ligature_noon_with_heh_initial_form);
+			return 2;
 		case 0xFCD7:
 			*normals = arabic_ligature_heh_with_jeem_initial_form;
-			return static_count(arabic_ligature_heh_with_jeem_initial_form);
+			return 2;
 		case 0xFCD8:
 			*normals = arabic_ligature_heh_with_meem_initial_form;
-			return static_count(arabic_ligature_heh_with_meem_initial_form);
+			return 2;
 		case 0xFCD9:
 			*normals = arabic_ligature_heh_with_superscript_alef_initial_form;
-			return static_count(arabic_ligature_heh_with_superscript_alef_initial_form);
+			return 2;
 		case 0xFCDA:
 			*normals = arabic_ligature_yeh_with_jeem_initial_form;
-			return static_count(arabic_ligature_yeh_with_jeem_initial_form);
+			return 2;
 		case 0xFCDB:
 			*normals = arabic_ligature_yeh_with_hah_initial_form;
-			return static_count(arabic_ligature_yeh_with_hah_initial_form);
+			return 2;
 		case 0xFCDC:
 			*normals = arabic_ligature_yeh_with_khah_initial_form;
-			return static_count(arabic_ligature_yeh_with_khah_initial_form);
+			return 2;
 		case 0xFCDD:
 			*normals = arabic_ligature_yeh_with_meem_initial_form;
-			return static_count(arabic_ligature_yeh_with_meem_initial_form);
+			return 2;
 		case 0xFCDE:
 			*normals = arabic_ligature_yeh_with_heh_initial_form;
-			return static_count(arabic_ligature_yeh_with_heh_initial_form);
+			return 2;
 		case 0xFCDF:
 			*normals = arabic_ligature_yeh_with_hamza_above_with_meem_medial_form;
-			return static_count(arabic_ligature_yeh_with_hamza_above_with_meem_medial_form);
+			return 2;
 		case 0xFCE0:
 			*normals = arabic_ligature_yeh_with_hamza_above_with_heh_medial_form;
-			return static_count(arabic_ligature_yeh_with_hamza_above_with_heh_medial_form);
+			return 2;
 		case 0xFCE1:
 			*normals = arabic_ligature_beh_with_meem_medial_form;
-			return static_count(arabic_ligature_beh_with_meem_medial_form);
+			return 2;
 		case 0xFCE2:
 			*normals = arabic_ligature_beh_with_heh_medial_form;
-			return static_count(arabic_ligature_beh_with_heh_medial_form);
+			return 2;
 		case 0xFCE3:
 			*normals = arabic_ligature_teh_with_meem_medial_form;
-			return static_count(arabic_ligature_teh_with_meem_medial_form);
+			return 2;
 		case 0xFCE4:
 			*normals = arabic_ligature_teh_with_heh_medial_form;
-			return static_count(arabic_ligature_teh_with_heh_medial_form);
+			return 2;
 		case 0xFCE5:
 			*normals = arabic_ligature_theh_with_meem_medial_form;
-			return static_count(arabic_ligature_theh_with_meem_medial_form);
+			return 2;
 		case 0xFCE6:
 			*normals = arabic_ligature_theh_with_heh_medial_form;
-			return static_count(arabic_ligature_theh_with_heh_medial_form);
+			return 2;
 		case 0xFCE7:
 			*normals = arabic_ligature_seen_with_meem_medial_form;
-			return static_count(arabic_ligature_seen_with_meem_medial_form);
+			return 2;
 		case 0xFCE8:
 			*normals = arabic_ligature_seen_with_heh_medial_form;
-			return static_count(arabic_ligature_seen_with_heh_medial_form);
+			return 2;
 		case 0xFCE9:
 			*normals = arabic_ligature_sheen_with_meem_medial_form;
-			return static_count(arabic_ligature_sheen_with_meem_medial_form);
+			return 2;
 		case 0xFCEA:
 			*normals = arabic_ligature_sheen_with_heh_medial_form;
-			return static_count(arabic_ligature_sheen_with_heh_medial_form);
+			return 2;
 		case 0xFCEB:
 			*normals = arabic_ligature_kaf_with_lam_medial_form;
-			return static_count(arabic_ligature_kaf_with_lam_medial_form);
+			return 2;
 		case 0xFCEC:
 			*normals = arabic_ligature_kaf_with_meem_medial_form;
-			return static_count(arabic_ligature_kaf_with_meem_medial_form);
+			return 2;
 		case 0xFCED:
 			*normals = arabic_ligature_lam_with_meem_medial_form;
-			return static_count(arabic_ligature_lam_with_meem_medial_form);
+			return 2;
 		case 0xFCEE:
 			*normals = arabic_ligature_noon_with_meem_medial_form;
-			return static_count(arabic_ligature_noon_with_meem_medial_form);
+			return 2;
 		case 0xFCEF:
 			*normals = arabic_ligature_noon_with_heh_medial_form;
-			return static_count(arabic_ligature_noon_with_heh_medial_form);
+			return 2;
 		case 0xFCF0:
 			*normals = arabic_ligature_yeh_with_meem_medial_form;
-			return static_count(arabic_ligature_yeh_with_meem_medial_form);
+			return 2;
 		case 0xFCF1:
 			*normals = arabic_ligature_yeh_with_heh_medial_form;
-			return static_count(arabic_ligature_yeh_with_heh_medial_form);
+			return 2;
 		case 0xFCF2:
 			*normals = arabic_ligature_shadda_with_fatha_medial_form;
-			return static_count(arabic_ligature_shadda_with_fatha_medial_form);
+			return 3;
 		case 0xFCF3:
 			*normals = arabic_ligature_shadda_with_damma_medial_form;
-			return static_count(arabic_ligature_shadda_with_damma_medial_form);
+			return 3;
 		case 0xFCF4:
 			*normals = arabic_ligature_shadda_with_kasra_medial_form;
-			return static_count(arabic_ligature_shadda_with_kasra_medial_form);
+			return 3;
 		case 0xFCF5:
 			*normals = arabic_ligature_tah_with_alef_maksura_isolated_form;
-			return static_count(arabic_ligature_tah_with_alef_maksura_isolated_form);
+			return 2;
 		case 0xFCF6:
 			*normals = arabic_ligature_tah_with_yeh_isolated_form;
-			return static_count(arabic_ligature_tah_with_yeh_isolated_form);
+			return 2;
 		case 0xFCF7:
 			*normals = arabic_ligature_ain_with_alef_maksura_isolated_form;
-			return static_count(arabic_ligature_ain_with_alef_maksura_isolated_form);
+			return 2;
 		case 0xFCF8:
 			*normals = arabic_ligature_ain_with_yeh_isolated_form;
-			return static_count(arabic_ligature_ain_with_yeh_isolated_form);
+			return 2;
 		case 0xFCF9:
 			*normals = arabic_ligature_ghain_with_alef_maksura_isolated_form;
-			return static_count(arabic_ligature_ghain_with_alef_maksura_isolated_form);
+			return 2;
 		case 0xFCFA:
 			*normals = arabic_ligature_ghain_with_yeh_isolated_form;
-			return static_count(arabic_ligature_ghain_with_yeh_isolated_form);
+			return 2;
 		case 0xFCFB:
 			*normals = arabic_ligature_seen_with_alef_maksura_isolated_form;
-			return static_count(arabic_ligature_seen_with_alef_maksura_isolated_form);
+			return 2;
 		case 0xFCFC:
 			*normals = arabic_ligature_seen_with_yeh_isolated_form;
-			return static_count(arabic_ligature_seen_with_yeh_isolated_form);
+			return 2;
 		case 0xFCFD:
 			*normals = arabic_ligature_sheen_with_alef_maksura_isolated_form;
-			return static_count(arabic_ligature_sheen_with_alef_maksura_isolated_form);
+			return 2;
 		case 0xFCFE:
 			*normals = arabic_ligature_sheen_with_yeh_isolated_form;
-			return static_count(arabic_ligature_sheen_with_yeh_isolated_form);
+			return 2;
 		case 0xFCFF:
 			*normals = arabic_ligature_hah_with_alef_maksura_isolated_form;
-			return static_count(arabic_ligature_hah_with_alef_maksura_isolated_form);
+			return 2;
 		case 0xFD00:
 			*normals = arabic_ligature_hah_with_yeh_isolated_form;
-			return static_count(arabic_ligature_hah_with_yeh_isolated_form);
+			return 2;
 		case 0xFD01:
 			*normals = arabic_ligature_jeem_with_alef_maksura_isolated_form;
-			return static_count(arabic_ligature_jeem_with_alef_maksura_isolated_form);
+			return 2;
 		case 0xFD02:
 			*normals = arabic_ligature_jeem_with_yeh_isolated_form;
-			return static_count(arabic_ligature_jeem_with_yeh_isolated_form);
+			return 2;
 		case 0xFD03:
 			*normals = arabic_ligature_khah_with_alef_maksura_isolated_form;
-			return static_count(arabic_ligature_khah_with_alef_maksura_isolated_form);
+			return 2;
 		case 0xFD04:
 			*normals = arabic_ligature_khah_with_yeh_isolated_form;
-			return static_count(arabic_ligature_khah_with_yeh_isolated_form);
+			return 2;
 		case 0xFD05:
 			*normals = arabic_ligature_sad_with_alef_maksura_isolated_form;
-			return static_count(arabic_ligature_sad_with_alef_maksura_isolated_form);
+			return 2;
 		case 0xFD06:
 			*normals = arabic_ligature_sad_with_yeh_isolated_form;
-			return static_count(arabic_ligature_sad_with_yeh_isolated_form);
+			return 2;
 		case 0xFD07:
 			*normals = arabic_ligature_dad_with_alef_maksura_isolated_form;
-			return static_count(arabic_ligature_dad_with_alef_maksura_isolated_form);
+			return 2;
 		case 0xFD08:
 			*normals = arabic_ligature_dad_with_yeh_isolated_form;
-			return static_count(arabic_ligature_dad_with_yeh_isolated_form);
+			return 2;
 		case 0xFD09:
 			*normals = arabic_ligature_sheen_with_jeem_isolated_form;
-			return static_count(arabic_ligature_sheen_with_jeem_isolated_form);
+			return 2;
 		case 0xFD0A:
 			*normals = arabic_ligature_sheen_with_hah_isolated_form;
-			return static_count(arabic_ligature_sheen_with_hah_isolated_form);
+			return 2;
 		case 0xFD0B:
 			*normals = arabic_ligature_sheen_with_khah_isolated_form;
-			return static_count(arabic_ligature_sheen_with_khah_isolated_form);
+			return 2;
 		case 0xFD0C:
 			*normals = arabic_ligature_sheen_with_meem_isolated_form;
-			return static_count(arabic_ligature_sheen_with_meem_isolated_form);
+			return 2;
 		case 0xFD0D:
 			*normals = arabic_ligature_sheen_with_reh_isolated_form;
-			return static_count(arabic_ligature_sheen_with_reh_isolated_form);
+			return 2;
 		case 0xFD0E:
 			*normals = arabic_ligature_seen_with_reh_isolated_form;
-			return static_count(arabic_ligature_seen_with_reh_isolated_form);
+			return 2;
 		case 0xFD0F:
 			*normals = arabic_ligature_sad_with_reh_isolated_form;
-			return static_count(arabic_ligature_sad_with_reh_isolated_form);
+			return 2;
 		case 0xFD10:
 			*normals = arabic_ligature_dad_with_reh_isolated_form;
-			return static_count(arabic_ligature_dad_with_reh_isolated_form);
+			return 2;
 		case 0xFD11:
 			*normals = arabic_ligature_tah_with_alef_maksura_final_form;
-			return static_count(arabic_ligature_tah_with_alef_maksura_final_form);
+			return 2;
 		case 0xFD12:
 			*normals = arabic_ligature_tah_with_yeh_final_form;
-			return static_count(arabic_ligature_tah_with_yeh_final_form);
+			return 2;
 		case 0xFD13:
 			*normals = arabic_ligature_ain_with_alef_maksura_final_form;
-			return static_count(arabic_ligature_ain_with_alef_maksura_final_form);
+			return 2;
 		case 0xFD14:
 			*normals = arabic_ligature_ain_with_yeh_final_form;
-			return static_count(arabic_ligature_ain_with_yeh_final_form);
+			return 2;
 		case 0xFD15:
 			*normals = arabic_ligature_ghain_with_alef_maksura_final_form;
-			return static_count(arabic_ligature_ghain_with_alef_maksura_final_form);
+			return 2;
 		case 0xFD16:
 			*normals = arabic_ligature_ghain_with_yeh_final_form;
-			return static_count(arabic_ligature_ghain_with_yeh_final_form);
+			return 2;
 		case 0xFD17:
 			*normals = arabic_ligature_seen_with_alef_maksura_final_form;
-			return static_count(arabic_ligature_seen_with_alef_maksura_final_form);
+			return 2;
 		case 0xFD18:
 			*normals = arabic_ligature_seen_with_yeh_final_form;
-			return static_count(arabic_ligature_seen_with_yeh_final_form);
+			return 2;
 		case 0xFD19:
 			*normals = arabic_ligature_sheen_with_alef_maksura_final_form;
-			return static_count(arabic_ligature_sheen_with_alef_maksura_final_form);
+			return 2;
 		case 0xFD1A:
 			*normals = arabic_ligature_sheen_with_yeh_final_form;
-			return static_count(arabic_ligature_sheen_with_yeh_final_form);
+			return 2;
 		case 0xFD1B:
 			*normals = arabic_ligature_hah_with_alef_maksura_final_form;
-			return static_count(arabic_ligature_hah_with_alef_maksura_final_form);
+			return 2;
 		case 0xFD1C:
 			*normals = arabic_ligature_hah_with_yeh_final_form;
-			return static_count(arabic_ligature_hah_with_yeh_final_form);
+			return 2;
 		case 0xFD1D:
 			*normals = arabic_ligature_jeem_with_alef_maksura_final_form;
-			return static_count(arabic_ligature_jeem_with_alef_maksura_final_form);
+			return 2;
 		case 0xFD1E:
 			*normals = arabic_ligature_jeem_with_yeh_final_form;
-			return static_count(arabic_ligature_jeem_with_yeh_final_form);
+			return 2;
 		case 0xFD1F:
 			*normals = arabic_ligature_khah_with_alef_maksura_final_form;
-			return static_count(arabic_ligature_khah_with_alef_maksura_final_form);
+			return 2;
 		case 0xFD20:
 			*normals = arabic_ligature_khah_with_yeh_final_form;
-			return static_count(arabic_ligature_khah_with_yeh_final_form);
+			return 2;
 		case 0xFD21:
 			*normals = arabic_ligature_sad_with_alef_maksura_final_form;
-			return static_count(arabic_ligature_sad_with_alef_maksura_final_form);
+			return 2;
 		case 0xFD22:
 			*normals = arabic_ligature_sad_with_yeh_final_form;
-			return static_count(arabic_ligature_sad_with_yeh_final_form);
+			return 2;
 		case 0xFD23:
 			*normals = arabic_ligature_dad_with_alef_maksura_final_form;
-			return static_count(arabic_ligature_dad_with_alef_maksura_final_form);
+			return 2;
 		case 0xFD24:
 			*normals = arabic_ligature_dad_with_yeh_final_form;
-			return static_count(arabic_ligature_dad_with_yeh_final_form);
+			return 2;
 		case 0xFD25:
 			*normals = arabic_ligature_sheen_with_jeem_final_form;
-			return static_count(arabic_ligature_sheen_with_jeem_final_form);
+			return 2;
 		case 0xFD26:
 			*normals = arabic_ligature_sheen_with_hah_final_form;
-			return static_count(arabic_ligature_sheen_with_hah_final_form);
+			return 2;
 		case 0xFD27:
 			*normals = arabic_ligature_sheen_with_khah_final_form;
-			return static_count(arabic_ligature_sheen_with_khah_final_form);
+			return 2;
 		case 0xFD28:
 			*normals = arabic_ligature_sheen_with_meem_final_form;
-			return static_count(arabic_ligature_sheen_with_meem_final_form);
+			return 2;
 		case 0xFD29:
 			*normals = arabic_ligature_sheen_with_reh_final_form;
-			return static_count(arabic_ligature_sheen_with_reh_final_form);
+			return 2;
 		case 0xFD2A:
 			*normals = arabic_ligature_seen_with_reh_final_form;
-			return static_count(arabic_ligature_seen_with_reh_final_form);
+			return 2;
 		case 0xFD2B:
 			*normals = arabic_ligature_sad_with_reh_final_form;
-			return static_count(arabic_ligature_sad_with_reh_final_form);
+			return 2;
 		case 0xFD2C:
 			*normals = arabic_ligature_dad_with_reh_final_form;
-			return static_count(arabic_ligature_dad_with_reh_final_form);
+			return 2;
 		case 0xFD2D:
 			*normals = arabic_ligature_sheen_with_jeem_initial_form;
-			return static_count(arabic_ligature_sheen_with_jeem_initial_form);
+			return 2;
 		case 0xFD2E:
 			*normals = arabic_ligature_sheen_with_hah_initial_form;
-			return static_count(arabic_ligature_sheen_with_hah_initial_form);
+			return 2;
 		case 0xFD2F:
 			*normals = arabic_ligature_sheen_with_khah_initial_form;
-			return static_count(arabic_ligature_sheen_with_khah_initial_form);
+			return 2;
 		case 0xFD30:
 			*normals = arabic_ligature_sheen_with_meem_initial_form;
-			return static_count(arabic_ligature_sheen_with_meem_initial_form);
+			return 2;
 		case 0xFD31:
 			*normals = arabic_ligature_seen_with_heh_initial_form;
-			return static_count(arabic_ligature_seen_with_heh_initial_form);
+			return 2;
 		case 0xFD32:
 			*normals = arabic_ligature_sheen_with_heh_initial_form;
-			return static_count(arabic_ligature_sheen_with_heh_initial_form);
+			return 2;
 		case 0xFD33:
 			*normals = arabic_ligature_tah_with_meem_initial_form;
-			return static_count(arabic_ligature_tah_with_meem_initial_form);
+			return 2;
 		case 0xFD34:
 			*normals = arabic_ligature_seen_with_jeem_medial_form;
-			return static_count(arabic_ligature_seen_with_jeem_medial_form);
+			return 2;
 		case 0xFD35:
 			*normals = arabic_ligature_seen_with_hah_medial_form;
-			return static_count(arabic_ligature_seen_with_hah_medial_form);
+			return 2;
 		case 0xFD36:
 			*normals = arabic_ligature_seen_with_khah_medial_form;
-			return static_count(arabic_ligature_seen_with_khah_medial_form);
+			return 2;
 		case 0xFD37:
 			*normals = arabic_ligature_sheen_with_jeem_medial_form;
-			return static_count(arabic_ligature_sheen_with_jeem_medial_form);
+			return 2;
 		case 0xFD38:
 			*normals = arabic_ligature_sheen_with_hah_medial_form;
-			return static_count(arabic_ligature_sheen_with_hah_medial_form);
+			return 2;
 		case 0xFD39:
 			*normals = arabic_ligature_sheen_with_khah_medial_form;
-			return static_count(arabic_ligature_sheen_with_khah_medial_form);
+			return 2;
 		case 0xFD3A:
 			*normals = arabic_ligature_tah_with_meem_medial_form;
-			return static_count(arabic_ligature_tah_with_meem_medial_form);
+			return 2;
 		case 0xFD3B:
 			*normals = arabic_ligature_zah_with_meem_medial_form;
-			return static_count(arabic_ligature_zah_with_meem_medial_form);
+			return 2;
 		case 0xFD3C:
 			*normals = arabic_ligature_alef_with_fathatan_final_form;
-			return static_count(arabic_ligature_alef_with_fathatan_final_form);
+			return 2;
 		case 0xFD3D:
 			*normals = arabic_ligature_alef_with_fathatan_isolated_form;
-			return static_count(arabic_ligature_alef_with_fathatan_isolated_form);
+			return 2;
 		case 0xFD50:
 			*normals = arabic_ligature_teh_with_jeem_with_meem_initial_form;
-			return static_count(arabic_ligature_teh_with_jeem_with_meem_initial_form);
+			return 3;
 		case 0xFD51:
 			*normals = arabic_ligature_teh_with_hah_with_jeem_final_form;
-			return static_count(arabic_ligature_teh_with_hah_with_jeem_final_form);
+			return 3;
 		case 0xFD52:
 			*normals = arabic_ligature_teh_with_hah_with_jeem_initial_form;
-			return static_count(arabic_ligature_teh_with_hah_with_jeem_initial_form);
+			return 3;
 		case 0xFD53:
 			*normals = arabic_ligature_teh_with_hah_with_meem_initial_form;
-			return static_count(arabic_ligature_teh_with_hah_with_meem_initial_form);
+			return 3;
 		case 0xFD54:
 			*normals = arabic_ligature_teh_with_khah_with_meem_initial_form;
-			return static_count(arabic_ligature_teh_with_khah_with_meem_initial_form);
+			return 3;
 		case 0xFD55:
 			*normals = arabic_ligature_teh_with_meem_with_jeem_initial_form;
-			return static_count(arabic_ligature_teh_with_meem_with_jeem_initial_form);
+			return 3;
 		case 0xFD56:
 			*normals = arabic_ligature_teh_with_meem_with_hah_initial_form;
-			return static_count(arabic_ligature_teh_with_meem_with_hah_initial_form);
+			return 3;
 		case 0xFD57:
 			*normals = arabic_ligature_teh_with_meem_with_khah_initial_form;
-			return static_count(arabic_ligature_teh_with_meem_with_khah_initial_form);
+			return 3;
 		case 0xFD58:
 			*normals = arabic_ligature_jeem_with_meem_with_hah_final_form;
-			return static_count(arabic_ligature_jeem_with_meem_with_hah_final_form);
+			return 3;
 		case 0xFD59:
 			*normals = arabic_ligature_jeem_with_meem_with_hah_initial_form;
-			return static_count(arabic_ligature_jeem_with_meem_with_hah_initial_form);
+			return 3;
 		case 0xFD5A:
 			*normals = arabic_ligature_hah_with_meem_with_yeh_final_form;
-			return static_count(arabic_ligature_hah_with_meem_with_yeh_final_form);
+			return 3;
 		case 0xFD5B:
 			*normals = arabic_ligature_hah_with_meem_with_alef_maksura_final_form;
-			return static_count(arabic_ligature_hah_with_meem_with_alef_maksura_final_form);
+			return 3;
 		case 0xFD5C:
 			*normals = arabic_ligature_seen_with_hah_with_jeem_initial_form;
-			return static_count(arabic_ligature_seen_with_hah_with_jeem_initial_form);
+			return 3;
 		case 0xFD5D:
 			*normals = arabic_ligature_seen_with_jeem_with_hah_initial_form;
-			return static_count(arabic_ligature_seen_with_jeem_with_hah_initial_form);
+			return 3;
 		case 0xFD5E:
 			*normals = arabic_ligature_seen_with_jeem_with_alef_maksura_final_form;
-			return static_count(arabic_ligature_seen_with_jeem_with_alef_maksura_final_form);
+			return 3;
 		case 0xFD5F:
 			*normals = arabic_ligature_seen_with_meem_with_hah_final_form;
-			return static_count(arabic_ligature_seen_with_meem_with_hah_final_form);
+			return 3;
 		case 0xFD60:
 			*normals = arabic_ligature_seen_with_meem_with_hah_initial_form;
-			return static_count(arabic_ligature_seen_with_meem_with_hah_initial_form);
+			return 3;
 		case 0xFD61:
 			*normals = arabic_ligature_seen_with_meem_with_jeem_initial_form;
-			return static_count(arabic_ligature_seen_with_meem_with_jeem_initial_form);
+			return 3;
 		case 0xFD62:
 			*normals = arabic_ligature_seen_with_meem_with_meem_final_form;
-			return static_count(arabic_ligature_seen_with_meem_with_meem_final_form);
+			return 3;
 		case 0xFD63:
 			*normals = arabic_ligature_seen_with_meem_with_meem_initial_form;
-			return static_count(arabic_ligature_seen_with_meem_with_meem_initial_form);
+			return 3;
 		case 0xFD64:
 			*normals = arabic_ligature_sad_with_hah_with_hah_final_form;
-			return static_count(arabic_ligature_sad_with_hah_with_hah_final_form);
+			return 3;
 		case 0xFD65:
 			*normals = arabic_ligature_sad_with_hah_with_hah_initial_form;
-			return static_count(arabic_ligature_sad_with_hah_with_hah_initial_form);
+			return 3;
 		case 0xFD66:
 			*normals = arabic_ligature_sad_with_meem_with_meem_final_form;
-			return static_count(arabic_ligature_sad_with_meem_with_meem_final_form);
+			return 3;
 		case 0xFD67:
 			*normals = arabic_ligature_sheen_with_hah_with_meem_final_form;
-			return static_count(arabic_ligature_sheen_with_hah_with_meem_final_form);
+			return 3;
 		case 0xFD68:
 			*normals = arabic_ligature_sheen_with_hah_with_meem_initial_form;
-			return static_count(arabic_ligature_sheen_with_hah_with_meem_initial_form);
+			return 3;
 		case 0xFD69:
 			*normals = arabic_ligature_sheen_with_jeem_with_yeh_final_form;
-			return static_count(arabic_ligature_sheen_with_jeem_with_yeh_final_form);
+			return 3;
 		case 0xFD6A:
 			*normals = arabic_ligature_sheen_with_meem_with_khah_final_form;
-			return static_count(arabic_ligature_sheen_with_meem_with_khah_final_form);
+			return 3;
 		case 0xFD6B:
 			*normals = arabic_ligature_sheen_with_meem_with_khah_initial_form;
-			return static_count(arabic_ligature_sheen_with_meem_with_khah_initial_form);
+			return 3;
 		case 0xFD6C:
 			*normals = arabic_ligature_sheen_with_meem_with_meem_final_form;
-			return static_count(arabic_ligature_sheen_with_meem_with_meem_final_form);
+			return 3;
 		case 0xFD6D:
 			*normals = arabic_ligature_sheen_with_meem_with_meem_initial_form;
-			return static_count(arabic_ligature_sheen_with_meem_with_meem_initial_form);
+			return 3;
 		case 0xFD6E:
 			*normals = arabic_ligature_dad_with_hah_with_alef_maksura_final_form;
-			return static_count(arabic_ligature_dad_with_hah_with_alef_maksura_final_form);
+			return 3;
 		case 0xFD6F:
 			*normals = arabic_ligature_dad_with_khah_with_meem_final_form;
-			return static_count(arabic_ligature_dad_with_khah_with_meem_final_form);
+			return 3;
 		case 0xFD70:
 			*normals = arabic_ligature_dad_with_khah_with_meem_initial_form;
-			return static_count(arabic_ligature_dad_with_khah_with_meem_initial_form);
+			return 3;
 		case 0xFD71:
 			*normals = arabic_ligature_tah_with_meem_with_hah_final_form;
-			return static_count(arabic_ligature_tah_with_meem_with_hah_final_form);
+			return 3;
 		case 0xFD72:
 			*normals = arabic_ligature_tah_with_meem_with_hah_initial_form;
-			return static_count(arabic_ligature_tah_with_meem_with_hah_initial_form);
+			return 3;
 		case 0xFD73:
 			*normals = arabic_ligature_tah_with_meem_with_meem_initial_form;
-			return static_count(arabic_ligature_tah_with_meem_with_meem_initial_form);
+			return 3;
 		case 0xFD74:
 			*normals = arabic_ligature_tah_with_meem_with_yeh_final_form;
-			return static_count(arabic_ligature_tah_with_meem_with_yeh_final_form);
+			return 3;
 		case 0xFD75:
 			*normals = arabic_ligature_ain_with_jeem_with_meem_final_form;
-			return static_count(arabic_ligature_ain_with_jeem_with_meem_final_form);
+			return 3;
 		case 0xFD76:
 			*normals = arabic_ligature_ain_with_meem_with_meem_final_form;
-			return static_count(arabic_ligature_ain_with_meem_with_meem_final_form);
+			return 3;
 		case 0xFD77:
 			*normals = arabic_ligature_ain_with_meem_with_meem_initial_form;
-			return static_count(arabic_ligature_ain_with_meem_with_meem_initial_form);
+			return 3;
 		case 0xFD78:
 			*normals = arabic_ligature_ain_with_meem_with_alef_maksura_final_form;
-			return static_count(arabic_ligature_ain_with_meem_with_alef_maksura_final_form);
+			return 3;
 		case 0xFD79:
 			*normals = arabic_ligature_ghain_with_meem_with_meem_final_form;
-			return static_count(arabic_ligature_ghain_with_meem_with_meem_final_form);
+			return 3;
 		case 0xFD7A:
 			*normals = arabic_ligature_ghain_with_meem_with_yeh_final_form;
-			return static_count(arabic_ligature_ghain_with_meem_with_yeh_final_form);
+			return 3;
 		case 0xFD7B:
 			*normals = arabic_ligature_ghain_with_meem_with_alef_maksura_final_form;
-			return static_count(arabic_ligature_ghain_with_meem_with_alef_maksura_final_form);
+			return 3;
 		case 0xFD7C:
 			*normals = arabic_ligature_feh_with_khah_with_meem_final_form;
-			return static_count(arabic_ligature_feh_with_khah_with_meem_final_form);
+			return 3;
 		case 0xFD7D:
 			*normals = arabic_ligature_feh_with_khah_with_meem_initial_form;
-			return static_count(arabic_ligature_feh_with_khah_with_meem_initial_form);
+			return 3;
 		case 0xFD7E:
 			*normals = arabic_ligature_qaf_with_meem_with_hah_final_form;
-			return static_count(arabic_ligature_qaf_with_meem_with_hah_final_form);
+			return 3;
 		case 0xFD7F:
 			*normals = arabic_ligature_qaf_with_meem_with_meem_final_form;
-			return static_count(arabic_ligature_qaf_with_meem_with_meem_final_form);
+			return 3;
 		case 0xFD80:
 			*normals = arabic_ligature_lam_with_hah_with_meem_final_form;
-			return static_count(arabic_ligature_lam_with_hah_with_meem_final_form);
+			return 3;
 		case 0xFD81:
 			*normals = arabic_ligature_lam_with_hah_with_yeh_final_form;
-			return static_count(arabic_ligature_lam_with_hah_with_yeh_final_form);
+			return 3;
 		case 0xFD82:
 			*normals = arabic_ligature_lam_with_hah_with_alef_maksura_final_form;
-			return static_count(arabic_ligature_lam_with_hah_with_alef_maksura_final_form);
+			return 3;
 		case 0xFD83:
 			*normals = arabic_ligature_lam_with_jeem_with_jeem_initial_form;
-			return static_count(arabic_ligature_lam_with_jeem_with_jeem_initial_form);
+			return 3;
 		case 0xFD84:
 			*normals = arabic_ligature_lam_with_jeem_with_jeem_final_form;
-			return static_count(arabic_ligature_lam_with_jeem_with_jeem_final_form);
+			return 3;
 		case 0xFD85:
 			*normals = arabic_ligature_lam_with_khah_with_meem_final_form;
-			return static_count(arabic_ligature_lam_with_khah_with_meem_final_form);
+			return 3;
 		case 0xFD86:
 			*normals = arabic_ligature_lam_with_khah_with_meem_initial_form;
-			return static_count(arabic_ligature_lam_with_khah_with_meem_initial_form);
+			return 3;
 		case 0xFD87:
 			*normals = arabic_ligature_lam_with_meem_with_hah_final_form;
-			return static_count(arabic_ligature_lam_with_meem_with_hah_final_form);
+			return 3;
 		case 0xFD88:
 			*normals = arabic_ligature_lam_with_meem_with_hah_initial_form;
-			return static_count(arabic_ligature_lam_with_meem_with_hah_initial_form);
+			return 3;
 		case 0xFD89:
 			*normals = arabic_ligature_meem_with_hah_with_jeem_initial_form;
-			return static_count(arabic_ligature_meem_with_hah_with_jeem_initial_form);
+			return 3;
 		case 0xFD8A:
 			*normals = arabic_ligature_meem_with_hah_with_meem_initial_form;
-			return static_count(arabic_ligature_meem_with_hah_with_meem_initial_form);
+			return 3;
 		case 0xFD8B:
 			*normals = arabic_ligature_meem_with_hah_with_yeh_final_form;
-			return static_count(arabic_ligature_meem_with_hah_with_yeh_final_form);
+			return 3;
 		case 0xFD8C:
 			*normals = arabic_ligature_meem_with_jeem_with_hah_initial_form;
-			return static_count(arabic_ligature_meem_with_jeem_with_hah_initial_form);
+			return 3;
 		case 0xFD8D:
 			*normals = arabic_ligature_meem_with_jeem_with_meem_initial_form;
-			return static_count(arabic_ligature_meem_with_jeem_with_meem_initial_form);
+			return 3;
 		case 0xFD8E:
 			*normals = arabic_ligature_meem_with_khah_with_jeem_initial_form;
-			return static_count(arabic_ligature_meem_with_khah_with_jeem_initial_form);
+			return 3;
 		case 0xFD8F:
 			*normals = arabic_ligature_meem_with_khah_with_meem_initial_form;
-			return static_count(arabic_ligature_meem_with_khah_with_meem_initial_form);
+			return 3;
 		case 0xFD92:
 			*normals = arabic_ligature_meem_with_jeem_with_khah_initial_form;
-			return static_count(arabic_ligature_meem_with_jeem_with_khah_initial_form);
+			return 3;
 		case 0xFD93:
 			*normals = arabic_ligature_heh_with_meem_with_jeem_initial_form;
-			return static_count(arabic_ligature_heh_with_meem_with_jeem_initial_form);
+			return 3;
 		case 0xFD94:
 			*normals = arabic_ligature_heh_with_meem_with_meem_initial_form;
-			return static_count(arabic_ligature_heh_with_meem_with_meem_initial_form);
+			return 3;
 		case 0xFD95:
 			*normals = arabic_ligature_noon_with_hah_with_meem_initial_form;
-			return static_count(arabic_ligature_noon_with_hah_with_meem_initial_form);
+			return 3;
 		case 0xFD96:
 			*normals = arabic_ligature_noon_with_hah_with_alef_maksura_final_form;
-			return static_count(arabic_ligature_noon_with_hah_with_alef_maksura_final_form);
+			return 3;
 		case 0xFD97:
 			*normals = arabic_ligature_noon_with_jeem_with_meem_final_form;
-			return static_count(arabic_ligature_noon_with_jeem_with_meem_final_form);
+			return 3;
 		case 0xFD98:
 			*normals = arabic_ligature_noon_with_jeem_with_meem_initial_form;
-			return static_count(arabic_ligature_noon_with_jeem_with_meem_initial_form);
+			return 3;
 		case 0xFD99:
 			*normals = arabic_ligature_noon_with_jeem_with_alef_maksura_final_form;
-			return static_count(arabic_ligature_noon_with_jeem_with_alef_maksura_final_form);
+			return 3;
 		case 0xFD9A:
 			*normals = arabic_ligature_noon_with_meem_with_yeh_final_form;
-			return static_count(arabic_ligature_noon_with_meem_with_yeh_final_form);
+			return 3;
 		case 0xFD9B:
 			*normals = arabic_ligature_noon_with_meem_with_alef_maksura_final_form;
-			return static_count(arabic_ligature_noon_with_meem_with_alef_maksura_final_form);
+			return 3;
 		case 0xFD9C:
 			*normals = arabic_ligature_yeh_with_meem_with_meem_final_form;
-			return static_count(arabic_ligature_yeh_with_meem_with_meem_final_form);
+			return 3;
 		case 0xFD9D:
 			*normals = arabic_ligature_yeh_with_meem_with_meem_initial_form;
-			return static_count(arabic_ligature_yeh_with_meem_with_meem_initial_form);
+			return 3;
 		case 0xFD9E:
 			*normals = arabic_ligature_beh_with_khah_with_yeh_final_form;
-			return static_count(arabic_ligature_beh_with_khah_with_yeh_final_form);
+			return 3;
 		case 0xFD9F:
 			*normals = arabic_ligature_teh_with_jeem_with_yeh_final_form;
-			return static_count(arabic_ligature_teh_with_jeem_with_yeh_final_form);
+			return 3;
 		case 0xFDA0:
 			*normals = arabic_ligature_teh_with_jeem_with_alef_maksura_final_form;
-			return static_count(arabic_ligature_teh_with_jeem_with_alef_maksura_final_form);
+			return 3;
 		case 0xFDA1:
 			*normals = arabic_ligature_teh_with_khah_with_yeh_final_form;
-			return static_count(arabic_ligature_teh_with_khah_with_yeh_final_form);
+			return 3;
 		case 0xFDA2:
 			*normals = arabic_ligature_teh_with_khah_with_alef_maksura_final_form;
-			return static_count(arabic_ligature_teh_with_khah_with_alef_maksura_final_form);
+			return 3;
 		case 0xFDA3:
 			*normals = arabic_ligature_teh_with_meem_with_yeh_final_form;
-			return static_count(arabic_ligature_teh_with_meem_with_yeh_final_form);
+			return 3;
 		case 0xFDA4:
 			*normals = arabic_ligature_teh_with_meem_with_alef_maksura_final_form;
-			return static_count(arabic_ligature_teh_with_meem_with_alef_maksura_final_form);
+			return 3;
 		case 0xFDA5:
 			*normals = arabic_ligature_jeem_with_meem_with_yeh_final_form;
-			return static_count(arabic_ligature_jeem_with_meem_with_yeh_final_form);
+			return 3;
 		case 0xFDA6:
 			*normals = arabic_ligature_jeem_with_hah_with_alef_maksura_final_form;
-			return static_count(arabic_ligature_jeem_with_hah_with_alef_maksura_final_form);
+			return 3;
 		case 0xFDA7:
 			*normals = arabic_ligature_jeem_with_meem_with_alef_maksura_final_form;
-			return static_count(arabic_ligature_jeem_with_meem_with_alef_maksura_final_form);
+			return 3;
 		case 0xFDA8:
 			*normals = arabic_ligature_seen_with_khah_with_alef_maksura_final_form;
-			return static_count(arabic_ligature_seen_with_khah_with_alef_maksura_final_form);
+			return 3;
 		case 0xFDA9:
 			*normals = arabic_ligature_sad_with_hah_with_yeh_final_form;
-			return static_count(arabic_ligature_sad_with_hah_with_yeh_final_form);
+			return 3;
 		case 0xFDAA:
 			*normals = arabic_ligature_sheen_with_hah_with_yeh_final_form;
-			return static_count(arabic_ligature_sheen_with_hah_with_yeh_final_form);
+			return 3;
 		case 0xFDAB:
 			*normals = arabic_ligature_dad_with_hah_with_yeh_final_form;
-			return static_count(arabic_ligature_dad_with_hah_with_yeh_final_form);
+			return 3;
 		case 0xFDAC:
 			*normals = arabic_ligature_lam_with_jeem_with_yeh_final_form;
-			return static_count(arabic_ligature_lam_with_jeem_with_yeh_final_form);
+			return 3;
 		case 0xFDAD:
 			*normals = arabic_ligature_lam_with_meem_with_yeh_final_form;
-			return static_count(arabic_ligature_lam_with_meem_with_yeh_final_form);
+			return 3;
 		case 0xFDAE:
 			*normals = arabic_ligature_yeh_with_hah_with_yeh_final_form;
-			return static_count(arabic_ligature_yeh_with_hah_with_yeh_final_form);
+			return 3;
 		case 0xFDAF:
 			*normals = arabic_ligature_yeh_with_jeem_with_yeh_final_form;
-			return static_count(arabic_ligature_yeh_with_jeem_with_yeh_final_form);
+			return 3;
 		case 0xFDB0:
 			*normals = arabic_ligature_yeh_with_meem_with_yeh_final_form;
-			return static_count(arabic_ligature_yeh_with_meem_with_yeh_final_form);
+			return 3;
 		case 0xFDB1:
 			*normals = arabic_ligature_meem_with_meem_with_yeh_final_form;
-			return static_count(arabic_ligature_meem_with_meem_with_yeh_final_form);
+			return 3;
 		case 0xFDB2:
 			*normals = arabic_ligature_qaf_with_meem_with_yeh_final_form;
-			return static_count(arabic_ligature_qaf_with_meem_with_yeh_final_form);
+			return 3;
 		case 0xFDB3:
 			*normals = arabic_ligature_noon_with_hah_with_yeh_final_form;
-			return static_count(arabic_ligature_noon_with_hah_with_yeh_final_form);
+			return 3;
 		case 0xFDB4:
 			*normals = arabic_ligature_qaf_with_meem_with_hah_initial_form;
-			return static_count(arabic_ligature_qaf_with_meem_with_hah_initial_form);
+			return 3;
 		case 0xFDB5:
 			*normals = arabic_ligature_lam_with_hah_with_meem_initial_form;
-			return static_count(arabic_ligature_lam_with_hah_with_meem_initial_form);
+			return 3;
 		case 0xFDB6:
 			*normals = arabic_ligature_ain_with_meem_with_yeh_final_form;
-			return static_count(arabic_ligature_ain_with_meem_with_yeh_final_form);
+			return 3;
 		case 0xFDB7:
 			*normals = arabic_ligature_kaf_with_meem_with_yeh_final_form;
-			return static_count(arabic_ligature_kaf_with_meem_with_yeh_final_form);
+			return 3;
 		case 0xFDB8:
 			*normals = arabic_ligature_noon_with_jeem_with_hah_initial_form;
-			return static_count(arabic_ligature_noon_with_jeem_with_hah_initial_form);
+			return 3;
 		case 0xFDB9:
 			*normals = arabic_ligature_meem_with_khah_with_yeh_final_form;
-			return static_count(arabic_ligature_meem_with_khah_with_yeh_final_form);
+			return 3;
 		case 0xFDBA:
 			*normals = arabic_ligature_lam_with_jeem_with_meem_initial_form;
-			return static_count(arabic_ligature_lam_with_jeem_with_meem_initial_form);
+			return 3;
 		case 0xFDBB:
 			*normals = arabic_ligature_kaf_with_meem_with_meem_final_form;
-			return static_count(arabic_ligature_kaf_with_meem_with_meem_final_form);
+			return 3;
 		case 0xFDBC:
 			*normals = arabic_ligature_lam_with_jeem_with_meem_final_form;
-			return static_count(arabic_ligature_lam_with_jeem_with_meem_final_form);
+			return 3;
 		case 0xFDBD:
 			*normals = arabic_ligature_noon_with_jeem_with_hah_final_form;
-			return static_count(arabic_ligature_noon_with_jeem_with_hah_final_form);
+			return 3;
 		case 0xFDBE:
 			*normals = arabic_ligature_jeem_with_hah_with_yeh_final_form;
-			return static_count(arabic_ligature_jeem_with_hah_with_yeh_final_form);
+			return 3;
 		case 0xFDBF:
 			*normals = arabic_ligature_hah_with_jeem_with_yeh_final_form;
-			return static_count(arabic_ligature_hah_with_jeem_with_yeh_final_form);
+			return 3;
 		case 0xFDC0:
 			*normals = arabic_ligature_meem_with_jeem_with_yeh_final_form;
-			return static_count(arabic_ligature_meem_with_jeem_with_yeh_final_form);
+			return 3;
 		case 0xFDC1:
 			*normals = arabic_ligature_feh_with_meem_with_yeh_final_form;
-			return static_count(arabic_ligature_feh_with_meem_with_yeh_final_form);
+			return 3;
 		case 0xFDC2:
 			*normals = arabic_ligature_beh_with_hah_with_yeh_final_form;
-			return static_count(arabic_ligature_beh_with_hah_with_yeh_final_form);
+			return 3;
 		case 0xFDC3:
 			*normals = arabic_ligature_kaf_with_meem_with_meem_initial_form;
-			return static_count(arabic_ligature_kaf_with_meem_with_meem_initial_form);
+			return 3;
 		case 0xFDC4:
 			*normals = arabic_ligature_ain_with_jeem_with_meem_initial_form;
-			return static_count(arabic_ligature_ain_with_jeem_with_meem_initial_form);
+			return 3;
 		case 0xFDC5:
 			*normals = arabic_ligature_sad_with_meem_with_meem_initial_form;
-			return static_count(arabic_ligature_sad_with_meem_with_meem_initial_form);
+			return 3;
 		case 0xFDC6:
 			*normals = arabic_ligature_seen_with_khah_with_yeh_final_form;
-			return static_count(arabic_ligature_seen_with_khah_with_yeh_final_form);
+			return 3;
 		case 0xFDC7:
 			*normals = arabic_ligature_noon_with_jeem_with_yeh_final_form;
-			return static_count(arabic_ligature_noon_with_jeem_with_yeh_final_form);
+			return 3;
 		case 0xFDF0:
 			*normals = arabic_ligature_salla_used_as_koranic_stop_sign_isolated_form;
-			return static_count(arabic_ligature_salla_used_as_koranic_stop_sign_isolated_form);
+			return 3;
 		case 0xFDF1:
 			*normals = arabic_ligature_qala_used_as_koranic_stop_sign_isolated_form;
-			return static_count(arabic_ligature_qala_used_as_koranic_stop_sign_isolated_form);
+			return 3;
 		case 0xFDF2:
 			*normals = arabic_ligature_allah_isolated_form;
-			return static_count(arabic_ligature_allah_isolated_form);
+			return 4;
 		case 0xFDF3:
 			*normals = arabic_ligature_akbar_isolated_form;
-			return static_count(arabic_ligature_akbar_isolated_form);
+			return 4;
 		case 0xFDF4:
 			*normals = arabic_ligature_mohammad_isolated_form;
-			return static_count(arabic_ligature_mohammad_isolated_form);
+			return 4;
 		case 0xFDF5:
 			*normals = arabic_ligature_salam_isolated_form;
-			return static_count(arabic_ligature_salam_isolated_form);
+			return 4;
 		case 0xFDF6:
 			*normals = arabic_ligature_rasoul_isolated_form;
-			return static_count(arabic_ligature_rasoul_isolated_form);
+			return 4;
 		case 0xFDF7:
 			*normals = arabic_ligature_alayhe_isolated_form;
-			return static_count(arabic_ligature_alayhe_isolated_form);
+			return 4;
 		case 0xFDF8:
 			*normals = arabic_ligature_wasallam_isolated_form;
-			return static_count(arabic_ligature_wasallam_isolated_form);
+			return 4;
 		case 0xFDF9:
 			*normals = arabic_ligature_salla_isolated_form;
-			return static_count(arabic_ligature_salla_isolated_form);
+			return 3;
 		case 0xFDFA:
 			*normals = arabic_ligature_sallallahou_alayhe_wasallam;
-			return static_count(arabic_ligature_sallallahou_alayhe_wasallam);
+			return 18;
 		case 0xFDFB:
 			*normals = arabic_ligature_jallajalalouhou;
-			return static_count(arabic_ligature_jallajalalouhou);
+			return 8;
 		case 0xFDFC:
 			*normals = rial_sign;
-			return static_count(rial_sign);
+			return 4;
 		case 0xFE10:
 			*normals = presentation_form_for_vertical_comma;
-			return static_count(presentation_form_for_vertical_comma);
+			return 1;
 		case 0xFE11:
 			*normals = presentation_form_for_vertical_ideographic_comma;
-			return static_count(presentation_form_for_vertical_ideographic_comma);
+			return 1;
 		case 0xFE12:
 			*normals = presentation_form_for_vertical_ideographic_full_stop;
-			return static_count(presentation_form_for_vertical_ideographic_full_stop);
+			return 1;
 		case 0xFE13:
 			*normals = presentation_form_for_vertical_colon;
-			return static_count(presentation_form_for_vertical_colon);
+			return 1;
 		case 0xFE14:
 			*normals = presentation_form_for_vertical_semicolon;
-			return static_count(presentation_form_for_vertical_semicolon);
+			return 1;
 		case 0xFE15:
 			*normals = presentation_form_for_vertical_exclamation_mark;
-			return static_count(presentation_form_for_vertical_exclamation_mark);
+			return 1;
 		case 0xFE16:
 			*normals = presentation_form_for_vertical_question_mark;
-			return static_count(presentation_form_for_vertical_question_mark);
+			return 1;
 		case 0xFE17:
 			*normals = presentation_form_for_vertical_left_white_lenticular_bracket;
-			return static_count(presentation_form_for_vertical_left_white_lenticular_bracket);
+			return 1;
 		case 0xFE18:
 			*normals = presentation_form_for_vertical_right_white_lenticular_brakcet;
-			return static_count(presentation_form_for_vertical_right_white_lenticular_brakcet);
+			return 1;
 		case 0xFE19:
 			*normals = presentation_form_for_vertical_horizontal_ellipsis;
-			return static_count(presentation_form_for_vertical_horizontal_ellipsis);
+			return 1;
 		case 0xFE30:
 			*normals = presentation_form_for_vertical_two_dot_leader;
-			return static_count(presentation_form_for_vertical_two_dot_leader);
+			return 1;
 		case 0xFE31:
 			*normals = presentation_form_for_vertical_em_dash;
-			return static_count(presentation_form_for_vertical_em_dash);
+			return 1;
 		case 0xFE32:
 			*normals = presentation_form_for_vertical_en_dash;
-			return static_count(presentation_form_for_vertical_en_dash);
+			return 1;
 		case 0xFE33:
 			*normals = presentation_form_for_vertical_low_line;
-			return static_count(presentation_form_for_vertical_low_line);
+			return 1;
 		case 0xFE34:
 			*normals = presentation_form_for_vertical_wavy_low_line;
-			return static_count(presentation_form_for_vertical_wavy_low_line);
+			return 1;
 		case 0xFE35:
 			*normals = presentation_form_for_vertical_left_parenthesis;
-			return static_count(presentation_form_for_vertical_left_parenthesis);
+			return 1;
 		case 0xFE36:
 			*normals = presentation_form_for_vertical_right_parenthesis;
-			return static_count(presentation_form_for_vertical_right_parenthesis);
+			return 1;
 		case 0xFE37:
 			*normals = presentation_form_for_vertical_left_curly_bracket;
-			return static_count(presentation_form_for_vertical_left_curly_bracket);
+			return 1;
 		case 0xFE38:
 			*normals = presentation_form_for_vertical_right_curly_bracket;
-			return static_count(presentation_form_for_vertical_right_curly_bracket);
+			return 1;
 		case 0xFE39:
 			*normals = presentation_form_for_vertical_left_tortoise_shell_bracket;
-			return static_count(presentation_form_for_vertical_left_tortoise_shell_bracket);
+			return 1;
 		case 0xFE3A:
 			*normals = presentation_form_for_vertical_right_tortoise_shell_bracket;
-			return static_count(presentation_form_for_vertical_right_tortoise_shell_bracket);
+			return 1;
 		case 0xFE3B:
 			*normals = presentation_form_for_vertical_left_black_lenticular_bracket;
-			return static_count(presentation_form_for_vertical_left_black_lenticular_bracket);
+			return 1;
 		case 0xFE3C:
 			*normals = presentation_form_for_vertical_right_black_lenticular_bracket;
-			return static_count(presentation_form_for_vertical_right_black_lenticular_bracket);
+			return 1;
 		case 0xFE3D:
 			*normals = presentation_form_for_vertical_left_double_angle_bracket;
-			return static_count(presentation_form_for_vertical_left_double_angle_bracket);
+			return 1;
 		case 0xFE3E:
 			*normals = presentation_form_for_vertical_right_double_angle_bracket;
-			return static_count(presentation_form_for_vertical_right_double_angle_bracket);
+			return 1;
 		case 0xFE3F:
 			*normals = presentation_form_for_vertical_left_angle_bracket;
-			return static_count(presentation_form_for_vertical_left_angle_bracket);
+			return 1;
 		case 0xFE40:
 			*normals = presentation_form_for_vertical_right_angle_bracket;
-			return static_count(presentation_form_for_vertical_right_angle_bracket);
+			return 1;
 		case 0xFE41:
 			*normals = presentation_form_for_vertical_left_corner_bracket;
-			return static_count(presentation_form_for_vertical_left_corner_bracket);
+			return 1;
 		case 0xFE42:
 			*normals = presentation_form_for_vertical_right_corner_bracket;
-			return static_count(presentation_form_for_vertical_right_corner_bracket);
+			return 1;
 		case 0xFE43:
 			*normals = presentation_form_for_vertical_left_white_corner_bracket;
-			return static_count(presentation_form_for_vertical_left_white_corner_bracket);
+			return 1;
 		case 0xFE44:
 			*normals = presentation_form_for_vertical_right_white_corner_bracket;
-			return static_count(presentation_form_for_vertical_right_white_corner_bracket);
+			return 1;
 		case 0xFE47:
 			*normals = presentation_form_for_vertical_left_square_bracket;
-			return static_count(presentation_form_for_vertical_left_square_bracket);
+			return 1;
 		case 0xFE48:
 			*normals = presentation_form_for_vertical_right_square_bracket;
-			return static_count(presentation_form_for_vertical_right_square_bracket);
+			return 1;
 		case 0xFE49:
 			*normals = dashed_overline;
-			return static_count(dashed_overline);
+			return 1;
 		case 0xFE4A:
 			*normals = centreline_overline;
-			return static_count(centreline_overline);
+			return 1;
 		case 0xFE4B:
 			*normals = wavy_overline;
-			return static_count(wavy_overline);
+			return 1;
 		case 0xFE4C:
 			*normals = double_wavy_overline;
-			return static_count(double_wavy_overline);
+			return 1;
 		case 0xFE4D:
 			*normals = dashed_low_line;
-			return static_count(dashed_low_line);
+			return 1;
 		case 0xFE4E:
 			*normals = centreline_low_line;
-			return static_count(centreline_low_line);
+			return 1;
 		case 0xFE4F:
 			*normals = wavy_low_line;
-			return static_count(wavy_low_line);
+			return 1;
 		case 0xFE50:
 			*normals = small_comma;
-			return static_count(small_comma);
+			return 1;
 		case 0xFE51:
 			*normals = small_ideographic_comma;
-			return static_count(small_ideographic_comma);
+			return 1;
 		case 0xFE52:
 			*normals = small_full_stop;
-			return static_count(small_full_stop);
+			return 1;
 		case 0xFE54:
 			*normals = small_semicolon;
-			return static_count(small_semicolon);
+			return 1;
 		case 0xFE55:
 			*normals = small_colon;
-			return static_count(small_colon);
+			return 1;
 		case 0xFE56:
 			*normals = small_question_mark;
-			return static_count(small_question_mark);
+			return 1;
 		case 0xFE57:
 			*normals = small_exclamation_mark;
-			return static_count(small_exclamation_mark);
+			return 1;
 		case 0xFE58:
 			*normals = small_em_dash;
-			return static_count(small_em_dash);
+			return 1;
 		case 0xFE59:
 			*normals = small_left_parenthesis;
-			return static_count(small_left_parenthesis);
+			return 1;
 		case 0xFE5A:
 			*normals = small_right_parenthesis;
-			return static_count(small_right_parenthesis);
+			return 1;
 		case 0xFE5B:
 			*normals = small_left_curly_bracket;
-			return static_count(small_left_curly_bracket);
+			return 1;
 		case 0xFE5C:
 			*normals = small_right_curly_bracket;
-			return static_count(small_right_curly_bracket);
+			return 1;
 		case 0xFE5D:
 			*normals = small_left_tortoise_shell_bracket;
-			return static_count(small_left_tortoise_shell_bracket);
+			return 1;
 		case 0xFE5E:
 			*normals = small_right_tortoise_shell_bracket;
-			return static_count(small_right_tortoise_shell_bracket);
+			return 1;
 		case 0xFE5F:
 			*normals = small_number_sign;
-			return static_count(small_number_sign);
+			return 1;
 		case 0xFE60:
 			*normals = small_ampersand;
-			return static_count(small_ampersand);
+			return 1;
 		case 0xFE61:
 			*normals = small_asterisk;
-			return static_count(small_asterisk);
+			return 1;
 		case 0xFE62:
 			*normals = small_plus_sign;
-			return static_count(small_plus_sign);
+			return 1;
 		case 0xFE63:
 			*normals = small_hyphen_minus;
-			return static_count(small_hyphen_minus);
+			return 1;
 		case 0xFE64:
 			*normals = small_less_than_sign;
-			return static_count(small_less_than_sign);
+			return 1;
 		case 0xFE65:
 			*normals = small_greater_than_sign;
-			return static_count(small_greater_than_sign);
+			return 1;
 		case 0xFE66:
 			*normals = small_equals_sign;
-			return static_count(small_equals_sign);
+			return 1;
 		case 0xFE68:
 			*normals = small_reverse_solidus;
-			return static_count(small_reverse_solidus);
+			return 1;
 		case 0xFE69:
 			*normals = small_dollar_sign;
-			return static_count(small_dollar_sign);
+			return 1;
 		case 0xFE6A:
 			*normals = small_percent_sign;
-			return static_count(small_percent_sign);
+			return 1;
 		case 0xFE6B:
 			*normals = small_commercial_at;
-			return static_count(small_commercial_at);
+			return 1;
 		case 0xFE70:
 			*normals = arabic_fathatan_isolated_form;
-			return static_count(arabic_fathatan_isolated_form);
+			return 2;
 		case 0xFE71:
 			*normals = arabic_tatweel_with_fathatan_above;
-			return static_count(arabic_tatweel_with_fathatan_above);
+			return 2;
 		case 0xFE72:
 			*normals = arabic_dammatan_isolated_form;
-			return static_count(arabic_dammatan_isolated_form);
+			return 2;
 		case 0xFE74:
 			*normals = arabic_kasratan_isolated_form;
-			return static_count(arabic_kasratan_isolated_form);
+			return 2;
 		case 0xFE76:
 			*normals = arabic_fatha_isolated_form;
-			return static_count(arabic_fatha_isolated_form);
+			return 2;
 		case 0xFE77:
 			*normals = arabic_fatha_medial_form;
-			return static_count(arabic_fatha_medial_form);
+			return 2;
 		case 0xFE78:
 			*normals = arabic_damma_isolated_form;
-			return static_count(arabic_damma_isolated_form);
+			return 2;
 		case 0xFE79:
 			*normals = arabic_damma_medial_form;
-			return static_count(arabic_damma_medial_form);
+			return 2;
 		case 0xFE7A:
 			*normals = arabic_kasra_isolated_form;
-			return static_count(arabic_kasra_isolated_form);
+			return 2;
 		case 0xFE7B:
 			*normals = arabic_kasra_medial_form;
-			return static_count(arabic_kasra_medial_form);
+			return 2;
 		case 0xFE7C:
 			*normals = arabic_shadda_isolated_form;
-			return static_count(arabic_shadda_isolated_form);
+			return 2;
 		case 0xFE7D:
 			*normals = arabic_shadda_medial_form;
-			return static_count(arabic_shadda_medial_form);
+			return 2;
 		case 0xFE7E:
 			*normals = arabic_sukun_isolated_form;
-			return static_count(arabic_sukun_isolated_form);
+			return 2;
 		case 0xFE7F:
 			*normals = arabic_sukun_medial_form;
-			return static_count(arabic_sukun_medial_form);
+			return 2;
 		case 0xFE80:
 			*normals = arabic_letter_hamza_isolated_form;
-			return static_count(arabic_letter_hamza_isolated_form);
+			return 1;
 		case 0xFE81:
 			*normals = arabic_letter_alef_with_madda_above_isolated_form;
-			return static_count(arabic_letter_alef_with_madda_above_isolated_form);
+			return 1;
 		case 0xFE82:
 			*normals = arabic_letter_alef_with_madda_above_final_form;
-			return static_count(arabic_letter_alef_with_madda_above_final_form);
+			return 1;
 		case 0xFE83:
 			*normals = arabic_letter_alef_with_hamza_above_isolated_form;
-			return static_count(arabic_letter_alef_with_hamza_above_isolated_form);
+			return 1;
 		case 0xFE84:
 			*normals = arabic_letter_alef_with_hamza_above_final_form;
-			return static_count(arabic_letter_alef_with_hamza_above_final_form);
+			return 1;
 		case 0xFE85:
 			*normals = arabic_letter_waw_with_hamza_above_isolated_form;
-			return static_count(arabic_letter_waw_with_hamza_above_isolated_form);
+			return 1;
 		case 0xFE86:
 			*normals = arabic_letter_waw_with_hamza_above_final_form;
-			return static_count(arabic_letter_waw_with_hamza_above_final_form);
+			return 1;
 		case 0xFE87:
 			*normals = arabic_letter_alef_with_hamza_below_isolated_form;
-			return static_count(arabic_letter_alef_with_hamza_below_isolated_form);
+			return 1;
 		case 0xFE88:
 			*normals = arabic_letter_alef_with_hamza_below_final_form;
-			return static_count(arabic_letter_alef_with_hamza_below_final_form);
+			return 1;
 		case 0xFE89:
 			*normals = arabic_letter_yeh_with_hamza_above_isolated_form;
-			return static_count(arabic_letter_yeh_with_hamza_above_isolated_form);
+			return 1;
 		case 0xFE8A:
 			*normals = arabic_letter_yeh_with_hamza_above_final_form;
-			return static_count(arabic_letter_yeh_with_hamza_above_final_form);
+			return 1;
 		case 0xFE8B:
 			*normals = arabic_letter_yeh_with_hamza_above_initial_form;
-			return static_count(arabic_letter_yeh_with_hamza_above_initial_form);
+			return 1;
 		case 0xFE8C:
 			*normals = arabic_letter_yeh_with_hamza_above_medial_form;
-			return static_count(arabic_letter_yeh_with_hamza_above_medial_form);
+			return 1;
 		case 0xFE8D:
 			*normals = arabic_letter_alef_isolated_form;
-			return static_count(arabic_letter_alef_isolated_form);
+			return 1;
 		case 0xFE8E:
 			*normals = arabic_letter_alef_final_form;
-			return static_count(arabic_letter_alef_final_form);
+			return 1;
 		case 0xFE8F:
 			*normals = arabic_letter_beh_isolated_form;
-			return static_count(arabic_letter_beh_isolated_form);
+			return 1;
 		case 0xFE90:
 			*normals = arabic_letter_beh_final_form;
-			return static_count(arabic_letter_beh_final_form);
+			return 1;
 		case 0xFE91:
 			*normals = arabic_letter_beh_initial_form;
-			return static_count(arabic_letter_beh_initial_form);
+			return 1;
 		case 0xFE92:
 			*normals = arabic_letter_beh_medial_form;
-			return static_count(arabic_letter_beh_medial_form);
+			return 1;
 		case 0xFE93:
 			*normals = arabic_letter_teh_marbuta_isolated_form;
-			return static_count(arabic_letter_teh_marbuta_isolated_form);
+			return 1;
 		case 0xFE94:
 			*normals = arabic_letter_teh_marbuta_final_form;
-			return static_count(arabic_letter_teh_marbuta_final_form);
+			return 1;
 		case 0xFE95:
 			*normals = arabic_letter_teh_isolated_form;
-			return static_count(arabic_letter_teh_isolated_form);
+			return 1;
 		case 0xFE96:
 			*normals = arabic_letter_teh_final_form;
-			return static_count(arabic_letter_teh_final_form);
+			return 1;
 		case 0xFE97:
 			*normals = arabic_letter_teh_initial_form;
-			return static_count(arabic_letter_teh_initial_form);
+			return 1;
 		case 0xFE98:
 			*normals = arabic_letter_teh_medial_form;
-			return static_count(arabic_letter_teh_medial_form);
+			return 1;
 		case 0xFE99:
 			*normals = arabic_letter_theh_isolated_form;
-			return static_count(arabic_letter_theh_isolated_form);
+			return 1;
 		case 0xFE9A:
 			*normals = arabic_letter_theh_final_form;
-			return static_count(arabic_letter_theh_final_form);
+			return 1;
 		case 0xFE9B:
 			*normals = arabic_letter_theh_initial_form;
-			return static_count(arabic_letter_theh_initial_form);
+			return 1;
 		case 0xFE9C:
 			*normals = arabic_letter_theh_medial_form;
-			return static_count(arabic_letter_theh_medial_form);
+			return 1;
 		case 0xFE9D:
 			*normals = arabic_letter_jeem_isolated_form;
-			return static_count(arabic_letter_jeem_isolated_form);
+			return 1;
 		case 0xFE9E:
 			*normals = arabic_letter_jeem_final_form;
-			return static_count(arabic_letter_jeem_final_form);
+			return 1;
 		case 0xFE9F:
 			*normals = arabic_letter_jeem_initial_form;
-			return static_count(arabic_letter_jeem_initial_form);
+			return 1;
 		case 0xFEA0:
 			*normals = arabic_letter_jeem_medial_form;
-			return static_count(arabic_letter_jeem_medial_form);
+			return 1;
 		case 0xFEA1:
 			*normals = arabic_letter_hah_isolated_form;
-			return static_count(arabic_letter_hah_isolated_form);
+			return 1;
 		case 0xFEA2:
 			*normals = arabic_letter_hah_final_form;
-			return static_count(arabic_letter_hah_final_form);
+			return 1;
 		case 0xFEA3:
 			*normals = arabic_letter_hah_initial_form;
-			return static_count(arabic_letter_hah_initial_form);
+			return 1;
 		case 0xFEA4:
 			*normals = arabic_letter_hah_medial_form;
-			return static_count(arabic_letter_hah_medial_form);
+			return 1;
 		case 0xFEA5:
 			*normals = arabic_letter_khah_isolated_form;
-			return static_count(arabic_letter_khah_isolated_form);
+			return 1;
 		case 0xFEA6:
 			*normals = arabic_letter_khah_final_form;
-			return static_count(arabic_letter_khah_final_form);
+			return 1;
 		case 0xFEA7:
 			*normals = arabic_letter_khah_initial_form;
-			return static_count(arabic_letter_khah_initial_form);
+			return 1;
 		case 0xFEA8:
 			*normals = arabic_letter_khah_medial_form;
-			return static_count(arabic_letter_khah_medial_form);
+			return 1;
 		case 0xFEA9:
 			*normals = arabic_letter_dal_isolated_form;
-			return static_count(arabic_letter_dal_isolated_form);
+			return 1;
 		case 0xFEAA:
 			*normals = arabic_letter_dal_final_form;
-			return static_count(arabic_letter_dal_final_form);
+			return 1;
 		case 0xFEAB:
 			*normals = arabic_letter_thal_isolated_form;
-			return static_count(arabic_letter_thal_isolated_form);
+			return 1;
 		case 0xFEAC:
 			*normals = arabic_letter_thal_final_form;
-			return static_count(arabic_letter_thal_final_form);
+			return 1;
 		case 0xFEAD:
 			*normals = arabic_letter_reh_isolated_form;
-			return static_count(arabic_letter_reh_isolated_form);
+			return 1;
 		case 0xFEAE:
 			*normals = arabic_letter_reh_final_form;
-			return static_count(arabic_letter_reh_final_form);
+			return 1;
 		case 0xFEAF:
 			*normals = arabic_letter_zain_isolated_form;
-			return static_count(arabic_letter_zain_isolated_form);
+			return 1;
 		case 0xFEB0:
 			*normals = arabic_letter_zain_final_form;
-			return static_count(arabic_letter_zain_final_form);
+			return 1;
 		case 0xFEB1:
 			*normals = arabic_letter_seen_isolated_form;
-			return static_count(arabic_letter_seen_isolated_form);
+			return 1;
 		case 0xFEB2:
 			*normals = arabic_letter_seen_final_form;
-			return static_count(arabic_letter_seen_final_form);
+			return 1;
 		case 0xFEB3:
 			*normals = arabic_letter_seen_initial_form;
-			return static_count(arabic_letter_seen_initial_form);
+			return 1;
 		case 0xFEB4:
 			*normals = arabic_letter_seen_medial_form;
-			return static_count(arabic_letter_seen_medial_form);
+			return 1;
 		case 0xFEB5:
 			*normals = arabic_letter_sheen_isolated_form;
-			return static_count(arabic_letter_sheen_isolated_form);
+			return 1;
 		case 0xFEB6:
 			*normals = arabic_letter_sheen_final_form;
-			return static_count(arabic_letter_sheen_final_form);
+			return 1;
 		case 0xFEB7:
 			*normals = arabic_letter_sheen_initial_form;
-			return static_count(arabic_letter_sheen_initial_form);
+			return 1;
 		case 0xFEB8:
 			*normals = arabic_letter_sheen_medial_form;
-			return static_count(arabic_letter_sheen_medial_form);
+			return 1;
 		case 0xFEB9:
 			*normals = arabic_letter_sad_isolated_form;
-			return static_count(arabic_letter_sad_isolated_form);
+			return 1;
 		case 0xFEBA:
 			*normals = arabic_letter_sad_final_form;
-			return static_count(arabic_letter_sad_final_form);
+			return 1;
 		case 0xFEBB:
 			*normals = arabic_letter_sad_initial_form;
-			return static_count(arabic_letter_sad_initial_form);
+			return 1;
 		case 0xFEBC:
 			*normals = arabic_letter_sad_medial_form;
-			return static_count(arabic_letter_sad_medial_form);
+			return 1;
 		case 0xFEBD:
 			*normals = arabic_letter_dad_isolated_form;
-			return static_count(arabic_letter_dad_isolated_form);
+			return 1;
 		case 0xFEBE:
 			*normals = arabic_letter_dad_final_form;
-			return static_count(arabic_letter_dad_final_form);
+			return 1;
 		case 0xFEBF:
 			*normals = arabic_letter_dad_initial_form;
-			return static_count(arabic_letter_dad_initial_form);
+			return 1;
 		case 0xFEC0:
 			*normals = arabic_letter_dad_medial_form;
-			return static_count(arabic_letter_dad_medial_form);
+			return 1;
 		case 0xFEC1:
 			*normals = arabic_letter_tah_isolated_form;
-			return static_count(arabic_letter_tah_isolated_form);
+			return 1;
 		case 0xFEC2:
 			*normals = arabic_letter_tah_final_form;
-			return static_count(arabic_letter_tah_final_form);
+			return 1;
 		case 0xFEC3:
 			*normals = arabic_letter_tah_initial_form;
-			return static_count(arabic_letter_tah_initial_form);
+			return 1;
 		case 0xFEC4:
 			*normals = arabic_letter_tah_medial_form;
-			return static_count(arabic_letter_tah_medial_form);
+			return 1;
 		case 0xFEC5:
 			*normals = arabic_letter_zah_isolated_form;
-			return static_count(arabic_letter_zah_isolated_form);
+			return 1;
 		case 0xFEC6:
 			*normals = arabic_letter_zah_final_form;
-			return static_count(arabic_letter_zah_final_form);
+			return 1;
 		case 0xFEC7:
 			*normals = arabic_letter_zah_initial_form;
-			return static_count(arabic_letter_zah_initial_form);
+			return 1;
 		case 0xFEC8:
 			*normals = arabic_letter_zah_medial_form;
-			return static_count(arabic_letter_zah_medial_form);
+			return 1;
 		case 0xFEC9:
 			*normals = arabic_letter_ain_isolated_form;
-			return static_count(arabic_letter_ain_isolated_form);
+			return 1;
 		case 0xFECA:
 			*normals = arabic_letter_ain_final_form;
-			return static_count(arabic_letter_ain_final_form);
+			return 1;
 		case 0xFECB:
 			*normals = arabic_letter_ain_initial_form;
-			return static_count(arabic_letter_ain_initial_form);
+			return 1;
 		case 0xFECC:
 			*normals = arabic_letter_ain_medial_form;
-			return static_count(arabic_letter_ain_medial_form);
+			return 1;
 		case 0xFECD:
 			*normals = arabic_letter_ghain_isolated_form;
-			return static_count(arabic_letter_ghain_isolated_form);
+			return 1;
 		case 0xFECE:
 			*normals = arabic_letter_ghain_final_form;
-			return static_count(arabic_letter_ghain_final_form);
+			return 1;
 		case 0xFECF:
 			*normals = arabic_letter_ghain_initial_form;
-			return static_count(arabic_letter_ghain_initial_form);
+			return 1;
 		case 0xFED0:
 			*normals = arabic_letter_ghain_medial_form;
-			return static_count(arabic_letter_ghain_medial_form);
+			return 1;
 		case 0xFED1:
 			*normals = arabic_letter_feh_isolated_form;
-			return static_count(arabic_letter_feh_isolated_form);
+			return 1;
 		case 0xFED2:
 			*normals = arabic_letter_feh_final_form;
-			return static_count(arabic_letter_feh_final_form);
+			return 1;
 		case 0xFED3:
 			*normals = arabic_letter_feh_initial_form;
-			return static_count(arabic_letter_feh_initial_form);
+			return 1;
 		case 0xFED4:
 			*normals = arabic_letter_feh_medial_form;
-			return static_count(arabic_letter_feh_medial_form);
+			return 1;
 		case 0xFED5:
 			*normals = arabic_letter_qaf_isolated_form;
-			return static_count(arabic_letter_qaf_isolated_form);
+			return 1;
 		case 0xFED6:
 			*normals = arabic_letter_qaf_final_form;
-			return static_count(arabic_letter_qaf_final_form);
+			return 1;
 		case 0xFED7:
 			*normals = arabic_letter_qaf_initial_form;
-			return static_count(arabic_letter_qaf_initial_form);
+			return 1;
 		case 0xFED8:
 			*normals = arabic_letter_qaf_medial_form;
-			return static_count(arabic_letter_qaf_medial_form);
+			return 1;
 		case 0xFED9:
 			*normals = arabic_letter_kaf_isolated_form;
-			return static_count(arabic_letter_kaf_isolated_form);
+			return 1;
 		case 0xFEDA:
 			*normals = arabic_letter_kaf_final_form;
-			return static_count(arabic_letter_kaf_final_form);
+			return 1;
 		case 0xFEDB:
 			*normals = arabic_letter_kaf_initial_form;
-			return static_count(arabic_letter_kaf_initial_form);
+			return 1;
 		case 0xFEDC:
 			*normals = arabic_letter_kaf_medial_form;
-			return static_count(arabic_letter_kaf_medial_form);
+			return 1;
 		case 0xFEDD:
 			*normals = arabic_letter_lam_isolated_form;
-			return static_count(arabic_letter_lam_isolated_form);
+			return 1;
 		case 0xFEDE:
 			*normals = arabic_letter_lam_final_form;
-			return static_count(arabic_letter_lam_final_form);
+			return 1;
 		case 0xFEDF:
 			*normals = arabic_letter_lam_initial_form;
-			return static_count(arabic_letter_lam_initial_form);
+			return 1;
 		case 0xFEE0:
 			*normals = arabic_letter_lam_medial_form;
-			return static_count(arabic_letter_lam_medial_form);
+			return 1;
 		case 0xFEE1:
 			*normals = arabic_letter_meem_isolated_form;
-			return static_count(arabic_letter_meem_isolated_form);
+			return 1;
 		case 0xFEE2:
 			*normals = arabic_letter_meem_final_form;
-			return static_count(arabic_letter_meem_final_form);
+			return 1;
 		case 0xFEE3:
 			*normals = arabic_letter_meem_initial_form;
-			return static_count(arabic_letter_meem_initial_form);
+			return 1;
 		case 0xFEE4:
 			*normals = arabic_letter_meem_medial_form;
-			return static_count(arabic_letter_meem_medial_form);
+			return 1;
 		case 0xFEE5:
 			*normals = arabic_letter_noon_isolated_form;
-			return static_count(arabic_letter_noon_isolated_form);
+			return 1;
 		case 0xFEE6:
 			*normals = arabic_letter_noon_final_form;
-			return static_count(arabic_letter_noon_final_form);
+			return 1;
 		case 0xFEE7:
 			*normals = arabic_letter_noon_initial_form;
-			return static_count(arabic_letter_noon_initial_form);
+			return 1;
 		case 0xFEE8:
 			*normals = arabic_letter_noon_medial_form;
-			return static_count(arabic_letter_noon_medial_form);
+			return 1;
 		case 0xFEE9:
 			*normals = arabic_letter_heh_isolated_form;
-			return static_count(arabic_letter_heh_isolated_form);
+			return 1;
 		case 0xFEEA:
 			*normals = arabic_letter_heh_final_form;
-			return static_count(arabic_letter_heh_final_form);
+			return 1;
 		case 0xFEEB:
 			*normals = arabic_letter_heh_initial_form;
-			return static_count(arabic_letter_heh_initial_form);
+			return 1;
 		case 0xFEEC:
 			*normals = arabic_letter_heh_medial_form;
-			return static_count(arabic_letter_heh_medial_form);
+			return 1;
 		case 0xFEED:
 			*normals = arabic_letter_waw_isolated_form;
-			return static_count(arabic_letter_waw_isolated_form);
+			return 1;
 		case 0xFEEE:
 			*normals = arabic_letter_waw_final_form;
-			return static_count(arabic_letter_waw_final_form);
+			return 1;
 		case 0xFEEF:
 			*normals = arabic_letter_alef_maksura_isolated_form;
-			return static_count(arabic_letter_alef_maksura_isolated_form);
+			return 1;
 		case 0xFEF0:
 			*normals = arabic_letter_alef_maksura_final_form;
-			return static_count(arabic_letter_alef_maksura_final_form);
+			return 1;
 		case 0xFEF1:
 			*normals = arabic_letter_yeh_isolated_form;
-			return static_count(arabic_letter_yeh_isolated_form);
+			return 1;
 		case 0xFEF2:
 			*normals = arabic_letter_yeh_final_form;
-			return static_count(arabic_letter_yeh_final_form);
+			return 1;
 		case 0xFEF3:
 			*normals = arabic_letter_yeh_initial_form;
-			return static_count(arabic_letter_yeh_initial_form);
+			return 1;
 		case 0xFEF4:
 			*normals = arabic_letter_yeh_medial_form;
-			return static_count(arabic_letter_yeh_medial_form);
+			return 1;
 		case 0xFEF5:
 			*normals = arabic_ligature_lam_with_alef_with_madda_above_isolated_form;
-			return static_count(arabic_ligature_lam_with_alef_with_madda_above_isolated_form);
+			return 2;
 		case 0xFEF6:
 			*normals = arabic_ligature_lam_with_alef_with_madda_above_final_form;
-			return static_count(arabic_ligature_lam_with_alef_with_madda_above_final_form);
+			return 2;
 		case 0xFEF7:
 			*normals = arabic_ligature_lam_with_alef_with_hamza_above_isolated_form;
-			return static_count(arabic_ligature_lam_with_alef_with_hamza_above_isolated_form);
+			return 2;
 		case 0xFEF8:
 			*normals = arabic_ligature_lam_with_alef_with_hamza_above_final_form;
-			return static_count(arabic_ligature_lam_with_alef_with_hamza_above_final_form);
+			return 2;
 		case 0xFEF9:
 			*normals = arabic_ligature_lam_with_alef_with_hamza_below_isolated_form;
-			return static_count(arabic_ligature_lam_with_alef_with_hamza_below_isolated_form);
+			return 2;
 		case 0xFEFA:
 			*normals = arabic_ligature_lam_with_alef_with_hamza_below_final_form;
-			return static_count(arabic_ligature_lam_with_alef_with_hamza_below_final_form);
+			return 2;
 		case 0xFEFB:
 			*normals = arabic_ligature_lam_with_alef_isolated_form;
-			return static_count(arabic_ligature_lam_with_alef_isolated_form);
+			return 2;
 		case 0xFEFC:
 			*normals = arabic_ligature_lam_with_alef_final_form;
-			return static_count(arabic_ligature_lam_with_alef_final_form);
+			return 2;
 		case 0xFF01:
 			*normals = fullwidth_exclamation_mark;
-			return static_count(fullwidth_exclamation_mark);
+			return 1;
 		case 0xFF02:
 			*normals = fullwidth_quotation_mark;
-			return static_count(fullwidth_quotation_mark);
+			return 1;
 		case 0xFF03:
 			*normals = fullwidth_number_sign;
-			return static_count(fullwidth_number_sign);
+			return 1;
 		case 0xFF04:
 			*normals = fullwidth_dollar_sign;
-			return static_count(fullwidth_dollar_sign);
+			return 1;
 		case 0xFF05:
 			*normals = fullwidth_percent_sign;
-			return static_count(fullwidth_percent_sign);
+			return 1;
 		case 0xFF06:
 			*normals = fullwidth_ampersand;
-			return static_count(fullwidth_ampersand);
+			return 1;
 		case 0xFF07:
 			*normals = fullwidth_apostrophe;
-			return static_count(fullwidth_apostrophe);
+			return 1;
 		case 0xFF08:
 			*normals = fullwidth_left_parenthesis;
-			return static_count(fullwidth_left_parenthesis);
+			return 1;
 		case 0xFF09:
 			*normals = fullwidth_right_parenthesis;
-			return static_count(fullwidth_right_parenthesis);
+			return 1;
 		case 0xFF0A:
 			*normals = fullwidth_asterisk;
-			return static_count(fullwidth_asterisk);
+			return 1;
 		case 0xFF0B:
 			*normals = fullwidth_plus_sign;
-			return static_count(fullwidth_plus_sign);
+			return 1;
 		case 0xFF0C:
 			*normals = fullwidth_comma;
-			return static_count(fullwidth_comma);
+			return 1;
 		case 0xFF0D:
 			*normals = fullwidth_hyphen_minus;
-			return static_count(fullwidth_hyphen_minus);
+			return 1;
 		case 0xFF0E:
 			*normals = fullwidth_full_stop;
-			return static_count(fullwidth_full_stop);
+			return 1;
 		case 0xFF0F:
 			*normals = fullwidth_solidus;
-			return static_count(fullwidth_solidus);
+			return 1;
 		case 0xFF10:
 			*normals = fullwidth_digit_zero;
-			return static_count(fullwidth_digit_zero);
+			return 1;
 		case 0xFF11:
 			*normals = fullwidth_digit_one;
-			return static_count(fullwidth_digit_one);
+			return 1;
 		case 0xFF12:
 			*normals = fullwidth_digit_two;
-			return static_count(fullwidth_digit_two);
+			return 1;
 		case 0xFF13:
 			*normals = fullwidth_digit_three;
-			return static_count(fullwidth_digit_three);
+			return 1;
 		case 0xFF14:
 			*normals = fullwidth_digit_four;
-			return static_count(fullwidth_digit_four);
+			return 1;
 		case 0xFF15:
 			*normals = fullwidth_digit_five;
-			return static_count(fullwidth_digit_five);
+			return 1;
 		case 0xFF16:
 			*normals = fullwidth_digit_six;
-			return static_count(fullwidth_digit_six);
+			return 1;
 		case 0xFF17:
 			*normals = fullwidth_digit_seven;
-			return static_count(fullwidth_digit_seven);
+			return 1;
 		case 0xFF18:
 			*normals = fullwidth_digit_eight;
-			return static_count(fullwidth_digit_eight);
+			return 1;
 		case 0xFF19:
 			*normals = fullwidth_digit_nine;
-			return static_count(fullwidth_digit_nine);
+			return 1;
 		case 0xFF1A:
 			*normals = fullwidth_colon;
-			return static_count(fullwidth_colon);
+			return 1;
 		case 0xFF1B:
 			*normals = fullwidth_semicolon;
-			return static_count(fullwidth_semicolon);
+			return 1;
 		case 0xFF1C:
 			*normals = fullwidth_less_than_sign;
-			return static_count(fullwidth_less_than_sign);
+			return 1;
 		case 0xFF1D:
 			*normals = fullwidth_equals_sign;
-			return static_count(fullwidth_equals_sign);
+			return 1;
 		case 0xFF1E:
 			*normals = fullwidth_greater_than_sign;
-			return static_count(fullwidth_greater_than_sign);
+			return 1;
 		case 0xFF1F:
 			*normals = fullwidth_question_mark;
-			return static_count(fullwidth_question_mark);
+			return 1;
 		case 0xFF20:
 			*normals = fullwidth_commercial_at;
-			return static_count(fullwidth_commercial_at);
+			return 1;
 		case 0xFF21:
 			*normals = fullwidth_latin_capital_letter_a;
-			return static_count(fullwidth_latin_capital_letter_a);
+			return 1;
 		case 0xFF22:
 			*normals = fullwidth_latin_capital_letter_b;
-			return static_count(fullwidth_latin_capital_letter_b);
+			return 1;
 		case 0xFF23:
 			*normals = fullwidth_latin_capital_letter_c;
-			return static_count(fullwidth_latin_capital_letter_c);
+			return 1;
 		case 0xFF24:
 			*normals = fullwidth_latin_capital_letter_d;
-			return static_count(fullwidth_latin_capital_letter_d);
+			return 1;
 		case 0xFF25:
 			*normals = fullwidth_latin_capital_letter_e;
-			return static_count(fullwidth_latin_capital_letter_e);
+			return 1;
 		case 0xFF26:
 			*normals = fullwidth_latin_capital_letter_f;
-			return static_count(fullwidth_latin_capital_letter_f);
+			return 1;
 		case 0xFF27:
 			*normals = fullwidth_latin_capital_letter_g;
-			return static_count(fullwidth_latin_capital_letter_g);
+			return 1;
 		case 0xFF28:
 			*normals = fullwidth_latin_capital_letter_h;
-			return static_count(fullwidth_latin_capital_letter_h);
+			return 1;
 		case 0xFF29:
 			*normals = fullwidth_latin_capital_letter_i;
-			return static_count(fullwidth_latin_capital_letter_i);
+			return 1;
 		case 0xFF2A:
 			*normals = fullwidth_latin_capital_letter_j;
-			return static_count(fullwidth_latin_capital_letter_j);
+			return 1;
 		case 0xFF2B:
 			*normals = fullwidth_latin_capital_letter_k;
-			return static_count(fullwidth_latin_capital_letter_k);
+			return 1;
 		case 0xFF2C:
 			*normals = fullwidth_latin_capital_letter_l;
-			return static_count(fullwidth_latin_capital_letter_l);
+			return 1;
 		case 0xFF2D:
 			*normals = fullwidth_latin_capital_letter_m;
-			return static_count(fullwidth_latin_capital_letter_m);
+			return 1;
 		case 0xFF2E:
 			*normals = fullwidth_latin_capital_letter_n;
-			return static_count(fullwidth_latin_capital_letter_n);
+			return 1;
 		case 0xFF2F:
 			*normals = fullwidth_latin_capital_letter_o;
-			return static_count(fullwidth_latin_capital_letter_o);
+			return 1;
 		case 0xFF30:
 			*normals = fullwidth_latin_capital_letter_p;
-			return static_count(fullwidth_latin_capital_letter_p);
+			return 1;
 		case 0xFF31:
 			*normals = fullwidth_latin_capital_letter_q;
-			return static_count(fullwidth_latin_capital_letter_q);
+			return 1;
 		case 0xFF32:
 			*normals = fullwidth_latin_capital_letter_r;
-			return static_count(fullwidth_latin_capital_letter_r);
+			return 1;
 		case 0xFF33:
 			*normals = fullwidth_latin_capital_letter_s;
-			return static_count(fullwidth_latin_capital_letter_s);
+			return 1;
 		case 0xFF34:
 			*normals = fullwidth_latin_capital_letter_t;
-			return static_count(fullwidth_latin_capital_letter_t);
+			return 1;
 		case 0xFF35:
 			*normals = fullwidth_latin_capital_letter_u;
-			return static_count(fullwidth_latin_capital_letter_u);
+			return 1;
 		case 0xFF36:
 			*normals = fullwidth_latin_capital_letter_v;
-			return static_count(fullwidth_latin_capital_letter_v);
+			return 1;
 		case 0xFF37:
 			*normals = fullwidth_latin_capital_letter_w;
-			return static_count(fullwidth_latin_capital_letter_w);
+			return 1;
 		case 0xFF38:
 			*normals = fullwidth_latin_capital_letter_x;
-			return static_count(fullwidth_latin_capital_letter_x);
+			return 1;
 		case 0xFF39:
 			*normals = fullwidth_latin_capital_letter_y;
-			return static_count(fullwidth_latin_capital_letter_y);
+			return 1;
 		case 0xFF3A:
 			*normals = fullwidth_latin_capital_letter_z;
-			return static_count(fullwidth_latin_capital_letter_z);
+			return 1;
 		case 0xFF3B:
 			*normals = fullwidth_left_square_bracket;
-			return static_count(fullwidth_left_square_bracket);
+			return 1;
 		case 0xFF3C:
 			*normals = fullwidth_reverse_solidus;
-			return static_count(fullwidth_reverse_solidus);
+			return 1;
 		case 0xFF3D:
 			*normals = fullwidth_right_square_bracket;
-			return static_count(fullwidth_right_square_bracket);
+			return 1;
 		case 0xFF3E:
 			*normals = fullwidth_circumflex_accent;
-			return static_count(fullwidth_circumflex_accent);
+			return 1;
 		case 0xFF3F:
 			*normals = fullwidth_low_line;
-			return static_count(fullwidth_low_line);
+			return 1;
 		case 0xFF40:
 			*normals = fullwidth_grave_accent;
-			return static_count(fullwidth_grave_accent);
+			return 1;
 		case 0xFF41:
 			*normals = fullwidth_latin_small_letter_a;
-			return static_count(fullwidth_latin_small_letter_a);
+			return 1;
 		case 0xFF42:
 			*normals = fullwidth_latin_small_letter_b;
-			return static_count(fullwidth_latin_small_letter_b);
+			return 1;
 		case 0xFF43:
 			*normals = fullwidth_latin_small_letter_c;
-			return static_count(fullwidth_latin_small_letter_c);
+			return 1;
 		case 0xFF44:
 			*normals = fullwidth_latin_small_letter_d;
-			return static_count(fullwidth_latin_small_letter_d);
+			return 1;
 		case 0xFF45:
 			*normals = fullwidth_latin_small_letter_e;
-			return static_count(fullwidth_latin_small_letter_e);
+			return 1;
 		case 0xFF46:
 			*normals = fullwidth_latin_small_letter_f;
-			return static_count(fullwidth_latin_small_letter_f);
+			return 1;
 		case 0xFF47:
 			*normals = fullwidth_latin_small_letter_g;
-			return static_count(fullwidth_latin_small_letter_g);
+			return 1;
 		case 0xFF48:
 			*normals = fullwidth_latin_small_letter_h;
-			return static_count(fullwidth_latin_small_letter_h);
+			return 1;
 		case 0xFF49:
 			*normals = fullwidth_latin_small_letter_i;
-			return static_count(fullwidth_latin_small_letter_i);
+			return 1;
 		case 0xFF4A:
 			*normals = fullwidth_latin_small_letter_j;
-			return static_count(fullwidth_latin_small_letter_j);
+			return 1;
 		case 0xFF4B:
 			*normals = fullwidth_latin_small_letter_k;
-			return static_count(fullwidth_latin_small_letter_k);
+			return 1;
 		case 0xFF4C:
 			*normals = fullwidth_latin_small_letter_l;
-			return static_count(fullwidth_latin_small_letter_l);
+			return 1;
 		case 0xFF4D:
 			*normals = fullwidth_latin_small_letter_m;
-			return static_count(fullwidth_latin_small_letter_m);
+			return 1;
 		case 0xFF4E:
 			*normals = fullwidth_latin_small_letter_n;
-			return static_count(fullwidth_latin_small_letter_n);
+			return 1;
 		case 0xFF4F:
 			*normals = fullwidth_latin_small_letter_o;
-			return static_count(fullwidth_latin_small_letter_o);
+			return 1;
 		case 0xFF50:
 			*normals = fullwidth_latin_small_letter_p;
-			return static_count(fullwidth_latin_small_letter_p);
+			return 1;
 		case 0xFF51:
 			*normals = fullwidth_latin_small_letter_q;
-			return static_count(fullwidth_latin_small_letter_q);
+			return 1;
 		case 0xFF52:
 			*normals = fullwidth_latin_small_letter_r;
-			return static_count(fullwidth_latin_small_letter_r);
+			return 1;
 		case 0xFF53:
 			*normals = fullwidth_latin_small_letter_s;
-			return static_count(fullwidth_latin_small_letter_s);
+			return 1;
 		case 0xFF54:
 			*normals = fullwidth_latin_small_letter_t;
-			return static_count(fullwidth_latin_small_letter_t);
+			return 1;
 		case 0xFF55:
 			*normals = fullwidth_latin_small_letter_u;
-			return static_count(fullwidth_latin_small_letter_u);
+			return 1;
 		case 0xFF56:
 			*normals = fullwidth_latin_small_letter_v;
-			return static_count(fullwidth_latin_small_letter_v);
+			return 1;
 		case 0xFF57:
 			*normals = fullwidth_latin_small_letter_w;
-			return static_count(fullwidth_latin_small_letter_w);
+			return 1;
 		case 0xFF58:
 			*normals = fullwidth_latin_small_letter_x;
-			return static_count(fullwidth_latin_small_letter_x);
+			return 1;
 		case 0xFF59:
 			*normals = fullwidth_latin_small_letter_y;
-			return static_count(fullwidth_latin_small_letter_y);
+			return 1;
 		case 0xFF5A:
 			*normals = fullwidth_latin_small_letter_z;
-			return static_count(fullwidth_latin_small_letter_z);
+			return 1;
 		case 0xFF5B:
 			*normals = fullwidth_left_curly_bracket;
-			return static_count(fullwidth_left_curly_bracket);
+			return 1;
 		case 0xFF5C:
 			*normals = fullwidth_vertical_line;
-			return static_count(fullwidth_vertical_line);
+			return 1;
 		case 0xFF5D:
 			*normals = fullwidth_right_curly_bracket;
-			return static_count(fullwidth_right_curly_bracket);
+			return 1;
 		case 0xFF5E:
 			*normals = fullwidth_tilde;
-			return static_count(fullwidth_tilde);
+			return 1;
 		case 0xFF5F:
 			*normals = fullwidth_left_white_parenthesis;
-			return static_count(fullwidth_left_white_parenthesis);
+			return 1;
 		case 0xFF60:
 			*normals = fullwidth_right_white_parenthesis;
-			return static_count(fullwidth_right_white_parenthesis);
+			return 1;
 		case 0xFF61:
 			*normals = halfwidth_ideographic_full_stop;
-			return static_count(halfwidth_ideographic_full_stop);
+			return 1;
 		case 0xFF62:
 			*normals = halfwidth_left_corner_bracket;
-			return static_count(halfwidth_left_corner_bracket);
+			return 1;
 		case 0xFF63:
 			*normals = halfwidth_right_corner_bracket;
-			return static_count(halfwidth_right_corner_bracket);
+			return 1;
 		case 0xFF64:
 			*normals = halfwidth_ideographic_comma;
-			return static_count(halfwidth_ideographic_comma);
+			return 1;
 		case 0xFF65:
 			*normals = halfwidth_katakana_middle_dot;
-			return static_count(halfwidth_katakana_middle_dot);
+			return 1;
 		case 0xFF66:
 			*normals = halfwidth_katakana_letter_wo;
-			return static_count(halfwidth_katakana_letter_wo);
+			return 1;
 		case 0xFF67:
 			*normals = halfwidth_katakana_letter_small_a;
-			return static_count(halfwidth_katakana_letter_small_a);
+			return 1;
 		case 0xFF68:
 			*normals = halfwidth_katakana_letter_small_i;
-			return static_count(halfwidth_katakana_letter_small_i);
+			return 1;
 		case 0xFF69:
 			*normals = halfwidth_katakana_letter_small_u;
-			return static_count(halfwidth_katakana_letter_small_u);
+			return 1;
 		case 0xFF6A:
 			*normals = halfwidth_katakana_letter_small_e;
-			return static_count(halfwidth_katakana_letter_small_e);
+			return 1;
 		case 0xFF6B:
 			*normals = halfwidth_katakana_letter_small_o;
-			return static_count(halfwidth_katakana_letter_small_o);
+			return 1;
 		case 0xFF6C:
 			*normals = halfwidth_katakana_letter_small_ya;
-			return static_count(halfwidth_katakana_letter_small_ya);
+			return 1;
 		case 0xFF6D:
 			*normals = halfwidth_katakana_letter_small_yu;
-			return static_count(halfwidth_katakana_letter_small_yu);
+			return 1;
 		case 0xFF6E:
 			*normals = halfwidth_katakana_letter_small_yo;
-			return static_count(halfwidth_katakana_letter_small_yo);
+			return 1;
 		case 0xFF6F:
 			*normals = halfwidth_katakana_letter_small_tu;
-			return static_count(halfwidth_katakana_letter_small_tu);
+			return 1;
 		case 0xFF70:
 			*normals = halfwidth_katakana_hiragana_prolonged_sound_mark;
-			return static_count(halfwidth_katakana_hiragana_prolonged_sound_mark);
+			return 1;
 		case 0xFF71:
 			*normals = halfwidth_katakana_letter_a;
-			return static_count(halfwidth_katakana_letter_a);
+			return 1;
 		case 0xFF72:
 			*normals = halfwidth_katakana_letter_i;
-			return static_count(halfwidth_katakana_letter_i);
+			return 1;
 		case 0xFF73:
 			*normals = halfwidth_katakana_letter_u;
-			return static_count(halfwidth_katakana_letter_u);
+			return 1;
 		case 0xFF74:
 			*normals = halfwidth_katakana_letter_e;
-			return static_count(halfwidth_katakana_letter_e);
+			return 1;
 		case 0xFF75:
 			*normals = halfwidth_katakana_letter_o;
-			return static_count(halfwidth_katakana_letter_o);
+			return 1;
 		case 0xFF76:
 			*normals = halfwidth_katakana_letter_ka;
-			return static_count(halfwidth_katakana_letter_ka);
+			return 1;
 		case 0xFF77:
 			*normals = halfwidth_katakana_letter_ki;
-			return static_count(halfwidth_katakana_letter_ki);
+			return 1;
 		case 0xFF78:
 			*normals = halfwidth_katakana_letter_ku;
-			return static_count(halfwidth_katakana_letter_ku);
+			return 1;
 		case 0xFF79:
 			*normals = halfwidth_katakana_letter_ke;
-			return static_count(halfwidth_katakana_letter_ke);
+			return 1;
 		case 0xFF7A:
 			*normals = halfwidth_katakana_letter_ko;
-			return static_count(halfwidth_katakana_letter_ko);
+			return 1;
 		case 0xFF7B:
 			*normals = halfwidth_katakana_letter_sa;
-			return static_count(halfwidth_katakana_letter_sa);
+			return 1;
 		case 0xFF7C:
 			*normals = halfwidth_katakana_letter_si;
-			return static_count(halfwidth_katakana_letter_si);
+			return 1;
 		case 0xFF7D:
 			*normals = halfwidth_katakana_letter_su;
-			return static_count(halfwidth_katakana_letter_su);
+			return 1;
 		case 0xFF7E:
 			*normals = halfwidth_katakana_letter_se;
-			return static_count(halfwidth_katakana_letter_se);
+			return 1;
 		case 0xFF7F:
 			*normals = halfwidth_katakana_letter_so;
-			return static_count(halfwidth_katakana_letter_so);
+			return 1;
 		case 0xFF80:
 			*normals = halfwidth_katakana_letter_ta;
-			return static_count(halfwidth_katakana_letter_ta);
+			return 1;
 		case 0xFF81:
 			*normals = halfwidth_katakana_letter_ti;
-			return static_count(halfwidth_katakana_letter_ti);
+			return 1;
 		case 0xFF82:
 			*normals = halfwidth_katakana_letter_tu;
-			return static_count(halfwidth_katakana_letter_tu);
+			return 1;
 		case 0xFF83:
 			*normals = halfwidth_katakana_letter_te;
-			return static_count(halfwidth_katakana_letter_te);
+			return 1;
 		case 0xFF84:
 			*normals = halfwidth_katakana_letter_to;
-			return static_count(halfwidth_katakana_letter_to);
+			return 1;
 		case 0xFF85:
 			*normals = halfwidth_katakana_letter_na;
-			return static_count(halfwidth_katakana_letter_na);
+			return 1;
 		case 0xFF86:
 			*normals = halfwidth_katakana_letter_ni;
-			return static_count(halfwidth_katakana_letter_ni);
+			return 1;
 		case 0xFF87:
 			*normals = halfwidth_katakana_letter_nu;
-			return static_count(halfwidth_katakana_letter_nu);
+			return 1;
 		case 0xFF88:
 			*normals = halfwidth_katakana_letter_ne;
-			return static_count(halfwidth_katakana_letter_ne);
+			return 1;
 		case 0xFF89:
 			*normals = halfwidth_katakana_letter_no;
-			return static_count(halfwidth_katakana_letter_no);
+			return 1;
 		case 0xFF8A:
 			*normals = halfwidth_katakana_letter_ha;
-			return static_count(halfwidth_katakana_letter_ha);
+			return 1;
 		case 0xFF8B:
 			*normals = halfwidth_katakana_letter_hi;
-			return static_count(halfwidth_katakana_letter_hi);
+			return 1;
 		case 0xFF8C:
 			*normals = halfwidth_katakana_letter_hu;
-			return static_count(halfwidth_katakana_letter_hu);
+			return 1;
 		case 0xFF8D:
 			*normals = halfwidth_katakana_letter_he;
-			return static_count(halfwidth_katakana_letter_he);
+			return 1;
 		case 0xFF8E:
 			*normals = halfwidth_katakana_letter_ho;
-			return static_count(halfwidth_katakana_letter_ho);
+			return 1;
 		case 0xFF8F:
 			*normals = halfwidth_katakana_letter_ma;
-			return static_count(halfwidth_katakana_letter_ma);
+			return 1;
 		case 0xFF90:
 			*normals = halfwidth_katakana_letter_mi;
-			return static_count(halfwidth_katakana_letter_mi);
+			return 1;
 		case 0xFF91:
 			*normals = halfwidth_katakana_letter_mu;
-			return static_count(halfwidth_katakana_letter_mu);
+			return 1;
 		case 0xFF92:
 			*normals = halfwidth_katakana_letter_me;
-			return static_count(halfwidth_katakana_letter_me);
+			return 1;
 		case 0xFF93:
 			*normals = halfwidth_katakana_letter_mo;
-			return static_count(halfwidth_katakana_letter_mo);
+			return 1;
 		case 0xFF94:
 			*normals = halfwidth_katakana_letter_ya;
-			return static_count(halfwidth_katakana_letter_ya);
+			return 1;
 		case 0xFF95:
 			*normals = halfwidth_katakana_letter_yu;
-			return static_count(halfwidth_katakana_letter_yu);
+			return 1;
 		case 0xFF96:
 			*normals = halfwidth_katakana_letter_yo;
-			return static_count(halfwidth_katakana_letter_yo);
+			return 1;
 		case 0xFF97:
 			*normals = halfwidth_katakana_letter_ra;
-			return static_count(halfwidth_katakana_letter_ra);
+			return 1;
 		case 0xFF98:
 			*normals = halfwidth_katakana_letter_ri;
-			return static_count(halfwidth_katakana_letter_ri);
+			return 1;
 		case 0xFF99:
 			*normals = halfwidth_katakana_letter_ru;
-			return static_count(halfwidth_katakana_letter_ru);
+			return 1;
 		case 0xFF9A:
 			*normals = halfwidth_katakana_letter_re;
-			return static_count(halfwidth_katakana_letter_re);
+			return 1;
 		case 0xFF9B:
 			*normals = halfwidth_katakana_letter_ro;
-			return static_count(halfwidth_katakana_letter_ro);
+			return 1;
 		case 0xFF9C:
 			*normals = halfwidth_katakana_letter_wa;
-			return static_count(halfwidth_katakana_letter_wa);
+			return 1;
 		case 0xFF9D:
 			*normals = halfwidth_katakana_letter_n;
-			return static_count(halfwidth_katakana_letter_n);
+			return 1;
 		case 0xFF9E:
 			*normals = halfwidth_katakana_voiced_sound_mark;
-			return static_count(halfwidth_katakana_voiced_sound_mark);
+			return 1;
 		case 0xFF9F:
 			*normals = halfwidth_katakana_semi_voiced_sound_mark;
-			return static_count(halfwidth_katakana_semi_voiced_sound_mark);
+			return 1;
 		case 0xFFA0:
 			*normals = halfwidth_hangul_filler;
-			return static_count(halfwidth_hangul_filler);
+			return 1;
 		case 0xFFA1:
 			*normals = halfwidth_hangul_letter_kiyeok;
-			return static_count(halfwidth_hangul_letter_kiyeok);
+			return 1;
 		case 0xFFA2:
 			*normals = halfwidth_hangul_letter_ssangkiyeok;
-			return static_count(halfwidth_hangul_letter_ssangkiyeok);
+			return 1;
 		case 0xFFA3:
 			*normals = halfwidth_hangul_letter_kiyeok_sios;
-			return static_count(halfwidth_hangul_letter_kiyeok_sios);
+			return 1;
 		case 0xFFA4:
 			*normals = halfwidth_hangul_letter_nieun;
-			return static_count(halfwidth_hangul_letter_nieun);
+			return 1;
 		case 0xFFA5:
 			*normals = halfwidth_hangul_letter_nieun_cieuc;
-			return static_count(halfwidth_hangul_letter_nieun_cieuc);
+			return 1;
 		case 0xFFA6:
 			*normals = halfwidth_hangul_letter_nieun_hieuh;
-			return static_count(halfwidth_hangul_letter_nieun_hieuh);
+			return 1;
 		case 0xFFA7:
 			*normals = halfwidth_hangul_letter_tikeut;
-			return static_count(halfwidth_hangul_letter_tikeut);
+			return 1;
 		case 0xFFA8:
 			*normals = halfwidth_hangul_letter_ssangtikeut;
-			return static_count(halfwidth_hangul_letter_ssangtikeut);
+			return 1;
 		case 0xFFA9:
 			*normals = halfwidth_hangul_letter_rieul;
-			return static_count(halfwidth_hangul_letter_rieul);
+			return 1;
 		case 0xFFAA:
 			*normals = halfwidth_hangul_letter_rieul_kiyeok;
-			return static_count(halfwidth_hangul_letter_rieul_kiyeok);
+			return 1;
 		case 0xFFAB:
 			*normals = halfwidth_hangul_letter_rieul_mieum;
-			return static_count(halfwidth_hangul_letter_rieul_mieum);
+			return 1;
 		case 0xFFAC:
 			*normals = halfwidth_hangul_letter_rieul_pieup;
-			return static_count(halfwidth_hangul_letter_rieul_pieup);
+			return 1;
 		case 0xFFAD:
 			*normals = halfwidth_hangul_letter_rieul_sios;
-			return static_count(halfwidth_hangul_letter_rieul_sios);
+			return 1;
 		case 0xFFAE:
 			*normals = halfwidth_hangul_letter_rieul_thieuth;
-			return static_count(halfwidth_hangul_letter_rieul_thieuth);
+			return 1;
 		case 0xFFAF:
 			*normals = halfwidth_hangul_letter_rieul_phieuph;
-			return static_count(halfwidth_hangul_letter_rieul_phieuph);
+			return 1;
 		case 0xFFB0:
 			*normals = halfwidth_hangul_letter_rieul_hieuh;
-			return static_count(halfwidth_hangul_letter_rieul_hieuh);
+			return 1;
 		case 0xFFB1:
 			*normals = halfwidth_hangul_letter_mieum;
-			return static_count(halfwidth_hangul_letter_mieum);
+			return 1;
 		case 0xFFB2:
 			*normals = halfwidth_hangul_letter_pieup;
-			return static_count(halfwidth_hangul_letter_pieup);
+			return 1;
 		case 0xFFB3:
 			*normals = halfwidth_hangul_letter_ssangpieup;
-			return static_count(halfwidth_hangul_letter_ssangpieup);
+			return 1;
 		case 0xFFB4:
 			*normals = halfwidth_hangul_letter_pieup_sios;
-			return static_count(halfwidth_hangul_letter_pieup_sios);
+			return 1;
 		case 0xFFB5:
 			*normals = halfwidth_hangul_letter_sios;
-			return static_count(halfwidth_hangul_letter_sios);
+			return 1;
 		case 0xFFB6:
 			*normals = halfwidth_hangul_letter_ssangsios;
-			return static_count(halfwidth_hangul_letter_ssangsios);
+			return 1;
 		case 0xFFB7:
 			*normals = halfwidth_hangul_letter_ieung;
-			return static_count(halfwidth_hangul_letter_ieung);
+			return 1;
 		case 0xFFB8:
 			*normals = halfwidth_hangul_letter_cieuc;
-			return static_count(halfwidth_hangul_letter_cieuc);
+			return 1;
 		case 0xFFB9:
 			*normals = halfwidth_hangul_letter_ssangcieuc;
-			return static_count(halfwidth_hangul_letter_ssangcieuc);
+			return 1;
 		case 0xFFBA:
 			*normals = halfwidth_hangul_letter_chieuch;
-			return static_count(halfwidth_hangul_letter_chieuch);
+			return 1;
 		case 0xFFBB:
 			*normals = halfwidth_hangul_letter_khieukh;
-			return static_count(halfwidth_hangul_letter_khieukh);
+			return 1;
 		case 0xFFBC:
 			*normals = halfwidth_hangul_letter_thieuth;
-			return static_count(halfwidth_hangul_letter_thieuth);
+			return 1;
 		case 0xFFBD:
 			*normals = halfwidth_hangul_letter_phieuph;
-			return static_count(halfwidth_hangul_letter_phieuph);
+			return 1;
 		case 0xFFBE:
 			*normals = halfwidth_hangul_letter_hieuh;
-			return static_count(halfwidth_hangul_letter_hieuh);
+			return 1;
 		case 0xFFC2:
 			*normals = halfwidth_hangul_letter_a;
-			return static_count(halfwidth_hangul_letter_a);
+			return 1;
 		case 0xFFC3:
 			*normals = halfwidth_hangul_letter_ae;
-			return static_count(halfwidth_hangul_letter_ae);
+			return 1;
 		case 0xFFC4:
 			*normals = halfwidth_hangul_letter_ya;
-			return static_count(halfwidth_hangul_letter_ya);
+			return 1;
 		case 0xFFC5:
 			*normals = halfwidth_hangul_letter_yae;
-			return static_count(halfwidth_hangul_letter_yae);
+			return 1;
 		case 0xFFC6:
 			*normals = halfwidth_hangul_letter_eo;
-			return static_count(halfwidth_hangul_letter_eo);
+			return 1;
 		case 0xFFC7:
 			*normals = halfwidth_hangul_letter_e;
-			return static_count(halfwidth_hangul_letter_e);
+			return 1;
 		case 0xFFCA:
 			*normals = halfwidth_hangul_letter_yeo;
-			return static_count(halfwidth_hangul_letter_yeo);
+			return 1;
 		case 0xFFCB:
 			*normals = halfwidth_hangul_letter_ye;
-			return static_count(halfwidth_hangul_letter_ye);
+			return 1;
 		case 0xFFCC:
 			*normals = halfwidth_hangul_letter_o;
-			return static_count(halfwidth_hangul_letter_o);
+			return 1;
 		case 0xFFCD:
 			*normals = halfwidth_hangul_letter_wa;
-			return static_count(halfwidth_hangul_letter_wa);
+			return 1;
 		case 0xFFCE:
 			*normals = halfwidth_hangul_letter_wae;
-			return static_count(halfwidth_hangul_letter_wae);
+			return 1;
 		case 0xFFCF:
 			*normals = halfwidth_hangul_letter_oe;
-			return static_count(halfwidth_hangul_letter_oe);
+			return 1;
 		case 0xFFD2:
 			*normals = halfwidth_hangul_letter_yo;
-			return static_count(halfwidth_hangul_letter_yo);
+			return 1;
 		case 0xFFD3:
 			*normals = halfwidth_hangul_letter_u;
-			return static_count(halfwidth_hangul_letter_u);
+			return 1;
 		case 0xFFD4:
 			*normals = halfwidth_hangul_letter_weo;
-			return static_count(halfwidth_hangul_letter_weo);
+			return 1;
 		case 0xFFD5:
 			*normals = halfwidth_hangul_letter_we;
-			return static_count(halfwidth_hangul_letter_we);
+			return 1;
 		case 0xFFD6:
 			*normals = halfwidth_hangul_letter_wi;
-			return static_count(halfwidth_hangul_letter_wi);
+			return 1;
 		case 0xFFD7:
 			*normals = halfwidth_hangul_letter_yu;
-			return static_count(halfwidth_hangul_letter_yu);
+			return 1;
 		case 0xFFDA:
 			*normals = halfwidth_hangul_letter_eu;
-			return static_count(halfwidth_hangul_letter_eu);
+			return 1;
 		case 0xFFDB:
 			*normals = halfwidth_hangul_letter_yi;
-			return static_count(halfwidth_hangul_letter_yi);
+			return 1;
 		case 0xFFDC:
 			*normals = halfwidth_hangul_letter_i;
-			return static_count(halfwidth_hangul_letter_i);
+			return 1;
 		case 0xFFE0:
 			*normals = fullwidth_cent_sign;
-			return static_count(fullwidth_cent_sign);
+			return 1;
 		case 0xFFE1:
 			*normals = fullwidth_pound_sign;
-			return static_count(fullwidth_pound_sign);
+			return 1;
 		case 0xFFE2:
 			*normals = fullwidth_not_sign;
-			return static_count(fullwidth_not_sign);
+			return 1;
 		case 0xFFE3:
 			*normals = fullwidth_macron;
-			return static_count(fullwidth_macron);
+			return 1;
 		case 0xFFE4:
 			*normals = fullwidth_broken_bar;
-			return static_count(fullwidth_broken_bar);
+			return 1;
 		case 0xFFE5:
 			*normals = fullwidth_yen_sign;
-			return static_count(fullwidth_yen_sign);
+			return 1;
 		case 0xFFE6:
 			*normals = fullwidth_won_sign;
-			return static_count(fullwidth_won_sign);
+			return 1;
 		case 0xFFE8:
 			*normals = halfwidth_forms_light_vertical;
-			return static_count(halfwidth_forms_light_vertical);
+			return 1;
 		case 0xFFE9:
 			*normals = halfwidth_leftwards_arrow;
-			return static_count(halfwidth_leftwards_arrow);
+			return 1;
 		case 0xFFEA:
 			*normals = halfwidth_upwards_arrow;
-			return static_count(halfwidth_upwards_arrow);
+			return 1;
 		case 0xFFEB:
 			*normals = halfwidth_rightwards_arrow;
-			return static_count(halfwidth_rightwards_arrow);
+			return 1;
 		case 0xFFEC:
 			*normals = halfwidth_downwards_arrow;
-			return static_count(halfwidth_downwards_arrow);
+			return 1;
 		case 0xFFED:
 			*normals = halfwidth_black_square;
-			return static_count(halfwidth_black_square);
+			return 1;
 		case 0xFFEE:
 			*normals = halfwidth_white_circle;
-			return static_count(halfwidth_white_circle);
+			return 1;
 		case 0x1109A:
 			*normals = kaithi_letter_dddha;
-			return static_count(kaithi_letter_dddha);
+			return 2;
 		case 0x1109C:
 			*normals = kaithi_letter_rha;
-			return static_count(kaithi_letter_rha);
+			return 2;
 		case 0x110AB:
 			*normals = kaithi_letter_va;
-			return static_count(kaithi_letter_va);
+			return 2;
 		case 0x1112E:
 			*normals = chakma_vowel_sign_o;
-			return static_count(chakma_vowel_sign_o);
+			return 2;
 		case 0x1112F:
 			*normals = chakma_vowel_sign_au;
-			return static_count(chakma_vowel_sign_au);
+			return 2;
 		case 0x1134B:
 			*normals = grantha_vowel_sign_oo;
-			return static_count(grantha_vowel_sign_oo);
+			return 2;
 		case 0x1134C:
 			*normals = grantha_vowel_sign_au;
-			return static_count(grantha_vowel_sign_au);
+			return 2;
 		case 0x114BB:
 			*normals = tirhuta_vowel_sign_ai;
-			return static_count(tirhuta_vowel_sign_ai);
+			return 2;
 		case 0x114BC:
 			*normals = tirhuta_vowel_sign_o;
-			return static_count(tirhuta_vowel_sign_o);
+			return 2;
 		case 0x114BE:
 			*normals = tirhuta_vowel_sign_au;
-			return static_count(tirhuta_vowel_sign_au);
+			return 2;
 		case 0x115BA:
 			*normals = siddham_vowel_sign_o;
-			return static_count(siddham_vowel_sign_o);
+			return 2;
 		case 0x115BB:
 			*normals = siddham_vowel_sign_au;
-			return static_count(siddham_vowel_sign_au);
+			return 2;
 		case 0x11938:
 			*normals = dives_akuru_vowel_sign_o;
-			return static_count(dives_akuru_vowel_sign_o);
+			return 2;
 		case 0x1D15E:
 			*normals = musical_symbol_half_note;
-			return static_count(musical_symbol_half_note);
+			return 2;
 		case 0x1D15F:
 			*normals = musical_symbol_quarter_note;
-			return static_count(musical_symbol_quarter_note);
+			return 2;
 		case 0x1D160:
 			*normals = musical_symbol_eighth_note;
-			return static_count(musical_symbol_eighth_note);
+			return 2;
 		case 0x1D161:
 			*normals = musical_symbol_sixteenth_note;
-			return static_count(musical_symbol_sixteenth_note);
+			return 2;
 		case 0x1D162:
 			*normals = musical_symbol_thirty_second_note;
-			return static_count(musical_symbol_thirty_second_note);
+			return 2;
 		case 0x1D163:
 			*normals = musical_symbol_sixty_fourth_note;
-			return static_count(musical_symbol_sixty_fourth_note);
+			return 2;
 		case 0x1D164:
 			*normals = musical_symbol_one_hundred_twenty_eighth_note;
-			return static_count(musical_symbol_one_hundred_twenty_eighth_note);
+			return 2;
 		case 0x1D1BB:
 			*normals = musical_symbol_minima;
-			return static_count(musical_symbol_minima);
+			return 2;
 		case 0x1D1BC:
 			*normals = musical_symbol_minima_black;
-			return static_count(musical_symbol_minima_black);
+			return 2;
 		case 0x1D1BD:
 			*normals = musical_symbol_semiminima_white;
-			return static_count(musical_symbol_semiminima_white);
+			return 2;
 		case 0x1D1BE:
 			*normals = musical_symbol_semiminima_black;
-			return static_count(musical_symbol_semiminima_black);
+			return 2;
 		case 0x1D1BF:
 			*normals = musical_symbol_fusa_white;
-			return static_count(musical_symbol_fusa_white);
+			return 2;
 		case 0x1D1C0:
 			*normals = musical_symbol_fusa_black;
-			return static_count(musical_symbol_fusa_black);
+			return 2;
 		case 0x1D400:
 			*normals = mathematical_bold_capital_a;
-			return static_count(mathematical_bold_capital_a);
+			return 1;
 		case 0x1D401:
 			*normals = mathematical_bold_capital_b;
-			return static_count(mathematical_bold_capital_b);
+			return 1;
 		case 0x1D402:
 			*normals = mathematical_bold_capital_c;
-			return static_count(mathematical_bold_capital_c);
+			return 1;
 		case 0x1D403:
 			*normals = mathematical_bold_capital_d;
-			return static_count(mathematical_bold_capital_d);
+			return 1;
 		case 0x1D404:
 			*normals = mathematical_bold_capital_e;
-			return static_count(mathematical_bold_capital_e);
+			return 1;
 		case 0x1D405:
 			*normals = mathematical_bold_capital_f;
-			return static_count(mathematical_bold_capital_f);
+			return 1;
 		case 0x1D406:
 			*normals = mathematical_bold_capital_g;
-			return static_count(mathematical_bold_capital_g);
+			return 1;
 		case 0x1D407:
 			*normals = mathematical_bold_capital_h;
-			return static_count(mathematical_bold_capital_h);
+			return 1;
 		case 0x1D408:
 			*normals = mathematical_bold_capital_i;
-			return static_count(mathematical_bold_capital_i);
+			return 1;
 		case 0x1D409:
 			*normals = mathematical_bold_capital_j;
-			return static_count(mathematical_bold_capital_j);
+			return 1;
 		case 0x1D40A:
 			*normals = mathematical_bold_capital_k;
-			return static_count(mathematical_bold_capital_k);
+			return 1;
 		case 0x1D40B:
 			*normals = mathematical_bold_capital_l;
-			return static_count(mathematical_bold_capital_l);
+			return 1;
 		case 0x1D40C:
 			*normals = mathematical_bold_capital_m;
-			return static_count(mathematical_bold_capital_m);
+			return 1;
 		case 0x1D40D:
 			*normals = mathematical_bold_capital_n;
-			return static_count(mathematical_bold_capital_n);
+			return 1;
 		case 0x1D40E:
 			*normals = mathematical_bold_capital_o;
-			return static_count(mathematical_bold_capital_o);
+			return 1;
 		case 0x1D40F:
 			*normals = mathematical_bold_capital_p;
-			return static_count(mathematical_bold_capital_p);
+			return 1;
 		case 0x1D410:
 			*normals = mathematical_bold_capital_q;
-			return static_count(mathematical_bold_capital_q);
+			return 1;
 		case 0x1D411:
 			*normals = mathematical_bold_capital_r;
-			return static_count(mathematical_bold_capital_r);
+			return 1;
 		case 0x1D412:
 			*normals = mathematical_bold_capital_s;
-			return static_count(mathematical_bold_capital_s);
+			return 1;
 		case 0x1D413:
 			*normals = mathematical_bold_capital_t;
-			return static_count(mathematical_bold_capital_t);
+			return 1;
 		case 0x1D414:
 			*normals = mathematical_bold_capital_u;
-			return static_count(mathematical_bold_capital_u);
+			return 1;
 		case 0x1D415:
 			*normals = mathematical_bold_capital_v;
-			return static_count(mathematical_bold_capital_v);
+			return 1;
 		case 0x1D416:
 			*normals = mathematical_bold_capital_w;
-			return static_count(mathematical_bold_capital_w);
+			return 1;
 		case 0x1D417:
 			*normals = mathematical_bold_capital_x;
-			return static_count(mathematical_bold_capital_x);
+			return 1;
 		case 0x1D418:
 			*normals = mathematical_bold_capital_y;
-			return static_count(mathematical_bold_capital_y);
+			return 1;
 		case 0x1D419:
 			*normals = mathematical_bold_capital_z;
-			return static_count(mathematical_bold_capital_z);
+			return 1;
 		case 0x1D41A:
 			*normals = mathematical_bold_small_a;
-			return static_count(mathematical_bold_small_a);
+			return 1;
 		case 0x1D41B:
 			*normals = mathematical_bold_small_b;
-			return static_count(mathematical_bold_small_b);
+			return 1;
 		case 0x1D41C:
 			*normals = mathematical_bold_small_c;
-			return static_count(mathematical_bold_small_c);
+			return 1;
 		case 0x1D41D:
 			*normals = mathematical_bold_small_d;
-			return static_count(mathematical_bold_small_d);
+			return 1;
 		case 0x1D41E:
 			*normals = mathematical_bold_small_e;
-			return static_count(mathematical_bold_small_e);
+			return 1;
 		case 0x1D41F:
 			*normals = mathematical_bold_small_f;
-			return static_count(mathematical_bold_small_f);
+			return 1;
 		case 0x1D420:
 			*normals = mathematical_bold_small_g;
-			return static_count(mathematical_bold_small_g);
+			return 1;
 		case 0x1D421:
 			*normals = mathematical_bold_small_h;
-			return static_count(mathematical_bold_small_h);
+			return 1;
 		case 0x1D422:
 			*normals = mathematical_bold_small_i;
-			return static_count(mathematical_bold_small_i);
+			return 1;
 		case 0x1D423:
 			*normals = mathematical_bold_small_j;
-			return static_count(mathematical_bold_small_j);
+			return 1;
 		case 0x1D424:
 			*normals = mathematical_bold_small_k;
-			return static_count(mathematical_bold_small_k);
+			return 1;
 		case 0x1D425:
 			*normals = mathematical_bold_small_l;
-			return static_count(mathematical_bold_small_l);
+			return 1;
 		case 0x1D426:
 			*normals = mathematical_bold_small_m;
-			return static_count(mathematical_bold_small_m);
+			return 1;
 		case 0x1D427:
 			*normals = mathematical_bold_small_n;
-			return static_count(mathematical_bold_small_n);
+			return 1;
 		case 0x1D428:
 			*normals = mathematical_bold_small_o;
-			return static_count(mathematical_bold_small_o);
+			return 1;
 		case 0x1D429:
 			*normals = mathematical_bold_small_p;
-			return static_count(mathematical_bold_small_p);
+			return 1;
 		case 0x1D42A:
 			*normals = mathematical_bold_small_q;
-			return static_count(mathematical_bold_small_q);
+			return 1;
 		case 0x1D42B:
 			*normals = mathematical_bold_small_r;
-			return static_count(mathematical_bold_small_r);
+			return 1;
 		case 0x1D42C:
 			*normals = mathematical_bold_small_s;
-			return static_count(mathematical_bold_small_s);
+			return 1;
 		case 0x1D42D:
 			*normals = mathematical_bold_small_t;
-			return static_count(mathematical_bold_small_t);
+			return 1;
 		case 0x1D42E:
 			*normals = mathematical_bold_small_u;
-			return static_count(mathematical_bold_small_u);
+			return 1;
 		case 0x1D42F:
 			*normals = mathematical_bold_small_v;
-			return static_count(mathematical_bold_small_v);
+			return 1;
 		case 0x1D430:
 			*normals = mathematical_bold_small_w;
-			return static_count(mathematical_bold_small_w);
+			return 1;
 		case 0x1D431:
 			*normals = mathematical_bold_small_x;
-			return static_count(mathematical_bold_small_x);
+			return 1;
 		case 0x1D432:
 			*normals = mathematical_bold_small_y;
-			return static_count(mathematical_bold_small_y);
+			return 1;
 		case 0x1D433:
 			*normals = mathematical_bold_small_z;
-			return static_count(mathematical_bold_small_z);
+			return 1;
 		case 0x1D434:
 			*normals = mathematical_italic_capital_a;
-			return static_count(mathematical_italic_capital_a);
+			return 1;
 		case 0x1D435:
 			*normals = mathematical_italic_capital_b;
-			return static_count(mathematical_italic_capital_b);
+			return 1;
 		case 0x1D436:
 			*normals = mathematical_italic_capital_c;
-			return static_count(mathematical_italic_capital_c);
+			return 1;
 		case 0x1D437:
 			*normals = mathematical_italic_capital_d;
-			return static_count(mathematical_italic_capital_d);
+			return 1;
 		case 0x1D438:
 			*normals = mathematical_italic_capital_e;
-			return static_count(mathematical_italic_capital_e);
+			return 1;
 		case 0x1D439:
 			*normals = mathematical_italic_capital_f;
-			return static_count(mathematical_italic_capital_f);
+			return 1;
 		case 0x1D43A:
 			*normals = mathematical_italic_capital_g;
-			return static_count(mathematical_italic_capital_g);
+			return 1;
 		case 0x1D43B:
 			*normals = mathematical_italic_capital_h;
-			return static_count(mathematical_italic_capital_h);
+			return 1;
 		case 0x1D43C:
 			*normals = mathematical_italic_capital_i;
-			return static_count(mathematical_italic_capital_i);
+			return 1;
 		case 0x1D43D:
 			*normals = mathematical_italic_capital_j;
-			return static_count(mathematical_italic_capital_j);
+			return 1;
 		case 0x1D43E:
 			*normals = mathematical_italic_capital_k;
-			return static_count(mathematical_italic_capital_k);
+			return 1;
 		case 0x1D43F:
 			*normals = mathematical_italic_capital_l;
-			return static_count(mathematical_italic_capital_l);
+			return 1;
 		case 0x1D440:
 			*normals = mathematical_italic_capital_m;
-			return static_count(mathematical_italic_capital_m);
+			return 1;
 		case 0x1D441:
 			*normals = mathematical_italic_capital_n;
-			return static_count(mathematical_italic_capital_n);
+			return 1;
 		case 0x1D442:
 			*normals = mathematical_italic_capital_o;
-			return static_count(mathematical_italic_capital_o);
+			return 1;
 		case 0x1D443:
 			*normals = mathematical_italic_capital_p;
-			return static_count(mathematical_italic_capital_p);
+			return 1;
 		case 0x1D444:
 			*normals = mathematical_italic_capital_q;
-			return static_count(mathematical_italic_capital_q);
+			return 1;
 		case 0x1D445:
 			*normals = mathematical_italic_capital_r;
-			return static_count(mathematical_italic_capital_r);
+			return 1;
 		case 0x1D446:
 			*normals = mathematical_italic_capital_s;
-			return static_count(mathematical_italic_capital_s);
+			return 1;
 		case 0x1D447:
 			*normals = mathematical_italic_capital_t;
-			return static_count(mathematical_italic_capital_t);
+			return 1;
 		case 0x1D448:
 			*normals = mathematical_italic_capital_u;
-			return static_count(mathematical_italic_capital_u);
+			return 1;
 		case 0x1D449:
 			*normals = mathematical_italic_capital_v;
-			return static_count(mathematical_italic_capital_v);
+			return 1;
 		case 0x1D44A:
 			*normals = mathematical_italic_capital_w;
-			return static_count(mathematical_italic_capital_w);
+			return 1;
 		case 0x1D44B:
 			*normals = mathematical_italic_capital_x;
-			return static_count(mathematical_italic_capital_x);
+			return 1;
 		case 0x1D44C:
 			*normals = mathematical_italic_capital_y;
-			return static_count(mathematical_italic_capital_y);
+			return 1;
 		case 0x1D44D:
 			*normals = mathematical_italic_capital_z;
-			return static_count(mathematical_italic_capital_z);
+			return 1;
 		case 0x1D44E:
 			*normals = mathematical_italic_small_a;
-			return static_count(mathematical_italic_small_a);
+			return 1;
 		case 0x1D44F:
 			*normals = mathematical_italic_small_b;
-			return static_count(mathematical_italic_small_b);
+			return 1;
 		case 0x1D450:
 			*normals = mathematical_italic_small_c;
-			return static_count(mathematical_italic_small_c);
+			return 1;
 		case 0x1D451:
 			*normals = mathematical_italic_small_d;
-			return static_count(mathematical_italic_small_d);
+			return 1;
 		case 0x1D452:
 			*normals = mathematical_italic_small_e;
-			return static_count(mathematical_italic_small_e);
+			return 1;
 		case 0x1D453:
 			*normals = mathematical_italic_small_f;
-			return static_count(mathematical_italic_small_f);
+			return 1;
 		case 0x1D454:
 			*normals = mathematical_italic_small_g;
-			return static_count(mathematical_italic_small_g);
+			return 1;
 		case 0x1D456:
 			*normals = mathematical_italic_small_i;
-			return static_count(mathematical_italic_small_i);
+			return 1;
 		case 0x1D457:
 			*normals = mathematical_italic_small_j;
-			return static_count(mathematical_italic_small_j);
+			return 1;
 		case 0x1D458:
 			*normals = mathematical_italic_small_k;
-			return static_count(mathematical_italic_small_k);
+			return 1;
 		case 0x1D459:
 			*normals = mathematical_italic_small_l;
-			return static_count(mathematical_italic_small_l);
+			return 1;
 		case 0x1D45A:
 			*normals = mathematical_italic_small_m;
-			return static_count(mathematical_italic_small_m);
+			return 1;
 		case 0x1D45B:
 			*normals = mathematical_italic_small_n;
-			return static_count(mathematical_italic_small_n);
+			return 1;
 		case 0x1D45C:
 			*normals = mathematical_italic_small_o;
-			return static_count(mathematical_italic_small_o);
+			return 1;
 		case 0x1D45D:
 			*normals = mathematical_italic_small_p;
-			return static_count(mathematical_italic_small_p);
+			return 1;
 		case 0x1D45E:
 			*normals = mathematical_italic_small_q;
-			return static_count(mathematical_italic_small_q);
+			return 1;
 		case 0x1D45F:
 			*normals = mathematical_italic_small_r;
-			return static_count(mathematical_italic_small_r);
+			return 1;
 		case 0x1D460:
 			*normals = mathematical_italic_small_s;
-			return static_count(mathematical_italic_small_s);
+			return 1;
 		case 0x1D461:
 			*normals = mathematical_italic_small_t;
-			return static_count(mathematical_italic_small_t);
+			return 1;
 		case 0x1D462:
 			*normals = mathematical_italic_small_u;
-			return static_count(mathematical_italic_small_u);
+			return 1;
 		case 0x1D463:
 			*normals = mathematical_italic_small_v;
-			return static_count(mathematical_italic_small_v);
+			return 1;
 		case 0x1D464:
 			*normals = mathematical_italic_small_w;
-			return static_count(mathematical_italic_small_w);
+			return 1;
 		case 0x1D465:
 			*normals = mathematical_italic_small_x;
-			return static_count(mathematical_italic_small_x);
+			return 1;
 		case 0x1D466:
 			*normals = mathematical_italic_small_y;
-			return static_count(mathematical_italic_small_y);
+			return 1;
 		case 0x1D467:
 			*normals = mathematical_italic_small_z;
-			return static_count(mathematical_italic_small_z);
+			return 1;
 		case 0x1D468:
 			*normals = mathematical_bold_italic_capital_a;
-			return static_count(mathematical_bold_italic_capital_a);
+			return 1;
 		case 0x1D469:
 			*normals = mathematical_bold_italic_capital_b;
-			return static_count(mathematical_bold_italic_capital_b);
+			return 1;
 		case 0x1D46A:
 			*normals = mathematical_bold_italic_capital_c;
-			return static_count(mathematical_bold_italic_capital_c);
+			return 1;
 		case 0x1D46B:
 			*normals = mathematical_bold_italic_capital_d;
-			return static_count(mathematical_bold_italic_capital_d);
+			return 1;
 		case 0x1D46C:
 			*normals = mathematical_bold_italic_capital_e;
-			return static_count(mathematical_bold_italic_capital_e);
+			return 1;
 		case 0x1D46D:
 			*normals = mathematical_bold_italic_capital_f;
-			return static_count(mathematical_bold_italic_capital_f);
+			return 1;
 		case 0x1D46E:
 			*normals = mathematical_bold_italic_capital_g;
-			return static_count(mathematical_bold_italic_capital_g);
+			return 1;
 		case 0x1D46F:
 			*normals = mathematical_bold_italic_capital_h;
-			return static_count(mathematical_bold_italic_capital_h);
+			return 1;
 		case 0x1D470:
 			*normals = mathematical_bold_italic_capital_i;
-			return static_count(mathematical_bold_italic_capital_i);
+			return 1;
 		case 0x1D471:
 			*normals = mathematical_bold_italic_capital_j;
-			return static_count(mathematical_bold_italic_capital_j);
+			return 1;
 		case 0x1D472:
 			*normals = mathematical_bold_italic_capital_k;
-			return static_count(mathematical_bold_italic_capital_k);
+			return 1;
 		case 0x1D473:
 			*normals = mathematical_bold_italic_capital_l;
-			return static_count(mathematical_bold_italic_capital_l);
+			return 1;
 		case 0x1D474:
 			*normals = mathematical_bold_italic_capital_m;
-			return static_count(mathematical_bold_italic_capital_m);
+			return 1;
 		case 0x1D475:
 			*normals = mathematical_bold_italic_capital_n;
-			return static_count(mathematical_bold_italic_capital_n);
+			return 1;
 		case 0x1D476:
 			*normals = mathematical_bold_italic_capital_o;
-			return static_count(mathematical_bold_italic_capital_o);
+			return 1;
 		case 0x1D477:
 			*normals = mathematical_bold_italic_capital_p;
-			return static_count(mathematical_bold_italic_capital_p);
+			return 1;
 		case 0x1D478:
 			*normals = mathematical_bold_italic_capital_q;
-			return static_count(mathematical_bold_italic_capital_q);
+			return 1;
 		case 0x1D479:
 			*normals = mathematical_bold_italic_capital_r;
-			return static_count(mathematical_bold_italic_capital_r);
+			return 1;
 		case 0x1D47A:
 			*normals = mathematical_bold_italic_capital_s;
-			return static_count(mathematical_bold_italic_capital_s);
+			return 1;
 		case 0x1D47B:
 			*normals = mathematical_bold_italic_capital_t;
-			return static_count(mathematical_bold_italic_capital_t);
+			return 1;
 		case 0x1D47C:
 			*normals = mathematical_bold_italic_capital_u;
-			return static_count(mathematical_bold_italic_capital_u);
+			return 1;
 		case 0x1D47D:
 			*normals = mathematical_bold_italic_capital_v;
-			return static_count(mathematical_bold_italic_capital_v);
+			return 1;
 		case 0x1D47E:
 			*normals = mathematical_bold_italic_capital_w;
-			return static_count(mathematical_bold_italic_capital_w);
+			return 1;
 		case 0x1D47F:
 			*normals = mathematical_bold_italic_capital_x;
-			return static_count(mathematical_bold_italic_capital_x);
+			return 1;
 		case 0x1D480:
 			*normals = mathematical_bold_italic_capital_y;
-			return static_count(mathematical_bold_italic_capital_y);
+			return 1;
 		case 0x1D481:
 			*normals = mathematical_bold_italic_capital_z;
-			return static_count(mathematical_bold_italic_capital_z);
+			return 1;
 		case 0x1D482:
 			*normals = mathematical_bold_italic_small_a;
-			return static_count(mathematical_bold_italic_small_a);
+			return 1;
 		case 0x1D483:
 			*normals = mathematical_bold_italic_small_b;
-			return static_count(mathematical_bold_italic_small_b);
+			return 1;
 		case 0x1D484:
 			*normals = mathematical_bold_italic_small_c;
-			return static_count(mathematical_bold_italic_small_c);
+			return 1;
 		case 0x1D485:
 			*normals = mathematical_bold_italic_small_d;
-			return static_count(mathematical_bold_italic_small_d);
+			return 1;
 		case 0x1D486:
 			*normals = mathematical_bold_italic_small_e;
-			return static_count(mathematical_bold_italic_small_e);
+			return 1;
 		case 0x1D487:
 			*normals = mathematical_bold_italic_small_f;
-			return static_count(mathematical_bold_italic_small_f);
+			return 1;
 		case 0x1D488:
 			*normals = mathematical_bold_italic_small_g;
-			return static_count(mathematical_bold_italic_small_g);
+			return 1;
 		case 0x1D489:
 			*normals = mathematical_bold_italic_small_h;
-			return static_count(mathematical_bold_italic_small_h);
+			return 1;
 		case 0x1D48A:
 			*normals = mathematical_bold_italic_small_i;
-			return static_count(mathematical_bold_italic_small_i);
+			return 1;
 		case 0x1D48B:
 			*normals = mathematical_bold_italic_small_j;
-			return static_count(mathematical_bold_italic_small_j);
+			return 1;
 		case 0x1D48C:
 			*normals = mathematical_bold_italic_small_k;
-			return static_count(mathematical_bold_italic_small_k);
+			return 1;
 		case 0x1D48D:
 			*normals = mathematical_bold_italic_small_l;
-			return static_count(mathematical_bold_italic_small_l);
+			return 1;
 		case 0x1D48E:
 			*normals = mathematical_bold_italic_small_m;
-			return static_count(mathematical_bold_italic_small_m);
+			return 1;
 		case 0x1D48F:
 			*normals = mathematical_bold_italic_small_n;
-			return static_count(mathematical_bold_italic_small_n);
+			return 1;
 		case 0x1D490:
 			*normals = mathematical_bold_italic_small_o;
-			return static_count(mathematical_bold_italic_small_o);
+			return 1;
 		case 0x1D491:
 			*normals = mathematical_bold_italic_small_p;
-			return static_count(mathematical_bold_italic_small_p);
+			return 1;
 		case 0x1D492:
 			*normals = mathematical_bold_italic_small_q;
-			return static_count(mathematical_bold_italic_small_q);
+			return 1;
 		case 0x1D493:
 			*normals = mathematical_bold_italic_small_r;
-			return static_count(mathematical_bold_italic_small_r);
+			return 1;
 		case 0x1D494:
 			*normals = mathematical_bold_italic_small_s;
-			return static_count(mathematical_bold_italic_small_s);
+			return 1;
 		case 0x1D495:
 			*normals = mathematical_bold_italic_small_t;
-			return static_count(mathematical_bold_italic_small_t);
+			return 1;
 		case 0x1D496:
 			*normals = mathematical_bold_italic_small_u;
-			return static_count(mathematical_bold_italic_small_u);
+			return 1;
 		case 0x1D497:
 			*normals = mathematical_bold_italic_small_v;
-			return static_count(mathematical_bold_italic_small_v);
+			return 1;
 		case 0x1D498:
 			*normals = mathematical_bold_italic_small_w;
-			return static_count(mathematical_bold_italic_small_w);
+			return 1;
 		case 0x1D499:
 			*normals = mathematical_bold_italic_small_x;
-			return static_count(mathematical_bold_italic_small_x);
+			return 1;
 		case 0x1D49A:
 			*normals = mathematical_bold_italic_small_y;
-			return static_count(mathematical_bold_italic_small_y);
+			return 1;
 		case 0x1D49B:
 			*normals = mathematical_bold_italic_small_z;
-			return static_count(mathematical_bold_italic_small_z);
+			return 1;
 		case 0x1D49C:
 			*normals = mathematical_script_capital_a;
-			return static_count(mathematical_script_capital_a);
+			return 1;
 		case 0x1D49E:
 			*normals = mathematical_script_capital_c;
-			return static_count(mathematical_script_capital_c);
+			return 1;
 		case 0x1D49F:
 			*normals = mathematical_script_capital_d;
-			return static_count(mathematical_script_capital_d);
+			return 1;
 		case 0x1D4A2:
 			*normals = mathematical_script_capital_g;
-			return static_count(mathematical_script_capital_g);
+			return 1;
 		case 0x1D4A5:
 			*normals = mathematical_script_capital_j;
-			return static_count(mathematical_script_capital_j);
+			return 1;
 		case 0x1D4A6:
 			*normals = mathematical_script_capital_k;
-			return static_count(mathematical_script_capital_k);
+			return 1;
 		case 0x1D4A9:
 			*normals = mathematical_script_capital_n;
-			return static_count(mathematical_script_capital_n);
+			return 1;
 		case 0x1D4AA:
 			*normals = mathematical_script_capital_o;
-			return static_count(mathematical_script_capital_o);
+			return 1;
 		case 0x1D4AB:
 			*normals = mathematical_script_capital_p;
-			return static_count(mathematical_script_capital_p);
+			return 1;
 		case 0x1D4AC:
 			*normals = mathematical_script_capital_q;
-			return static_count(mathematical_script_capital_q);
+			return 1;
 		case 0x1D4AE:
 			*normals = mathematical_script_capital_s;
-			return static_count(mathematical_script_capital_s);
+			return 1;
 		case 0x1D4AF:
 			*normals = mathematical_script_capital_t;
-			return static_count(mathematical_script_capital_t);
+			return 1;
 		case 0x1D4B0:
 			*normals = mathematical_script_capital_u;
-			return static_count(mathematical_script_capital_u);
+			return 1;
 		case 0x1D4B1:
 			*normals = mathematical_script_capital_v;
-			return static_count(mathematical_script_capital_v);
+			return 1;
 		case 0x1D4B2:
 			*normals = mathematical_script_capital_w;
-			return static_count(mathematical_script_capital_w);
+			return 1;
 		case 0x1D4B3:
 			*normals = mathematical_script_capital_x;
-			return static_count(mathematical_script_capital_x);
+			return 1;
 		case 0x1D4B4:
 			*normals = mathematical_script_capital_y;
-			return static_count(mathematical_script_capital_y);
+			return 1;
 		case 0x1D4B5:
 			*normals = mathematical_script_capital_z;
-			return static_count(mathematical_script_capital_z);
+			return 1;
 		case 0x1D4B6:
 			*normals = mathematical_script_small_a;
-			return static_count(mathematical_script_small_a);
+			return 1;
 		case 0x1D4B7:
 			*normals = mathematical_script_small_b;
-			return static_count(mathematical_script_small_b);
+			return 1;
 		case 0x1D4B8:
 			*normals = mathematical_script_small_c;
-			return static_count(mathematical_script_small_c);
+			return 1;
 		case 0x1D4B9:
 			*normals = mathematical_script_small_d;
-			return static_count(mathematical_script_small_d);
+			return 1;
 		case 0x1D4BB:
 			*normals = mathematical_script_small_f;
-			return static_count(mathematical_script_small_f);
+			return 1;
 		case 0x1D4BD:
 			*normals = mathematical_script_small_h;
-			return static_count(mathematical_script_small_h);
+			return 1;
 		case 0x1D4BE:
 			*normals = mathematical_script_small_i;
-			return static_count(mathematical_script_small_i);
+			return 1;
 		case 0x1D4BF:
 			*normals = mathematical_script_small_j;
-			return static_count(mathematical_script_small_j);
+			return 1;
 		case 0x1D4C0:
 			*normals = mathematical_script_small_k;
-			return static_count(mathematical_script_small_k);
+			return 1;
 		case 0x1D4C1:
 			*normals = mathematical_script_small_l;
-			return static_count(mathematical_script_small_l);
+			return 1;
 		case 0x1D4C2:
 			*normals = mathematical_script_small_m;
-			return static_count(mathematical_script_small_m);
+			return 1;
 		case 0x1D4C3:
 			*normals = mathematical_script_small_n;
-			return static_count(mathematical_script_small_n);
+			return 1;
 		case 0x1D4C5:
 			*normals = mathematical_script_small_p;
-			return static_count(mathematical_script_small_p);
+			return 1;
 		case 0x1D4C6:
 			*normals = mathematical_script_small_q;
-			return static_count(mathematical_script_small_q);
+			return 1;
 		case 0x1D4C7:
 			*normals = mathematical_script_small_r;
-			return static_count(mathematical_script_small_r);
+			return 1;
 		case 0x1D4C8:
 			*normals = mathematical_script_small_s;
-			return static_count(mathematical_script_small_s);
+			return 1;
 		case 0x1D4C9:
 			*normals = mathematical_script_small_t;
-			return static_count(mathematical_script_small_t);
+			return 1;
 		case 0x1D4CA:
 			*normals = mathematical_script_small_u;
-			return static_count(mathematical_script_small_u);
+			return 1;
 		case 0x1D4CB:
 			*normals = mathematical_script_small_v;
-			return static_count(mathematical_script_small_v);
+			return 1;
 		case 0x1D4CC:
 			*normals = mathematical_script_small_w;
-			return static_count(mathematical_script_small_w);
+			return 1;
 		case 0x1D4CD:
 			*normals = mathematical_script_small_x;
-			return static_count(mathematical_script_small_x);
+			return 1;
 		case 0x1D4CE:
 			*normals = mathematical_script_small_y;
-			return static_count(mathematical_script_small_y);
+			return 1;
 		case 0x1D4CF:
 			*normals = mathematical_script_small_z;
-			return static_count(mathematical_script_small_z);
+			return 1;
 		case 0x1D4D0:
 			*normals = mathematical_bold_script_capital_a;
-			return static_count(mathematical_bold_script_capital_a);
+			return 1;
 		case 0x1D4D1:
 			*normals = mathematical_bold_script_capital_b;
-			return static_count(mathematical_bold_script_capital_b);
+			return 1;
 		case 0x1D4D2:
 			*normals = mathematical_bold_script_capital_c;
-			return static_count(mathematical_bold_script_capital_c);
+			return 1;
 		case 0x1D4D3:
 			*normals = mathematical_bold_script_capital_d;
-			return static_count(mathematical_bold_script_capital_d);
+			return 1;
 		case 0x1D4D4:
 			*normals = mathematical_bold_script_capital_e;
-			return static_count(mathematical_bold_script_capital_e);
+			return 1;
 		case 0x1D4D5:
 			*normals = mathematical_bold_script_capital_f;
-			return static_count(mathematical_bold_script_capital_f);
+			return 1;
 		case 0x1D4D6:
 			*normals = mathematical_bold_script_capital_g;
-			return static_count(mathematical_bold_script_capital_g);
+			return 1;
 		case 0x1D4D7:
 			*normals = mathematical_bold_script_capital_h;
-			return static_count(mathematical_bold_script_capital_h);
+			return 1;
 		case 0x1D4D8:
 			*normals = mathematical_bold_script_capital_i;
-			return static_count(mathematical_bold_script_capital_i);
+			return 1;
 		case 0x1D4D9:
 			*normals = mathematical_bold_script_capital_j;
-			return static_count(mathematical_bold_script_capital_j);
+			return 1;
 		case 0x1D4DA:
 			*normals = mathematical_bold_script_capital_k;
-			return static_count(mathematical_bold_script_capital_k);
+			return 1;
 		case 0x1D4DB:
 			*normals = mathematical_bold_script_capital_l;
-			return static_count(mathematical_bold_script_capital_l);
+			return 1;
 		case 0x1D4DC:
 			*normals = mathematical_bold_script_capital_m;
-			return static_count(mathematical_bold_script_capital_m);
+			return 1;
 		case 0x1D4DD:
 			*normals = mathematical_bold_script_capital_n;
-			return static_count(mathematical_bold_script_capital_n);
+			return 1;
 		case 0x1D4DE:
 			*normals = mathematical_bold_script_capital_o;
-			return static_count(mathematical_bold_script_capital_o);
+			return 1;
 		case 0x1D4DF:
 			*normals = mathematical_bold_script_capital_p;
-			return static_count(mathematical_bold_script_capital_p);
+			return 1;
 		case 0x1D4E0:
 			*normals = mathematical_bold_script_capital_q;
-			return static_count(mathematical_bold_script_capital_q);
+			return 1;
 		case 0x1D4E1:
 			*normals = mathematical_bold_script_capital_r;
-			return static_count(mathematical_bold_script_capital_r);
+			return 1;
 		case 0x1D4E2:
 			*normals = mathematical_bold_script_capital_s;
-			return static_count(mathematical_bold_script_capital_s);
+			return 1;
 		case 0x1D4E3:
 			*normals = mathematical_bold_script_capital_t;
-			return static_count(mathematical_bold_script_capital_t);
+			return 1;
 		case 0x1D4E4:
 			*normals = mathematical_bold_script_capital_u;
-			return static_count(mathematical_bold_script_capital_u);
+			return 1;
 		case 0x1D4E5:
 			*normals = mathematical_bold_script_capital_v;
-			return static_count(mathematical_bold_script_capital_v);
+			return 1;
 		case 0x1D4E6:
 			*normals = mathematical_bold_script_capital_w;
-			return static_count(mathematical_bold_script_capital_w);
+			return 1;
 		case 0x1D4E7:
 			*normals = mathematical_bold_script_capital_x;
-			return static_count(mathematical_bold_script_capital_x);
+			return 1;
 		case 0x1D4E8:
 			*normals = mathematical_bold_script_capital_y;
-			return static_count(mathematical_bold_script_capital_y);
+			return 1;
 		case 0x1D4E9:
 			*normals = mathematical_bold_script_capital_z;
-			return static_count(mathematical_bold_script_capital_z);
+			return 1;
 		case 0x1D4EA:
 			*normals = mathematical_bold_script_small_a;
-			return static_count(mathematical_bold_script_small_a);
+			return 1;
 		case 0x1D4EB:
 			*normals = mathematical_bold_script_small_b;
-			return static_count(mathematical_bold_script_small_b);
+			return 1;
 		case 0x1D4EC:
 			*normals = mathematical_bold_script_small_c;
-			return static_count(mathematical_bold_script_small_c);
+			return 1;
 		case 0x1D4ED:
 			*normals = mathematical_bold_script_small_d;
-			return static_count(mathematical_bold_script_small_d);
+			return 1;
 		case 0x1D4EE:
 			*normals = mathematical_bold_script_small_e;
-			return static_count(mathematical_bold_script_small_e);
+			return 1;
 		case 0x1D4EF:
 			*normals = mathematical_bold_script_small_f;
-			return static_count(mathematical_bold_script_small_f);
+			return 1;
 		case 0x1D4F0:
 			*normals = mathematical_bold_script_small_g;
-			return static_count(mathematical_bold_script_small_g);
+			return 1;
 		case 0x1D4F1:
 			*normals = mathematical_bold_script_small_h;
-			return static_count(mathematical_bold_script_small_h);
+			return 1;
 		case 0x1D4F2:
 			*normals = mathematical_bold_script_small_i;
-			return static_count(mathematical_bold_script_small_i);
+			return 1;
 		case 0x1D4F3:
 			*normals = mathematical_bold_script_small_j;
-			return static_count(mathematical_bold_script_small_j);
+			return 1;
 		case 0x1D4F4:
 			*normals = mathematical_bold_script_small_k;
-			return static_count(mathematical_bold_script_small_k);
+			return 1;
 		case 0x1D4F5:
 			*normals = mathematical_bold_script_small_l;
-			return static_count(mathematical_bold_script_small_l);
+			return 1;
 		case 0x1D4F6:
 			*normals = mathematical_bold_script_small_m;
-			return static_count(mathematical_bold_script_small_m);
+			return 1;
 		case 0x1D4F7:
 			*normals = mathematical_bold_script_small_n;
-			return static_count(mathematical_bold_script_small_n);
+			return 1;
 		case 0x1D4F8:
 			*normals = mathematical_bold_script_small_o;
-			return static_count(mathematical_bold_script_small_o);
+			return 1;
 		case 0x1D4F9:
 			*normals = mathematical_bold_script_small_p;
-			return static_count(mathematical_bold_script_small_p);
+			return 1;
 		case 0x1D4FA:
 			*normals = mathematical_bold_script_small_q;
-			return static_count(mathematical_bold_script_small_q);
+			return 1;
 		case 0x1D4FB:
 			*normals = mathematical_bold_script_small_r;
-			return static_count(mathematical_bold_script_small_r);
+			return 1;
 		case 0x1D4FC:
 			*normals = mathematical_bold_script_small_s;
-			return static_count(mathematical_bold_script_small_s);
+			return 1;
 		case 0x1D4FD:
 			*normals = mathematical_bold_script_small_t;
-			return static_count(mathematical_bold_script_small_t);
+			return 1;
 		case 0x1D4FE:
 			*normals = mathematical_bold_script_small_u;
-			return static_count(mathematical_bold_script_small_u);
+			return 1;
 		case 0x1D4FF:
 			*normals = mathematical_bold_script_small_v;
-			return static_count(mathematical_bold_script_small_v);
+			return 1;
 		case 0x1D500:
 			*normals = mathematical_bold_script_small_w;
-			return static_count(mathematical_bold_script_small_w);
+			return 1;
 		case 0x1D501:
 			*normals = mathematical_bold_script_small_x;
-			return static_count(mathematical_bold_script_small_x);
+			return 1;
 		case 0x1D502:
 			*normals = mathematical_bold_script_small_y;
-			return static_count(mathematical_bold_script_small_y);
+			return 1;
 		case 0x1D503:
 			*normals = mathematical_bold_script_small_z;
-			return static_count(mathematical_bold_script_small_z);
+			return 1;
 		case 0x1D504:
 			*normals = mathematical_fraktur_capital_a;
-			return static_count(mathematical_fraktur_capital_a);
+			return 1;
 		case 0x1D505:
 			*normals = mathematical_fraktur_capital_b;
-			return static_count(mathematical_fraktur_capital_b);
+			return 1;
 		case 0x1D507:
 			*normals = mathematical_fraktur_capital_d;
-			return static_count(mathematical_fraktur_capital_d);
+			return 1;
 		case 0x1D508:
 			*normals = mathematical_fraktur_capital_e;
-			return static_count(mathematical_fraktur_capital_e);
+			return 1;
 		case 0x1D509:
 			*normals = mathematical_fraktur_capital_f;
-			return static_count(mathematical_fraktur_capital_f);
+			return 1;
 		case 0x1D50A:
 			*normals = mathematical_fraktur_capital_g;
-			return static_count(mathematical_fraktur_capital_g);
+			return 1;
 		case 0x1D50D:
 			*normals = mathematical_fraktur_capital_j;
-			return static_count(mathematical_fraktur_capital_j);
+			return 1;
 		case 0x1D50E:
 			*normals = mathematical_fraktur_capital_k;
-			return static_count(mathematical_fraktur_capital_k);
+			return 1;
 		case 0x1D50F:
 			*normals = mathematical_fraktur_capital_l;
-			return static_count(mathematical_fraktur_capital_l);
+			return 1;
 		case 0x1D510:
 			*normals = mathematical_fraktur_capital_m;
-			return static_count(mathematical_fraktur_capital_m);
+			return 1;
 		case 0x1D511:
 			*normals = mathematical_fraktur_capital_n;
-			return static_count(mathematical_fraktur_capital_n);
+			return 1;
 		case 0x1D512:
 			*normals = mathematical_fraktur_capital_o;
-			return static_count(mathematical_fraktur_capital_o);
+			return 1;
 		case 0x1D513:
 			*normals = mathematical_fraktur_capital_p;
-			return static_count(mathematical_fraktur_capital_p);
+			return 1;
 		case 0x1D514:
 			*normals = mathematical_fraktur_capital_q;
-			return static_count(mathematical_fraktur_capital_q);
+			return 1;
 		case 0x1D516:
 			*normals = mathematical_fraktur_capital_s;
-			return static_count(mathematical_fraktur_capital_s);
+			return 1;
 		case 0x1D517:
 			*normals = mathematical_fraktur_capital_t;
-			return static_count(mathematical_fraktur_capital_t);
+			return 1;
 		case 0x1D518:
 			*normals = mathematical_fraktur_capital_u;
-			return static_count(mathematical_fraktur_capital_u);
+			return 1;
 		case 0x1D519:
 			*normals = mathematical_fraktur_capital_v;
-			return static_count(mathematical_fraktur_capital_v);
+			return 1;
 		case 0x1D51A:
 			*normals = mathematical_fraktur_capital_w;
-			return static_count(mathematical_fraktur_capital_w);
+			return 1;
 		case 0x1D51B:
 			*normals = mathematical_fraktur_capital_x;
-			return static_count(mathematical_fraktur_capital_x);
+			return 1;
 		case 0x1D51C:
 			*normals = mathematical_fraktur_capital_y;
-			return static_count(mathematical_fraktur_capital_y);
+			return 1;
 		case 0x1D51E:
 			*normals = mathematical_fraktur_small_a;
-			return static_count(mathematical_fraktur_small_a);
+			return 1;
 		case 0x1D51F:
 			*normals = mathematical_fraktur_small_b;
-			return static_count(mathematical_fraktur_small_b);
+			return 1;
 		case 0x1D520:
 			*normals = mathematical_fraktur_small_c;
-			return static_count(mathematical_fraktur_small_c);
+			return 1;
 		case 0x1D521:
 			*normals = mathematical_fraktur_small_d;
-			return static_count(mathematical_fraktur_small_d);
+			return 1;
 		case 0x1D522:
 			*normals = mathematical_fraktur_small_e;
-			return static_count(mathematical_fraktur_small_e);
+			return 1;
 		case 0x1D523:
 			*normals = mathematical_fraktur_small_f;
-			return static_count(mathematical_fraktur_small_f);
+			return 1;
 		case 0x1D524:
 			*normals = mathematical_fraktur_small_g;
-			return static_count(mathematical_fraktur_small_g);
+			return 1;
 		case 0x1D525:
 			*normals = mathematical_fraktur_small_h;
-			return static_count(mathematical_fraktur_small_h);
+			return 1;
 		case 0x1D526:
 			*normals = mathematical_fraktur_small_i;
-			return static_count(mathematical_fraktur_small_i);
+			return 1;
 		case 0x1D527:
 			*normals = mathematical_fraktur_small_j;
-			return static_count(mathematical_fraktur_small_j);
+			return 1;
 		case 0x1D528:
 			*normals = mathematical_fraktur_small_k;
-			return static_count(mathematical_fraktur_small_k);
+			return 1;
 		case 0x1D529:
 			*normals = mathematical_fraktur_small_l;
-			return static_count(mathematical_fraktur_small_l);
+			return 1;
 		case 0x1D52A:
 			*normals = mathematical_fraktur_small_m;
-			return static_count(mathematical_fraktur_small_m);
+			return 1;
 		case 0x1D52B:
 			*normals = mathematical_fraktur_small_n;
-			return static_count(mathematical_fraktur_small_n);
+			return 1;
 		case 0x1D52C:
 			*normals = mathematical_fraktur_small_o;
-			return static_count(mathematical_fraktur_small_o);
+			return 1;
 		case 0x1D52D:
 			*normals = mathematical_fraktur_small_p;
-			return static_count(mathematical_fraktur_small_p);
+			return 1;
 		case 0x1D52E:
 			*normals = mathematical_fraktur_small_q;
-			return static_count(mathematical_fraktur_small_q);
+			return 1;
 		case 0x1D52F:
 			*normals = mathematical_fraktur_small_r;
-			return static_count(mathematical_fraktur_small_r);
+			return 1;
 		case 0x1D530:
 			*normals = mathematical_fraktur_small_s;
-			return static_count(mathematical_fraktur_small_s);
+			return 1;
 		case 0x1D531:
 			*normals = mathematical_fraktur_small_t;
-			return static_count(mathematical_fraktur_small_t);
+			return 1;
 		case 0x1D532:
 			*normals = mathematical_fraktur_small_u;
-			return static_count(mathematical_fraktur_small_u);
+			return 1;
 		case 0x1D533:
 			*normals = mathematical_fraktur_small_v;
-			return static_count(mathematical_fraktur_small_v);
+			return 1;
 		case 0x1D534:
 			*normals = mathematical_fraktur_small_w;
-			return static_count(mathematical_fraktur_small_w);
+			return 1;
 		case 0x1D535:
 			*normals = mathematical_fraktur_small_x;
-			return static_count(mathematical_fraktur_small_x);
+			return 1;
 		case 0x1D536:
 			*normals = mathematical_fraktur_small_y;
-			return static_count(mathematical_fraktur_small_y);
+			return 1;
 		case 0x1D537:
 			*normals = mathematical_fraktur_small_z;
-			return static_count(mathematical_fraktur_small_z);
+			return 1;
 		case 0x1D538:
 			*normals = mathematical_double_struck_capital_a;
-			return static_count(mathematical_double_struck_capital_a);
+			return 1;
 		case 0x1D539:
 			*normals = mathematical_double_struck_capital_b;
-			return static_count(mathematical_double_struck_capital_b);
+			return 1;
 		case 0x1D53B:
 			*normals = mathematical_double_struck_capital_d;
-			return static_count(mathematical_double_struck_capital_d);
+			return 1;
 		case 0x1D53C:
 			*normals = mathematical_double_struck_capital_e;
-			return static_count(mathematical_double_struck_capital_e);
+			return 1;
 		case 0x1D53D:
 			*normals = mathematical_double_struck_capital_f;
-			return static_count(mathematical_double_struck_capital_f);
+			return 1;
 		case 0x1D53E:
 			*normals = mathematical_double_struck_capital_g;
-			return static_count(mathematical_double_struck_capital_g);
+			return 1;
 		case 0x1D540:
 			*normals = mathematical_double_struck_capital_i;
-			return static_count(mathematical_double_struck_capital_i);
+			return 1;
 		case 0x1D541:
 			*normals = mathematical_double_struck_capital_j;
-			return static_count(mathematical_double_struck_capital_j);
+			return 1;
 		case 0x1D542:
 			*normals = mathematical_double_struck_capital_k;
-			return static_count(mathematical_double_struck_capital_k);
+			return 1;
 		case 0x1D543:
 			*normals = mathematical_double_struck_capital_l;
-			return static_count(mathematical_double_struck_capital_l);
+			return 1;
 		case 0x1D544:
 			*normals = mathematical_double_struck_capital_m;
-			return static_count(mathematical_double_struck_capital_m);
+			return 1;
 		case 0x1D546:
 			*normals = mathematical_double_struck_capital_o;
-			return static_count(mathematical_double_struck_capital_o);
+			return 1;
 		case 0x1D54A:
 			*normals = mathematical_double_struck_capital_s;
-			return static_count(mathematical_double_struck_capital_s);
+			return 1;
 		case 0x1D54B:
 			*normals = mathematical_double_struck_capital_t;
-			return static_count(mathematical_double_struck_capital_t);
+			return 1;
 		case 0x1D54C:
 			*normals = mathematical_double_struck_capital_u;
-			return static_count(mathematical_double_struck_capital_u);
+			return 1;
 		case 0x1D54D:
 			*normals = mathematical_double_struck_capital_v;
-			return static_count(mathematical_double_struck_capital_v);
+			return 1;
 		case 0x1D54E:
 			*normals = mathematical_double_struck_capital_w;
-			return static_count(mathematical_double_struck_capital_w);
+			return 1;
 		case 0x1D54F:
 			*normals = mathematical_double_struck_capital_x;
-			return static_count(mathematical_double_struck_capital_x);
+			return 1;
 		case 0x1D550:
 			*normals = mathematical_double_struck_capital_y;
-			return static_count(mathematical_double_struck_capital_y);
+			return 1;
 		case 0x1D552:
 			*normals = mathematical_double_struck_small_a;
-			return static_count(mathematical_double_struck_small_a);
+			return 1;
 		case 0x1D553:
 			*normals = mathematical_double_struck_small_b;
-			return static_count(mathematical_double_struck_small_b);
+			return 1;
 		case 0x1D554:
 			*normals = mathematical_double_struck_small_c;
-			return static_count(mathematical_double_struck_small_c);
+			return 1;
 		case 0x1D555:
 			*normals = mathematical_double_struck_small_d;
-			return static_count(mathematical_double_struck_small_d);
+			return 1;
 		case 0x1D556:
 			*normals = mathematical_double_struck_small_e;
-			return static_count(mathematical_double_struck_small_e);
+			return 1;
 		case 0x1D557:
 			*normals = mathematical_double_struck_small_f;
-			return static_count(mathematical_double_struck_small_f);
+			return 1;
 		case 0x1D558:
 			*normals = mathematical_double_struck_small_g;
-			return static_count(mathematical_double_struck_small_g);
+			return 1;
 		case 0x1D559:
 			*normals = mathematical_double_struck_small_h;
-			return static_count(mathematical_double_struck_small_h);
+			return 1;
 		case 0x1D55A:
 			*normals = mathematical_double_struck_small_i;
-			return static_count(mathematical_double_struck_small_i);
+			return 1;
 		case 0x1D55B:
 			*normals = mathematical_double_struck_small_j;
-			return static_count(mathematical_double_struck_small_j);
+			return 1;
 		case 0x1D55C:
 			*normals = mathematical_double_struck_small_k;
-			return static_count(mathematical_double_struck_small_k);
+			return 1;
 		case 0x1D55D:
 			*normals = mathematical_double_struck_small_l;
-			return static_count(mathematical_double_struck_small_l);
+			return 1;
 		case 0x1D55E:
 			*normals = mathematical_double_struck_small_m;
-			return static_count(mathematical_double_struck_small_m);
+			return 1;
 		case 0x1D55F:
 			*normals = mathematical_double_struck_small_n;
-			return static_count(mathematical_double_struck_small_n);
+			return 1;
 		case 0x1D560:
 			*normals = mathematical_double_struck_small_o;
-			return static_count(mathematical_double_struck_small_o);
+			return 1;
 		case 0x1D561:
 			*normals = mathematical_double_struck_small_p;
-			return static_count(mathematical_double_struck_small_p);
+			return 1;
 		case 0x1D562:
 			*normals = mathematical_double_struck_small_q;
-			return static_count(mathematical_double_struck_small_q);
+			return 1;
 		case 0x1D563:
 			*normals = mathematical_double_struck_small_r;
-			return static_count(mathematical_double_struck_small_r);
+			return 1;
 		case 0x1D564:
 			*normals = mathematical_double_struck_small_s;
-			return static_count(mathematical_double_struck_small_s);
+			return 1;
 		case 0x1D565:
 			*normals = mathematical_double_struck_small_t;
-			return static_count(mathematical_double_struck_small_t);
+			return 1;
 		case 0x1D566:
 			*normals = mathematical_double_struck_small_u;
-			return static_count(mathematical_double_struck_small_u);
+			return 1;
 		case 0x1D567:
 			*normals = mathematical_double_struck_small_v;
-			return static_count(mathematical_double_struck_small_v);
+			return 1;
 		case 0x1D568:
 			*normals = mathematical_double_struck_small_w;
-			return static_count(mathematical_double_struck_small_w);
+			return 1;
 		case 0x1D569:
 			*normals = mathematical_double_struck_small_x;
-			return static_count(mathematical_double_struck_small_x);
+			return 1;
 		case 0x1D56A:
 			*normals = mathematical_double_struck_small_y;
-			return static_count(mathematical_double_struck_small_y);
+			return 1;
 		case 0x1D56B:
 			*normals = mathematical_double_struck_small_z;
-			return static_count(mathematical_double_struck_small_z);
+			return 1;
 		case 0x1D56C:
 			*normals = mathematical_bold_fraktur_capital_a;
-			return static_count(mathematical_bold_fraktur_capital_a);
+			return 1;
 		case 0x1D56D:
 			*normals = mathematical_bold_fraktur_capital_b;
-			return static_count(mathematical_bold_fraktur_capital_b);
+			return 1;
 		case 0x1D56E:
 			*normals = mathematical_bold_fraktur_capital_c;
-			return static_count(mathematical_bold_fraktur_capital_c);
+			return 1;
 		case 0x1D56F:
 			*normals = mathematical_bold_fraktur_capital_d;
-			return static_count(mathematical_bold_fraktur_capital_d);
+			return 1;
 		case 0x1D570:
 			*normals = mathematical_bold_fraktur_capital_e;
-			return static_count(mathematical_bold_fraktur_capital_e);
+			return 1;
 		case 0x1D571:
 			*normals = mathematical_bold_fraktur_capital_f;
-			return static_count(mathematical_bold_fraktur_capital_f);
+			return 1;
 		case 0x1D572:
 			*normals = mathematical_bold_fraktur_capital_g;
-			return static_count(mathematical_bold_fraktur_capital_g);
+			return 1;
 		case 0x1D573:
 			*normals = mathematical_bold_fraktur_capital_h;
-			return static_count(mathematical_bold_fraktur_capital_h);
+			return 1;
 		case 0x1D574:
 			*normals = mathematical_bold_fraktur_capital_i;
-			return static_count(mathematical_bold_fraktur_capital_i);
+			return 1;
 		case 0x1D575:
 			*normals = mathematical_bold_fraktur_capital_j;
-			return static_count(mathematical_bold_fraktur_capital_j);
+			return 1;
 		case 0x1D576:
 			*normals = mathematical_bold_fraktur_capital_k;
-			return static_count(mathematical_bold_fraktur_capital_k);
+			return 1;
 		case 0x1D577:
 			*normals = mathematical_bold_fraktur_capital_l;
-			return static_count(mathematical_bold_fraktur_capital_l);
+			return 1;
 		case 0x1D578:
 			*normals = mathematical_bold_fraktur_capital_m;
-			return static_count(mathematical_bold_fraktur_capital_m);
+			return 1;
 		case 0x1D579:
 			*normals = mathematical_bold_fraktur_capital_n;
-			return static_count(mathematical_bold_fraktur_capital_n);
+			return 1;
 		case 0x1D57A:
 			*normals = mathematical_bold_fraktur_capital_o;
-			return static_count(mathematical_bold_fraktur_capital_o);
+			return 1;
 		case 0x1D57B:
 			*normals = mathematical_bold_fraktur_capital_p;
-			return static_count(mathematical_bold_fraktur_capital_p);
+			return 1;
 		case 0x1D57C:
 			*normals = mathematical_bold_fraktur_capital_q;
-			return static_count(mathematical_bold_fraktur_capital_q);
+			return 1;
 		case 0x1D57D:
 			*normals = mathematical_bold_fraktur_capital_r;
-			return static_count(mathematical_bold_fraktur_capital_r);
+			return 1;
 		case 0x1D57E:
 			*normals = mathematical_bold_fraktur_capital_s;
-			return static_count(mathematical_bold_fraktur_capital_s);
+			return 1;
 		case 0x1D57F:
 			*normals = mathematical_bold_fraktur_capital_t;
-			return static_count(mathematical_bold_fraktur_capital_t);
+			return 1;
 		case 0x1D580:
 			*normals = mathematical_bold_fraktur_capital_u;
-			return static_count(mathematical_bold_fraktur_capital_u);
+			return 1;
 		case 0x1D581:
 			*normals = mathematical_bold_fraktur_capital_v;
-			return static_count(mathematical_bold_fraktur_capital_v);
+			return 1;
 		case 0x1D582:
 			*normals = mathematical_bold_fraktur_capital_w;
-			return static_count(mathematical_bold_fraktur_capital_w);
+			return 1;
 		case 0x1D583:
 			*normals = mathematical_bold_fraktur_capital_x;
-			return static_count(mathematical_bold_fraktur_capital_x);
+			return 1;
 		case 0x1D584:
 			*normals = mathematical_bold_fraktur_capital_y;
-			return static_count(mathematical_bold_fraktur_capital_y);
+			return 1;
 		case 0x1D585:
 			*normals = mathematical_bold_fraktur_capital_z;
-			return static_count(mathematical_bold_fraktur_capital_z);
+			return 1;
 		case 0x1D586:
 			*normals = mathematical_bold_fraktur_small_a;
-			return static_count(mathematical_bold_fraktur_small_a);
+			return 1;
 		case 0x1D587:
 			*normals = mathematical_bold_fraktur_small_b;
-			return static_count(mathematical_bold_fraktur_small_b);
+			return 1;
 		case 0x1D588:
 			*normals = mathematical_bold_fraktur_small_c;
-			return static_count(mathematical_bold_fraktur_small_c);
+			return 1;
 		case 0x1D589:
 			*normals = mathematical_bold_fraktur_small_d;
-			return static_count(mathematical_bold_fraktur_small_d);
+			return 1;
 		case 0x1D58A:
 			*normals = mathematical_bold_fraktur_small_e;
-			return static_count(mathematical_bold_fraktur_small_e);
+			return 1;
 		case 0x1D58B:
 			*normals = mathematical_bold_fraktur_small_f;
-			return static_count(mathematical_bold_fraktur_small_f);
+			return 1;
 		case 0x1D58C:
 			*normals = mathematical_bold_fraktur_small_g;
-			return static_count(mathematical_bold_fraktur_small_g);
+			return 1;
 		case 0x1D58D:
 			*normals = mathematical_bold_fraktur_small_h;
-			return static_count(mathematical_bold_fraktur_small_h);
+			return 1;
 		case 0x1D58E:
 			*normals = mathematical_bold_fraktur_small_i;
-			return static_count(mathematical_bold_fraktur_small_i);
+			return 1;
 		case 0x1D58F:
 			*normals = mathematical_bold_fraktur_small_j;
-			return static_count(mathematical_bold_fraktur_small_j);
+			return 1;
 		case 0x1D590:
 			*normals = mathematical_bold_fraktur_small_k;
-			return static_count(mathematical_bold_fraktur_small_k);
+			return 1;
 		case 0x1D591:
 			*normals = mathematical_bold_fraktur_small_l;
-			return static_count(mathematical_bold_fraktur_small_l);
+			return 1;
 		case 0x1D592:
 			*normals = mathematical_bold_fraktur_small_m;
-			return static_count(mathematical_bold_fraktur_small_m);
+			return 1;
 		case 0x1D593:
 			*normals = mathematical_bold_fraktur_small_n;
-			return static_count(mathematical_bold_fraktur_small_n);
+			return 1;
 		case 0x1D594:
 			*normals = mathematical_bold_fraktur_small_o;
-			return static_count(mathematical_bold_fraktur_small_o);
+			return 1;
 		case 0x1D595:
 			*normals = mathematical_bold_fraktur_small_p;
-			return static_count(mathematical_bold_fraktur_small_p);
+			return 1;
 		case 0x1D596:
 			*normals = mathematical_bold_fraktur_small_q;
-			return static_count(mathematical_bold_fraktur_small_q);
+			return 1;
 		case 0x1D597:
 			*normals = mathematical_bold_fraktur_small_r;
-			return static_count(mathematical_bold_fraktur_small_r);
+			return 1;
 		case 0x1D598:
 			*normals = mathematical_bold_fraktur_small_s;
-			return static_count(mathematical_bold_fraktur_small_s);
+			return 1;
 		case 0x1D599:
 			*normals = mathematical_bold_fraktur_small_t;
-			return static_count(mathematical_bold_fraktur_small_t);
+			return 1;
 		case 0x1D59A:
 			*normals = mathematical_bold_fraktur_small_u;
-			return static_count(mathematical_bold_fraktur_small_u);
+			return 1;
 		case 0x1D59B:
 			*normals = mathematical_bold_fraktur_small_v;
-			return static_count(mathematical_bold_fraktur_small_v);
+			return 1;
 		case 0x1D59C:
 			*normals = mathematical_bold_fraktur_small_w;
-			return static_count(mathematical_bold_fraktur_small_w);
+			return 1;
 		case 0x1D59D:
 			*normals = mathematical_bold_fraktur_small_x;
-			return static_count(mathematical_bold_fraktur_small_x);
+			return 1;
 		case 0x1D59E:
 			*normals = mathematical_bold_fraktur_small_y;
-			return static_count(mathematical_bold_fraktur_small_y);
+			return 1;
 		case 0x1D59F:
 			*normals = mathematical_bold_fraktur_small_z;
-			return static_count(mathematical_bold_fraktur_small_z);
+			return 1;
 		case 0x1D5A0:
 			*normals = mathematical_sans_serif_capital_a;
-			return static_count(mathematical_sans_serif_capital_a);
+			return 1;
 		case 0x1D5A1:
 			*normals = mathematical_sans_serif_capital_b;
-			return static_count(mathematical_sans_serif_capital_b);
+			return 1;
 		case 0x1D5A2:
 			*normals = mathematical_sans_serif_capital_c;
-			return static_count(mathematical_sans_serif_capital_c);
+			return 1;
 		case 0x1D5A3:
 			*normals = mathematical_sans_serif_capital_d;
-			return static_count(mathematical_sans_serif_capital_d);
+			return 1;
 		case 0x1D5A4:
 			*normals = mathematical_sans_serif_capital_e;
-			return static_count(mathematical_sans_serif_capital_e);
+			return 1;
 		case 0x1D5A5:
 			*normals = mathematical_sans_serif_capital_f;
-			return static_count(mathematical_sans_serif_capital_f);
+			return 1;
 		case 0x1D5A6:
 			*normals = mathematical_sans_serif_capital_g;
-			return static_count(mathematical_sans_serif_capital_g);
+			return 1;
 		case 0x1D5A7:
 			*normals = mathematical_sans_serif_capital_h;
-			return static_count(mathematical_sans_serif_capital_h);
+			return 1;
 		case 0x1D5A8:
 			*normals = mathematical_sans_serif_capital_i;
-			return static_count(mathematical_sans_serif_capital_i);
+			return 1;
 		case 0x1D5A9:
 			*normals = mathematical_sans_serif_capital_j;
-			return static_count(mathematical_sans_serif_capital_j);
+			return 1;
 		case 0x1D5AA:
 			*normals = mathematical_sans_serif_capital_k;
-			return static_count(mathematical_sans_serif_capital_k);
+			return 1;
 		case 0x1D5AB:
 			*normals = mathematical_sans_serif_capital_l;
-			return static_count(mathematical_sans_serif_capital_l);
+			return 1;
 		case 0x1D5AC:
 			*normals = mathematical_sans_serif_capital_m;
-			return static_count(mathematical_sans_serif_capital_m);
+			return 1;
 		case 0x1D5AD:
 			*normals = mathematical_sans_serif_capital_n;
-			return static_count(mathematical_sans_serif_capital_n);
+			return 1;
 		case 0x1D5AE:
 			*normals = mathematical_sans_serif_capital_o;
-			return static_count(mathematical_sans_serif_capital_o);
+			return 1;
 		case 0x1D5AF:
 			*normals = mathematical_sans_serif_capital_p;
-			return static_count(mathematical_sans_serif_capital_p);
+			return 1;
 		case 0x1D5B0:
 			*normals = mathematical_sans_serif_capital_q;
-			return static_count(mathematical_sans_serif_capital_q);
+			return 1;
 		case 0x1D5B1:
 			*normals = mathematical_sans_serif_capital_r;
-			return static_count(mathematical_sans_serif_capital_r);
+			return 1;
 		case 0x1D5B2:
 			*normals = mathematical_sans_serif_capital_s;
-			return static_count(mathematical_sans_serif_capital_s);
+			return 1;
 		case 0x1D5B3:
 			*normals = mathematical_sans_serif_capital_t;
-			return static_count(mathematical_sans_serif_capital_t);
+			return 1;
 		case 0x1D5B4:
 			*normals = mathematical_sans_serif_capital_u;
-			return static_count(mathematical_sans_serif_capital_u);
+			return 1;
 		case 0x1D5B5:
 			*normals = mathematical_sans_serif_capital_v;
-			return static_count(mathematical_sans_serif_capital_v);
+			return 1;
 		case 0x1D5B6:
 			*normals = mathematical_sans_serif_capital_w;
-			return static_count(mathematical_sans_serif_capital_w);
+			return 1;
 		case 0x1D5B7:
 			*normals = mathematical_sans_serif_capital_x;
-			return static_count(mathematical_sans_serif_capital_x);
+			return 1;
 		case 0x1D5B8:
 			*normals = mathematical_sans_serif_capital_y;
-			return static_count(mathematical_sans_serif_capital_y);
+			return 1;
 		case 0x1D5B9:
 			*normals = mathematical_sans_serif_capital_z;
-			return static_count(mathematical_sans_serif_capital_z);
+			return 1;
 		case 0x1D5BA:
 			*normals = mathematical_sans_serif_small_a;
-			return static_count(mathematical_sans_serif_small_a);
+			return 1;
 		case 0x1D5BB:
 			*normals = mathematical_sans_serif_small_b;
-			return static_count(mathematical_sans_serif_small_b);
+			return 1;
 		case 0x1D5BC:
 			*normals = mathematical_sans_serif_small_c;
-			return static_count(mathematical_sans_serif_small_c);
+			return 1;
 		case 0x1D5BD:
 			*normals = mathematical_sans_serif_small_d;
-			return static_count(mathematical_sans_serif_small_d);
+			return 1;
 		case 0x1D5BE:
 			*normals = mathematical_sans_serif_small_e;
-			return static_count(mathematical_sans_serif_small_e);
+			return 1;
 		case 0x1D5BF:
 			*normals = mathematical_sans_serif_small_f;
-			return static_count(mathematical_sans_serif_small_f);
+			return 1;
 		case 0x1D5C0:
 			*normals = mathematical_sans_serif_small_g;
-			return static_count(mathematical_sans_serif_small_g);
+			return 1;
 		case 0x1D5C1:
 			*normals = mathematical_sans_serif_small_h;
-			return static_count(mathematical_sans_serif_small_h);
+			return 1;
 		case 0x1D5C2:
 			*normals = mathematical_sans_serif_small_i;
-			return static_count(mathematical_sans_serif_small_i);
+			return 1;
 		case 0x1D5C3:
 			*normals = mathematical_sans_serif_small_j;
-			return static_count(mathematical_sans_serif_small_j);
+			return 1;
 		case 0x1D5C4:
 			*normals = mathematical_sans_serif_small_k;
-			return static_count(mathematical_sans_serif_small_k);
+			return 1;
 		case 0x1D5C5:
 			*normals = mathematical_sans_serif_small_l;
-			return static_count(mathematical_sans_serif_small_l);
+			return 1;
 		case 0x1D5C6:
 			*normals = mathematical_sans_serif_small_m;
-			return static_count(mathematical_sans_serif_small_m);
+			return 1;
 		case 0x1D5C7:
 			*normals = mathematical_sans_serif_small_n;
-			return static_count(mathematical_sans_serif_small_n);
+			return 1;
 		case 0x1D5C8:
 			*normals = mathematical_sans_serif_small_o;
-			return static_count(mathematical_sans_serif_small_o);
+			return 1;
 		case 0x1D5C9:
 			*normals = mathematical_sans_serif_small_p;
-			return static_count(mathematical_sans_serif_small_p);
+			return 1;
 		case 0x1D5CA:
 			*normals = mathematical_sans_serif_small_q;
-			return static_count(mathematical_sans_serif_small_q);
+			return 1;
 		case 0x1D5CB:
 			*normals = mathematical_sans_serif_small_r;
-			return static_count(mathematical_sans_serif_small_r);
+			return 1;
 		case 0x1D5CC:
 			*normals = mathematical_sans_serif_small_s;
-			return static_count(mathematical_sans_serif_small_s);
+			return 1;
 		case 0x1D5CD:
 			*normals = mathematical_sans_serif_small_t;
-			return static_count(mathematical_sans_serif_small_t);
+			return 1;
 		case 0x1D5CE:
 			*normals = mathematical_sans_serif_small_u;
-			return static_count(mathematical_sans_serif_small_u);
+			return 1;
 		case 0x1D5CF:
 			*normals = mathematical_sans_serif_small_v;
-			return static_count(mathematical_sans_serif_small_v);
+			return 1;
 		case 0x1D5D0:
 			*normals = mathematical_sans_serif_small_w;
-			return static_count(mathematical_sans_serif_small_w);
+			return 1;
 		case 0x1D5D1:
 			*normals = mathematical_sans_serif_small_x;
-			return static_count(mathematical_sans_serif_small_x);
+			return 1;
 		case 0x1D5D2:
 			*normals = mathematical_sans_serif_small_y;
-			return static_count(mathematical_sans_serif_small_y);
+			return 1;
 		case 0x1D5D3:
 			*normals = mathematical_sans_serif_small_z;
-			return static_count(mathematical_sans_serif_small_z);
+			return 1;
 		case 0x1D5D4:
 			*normals = mathematical_sans_serif_bold_capital_a;
-			return static_count(mathematical_sans_serif_bold_capital_a);
+			return 1;
 		case 0x1D5D5:
 			*normals = mathematical_sans_serif_bold_capital_b;
-			return static_count(mathematical_sans_serif_bold_capital_b);
+			return 1;
 		case 0x1D5D6:
 			*normals = mathematical_sans_serif_bold_capital_c;
-			return static_count(mathematical_sans_serif_bold_capital_c);
+			return 1;
 		case 0x1D5D7:
 			*normals = mathematical_sans_serif_bold_capital_d;
-			return static_count(mathematical_sans_serif_bold_capital_d);
+			return 1;
 		case 0x1D5D8:
 			*normals = mathematical_sans_serif_bold_capital_e;
-			return static_count(mathematical_sans_serif_bold_capital_e);
+			return 1;
 		case 0x1D5D9:
 			*normals = mathematical_sans_serif_bold_capital_f;
-			return static_count(mathematical_sans_serif_bold_capital_f);
+			return 1;
 		case 0x1D5DA:
 			*normals = mathematical_sans_serif_bold_capital_g;
-			return static_count(mathematical_sans_serif_bold_capital_g);
+			return 1;
 		case 0x1D5DB:
 			*normals = mathematical_sans_serif_bold_capital_h;
-			return static_count(mathematical_sans_serif_bold_capital_h);
+			return 1;
 		case 0x1D5DC:
 			*normals = mathematical_sans_serif_bold_capital_i;
-			return static_count(mathematical_sans_serif_bold_capital_i);
+			return 1;
 		case 0x1D5DD:
 			*normals = mathematical_sans_serif_bold_capital_j;
-			return static_count(mathematical_sans_serif_bold_capital_j);
+			return 1;
 		case 0x1D5DE:
 			*normals = mathematical_sans_serif_bold_capital_k;
-			return static_count(mathematical_sans_serif_bold_capital_k);
+			return 1;
 		case 0x1D5DF:
 			*normals = mathematical_sans_serif_bold_capital_l;
-			return static_count(mathematical_sans_serif_bold_capital_l);
+			return 1;
 		case 0x1D5E0:
 			*normals = mathematical_sans_serif_bold_capital_m;
-			return static_count(mathematical_sans_serif_bold_capital_m);
+			return 1;
 		case 0x1D5E1:
 			*normals = mathematical_sans_serif_bold_capital_n;
-			return static_count(mathematical_sans_serif_bold_capital_n);
+			return 1;
 		case 0x1D5E2:
 			*normals = mathematical_sans_serif_bold_capital_o;
-			return static_count(mathematical_sans_serif_bold_capital_o);
+			return 1;
 		case 0x1D5E3:
 			*normals = mathematical_sans_serif_bold_capital_p;
-			return static_count(mathematical_sans_serif_bold_capital_p);
+			return 1;
 		case 0x1D5E4:
 			*normals = mathematical_sans_serif_bold_capital_q;
-			return static_count(mathematical_sans_serif_bold_capital_q);
+			return 1;
 		case 0x1D5E5:
 			*normals = mathematical_sans_serif_bold_capital_r;
-			return static_count(mathematical_sans_serif_bold_capital_r);
+			return 1;
 		case 0x1D5E6:
 			*normals = mathematical_sans_serif_bold_capital_s;
-			return static_count(mathematical_sans_serif_bold_capital_s);
+			return 1;
 		case 0x1D5E7:
 			*normals = mathematical_sans_serif_bold_capital_t;
-			return static_count(mathematical_sans_serif_bold_capital_t);
+			return 1;
 		case 0x1D5E8:
 			*normals = mathematical_sans_serif_bold_capital_u;
-			return static_count(mathematical_sans_serif_bold_capital_u);
+			return 1;
 		case 0x1D5E9:
 			*normals = mathematical_sans_serif_bold_capital_v;
-			return static_count(mathematical_sans_serif_bold_capital_v);
+			return 1;
 		case 0x1D5EA:
 			*normals = mathematical_sans_serif_bold_capital_w;
-			return static_count(mathematical_sans_serif_bold_capital_w);
+			return 1;
 		case 0x1D5EB:
 			*normals = mathematical_sans_serif_bold_capital_x;
-			return static_count(mathematical_sans_serif_bold_capital_x);
+			return 1;
 		case 0x1D5EC:
 			*normals = mathematical_sans_serif_bold_capital_y;
-			return static_count(mathematical_sans_serif_bold_capital_y);
+			return 1;
 		case 0x1D5ED:
 			*normals = mathematical_sans_serif_bold_capital_z;
-			return static_count(mathematical_sans_serif_bold_capital_z);
+			return 1;
 		case 0x1D5EE:
 			*normals = mathematical_sans_serif_bold_small_a;
-			return static_count(mathematical_sans_serif_bold_small_a);
+			return 1;
 		case 0x1D5EF:
 			*normals = mathematical_sans_serif_bold_small_b;
-			return static_count(mathematical_sans_serif_bold_small_b);
+			return 1;
 		case 0x1D5F0:
 			*normals = mathematical_sans_serif_bold_small_c;
-			return static_count(mathematical_sans_serif_bold_small_c);
+			return 1;
 		case 0x1D5F1:
 			*normals = mathematical_sans_serif_bold_small_d;
-			return static_count(mathematical_sans_serif_bold_small_d);
+			return 1;
 		case 0x1D5F2:
 			*normals = mathematical_sans_serif_bold_small_e;
-			return static_count(mathematical_sans_serif_bold_small_e);
+			return 1;
 		case 0x1D5F3:
 			*normals = mathematical_sans_serif_bold_small_f;
-			return static_count(mathematical_sans_serif_bold_small_f);
+			return 1;
 		case 0x1D5F4:
 			*normals = mathematical_sans_serif_bold_small_g;
-			return static_count(mathematical_sans_serif_bold_small_g);
+			return 1;
 		case 0x1D5F5:
 			*normals = mathematical_sans_serif_bold_small_h;
-			return static_count(mathematical_sans_serif_bold_small_h);
+			return 1;
 		case 0x1D5F6:
 			*normals = mathematical_sans_serif_bold_small_i;
-			return static_count(mathematical_sans_serif_bold_small_i);
+			return 1;
 		case 0x1D5F7:
 			*normals = mathematical_sans_serif_bold_small_j;
-			return static_count(mathematical_sans_serif_bold_small_j);
+			return 1;
 		case 0x1D5F8:
 			*normals = mathematical_sans_serif_bold_small_k;
-			return static_count(mathematical_sans_serif_bold_small_k);
+			return 1;
 		case 0x1D5F9:
 			*normals = mathematical_sans_serif_bold_small_l;
-			return static_count(mathematical_sans_serif_bold_small_l);
+			return 1;
 		case 0x1D5FA:
 			*normals = mathematical_sans_serif_bold_small_m;
-			return static_count(mathematical_sans_serif_bold_small_m);
+			return 1;
 		case 0x1D5FB:
 			*normals = mathematical_sans_serif_bold_small_n;
-			return static_count(mathematical_sans_serif_bold_small_n);
+			return 1;
 		case 0x1D5FC:
 			*normals = mathematical_sans_serif_bold_small_o;
-			return static_count(mathematical_sans_serif_bold_small_o);
+			return 1;
 		case 0x1D5FD:
 			*normals = mathematical_sans_serif_bold_small_p;
-			return static_count(mathematical_sans_serif_bold_small_p);
+			return 1;
 		case 0x1D5FE:
 			*normals = mathematical_sans_serif_bold_small_q;
-			return static_count(mathematical_sans_serif_bold_small_q);
+			return 1;
 		case 0x1D5FF:
 			*normals = mathematical_sans_serif_bold_small_r;
-			return static_count(mathematical_sans_serif_bold_small_r);
+			return 1;
 		case 0x1D600:
 			*normals = mathematical_sans_serif_bold_small_s;
-			return static_count(mathematical_sans_serif_bold_small_s);
+			return 1;
 		case 0x1D601:
 			*normals = mathematical_sans_serif_bold_small_t;
-			return static_count(mathematical_sans_serif_bold_small_t);
+			return 1;
 		case 0x1D602:
 			*normals = mathematical_sans_serif_bold_small_u;
-			return static_count(mathematical_sans_serif_bold_small_u);
+			return 1;
 		case 0x1D603:
 			*normals = mathematical_sans_serif_bold_small_v;
-			return static_count(mathematical_sans_serif_bold_small_v);
+			return 1;
 		case 0x1D604:
 			*normals = mathematical_sans_serif_bold_small_w;
-			return static_count(mathematical_sans_serif_bold_small_w);
+			return 1;
 		case 0x1D605:
 			*normals = mathematical_sans_serif_bold_small_x;
-			return static_count(mathematical_sans_serif_bold_small_x);
+			return 1;
 		case 0x1D606:
 			*normals = mathematical_sans_serif_bold_small_y;
-			return static_count(mathematical_sans_serif_bold_small_y);
+			return 1;
 		case 0x1D607:
 			*normals = mathematical_sans_serif_bold_small_z;
-			return static_count(mathematical_sans_serif_bold_small_z);
+			return 1;
 		case 0x1D608:
 			*normals = mathematical_sans_serif_italic_capital_a;
-			return static_count(mathematical_sans_serif_italic_capital_a);
+			return 1;
 		case 0x1D609:
 			*normals = mathematical_sans_serif_italic_capital_b;
-			return static_count(mathematical_sans_serif_italic_capital_b);
+			return 1;
 		case 0x1D60A:
 			*normals = mathematical_sans_serif_italic_capital_c;
-			return static_count(mathematical_sans_serif_italic_capital_c);
+			return 1;
 		case 0x1D60B:
 			*normals = mathematical_sans_serif_italic_capital_d;
-			return static_count(mathematical_sans_serif_italic_capital_d);
+			return 1;
 		case 0x1D60C:
 			*normals = mathematical_sans_serif_italic_capital_e;
-			return static_count(mathematical_sans_serif_italic_capital_e);
+			return 1;
 		case 0x1D60D:
 			*normals = mathematical_sans_serif_italic_capital_f;
-			return static_count(mathematical_sans_serif_italic_capital_f);
+			return 1;
 		case 0x1D60E:
 			*normals = mathematical_sans_serif_italic_capital_g;
-			return static_count(mathematical_sans_serif_italic_capital_g);
+			return 1;
 		case 0x1D60F:
 			*normals = mathematical_sans_serif_italic_capital_h;
-			return static_count(mathematical_sans_serif_italic_capital_h);
+			return 1;
 		case 0x1D610:
 			*normals = mathematical_sans_serif_italic_capital_i;
-			return static_count(mathematical_sans_serif_italic_capital_i);
+			return 1;
 		case 0x1D611:
 			*normals = mathematical_sans_serif_italic_capital_j;
-			return static_count(mathematical_sans_serif_italic_capital_j);
+			return 1;
 		case 0x1D612:
 			*normals = mathematical_sans_serif_italic_capital_k;
-			return static_count(mathematical_sans_serif_italic_capital_k);
+			return 1;
 		case 0x1D613:
 			*normals = mathematical_sans_serif_italic_capital_l;
-			return static_count(mathematical_sans_serif_italic_capital_l);
+			return 1;
 		case 0x1D614:
 			*normals = mathematical_sans_serif_italic_capital_m;
-			return static_count(mathematical_sans_serif_italic_capital_m);
+			return 1;
 		case 0x1D615:
 			*normals = mathematical_sans_serif_italic_capital_n;
-			return static_count(mathematical_sans_serif_italic_capital_n);
+			return 1;
 		case 0x1D616:
 			*normals = mathematical_sans_serif_italic_capital_o;
-			return static_count(mathematical_sans_serif_italic_capital_o);
+			return 1;
 		case 0x1D617:
 			*normals = mathematical_sans_serif_italic_capital_p;
-			return static_count(mathematical_sans_serif_italic_capital_p);
+			return 1;
 		case 0x1D618:
 			*normals = mathematical_sans_serif_italic_capital_q;
-			return static_count(mathematical_sans_serif_italic_capital_q);
+			return 1;
 		case 0x1D619:
 			*normals = mathematical_sans_serif_italic_capital_r;
-			return static_count(mathematical_sans_serif_italic_capital_r);
+			return 1;
 		case 0x1D61A:
 			*normals = mathematical_sans_serif_italic_capital_s;
-			return static_count(mathematical_sans_serif_italic_capital_s);
+			return 1;
 		case 0x1D61B:
 			*normals = mathematical_sans_serif_italic_capital_t;
-			return static_count(mathematical_sans_serif_italic_capital_t);
+			return 1;
 		case 0x1D61C:
 			*normals = mathematical_sans_serif_italic_capital_u;
-			return static_count(mathematical_sans_serif_italic_capital_u);
+			return 1;
 		case 0x1D61D:
 			*normals = mathematical_sans_serif_italic_capital_v;
-			return static_count(mathematical_sans_serif_italic_capital_v);
+			return 1;
 		case 0x1D61E:
 			*normals = mathematical_sans_serif_italic_capital_w;
-			return static_count(mathematical_sans_serif_italic_capital_w);
+			return 1;
 		case 0x1D61F:
 			*normals = mathematical_sans_serif_italic_capital_x;
-			return static_count(mathematical_sans_serif_italic_capital_x);
+			return 1;
 		case 0x1D620:
 			*normals = mathematical_sans_serif_italic_capital_y;
-			return static_count(mathematical_sans_serif_italic_capital_y);
+			return 1;
 		case 0x1D621:
 			*normals = mathematical_sans_serif_italic_capital_z;
-			return static_count(mathematical_sans_serif_italic_capital_z);
+			return 1;
 		case 0x1D622:
 			*normals = mathematical_sans_serif_italic_small_a;
-			return static_count(mathematical_sans_serif_italic_small_a);
+			return 1;
 		case 0x1D623:
 			*normals = mathematical_sans_serif_italic_small_b;
-			return static_count(mathematical_sans_serif_italic_small_b);
+			return 1;
 		case 0x1D624:
 			*normals = mathematical_sans_serif_italic_small_c;
-			return static_count(mathematical_sans_serif_italic_small_c);
+			return 1;
 		case 0x1D625:
 			*normals = mathematical_sans_serif_italic_small_d;
-			return static_count(mathematical_sans_serif_italic_small_d);
+			return 1;
 		case 0x1D626:
 			*normals = mathematical_sans_serif_italic_small_e;
-			return static_count(mathematical_sans_serif_italic_small_e);
+			return 1;
 		case 0x1D627:
 			*normals = mathematical_sans_serif_italic_small_f;
-			return static_count(mathematical_sans_serif_italic_small_f);
+			return 1;
 		case 0x1D628:
 			*normals = mathematical_sans_serif_italic_small_g;
-			return static_count(mathematical_sans_serif_italic_small_g);
+			return 1;
 		case 0x1D629:
 			*normals = mathematical_sans_serif_italic_small_h;
-			return static_count(mathematical_sans_serif_italic_small_h);
+			return 1;
 		case 0x1D62A:
 			*normals = mathematical_sans_serif_italic_small_i;
-			return static_count(mathematical_sans_serif_italic_small_i);
+			return 1;
 		case 0x1D62B:
 			*normals = mathematical_sans_serif_italic_small_j;
-			return static_count(mathematical_sans_serif_italic_small_j);
+			return 1;
 		case 0x1D62C:
 			*normals = mathematical_sans_serif_italic_small_k;
-			return static_count(mathematical_sans_serif_italic_small_k);
+			return 1;
 		case 0x1D62D:
 			*normals = mathematical_sans_serif_italic_small_l;
-			return static_count(mathematical_sans_serif_italic_small_l);
+			return 1;
 		case 0x1D62E:
 			*normals = mathematical_sans_serif_italic_small_m;
-			return static_count(mathematical_sans_serif_italic_small_m);
+			return 1;
 		case 0x1D62F:
 			*normals = mathematical_sans_serif_italic_small_n;
-			return static_count(mathematical_sans_serif_italic_small_n);
+			return 1;
 		case 0x1D630:
 			*normals = mathematical_sans_serif_italic_small_o;
-			return static_count(mathematical_sans_serif_italic_small_o);
+			return 1;
 		case 0x1D631:
 			*normals = mathematical_sans_serif_italic_small_p;
-			return static_count(mathematical_sans_serif_italic_small_p);
+			return 1;
 		case 0x1D632:
 			*normals = mathematical_sans_serif_italic_small_q;
-			return static_count(mathematical_sans_serif_italic_small_q);
+			return 1;
 		case 0x1D633:
 			*normals = mathematical_sans_serif_italic_small_r;
-			return static_count(mathematical_sans_serif_italic_small_r);
+			return 1;
 		case 0x1D634:
 			*normals = mathematical_sans_serif_italic_small_s;
-			return static_count(mathematical_sans_serif_italic_small_s);
+			return 1;
 		case 0x1D635:
 			*normals = mathematical_sans_serif_italic_small_t;
-			return static_count(mathematical_sans_serif_italic_small_t);
+			return 1;
 		case 0x1D636:
 			*normals = mathematical_sans_serif_italic_small_u;
-			return static_count(mathematical_sans_serif_italic_small_u);
+			return 1;
 		case 0x1D637:
 			*normals = mathematical_sans_serif_italic_small_v;
-			return static_count(mathematical_sans_serif_italic_small_v);
+			return 1;
 		case 0x1D638:
 			*normals = mathematical_sans_serif_italic_small_w;
-			return static_count(mathematical_sans_serif_italic_small_w);
+			return 1;
 		case 0x1D639:
 			*normals = mathematical_sans_serif_italic_small_x;
-			return static_count(mathematical_sans_serif_italic_small_x);
+			return 1;
 		case 0x1D63A:
 			*normals = mathematical_sans_serif_italic_small_y;
-			return static_count(mathematical_sans_serif_italic_small_y);
+			return 1;
 		case 0x1D63B:
 			*normals = mathematical_sans_serif_italic_small_z;
-			return static_count(mathematical_sans_serif_italic_small_z);
+			return 1;
 		case 0x1D63C:
 			*normals = mathematical_sans_serif_bold_italic_capital_a;
-			return static_count(mathematical_sans_serif_bold_italic_capital_a);
+			return 1;
 		case 0x1D63D:
 			*normals = mathematical_sans_serif_bold_italic_capital_b;
-			return static_count(mathematical_sans_serif_bold_italic_capital_b);
+			return 1;
 		case 0x1D63E:
 			*normals = mathematical_sans_serif_bold_italic_capital_c;
-			return static_count(mathematical_sans_serif_bold_italic_capital_c);
+			return 1;
 		case 0x1D63F:
 			*normals = mathematical_sans_serif_bold_italic_capital_d;
-			return static_count(mathematical_sans_serif_bold_italic_capital_d);
+			return 1;
 		case 0x1D640:
 			*normals = mathematical_sans_serif_bold_italic_capital_e;
-			return static_count(mathematical_sans_serif_bold_italic_capital_e);
+			return 1;
 		case 0x1D641:
 			*normals = mathematical_sans_serif_bold_italic_capital_f;
-			return static_count(mathematical_sans_serif_bold_italic_capital_f);
+			return 1;
 		case 0x1D642:
 			*normals = mathematical_sans_serif_bold_italic_capital_g;
-			return static_count(mathematical_sans_serif_bold_italic_capital_g);
+			return 1;
 		case 0x1D643:
 			*normals = mathematical_sans_serif_bold_italic_capital_h;
-			return static_count(mathematical_sans_serif_bold_italic_capital_h);
+			return 1;
 		case 0x1D644:
 			*normals = mathematical_sans_serif_bold_italic_capital_i;
-			return static_count(mathematical_sans_serif_bold_italic_capital_i);
+			return 1;
 		case 0x1D645:
 			*normals = mathematical_sans_serif_bold_italic_capital_j;
-			return static_count(mathematical_sans_serif_bold_italic_capital_j);
+			return 1;
 		case 0x1D646:
 			*normals = mathematical_sans_serif_bold_italic_capital_k;
-			return static_count(mathematical_sans_serif_bold_italic_capital_k);
+			return 1;
 		case 0x1D647:
 			*normals = mathematical_sans_serif_bold_italic_capital_l;
-			return static_count(mathematical_sans_serif_bold_italic_capital_l);
+			return 1;
 		case 0x1D648:
 			*normals = mathematical_sans_serif_bold_italic_capital_m;
-			return static_count(mathematical_sans_serif_bold_italic_capital_m);
+			return 1;
 		case 0x1D649:
 			*normals = mathematical_sans_serif_bold_italic_capital_n;
-			return static_count(mathematical_sans_serif_bold_italic_capital_n);
+			return 1;
 		case 0x1D64A:
 			*normals = mathematical_sans_serif_bold_italic_capital_o;
-			return static_count(mathematical_sans_serif_bold_italic_capital_o);
+			return 1;
 		case 0x1D64B:
 			*normals = mathematical_sans_serif_bold_italic_capital_p;
-			return static_count(mathematical_sans_serif_bold_italic_capital_p);
+			return 1;
 		case 0x1D64C:
 			*normals = mathematical_sans_serif_bold_italic_capital_q;
-			return static_count(mathematical_sans_serif_bold_italic_capital_q);
+			return 1;
 		case 0x1D64D:
 			*normals = mathematical_sans_serif_bold_italic_capital_r;
-			return static_count(mathematical_sans_serif_bold_italic_capital_r);
+			return 1;
 		case 0x1D64E:
 			*normals = mathematical_sans_serif_bold_italic_capital_s;
-			return static_count(mathematical_sans_serif_bold_italic_capital_s);
+			return 1;
 		case 0x1D64F:
 			*normals = mathematical_sans_serif_bold_italic_capital_t;
-			return static_count(mathematical_sans_serif_bold_italic_capital_t);
+			return 1;
 		case 0x1D650:
 			*normals = mathematical_sans_serif_bold_italic_capital_u;
-			return static_count(mathematical_sans_serif_bold_italic_capital_u);
+			return 1;
 		case 0x1D651:
 			*normals = mathematical_sans_serif_bold_italic_capital_v;
-			return static_count(mathematical_sans_serif_bold_italic_capital_v);
+			return 1;
 		case 0x1D652:
 			*normals = mathematical_sans_serif_bold_italic_capital_w;
-			return static_count(mathematical_sans_serif_bold_italic_capital_w);
+			return 1;
 		case 0x1D653:
 			*normals = mathematical_sans_serif_bold_italic_capital_x;
-			return static_count(mathematical_sans_serif_bold_italic_capital_x);
+			return 1;
 		case 0x1D654:
 			*normals = mathematical_sans_serif_bold_italic_capital_y;
-			return static_count(mathematical_sans_serif_bold_italic_capital_y);
+			return 1;
 		case 0x1D655:
 			*normals = mathematical_sans_serif_bold_italic_capital_z;
-			return static_count(mathematical_sans_serif_bold_italic_capital_z);
+			return 1;
 		case 0x1D656:
 			*normals = mathematical_sans_serif_bold_italic_small_a;
-			return static_count(mathematical_sans_serif_bold_italic_small_a);
+			return 1;
 		case 0x1D657:
 			*normals = mathematical_sans_serif_bold_italic_small_b;
-			return static_count(mathematical_sans_serif_bold_italic_small_b);
+			return 1;
 		case 0x1D658:
 			*normals = mathematical_sans_serif_bold_italic_small_c;
-			return static_count(mathematical_sans_serif_bold_italic_small_c);
+			return 1;
 		case 0x1D659:
 			*normals = mathematical_sans_serif_bold_italic_small_d;
-			return static_count(mathematical_sans_serif_bold_italic_small_d);
+			return 1;
 		case 0x1D65A:
 			*normals = mathematical_sans_serif_bold_italic_small_e;
-			return static_count(mathematical_sans_serif_bold_italic_small_e);
+			return 1;
 		case 0x1D65B:
 			*normals = mathematical_sans_serif_bold_italic_small_f;
-			return static_count(mathematical_sans_serif_bold_italic_small_f);
+			return 1;
 		case 0x1D65C:
 			*normals = mathematical_sans_serif_bold_italic_small_g;
-			return static_count(mathematical_sans_serif_bold_italic_small_g);
+			return 1;
 		case 0x1D65D:
 			*normals = mathematical_sans_serif_bold_italic_small_h;
-			return static_count(mathematical_sans_serif_bold_italic_small_h);
+			return 1;
 		case 0x1D65E:
 			*normals = mathematical_sans_serif_bold_italic_small_i;
-			return static_count(mathematical_sans_serif_bold_italic_small_i);
+			return 1;
 		case 0x1D65F:
 			*normals = mathematical_sans_serif_bold_italic_small_j;
-			return static_count(mathematical_sans_serif_bold_italic_small_j);
+			return 1;
 		case 0x1D660:
 			*normals = mathematical_sans_serif_bold_italic_small_k;
-			return static_count(mathematical_sans_serif_bold_italic_small_k);
+			return 1;
 		case 0x1D661:
 			*normals = mathematical_sans_serif_bold_italic_small_l;
-			return static_count(mathematical_sans_serif_bold_italic_small_l);
+			return 1;
 		case 0x1D662:
 			*normals = mathematical_sans_serif_bold_italic_small_m;
-			return static_count(mathematical_sans_serif_bold_italic_small_m);
+			return 1;
 		case 0x1D663:
 			*normals = mathematical_sans_serif_bold_italic_small_n;
-			return static_count(mathematical_sans_serif_bold_italic_small_n);
+			return 1;
 		case 0x1D664:
 			*normals = mathematical_sans_serif_bold_italic_small_o;
-			return static_count(mathematical_sans_serif_bold_italic_small_o);
+			return 1;
 		case 0x1D665:
 			*normals = mathematical_sans_serif_bold_italic_small_p;
-			return static_count(mathematical_sans_serif_bold_italic_small_p);
+			return 1;
 		case 0x1D666:
 			*normals = mathematical_sans_serif_bold_italic_small_q;
-			return static_count(mathematical_sans_serif_bold_italic_small_q);
+			return 1;
 		case 0x1D667:
 			*normals = mathematical_sans_serif_bold_italic_small_r;
-			return static_count(mathematical_sans_serif_bold_italic_small_r);
+			return 1;
 		case 0x1D668:
 			*normals = mathematical_sans_serif_bold_italic_small_s;
-			return static_count(mathematical_sans_serif_bold_italic_small_s);
+			return 1;
 		case 0x1D669:
 			*normals = mathematical_sans_serif_bold_italic_small_t;
-			return static_count(mathematical_sans_serif_bold_italic_small_t);
+			return 1;
 		case 0x1D66A:
 			*normals = mathematical_sans_serif_bold_italic_small_u;
-			return static_count(mathematical_sans_serif_bold_italic_small_u);
+			return 1;
 		case 0x1D66B:
 			*normals = mathematical_sans_serif_bold_italic_small_v;
-			return static_count(mathematical_sans_serif_bold_italic_small_v);
+			return 1;
 		case 0x1D66C:
 			*normals = mathematical_sans_serif_bold_italic_small_w;
-			return static_count(mathematical_sans_serif_bold_italic_small_w);
+			return 1;
 		case 0x1D66D:
 			*normals = mathematical_sans_serif_bold_italic_small_x;
-			return static_count(mathematical_sans_serif_bold_italic_small_x);
+			return 1;
 		case 0x1D66E:
 			*normals = mathematical_sans_serif_bold_italic_small_y;
-			return static_count(mathematical_sans_serif_bold_italic_small_y);
+			return 1;
 		case 0x1D66F:
 			*normals = mathematical_sans_serif_bold_italic_small_z;
-			return static_count(mathematical_sans_serif_bold_italic_small_z);
+			return 1;
 		case 0x1D670:
 			*normals = mathematical_monospace_capital_a;
-			return static_count(mathematical_monospace_capital_a);
+			return 1;
 		case 0x1D671:
 			*normals = mathematical_monospace_capital_b;
-			return static_count(mathematical_monospace_capital_b);
+			return 1;
 		case 0x1D672:
 			*normals = mathematical_monospace_capital_c;
-			return static_count(mathematical_monospace_capital_c);
+			return 1;
 		case 0x1D673:
 			*normals = mathematical_monospace_capital_d;
-			return static_count(mathematical_monospace_capital_d);
+			return 1;
 		case 0x1D674:
 			*normals = mathematical_monospace_capital_e;
-			return static_count(mathematical_monospace_capital_e);
+			return 1;
 		case 0x1D675:
 			*normals = mathematical_monospace_capital_f;
-			return static_count(mathematical_monospace_capital_f);
+			return 1;
 		case 0x1D676:
 			*normals = mathematical_monospace_capital_g;
-			return static_count(mathematical_monospace_capital_g);
+			return 1;
 		case 0x1D677:
 			*normals = mathematical_monospace_capital_h;
-			return static_count(mathematical_monospace_capital_h);
+			return 1;
 		case 0x1D678:
 			*normals = mathematical_monospace_capital_i;
-			return static_count(mathematical_monospace_capital_i);
+			return 1;
 		case 0x1D679:
 			*normals = mathematical_monospace_capital_j;
-			return static_count(mathematical_monospace_capital_j);
+			return 1;
 		case 0x1D67A:
 			*normals = mathematical_monospace_capital_k;
-			return static_count(mathematical_monospace_capital_k);
+			return 1;
 		case 0x1D67B:
 			*normals = mathematical_monospace_capital_l;
-			return static_count(mathematical_monospace_capital_l);
+			return 1;
 		case 0x1D67C:
 			*normals = mathematical_monospace_capital_m;
-			return static_count(mathematical_monospace_capital_m);
+			return 1;
 		case 0x1D67D:
 			*normals = mathematical_monospace_capital_n;
-			return static_count(mathematical_monospace_capital_n);
+			return 1;
 		case 0x1D67E:
 			*normals = mathematical_monospace_capital_o;
-			return static_count(mathematical_monospace_capital_o);
+			return 1;
 		case 0x1D67F:
 			*normals = mathematical_monospace_capital_p;
-			return static_count(mathematical_monospace_capital_p);
+			return 1;
 		case 0x1D680:
 			*normals = mathematical_monospace_capital_q;
-			return static_count(mathematical_monospace_capital_q);
+			return 1;
 		case 0x1D681:
 			*normals = mathematical_monospace_capital_r;
-			return static_count(mathematical_monospace_capital_r);
+			return 1;
 		case 0x1D682:
 			*normals = mathematical_monospace_capital_s;
-			return static_count(mathematical_monospace_capital_s);
+			return 1;
 		case 0x1D683:
 			*normals = mathematical_monospace_capital_t;
-			return static_count(mathematical_monospace_capital_t);
+			return 1;
 		case 0x1D684:
 			*normals = mathematical_monospace_capital_u;
-			return static_count(mathematical_monospace_capital_u);
+			return 1;
 		case 0x1D685:
 			*normals = mathematical_monospace_capital_v;
-			return static_count(mathematical_monospace_capital_v);
+			return 1;
 		case 0x1D686:
 			*normals = mathematical_monospace_capital_w;
-			return static_count(mathematical_monospace_capital_w);
+			return 1;
 		case 0x1D687:
 			*normals = mathematical_monospace_capital_x;
-			return static_count(mathematical_monospace_capital_x);
+			return 1;
 		case 0x1D688:
 			*normals = mathematical_monospace_capital_y;
-			return static_count(mathematical_monospace_capital_y);
+			return 1;
 		case 0x1D689:
 			*normals = mathematical_monospace_capital_z;
-			return static_count(mathematical_monospace_capital_z);
+			return 1;
 		case 0x1D68A:
 			*normals = mathematical_monospace_small_a;
-			return static_count(mathematical_monospace_small_a);
+			return 1;
 		case 0x1D68B:
 			*normals = mathematical_monospace_small_b;
-			return static_count(mathematical_monospace_small_b);
+			return 1;
 		case 0x1D68C:
 			*normals = mathematical_monospace_small_c;
-			return static_count(mathematical_monospace_small_c);
+			return 1;
 		case 0x1D68D:
 			*normals = mathematical_monospace_small_d;
-			return static_count(mathematical_monospace_small_d);
+			return 1;
 		case 0x1D68E:
 			*normals = mathematical_monospace_small_e;
-			return static_count(mathematical_monospace_small_e);
+			return 1;
 		case 0x1D68F:
 			*normals = mathematical_monospace_small_f;
-			return static_count(mathematical_monospace_small_f);
+			return 1;
 		case 0x1D690:
 			*normals = mathematical_monospace_small_g;
-			return static_count(mathematical_monospace_small_g);
+			return 1;
 		case 0x1D691:
 			*normals = mathematical_monospace_small_h;
-			return static_count(mathematical_monospace_small_h);
+			return 1;
 		case 0x1D692:
 			*normals = mathematical_monospace_small_i;
-			return static_count(mathematical_monospace_small_i);
+			return 1;
 		case 0x1D693:
 			*normals = mathematical_monospace_small_j;
-			return static_count(mathematical_monospace_small_j);
+			return 1;
 		case 0x1D694:
 			*normals = mathematical_monospace_small_k;
-			return static_count(mathematical_monospace_small_k);
+			return 1;
 		case 0x1D695:
 			*normals = mathematical_monospace_small_l;
-			return static_count(mathematical_monospace_small_l);
+			return 1;
 		case 0x1D696:
 			*normals = mathematical_monospace_small_m;
-			return static_count(mathematical_monospace_small_m);
+			return 1;
 		case 0x1D697:
 			*normals = mathematical_monospace_small_n;
-			return static_count(mathematical_monospace_small_n);
+			return 1;
 		case 0x1D698:
 			*normals = mathematical_monospace_small_o;
-			return static_count(mathematical_monospace_small_o);
+			return 1;
 		case 0x1D699:
 			*normals = mathematical_monospace_small_p;
-			return static_count(mathematical_monospace_small_p);
+			return 1;
 		case 0x1D69A:
 			*normals = mathematical_monospace_small_q;
-			return static_count(mathematical_monospace_small_q);
+			return 1;
 		case 0x1D69B:
 			*normals = mathematical_monospace_small_r;
-			return static_count(mathematical_monospace_small_r);
+			return 1;
 		case 0x1D69C:
 			*normals = mathematical_monospace_small_s;
-			return static_count(mathematical_monospace_small_s);
+			return 1;
 		case 0x1D69D:
 			*normals = mathematical_monospace_small_t;
-			return static_count(mathematical_monospace_small_t);
+			return 1;
 		case 0x1D69E:
 			*normals = mathematical_monospace_small_u;
-			return static_count(mathematical_monospace_small_u);
+			return 1;
 		case 0x1D69F:
 			*normals = mathematical_monospace_small_v;
-			return static_count(mathematical_monospace_small_v);
+			return 1;
 		case 0x1D6A0:
 			*normals = mathematical_monospace_small_w;
-			return static_count(mathematical_monospace_small_w);
+			return 1;
 		case 0x1D6A1:
 			*normals = mathematical_monospace_small_x;
-			return static_count(mathematical_monospace_small_x);
+			return 1;
 		case 0x1D6A2:
 			*normals = mathematical_monospace_small_y;
-			return static_count(mathematical_monospace_small_y);
+			return 1;
 		case 0x1D6A3:
 			*normals = mathematical_monospace_small_z;
-			return static_count(mathematical_monospace_small_z);
+			return 1;
 		case 0x1D6A4:
 			*normals = mathematical_italic_small_dotless_i;
-			return static_count(mathematical_italic_small_dotless_i);
+			return 1;
 		case 0x1D6A5:
 			*normals = mathematical_italic_small_dotless_j;
-			return static_count(mathematical_italic_small_dotless_j);
+			return 1;
 		case 0x1D6A8:
 			*normals = mathematical_bold_capital_alpha;
-			return static_count(mathematical_bold_capital_alpha);
+			return 1;
 		case 0x1D6A9:
 			*normals = mathematical_bold_capital_beta;
-			return static_count(mathematical_bold_capital_beta);
+			return 1;
 		case 0x1D6AA:
 			*normals = mathematical_bold_capital_gamma;
-			return static_count(mathematical_bold_capital_gamma);
+			return 1;
 		case 0x1D6AB:
 			*normals = mathematical_bold_capital_delta;
-			return static_count(mathematical_bold_capital_delta);
+			return 1;
 		case 0x1D6AC:
 			*normals = mathematical_bold_capital_epsilon;
-			return static_count(mathematical_bold_capital_epsilon);
+			return 1;
 		case 0x1D6AD:
 			*normals = mathematical_bold_capital_zeta;
-			return static_count(mathematical_bold_capital_zeta);
+			return 1;
 		case 0x1D6AE:
 			*normals = mathematical_bold_capital_eta;
-			return static_count(mathematical_bold_capital_eta);
+			return 1;
 		case 0x1D6AF:
 			*normals = mathematical_bold_capital_theta;
-			return static_count(mathematical_bold_capital_theta);
+			return 1;
 		case 0x1D6B0:
 			*normals = mathematical_bold_capital_iota;
-			return static_count(mathematical_bold_capital_iota);
+			return 1;
 		case 0x1D6B1:
 			*normals = mathematical_bold_capital_kappa;
-			return static_count(mathematical_bold_capital_kappa);
+			return 1;
 		case 0x1D6B2:
 			*normals = mathematical_bold_capital_lamda;
-			return static_count(mathematical_bold_capital_lamda);
+			return 1;
 		case 0x1D6B3:
 			*normals = mathematical_bold_capital_mu;
-			return static_count(mathematical_bold_capital_mu);
+			return 1;
 		case 0x1D6B4:
 			*normals = mathematical_bold_capital_nu;
-			return static_count(mathematical_bold_capital_nu);
+			return 1;
 		case 0x1D6B5:
 			*normals = mathematical_bold_capital_xi;
-			return static_count(mathematical_bold_capital_xi);
+			return 1;
 		case 0x1D6B6:
 			*normals = mathematical_bold_capital_omicron;
-			return static_count(mathematical_bold_capital_omicron);
+			return 1;
 		case 0x1D6B7:
 			*normals = mathematical_bold_capital_pi;
-			return static_count(mathematical_bold_capital_pi);
+			return 1;
 		case 0x1D6B8:
 			*normals = mathematical_bold_capital_rho;
-			return static_count(mathematical_bold_capital_rho);
+			return 1;
 		case 0x1D6B9:
 			*normals = mathematical_bold_capital_theta_symbol;
-			return static_count(mathematical_bold_capital_theta_symbol);
+			return 1;
 		case 0x1D6BA:
 			*normals = mathematical_bold_capital_sigma;
-			return static_count(mathematical_bold_capital_sigma);
+			return 1;
 		case 0x1D6BB:
 			*normals = mathematical_bold_capital_tau;
-			return static_count(mathematical_bold_capital_tau);
+			return 1;
 		case 0x1D6BC:
 			*normals = mathematical_bold_capital_upsilon;
-			return static_count(mathematical_bold_capital_upsilon);
+			return 1;
 		case 0x1D6BD:
 			*normals = mathematical_bold_capital_phi;
-			return static_count(mathematical_bold_capital_phi);
+			return 1;
 		case 0x1D6BE:
 			*normals = mathematical_bold_capital_chi;
-			return static_count(mathematical_bold_capital_chi);
+			return 1;
 		case 0x1D6BF:
 			*normals = mathematical_bold_capital_psi;
-			return static_count(mathematical_bold_capital_psi);
+			return 1;
 		case 0x1D6C0:
 			*normals = mathematical_bold_capital_omega;
-			return static_count(mathematical_bold_capital_omega);
+			return 1;
 		case 0x1D6C1:
 			*normals = mathematical_bold_nabla;
-			return static_count(mathematical_bold_nabla);
+			return 1;
 		case 0x1D6C2:
 			*normals = mathematical_bold_small_alpha;
-			return static_count(mathematical_bold_small_alpha);
+			return 1;
 		case 0x1D6C3:
 			*normals = mathematical_bold_small_beta;
-			return static_count(mathematical_bold_small_beta);
+			return 1;
 		case 0x1D6C4:
 			*normals = mathematical_bold_small_gamma;
-			return static_count(mathematical_bold_small_gamma);
+			return 1;
 		case 0x1D6C5:
 			*normals = mathematical_bold_small_delta;
-			return static_count(mathematical_bold_small_delta);
+			return 1;
 		case 0x1D6C6:
 			*normals = mathematical_bold_small_epsilon;
-			return static_count(mathematical_bold_small_epsilon);
+			return 1;
 		case 0x1D6C7:
 			*normals = mathematical_bold_small_zeta;
-			return static_count(mathematical_bold_small_zeta);
+			return 1;
 		case 0x1D6C8:
 			*normals = mathematical_bold_small_eta;
-			return static_count(mathematical_bold_small_eta);
+			return 1;
 		case 0x1D6C9:
 			*normals = mathematical_bold_small_theta;
-			return static_count(mathematical_bold_small_theta);
+			return 1;
 		case 0x1D6CA:
 			*normals = mathematical_bold_small_iota;
-			return static_count(mathematical_bold_small_iota);
+			return 1;
 		case 0x1D6CB:
 			*normals = mathematical_bold_small_kappa;
-			return static_count(mathematical_bold_small_kappa);
+			return 1;
 		case 0x1D6CC:
 			*normals = mathematical_bold_small_lamda;
-			return static_count(mathematical_bold_small_lamda);
+			return 1;
 		case 0x1D6CD:
 			*normals = mathematical_bold_small_mu;
-			return static_count(mathematical_bold_small_mu);
+			return 1;
 		case 0x1D6CE:
 			*normals = mathematical_bold_small_nu;
-			return static_count(mathematical_bold_small_nu);
+			return 1;
 		case 0x1D6CF:
 			*normals = mathematical_bold_small_xi;
-			return static_count(mathematical_bold_small_xi);
+			return 1;
 		case 0x1D6D0:
 			*normals = mathematical_bold_small_omicron;
-			return static_count(mathematical_bold_small_omicron);
+			return 1;
 		case 0x1D6D1:
 			*normals = mathematical_bold_small_pi;
-			return static_count(mathematical_bold_small_pi);
+			return 1;
 		case 0x1D6D2:
 			*normals = mathematical_bold_small_rho;
-			return static_count(mathematical_bold_small_rho);
+			return 1;
 		case 0x1D6D3:
 			*normals = mathematical_bold_small_final_sigma;
-			return static_count(mathematical_bold_small_final_sigma);
+			return 1;
 		case 0x1D6D4:
 			*normals = mathematical_bold_small_sigma;
-			return static_count(mathematical_bold_small_sigma);
+			return 1;
 		case 0x1D6D5:
 			*normals = mathematical_bold_small_tau;
-			return static_count(mathematical_bold_small_tau);
+			return 1;
 		case 0x1D6D6:
 			*normals = mathematical_bold_small_upsilon;
-			return static_count(mathematical_bold_small_upsilon);
+			return 1;
 		case 0x1D6D7:
 			*normals = mathematical_bold_small_phi;
-			return static_count(mathematical_bold_small_phi);
+			return 1;
 		case 0x1D6D8:
 			*normals = mathematical_bold_small_chi;
-			return static_count(mathematical_bold_small_chi);
+			return 1;
 		case 0x1D6D9:
 			*normals = mathematical_bold_small_psi;
-			return static_count(mathematical_bold_small_psi);
+			return 1;
 		case 0x1D6DA:
 			*normals = mathematical_bold_small_omega;
-			return static_count(mathematical_bold_small_omega);
+			return 1;
 		case 0x1D6DB:
 			*normals = mathematical_bold_partial_differential;
-			return static_count(mathematical_bold_partial_differential);
+			return 1;
 		case 0x1D6DC:
 			*normals = mathematical_bold_epsilon_symbol;
-			return static_count(mathematical_bold_epsilon_symbol);
+			return 1;
 		case 0x1D6DD:
 			*normals = mathematical_bold_theta_symbol;
-			return static_count(mathematical_bold_theta_symbol);
+			return 1;
 		case 0x1D6DE:
 			*normals = mathematical_bold_kappa_symbol;
-			return static_count(mathematical_bold_kappa_symbol);
+			return 1;
 		case 0x1D6DF:
 			*normals = mathematical_bold_phi_symbol;
-			return static_count(mathematical_bold_phi_symbol);
+			return 1;
 		case 0x1D6E0:
 			*normals = mathematical_bold_rho_symbol;
-			return static_count(mathematical_bold_rho_symbol);
+			return 1;
 		case 0x1D6E1:
 			*normals = mathematical_bold_pi_symbol;
-			return static_count(mathematical_bold_pi_symbol);
+			return 1;
 		case 0x1D6E2:
 			*normals = mathematical_italic_capital_alpha;
-			return static_count(mathematical_italic_capital_alpha);
+			return 1;
 		case 0x1D6E3:
 			*normals = mathematical_italic_capital_beta;
-			return static_count(mathematical_italic_capital_beta);
+			return 1;
 		case 0x1D6E4:
 			*normals = mathematical_italic_capital_gamma;
-			return static_count(mathematical_italic_capital_gamma);
+			return 1;
 		case 0x1D6E5:
 			*normals = mathematical_italic_capital_delta;
-			return static_count(mathematical_italic_capital_delta);
+			return 1;
 		case 0x1D6E6:
 			*normals = mathematical_italic_capital_epsilon;
-			return static_count(mathematical_italic_capital_epsilon);
+			return 1;
 		case 0x1D6E7:
 			*normals = mathematical_italic_capital_zeta;
-			return static_count(mathematical_italic_capital_zeta);
+			return 1;
 		case 0x1D6E8:
 			*normals = mathematical_italic_capital_eta;
-			return static_count(mathematical_italic_capital_eta);
+			return 1;
 		case 0x1D6E9:
 			*normals = mathematical_italic_capital_theta;
-			return static_count(mathematical_italic_capital_theta);
+			return 1;
 		case 0x1D6EA:
 			*normals = mathematical_italic_capital_iota;
-			return static_count(mathematical_italic_capital_iota);
+			return 1;
 		case 0x1D6EB:
 			*normals = mathematical_italic_capital_kappa;
-			return static_count(mathematical_italic_capital_kappa);
+			return 1;
 		case 0x1D6EC:
 			*normals = mathematical_italic_capital_lamda;
-			return static_count(mathematical_italic_capital_lamda);
+			return 1;
 		case 0x1D6ED:
 			*normals = mathematical_italic_capital_mu;
-			return static_count(mathematical_italic_capital_mu);
+			return 1;
 		case 0x1D6EE:
 			*normals = mathematical_italic_capital_nu;
-			return static_count(mathematical_italic_capital_nu);
+			return 1;
 		case 0x1D6EF:
 			*normals = mathematical_italic_capital_xi;
-			return static_count(mathematical_italic_capital_xi);
+			return 1;
 		case 0x1D6F0:
 			*normals = mathematical_italic_capital_omicron;
-			return static_count(mathematical_italic_capital_omicron);
+			return 1;
 		case 0x1D6F1:
 			*normals = mathematical_italic_capital_pi;
-			return static_count(mathematical_italic_capital_pi);
+			return 1;
 		case 0x1D6F2:
 			*normals = mathematical_italic_capital_rho;
-			return static_count(mathematical_italic_capital_rho);
+			return 1;
 		case 0x1D6F3:
 			*normals = mathematical_italic_capital_theta_symbol;
-			return static_count(mathematical_italic_capital_theta_symbol);
+			return 1;
 		case 0x1D6F4:
 			*normals = mathematical_italic_capital_sigma;
-			return static_count(mathematical_italic_capital_sigma);
+			return 1;
 		case 0x1D6F5:
 			*normals = mathematical_italic_capital_tau;
-			return static_count(mathematical_italic_capital_tau);
+			return 1;
 		case 0x1D6F6:
 			*normals = mathematical_italic_capital_upsilon;
-			return static_count(mathematical_italic_capital_upsilon);
+			return 1;
 		case 0x1D6F7:
 			*normals = mathematical_italic_capital_phi;
-			return static_count(mathematical_italic_capital_phi);
+			return 1;
 		case 0x1D6F8:
 			*normals = mathematical_italic_capital_chi;
-			return static_count(mathematical_italic_capital_chi);
+			return 1;
 		case 0x1D6F9:
 			*normals = mathematical_italic_capital_psi;
-			return static_count(mathematical_italic_capital_psi);
+			return 1;
 		case 0x1D6FA:
 			*normals = mathematical_italic_capital_omega;
-			return static_count(mathematical_italic_capital_omega);
+			return 1;
 		case 0x1D6FB:
 			*normals = mathematical_italic_nabla;
-			return static_count(mathematical_italic_nabla);
+			return 1;
 		case 0x1D6FC:
 			*normals = mathematical_italic_small_alpha;
-			return static_count(mathematical_italic_small_alpha);
+			return 1;
 		case 0x1D6FD:
 			*normals = mathematical_italic_small_beta;
-			return static_count(mathematical_italic_small_beta);
+			return 1;
 		case 0x1D6FE:
 			*normals = mathematical_italic_small_gamma;
-			return static_count(mathematical_italic_small_gamma);
+			return 1;
 		case 0x1D6FF:
 			*normals = mathematical_italic_small_delta;
-			return static_count(mathematical_italic_small_delta);
+			return 1;
 		case 0x1D700:
 			*normals = mathematical_italic_small_epsilon;
-			return static_count(mathematical_italic_small_epsilon);
+			return 1;
 		case 0x1D701:
 			*normals = mathematical_italic_small_zeta;
-			return static_count(mathematical_italic_small_zeta);
+			return 1;
 		case 0x1D702:
 			*normals = mathematical_italic_small_eta;
-			return static_count(mathematical_italic_small_eta);
+			return 1;
 		case 0x1D703:
 			*normals = mathematical_italic_small_theta;
-			return static_count(mathematical_italic_small_theta);
+			return 1;
 		case 0x1D704:
 			*normals = mathematical_italic_small_iota;
-			return static_count(mathematical_italic_small_iota);
+			return 1;
 		case 0x1D705:
 			*normals = mathematical_italic_small_kappa;
-			return static_count(mathematical_italic_small_kappa);
+			return 1;
 		case 0x1D706:
 			*normals = mathematical_italic_small_lamda;
-			return static_count(mathematical_italic_small_lamda);
+			return 1;
 		case 0x1D707:
 			*normals = mathematical_italic_small_mu;
-			return static_count(mathematical_italic_small_mu);
+			return 1;
 		case 0x1D708:
 			*normals = mathematical_italic_small_nu;
-			return static_count(mathematical_italic_small_nu);
+			return 1;
 		case 0x1D709:
 			*normals = mathematical_italic_small_xi;
-			return static_count(mathematical_italic_small_xi);
+			return 1;
 		case 0x1D70A:
 			*normals = mathematical_italic_small_omicron;
-			return static_count(mathematical_italic_small_omicron);
+			return 1;
 		case 0x1D70B:
 			*normals = mathematical_italic_small_pi;
-			return static_count(mathematical_italic_small_pi);
+			return 1;
 		case 0x1D70C:
 			*normals = mathematical_italic_small_rho;
-			return static_count(mathematical_italic_small_rho);
+			return 1;
 		case 0x1D70D:
 			*normals = mathematical_italic_small_final_sigma;
-			return static_count(mathematical_italic_small_final_sigma);
+			return 1;
 		case 0x1D70E:
 			*normals = mathematical_italic_small_sigma;
-			return static_count(mathematical_italic_small_sigma);
+			return 1;
 		case 0x1D70F:
 			*normals = mathematical_italic_small_tau;
-			return static_count(mathematical_italic_small_tau);
+			return 1;
 		case 0x1D710:
 			*normals = mathematical_italic_small_upsilon;
-			return static_count(mathematical_italic_small_upsilon);
+			return 1;
 		case 0x1D711:
 			*normals = mathematical_italic_small_phi;
-			return static_count(mathematical_italic_small_phi);
+			return 1;
 		case 0x1D712:
 			*normals = mathematical_italic_small_chi;
-			return static_count(mathematical_italic_small_chi);
+			return 1;
 		case 0x1D713:
 			*normals = mathematical_italic_small_psi;
-			return static_count(mathematical_italic_small_psi);
+			return 1;
 		case 0x1D714:
 			*normals = mathematical_italic_small_omega;
-			return static_count(mathematical_italic_small_omega);
+			return 1;
 		case 0x1D715:
 			*normals = mathematical_italic_partial_differential;
-			return static_count(mathematical_italic_partial_differential);
+			return 1;
 		case 0x1D716:
 			*normals = mathematical_italic_epsilon_symbol;
-			return static_count(mathematical_italic_epsilon_symbol);
+			return 1;
 		case 0x1D717:
 			*normals = mathematical_italic_theta_symbol;
-			return static_count(mathematical_italic_theta_symbol);
+			return 1;
 		case 0x1D718:
 			*normals = mathematical_italic_kappa_symbol;
-			return static_count(mathematical_italic_kappa_symbol);
+			return 1;
 		case 0x1D719:
 			*normals = mathematical_italic_phi_symbol;
-			return static_count(mathematical_italic_phi_symbol);
+			return 1;
 		case 0x1D71A:
 			*normals = mathematical_italic_rho_symbol;
-			return static_count(mathematical_italic_rho_symbol);
+			return 1;
 		case 0x1D71B:
 			*normals = mathematical_italic_pi_symbol;
-			return static_count(mathematical_italic_pi_symbol);
+			return 1;
 		case 0x1D71C:
 			*normals = mathematical_bold_italic_capital_alpha;
-			return static_count(mathematical_bold_italic_capital_alpha);
+			return 1;
 		case 0x1D71D:
 			*normals = mathematical_bold_italic_capital_beta;
-			return static_count(mathematical_bold_italic_capital_beta);
+			return 1;
 		case 0x1D71E:
 			*normals = mathematical_bold_italic_capital_gamma;
-			return static_count(mathematical_bold_italic_capital_gamma);
+			return 1;
 		case 0x1D71F:
 			*normals = mathematical_bold_italic_capital_delta;
-			return static_count(mathematical_bold_italic_capital_delta);
+			return 1;
 		case 0x1D720:
 			*normals = mathematical_bold_italic_capital_epsilon;
-			return static_count(mathematical_bold_italic_capital_epsilon);
+			return 1;
 		case 0x1D721:
 			*normals = mathematical_bold_italic_capital_zeta;
-			return static_count(mathematical_bold_italic_capital_zeta);
+			return 1;
 		case 0x1D722:
 			*normals = mathematical_bold_italic_capital_eta;
-			return static_count(mathematical_bold_italic_capital_eta);
+			return 1;
 		case 0x1D723:
 			*normals = mathematical_bold_italic_capital_theta;
-			return static_count(mathematical_bold_italic_capital_theta);
+			return 1;
 		case 0x1D724:
 			*normals = mathematical_bold_italic_capital_iota;
-			return static_count(mathematical_bold_italic_capital_iota);
+			return 1;
 		case 0x1D725:
 			*normals = mathematical_bold_italic_capital_kappa;
-			return static_count(mathematical_bold_italic_capital_kappa);
+			return 1;
 		case 0x1D726:
 			*normals = mathematical_bold_italic_capital_lamda;
-			return static_count(mathematical_bold_italic_capital_lamda);
+			return 1;
 		case 0x1D727:
 			*normals = mathematical_bold_italic_capital_mu;
-			return static_count(mathematical_bold_italic_capital_mu);
+			return 1;
 		case 0x1D728:
 			*normals = mathematical_bold_italic_capital_nu;
-			return static_count(mathematical_bold_italic_capital_nu);
+			return 1;
 		case 0x1D729:
 			*normals = mathematical_bold_italic_capital_xi;
-			return static_count(mathematical_bold_italic_capital_xi);
+			return 1;
 		case 0x1D72A:
 			*normals = mathematical_bold_italic_capital_omicron;
-			return static_count(mathematical_bold_italic_capital_omicron);
+			return 1;
 		case 0x1D72B:
 			*normals = mathematical_bold_italic_capital_pi;
-			return static_count(mathematical_bold_italic_capital_pi);
+			return 1;
 		case 0x1D72C:
 			*normals = mathematical_bold_italic_capital_rho;
-			return static_count(mathematical_bold_italic_capital_rho);
+			return 1;
 		case 0x1D72D:
 			*normals = mathematical_bold_italic_capital_theta_symbol;
-			return static_count(mathematical_bold_italic_capital_theta_symbol);
+			return 1;
 		case 0x1D72E:
 			*normals = mathematical_bold_italic_capital_sigma;
-			return static_count(mathematical_bold_italic_capital_sigma);
+			return 1;
 		case 0x1D72F:
 			*normals = mathematical_bold_italic_capital_tau;
-			return static_count(mathematical_bold_italic_capital_tau);
+			return 1;
 		case 0x1D730:
 			*normals = mathematical_bold_italic_capital_upsilon;
-			return static_count(mathematical_bold_italic_capital_upsilon);
+			return 1;
 		case 0x1D731:
 			*normals = mathematical_bold_italic_capital_phi;
-			return static_count(mathematical_bold_italic_capital_phi);
+			return 1;
 		case 0x1D732:
 			*normals = mathematical_bold_italic_capital_chi;
-			return static_count(mathematical_bold_italic_capital_chi);
+			return 1;
 		case 0x1D733:
 			*normals = mathematical_bold_italic_capital_psi;
-			return static_count(mathematical_bold_italic_capital_psi);
+			return 1;
 		case 0x1D734:
 			*normals = mathematical_bold_italic_capital_omega;
-			return static_count(mathematical_bold_italic_capital_omega);
+			return 1;
 		case 0x1D735:
 			*normals = mathematical_bold_italic_nabla;
-			return static_count(mathematical_bold_italic_nabla);
+			return 1;
 		case 0x1D736:
 			*normals = mathematical_bold_italic_small_alpha;
-			return static_count(mathematical_bold_italic_small_alpha);
+			return 1;
 		case 0x1D737:
 			*normals = mathematical_bold_italic_small_beta;
-			return static_count(mathematical_bold_italic_small_beta);
+			return 1;
 		case 0x1D738:
 			*normals = mathematical_bold_italic_small_gamma;
-			return static_count(mathematical_bold_italic_small_gamma);
+			return 1;
 		case 0x1D739:
 			*normals = mathematical_bold_italic_small_delta;
-			return static_count(mathematical_bold_italic_small_delta);
+			return 1;
 		case 0x1D73A:
 			*normals = mathematical_bold_italic_small_epsilon;
-			return static_count(mathematical_bold_italic_small_epsilon);
+			return 1;
 		case 0x1D73B:
 			*normals = mathematical_bold_italic_small_zeta;
-			return static_count(mathematical_bold_italic_small_zeta);
+			return 1;
 		case 0x1D73C:
 			*normals = mathematical_bold_italic_small_eta;
-			return static_count(mathematical_bold_italic_small_eta);
+			return 1;
 		case 0x1D73D:
 			*normals = mathematical_bold_italic_small_theta;
-			return static_count(mathematical_bold_italic_small_theta);
+			return 1;
 		case 0x1D73E:
 			*normals = mathematical_bold_italic_small_iota;
-			return static_count(mathematical_bold_italic_small_iota);
+			return 1;
 		case 0x1D73F:
 			*normals = mathematical_bold_italic_small_kappa;
-			return static_count(mathematical_bold_italic_small_kappa);
+			return 1;
 		case 0x1D740:
 			*normals = mathematical_bold_italic_small_lamda;
-			return static_count(mathematical_bold_italic_small_lamda);
+			return 1;
 		case 0x1D741:
 			*normals = mathematical_bold_italic_small_mu;
-			return static_count(mathematical_bold_italic_small_mu);
+			return 1;
 		case 0x1D742:
 			*normals = mathematical_bold_italic_small_nu;
-			return static_count(mathematical_bold_italic_small_nu);
+			return 1;
 		case 0x1D743:
 			*normals = mathematical_bold_italic_small_xi;
-			return static_count(mathematical_bold_italic_small_xi);
+			return 1;
 		case 0x1D744:
 			*normals = mathematical_bold_italic_small_omicron;
-			return static_count(mathematical_bold_italic_small_omicron);
+			return 1;
 		case 0x1D745:
 			*normals = mathematical_bold_italic_small_pi;
-			return static_count(mathematical_bold_italic_small_pi);
+			return 1;
 		case 0x1D746:
 			*normals = mathematical_bold_italic_small_rho;
-			return static_count(mathematical_bold_italic_small_rho);
+			return 1;
 		case 0x1D747:
 			*normals = mathematical_bold_italic_small_final_sigma;
-			return static_count(mathematical_bold_italic_small_final_sigma);
+			return 1;
 		case 0x1D748:
 			*normals = mathematical_bold_italic_small_sigma;
-			return static_count(mathematical_bold_italic_small_sigma);
+			return 1;
 		case 0x1D749:
 			*normals = mathematical_bold_italic_small_tau;
-			return static_count(mathematical_bold_italic_small_tau);
+			return 1;
 		case 0x1D74A:
 			*normals = mathematical_bold_italic_small_upsilon;
-			return static_count(mathematical_bold_italic_small_upsilon);
+			return 1;
 		case 0x1D74B:
 			*normals = mathematical_bold_italic_small_phi;
-			return static_count(mathematical_bold_italic_small_phi);
+			return 1;
 		case 0x1D74C:
 			*normals = mathematical_bold_italic_small_chi;
-			return static_count(mathematical_bold_italic_small_chi);
+			return 1;
 		case 0x1D74D:
 			*normals = mathematical_bold_italic_small_psi;
-			return static_count(mathematical_bold_italic_small_psi);
+			return 1;
 		case 0x1D74E:
 			*normals = mathematical_bold_italic_small_omega;
-			return static_count(mathematical_bold_italic_small_omega);
+			return 1;
 		case 0x1D74F:
 			*normals = mathematical_bold_italic_partial_differential;
-			return static_count(mathematical_bold_italic_partial_differential);
+			return 1;
 		case 0x1D750:
 			*normals = mathematical_bold_italic_epsilon_symbol;
-			return static_count(mathematical_bold_italic_epsilon_symbol);
+			return 1;
 		case 0x1D751:
 			*normals = mathematical_bold_italic_theta_symbol;
-			return static_count(mathematical_bold_italic_theta_symbol);
+			return 1;
 		case 0x1D752:
 			*normals = mathematical_bold_italic_kappa_symbol;
-			return static_count(mathematical_bold_italic_kappa_symbol);
+			return 1;
 		case 0x1D753:
 			*normals = mathematical_bold_italic_phi_symbol;
-			return static_count(mathematical_bold_italic_phi_symbol);
+			return 1;
 		case 0x1D754:
 			*normals = mathematical_bold_italic_rho_symbol;
-			return static_count(mathematical_bold_italic_rho_symbol);
+			return 1;
 		case 0x1D755:
 			*normals = mathematical_bold_italic_pi_symbol;
-			return static_count(mathematical_bold_italic_pi_symbol);
+			return 1;
 		case 0x1D756:
 			*normals = mathematical_sans_serif_bold_capital_alpha;
-			return static_count(mathematical_sans_serif_bold_capital_alpha);
+			return 1;
 		case 0x1D757:
 			*normals = mathematical_sans_serif_bold_capital_beta;
-			return static_count(mathematical_sans_serif_bold_capital_beta);
+			return 1;
 		case 0x1D758:
 			*normals = mathematical_sans_serif_bold_capital_gamma;
-			return static_count(mathematical_sans_serif_bold_capital_gamma);
+			return 1;
 		case 0x1D759:
 			*normals = mathematical_sans_serif_bold_capital_delta;
-			return static_count(mathematical_sans_serif_bold_capital_delta);
+			return 1;
 		case 0x1D75A:
 			*normals = mathematical_sans_serif_bold_capital_epsilon;
-			return static_count(mathematical_sans_serif_bold_capital_epsilon);
+			return 1;
 		case 0x1D75B:
 			*normals = mathematical_sans_serif_bold_capital_zeta;
-			return static_count(mathematical_sans_serif_bold_capital_zeta);
+			return 1;
 		case 0x1D75C:
 			*normals = mathematical_sans_serif_bold_capital_eta;
-			return static_count(mathematical_sans_serif_bold_capital_eta);
+			return 1;
 		case 0x1D75D:
 			*normals = mathematical_sans_serif_bold_capital_theta;
-			return static_count(mathematical_sans_serif_bold_capital_theta);
+			return 1;
 		case 0x1D75E:
 			*normals = mathematical_sans_serif_bold_capital_iota;
-			return static_count(mathematical_sans_serif_bold_capital_iota);
+			return 1;
 		case 0x1D75F:
 			*normals = mathematical_sans_serif_bold_capital_kappa;
-			return static_count(mathematical_sans_serif_bold_capital_kappa);
+			return 1;
 		case 0x1D760:
 			*normals = mathematical_sans_serif_bold_capital_lamda;
-			return static_count(mathematical_sans_serif_bold_capital_lamda);
+			return 1;
 		case 0x1D761:
 			*normals = mathematical_sans_serif_bold_capital_mu;
-			return static_count(mathematical_sans_serif_bold_capital_mu);
+			return 1;
 		case 0x1D762:
 			*normals = mathematical_sans_serif_bold_capital_nu;
-			return static_count(mathematical_sans_serif_bold_capital_nu);
+			return 1;
 		case 0x1D763:
 			*normals = mathematical_sans_serif_bold_capital_xi;
-			return static_count(mathematical_sans_serif_bold_capital_xi);
+			return 1;
 		case 0x1D764:
 			*normals = mathematical_sans_serif_bold_capital_omicron;
-			return static_count(mathematical_sans_serif_bold_capital_omicron);
+			return 1;
 		case 0x1D765:
 			*normals = mathematical_sans_serif_bold_capital_pi;
-			return static_count(mathematical_sans_serif_bold_capital_pi);
+			return 1;
 		case 0x1D766:
 			*normals = mathematical_sans_serif_bold_capital_rho;
-			return static_count(mathematical_sans_serif_bold_capital_rho);
+			return 1;
 		case 0x1D767:
 			*normals = mathematical_sans_serif_bold_capital_theta_symbol;
-			return static_count(mathematical_sans_serif_bold_capital_theta_symbol);
+			return 1;
 		case 0x1D768:
 			*normals = mathematical_sans_serif_bold_capital_sigma;
-			return static_count(mathematical_sans_serif_bold_capital_sigma);
+			return 1;
 		case 0x1D769:
 			*normals = mathematical_sans_serif_bold_capital_tau;
-			return static_count(mathematical_sans_serif_bold_capital_tau);
+			return 1;
 		case 0x1D76A:
 			*normals = mathematical_sans_serif_bold_capital_upsilon;
-			return static_count(mathematical_sans_serif_bold_capital_upsilon);
+			return 1;
 		case 0x1D76B:
 			*normals = mathematical_sans_serif_bold_capital_phi;
-			return static_count(mathematical_sans_serif_bold_capital_phi);
+			return 1;
 		case 0x1D76C:
 			*normals = mathematical_sans_serif_bold_capital_chi;
-			return static_count(mathematical_sans_serif_bold_capital_chi);
+			return 1;
 		case 0x1D76D:
 			*normals = mathematical_sans_serif_bold_capital_psi;
-			return static_count(mathematical_sans_serif_bold_capital_psi);
+			return 1;
 		case 0x1D76E:
 			*normals = mathematical_sans_serif_bold_capital_omega;
-			return static_count(mathematical_sans_serif_bold_capital_omega);
+			return 1;
 		case 0x1D76F:
 			*normals = mathematical_sans_serif_bold_nabla;
-			return static_count(mathematical_sans_serif_bold_nabla);
+			return 1;
 		case 0x1D770:
 			*normals = mathematical_sans_serif_bold_small_alpha;
-			return static_count(mathematical_sans_serif_bold_small_alpha);
+			return 1;
 		case 0x1D771:
 			*normals = mathematical_sans_serif_bold_small_beta;
-			return static_count(mathematical_sans_serif_bold_small_beta);
+			return 1;
 		case 0x1D772:
 			*normals = mathematical_sans_serif_bold_small_gamma;
-			return static_count(mathematical_sans_serif_bold_small_gamma);
+			return 1;
 		case 0x1D773:
 			*normals = mathematical_sans_serif_bold_small_delta;
-			return static_count(mathematical_sans_serif_bold_small_delta);
+			return 1;
 		case 0x1D774:
 			*normals = mathematical_sans_serif_bold_small_epsilon;
-			return static_count(mathematical_sans_serif_bold_small_epsilon);
+			return 1;
 		case 0x1D775:
 			*normals = mathematical_sans_serif_bold_small_zeta;
-			return static_count(mathematical_sans_serif_bold_small_zeta);
+			return 1;
 		case 0x1D776:
 			*normals = mathematical_sans_serif_bold_small_eta;
-			return static_count(mathematical_sans_serif_bold_small_eta);
+			return 1;
 		case 0x1D777:
 			*normals = mathematical_sans_serif_bold_small_theta;
-			return static_count(mathematical_sans_serif_bold_small_theta);
+			return 1;
 		case 0x1D778:
 			*normals = mathematical_sans_serif_bold_small_iota;
-			return static_count(mathematical_sans_serif_bold_small_iota);
+			return 1;
 		case 0x1D779:
 			*normals = mathematical_sans_serif_bold_small_kappa;
-			return static_count(mathematical_sans_serif_bold_small_kappa);
+			return 1;
 		case 0x1D77A:
 			*normals = mathematical_sans_serif_bold_small_lamda;
-			return static_count(mathematical_sans_serif_bold_small_lamda);
+			return 1;
 		case 0x1D77B:
 			*normals = mathematical_sans_serif_bold_small_mu;
-			return static_count(mathematical_sans_serif_bold_small_mu);
+			return 1;
 		case 0x1D77C:
 			*normals = mathematical_sans_serif_bold_small_nu;
-			return static_count(mathematical_sans_serif_bold_small_nu);
+			return 1;
 		case 0x1D77D:
 			*normals = mathematical_sans_serif_bold_small_xi;
-			return static_count(mathematical_sans_serif_bold_small_xi);
+			return 1;
 		case 0x1D77E:
 			*normals = mathematical_sans_serif_bold_small_omicron;
-			return static_count(mathematical_sans_serif_bold_small_omicron);
+			return 1;
 		case 0x1D77F:
 			*normals = mathematical_sans_serif_bold_small_pi;
-			return static_count(mathematical_sans_serif_bold_small_pi);
+			return 1;
 		case 0x1D780:
 			*normals = mathematical_sans_serif_bold_small_rho;
-			return static_count(mathematical_sans_serif_bold_small_rho);
+			return 1;
 		case 0x1D781:
 			*normals = mathematical_sans_serif_bold_small_final_sigma;
-			return static_count(mathematical_sans_serif_bold_small_final_sigma);
+			return 1;
 		case 0x1D782:
 			*normals = mathematical_sans_serif_bold_small_sigma;
-			return static_count(mathematical_sans_serif_bold_small_sigma);
+			return 1;
 		case 0x1D783:
 			*normals = mathematical_sans_serif_bold_small_tau;
-			return static_count(mathematical_sans_serif_bold_small_tau);
+			return 1;
 		case 0x1D784:
 			*normals = mathematical_sans_serif_bold_small_upsilon;
-			return static_count(mathematical_sans_serif_bold_small_upsilon);
+			return 1;
 		case 0x1D785:
 			*normals = mathematical_sans_serif_bold_small_phi;
-			return static_count(mathematical_sans_serif_bold_small_phi);
+			return 1;
 		case 0x1D786:
 			*normals = mathematical_sans_serif_bold_small_chi;
-			return static_count(mathematical_sans_serif_bold_small_chi);
+			return 1;
 		case 0x1D787:
 			*normals = mathematical_sans_serif_bold_small_psi;
-			return static_count(mathematical_sans_serif_bold_small_psi);
+			return 1;
 		case 0x1D788:
 			*normals = mathematical_sans_serif_bold_small_omega;
-			return static_count(mathematical_sans_serif_bold_small_omega);
+			return 1;
 		case 0x1D789:
 			*normals = mathematical_sans_serif_bold_partial_differential;
-			return static_count(mathematical_sans_serif_bold_partial_differential);
+			return 1;
 		case 0x1D78A:
 			*normals = mathematical_sans_serif_bold_epsilon_symbol;
-			return static_count(mathematical_sans_serif_bold_epsilon_symbol);
+			return 1;
 		case 0x1D78B:
 			*normals = mathematical_sans_serif_bold_theta_symbol;
-			return static_count(mathematical_sans_serif_bold_theta_symbol);
+			return 1;
 		case 0x1D78C:
 			*normals = mathematical_sans_serif_bold_kappa_symbol;
-			return static_count(mathematical_sans_serif_bold_kappa_symbol);
+			return 1;
 		case 0x1D78D:
 			*normals = mathematical_sans_serif_bold_phi_symbol;
-			return static_count(mathematical_sans_serif_bold_phi_symbol);
+			return 1;
 		case 0x1D78E:
 			*normals = mathematical_sans_serif_bold_rho_symbol;
-			return static_count(mathematical_sans_serif_bold_rho_symbol);
+			return 1;
 		case 0x1D78F:
 			*normals = mathematical_sans_serif_bold_pi_symbol;
-			return static_count(mathematical_sans_serif_bold_pi_symbol);
+			return 1;
 		case 0x1D790:
 			*normals = mathematical_sans_serif_bold_italic_capital_alpha;
-			return static_count(mathematical_sans_serif_bold_italic_capital_alpha);
+			return 1;
 		case 0x1D791:
 			*normals = mathematical_sans_serif_bold_italic_capital_beta;
-			return static_count(mathematical_sans_serif_bold_italic_capital_beta);
+			return 1;
 		case 0x1D792:
 			*normals = mathematical_sans_serif_bold_italic_capital_gamma;
-			return static_count(mathematical_sans_serif_bold_italic_capital_gamma);
+			return 1;
 		case 0x1D793:
 			*normals = mathematical_sans_serif_bold_italic_capital_delta;
-			return static_count(mathematical_sans_serif_bold_italic_capital_delta);
+			return 1;
 		case 0x1D794:
 			*normals = mathematical_sans_serif_bold_italic_capital_epsilon;
-			return static_count(mathematical_sans_serif_bold_italic_capital_epsilon);
+			return 1;
 		case 0x1D795:
 			*normals = mathematical_sans_serif_bold_italic_capital_zeta;
-			return static_count(mathematical_sans_serif_bold_italic_capital_zeta);
+			return 1;
 		case 0x1D796:
 			*normals = mathematical_sans_serif_bold_italic_capital_eta;
-			return static_count(mathematical_sans_serif_bold_italic_capital_eta);
+			return 1;
 		case 0x1D797:
 			*normals = mathematical_sans_serif_bold_italic_capital_theta;
-			return static_count(mathematical_sans_serif_bold_italic_capital_theta);
+			return 1;
 		case 0x1D798:
 			*normals = mathematical_sans_serif_bold_italic_capital_iota;
-			return static_count(mathematical_sans_serif_bold_italic_capital_iota);
+			return 1;
 		case 0x1D799:
 			*normals = mathematical_sans_serif_bold_italic_capital_kappa;
-			return static_count(mathematical_sans_serif_bold_italic_capital_kappa);
+			return 1;
 		case 0x1D79A:
 			*normals = mathematical_sans_serif_bold_italic_capital_lamda;
-			return static_count(mathematical_sans_serif_bold_italic_capital_lamda);
+			return 1;
 		case 0x1D79B:
 			*normals = mathematical_sans_serif_bold_italic_capital_mu;
-			return static_count(mathematical_sans_serif_bold_italic_capital_mu);
+			return 1;
 		case 0x1D79C:
 			*normals = mathematical_sans_serif_bold_italic_capital_nu;
-			return static_count(mathematical_sans_serif_bold_italic_capital_nu);
+			return 1;
 		case 0x1D79D:
 			*normals = mathematical_sans_serif_bold_italic_capital_xi;
-			return static_count(mathematical_sans_serif_bold_italic_capital_xi);
+			return 1;
 		case 0x1D79E:
 			*normals = mathematical_sans_serif_bold_italic_capital_omicron;
-			return static_count(mathematical_sans_serif_bold_italic_capital_omicron);
+			return 1;
 		case 0x1D79F:
 			*normals = mathematical_sans_serif_bold_italic_capital_pi;
-			return static_count(mathematical_sans_serif_bold_italic_capital_pi);
+			return 1;
 		case 0x1D7A0:
 			*normals = mathematical_sans_serif_bold_italic_capital_rho;
-			return static_count(mathematical_sans_serif_bold_italic_capital_rho);
+			return 1;
 		case 0x1D7A1:
 			*normals = mathematical_sans_serif_bold_italic_capital_theta_symbol;
-			return static_count(mathematical_sans_serif_bold_italic_capital_theta_symbol);
+			return 1;
 		case 0x1D7A2:
 			*normals = mathematical_sans_serif_bold_italic_capital_sigma;
-			return static_count(mathematical_sans_serif_bold_italic_capital_sigma);
+			return 1;
 		case 0x1D7A3:
 			*normals = mathematical_sans_serif_bold_italic_capital_tau;
-			return static_count(mathematical_sans_serif_bold_italic_capital_tau);
+			return 1;
 		case 0x1D7A4:
 			*normals = mathematical_sans_serif_bold_italic_capital_upsilon;
-			return static_count(mathematical_sans_serif_bold_italic_capital_upsilon);
+			return 1;
 		case 0x1D7A5:
 			*normals = mathematical_sans_serif_bold_italic_capital_phi;
-			return static_count(mathematical_sans_serif_bold_italic_capital_phi);
+			return 1;
 		case 0x1D7A6:
 			*normals = mathematical_sans_serif_bold_italic_capital_chi;
-			return static_count(mathematical_sans_serif_bold_italic_capital_chi);
+			return 1;
 		case 0x1D7A7:
 			*normals = mathematical_sans_serif_bold_italic_capital_psi;
-			return static_count(mathematical_sans_serif_bold_italic_capital_psi);
+			return 1;
 		case 0x1D7A8:
 			*normals = mathematical_sans_serif_bold_italic_capital_omega;
-			return static_count(mathematical_sans_serif_bold_italic_capital_omega);
+			return 1;
 		case 0x1D7A9:
 			*normals = mathematical_sans_serif_bold_italic_nabla;
-			return static_count(mathematical_sans_serif_bold_italic_nabla);
+			return 1;
 		case 0x1D7AA:
 			*normals = mathematical_sans_serif_bold_italic_small_alpha;
-			return static_count(mathematical_sans_serif_bold_italic_small_alpha);
+			return 1;
 		case 0x1D7AB:
 			*normals = mathematical_sans_serif_bold_italic_small_beta;
-			return static_count(mathematical_sans_serif_bold_italic_small_beta);
+			return 1;
 		case 0x1D7AC:
 			*normals = mathematical_sans_serif_bold_italic_small_gamma;
-			return static_count(mathematical_sans_serif_bold_italic_small_gamma);
+			return 1;
 		case 0x1D7AD:
 			*normals = mathematical_sans_serif_bold_italic_small_delta;
-			return static_count(mathematical_sans_serif_bold_italic_small_delta);
+			return 1;
 		case 0x1D7AE:
 			*normals = mathematical_sans_serif_bold_italic_small_epsilon;
-			return static_count(mathematical_sans_serif_bold_italic_small_epsilon);
+			return 1;
 		case 0x1D7AF:
 			*normals = mathematical_sans_serif_bold_italic_small_zeta;
-			return static_count(mathematical_sans_serif_bold_italic_small_zeta);
+			return 1;
 		case 0x1D7B0:
 			*normals = mathematical_sans_serif_bold_italic_small_eta;
-			return static_count(mathematical_sans_serif_bold_italic_small_eta);
+			return 1;
 		case 0x1D7B1:
 			*normals = mathematical_sans_serif_bold_italic_small_theta;
-			return static_count(mathematical_sans_serif_bold_italic_small_theta);
+			return 1;
 		case 0x1D7B2:
 			*normals = mathematical_sans_serif_bold_italic_small_iota;
-			return static_count(mathematical_sans_serif_bold_italic_small_iota);
+			return 1;
 		case 0x1D7B3:
 			*normals = mathematical_sans_serif_bold_italic_small_kappa;
-			return static_count(mathematical_sans_serif_bold_italic_small_kappa);
+			return 1;
 		case 0x1D7B4:
 			*normals = mathematical_sans_serif_bold_italic_small_lamda;
-			return static_count(mathematical_sans_serif_bold_italic_small_lamda);
+			return 1;
 		case 0x1D7B5:
 			*normals = mathematical_sans_serif_bold_italic_small_mu;
-			return static_count(mathematical_sans_serif_bold_italic_small_mu);
+			return 1;
 		case 0x1D7B6:
 			*normals = mathematical_sans_serif_bold_italic_small_nu;
-			return static_count(mathematical_sans_serif_bold_italic_small_nu);
+			return 1;
 		case 0x1D7B7:
 			*normals = mathematical_sans_serif_bold_italic_small_xi;
-			return static_count(mathematical_sans_serif_bold_italic_small_xi);
+			return 1;
 		case 0x1D7B8:
 			*normals = mathematical_sans_serif_bold_italic_small_omicron;
-			return static_count(mathematical_sans_serif_bold_italic_small_omicron);
+			return 1;
 		case 0x1D7B9:
 			*normals = mathematical_sans_serif_bold_italic_small_pi;
-			return static_count(mathematical_sans_serif_bold_italic_small_pi);
+			return 1;
 		case 0x1D7BA:
 			*normals = mathematical_sans_serif_bold_italic_small_rho;
-			return static_count(mathematical_sans_serif_bold_italic_small_rho);
+			return 1;
 		case 0x1D7BB:
 			*normals = mathematical_sans_serif_bold_italic_small_final_sigma;
-			return static_count(mathematical_sans_serif_bold_italic_small_final_sigma);
+			return 1;
 		case 0x1D7BC:
 			*normals = mathematical_sans_serif_bold_italic_small_sigma;
-			return static_count(mathematical_sans_serif_bold_italic_small_sigma);
+			return 1;
 		case 0x1D7BD:
 			*normals = mathematical_sans_serif_bold_italic_small_tau;
-			return static_count(mathematical_sans_serif_bold_italic_small_tau);
+			return 1;
 		case 0x1D7BE:
 			*normals = mathematical_sans_serif_bold_italic_small_upsilon;
-			return static_count(mathematical_sans_serif_bold_italic_small_upsilon);
+			return 1;
 		case 0x1D7BF:
 			*normals = mathematical_sans_serif_bold_italic_small_phi;
-			return static_count(mathematical_sans_serif_bold_italic_small_phi);
+			return 1;
 		case 0x1D7C0:
 			*normals = mathematical_sans_serif_bold_italic_small_chi;
-			return static_count(mathematical_sans_serif_bold_italic_small_chi);
+			return 1;
 		case 0x1D7C1:
 			*normals = mathematical_sans_serif_bold_italic_small_psi;
-			return static_count(mathematical_sans_serif_bold_italic_small_psi);
+			return 1;
 		case 0x1D7C2:
 			*normals = mathematical_sans_serif_bold_italic_small_omega;
-			return static_count(mathematical_sans_serif_bold_italic_small_omega);
+			return 1;
 		case 0x1D7C3:
 			*normals = mathematical_sans_serif_bold_italic_partial_differential;
-			return static_count(mathematical_sans_serif_bold_italic_partial_differential);
+			return 1;
 		case 0x1D7C4:
 			*normals = mathematical_sans_serif_bold_italic_epsilon_symbol;
-			return static_count(mathematical_sans_serif_bold_italic_epsilon_symbol);
+			return 1;
 		case 0x1D7C5:
 			*normals = mathematical_sans_serif_bold_italic_theta_symbol;
-			return static_count(mathematical_sans_serif_bold_italic_theta_symbol);
+			return 1;
 		case 0x1D7C6:
 			*normals = mathematical_sans_serif_bold_italic_kappa_symbol;
-			return static_count(mathematical_sans_serif_bold_italic_kappa_symbol);
+			return 1;
 		case 0x1D7C7:
 			*normals = mathematical_sans_serif_bold_italic_phi_symbol;
-			return static_count(mathematical_sans_serif_bold_italic_phi_symbol);
+			return 1;
 		case 0x1D7C8:
 			*normals = mathematical_sans_serif_bold_italic_rho_symbol;
-			return static_count(mathematical_sans_serif_bold_italic_rho_symbol);
+			return 1;
 		case 0x1D7C9:
 			*normals = mathematical_sans_serif_bold_italic_pi_symbol;
-			return static_count(mathematical_sans_serif_bold_italic_pi_symbol);
+			return 1;
 		case 0x1D7CA:
 			*normals = mathematical_bold_capital_digamma;
-			return static_count(mathematical_bold_capital_digamma);
+			return 1;
 		case 0x1D7CB:
 			*normals = mathematical_bold_small_digamma;
-			return static_count(mathematical_bold_small_digamma);
+			return 1;
 		case 0x1D7CE:
 			*normals = mathematical_bold_digit_zero;
-			return static_count(mathematical_bold_digit_zero);
+			return 1;
 		case 0x1D7CF:
 			*normals = mathematical_bold_digit_one;
-			return static_count(mathematical_bold_digit_one);
+			return 1;
 		case 0x1D7D0:
 			*normals = mathematical_bold_digit_two;
-			return static_count(mathematical_bold_digit_two);
+			return 1;
 		case 0x1D7D1:
 			*normals = mathematical_bold_digit_three;
-			return static_count(mathematical_bold_digit_three);
+			return 1;
 		case 0x1D7D2:
 			*normals = mathematical_bold_digit_four;
-			return static_count(mathematical_bold_digit_four);
+			return 1;
 		case 0x1D7D3:
 			*normals = mathematical_bold_digit_five;
-			return static_count(mathematical_bold_digit_five);
+			return 1;
 		case 0x1D7D4:
 			*normals = mathematical_bold_digit_six;
-			return static_count(mathematical_bold_digit_six);
+			return 1;
 		case 0x1D7D5:
 			*normals = mathematical_bold_digit_seven;
-			return static_count(mathematical_bold_digit_seven);
+			return 1;
 		case 0x1D7D6:
 			*normals = mathematical_bold_digit_eight;
-			return static_count(mathematical_bold_digit_eight);
+			return 1;
 		case 0x1D7D7:
 			*normals = mathematical_bold_digit_nine;
-			return static_count(mathematical_bold_digit_nine);
+			return 1;
 		case 0x1D7D8:
 			*normals = mathematical_double_struck_digit_zero;
-			return static_count(mathematical_double_struck_digit_zero);
+			return 1;
 		case 0x1D7D9:
 			*normals = mathematical_double_struck_digit_one;
-			return static_count(mathematical_double_struck_digit_one);
+			return 1;
 		case 0x1D7DA:
 			*normals = mathematical_double_struck_digit_two;
-			return static_count(mathematical_double_struck_digit_two);
+			return 1;
 		case 0x1D7DB:
 			*normals = mathematical_double_struck_digit_three;
-			return static_count(mathematical_double_struck_digit_three);
+			return 1;
 		case 0x1D7DC:
 			*normals = mathematical_double_struck_digit_four;
-			return static_count(mathematical_double_struck_digit_four);
+			return 1;
 		case 0x1D7DD:
 			*normals = mathematical_double_struck_digit_five;
-			return static_count(mathematical_double_struck_digit_five);
+			return 1;
 		case 0x1D7DE:
 			*normals = mathematical_double_struck_digit_six;
-			return static_count(mathematical_double_struck_digit_six);
+			return 1;
 		case 0x1D7DF:
 			*normals = mathematical_double_struck_digit_seven;
-			return static_count(mathematical_double_struck_digit_seven);
+			return 1;
 		case 0x1D7E0:
 			*normals = mathematical_double_struck_digit_eight;
-			return static_count(mathematical_double_struck_digit_eight);
+			return 1;
 		case 0x1D7E1:
 			*normals = mathematical_double_struck_digit_nine;
-			return static_count(mathematical_double_struck_digit_nine);
+			return 1;
 		case 0x1D7E2:
 			*normals = mathematical_sans_serif_digit_zero;
-			return static_count(mathematical_sans_serif_digit_zero);
+			return 1;
 		case 0x1D7E3:
 			*normals = mathematical_sans_serif_digit_one;
-			return static_count(mathematical_sans_serif_digit_one);
+			return 1;
 		case 0x1D7E4:
 			*normals = mathematical_sans_serif_digit_two;
-			return static_count(mathematical_sans_serif_digit_two);
+			return 1;
 		case 0x1D7E5:
 			*normals = mathematical_sans_serif_digit_three;
-			return static_count(mathematical_sans_serif_digit_three);
+			return 1;
 		case 0x1D7E6:
 			*normals = mathematical_sans_serif_digit_four;
-			return static_count(mathematical_sans_serif_digit_four);
+			return 1;
 		case 0x1D7E7:
 			*normals = mathematical_sans_serif_digit_five;
-			return static_count(mathematical_sans_serif_digit_five);
+			return 1;
 		case 0x1D7E8:
 			*normals = mathematical_sans_serif_digit_six;
-			return static_count(mathematical_sans_serif_digit_six);
+			return 1;
 		case 0x1D7E9:
 			*normals = mathematical_sans_serif_digit_seven;
-			return static_count(mathematical_sans_serif_digit_seven);
+			return 1;
 		case 0x1D7EA:
 			*normals = mathematical_sans_serif_digit_eight;
-			return static_count(mathematical_sans_serif_digit_eight);
+			return 1;
 		case 0x1D7EB:
 			*normals = mathematical_sans_serif_digit_nine;
-			return static_count(mathematical_sans_serif_digit_nine);
+			return 1;
 		case 0x1D7EC:
 			*normals = mathematical_sans_serif_bold_digit_zero;
-			return static_count(mathematical_sans_serif_bold_digit_zero);
+			return 1;
 		case 0x1D7ED:
 			*normals = mathematical_sans_serif_bold_digit_one;
-			return static_count(mathematical_sans_serif_bold_digit_one);
+			return 1;
 		case 0x1D7EE:
 			*normals = mathematical_sans_serif_bold_digit_two;
-			return static_count(mathematical_sans_serif_bold_digit_two);
+			return 1;
 		case 0x1D7EF:
 			*normals = mathematical_sans_serif_bold_digit_three;
-			return static_count(mathematical_sans_serif_bold_digit_three);
+			return 1;
 		case 0x1D7F0:
 			*normals = mathematical_sans_serif_bold_digit_four;
-			return static_count(mathematical_sans_serif_bold_digit_four);
+			return 1;
 		case 0x1D7F1:
 			*normals = mathematical_sans_serif_bold_digit_five;
-			return static_count(mathematical_sans_serif_bold_digit_five);
+			return 1;
 		case 0x1D7F2:
 			*normals = mathematical_sans_serif_bold_digit_six;
-			return static_count(mathematical_sans_serif_bold_digit_six);
+			return 1;
 		case 0x1D7F3:
 			*normals = mathematical_sans_serif_bold_digit_seven;
-			return static_count(mathematical_sans_serif_bold_digit_seven);
+			return 1;
 		case 0x1D7F4:
 			*normals = mathematical_sans_serif_bold_digit_eight;
-			return static_count(mathematical_sans_serif_bold_digit_eight);
+			return 1;
 		case 0x1D7F5:
 			*normals = mathematical_sans_serif_bold_digit_nine;
-			return static_count(mathematical_sans_serif_bold_digit_nine);
+			return 1;
 		case 0x1D7F6:
 			*normals = mathematical_monospace_digit_zero;
-			return static_count(mathematical_monospace_digit_zero);
+			return 1;
 		case 0x1D7F7:
 			*normals = mathematical_monospace_digit_one;
-			return static_count(mathematical_monospace_digit_one);
+			return 1;
 		case 0x1D7F8:
 			*normals = mathematical_monospace_digit_two;
-			return static_count(mathematical_monospace_digit_two);
+			return 1;
 		case 0x1D7F9:
 			*normals = mathematical_monospace_digit_three;
-			return static_count(mathematical_monospace_digit_three);
+			return 1;
 		case 0x1D7FA:
 			*normals = mathematical_monospace_digit_four;
-			return static_count(mathematical_monospace_digit_four);
+			return 1;
 		case 0x1D7FB:
 			*normals = mathematical_monospace_digit_five;
-			return static_count(mathematical_monospace_digit_five);
+			return 1;
 		case 0x1D7FC:
 			*normals = mathematical_monospace_digit_six;
-			return static_count(mathematical_monospace_digit_six);
+			return 1;
 		case 0x1D7FD:
 			*normals = mathematical_monospace_digit_seven;
-			return static_count(mathematical_monospace_digit_seven);
+			return 1;
 		case 0x1D7FE:
 			*normals = mathematical_monospace_digit_eight;
-			return static_count(mathematical_monospace_digit_eight);
+			return 1;
 		case 0x1D7FF:
 			*normals = mathematical_monospace_digit_nine;
-			return static_count(mathematical_monospace_digit_nine);
+			return 1;
 		case 0x1EE00:
 			*normals = arabic_mathematical_alef;
-			return static_count(arabic_mathematical_alef);
+			return 1;
 		case 0x1EE01:
 			*normals = arabic_mathematical_beh;
-			return static_count(arabic_mathematical_beh);
+			return 1;
 		case 0x1EE02:
 			*normals = arabic_mathematical_jeem;
-			return static_count(arabic_mathematical_jeem);
+			return 1;
 		case 0x1EE03:
 			*normals = arabic_mathematical_dal;
-			return static_count(arabic_mathematical_dal);
+			return 1;
 		case 0x1EE05:
 			*normals = arabic_mathematical_waw;
-			return static_count(arabic_mathematical_waw);
+			return 1;
 		case 0x1EE06:
 			*normals = arabic_mathematical_zain;
-			return static_count(arabic_mathematical_zain);
+			return 1;
 		case 0x1EE07:
 			*normals = arabic_mathematical_hah;
-			return static_count(arabic_mathematical_hah);
+			return 1;
 		case 0x1EE08:
 			*normals = arabic_mathematical_tah;
-			return static_count(arabic_mathematical_tah);
+			return 1;
 		case 0x1EE09:
 			*normals = arabic_mathematical_yeh;
-			return static_count(arabic_mathematical_yeh);
+			return 1;
 		case 0x1EE0A:
 			*normals = arabic_mathematical_kaf;
-			return static_count(arabic_mathematical_kaf);
+			return 1;
 		case 0x1EE0B:
 			*normals = arabic_mathematical_lam;
-			return static_count(arabic_mathematical_lam);
+			return 1;
 		case 0x1EE0C:
 			*normals = arabic_mathematical_meem;
-			return static_count(arabic_mathematical_meem);
+			return 1;
 		case 0x1EE0D:
 			*normals = arabic_mathematical_noon;
-			return static_count(arabic_mathematical_noon);
+			return 1;
 		case 0x1EE0E:
 			*normals = arabic_mathematical_seen;
-			return static_count(arabic_mathematical_seen);
+			return 1;
 		case 0x1EE0F:
 			*normals = arabic_mathematical_ain;
-			return static_count(arabic_mathematical_ain);
+			return 1;
 		case 0x1EE10:
 			*normals = arabic_mathematical_feh;
-			return static_count(arabic_mathematical_feh);
+			return 1;
 		case 0x1EE11:
 			*normals = arabic_mathematical_sad;
-			return static_count(arabic_mathematical_sad);
+			return 1;
 		case 0x1EE12:
 			*normals = arabic_mathematical_qaf;
-			return static_count(arabic_mathematical_qaf);
+			return 1;
 		case 0x1EE13:
 			*normals = arabic_mathematical_reh;
-			return static_count(arabic_mathematical_reh);
+			return 1;
 		case 0x1EE14:
 			*normals = arabic_mathematical_sheen;
-			return static_count(arabic_mathematical_sheen);
+			return 1;
 		case 0x1EE15:
 			*normals = arabic_mathematical_teh;
-			return static_count(arabic_mathematical_teh);
+			return 1;
 		case 0x1EE16:
 			*normals = arabic_mathematical_theh;
-			return static_count(arabic_mathematical_theh);
+			return 1;
 		case 0x1EE17:
 			*normals = arabic_mathematical_khah;
-			return static_count(arabic_mathematical_khah);
+			return 1;
 		case 0x1EE18:
 			*normals = arabic_mathematical_thal;
-			return static_count(arabic_mathematical_thal);
+			return 1;
 		case 0x1EE19:
 			*normals = arabic_mathematical_dad;
-			return static_count(arabic_mathematical_dad);
+			return 1;
 		case 0x1EE1A:
 			*normals = arabic_mathematical_zah;
-			return static_count(arabic_mathematical_zah);
+			return 1;
 		case 0x1EE1B:
 			*normals = arabic_mathematical_ghain;
-			return static_count(arabic_mathematical_ghain);
+			return 1;
 		case 0x1EE1C:
 			*normals = arabic_mathematical_dotless_beh;
-			return static_count(arabic_mathematical_dotless_beh);
+			return 1;
 		case 0x1EE1D:
 			*normals = arabic_mathematical_dotless_noon;
-			return static_count(arabic_mathematical_dotless_noon);
+			return 1;
 		case 0x1EE1E:
 			*normals = arabic_mathematical_dotless_feh;
-			return static_count(arabic_mathematical_dotless_feh);
+			return 1;
 		case 0x1EE1F:
 			*normals = arabic_mathematical_dotless_qaf;
-			return static_count(arabic_mathematical_dotless_qaf);
+			return 1;
 		case 0x1EE21:
 			*normals = arabic_mathematical_initial_beh;
-			return static_count(arabic_mathematical_initial_beh);
+			return 1;
 		case 0x1EE22:
 			*normals = arabic_mathematical_initial_jeem;
-			return static_count(arabic_mathematical_initial_jeem);
+			return 1;
 		case 0x1EE24:
 			*normals = arabic_mathematical_initial_heh;
-			return static_count(arabic_mathematical_initial_heh);
+			return 1;
 		case 0x1EE27:
 			*normals = arabic_mathematical_initial_hah;
-			return static_count(arabic_mathematical_initial_hah);
+			return 1;
 		case 0x1EE29:
 			*normals = arabic_mathematical_initial_yeh;
-			return static_count(arabic_mathematical_initial_yeh);
+			return 1;
 		case 0x1EE2A:
 			*normals = arabic_mathematical_initial_kaf;
-			return static_count(arabic_mathematical_initial_kaf);
+			return 1;
 		case 0x1EE2B:
 			*normals = arabic_mathematical_initial_lam;
-			return static_count(arabic_mathematical_initial_lam);
+			return 1;
 		case 0x1EE2C:
 			*normals = arabic_mathematical_initial_meem;
-			return static_count(arabic_mathematical_initial_meem);
+			return 1;
 		case 0x1EE2D:
 			*normals = arabic_mathematical_initial_noon;
-			return static_count(arabic_mathematical_initial_noon);
+			return 1;
 		case 0x1EE2E:
 			*normals = arabic_mathematical_initial_seen;
-			return static_count(arabic_mathematical_initial_seen);
+			return 1;
 		case 0x1EE2F:
 			*normals = arabic_mathematical_initial_ain;
-			return static_count(arabic_mathematical_initial_ain);
+			return 1;
 		case 0x1EE30:
 			*normals = arabic_mathematical_initial_feh;
-			return static_count(arabic_mathematical_initial_feh);
+			return 1;
 		case 0x1EE31:
 			*normals = arabic_mathematical_initial_sad;
-			return static_count(arabic_mathematical_initial_sad);
+			return 1;
 		case 0x1EE32:
 			*normals = arabic_mathematical_initial_qaf;
-			return static_count(arabic_mathematical_initial_qaf);
+			return 1;
 		case 0x1EE34:
 			*normals = arabic_mathematical_initial_sheen;
-			return static_count(arabic_mathematical_initial_sheen);
+			return 1;
 		case 0x1EE35:
 			*normals = arabic_mathematical_initial_teh;
-			return static_count(arabic_mathematical_initial_teh);
+			return 1;
 		case 0x1EE36:
 			*normals = arabic_mathematical_initial_theh;
-			return static_count(arabic_mathematical_initial_theh);
+			return 1;
 		case 0x1EE37:
 			*normals = arabic_mathematical_initial_khah;
-			return static_count(arabic_mathematical_initial_khah);
+			return 1;
 		case 0x1EE39:
 			*normals = arabic_mathematical_initial_dad;
-			return static_count(arabic_mathematical_initial_dad);
+			return 1;
 		case 0x1EE3B:
 			*normals = arabic_mathematical_initial_ghain;
-			return static_count(arabic_mathematical_initial_ghain);
+			return 1;
 		case 0x1EE42:
 			*normals = arabic_mathematical_tailed_jeem;
-			return static_count(arabic_mathematical_tailed_jeem);
+			return 1;
 		case 0x1EE47:
 			*normals = arabic_mathematical_tailed_hah;
-			return static_count(arabic_mathematical_tailed_hah);
+			return 1;
 		case 0x1EE49:
 			*normals = arabic_mathematical_tailed_yeh;
-			return static_count(arabic_mathematical_tailed_yeh);
+			return 1;
 		case 0x1EE4B:
 			*normals = arabic_mathematical_tailed_lam;
-			return static_count(arabic_mathematical_tailed_lam);
+			return 1;
 		case 0x1EE4D:
 			*normals = arabic_mathematical_tailed_noon;
-			return static_count(arabic_mathematical_tailed_noon);
+			return 1;
 		case 0x1EE4E:
 			*normals = arabic_mathematical_tailed_seen;
-			return static_count(arabic_mathematical_tailed_seen);
+			return 1;
 		case 0x1EE4F:
 			*normals = arabic_mathematical_tailed_ain;
-			return static_count(arabic_mathematical_tailed_ain);
+			return 1;
 		case 0x1EE51:
 			*normals = arabic_mathematical_tailed_sad;
-			return static_count(arabic_mathematical_tailed_sad);
+			return 1;
 		case 0x1EE52:
 			*normals = arabic_mathematical_tailed_qaf;
-			return static_count(arabic_mathematical_tailed_qaf);
+			return 1;
 		case 0x1EE54:
 			*normals = arabic_mathematical_tailed_sheen;
-			return static_count(arabic_mathematical_tailed_sheen);
+			return 1;
 		case 0x1EE57:
 			*normals = arabic_mathematical_tailed_khah;
-			return static_count(arabic_mathematical_tailed_khah);
+			return 1;
 		case 0x1EE59:
 			*normals = arabic_mathematical_tailed_dad;
-			return static_count(arabic_mathematical_tailed_dad);
+			return 1;
 		case 0x1EE5B:
 			*normals = arabic_mathematical_tailed_ghain;
-			return static_count(arabic_mathematical_tailed_ghain);
+			return 1;
 		case 0x1EE5D:
 			*normals = arabic_mathematical_tailed_dotless_noon;
-			return static_count(arabic_mathematical_tailed_dotless_noon);
+			return 1;
 		case 0x1EE5F:
 			*normals = arabic_mathematical_tailed_dotless_qaf;
-			return static_count(arabic_mathematical_tailed_dotless_qaf);
+			return 1;
 		case 0x1EE61:
 			*normals = arabic_mathematical_stretched_beh;
-			return static_count(arabic_mathematical_stretched_beh);
+			return 1;
 		case 0x1EE62:
 			*normals = arabic_mathematical_stretched_jeem;
-			return static_count(arabic_mathematical_stretched_jeem);
+			return 1;
 		case 0x1EE64:
 			*normals = arabic_mathematical_stretched_heh;
-			return static_count(arabic_mathematical_stretched_heh);
+			return 1;
 		case 0x1EE67:
 			*normals = arabic_mathematical_stretched_hah;
-			return static_count(arabic_mathematical_stretched_hah);
+			return 1;
 		case 0x1EE68:
 			*normals = arabic_mathematical_stretched_tah;
-			return static_count(arabic_mathematical_stretched_tah);
+			return 1;
 		case 0x1EE69:
 			*normals = arabic_mathematical_stretched_yeh;
-			return static_count(arabic_mathematical_stretched_yeh);
+			return 1;
 		case 0x1EE6A:
 			*normals = arabic_mathematical_stretched_kaf;
-			return static_count(arabic_mathematical_stretched_kaf);
+			return 1;
 		case 0x1EE6C:
 			*normals = arabic_mathematical_stretched_meem;
-			return static_count(arabic_mathematical_stretched_meem);
+			return 1;
 		case 0x1EE6D:
 			*normals = arabic_mathematical_stretched_noon;
-			return static_count(arabic_mathematical_stretched_noon);
+			return 1;
 		case 0x1EE6E:
 			*normals = arabic_mathematical_stretched_seen;
-			return static_count(arabic_mathematical_stretched_seen);
+			return 1;
 		case 0x1EE6F:
 			*normals = arabic_mathematical_stretched_ain;
-			return static_count(arabic_mathematical_stretched_ain);
+			return 1;
 		case 0x1EE70:
 			*normals = arabic_mathematical_stretched_feh;
-			return static_count(arabic_mathematical_stretched_feh);
+			return 1;
 		case 0x1EE71:
 			*normals = arabic_mathematical_stretched_sad;
-			return static_count(arabic_mathematical_stretched_sad);
+			return 1;
 		case 0x1EE72:
 			*normals = arabic_mathematical_stretched_qaf;
-			return static_count(arabic_mathematical_stretched_qaf);
+			return 1;
 		case 0x1EE74:
 			*normals = arabic_mathematical_stretched_sheen;
-			return static_count(arabic_mathematical_stretched_sheen);
+			return 1;
 		case 0x1EE75:
 			*normals = arabic_mathematical_stretched_teh;
-			return static_count(arabic_mathematical_stretched_teh);
+			return 1;
 		case 0x1EE76:
 			*normals = arabic_mathematical_stretched_theh;
-			return static_count(arabic_mathematical_stretched_theh);
+			return 1;
 		case 0x1EE77:
 			*normals = arabic_mathematical_stretched_khah;
-			return static_count(arabic_mathematical_stretched_khah);
+			return 1;
 		case 0x1EE79:
 			*normals = arabic_mathematical_stretched_dad;
-			return static_count(arabic_mathematical_stretched_dad);
+			return 1;
 		case 0x1EE7A:
 			*normals = arabic_mathematical_stretched_zah;
-			return static_count(arabic_mathematical_stretched_zah);
+			return 1;
 		case 0x1EE7B:
 			*normals = arabic_mathematical_stretched_ghain;
-			return static_count(arabic_mathematical_stretched_ghain);
+			return 1;
 		case 0x1EE7C:
 			*normals = arabic_mathematical_stretched_dotless_beh;
-			return static_count(arabic_mathematical_stretched_dotless_beh);
+			return 1;
 		case 0x1EE7E:
 			*normals = arabic_mathematical_stretched_dotless_feh;
-			return static_count(arabic_mathematical_stretched_dotless_feh);
+			return 1;
 		case 0x1EE80:
 			*normals = arabic_mathematical_looped_alef;
-			return static_count(arabic_mathematical_looped_alef);
+			return 1;
 		case 0x1EE81:
 			*normals = arabic_mathematical_looped_beh;
-			return static_count(arabic_mathematical_looped_beh);
+			return 1;
 		case 0x1EE82:
 			*normals = arabic_mathematical_looped_jeem;
-			return static_count(arabic_mathematical_looped_jeem);
+			return 1;
 		case 0x1EE83:
 			*normals = arabic_mathematical_looped_dal;
-			return static_count(arabic_mathematical_looped_dal);
+			return 1;
 		case 0x1EE84:
 			*normals = arabic_mathematical_looped_heh;
-			return static_count(arabic_mathematical_looped_heh);
+			return 1;
 		case 0x1EE85:
 			*normals = arabic_mathematical_looped_waw;
-			return static_count(arabic_mathematical_looped_waw);
+			return 1;
 		case 0x1EE86:
 			*normals = arabic_mathematical_looped_zain;
-			return static_count(arabic_mathematical_looped_zain);
+			return 1;
 		case 0x1EE87:
 			*normals = arabic_mathematical_looped_hah;
-			return static_count(arabic_mathematical_looped_hah);
+			return 1;
 		case 0x1EE88:
 			*normals = arabic_mathematical_looped_tah;
-			return static_count(arabic_mathematical_looped_tah);
+			return 1;
 		case 0x1EE89:
 			*normals = arabic_mathematical_looped_yeh;
-			return static_count(arabic_mathematical_looped_yeh);
+			return 1;
 		case 0x1EE8B:
 			*normals = arabic_mathematical_looped_lam;
-			return static_count(arabic_mathematical_looped_lam);
+			return 1;
 		case 0x1EE8C:
 			*normals = arabic_mathematical_looped_meem;
-			return static_count(arabic_mathematical_looped_meem);
+			return 1;
 		case 0x1EE8D:
 			*normals = arabic_mathematical_looped_noon;
-			return static_count(arabic_mathematical_looped_noon);
+			return 1;
 		case 0x1EE8E:
 			*normals = arabic_mathematical_looped_seen;
-			return static_count(arabic_mathematical_looped_seen);
+			return 1;
 		case 0x1EE8F:
 			*normals = arabic_mathematical_looped_ain;
-			return static_count(arabic_mathematical_looped_ain);
+			return 1;
 		case 0x1EE90:
 			*normals = arabic_mathematical_looped_feh;
-			return static_count(arabic_mathematical_looped_feh);
+			return 1;
 		case 0x1EE91:
 			*normals = arabic_mathematical_looped_sad;
-			return static_count(arabic_mathematical_looped_sad);
+			return 1;
 		case 0x1EE92:
 			*normals = arabic_mathematical_looped_qaf;
-			return static_count(arabic_mathematical_looped_qaf);
+			return 1;
 		case 0x1EE93:
 			*normals = arabic_mathematical_looped_reh;
-			return static_count(arabic_mathematical_looped_reh);
+			return 1;
 		case 0x1EE94:
 			*normals = arabic_mathematical_looped_sheen;
-			return static_count(arabic_mathematical_looped_sheen);
+			return 1;
 		case 0x1EE95:
 			*normals = arabic_mathematical_looped_teh;
-			return static_count(arabic_mathematical_looped_teh);
+			return 1;
 		case 0x1EE96:
 			*normals = arabic_mathematical_looped_theh;
-			return static_count(arabic_mathematical_looped_theh);
+			return 1;
 		case 0x1EE97:
 			*normals = arabic_mathematical_looped_khah;
-			return static_count(arabic_mathematical_looped_khah);
+			return 1;
 		case 0x1EE98:
 			*normals = arabic_mathematical_looped_thal;
-			return static_count(arabic_mathematical_looped_thal);
+			return 1;
 		case 0x1EE99:
 			*normals = arabic_mathematical_looped_dad;
-			return static_count(arabic_mathematical_looped_dad);
+			return 1;
 		case 0x1EE9A:
 			*normals = arabic_mathematical_looped_zah;
-			return static_count(arabic_mathematical_looped_zah);
+			return 1;
 		case 0x1EE9B:
 			*normals = arabic_mathematical_looped_ghain;
-			return static_count(arabic_mathematical_looped_ghain);
+			return 1;
 		case 0x1EEA1:
 			*normals = arabic_mathematical_double_struck_beh;
-			return static_count(arabic_mathematical_double_struck_beh);
+			return 1;
 		case 0x1EEA2:
 			*normals = arabic_mathematical_double_struck_jeem;
-			return static_count(arabic_mathematical_double_struck_jeem);
+			return 1;
 		case 0x1EEA3:
 			*normals = arabic_mathematical_double_struck_dal;
-			return static_count(arabic_mathematical_double_struck_dal);
+			return 1;
 		case 0x1EEA5:
 			*normals = arabic_mathematical_double_struck_waw;
-			return static_count(arabic_mathematical_double_struck_waw);
+			return 1;
 		case 0x1EEA6:
 			*normals = arabic_mathematical_double_struck_zain;
-			return static_count(arabic_mathematical_double_struck_zain);
+			return 1;
 		case 0x1EEA7:
 			*normals = arabic_mathematical_double_struck_hah;
-			return static_count(arabic_mathematical_double_struck_hah);
+			return 1;
 		case 0x1EEA8:
 			*normals = arabic_mathematical_double_struck_tah;
-			return static_count(arabic_mathematical_double_struck_tah);
+			return 1;
 		case 0x1EEA9:
 			*normals = arabic_mathematical_double_struck_yeh;
-			return static_count(arabic_mathematical_double_struck_yeh);
+			return 1;
 		case 0x1EEAB:
 			*normals = arabic_mathematical_double_struck_lam;
-			return static_count(arabic_mathematical_double_struck_lam);
+			return 1;
 		case 0x1EEAC:
 			*normals = arabic_mathematical_double_struck_meem;
-			return static_count(arabic_mathematical_double_struck_meem);
+			return 1;
 		case 0x1EEAD:
 			*normals = arabic_mathematical_double_struck_noon;
-			return static_count(arabic_mathematical_double_struck_noon);
+			return 1;
 		case 0x1EEAE:
 			*normals = arabic_mathematical_double_struck_seen;
-			return static_count(arabic_mathematical_double_struck_seen);
+			return 1;
 		case 0x1EEAF:
 			*normals = arabic_mathematical_double_struck_ain;
-			return static_count(arabic_mathematical_double_struck_ain);
+			return 1;
 		case 0x1EEB0:
 			*normals = arabic_mathematical_double_struck_feh;
-			return static_count(arabic_mathematical_double_struck_feh);
+			return 1;
 		case 0x1EEB1:
 			*normals = arabic_mathematical_double_struck_sad;
-			return static_count(arabic_mathematical_double_struck_sad);
+			return 1;
 		case 0x1EEB2:
 			*normals = arabic_mathematical_double_struck_qaf;
-			return static_count(arabic_mathematical_double_struck_qaf);
+			return 1;
 		case 0x1EEB3:
 			*normals = arabic_mathematical_double_struck_reh;
-			return static_count(arabic_mathematical_double_struck_reh);
+			return 1;
 		case 0x1EEB4:
 			*normals = arabic_mathematical_double_struck_sheen;
-			return static_count(arabic_mathematical_double_struck_sheen);
+			return 1;
 		case 0x1EEB5:
 			*normals = arabic_mathematical_double_struck_teh;
-			return static_count(arabic_mathematical_double_struck_teh);
+			return 1;
 		case 0x1EEB6:
 			*normals = arabic_mathematical_double_struck_theh;
-			return static_count(arabic_mathematical_double_struck_theh);
+			return 1;
 		case 0x1EEB7:
 			*normals = arabic_mathematical_double_struck_khah;
-			return static_count(arabic_mathematical_double_struck_khah);
+			return 1;
 		case 0x1EEB8:
 			*normals = arabic_mathematical_double_struck_thal;
-			return static_count(arabic_mathematical_double_struck_thal);
+			return 1;
 		case 0x1EEB9:
 			*normals = arabic_mathematical_double_struck_dad;
-			return static_count(arabic_mathematical_double_struck_dad);
+			return 1;
 		case 0x1EEBA:
 			*normals = arabic_mathematical_double_struck_zah;
-			return static_count(arabic_mathematical_double_struck_zah);
+			return 1;
 		case 0x1EEBB:
 			*normals = arabic_mathematical_double_struck_ghain;
-			return static_count(arabic_mathematical_double_struck_ghain);
+			return 1;
 		case 0x1F100:
 			*normals = digit_zero_full_stop;
-			return static_count(digit_zero_full_stop);
+			return 2;
 		case 0x1F101:
 			*normals = digit_zero_comma;
-			return static_count(digit_zero_comma);
+			return 2;
 		case 0x1F102:
 			*normals = digit_one_comma;
-			return static_count(digit_one_comma);
+			return 2;
 		case 0x1F103:
 			*normals = digit_two_comma;
-			return static_count(digit_two_comma);
+			return 2;
 		case 0x1F104:
 			*normals = digit_three_comma;
-			return static_count(digit_three_comma);
+			return 2;
 		case 0x1F105:
 			*normals = digit_four_comma;
-			return static_count(digit_four_comma);
+			return 2;
 		case 0x1F106:
 			*normals = digit_five_comma;
-			return static_count(digit_five_comma);
+			return 2;
 		case 0x1F107:
 			*normals = digit_six_comma;
-			return static_count(digit_six_comma);
+			return 2;
 		case 0x1F108:
 			*normals = digit_seven_comma;
-			return static_count(digit_seven_comma);
+			return 2;
 		case 0x1F109:
 			*normals = digit_eight_comma;
-			return static_count(digit_eight_comma);
+			return 2;
 		case 0x1F10A:
 			*normals = digit_nine_comma;
-			return static_count(digit_nine_comma);
+			return 2;
 		case 0x1F110:
 			*normals = parenthesized_latin_capital_letter_a;
-			return static_count(parenthesized_latin_capital_letter_a);
+			return 3;
 		case 0x1F111:
 			*normals = parenthesized_latin_capital_letter_b;
-			return static_count(parenthesized_latin_capital_letter_b);
+			return 3;
 		case 0x1F112:
 			*normals = parenthesized_latin_capital_letter_c;
-			return static_count(parenthesized_latin_capital_letter_c);
+			return 3;
 		case 0x1F113:
 			*normals = parenthesized_latin_capital_letter_d;
-			return static_count(parenthesized_latin_capital_letter_d);
+			return 3;
 		case 0x1F114:
 			*normals = parenthesized_latin_capital_letter_e;
-			return static_count(parenthesized_latin_capital_letter_e);
+			return 3;
 		case 0x1F115:
 			*normals = parenthesized_latin_capital_letter_f;
-			return static_count(parenthesized_latin_capital_letter_f);
+			return 3;
 		case 0x1F116:
 			*normals = parenthesized_latin_capital_letter_g;
-			return static_count(parenthesized_latin_capital_letter_g);
+			return 3;
 		case 0x1F117:
 			*normals = parenthesized_latin_capital_letter_h;
-			return static_count(parenthesized_latin_capital_letter_h);
+			return 3;
 		case 0x1F118:
 			*normals = parenthesized_latin_capital_letter_i;
-			return static_count(parenthesized_latin_capital_letter_i);
+			return 3;
 		case 0x1F119:
 			*normals = parenthesized_latin_capital_letter_j;
-			return static_count(parenthesized_latin_capital_letter_j);
+			return 3;
 		case 0x1F11A:
 			*normals = parenthesized_latin_capital_letter_k;
-			return static_count(parenthesized_latin_capital_letter_k);
+			return 3;
 		case 0x1F11B:
 			*normals = parenthesized_latin_capital_letter_l;
-			return static_count(parenthesized_latin_capital_letter_l);
+			return 3;
 		case 0x1F11C:
 			*normals = parenthesized_latin_capital_letter_m;
-			return static_count(parenthesized_latin_capital_letter_m);
+			return 3;
 		case 0x1F11D:
 			*normals = parenthesized_latin_capital_letter_n;
-			return static_count(parenthesized_latin_capital_letter_n);
+			return 3;
 		case 0x1F11E:
 			*normals = parenthesized_latin_capital_letter_o;
-			return static_count(parenthesized_latin_capital_letter_o);
+			return 3;
 		case 0x1F11F:
 			*normals = parenthesized_latin_capital_letter_p;
-			return static_count(parenthesized_latin_capital_letter_p);
+			return 3;
 		case 0x1F120:
 			*normals = parenthesized_latin_capital_letter_q;
-			return static_count(parenthesized_latin_capital_letter_q);
+			return 3;
 		case 0x1F121:
 			*normals = parenthesized_latin_capital_letter_r;
-			return static_count(parenthesized_latin_capital_letter_r);
+			return 3;
 		case 0x1F122:
 			*normals = parenthesized_latin_capital_letter_s;
-			return static_count(parenthesized_latin_capital_letter_s);
+			return 3;
 		case 0x1F123:
 			*normals = parenthesized_latin_capital_letter_t;
-			return static_count(parenthesized_latin_capital_letter_t);
+			return 3;
 		case 0x1F124:
 			*normals = parenthesized_latin_capital_letter_u;
-			return static_count(parenthesized_latin_capital_letter_u);
+			return 3;
 		case 0x1F125:
 			*normals = parenthesized_latin_capital_letter_v;
-			return static_count(parenthesized_latin_capital_letter_v);
+			return 3;
 		case 0x1F126:
 			*normals = parenthesized_latin_capital_letter_w;
-			return static_count(parenthesized_latin_capital_letter_w);
+			return 3;
 		case 0x1F127:
 			*normals = parenthesized_latin_capital_letter_x;
-			return static_count(parenthesized_latin_capital_letter_x);
+			return 3;
 		case 0x1F128:
 			*normals = parenthesized_latin_capital_letter_y;
-			return static_count(parenthesized_latin_capital_letter_y);
+			return 3;
 		case 0x1F129:
 			*normals = parenthesized_latin_capital_letter_z;
-			return static_count(parenthesized_latin_capital_letter_z);
+			return 3;
 		case 0x1F12A:
 			*normals = tortoise_shell_bracketed_latin_capital_letter_s;
-			return static_count(tortoise_shell_bracketed_latin_capital_letter_s);
+			return 3;
 		case 0x1F12B:
 			*normals = circled_italic_latin_capital_letter_c;
-			return static_count(circled_italic_latin_capital_letter_c);
+			return 1;
 		case 0x1F12C:
 			*normals = circled_italic_latin_capital_letter_r;
-			return static_count(circled_italic_latin_capital_letter_r);
+			return 1;
 		case 0x1F12D:
 			*normals = circled_cd;
-			return static_count(circled_cd);
+			return 2;
 		case 0x1F12E:
 			*normals = circled_wz;
-			return static_count(circled_wz);
+			return 2;
 		case 0x1F130:
 			*normals = squared_latin_capital_letter_a;
-			return static_count(squared_latin_capital_letter_a);
+			return 1;
 		case 0x1F131:
 			*normals = squared_latin_capital_letter_b;
-			return static_count(squared_latin_capital_letter_b);
+			return 1;
 		case 0x1F132:
 			*normals = squared_latin_capital_letter_c;
-			return static_count(squared_latin_capital_letter_c);
+			return 1;
 		case 0x1F133:
 			*normals = squared_latin_capital_letter_d;
-			return static_count(squared_latin_capital_letter_d);
+			return 1;
 		case 0x1F134:
 			*normals = squared_latin_capital_letter_e;
-			return static_count(squared_latin_capital_letter_e);
+			return 1;
 		case 0x1F135:
 			*normals = squared_latin_capital_letter_f;
-			return static_count(squared_latin_capital_letter_f);
+			return 1;
 		case 0x1F136:
 			*normals = squared_latin_capital_letter_g;
-			return static_count(squared_latin_capital_letter_g);
+			return 1;
 		case 0x1F137:
 			*normals = squared_latin_capital_letter_h;
-			return static_count(squared_latin_capital_letter_h);
+			return 1;
 		case 0x1F138:
 			*normals = squared_latin_capital_letter_i;
-			return static_count(squared_latin_capital_letter_i);
+			return 1;
 		case 0x1F139:
 			*normals = squared_latin_capital_letter_j;
-			return static_count(squared_latin_capital_letter_j);
+			return 1;
 		case 0x1F13A:
 			*normals = squared_latin_capital_letter_k;
-			return static_count(squared_latin_capital_letter_k);
+			return 1;
 		case 0x1F13B:
 			*normals = squared_latin_capital_letter_l;
-			return static_count(squared_latin_capital_letter_l);
+			return 1;
 		case 0x1F13C:
 			*normals = squared_latin_capital_letter_m;
-			return static_count(squared_latin_capital_letter_m);
+			return 1;
 		case 0x1F13D:
 			*normals = squared_latin_capital_letter_n;
-			return static_count(squared_latin_capital_letter_n);
+			return 1;
 		case 0x1F13E:
 			*normals = squared_latin_capital_letter_o;
-			return static_count(squared_latin_capital_letter_o);
+			return 1;
 		case 0x1F13F:
 			*normals = squared_latin_capital_letter_p;
-			return static_count(squared_latin_capital_letter_p);
+			return 1;
 		case 0x1F140:
 			*normals = squared_latin_capital_letter_q;
-			return static_count(squared_latin_capital_letter_q);
+			return 1;
 		case 0x1F141:
 			*normals = squared_latin_capital_letter_r;
-			return static_count(squared_latin_capital_letter_r);
+			return 1;
 		case 0x1F142:
 			*normals = squared_latin_capital_letter_s;
-			return static_count(squared_latin_capital_letter_s);
+			return 1;
 		case 0x1F143:
 			*normals = squared_latin_capital_letter_t;
-			return static_count(squared_latin_capital_letter_t);
+			return 1;
 		case 0x1F144:
 			*normals = squared_latin_capital_letter_u;
-			return static_count(squared_latin_capital_letter_u);
+			return 1;
 		case 0x1F145:
 			*normals = squared_latin_capital_letter_v;
-			return static_count(squared_latin_capital_letter_v);
+			return 1;
 		case 0x1F146:
 			*normals = squared_latin_capital_letter_w;
-			return static_count(squared_latin_capital_letter_w);
+			return 1;
 		case 0x1F147:
 			*normals = squared_latin_capital_letter_x;
-			return static_count(squared_latin_capital_letter_x);
+			return 1;
 		case 0x1F148:
 			*normals = squared_latin_capital_letter_y;
-			return static_count(squared_latin_capital_letter_y);
+			return 1;
 		case 0x1F149:
 			*normals = squared_latin_capital_letter_z;
-			return static_count(squared_latin_capital_letter_z);
+			return 1;
 		case 0x1F14A:
 			*normals = squared_hv;
-			return static_count(squared_hv);
+			return 2;
 		case 0x1F14B:
 			*normals = squared_mv;
-			return static_count(squared_mv);
+			return 2;
 		case 0x1F14C:
 			*normals = squared_sd;
-			return static_count(squared_sd);
+			return 2;
 		case 0x1F14D:
 			*normals = squared_ss;
-			return static_count(squared_ss);
+			return 2;
 		case 0x1F14E:
 			*normals = squared_ppv;
-			return static_count(squared_ppv);
+			return 3;
 		case 0x1F14F:
 			*normals = squared_wc;
-			return static_count(squared_wc);
+			return 2;
 		case 0x1F16A:
 			*normals = raised_mc_sign;
-			return static_count(raised_mc_sign);
+			return 2;
 		case 0x1F16B:
 			*normals = raised_md_sign;
-			return static_count(raised_md_sign);
+			return 2;
 		case 0x1F16C:
 			*normals = raised_mr_sign;
-			return static_count(raised_mr_sign);
+			return 2;
 		case 0x1F190:
 			*normals = square_dj;
-			return static_count(square_dj);
+			return 2;
 		case 0x1F200:
 			*normals = square_hiragana_hoka;
-			return static_count(square_hiragana_hoka);
+			return 2;
 		case 0x1F201:
 			*normals = squared_katakana_koko;
-			return static_count(squared_katakana_koko);
+			return 2;
 		case 0x1F202:
 			*normals = squared_katakana_sa;
-			return static_count(squared_katakana_sa);
+			return 1;
 		case 0x1F210:
 			*normals = squared_cjk_unified_ideograph_624b;
-			return static_count(squared_cjk_unified_ideograph_624b);
+			return 1;
 		case 0x1F211:
 			*normals = squared_cjk_unified_ideograph_5b57;
-			return static_count(squared_cjk_unified_ideograph_5b57);
+			return 1;
 		case 0x1F212:
 			*normals = squared_cjk_unified_ideograph_53cc;
-			return static_count(squared_cjk_unified_ideograph_53cc);
+			return 1;
 		case 0x1F213:
 			*normals = squared_katakana_de;
-			return static_count(squared_katakana_de);
+			return 1;
 		case 0x1F214:
 			*normals = squared_cjk_unified_ideograph_4e8c;
-			return static_count(squared_cjk_unified_ideograph_4e8c);
+			return 1;
 		case 0x1F215:
 			*normals = squared_cjk_unified_ideograph_591a;
-			return static_count(squared_cjk_unified_ideograph_591a);
+			return 1;
 		case 0x1F216:
 			*normals = squared_cjk_unified_ideograph_89e3;
-			return static_count(squared_cjk_unified_ideograph_89e3);
+			return 1;
 		case 0x1F217:
 			*normals = squared_cjk_unified_ideograph_5929;
-			return static_count(squared_cjk_unified_ideograph_5929);
+			return 1;
 		case 0x1F218:
 			*normals = squared_cjk_unified_ideograph_4ea4;
-			return static_count(squared_cjk_unified_ideograph_4ea4);
+			return 1;
 		case 0x1F219:
 			*normals = squared_cjk_unified_ideograph_6620;
-			return static_count(squared_cjk_unified_ideograph_6620);
+			return 1;
 		case 0x1F21A:
 			*normals = squared_cjk_unified_ideograph_7121;
-			return static_count(squared_cjk_unified_ideograph_7121);
+			return 1;
 		case 0x1F21B:
 			*normals = squared_cjk_unified_ideograph_6599;
-			return static_count(squared_cjk_unified_ideograph_6599);
+			return 1;
 		case 0x1F21C:
 			*normals = squared_cjk_unified_ideograph_524d;
-			return static_count(squared_cjk_unified_ideograph_524d);
+			return 1;
 		case 0x1F21D:
 			*normals = squared_cjk_unified_ideograph_5f8c;
-			return static_count(squared_cjk_unified_ideograph_5f8c);
+			return 1;
 		case 0x1F21E:
 			*normals = squared_cjk_unified_ideograph_518d;
-			return static_count(squared_cjk_unified_ideograph_518d);
+			return 1;
 		case 0x1F21F:
 			*normals = squared_cjk_unified_ideograph_65b0;
-			return static_count(squared_cjk_unified_ideograph_65b0);
+			return 1;
 		case 0x1F220:
 			*normals = squared_cjk_unified_ideograph_521d;
-			return static_count(squared_cjk_unified_ideograph_521d);
+			return 1;
 		case 0x1F221:
 			*normals = squared_cjk_unified_ideograph_7d42;
-			return static_count(squared_cjk_unified_ideograph_7d42);
+			return 1;
 		case 0x1F222:
 			*normals = squared_cjk_unified_ideograph_751f;
-			return static_count(squared_cjk_unified_ideograph_751f);
+			return 1;
 		case 0x1F223:
 			*normals = squared_cjk_unified_ideograph_8ca9;
-			return static_count(squared_cjk_unified_ideograph_8ca9);
+			return 1;
 		case 0x1F224:
 			*normals = squared_cjk_unified_ideograph_58f0;
-			return static_count(squared_cjk_unified_ideograph_58f0);
+			return 1;
 		case 0x1F225:
 			*normals = squared_cjk_unified_ideograph_5439;
-			return static_count(squared_cjk_unified_ideograph_5439);
+			return 1;
 		case 0x1F226:
 			*normals = squared_cjk_unified_ideograph_6f14;
-			return static_count(squared_cjk_unified_ideograph_6f14);
+			return 1;
 		case 0x1F227:
 			*normals = squared_cjk_unified_ideograph_6295;
-			return static_count(squared_cjk_unified_ideograph_6295);
+			return 1;
 		case 0x1F228:
 			*normals = squared_cjk_unified_ideograph_6355;
-			return static_count(squared_cjk_unified_ideograph_6355);
+			return 1;
 		case 0x1F229:
 			*normals = squared_cjk_unified_ideograph_4e00;
-			return static_count(squared_cjk_unified_ideograph_4e00);
+			return 1;
 		case 0x1F22A:
 			*normals = squared_cjk_unified_ideograph_4e09;
-			return static_count(squared_cjk_unified_ideograph_4e09);
+			return 1;
 		case 0x1F22B:
 			*normals = squared_cjk_unified_ideograph_904a;
-			return static_count(squared_cjk_unified_ideograph_904a);
+			return 1;
 		case 0x1F22C:
 			*normals = squared_cjk_unified_ideograph_5de6;
-			return static_count(squared_cjk_unified_ideograph_5de6);
+			return 1;
 		case 0x1F22D:
 			*normals = squared_cjk_unified_ideograph_4e2d;
-			return static_count(squared_cjk_unified_ideograph_4e2d);
+			return 1;
 		case 0x1F22E:
 			*normals = squared_cjk_unified_ideograph_53f3;
-			return static_count(squared_cjk_unified_ideograph_53f3);
+			return 1;
 		case 0x1F22F:
 			*normals = squared_cjk_unified_ideograph_6307;
-			return static_count(squared_cjk_unified_ideograph_6307);
+			return 1;
 		case 0x1F230:
 			*normals = squared_cjk_unified_ideograph_8d70;
-			return static_count(squared_cjk_unified_ideograph_8d70);
+			return 1;
 		case 0x1F231:
 			*normals = squared_cjk_unified_ideograph_6253;
-			return static_count(squared_cjk_unified_ideograph_6253);
+			return 1;
 		case 0x1F232:
 			*normals = squared_cjk_unified_ideograph_7981;
-			return static_count(squared_cjk_unified_ideograph_7981);
+			return 1;
 		case 0x1F233:
 			*normals = squared_cjk_unified_ideograph_7a7a;
-			return static_count(squared_cjk_unified_ideograph_7a7a);
+			return 1;
 		case 0x1F234:
 			*normals = squared_cjk_unified_ideograph_5408;
-			return static_count(squared_cjk_unified_ideograph_5408);
+			return 1;
 		case 0x1F235:
 			*normals = squared_cjk_unified_ideograph_6e80;
-			return static_count(squared_cjk_unified_ideograph_6e80);
+			return 1;
 		case 0x1F236:
 			*normals = squared_cjk_unified_ideograph_6709;
-			return static_count(squared_cjk_unified_ideograph_6709);
+			return 1;
 		case 0x1F237:
 			*normals = squared_cjk_unified_ideograph_6708;
-			return static_count(squared_cjk_unified_ideograph_6708);
+			return 1;
 		case 0x1F238:
 			*normals = squared_cjk_unified_ideograph_7533;
-			return static_count(squared_cjk_unified_ideograph_7533);
+			return 1;
 		case 0x1F239:
 			*normals = squared_cjk_unified_ideograph_5272;
-			return static_count(squared_cjk_unified_ideograph_5272);
+			return 1;
 		case 0x1F23A:
 			*normals = squared_cjk_unified_ideograph_55b6;
-			return static_count(squared_cjk_unified_ideograph_55b6);
+			return 1;
 		case 0x1F23B:
 			*normals = squared_cjk_unified_ideograph_914d;
-			return static_count(squared_cjk_unified_ideograph_914d);
+			return 1;
 		case 0x1F240:
 			*normals = tortoise_shell_bracketed_cjk_unified_ideograph_672c;
-			return static_count(tortoise_shell_bracketed_cjk_unified_ideograph_672c);
+			return 3;
 		case 0x1F241:
 			*normals = tortoise_shell_bracketed_cjk_unified_ideograph_4e09;
-			return static_count(tortoise_shell_bracketed_cjk_unified_ideograph_4e09);
+			return 3;
 		case 0x1F242:
 			*normals = tortoise_shell_bracketed_cjk_unified_ideograph_4e8c;
-			return static_count(tortoise_shell_bracketed_cjk_unified_ideograph_4e8c);
+			return 3;
 		case 0x1F243:
 			*normals = tortoise_shell_bracketed_cjk_unified_ideograph_5b89;
-			return static_count(tortoise_shell_bracketed_cjk_unified_ideograph_5b89);
+			return 3;
 		case 0x1F244:
 			*normals = tortoise_shell_bracketed_cjk_unified_ideograph_70b9;
-			return static_count(tortoise_shell_bracketed_cjk_unified_ideograph_70b9);
+			return 3;
 		case 0x1F245:
 			*normals = tortoise_shell_bracketed_cjk_unified_ideograph_6253;
-			return static_count(tortoise_shell_bracketed_cjk_unified_ideograph_6253);
+			return 3;
 		case 0x1F246:
 			*normals = tortoise_shell_bracketed_cjk_unified_ideograph_76d7;
-			return static_count(tortoise_shell_bracketed_cjk_unified_ideograph_76d7);
+			return 3;
 		case 0x1F247:
 			*normals = tortoise_shell_bracketed_cjk_unified_ideograph_52dd;
-			return static_count(tortoise_shell_bracketed_cjk_unified_ideograph_52dd);
+			return 3;
 		case 0x1F248:
 			*normals = tortoise_shell_bracketed_cjk_unified_ideograph_6557;
-			return static_count(tortoise_shell_bracketed_cjk_unified_ideograph_6557);
+			return 3;
 		case 0x1F250:
 			*normals = circled_ideograph_advantage;
-			return static_count(circled_ideograph_advantage);
+			return 1;
 		case 0x1F251:
 			*normals = circled_ideograph_accept;
-			return static_count(circled_ideograph_accept);
+			return 1;
 		case 0x1FBF0:
 			*normals = segmented_digit_zero;
-			return static_count(segmented_digit_zero);
+			return 1;
 		case 0x1FBF1:
 			*normals = segmented_digit_one;
-			return static_count(segmented_digit_one);
+			return 1;
 		case 0x1FBF2:
 			*normals = segmented_digit_two;
-			return static_count(segmented_digit_two);
+			return 1;
 		case 0x1FBF3:
 			*normals = segmented_digit_three;
-			return static_count(segmented_digit_three);
+			return 1;
 		case 0x1FBF4:
 			*normals = segmented_digit_four;
-			return static_count(segmented_digit_four);
+			return 1;
 		case 0x1FBF5:
 			*normals = segmented_digit_five;
-			return static_count(segmented_digit_five);
+			return 1;
 		case 0x1FBF6:
 			*normals = segmented_digit_six;
-			return static_count(segmented_digit_six);
+			return 1;
 		case 0x1FBF7:
 			*normals = segmented_digit_seven;
-			return static_count(segmented_digit_seven);
+			return 1;
 		case 0x1FBF8:
 			*normals = segmented_digit_eight;
-			return static_count(segmented_digit_eight);
+			return 1;
 		case 0x1FBF9:
 			*normals = segmented_digit_nine;
-			return static_count(segmented_digit_nine);
+			return 1;
 		case 0x2F800:
 			*normals = cjk_compatibility_ideograph_2f800;
-			return static_count(cjk_compatibility_ideograph_2f800);
+			return 1;
 		case 0x2F801:
 			*normals = cjk_compatibility_ideograph_2f801;
-			return static_count(cjk_compatibility_ideograph_2f801);
+			return 1;
 		case 0x2F802:
 			*normals = cjk_compatibility_ideograph_2f802;
-			return static_count(cjk_compatibility_ideograph_2f802);
+			return 1;
 		case 0x2F803:
 			*normals = cjk_compatibility_ideograph_2f803;
-			return static_count(cjk_compatibility_ideograph_2f803);
+			return 1;
 		case 0x2F804:
 			*normals = cjk_compatibility_ideograph_2f804;
-			return static_count(cjk_compatibility_ideograph_2f804);
+			return 1;
 		case 0x2F805:
 			*normals = cjk_compatibility_ideograph_2f805;
-			return static_count(cjk_compatibility_ideograph_2f805);
+			return 1;
 		case 0x2F806:
 			*normals = cjk_compatibility_ideograph_2f806;
-			return static_count(cjk_compatibility_ideograph_2f806);
+			return 1;
 		case 0x2F807:
 			*normals = cjk_compatibility_ideograph_2f807;
-			return static_count(cjk_compatibility_ideograph_2f807);
+			return 1;
 		case 0x2F808:
 			*normals = cjk_compatibility_ideograph_2f808;
-			return static_count(cjk_compatibility_ideograph_2f808);
+			return 1;
 		case 0x2F809:
 			*normals = cjk_compatibility_ideograph_2f809;
-			return static_count(cjk_compatibility_ideograph_2f809);
+			return 1;
 		case 0x2F80A:
 			*normals = cjk_compatibility_ideograph_2f80a;
-			return static_count(cjk_compatibility_ideograph_2f80a);
+			return 1;
 		case 0x2F80B:
 			*normals = cjk_compatibility_ideograph_2f80b;
-			return static_count(cjk_compatibility_ideograph_2f80b);
+			return 1;
 		case 0x2F80C:
 			*normals = cjk_compatibility_ideograph_2f80c;
-			return static_count(cjk_compatibility_ideograph_2f80c);
+			return 1;
 		case 0x2F80D:
 			*normals = cjk_compatibility_ideograph_2f80d;
-			return static_count(cjk_compatibility_ideograph_2f80d);
+			return 1;
 		case 0x2F80E:
 			*normals = cjk_compatibility_ideograph_2f80e;
-			return static_count(cjk_compatibility_ideograph_2f80e);
+			return 1;
 		case 0x2F80F:
 			*normals = cjk_compatibility_ideograph_2f80f;
-			return static_count(cjk_compatibility_ideograph_2f80f);
+			return 1;
 		case 0x2F810:
 			*normals = cjk_compatibility_ideograph_2f810;
-			return static_count(cjk_compatibility_ideograph_2f810);
+			return 1;
 		case 0x2F811:
 			*normals = cjk_compatibility_ideograph_2f811;
-			return static_count(cjk_compatibility_ideograph_2f811);
+			return 1;
 		case 0x2F812:
 			*normals = cjk_compatibility_ideograph_2f812;
-			return static_count(cjk_compatibility_ideograph_2f812);
+			return 1;
 		case 0x2F813:
 			*normals = cjk_compatibility_ideograph_2f813;
-			return static_count(cjk_compatibility_ideograph_2f813);
+			return 1;
 		case 0x2F814:
 			*normals = cjk_compatibility_ideograph_2f814;
-			return static_count(cjk_compatibility_ideograph_2f814);
+			return 1;
 		case 0x2F815:
 			*normals = cjk_compatibility_ideograph_2f815;
-			return static_count(cjk_compatibility_ideograph_2f815);
+			return 1;
 		case 0x2F816:
 			*normals = cjk_compatibility_ideograph_2f816;
-			return static_count(cjk_compatibility_ideograph_2f816);
+			return 1;
 		case 0x2F817:
 			*normals = cjk_compatibility_ideograph_2f817;
-			return static_count(cjk_compatibility_ideograph_2f817);
+			return 1;
 		case 0x2F818:
 			*normals = cjk_compatibility_ideograph_2f818;
-			return static_count(cjk_compatibility_ideograph_2f818);
+			return 1;
 		case 0x2F819:
 			*normals = cjk_compatibility_ideograph_2f819;
-			return static_count(cjk_compatibility_ideograph_2f819);
+			return 1;
 		case 0x2F81A:
 			*normals = cjk_compatibility_ideograph_2f81a;
-			return static_count(cjk_compatibility_ideograph_2f81a);
+			return 1;
 		case 0x2F81B:
 			*normals = cjk_compatibility_ideograph_2f81b;
-			return static_count(cjk_compatibility_ideograph_2f81b);
+			return 1;
 		case 0x2F81C:
 			*normals = cjk_compatibility_ideograph_2f81c;
-			return static_count(cjk_compatibility_ideograph_2f81c);
+			return 1;
 		case 0x2F81D:
 			*normals = cjk_compatibility_ideograph_2f81d;
-			return static_count(cjk_compatibility_ideograph_2f81d);
+			return 1;
 		case 0x2F81E:
 			*normals = cjk_compatibility_ideograph_2f81e;
-			return static_count(cjk_compatibility_ideograph_2f81e);
+			return 1;
 		case 0x2F81F:
 			*normals = cjk_compatibility_ideograph_2f81f;
-			return static_count(cjk_compatibility_ideograph_2f81f);
+			return 1;
 		case 0x2F820:
 			*normals = cjk_compatibility_ideograph_2f820;
-			return static_count(cjk_compatibility_ideograph_2f820);
+			return 1;
 		case 0x2F821:
 			*normals = cjk_compatibility_ideograph_2f821;
-			return static_count(cjk_compatibility_ideograph_2f821);
+			return 1;
 		case 0x2F822:
 			*normals = cjk_compatibility_ideograph_2f822;
-			return static_count(cjk_compatibility_ideograph_2f822);
+			return 1;
 		case 0x2F823:
 			*normals = cjk_compatibility_ideograph_2f823;
-			return static_count(cjk_compatibility_ideograph_2f823);
+			return 1;
 		case 0x2F824:
 			*normals = cjk_compatibility_ideograph_2f824;
-			return static_count(cjk_compatibility_ideograph_2f824);
+			return 1;
 		case 0x2F825:
 			*normals = cjk_compatibility_ideograph_2f825;
-			return static_count(cjk_compatibility_ideograph_2f825);
+			return 1;
 		case 0x2F826:
 			*normals = cjk_compatibility_ideograph_2f826;
-			return static_count(cjk_compatibility_ideograph_2f826);
+			return 1;
 		case 0x2F827:
 			*normals = cjk_compatibility_ideograph_2f827;
-			return static_count(cjk_compatibility_ideograph_2f827);
+			return 1;
 		case 0x2F828:
 			*normals = cjk_compatibility_ideograph_2f828;
-			return static_count(cjk_compatibility_ideograph_2f828);
+			return 1;
 		case 0x2F829:
 			*normals = cjk_compatibility_ideograph_2f829;
-			return static_count(cjk_compatibility_ideograph_2f829);
+			return 1;
 		case 0x2F82A:
 			*normals = cjk_compatibility_ideograph_2f82a;
-			return static_count(cjk_compatibility_ideograph_2f82a);
+			return 1;
 		case 0x2F82B:
 			*normals = cjk_compatibility_ideograph_2f82b;
-			return static_count(cjk_compatibility_ideograph_2f82b);
+			return 1;
 		case 0x2F82C:
 			*normals = cjk_compatibility_ideograph_2f82c;
-			return static_count(cjk_compatibility_ideograph_2f82c);
+			return 1;
 		case 0x2F82D:
 			*normals = cjk_compatibility_ideograph_2f82d;
-			return static_count(cjk_compatibility_ideograph_2f82d);
+			return 1;
 		case 0x2F82E:
 			*normals = cjk_compatibility_ideograph_2f82e;
-			return static_count(cjk_compatibility_ideograph_2f82e);
+			return 1;
 		case 0x2F82F:
 			*normals = cjk_compatibility_ideograph_2f82f;
-			return static_count(cjk_compatibility_ideograph_2f82f);
+			return 1;
 		case 0x2F830:
 			*normals = cjk_compatibility_ideograph_2f830;
-			return static_count(cjk_compatibility_ideograph_2f830);
+			return 1;
 		case 0x2F831:
 			*normals = cjk_compatibility_ideograph_2f831;
-			return static_count(cjk_compatibility_ideograph_2f831);
+			return 1;
 		case 0x2F832:
 			*normals = cjk_compatibility_ideograph_2f832;
-			return static_count(cjk_compatibility_ideograph_2f832);
+			return 1;
 		case 0x2F833:
 			*normals = cjk_compatibility_ideograph_2f833;
-			return static_count(cjk_compatibility_ideograph_2f833);
+			return 1;
 		case 0x2F834:
 			*normals = cjk_compatibility_ideograph_2f834;
-			return static_count(cjk_compatibility_ideograph_2f834);
+			return 1;
 		case 0x2F835:
 			*normals = cjk_compatibility_ideograph_2f835;
-			return static_count(cjk_compatibility_ideograph_2f835);
+			return 1;
 		case 0x2F836:
 			*normals = cjk_compatibility_ideograph_2f836;
-			return static_count(cjk_compatibility_ideograph_2f836);
+			return 1;
 		case 0x2F837:
 			*normals = cjk_compatibility_ideograph_2f837;
-			return static_count(cjk_compatibility_ideograph_2f837);
+			return 1;
 		case 0x2F838:
 			*normals = cjk_compatibility_ideograph_2f838;
-			return static_count(cjk_compatibility_ideograph_2f838);
+			return 1;
 		case 0x2F839:
 			*normals = cjk_compatibility_ideograph_2f839;
-			return static_count(cjk_compatibility_ideograph_2f839);
+			return 1;
 		case 0x2F83A:
 			*normals = cjk_compatibility_ideograph_2f83a;
-			return static_count(cjk_compatibility_ideograph_2f83a);
+			return 1;
 		case 0x2F83B:
 			*normals = cjk_compatibility_ideograph_2f83b;
-			return static_count(cjk_compatibility_ideograph_2f83b);
+			return 1;
 		case 0x2F83C:
 			*normals = cjk_compatibility_ideograph_2f83c;
-			return static_count(cjk_compatibility_ideograph_2f83c);
+			return 1;
 		case 0x2F83D:
 			*normals = cjk_compatibility_ideograph_2f83d;
-			return static_count(cjk_compatibility_ideograph_2f83d);
+			return 1;
 		case 0x2F83E:
 			*normals = cjk_compatibility_ideograph_2f83e;
-			return static_count(cjk_compatibility_ideograph_2f83e);
+			return 1;
 		case 0x2F83F:
 			*normals = cjk_compatibility_ideograph_2f83f;
-			return static_count(cjk_compatibility_ideograph_2f83f);
+			return 1;
 		case 0x2F840:
 			*normals = cjk_compatibility_ideograph_2f840;
-			return static_count(cjk_compatibility_ideograph_2f840);
+			return 1;
 		case 0x2F841:
 			*normals = cjk_compatibility_ideograph_2f841;
-			return static_count(cjk_compatibility_ideograph_2f841);
+			return 1;
 		case 0x2F842:
 			*normals = cjk_compatibility_ideograph_2f842;
-			return static_count(cjk_compatibility_ideograph_2f842);
+			return 1;
 		case 0x2F843:
 			*normals = cjk_compatibility_ideograph_2f843;
-			return static_count(cjk_compatibility_ideograph_2f843);
+			return 1;
 		case 0x2F844:
 			*normals = cjk_compatibility_ideograph_2f844;
-			return static_count(cjk_compatibility_ideograph_2f844);
+			return 1;
 		case 0x2F845:
 			*normals = cjk_compatibility_ideograph_2f845;
-			return static_count(cjk_compatibility_ideograph_2f845);
+			return 1;
 		case 0x2F846:
 			*normals = cjk_compatibility_ideograph_2f846;
-			return static_count(cjk_compatibility_ideograph_2f846);
+			return 1;
 		case 0x2F847:
 			*normals = cjk_compatibility_ideograph_2f847;
-			return static_count(cjk_compatibility_ideograph_2f847);
+			return 1;
 		case 0x2F848:
 			*normals = cjk_compatibility_ideograph_2f848;
-			return static_count(cjk_compatibility_ideograph_2f848);
+			return 1;
 		case 0x2F849:
 			*normals = cjk_compatibility_ideograph_2f849;
-			return static_count(cjk_compatibility_ideograph_2f849);
+			return 1;
 		case 0x2F84A:
 			*normals = cjk_compatibility_ideograph_2f84a;
-			return static_count(cjk_compatibility_ideograph_2f84a);
+			return 1;
 		case 0x2F84B:
 			*normals = cjk_compatibility_ideograph_2f84b;
-			return static_count(cjk_compatibility_ideograph_2f84b);
+			return 1;
 		case 0x2F84C:
 			*normals = cjk_compatibility_ideograph_2f84c;
-			return static_count(cjk_compatibility_ideograph_2f84c);
+			return 1;
 		case 0x2F84D:
 			*normals = cjk_compatibility_ideograph_2f84d;
-			return static_count(cjk_compatibility_ideograph_2f84d);
+			return 1;
 		case 0x2F84E:
 			*normals = cjk_compatibility_ideograph_2f84e;
-			return static_count(cjk_compatibility_ideograph_2f84e);
+			return 1;
 		case 0x2F84F:
 			*normals = cjk_compatibility_ideograph_2f84f;
-			return static_count(cjk_compatibility_ideograph_2f84f);
+			return 1;
 		case 0x2F850:
 			*normals = cjk_compatibility_ideograph_2f850;
-			return static_count(cjk_compatibility_ideograph_2f850);
+			return 1;
 		case 0x2F851:
 			*normals = cjk_compatibility_ideograph_2f851;
-			return static_count(cjk_compatibility_ideograph_2f851);
+			return 1;
 		case 0x2F852:
 			*normals = cjk_compatibility_ideograph_2f852;
-			return static_count(cjk_compatibility_ideograph_2f852);
+			return 1;
 		case 0x2F853:
 			*normals = cjk_compatibility_ideograph_2f853;
-			return static_count(cjk_compatibility_ideograph_2f853);
+			return 1;
 		case 0x2F854:
 			*normals = cjk_compatibility_ideograph_2f854;
-			return static_count(cjk_compatibility_ideograph_2f854);
+			return 1;
 		case 0x2F855:
 			*normals = cjk_compatibility_ideograph_2f855;
-			return static_count(cjk_compatibility_ideograph_2f855);
+			return 1;
 		case 0x2F856:
 			*normals = cjk_compatibility_ideograph_2f856;
-			return static_count(cjk_compatibility_ideograph_2f856);
+			return 1;
 		case 0x2F857:
 			*normals = cjk_compatibility_ideograph_2f857;
-			return static_count(cjk_compatibility_ideograph_2f857);
+			return 1;
 		case 0x2F858:
 			*normals = cjk_compatibility_ideograph_2f858;
-			return static_count(cjk_compatibility_ideograph_2f858);
+			return 1;
 		case 0x2F859:
 			*normals = cjk_compatibility_ideograph_2f859;
-			return static_count(cjk_compatibility_ideograph_2f859);
+			return 1;
 		case 0x2F85A:
 			*normals = cjk_compatibility_ideograph_2f85a;
-			return static_count(cjk_compatibility_ideograph_2f85a);
+			return 1;
 		case 0x2F85B:
 			*normals = cjk_compatibility_ideograph_2f85b;
-			return static_count(cjk_compatibility_ideograph_2f85b);
+			return 1;
 		case 0x2F85C:
 			*normals = cjk_compatibility_ideograph_2f85c;
-			return static_count(cjk_compatibility_ideograph_2f85c);
+			return 1;
 		case 0x2F85D:
 			*normals = cjk_compatibility_ideograph_2f85d;
-			return static_count(cjk_compatibility_ideograph_2f85d);
+			return 1;
 		case 0x2F85E:
 			*normals = cjk_compatibility_ideograph_2f85e;
-			return static_count(cjk_compatibility_ideograph_2f85e);
+			return 1;
 		case 0x2F85F:
 			*normals = cjk_compatibility_ideograph_2f85f;
-			return static_count(cjk_compatibility_ideograph_2f85f);
+			return 1;
 		case 0x2F860:
 			*normals = cjk_compatibility_ideograph_2f860;
-			return static_count(cjk_compatibility_ideograph_2f860);
+			return 1;
 		case 0x2F861:
 			*normals = cjk_compatibility_ideograph_2f861;
-			return static_count(cjk_compatibility_ideograph_2f861);
+			return 1;
 		case 0x2F862:
 			*normals = cjk_compatibility_ideograph_2f862;
-			return static_count(cjk_compatibility_ideograph_2f862);
+			return 1;
 		case 0x2F863:
 			*normals = cjk_compatibility_ideograph_2f863;
-			return static_count(cjk_compatibility_ideograph_2f863);
+			return 1;
 		case 0x2F864:
 			*normals = cjk_compatibility_ideograph_2f864;
-			return static_count(cjk_compatibility_ideograph_2f864);
+			return 1;
 		case 0x2F865:
 			*normals = cjk_compatibility_ideograph_2f865;
-			return static_count(cjk_compatibility_ideograph_2f865);
+			return 1;
 		case 0x2F866:
 			*normals = cjk_compatibility_ideograph_2f866;
-			return static_count(cjk_compatibility_ideograph_2f866);
+			return 1;
 		case 0x2F867:
 			*normals = cjk_compatibility_ideograph_2f867;
-			return static_count(cjk_compatibility_ideograph_2f867);
+			return 1;
 		case 0x2F868:
 			*normals = cjk_compatibility_ideograph_2f868;
-			return static_count(cjk_compatibility_ideograph_2f868);
+			return 1;
 		case 0x2F869:
 			*normals = cjk_compatibility_ideograph_2f869;
-			return static_count(cjk_compatibility_ideograph_2f869);
+			return 1;
 		case 0x2F86A:
 			*normals = cjk_compatibility_ideograph_2f86a;
-			return static_count(cjk_compatibility_ideograph_2f86a);
+			return 1;
 		case 0x2F86B:
 			*normals = cjk_compatibility_ideograph_2f86b;
-			return static_count(cjk_compatibility_ideograph_2f86b);
+			return 1;
 		case 0x2F86C:
 			*normals = cjk_compatibility_ideograph_2f86c;
-			return static_count(cjk_compatibility_ideograph_2f86c);
+			return 1;
 		case 0x2F86D:
 			*normals = cjk_compatibility_ideograph_2f86d;
-			return static_count(cjk_compatibility_ideograph_2f86d);
+			return 1;
 		case 0x2F86E:
 			*normals = cjk_compatibility_ideograph_2f86e;
-			return static_count(cjk_compatibility_ideograph_2f86e);
+			return 1;
 		case 0x2F86F:
 			*normals = cjk_compatibility_ideograph_2f86f;
-			return static_count(cjk_compatibility_ideograph_2f86f);
+			return 1;
 		case 0x2F870:
 			*normals = cjk_compatibility_ideograph_2f870;
-			return static_count(cjk_compatibility_ideograph_2f870);
+			return 1;
 		case 0x2F871:
 			*normals = cjk_compatibility_ideograph_2f871;
-			return static_count(cjk_compatibility_ideograph_2f871);
+			return 1;
 		case 0x2F872:
 			*normals = cjk_compatibility_ideograph_2f872;
-			return static_count(cjk_compatibility_ideograph_2f872);
+			return 1;
 		case 0x2F873:
 			*normals = cjk_compatibility_ideograph_2f873;
-			return static_count(cjk_compatibility_ideograph_2f873);
+			return 1;
 		case 0x2F874:
 			*normals = cjk_compatibility_ideograph_2f874;
-			return static_count(cjk_compatibility_ideograph_2f874);
+			return 1;
 		case 0x2F875:
 			*normals = cjk_compatibility_ideograph_2f875;
-			return static_count(cjk_compatibility_ideograph_2f875);
+			return 1;
 		case 0x2F876:
 			*normals = cjk_compatibility_ideograph_2f876;
-			return static_count(cjk_compatibility_ideograph_2f876);
+			return 1;
 		case 0x2F877:
 			*normals = cjk_compatibility_ideograph_2f877;
-			return static_count(cjk_compatibility_ideograph_2f877);
+			return 1;
 		case 0x2F878:
 			*normals = cjk_compatibility_ideograph_2f878;
-			return static_count(cjk_compatibility_ideograph_2f878);
+			return 1;
 		case 0x2F879:
 			*normals = cjk_compatibility_ideograph_2f879;
-			return static_count(cjk_compatibility_ideograph_2f879);
+			return 1;
 		case 0x2F87A:
 			*normals = cjk_compatibility_ideograph_2f87a;
-			return static_count(cjk_compatibility_ideograph_2f87a);
+			return 1;
 		case 0x2F87B:
 			*normals = cjk_compatibility_ideograph_2f87b;
-			return static_count(cjk_compatibility_ideograph_2f87b);
+			return 1;
 		case 0x2F87C:
 			*normals = cjk_compatibility_ideograph_2f87c;
-			return static_count(cjk_compatibility_ideograph_2f87c);
+			return 1;
 		case 0x2F87D:
 			*normals = cjk_compatibility_ideograph_2f87d;
-			return static_count(cjk_compatibility_ideograph_2f87d);
+			return 1;
 		case 0x2F87E:
 			*normals = cjk_compatibility_ideograph_2f87e;
-			return static_count(cjk_compatibility_ideograph_2f87e);
+			return 1;
 		case 0x2F87F:
 			*normals = cjk_compatibility_ideograph_2f87f;
-			return static_count(cjk_compatibility_ideograph_2f87f);
+			return 1;
 		case 0x2F880:
 			*normals = cjk_compatibility_ideograph_2f880;
-			return static_count(cjk_compatibility_ideograph_2f880);
+			return 1;
 		case 0x2F881:
 			*normals = cjk_compatibility_ideograph_2f881;
-			return static_count(cjk_compatibility_ideograph_2f881);
+			return 1;
 		case 0x2F882:
 			*normals = cjk_compatibility_ideograph_2f882;
-			return static_count(cjk_compatibility_ideograph_2f882);
+			return 1;
 		case 0x2F883:
 			*normals = cjk_compatibility_ideograph_2f883;
-			return static_count(cjk_compatibility_ideograph_2f883);
+			return 1;
 		case 0x2F884:
 			*normals = cjk_compatibility_ideograph_2f884;
-			return static_count(cjk_compatibility_ideograph_2f884);
+			return 1;
 		case 0x2F885:
 			*normals = cjk_compatibility_ideograph_2f885;
-			return static_count(cjk_compatibility_ideograph_2f885);
+			return 1;
 		case 0x2F886:
 			*normals = cjk_compatibility_ideograph_2f886;
-			return static_count(cjk_compatibility_ideograph_2f886);
+			return 1;
 		case 0x2F887:
 			*normals = cjk_compatibility_ideograph_2f887;
-			return static_count(cjk_compatibility_ideograph_2f887);
+			return 1;
 		case 0x2F888:
 			*normals = cjk_compatibility_ideograph_2f888;
-			return static_count(cjk_compatibility_ideograph_2f888);
+			return 1;
 		case 0x2F889:
 			*normals = cjk_compatibility_ideograph_2f889;
-			return static_count(cjk_compatibility_ideograph_2f889);
+			return 1;
 		case 0x2F88A:
 			*normals = cjk_compatibility_ideograph_2f88a;
-			return static_count(cjk_compatibility_ideograph_2f88a);
+			return 1;
 		case 0x2F88B:
 			*normals = cjk_compatibility_ideograph_2f88b;
-			return static_count(cjk_compatibility_ideograph_2f88b);
+			return 1;
 		case 0x2F88C:
 			*normals = cjk_compatibility_ideograph_2f88c;
-			return static_count(cjk_compatibility_ideograph_2f88c);
+			return 1;
 		case 0x2F88D:
 			*normals = cjk_compatibility_ideograph_2f88d;
-			return static_count(cjk_compatibility_ideograph_2f88d);
+			return 1;
 		case 0x2F88E:
 			*normals = cjk_compatibility_ideograph_2f88e;
-			return static_count(cjk_compatibility_ideograph_2f88e);
+			return 1;
 		case 0x2F88F:
 			*normals = cjk_compatibility_ideograph_2f88f;
-			return static_count(cjk_compatibility_ideograph_2f88f);
+			return 1;
 		case 0x2F890:
 			*normals = cjk_compatibility_ideograph_2f890;
-			return static_count(cjk_compatibility_ideograph_2f890);
+			return 1;
 		case 0x2F891:
 			*normals = cjk_compatibility_ideograph_2f891;
-			return static_count(cjk_compatibility_ideograph_2f891);
+			return 1;
 		case 0x2F892:
 			*normals = cjk_compatibility_ideograph_2f892;
-			return static_count(cjk_compatibility_ideograph_2f892);
+			return 1;
 		case 0x2F893:
 			*normals = cjk_compatibility_ideograph_2f893;
-			return static_count(cjk_compatibility_ideograph_2f893);
+			return 1;
 		case 0x2F894:
 			*normals = cjk_compatibility_ideograph_2f894;
-			return static_count(cjk_compatibility_ideograph_2f894);
+			return 1;
 		case 0x2F895:
 			*normals = cjk_compatibility_ideograph_2f895;
-			return static_count(cjk_compatibility_ideograph_2f895);
+			return 1;
 		case 0x2F896:
 			*normals = cjk_compatibility_ideograph_2f896;
-			return static_count(cjk_compatibility_ideograph_2f896);
+			return 1;
 		case 0x2F897:
 			*normals = cjk_compatibility_ideograph_2f897;
-			return static_count(cjk_compatibility_ideograph_2f897);
+			return 1;
 		case 0x2F898:
 			*normals = cjk_compatibility_ideograph_2f898;
-			return static_count(cjk_compatibility_ideograph_2f898);
+			return 1;
 		case 0x2F899:
 			*normals = cjk_compatibility_ideograph_2f899;
-			return static_count(cjk_compatibility_ideograph_2f899);
+			return 1;
 		case 0x2F89A:
 			*normals = cjk_compatibility_ideograph_2f89a;
-			return static_count(cjk_compatibility_ideograph_2f89a);
+			return 1;
 		case 0x2F89B:
 			*normals = cjk_compatibility_ideograph_2f89b;
-			return static_count(cjk_compatibility_ideograph_2f89b);
+			return 1;
 		case 0x2F89C:
 			*normals = cjk_compatibility_ideograph_2f89c;
-			return static_count(cjk_compatibility_ideograph_2f89c);
+			return 1;
 		case 0x2F89D:
 			*normals = cjk_compatibility_ideograph_2f89d;
-			return static_count(cjk_compatibility_ideograph_2f89d);
+			return 1;
 		case 0x2F89E:
 			*normals = cjk_compatibility_ideograph_2f89e;
-			return static_count(cjk_compatibility_ideograph_2f89e);
+			return 1;
 		case 0x2F89F:
 			*normals = cjk_compatibility_ideograph_2f89f;
-			return static_count(cjk_compatibility_ideograph_2f89f);
+			return 1;
 		case 0x2F8A0:
 			*normals = cjk_compatibility_ideograph_2f8a0;
-			return static_count(cjk_compatibility_ideograph_2f8a0);
+			return 1;
 		case 0x2F8A1:
 			*normals = cjk_compatibility_ideograph_2f8a1;
-			return static_count(cjk_compatibility_ideograph_2f8a1);
+			return 1;
 		case 0x2F8A2:
 			*normals = cjk_compatibility_ideograph_2f8a2;
-			return static_count(cjk_compatibility_ideograph_2f8a2);
+			return 1;
 		case 0x2F8A3:
 			*normals = cjk_compatibility_ideograph_2f8a3;
-			return static_count(cjk_compatibility_ideograph_2f8a3);
+			return 1;
 		case 0x2F8A4:
 			*normals = cjk_compatibility_ideograph_2f8a4;
-			return static_count(cjk_compatibility_ideograph_2f8a4);
+			return 1;
 		case 0x2F8A5:
 			*normals = cjk_compatibility_ideograph_2f8a5;
-			return static_count(cjk_compatibility_ideograph_2f8a5);
+			return 1;
 		case 0x2F8A6:
 			*normals = cjk_compatibility_ideograph_2f8a6;
-			return static_count(cjk_compatibility_ideograph_2f8a6);
+			return 1;
 		case 0x2F8A7:
 			*normals = cjk_compatibility_ideograph_2f8a7;
-			return static_count(cjk_compatibility_ideograph_2f8a7);
+			return 1;
 		case 0x2F8A8:
 			*normals = cjk_compatibility_ideograph_2f8a8;
-			return static_count(cjk_compatibility_ideograph_2f8a8);
+			return 1;
 		case 0x2F8A9:
 			*normals = cjk_compatibility_ideograph_2f8a9;
-			return static_count(cjk_compatibility_ideograph_2f8a9);
+			return 1;
 		case 0x2F8AA:
 			*normals = cjk_compatibility_ideograph_2f8aa;
-			return static_count(cjk_compatibility_ideograph_2f8aa);
+			return 1;
 		case 0x2F8AB:
 			*normals = cjk_compatibility_ideograph_2f8ab;
-			return static_count(cjk_compatibility_ideograph_2f8ab);
+			return 1;
 		case 0x2F8AC:
 			*normals = cjk_compatibility_ideograph_2f8ac;
-			return static_count(cjk_compatibility_ideograph_2f8ac);
+			return 1;
 		case 0x2F8AD:
 			*normals = cjk_compatibility_ideograph_2f8ad;
-			return static_count(cjk_compatibility_ideograph_2f8ad);
+			return 1;
 		case 0x2F8AE:
 			*normals = cjk_compatibility_ideograph_2f8ae;
-			return static_count(cjk_compatibility_ideograph_2f8ae);
+			return 1;
 		case 0x2F8AF:
 			*normals = cjk_compatibility_ideograph_2f8af;
-			return static_count(cjk_compatibility_ideograph_2f8af);
+			return 1;
 		case 0x2F8B0:
 			*normals = cjk_compatibility_ideograph_2f8b0;
-			return static_count(cjk_compatibility_ideograph_2f8b0);
+			return 1;
 		case 0x2F8B1:
 			*normals = cjk_compatibility_ideograph_2f8b1;
-			return static_count(cjk_compatibility_ideograph_2f8b1);
+			return 1;
 		case 0x2F8B2:
 			*normals = cjk_compatibility_ideograph_2f8b2;
-			return static_count(cjk_compatibility_ideograph_2f8b2);
+			return 1;
 		case 0x2F8B3:
 			*normals = cjk_compatibility_ideograph_2f8b3;
-			return static_count(cjk_compatibility_ideograph_2f8b3);
+			return 1;
 		case 0x2F8B4:
 			*normals = cjk_compatibility_ideograph_2f8b4;
-			return static_count(cjk_compatibility_ideograph_2f8b4);
+			return 1;
 		case 0x2F8B5:
 			*normals = cjk_compatibility_ideograph_2f8b5;
-			return static_count(cjk_compatibility_ideograph_2f8b5);
+			return 1;
 		case 0x2F8B6:
 			*normals = cjk_compatibility_ideograph_2f8b6;
-			return static_count(cjk_compatibility_ideograph_2f8b6);
+			return 1;
 		case 0x2F8B7:
 			*normals = cjk_compatibility_ideograph_2f8b7;
-			return static_count(cjk_compatibility_ideograph_2f8b7);
+			return 1;
 		case 0x2F8B8:
 			*normals = cjk_compatibility_ideograph_2f8b8;
-			return static_count(cjk_compatibility_ideograph_2f8b8);
+			return 1;
 		case 0x2F8B9:
 			*normals = cjk_compatibility_ideograph_2f8b9;
-			return static_count(cjk_compatibility_ideograph_2f8b9);
+			return 1;
 		case 0x2F8BA:
 			*normals = cjk_compatibility_ideograph_2f8ba;
-			return static_count(cjk_compatibility_ideograph_2f8ba);
+			return 1;
 		case 0x2F8BB:
 			*normals = cjk_compatibility_ideograph_2f8bb;
-			return static_count(cjk_compatibility_ideograph_2f8bb);
+			return 1;
 		case 0x2F8BC:
 			*normals = cjk_compatibility_ideograph_2f8bc;
-			return static_count(cjk_compatibility_ideograph_2f8bc);
+			return 1;
 		case 0x2F8BD:
 			*normals = cjk_compatibility_ideograph_2f8bd;
-			return static_count(cjk_compatibility_ideograph_2f8bd);
+			return 1;
 		case 0x2F8BE:
 			*normals = cjk_compatibility_ideograph_2f8be;
-			return static_count(cjk_compatibility_ideograph_2f8be);
+			return 1;
 		case 0x2F8BF:
 			*normals = cjk_compatibility_ideograph_2f8bf;
-			return static_count(cjk_compatibility_ideograph_2f8bf);
+			return 1;
 		case 0x2F8C0:
 			*normals = cjk_compatibility_ideograph_2f8c0;
-			return static_count(cjk_compatibility_ideograph_2f8c0);
+			return 1;
 		case 0x2F8C1:
 			*normals = cjk_compatibility_ideograph_2f8c1;
-			return static_count(cjk_compatibility_ideograph_2f8c1);
+			return 1;
 		case 0x2F8C2:
 			*normals = cjk_compatibility_ideograph_2f8c2;
-			return static_count(cjk_compatibility_ideograph_2f8c2);
+			return 1;
 		case 0x2F8C3:
 			*normals = cjk_compatibility_ideograph_2f8c3;
-			return static_count(cjk_compatibility_ideograph_2f8c3);
+			return 1;
 		case 0x2F8C4:
 			*normals = cjk_compatibility_ideograph_2f8c4;
-			return static_count(cjk_compatibility_ideograph_2f8c4);
+			return 1;
 		case 0x2F8C5:
 			*normals = cjk_compatibility_ideograph_2f8c5;
-			return static_count(cjk_compatibility_ideograph_2f8c5);
+			return 1;
 		case 0x2F8C6:
 			*normals = cjk_compatibility_ideograph_2f8c6;
-			return static_count(cjk_compatibility_ideograph_2f8c6);
+			return 1;
 		case 0x2F8C7:
 			*normals = cjk_compatibility_ideograph_2f8c7;
-			return static_count(cjk_compatibility_ideograph_2f8c7);
+			return 1;
 		case 0x2F8C8:
 			*normals = cjk_compatibility_ideograph_2f8c8;
-			return static_count(cjk_compatibility_ideograph_2f8c8);
+			return 1;
 		case 0x2F8C9:
 			*normals = cjk_compatibility_ideograph_2f8c9;
-			return static_count(cjk_compatibility_ideograph_2f8c9);
+			return 1;
 		case 0x2F8CA:
 			*normals = cjk_compatibility_ideograph_2f8ca;
-			return static_count(cjk_compatibility_ideograph_2f8ca);
+			return 1;
 		case 0x2F8CB:
 			*normals = cjk_compatibility_ideograph_2f8cb;
-			return static_count(cjk_compatibility_ideograph_2f8cb);
+			return 1;
 		case 0x2F8CC:
 			*normals = cjk_compatibility_ideograph_2f8cc;
-			return static_count(cjk_compatibility_ideograph_2f8cc);
+			return 1;
 		case 0x2F8CD:
 			*normals = cjk_compatibility_ideograph_2f8cd;
-			return static_count(cjk_compatibility_ideograph_2f8cd);
+			return 1;
 		case 0x2F8CE:
 			*normals = cjk_compatibility_ideograph_2f8ce;
-			return static_count(cjk_compatibility_ideograph_2f8ce);
+			return 1;
 		case 0x2F8CF:
 			*normals = cjk_compatibility_ideograph_2f8cf;
-			return static_count(cjk_compatibility_ideograph_2f8cf);
+			return 1;
 		case 0x2F8D0:
 			*normals = cjk_compatibility_ideograph_2f8d0;
-			return static_count(cjk_compatibility_ideograph_2f8d0);
+			return 1;
 		case 0x2F8D1:
 			*normals = cjk_compatibility_ideograph_2f8d1;
-			return static_count(cjk_compatibility_ideograph_2f8d1);
+			return 1;
 		case 0x2F8D2:
 			*normals = cjk_compatibility_ideograph_2f8d2;
-			return static_count(cjk_compatibility_ideograph_2f8d2);
+			return 1;
 		case 0x2F8D3:
 			*normals = cjk_compatibility_ideograph_2f8d3;
-			return static_count(cjk_compatibility_ideograph_2f8d3);
+			return 1;
 		case 0x2F8D4:
 			*normals = cjk_compatibility_ideograph_2f8d4;
-			return static_count(cjk_compatibility_ideograph_2f8d4);
+			return 1;
 		case 0x2F8D5:
 			*normals = cjk_compatibility_ideograph_2f8d5;
-			return static_count(cjk_compatibility_ideograph_2f8d5);
+			return 1;
 		case 0x2F8D6:
 			*normals = cjk_compatibility_ideograph_2f8d6;
-			return static_count(cjk_compatibility_ideograph_2f8d6);
+			return 1;
 		case 0x2F8D7:
 			*normals = cjk_compatibility_ideograph_2f8d7;
-			return static_count(cjk_compatibility_ideograph_2f8d7);
+			return 1;
 		case 0x2F8D8:
 			*normals = cjk_compatibility_ideograph_2f8d8;
-			return static_count(cjk_compatibility_ideograph_2f8d8);
+			return 1;
 		case 0x2F8D9:
 			*normals = cjk_compatibility_ideograph_2f8d9;
-			return static_count(cjk_compatibility_ideograph_2f8d9);
+			return 1;
 		case 0x2F8DA:
 			*normals = cjk_compatibility_ideograph_2f8da;
-			return static_count(cjk_compatibility_ideograph_2f8da);
+			return 1;
 		case 0x2F8DB:
 			*normals = cjk_compatibility_ideograph_2f8db;
-			return static_count(cjk_compatibility_ideograph_2f8db);
+			return 1;
 		case 0x2F8DC:
 			*normals = cjk_compatibility_ideograph_2f8dc;
-			return static_count(cjk_compatibility_ideograph_2f8dc);
+			return 1;
 		case 0x2F8DD:
 			*normals = cjk_compatibility_ideograph_2f8dd;
-			return static_count(cjk_compatibility_ideograph_2f8dd);
+			return 1;
 		case 0x2F8DE:
 			*normals = cjk_compatibility_ideograph_2f8de;
-			return static_count(cjk_compatibility_ideograph_2f8de);
+			return 1;
 		case 0x2F8DF:
 			*normals = cjk_compatibility_ideograph_2f8df;
-			return static_count(cjk_compatibility_ideograph_2f8df);
+			return 1;
 		case 0x2F8E0:
 			*normals = cjk_compatibility_ideograph_2f8e0;
-			return static_count(cjk_compatibility_ideograph_2f8e0);
+			return 1;
 		case 0x2F8E1:
 			*normals = cjk_compatibility_ideograph_2f8e1;
-			return static_count(cjk_compatibility_ideograph_2f8e1);
+			return 1;
 		case 0x2F8E2:
 			*normals = cjk_compatibility_ideograph_2f8e2;
-			return static_count(cjk_compatibility_ideograph_2f8e2);
+			return 1;
 		case 0x2F8E3:
 			*normals = cjk_compatibility_ideograph_2f8e3;
-			return static_count(cjk_compatibility_ideograph_2f8e3);
+			return 1;
 		case 0x2F8E4:
 			*normals = cjk_compatibility_ideograph_2f8e4;
-			return static_count(cjk_compatibility_ideograph_2f8e4);
+			return 1;
 		case 0x2F8E5:
 			*normals = cjk_compatibility_ideograph_2f8e5;
-			return static_count(cjk_compatibility_ideograph_2f8e5);
+			return 1;
 		case 0x2F8E6:
 			*normals = cjk_compatibility_ideograph_2f8e6;
-			return static_count(cjk_compatibility_ideograph_2f8e6);
+			return 1;
 		case 0x2F8E7:
 			*normals = cjk_compatibility_ideograph_2f8e7;
-			return static_count(cjk_compatibility_ideograph_2f8e7);
+			return 1;
 		case 0x2F8E8:
 			*normals = cjk_compatibility_ideograph_2f8e8;
-			return static_count(cjk_compatibility_ideograph_2f8e8);
+			return 1;
 		case 0x2F8E9:
 			*normals = cjk_compatibility_ideograph_2f8e9;
-			return static_count(cjk_compatibility_ideograph_2f8e9);
+			return 1;
 		case 0x2F8EA:
 			*normals = cjk_compatibility_ideograph_2f8ea;
-			return static_count(cjk_compatibility_ideograph_2f8ea);
+			return 1;
 		case 0x2F8EB:
 			*normals = cjk_compatibility_ideograph_2f8eb;
-			return static_count(cjk_compatibility_ideograph_2f8eb);
+			return 1;
 		case 0x2F8EC:
 			*normals = cjk_compatibility_ideograph_2f8ec;
-			return static_count(cjk_compatibility_ideograph_2f8ec);
+			return 1;
 		case 0x2F8ED:
 			*normals = cjk_compatibility_ideograph_2f8ed;
-			return static_count(cjk_compatibility_ideograph_2f8ed);
+			return 1;
 		case 0x2F8EE:
 			*normals = cjk_compatibility_ideograph_2f8ee;
-			return static_count(cjk_compatibility_ideograph_2f8ee);
+			return 1;
 		case 0x2F8EF:
 			*normals = cjk_compatibility_ideograph_2f8ef;
-			return static_count(cjk_compatibility_ideograph_2f8ef);
+			return 1;
 		case 0x2F8F0:
 			*normals = cjk_compatibility_ideograph_2f8f0;
-			return static_count(cjk_compatibility_ideograph_2f8f0);
+			return 1;
 		case 0x2F8F1:
 			*normals = cjk_compatibility_ideograph_2f8f1;
-			return static_count(cjk_compatibility_ideograph_2f8f1);
+			return 1;
 		case 0x2F8F2:
 			*normals = cjk_compatibility_ideograph_2f8f2;
-			return static_count(cjk_compatibility_ideograph_2f8f2);
+			return 1;
 		case 0x2F8F3:
 			*normals = cjk_compatibility_ideograph_2f8f3;
-			return static_count(cjk_compatibility_ideograph_2f8f3);
+			return 1;
 		case 0x2F8F4:
 			*normals = cjk_compatibility_ideograph_2f8f4;
-			return static_count(cjk_compatibility_ideograph_2f8f4);
+			return 1;
 		case 0x2F8F5:
 			*normals = cjk_compatibility_ideograph_2f8f5;
-			return static_count(cjk_compatibility_ideograph_2f8f5);
+			return 1;
 		case 0x2F8F6:
 			*normals = cjk_compatibility_ideograph_2f8f6;
-			return static_count(cjk_compatibility_ideograph_2f8f6);
+			return 1;
 		case 0x2F8F7:
 			*normals = cjk_compatibility_ideograph_2f8f7;
-			return static_count(cjk_compatibility_ideograph_2f8f7);
+			return 1;
 		case 0x2F8F8:
 			*normals = cjk_compatibility_ideograph_2f8f8;
-			return static_count(cjk_compatibility_ideograph_2f8f8);
+			return 1;
 		case 0x2F8F9:
 			*normals = cjk_compatibility_ideograph_2f8f9;
-			return static_count(cjk_compatibility_ideograph_2f8f9);
+			return 1;
 		case 0x2F8FA:
 			*normals = cjk_compatibility_ideograph_2f8fa;
-			return static_count(cjk_compatibility_ideograph_2f8fa);
+			return 1;
 		case 0x2F8FB:
 			*normals = cjk_compatibility_ideograph_2f8fb;
-			return static_count(cjk_compatibility_ideograph_2f8fb);
+			return 1;
 		case 0x2F8FC:
 			*normals = cjk_compatibility_ideograph_2f8fc;
-			return static_count(cjk_compatibility_ideograph_2f8fc);
+			return 1;
 		case 0x2F8FD:
 			*normals = cjk_compatibility_ideograph_2f8fd;
-			return static_count(cjk_compatibility_ideograph_2f8fd);
+			return 1;
 		case 0x2F8FE:
 			*normals = cjk_compatibility_ideograph_2f8fe;
-			return static_count(cjk_compatibility_ideograph_2f8fe);
+			return 1;
 		case 0x2F8FF:
 			*normals = cjk_compatibility_ideograph_2f8ff;
-			return static_count(cjk_compatibility_ideograph_2f8ff);
+			return 1;
 		case 0x2F900:
 			*normals = cjk_compatibility_ideograph_2f900;
-			return static_count(cjk_compatibility_ideograph_2f900);
+			return 1;
 		case 0x2F901:
 			*normals = cjk_compatibility_ideograph_2f901;
-			return static_count(cjk_compatibility_ideograph_2f901);
+			return 1;
 		case 0x2F902:
 			*normals = cjk_compatibility_ideograph_2f902;
-			return static_count(cjk_compatibility_ideograph_2f902);
+			return 1;
 		case 0x2F903:
 			*normals = cjk_compatibility_ideograph_2f903;
-			return static_count(cjk_compatibility_ideograph_2f903);
+			return 1;
 		case 0x2F904:
 			*normals = cjk_compatibility_ideograph_2f904;
-			return static_count(cjk_compatibility_ideograph_2f904);
+			return 1;
 		case 0x2F905:
 			*normals = cjk_compatibility_ideograph_2f905;
-			return static_count(cjk_compatibility_ideograph_2f905);
+			return 1;
 		case 0x2F906:
 			*normals = cjk_compatibility_ideograph_2f906;
-			return static_count(cjk_compatibility_ideograph_2f906);
+			return 1;
 		case 0x2F907:
 			*normals = cjk_compatibility_ideograph_2f907;
-			return static_count(cjk_compatibility_ideograph_2f907);
+			return 1;
 		case 0x2F908:
 			*normals = cjk_compatibility_ideograph_2f908;
-			return static_count(cjk_compatibility_ideograph_2f908);
+			return 1;
 		case 0x2F909:
 			*normals = cjk_compatibility_ideograph_2f909;
-			return static_count(cjk_compatibility_ideograph_2f909);
+			return 1;
 		case 0x2F90A:
 			*normals = cjk_compatibility_ideograph_2f90a;
-			return static_count(cjk_compatibility_ideograph_2f90a);
+			return 1;
 		case 0x2F90B:
 			*normals = cjk_compatibility_ideograph_2f90b;
-			return static_count(cjk_compatibility_ideograph_2f90b);
+			return 1;
 		case 0x2F90C:
 			*normals = cjk_compatibility_ideograph_2f90c;
-			return static_count(cjk_compatibility_ideograph_2f90c);
+			return 1;
 		case 0x2F90D:
 			*normals = cjk_compatibility_ideograph_2f90d;
-			return static_count(cjk_compatibility_ideograph_2f90d);
+			return 1;
 		case 0x2F90E:
 			*normals = cjk_compatibility_ideograph_2f90e;
-			return static_count(cjk_compatibility_ideograph_2f90e);
+			return 1;
 		case 0x2F90F:
 			*normals = cjk_compatibility_ideograph_2f90f;
-			return static_count(cjk_compatibility_ideograph_2f90f);
+			return 1;
 		case 0x2F910:
 			*normals = cjk_compatibility_ideograph_2f910;
-			return static_count(cjk_compatibility_ideograph_2f910);
+			return 1;
 		case 0x2F911:
 			*normals = cjk_compatibility_ideograph_2f911;
-			return static_count(cjk_compatibility_ideograph_2f911);
+			return 1;
 		case 0x2F912:
 			*normals = cjk_compatibility_ideograph_2f912;
-			return static_count(cjk_compatibility_ideograph_2f912);
+			return 1;
 		case 0x2F913:
 			*normals = cjk_compatibility_ideograph_2f913;
-			return static_count(cjk_compatibility_ideograph_2f913);
+			return 1;
 		case 0x2F914:
 			*normals = cjk_compatibility_ideograph_2f914;
-			return static_count(cjk_compatibility_ideograph_2f914);
+			return 1;
 		case 0x2F915:
 			*normals = cjk_compatibility_ideograph_2f915;
-			return static_count(cjk_compatibility_ideograph_2f915);
+			return 1;
 		case 0x2F916:
 			*normals = cjk_compatibility_ideograph_2f916;
-			return static_count(cjk_compatibility_ideograph_2f916);
+			return 1;
 		case 0x2F917:
 			*normals = cjk_compatibility_ideograph_2f917;
-			return static_count(cjk_compatibility_ideograph_2f917);
+			return 1;
 		case 0x2F918:
 			*normals = cjk_compatibility_ideograph_2f918;
-			return static_count(cjk_compatibility_ideograph_2f918);
+			return 1;
 		case 0x2F919:
 			*normals = cjk_compatibility_ideograph_2f919;
-			return static_count(cjk_compatibility_ideograph_2f919);
+			return 1;
 		case 0x2F91A:
 			*normals = cjk_compatibility_ideograph_2f91a;
-			return static_count(cjk_compatibility_ideograph_2f91a);
+			return 1;
 		case 0x2F91B:
 			*normals = cjk_compatibility_ideograph_2f91b;
-			return static_count(cjk_compatibility_ideograph_2f91b);
+			return 1;
 		case 0x2F91C:
 			*normals = cjk_compatibility_ideograph_2f91c;
-			return static_count(cjk_compatibility_ideograph_2f91c);
+			return 1;
 		case 0x2F91D:
 			*normals = cjk_compatibility_ideograph_2f91d;
-			return static_count(cjk_compatibility_ideograph_2f91d);
+			return 1;
 		case 0x2F91E:
 			*normals = cjk_compatibility_ideograph_2f91e;
-			return static_count(cjk_compatibility_ideograph_2f91e);
+			return 1;
 		case 0x2F91F:
 			*normals = cjk_compatibility_ideograph_2f91f;
-			return static_count(cjk_compatibility_ideograph_2f91f);
+			return 1;
 		case 0x2F920:
 			*normals = cjk_compatibility_ideograph_2f920;
-			return static_count(cjk_compatibility_ideograph_2f920);
+			return 1;
 		case 0x2F921:
 			*normals = cjk_compatibility_ideograph_2f921;
-			return static_count(cjk_compatibility_ideograph_2f921);
+			return 1;
 		case 0x2F922:
 			*normals = cjk_compatibility_ideograph_2f922;
-			return static_count(cjk_compatibility_ideograph_2f922);
+			return 1;
 		case 0x2F923:
 			*normals = cjk_compatibility_ideograph_2f923;
-			return static_count(cjk_compatibility_ideograph_2f923);
+			return 1;
 		case 0x2F924:
 			*normals = cjk_compatibility_ideograph_2f924;
-			return static_count(cjk_compatibility_ideograph_2f924);
+			return 1;
 		case 0x2F925:
 			*normals = cjk_compatibility_ideograph_2f925;
-			return static_count(cjk_compatibility_ideograph_2f925);
+			return 1;
 		case 0x2F926:
 			*normals = cjk_compatibility_ideograph_2f926;
-			return static_count(cjk_compatibility_ideograph_2f926);
+			return 1;
 		case 0x2F927:
 			*normals = cjk_compatibility_ideograph_2f927;
-			return static_count(cjk_compatibility_ideograph_2f927);
+			return 1;
 		case 0x2F928:
 			*normals = cjk_compatibility_ideograph_2f928;
-			return static_count(cjk_compatibility_ideograph_2f928);
+			return 1;
 		case 0x2F929:
 			*normals = cjk_compatibility_ideograph_2f929;
-			return static_count(cjk_compatibility_ideograph_2f929);
+			return 1;
 		case 0x2F92A:
 			*normals = cjk_compatibility_ideograph_2f92a;
-			return static_count(cjk_compatibility_ideograph_2f92a);
+			return 1;
 		case 0x2F92B:
 			*normals = cjk_compatibility_ideograph_2f92b;
-			return static_count(cjk_compatibility_ideograph_2f92b);
+			return 1;
 		case 0x2F92C:
 			*normals = cjk_compatibility_ideograph_2f92c;
-			return static_count(cjk_compatibility_ideograph_2f92c);
+			return 1;
 		case 0x2F92D:
 			*normals = cjk_compatibility_ideograph_2f92d;
-			return static_count(cjk_compatibility_ideograph_2f92d);
+			return 1;
 		case 0x2F92E:
 			*normals = cjk_compatibility_ideograph_2f92e;
-			return static_count(cjk_compatibility_ideograph_2f92e);
+			return 1;
 		case 0x2F92F:
 			*normals = cjk_compatibility_ideograph_2f92f;
-			return static_count(cjk_compatibility_ideograph_2f92f);
+			return 1;
 		case 0x2F930:
 			*normals = cjk_compatibility_ideograph_2f930;
-			return static_count(cjk_compatibility_ideograph_2f930);
+			return 1;
 		case 0x2F931:
 			*normals = cjk_compatibility_ideograph_2f931;
-			return static_count(cjk_compatibility_ideograph_2f931);
+			return 1;
 		case 0x2F932:
 			*normals = cjk_compatibility_ideograph_2f932;
-			return static_count(cjk_compatibility_ideograph_2f932);
+			return 1;
 		case 0x2F933:
 			*normals = cjk_compatibility_ideograph_2f933;
-			return static_count(cjk_compatibility_ideograph_2f933);
+			return 1;
 		case 0x2F934:
 			*normals = cjk_compatibility_ideograph_2f934;
-			return static_count(cjk_compatibility_ideograph_2f934);
+			return 1;
 		case 0x2F935:
 			*normals = cjk_compatibility_ideograph_2f935;
-			return static_count(cjk_compatibility_ideograph_2f935);
+			return 1;
 		case 0x2F936:
 			*normals = cjk_compatibility_ideograph_2f936;
-			return static_count(cjk_compatibility_ideograph_2f936);
+			return 1;
 		case 0x2F937:
 			*normals = cjk_compatibility_ideograph_2f937;
-			return static_count(cjk_compatibility_ideograph_2f937);
+			return 1;
 		case 0x2F938:
 			*normals = cjk_compatibility_ideograph_2f938;
-			return static_count(cjk_compatibility_ideograph_2f938);
+			return 1;
 		case 0x2F939:
 			*normals = cjk_compatibility_ideograph_2f939;
-			return static_count(cjk_compatibility_ideograph_2f939);
+			return 1;
 		case 0x2F93A:
 			*normals = cjk_compatibility_ideograph_2f93a;
-			return static_count(cjk_compatibility_ideograph_2f93a);
+			return 1;
 		case 0x2F93B:
 			*normals = cjk_compatibility_ideograph_2f93b;
-			return static_count(cjk_compatibility_ideograph_2f93b);
+			return 1;
 		case 0x2F93C:
 			*normals = cjk_compatibility_ideograph_2f93c;
-			return static_count(cjk_compatibility_ideograph_2f93c);
+			return 1;
 		case 0x2F93D:
 			*normals = cjk_compatibility_ideograph_2f93d;
-			return static_count(cjk_compatibility_ideograph_2f93d);
+			return 1;
 		case 0x2F93E:
 			*normals = cjk_compatibility_ideograph_2f93e;
-			return static_count(cjk_compatibility_ideograph_2f93e);
+			return 1;
 		case 0x2F93F:
 			*normals = cjk_compatibility_ideograph_2f93f;
-			return static_count(cjk_compatibility_ideograph_2f93f);
+			return 1;
 		case 0x2F940:
 			*normals = cjk_compatibility_ideograph_2f940;
-			return static_count(cjk_compatibility_ideograph_2f940);
+			return 1;
 		case 0x2F941:
 			*normals = cjk_compatibility_ideograph_2f941;
-			return static_count(cjk_compatibility_ideograph_2f941);
+			return 1;
 		case 0x2F942:
 			*normals = cjk_compatibility_ideograph_2f942;
-			return static_count(cjk_compatibility_ideograph_2f942);
+			return 1;
 		case 0x2F943:
 			*normals = cjk_compatibility_ideograph_2f943;
-			return static_count(cjk_compatibility_ideograph_2f943);
+			return 1;
 		case 0x2F944:
 			*normals = cjk_compatibility_ideograph_2f944;
-			return static_count(cjk_compatibility_ideograph_2f944);
+			return 1;
 		case 0x2F945:
 			*normals = cjk_compatibility_ideograph_2f945;
-			return static_count(cjk_compatibility_ideograph_2f945);
+			return 1;
 		case 0x2F946:
 			*normals = cjk_compatibility_ideograph_2f946;
-			return static_count(cjk_compatibility_ideograph_2f946);
+			return 1;
 		case 0x2F947:
 			*normals = cjk_compatibility_ideograph_2f947;
-			return static_count(cjk_compatibility_ideograph_2f947);
+			return 1;
 		case 0x2F948:
 			*normals = cjk_compatibility_ideograph_2f948;
-			return static_count(cjk_compatibility_ideograph_2f948);
+			return 1;
 		case 0x2F949:
 			*normals = cjk_compatibility_ideograph_2f949;
-			return static_count(cjk_compatibility_ideograph_2f949);
+			return 1;
 		case 0x2F94A:
 			*normals = cjk_compatibility_ideograph_2f94a;
-			return static_count(cjk_compatibility_ideograph_2f94a);
+			return 1;
 		case 0x2F94B:
 			*normals = cjk_compatibility_ideograph_2f94b;
-			return static_count(cjk_compatibility_ideograph_2f94b);
+			return 1;
 		case 0x2F94C:
 			*normals = cjk_compatibility_ideograph_2f94c;
-			return static_count(cjk_compatibility_ideograph_2f94c);
+			return 1;
 		case 0x2F94D:
 			*normals = cjk_compatibility_ideograph_2f94d;
-			return static_count(cjk_compatibility_ideograph_2f94d);
+			return 1;
 		case 0x2F94E:
 			*normals = cjk_compatibility_ideograph_2f94e;
-			return static_count(cjk_compatibility_ideograph_2f94e);
+			return 1;
 		case 0x2F94F:
 			*normals = cjk_compatibility_ideograph_2f94f;
-			return static_count(cjk_compatibility_ideograph_2f94f);
+			return 1;
 		case 0x2F950:
 			*normals = cjk_compatibility_ideograph_2f950;
-			return static_count(cjk_compatibility_ideograph_2f950);
+			return 1;
 		case 0x2F951:
 			*normals = cjk_compatibility_ideograph_2f951;
-			return static_count(cjk_compatibility_ideograph_2f951);
+			return 1;
 		case 0x2F952:
 			*normals = cjk_compatibility_ideograph_2f952;
-			return static_count(cjk_compatibility_ideograph_2f952);
+			return 1;
 		case 0x2F953:
 			*normals = cjk_compatibility_ideograph_2f953;
-			return static_count(cjk_compatibility_ideograph_2f953);
+			return 1;
 		case 0x2F954:
 			*normals = cjk_compatibility_ideograph_2f954;
-			return static_count(cjk_compatibility_ideograph_2f954);
+			return 1;
 		case 0x2F955:
 			*normals = cjk_compatibility_ideograph_2f955;
-			return static_count(cjk_compatibility_ideograph_2f955);
+			return 1;
 		case 0x2F956:
 			*normals = cjk_compatibility_ideograph_2f956;
-			return static_count(cjk_compatibility_ideograph_2f956);
+			return 1;
 		case 0x2F957:
 			*normals = cjk_compatibility_ideograph_2f957;
-			return static_count(cjk_compatibility_ideograph_2f957);
+			return 1;
 		case 0x2F958:
 			*normals = cjk_compatibility_ideograph_2f958;
-			return static_count(cjk_compatibility_ideograph_2f958);
+			return 1;
 		case 0x2F959:
 			*normals = cjk_compatibility_ideograph_2f959;
-			return static_count(cjk_compatibility_ideograph_2f959);
+			return 1;
 		case 0x2F95A:
 			*normals = cjk_compatibility_ideograph_2f95a;
-			return static_count(cjk_compatibility_ideograph_2f95a);
+			return 1;
 		case 0x2F95B:
 			*normals = cjk_compatibility_ideograph_2f95b;
-			return static_count(cjk_compatibility_ideograph_2f95b);
+			return 1;
 		case 0x2F95C:
 			*normals = cjk_compatibility_ideograph_2f95c;
-			return static_count(cjk_compatibility_ideograph_2f95c);
+			return 1;
 		case 0x2F95D:
 			*normals = cjk_compatibility_ideograph_2f95d;
-			return static_count(cjk_compatibility_ideograph_2f95d);
+			return 1;
 		case 0x2F95E:
 			*normals = cjk_compatibility_ideograph_2f95e;
-			return static_count(cjk_compatibility_ideograph_2f95e);
+			return 1;
 		case 0x2F95F:
 			*normals = cjk_compatibility_ideograph_2f95f;
-			return static_count(cjk_compatibility_ideograph_2f95f);
+			return 1;
 		case 0x2F960:
 			*normals = cjk_compatibility_ideograph_2f960;
-			return static_count(cjk_compatibility_ideograph_2f960);
+			return 1;
 		case 0x2F961:
 			*normals = cjk_compatibility_ideograph_2f961;
-			return static_count(cjk_compatibility_ideograph_2f961);
+			return 1;
 		case 0x2F962:
 			*normals = cjk_compatibility_ideograph_2f962;
-			return static_count(cjk_compatibility_ideograph_2f962);
+			return 1;
 		case 0x2F963:
 			*normals = cjk_compatibility_ideograph_2f963;
-			return static_count(cjk_compatibility_ideograph_2f963);
+			return 1;
 		case 0x2F964:
 			*normals = cjk_compatibility_ideograph_2f964;
-			return static_count(cjk_compatibility_ideograph_2f964);
+			return 1;
 		case 0x2F965:
 			*normals = cjk_compatibility_ideograph_2f965;
-			return static_count(cjk_compatibility_ideograph_2f965);
+			return 1;
 		case 0x2F966:
 			*normals = cjk_compatibility_ideograph_2f966;
-			return static_count(cjk_compatibility_ideograph_2f966);
+			return 1;
 		case 0x2F967:
 			*normals = cjk_compatibility_ideograph_2f967;
-			return static_count(cjk_compatibility_ideograph_2f967);
+			return 1;
 		case 0x2F968:
 			*normals = cjk_compatibility_ideograph_2f968;
-			return static_count(cjk_compatibility_ideograph_2f968);
+			return 1;
 		case 0x2F969:
 			*normals = cjk_compatibility_ideograph_2f969;
-			return static_count(cjk_compatibility_ideograph_2f969);
+			return 1;
 		case 0x2F96A:
 			*normals = cjk_compatibility_ideograph_2f96a;
-			return static_count(cjk_compatibility_ideograph_2f96a);
+			return 1;
 		case 0x2F96B:
 			*normals = cjk_compatibility_ideograph_2f96b;
-			return static_count(cjk_compatibility_ideograph_2f96b);
+			return 1;
 		case 0x2F96C:
 			*normals = cjk_compatibility_ideograph_2f96c;
-			return static_count(cjk_compatibility_ideograph_2f96c);
+			return 1;
 		case 0x2F96D:
 			*normals = cjk_compatibility_ideograph_2f96d;
-			return static_count(cjk_compatibility_ideograph_2f96d);
+			return 1;
 		case 0x2F96E:
 			*normals = cjk_compatibility_ideograph_2f96e;
-			return static_count(cjk_compatibility_ideograph_2f96e);
+			return 1;
 		case 0x2F96F:
 			*normals = cjk_compatibility_ideograph_2f96f;
-			return static_count(cjk_compatibility_ideograph_2f96f);
+			return 1;
 		case 0x2F970:
 			*normals = cjk_compatibility_ideograph_2f970;
-			return static_count(cjk_compatibility_ideograph_2f970);
+			return 1;
 		case 0x2F971:
 			*normals = cjk_compatibility_ideograph_2f971;
-			return static_count(cjk_compatibility_ideograph_2f971);
+			return 1;
 		case 0x2F972:
 			*normals = cjk_compatibility_ideograph_2f972;
-			return static_count(cjk_compatibility_ideograph_2f972);
+			return 1;
 		case 0x2F973:
 			*normals = cjk_compatibility_ideograph_2f973;
-			return static_count(cjk_compatibility_ideograph_2f973);
+			return 1;
 		case 0x2F974:
 			*normals = cjk_compatibility_ideograph_2f974;
-			return static_count(cjk_compatibility_ideograph_2f974);
+			return 1;
 		case 0x2F975:
 			*normals = cjk_compatibility_ideograph_2f975;
-			return static_count(cjk_compatibility_ideograph_2f975);
+			return 1;
 		case 0x2F976:
 			*normals = cjk_compatibility_ideograph_2f976;
-			return static_count(cjk_compatibility_ideograph_2f976);
+			return 1;
 		case 0x2F977:
 			*normals = cjk_compatibility_ideograph_2f977;
-			return static_count(cjk_compatibility_ideograph_2f977);
+			return 1;
 		case 0x2F978:
 			*normals = cjk_compatibility_ideograph_2f978;
-			return static_count(cjk_compatibility_ideograph_2f978);
+			return 1;
 		case 0x2F979:
 			*normals = cjk_compatibility_ideograph_2f979;
-			return static_count(cjk_compatibility_ideograph_2f979);
+			return 1;
 		case 0x2F97A:
 			*normals = cjk_compatibility_ideograph_2f97a;
-			return static_count(cjk_compatibility_ideograph_2f97a);
+			return 1;
 		case 0x2F97B:
 			*normals = cjk_compatibility_ideograph_2f97b;
-			return static_count(cjk_compatibility_ideograph_2f97b);
+			return 1;
 		case 0x2F97C:
 			*normals = cjk_compatibility_ideograph_2f97c;
-			return static_count(cjk_compatibility_ideograph_2f97c);
+			return 1;
 		case 0x2F97D:
 			*normals = cjk_compatibility_ideograph_2f97d;
-			return static_count(cjk_compatibility_ideograph_2f97d);
+			return 1;
 		case 0x2F97E:
 			*normals = cjk_compatibility_ideograph_2f97e;
-			return static_count(cjk_compatibility_ideograph_2f97e);
+			return 1;
 		case 0x2F97F:
 			*normals = cjk_compatibility_ideograph_2f97f;
-			return static_count(cjk_compatibility_ideograph_2f97f);
+			return 1;
 		case 0x2F980:
 			*normals = cjk_compatibility_ideograph_2f980;
-			return static_count(cjk_compatibility_ideograph_2f980);
+			return 1;
 		case 0x2F981:
 			*normals = cjk_compatibility_ideograph_2f981;
-			return static_count(cjk_compatibility_ideograph_2f981);
+			return 1;
 		case 0x2F982:
 			*normals = cjk_compatibility_ideograph_2f982;
-			return static_count(cjk_compatibility_ideograph_2f982);
+			return 1;
 		case 0x2F983:
 			*normals = cjk_compatibility_ideograph_2f983;
-			return static_count(cjk_compatibility_ideograph_2f983);
+			return 1;
 		case 0x2F984:
 			*normals = cjk_compatibility_ideograph_2f984;
-			return static_count(cjk_compatibility_ideograph_2f984);
+			return 1;
 		case 0x2F985:
 			*normals = cjk_compatibility_ideograph_2f985;
-			return static_count(cjk_compatibility_ideograph_2f985);
+			return 1;
 		case 0x2F986:
 			*normals = cjk_compatibility_ideograph_2f986;
-			return static_count(cjk_compatibility_ideograph_2f986);
+			return 1;
 		case 0x2F987:
 			*normals = cjk_compatibility_ideograph_2f987;
-			return static_count(cjk_compatibility_ideograph_2f987);
+			return 1;
 		case 0x2F988:
 			*normals = cjk_compatibility_ideograph_2f988;
-			return static_count(cjk_compatibility_ideograph_2f988);
+			return 1;
 		case 0x2F989:
 			*normals = cjk_compatibility_ideograph_2f989;
-			return static_count(cjk_compatibility_ideograph_2f989);
+			return 1;
 		case 0x2F98A:
 			*normals = cjk_compatibility_ideograph_2f98a;
-			return static_count(cjk_compatibility_ideograph_2f98a);
+			return 1;
 		case 0x2F98B:
 			*normals = cjk_compatibility_ideograph_2f98b;
-			return static_count(cjk_compatibility_ideograph_2f98b);
+			return 1;
 		case 0x2F98C:
 			*normals = cjk_compatibility_ideograph_2f98c;
-			return static_count(cjk_compatibility_ideograph_2f98c);
+			return 1;
 		case 0x2F98D:
 			*normals = cjk_compatibility_ideograph_2f98d;
-			return static_count(cjk_compatibility_ideograph_2f98d);
+			return 1;
 		case 0x2F98E:
 			*normals = cjk_compatibility_ideograph_2f98e;
-			return static_count(cjk_compatibility_ideograph_2f98e);
+			return 1;
 		case 0x2F98F:
 			*normals = cjk_compatibility_ideograph_2f98f;
-			return static_count(cjk_compatibility_ideograph_2f98f);
+			return 1;
 		case 0x2F990:
 			*normals = cjk_compatibility_ideograph_2f990;
-			return static_count(cjk_compatibility_ideograph_2f990);
+			return 1;
 		case 0x2F991:
 			*normals = cjk_compatibility_ideograph_2f991;
-			return static_count(cjk_compatibility_ideograph_2f991);
+			return 1;
 		case 0x2F992:
 			*normals = cjk_compatibility_ideograph_2f992;
-			return static_count(cjk_compatibility_ideograph_2f992);
+			return 1;
 		case 0x2F993:
 			*normals = cjk_compatibility_ideograph_2f993;
-			return static_count(cjk_compatibility_ideograph_2f993);
+			return 1;
 		case 0x2F994:
 			*normals = cjk_compatibility_ideograph_2f994;
-			return static_count(cjk_compatibility_ideograph_2f994);
+			return 1;
 		case 0x2F995:
 			*normals = cjk_compatibility_ideograph_2f995;
-			return static_count(cjk_compatibility_ideograph_2f995);
+			return 1;
 		case 0x2F996:
 			*normals = cjk_compatibility_ideograph_2f996;
-			return static_count(cjk_compatibility_ideograph_2f996);
+			return 1;
 		case 0x2F997:
 			*normals = cjk_compatibility_ideograph_2f997;
-			return static_count(cjk_compatibility_ideograph_2f997);
+			return 1;
 		case 0x2F998:
 			*normals = cjk_compatibility_ideograph_2f998;
-			return static_count(cjk_compatibility_ideograph_2f998);
+			return 1;
 		case 0x2F999:
 			*normals = cjk_compatibility_ideograph_2f999;
-			return static_count(cjk_compatibility_ideograph_2f999);
+			return 1;
 		case 0x2F99A:
 			*normals = cjk_compatibility_ideograph_2f99a;
-			return static_count(cjk_compatibility_ideograph_2f99a);
+			return 1;
 		case 0x2F99B:
 			*normals = cjk_compatibility_ideograph_2f99b;
-			return static_count(cjk_compatibility_ideograph_2f99b);
+			return 1;
 		case 0x2F99C:
 			*normals = cjk_compatibility_ideograph_2f99c;
-			return static_count(cjk_compatibility_ideograph_2f99c);
+			return 1;
 		case 0x2F99D:
 			*normals = cjk_compatibility_ideograph_2f99d;
-			return static_count(cjk_compatibility_ideograph_2f99d);
+			return 1;
 		case 0x2F99E:
 			*normals = cjk_compatibility_ideograph_2f99e;
-			return static_count(cjk_compatibility_ideograph_2f99e);
+			return 1;
 		case 0x2F99F:
 			*normals = cjk_compatibility_ideograph_2f99f;
-			return static_count(cjk_compatibility_ideograph_2f99f);
+			return 1;
 		case 0x2F9A0:
 			*normals = cjk_compatibility_ideograph_2f9a0;
-			return static_count(cjk_compatibility_ideograph_2f9a0);
+			return 1;
 		case 0x2F9A1:
 			*normals = cjk_compatibility_ideograph_2f9a1;
-			return static_count(cjk_compatibility_ideograph_2f9a1);
+			return 1;
 		case 0x2F9A2:
 			*normals = cjk_compatibility_ideograph_2f9a2;
-			return static_count(cjk_compatibility_ideograph_2f9a2);
+			return 1;
 		case 0x2F9A3:
 			*normals = cjk_compatibility_ideograph_2f9a3;
-			return static_count(cjk_compatibility_ideograph_2f9a3);
+			return 1;
 		case 0x2F9A4:
 			*normals = cjk_compatibility_ideograph_2f9a4;
-			return static_count(cjk_compatibility_ideograph_2f9a4);
+			return 1;
 		case 0x2F9A5:
 			*normals = cjk_compatibility_ideograph_2f9a5;
-			return static_count(cjk_compatibility_ideograph_2f9a5);
+			return 1;
 		case 0x2F9A6:
 			*normals = cjk_compatibility_ideograph_2f9a6;
-			return static_count(cjk_compatibility_ideograph_2f9a6);
+			return 1;
 		case 0x2F9A7:
 			*normals = cjk_compatibility_ideograph_2f9a7;
-			return static_count(cjk_compatibility_ideograph_2f9a7);
+			return 1;
 		case 0x2F9A8:
 			*normals = cjk_compatibility_ideograph_2f9a8;
-			return static_count(cjk_compatibility_ideograph_2f9a8);
+			return 1;
 		case 0x2F9A9:
 			*normals = cjk_compatibility_ideograph_2f9a9;
-			return static_count(cjk_compatibility_ideograph_2f9a9);
+			return 1;
 		case 0x2F9AA:
 			*normals = cjk_compatibility_ideograph_2f9aa;
-			return static_count(cjk_compatibility_ideograph_2f9aa);
+			return 1;
 		case 0x2F9AB:
 			*normals = cjk_compatibility_ideograph_2f9ab;
-			return static_count(cjk_compatibility_ideograph_2f9ab);
+			return 1;
 		case 0x2F9AC:
 			*normals = cjk_compatibility_ideograph_2f9ac;
-			return static_count(cjk_compatibility_ideograph_2f9ac);
+			return 1;
 		case 0x2F9AD:
 			*normals = cjk_compatibility_ideograph_2f9ad;
-			return static_count(cjk_compatibility_ideograph_2f9ad);
+			return 1;
 		case 0x2F9AE:
 			*normals = cjk_compatibility_ideograph_2f9ae;
-			return static_count(cjk_compatibility_ideograph_2f9ae);
+			return 1;
 		case 0x2F9AF:
 			*normals = cjk_compatibility_ideograph_2f9af;
-			return static_count(cjk_compatibility_ideograph_2f9af);
+			return 1;
 		case 0x2F9B0:
 			*normals = cjk_compatibility_ideograph_2f9b0;
-			return static_count(cjk_compatibility_ideograph_2f9b0);
+			return 1;
 		case 0x2F9B1:
 			*normals = cjk_compatibility_ideograph_2f9b1;
-			return static_count(cjk_compatibility_ideograph_2f9b1);
+			return 1;
 		case 0x2F9B2:
 			*normals = cjk_compatibility_ideograph_2f9b2;
-			return static_count(cjk_compatibility_ideograph_2f9b2);
+			return 1;
 		case 0x2F9B3:
 			*normals = cjk_compatibility_ideograph_2f9b3;
-			return static_count(cjk_compatibility_ideograph_2f9b3);
+			return 1;
 		case 0x2F9B4:
 			*normals = cjk_compatibility_ideograph_2f9b4;
-			return static_count(cjk_compatibility_ideograph_2f9b4);
+			return 1;
 		case 0x2F9B5:
 			*normals = cjk_compatibility_ideograph_2f9b5;
-			return static_count(cjk_compatibility_ideograph_2f9b5);
+			return 1;
 		case 0x2F9B6:
 			*normals = cjk_compatibility_ideograph_2f9b6;
-			return static_count(cjk_compatibility_ideograph_2f9b6);
+			return 1;
 		case 0x2F9B7:
 			*normals = cjk_compatibility_ideograph_2f9b7;
-			return static_count(cjk_compatibility_ideograph_2f9b7);
+			return 1;
 		case 0x2F9B8:
 			*normals = cjk_compatibility_ideograph_2f9b8;
-			return static_count(cjk_compatibility_ideograph_2f9b8);
+			return 1;
 		case 0x2F9B9:
 			*normals = cjk_compatibility_ideograph_2f9b9;
-			return static_count(cjk_compatibility_ideograph_2f9b9);
+			return 1;
 		case 0x2F9BA:
 			*normals = cjk_compatibility_ideograph_2f9ba;
-			return static_count(cjk_compatibility_ideograph_2f9ba);
+			return 1;
 		case 0x2F9BB:
 			*normals = cjk_compatibility_ideograph_2f9bb;
-			return static_count(cjk_compatibility_ideograph_2f9bb);
+			return 1;
 		case 0x2F9BC:
 			*normals = cjk_compatibility_ideograph_2f9bc;
-			return static_count(cjk_compatibility_ideograph_2f9bc);
+			return 1;
 		case 0x2F9BD:
 			*normals = cjk_compatibility_ideograph_2f9bd;
-			return static_count(cjk_compatibility_ideograph_2f9bd);
+			return 1;
 		case 0x2F9BE:
 			*normals = cjk_compatibility_ideograph_2f9be;
-			return static_count(cjk_compatibility_ideograph_2f9be);
+			return 1;
 		case 0x2F9BF:
 			*normals = cjk_compatibility_ideograph_2f9bf;
-			return static_count(cjk_compatibility_ideograph_2f9bf);
+			return 1;
 		case 0x2F9C0:
 			*normals = cjk_compatibility_ideograph_2f9c0;
-			return static_count(cjk_compatibility_ideograph_2f9c0);
+			return 1;
 		case 0x2F9C1:
 			*normals = cjk_compatibility_ideograph_2f9c1;
-			return static_count(cjk_compatibility_ideograph_2f9c1);
+			return 1;
 		case 0x2F9C2:
 			*normals = cjk_compatibility_ideograph_2f9c2;
-			return static_count(cjk_compatibility_ideograph_2f9c2);
+			return 1;
 		case 0x2F9C3:
 			*normals = cjk_compatibility_ideograph_2f9c3;
-			return static_count(cjk_compatibility_ideograph_2f9c3);
+			return 1;
 		case 0x2F9C4:
 			*normals = cjk_compatibility_ideograph_2f9c4;
-			return static_count(cjk_compatibility_ideograph_2f9c4);
+			return 1;
 		case 0x2F9C5:
 			*normals = cjk_compatibility_ideograph_2f9c5;
-			return static_count(cjk_compatibility_ideograph_2f9c5);
+			return 1;
 		case 0x2F9C6:
 			*normals = cjk_compatibility_ideograph_2f9c6;
-			return static_count(cjk_compatibility_ideograph_2f9c6);
+			return 1;
 		case 0x2F9C7:
 			*normals = cjk_compatibility_ideograph_2f9c7;
-			return static_count(cjk_compatibility_ideograph_2f9c7);
+			return 1;
 		case 0x2F9C8:
 			*normals = cjk_compatibility_ideograph_2f9c8;
-			return static_count(cjk_compatibility_ideograph_2f9c8);
+			return 1;
 		case 0x2F9C9:
 			*normals = cjk_compatibility_ideograph_2f9c9;
-			return static_count(cjk_compatibility_ideograph_2f9c9);
+			return 1;
 		case 0x2F9CA:
 			*normals = cjk_compatibility_ideograph_2f9ca;
-			return static_count(cjk_compatibility_ideograph_2f9ca);
+			return 1;
 		case 0x2F9CB:
 			*normals = cjk_compatibility_ideograph_2f9cb;
-			return static_count(cjk_compatibility_ideograph_2f9cb);
+			return 1;
 		case 0x2F9CC:
 			*normals = cjk_compatibility_ideograph_2f9cc;
-			return static_count(cjk_compatibility_ideograph_2f9cc);
+			return 1;
 		case 0x2F9CD:
 			*normals = cjk_compatibility_ideograph_2f9cd;
-			return static_count(cjk_compatibility_ideograph_2f9cd);
+			return 1;
 		case 0x2F9CE:
 			*normals = cjk_compatibility_ideograph_2f9ce;
-			return static_count(cjk_compatibility_ideograph_2f9ce);
+			return 1;
 		case 0x2F9CF:
 			*normals = cjk_compatibility_ideograph_2f9cf;
-			return static_count(cjk_compatibility_ideograph_2f9cf);
+			return 1;
 		case 0x2F9D0:
 			*normals = cjk_compatibility_ideograph_2f9d0;
-			return static_count(cjk_compatibility_ideograph_2f9d0);
+			return 1;
 		case 0x2F9D1:
 			*normals = cjk_compatibility_ideograph_2f9d1;
-			return static_count(cjk_compatibility_ideograph_2f9d1);
+			return 1;
 		case 0x2F9D2:
 			*normals = cjk_compatibility_ideograph_2f9d2;
-			return static_count(cjk_compatibility_ideograph_2f9d2);
+			return 1;
 		case 0x2F9D3:
 			*normals = cjk_compatibility_ideograph_2f9d3;
-			return static_count(cjk_compatibility_ideograph_2f9d3);
+			return 1;
 		case 0x2F9D4:
 			*normals = cjk_compatibility_ideograph_2f9d4;
-			return static_count(cjk_compatibility_ideograph_2f9d4);
+			return 1;
 		case 0x2F9D5:
 			*normals = cjk_compatibility_ideograph_2f9d5;
-			return static_count(cjk_compatibility_ideograph_2f9d5);
+			return 1;
 		case 0x2F9D6:
 			*normals = cjk_compatibility_ideograph_2f9d6;
-			return static_count(cjk_compatibility_ideograph_2f9d6);
+			return 1;
 		case 0x2F9D7:
 			*normals = cjk_compatibility_ideograph_2f9d7;
-			return static_count(cjk_compatibility_ideograph_2f9d7);
+			return 1;
 		case 0x2F9D8:
 			*normals = cjk_compatibility_ideograph_2f9d8;
-			return static_count(cjk_compatibility_ideograph_2f9d8);
+			return 1;
 		case 0x2F9D9:
 			*normals = cjk_compatibility_ideograph_2f9d9;
-			return static_count(cjk_compatibility_ideograph_2f9d9);
+			return 1;
 		case 0x2F9DA:
 			*normals = cjk_compatibility_ideograph_2f9da;
-			return static_count(cjk_compatibility_ideograph_2f9da);
+			return 1;
 		case 0x2F9DB:
 			*normals = cjk_compatibility_ideograph_2f9db;
-			return static_count(cjk_compatibility_ideograph_2f9db);
+			return 1;
 		case 0x2F9DC:
 			*normals = cjk_compatibility_ideograph_2f9dc;
-			return static_count(cjk_compatibility_ideograph_2f9dc);
+			return 1;
 		case 0x2F9DD:
 			*normals = cjk_compatibility_ideograph_2f9dd;
-			return static_count(cjk_compatibility_ideograph_2f9dd);
+			return 1;
 		case 0x2F9DE:
 			*normals = cjk_compatibility_ideograph_2f9de;
-			return static_count(cjk_compatibility_ideograph_2f9de);
+			return 1;
 		case 0x2F9DF:
 			*normals = cjk_compatibility_ideograph_2f9df;
-			return static_count(cjk_compatibility_ideograph_2f9df);
+			return 1;
 		case 0x2F9E0:
 			*normals = cjk_compatibility_ideograph_2f9e0;
-			return static_count(cjk_compatibility_ideograph_2f9e0);
+			return 1;
 		case 0x2F9E1:
 			*normals = cjk_compatibility_ideograph_2f9e1;
-			return static_count(cjk_compatibility_ideograph_2f9e1);
+			return 1;
 		case 0x2F9E2:
 			*normals = cjk_compatibility_ideograph_2f9e2;
-			return static_count(cjk_compatibility_ideograph_2f9e2);
+			return 1;
 		case 0x2F9E3:
 			*normals = cjk_compatibility_ideograph_2f9e3;
-			return static_count(cjk_compatibility_ideograph_2f9e3);
+			return 1;
 		case 0x2F9E4:
 			*normals = cjk_compatibility_ideograph_2f9e4;
-			return static_count(cjk_compatibility_ideograph_2f9e4);
+			return 1;
 		case 0x2F9E5:
 			*normals = cjk_compatibility_ideograph_2f9e5;
-			return static_count(cjk_compatibility_ideograph_2f9e5);
+			return 1;
 		case 0x2F9E6:
 			*normals = cjk_compatibility_ideograph_2f9e6;
-			return static_count(cjk_compatibility_ideograph_2f9e6);
+			return 1;
 		case 0x2F9E7:
 			*normals = cjk_compatibility_ideograph_2f9e7;
-			return static_count(cjk_compatibility_ideograph_2f9e7);
+			return 1;
 		case 0x2F9E8:
 			*normals = cjk_compatibility_ideograph_2f9e8;
-			return static_count(cjk_compatibility_ideograph_2f9e8);
+			return 1;
 		case 0x2F9E9:
 			*normals = cjk_compatibility_ideograph_2f9e9;
-			return static_count(cjk_compatibility_ideograph_2f9e9);
+			return 1;
 		case 0x2F9EA:
 			*normals = cjk_compatibility_ideograph_2f9ea;
-			return static_count(cjk_compatibility_ideograph_2f9ea);
+			return 1;
 		case 0x2F9EB:
 			*normals = cjk_compatibility_ideograph_2f9eb;
-			return static_count(cjk_compatibility_ideograph_2f9eb);
+			return 1;
 		case 0x2F9EC:
 			*normals = cjk_compatibility_ideograph_2f9ec;
-			return static_count(cjk_compatibility_ideograph_2f9ec);
+			return 1;
 		case 0x2F9ED:
 			*normals = cjk_compatibility_ideograph_2f9ed;
-			return static_count(cjk_compatibility_ideograph_2f9ed);
+			return 1;
 		case 0x2F9EE:
 			*normals = cjk_compatibility_ideograph_2f9ee;
-			return static_count(cjk_compatibility_ideograph_2f9ee);
+			return 1;
 		case 0x2F9EF:
 			*normals = cjk_compatibility_ideograph_2f9ef;
-			return static_count(cjk_compatibility_ideograph_2f9ef);
+			return 1;
 		case 0x2F9F0:
 			*normals = cjk_compatibility_ideograph_2f9f0;
-			return static_count(cjk_compatibility_ideograph_2f9f0);
+			return 1;
 		case 0x2F9F1:
 			*normals = cjk_compatibility_ideograph_2f9f1;
-			return static_count(cjk_compatibility_ideograph_2f9f1);
+			return 1;
 		case 0x2F9F2:
 			*normals = cjk_compatibility_ideograph_2f9f2;
-			return static_count(cjk_compatibility_ideograph_2f9f2);
+			return 1;
 		case 0x2F9F3:
 			*normals = cjk_compatibility_ideograph_2f9f3;
-			return static_count(cjk_compatibility_ideograph_2f9f3);
+			return 1;
 		case 0x2F9F4:
 			*normals = cjk_compatibility_ideograph_2f9f4;
-			return static_count(cjk_compatibility_ideograph_2f9f4);
+			return 1;
 		case 0x2F9F5:
 			*normals = cjk_compatibility_ideograph_2f9f5;
-			return static_count(cjk_compatibility_ideograph_2f9f5);
+			return 1;
 		case 0x2F9F6:
 			*normals = cjk_compatibility_ideograph_2f9f6;
-			return static_count(cjk_compatibility_ideograph_2f9f6);
+			return 1;
 		case 0x2F9F7:
 			*normals = cjk_compatibility_ideograph_2f9f7;
-			return static_count(cjk_compatibility_ideograph_2f9f7);
+			return 1;
 		case 0x2F9F8:
 			*normals = cjk_compatibility_ideograph_2f9f8;
-			return static_count(cjk_compatibility_ideograph_2f9f8);
+			return 1;
 		case 0x2F9F9:
 			*normals = cjk_compatibility_ideograph_2f9f9;
-			return static_count(cjk_compatibility_ideograph_2f9f9);
+			return 1;
 		case 0x2F9FA:
 			*normals = cjk_compatibility_ideograph_2f9fa;
-			return static_count(cjk_compatibility_ideograph_2f9fa);
+			return 1;
 		case 0x2F9FB:
 			*normals = cjk_compatibility_ideograph_2f9fb;
-			return static_count(cjk_compatibility_ideograph_2f9fb);
+			return 1;
 		case 0x2F9FC:
 			*normals = cjk_compatibility_ideograph_2f9fc;
-			return static_count(cjk_compatibility_ideograph_2f9fc);
+			return 1;
 		case 0x2F9FD:
 			*normals = cjk_compatibility_ideograph_2f9fd;
-			return static_count(cjk_compatibility_ideograph_2f9fd);
+			return 1;
 		case 0x2F9FE:
 			*normals = cjk_compatibility_ideograph_2f9fe;
-			return static_count(cjk_compatibility_ideograph_2f9fe);
+			return 1;
 		case 0x2F9FF:
 			*normals = cjk_compatibility_ideograph_2f9ff;
-			return static_count(cjk_compatibility_ideograph_2f9ff);
+			return 1;
 		case 0x2FA00:
 			*normals = cjk_compatibility_ideograph_2fa00;
-			return static_count(cjk_compatibility_ideograph_2fa00);
+			return 1;
 		case 0x2FA01:
 			*normals = cjk_compatibility_ideograph_2fa01;
-			return static_count(cjk_compatibility_ideograph_2fa01);
+			return 1;
 		case 0x2FA02:
 			*normals = cjk_compatibility_ideograph_2fa02;
-			return static_count(cjk_compatibility_ideograph_2fa02);
+			return 1;
 		case 0x2FA03:
 			*normals = cjk_compatibility_ideograph_2fa03;
-			return static_count(cjk_compatibility_ideograph_2fa03);
+			return 1;
 		case 0x2FA04:
 			*normals = cjk_compatibility_ideograph_2fa04;
-			return static_count(cjk_compatibility_ideograph_2fa04);
+			return 1;
 		case 0x2FA05:
 			*normals = cjk_compatibility_ideograph_2fa05;
-			return static_count(cjk_compatibility_ideograph_2fa05);
+			return 1;
 		case 0x2FA06:
 			*normals = cjk_compatibility_ideograph_2fa06;
-			return static_count(cjk_compatibility_ideograph_2fa06);
+			return 1;
 		case 0x2FA07:
 			*normals = cjk_compatibility_ideograph_2fa07;
-			return static_count(cjk_compatibility_ideograph_2fa07);
+			return 1;
 		case 0x2FA08:
 			*normals = cjk_compatibility_ideograph_2fa08;
-			return static_count(cjk_compatibility_ideograph_2fa08);
+			return 1;
 		case 0x2FA09:
 			*normals = cjk_compatibility_ideograph_2fa09;
-			return static_count(cjk_compatibility_ideograph_2fa09);
+			return 1;
 		case 0x2FA0A:
 			*normals = cjk_compatibility_ideograph_2fa0a;
-			return static_count(cjk_compatibility_ideograph_2fa0a);
+			return 1;
 		case 0x2FA0B:
 			*normals = cjk_compatibility_ideograph_2fa0b;
-			return static_count(cjk_compatibility_ideograph_2fa0b);
+			return 1;
 		case 0x2FA0C:
 			*normals = cjk_compatibility_ideograph_2fa0c;
-			return static_count(cjk_compatibility_ideograph_2fa0c);
+			return 1;
 		case 0x2FA0D:
 			*normals = cjk_compatibility_ideograph_2fa0d;
-			return static_count(cjk_compatibility_ideograph_2fa0d);
+			return 1;
 		case 0x2FA0E:
 			*normals = cjk_compatibility_ideograph_2fa0e;
-			return static_count(cjk_compatibility_ideograph_2fa0e);
+			return 1;
 		case 0x2FA0F:
 			*normals = cjk_compatibility_ideograph_2fa0f;
-			return static_count(cjk_compatibility_ideograph_2fa0f);
+			return 1;
 		case 0x2FA10:
 			*normals = cjk_compatibility_ideograph_2fa10;
-			return static_count(cjk_compatibility_ideograph_2fa10);
+			return 1;
 		case 0x2FA11:
 			*normals = cjk_compatibility_ideograph_2fa11;
-			return static_count(cjk_compatibility_ideograph_2fa11);
+			return 1;
 		case 0x2FA12:
 			*normals = cjk_compatibility_ideograph_2fa12;
-			return static_count(cjk_compatibility_ideograph_2fa12);
+			return 1;
 		case 0x2FA13:
 			*normals = cjk_compatibility_ideograph_2fa13;
-			return static_count(cjk_compatibility_ideograph_2fa13);
+			return 1;
 		case 0x2FA14:
 			*normals = cjk_compatibility_ideograph_2fa14;
-			return static_count(cjk_compatibility_ideograph_2fa14);
+			return 1;
 		case 0x2FA15:
 			*normals = cjk_compatibility_ideograph_2fa15;
-			return static_count(cjk_compatibility_ideograph_2fa15);
+			return 1;
 		case 0x2FA16:
 			*normals = cjk_compatibility_ideograph_2fa16;
-			return static_count(cjk_compatibility_ideograph_2fa16);
+			return 1;
 		case 0x2FA17:
 			*normals = cjk_compatibility_ideograph_2fa17;
-			return static_count(cjk_compatibility_ideograph_2fa17);
+			return 1;
 		case 0x2FA18:
 			*normals = cjk_compatibility_ideograph_2fa18;
-			return static_count(cjk_compatibility_ideograph_2fa18);
+			return 1;
 		case 0x2FA19:
 			*normals = cjk_compatibility_ideograph_2fa19;
-			return static_count(cjk_compatibility_ideograph_2fa19);
+			return 1;
 		case 0x2FA1A:
 			*normals = cjk_compatibility_ideograph_2fa1a;
-			return static_count(cjk_compatibility_ideograph_2fa1a);
+			return 1;
 		case 0x2FA1B:
 			*normals = cjk_compatibility_ideograph_2fa1b;
-			return static_count(cjk_compatibility_ideograph_2fa1b);
+			return 1;
 		case 0x2FA1C:
 			*normals = cjk_compatibility_ideograph_2fa1c;
-			return static_count(cjk_compatibility_ideograph_2fa1c);
+			return 1;
 		case 0x2FA1D:
 			*normals = cjk_compatibility_ideograph_2fa1d;
-			return static_count(cjk_compatibility_ideograph_2fa1d);
-}
+			return 1;
+	}
 	return 0;
 }
 

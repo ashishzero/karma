@@ -1,5 +1,7 @@
+// NOTE: The source files included in this (build.cpp) file should not be included in the compilation process seperately
+
 /*
- * Unity build file
+ * Karma build configuration
 */
 
 //
@@ -59,24 +61,7 @@
  *          - pcg (src/pcg)
 */
 
-//
-// Platform Independent source files
-//
-
 #include "karma.h"
-
-// Entry point
-#include "main.cpp"
-
-#include "shared_newdelete.cpp"
-
-#include "lin_maths.cpp"
-
-#include "length_string.cpp"
-
-#include "unicode.cpp"
-
-#include "gfx_renderer.cpp"
 
 #if defined(BUILD_DEBUG) || defined(BUILD_DEVELOPER)
 #	include "tokenizer.cpp"
@@ -87,18 +72,18 @@
 //
 //
 
-#ifndef RUN_REFLECTION
 
-#	ifndef EXCLUDE_SYSTEMS_BUILD
-
-#		if defined(TARGET_WINDOWS)
-#			include "windows/systems_windows.cpp"
-#		else
-#			error "Platform not supported!"
-#		endif
-
+#ifndef EXCLUDE_SYSTEMS_BUILD
+#	if defined(TARGET_WINDOWS)
+        // This is included before including windows because windows header files define *far* and *near*
+        // which we use as variables in gfx_types.h file, which causes conflict, but if we include this header
+        // first, the macro in windows header file won't take effect, and it does not get included in the cpp
+        // file below by the opengl / others graphics implementation
+#       include "gfx_types.h" 
+#		include "windows/systems_windows.cpp"
+#	else
+#		error "Platform not supported!"
 #	endif
-
 #endif
 
 //
@@ -118,12 +103,5 @@
 #endif
 
 #ifdef INCLUDE_OPENGL_RENDERER
-#	include "gfx_opengl.cpp"
-#endif
-
-//
-// Reflection
-//
-#ifndef RUN_REFLECTION
-#	include "type_info.h"
+#	include "opengl/gfx_opengl.cpp"
 #endif

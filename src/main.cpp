@@ -97,8 +97,8 @@ int system_main() {
 	//const String string = u8"र्क;र्र्;र्ज्ञ;ग्ध;ठ्र;त्र्;हि";
 	//const String string = u8"र्कग्धठ्र;काँ;त्र्य;रु";
 	//const String string = u8";कि;की;";
-	//const String string = u8"श्;रुकिकीत्रिर्ज्ञ;र्कर्र";
-	const String string = u8"ऩ;श्;र्ज्ञ;र्कर्र";
+	const String string = u8"श्;रुकिकीत्रिर्ज्ञ;र्कर्र";
+	//const String string = u8"ऩ;श्;र्ज्ञ;र्कर्र";
 	//const String string = u8"र्कर्रर्ज्ञ";
 	//const String string = u8"देहांते तव +-*/ सान्निध्यं देहि मे परमेश्"; //श्वर ";
 	//const String string = u8"The cake is a lie";
@@ -481,21 +481,25 @@ int system_main() {
 		}
 		ImGui::EndChild();
 #endif
-		ImGui::BeginChild("Child");
-		{
-			String_Iter iter;
-			utf8        pool[4];
-			for (s64 ii = 0; ii < font_shape.originals.count; ++ii) {
-				pool[utf32_to_utf8(font_shape.originals[ii].codepoint, pool)] = 0;
-				ImGui::Text("%d U+%04x [ %s ] - %d", 
-					(int)ii, font_shape.originals[ii].codepoint, pool, font_shape.originals[ii].value);
-				if (font_shape.originals[ii].base) {
-					ImGui::SameLine();
-					ImGui::TextUnformatted("  (base)");
+		static auto should_display_codepoints = false;
+
+		if (should_display_codepoints) {
+			ImGui::BeginChild("Child");
+			{
+				String_Iter iter;
+				utf8        pool[4];
+				for (s64 ii = 0; ii < font_shape.originals.count; ++ii) {
+					pool[utf32_to_utf8(font_shape.originals[ii].codepoint, pool)] = 0;
+					ImGui::Text("%d U+%04x [ %s ] - %d",
+								(int)ii, font_shape.originals[ii].codepoint, pool, font_shape.originals[ii].value);
+					if (font_shape.originals[ii].base) {
+						ImGui::SameLine();
+						ImGui::TextUnformatted("  (base)");
+					}
 				}
 			}
+			ImGui::EndChild();
 		}
-		ImGui::EndChild();
 
 		ImGui::End();
 
@@ -503,6 +507,7 @@ int system_main() {
 		ImGui::Checkbox("Vertices", &draw_points);
 		ImGui::Checkbox("Regions", &draw_regions);
 		ImGui::Checkbox("Baseline", &draw_baseline);
+		ImGui::Checkbox("Codepoints", &should_display_codepoints);
 		ImGui::DragFloat("Scale", &scale, 0.0001f, 0, 1);
 
 		auto g_counts = font_shape.codepoints.count > hb_glyph_count ? font_shape.codepoints.count : hb_glyph_count;

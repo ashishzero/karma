@@ -15,9 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\gfx_opengl.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\gfx_renderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -70,6 +67,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\unicode.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\opengl\gfx_opengl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -158,9 +158,6 @@
     <ClInclude Include="src\lin_maths_types.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\type_info.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\length_string.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -175,9 +172,13 @@
     <None Include="res\shaders\quad.glsl" />
     <None Include=".clang-format" />
     <None Include="..\harfbuzz\msbuild-x64\harfbuzz.sln" />
+    <None Include="src\prebuild.bat">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Text Include="todo.txt" />
+    <Text Include="src\.generated\readme.txt" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\windows\resource.rc">

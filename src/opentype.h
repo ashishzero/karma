@@ -2361,21 +2361,26 @@ Font_Shape font_shape_string(Dynamic_Font *font, String string) {
 			}
 		}
 
+		#if 0
 		for (auto iter = first; iter + 2 <= last; ++iter) {
 			if (codepoints[iter + 0].codepoint == UNICODE_DEVANAGARI_RA &&
 				codepoints[iter + 1].syllable == Unicode_Indic_Syllable_VIRAMA &&
 				codepoints[iter + 2].syllable == Unicode_Indic_Syllable_CONSONANT) {
 				if (codepoints[iter + 2].codepoint == UNICODE_DEVANAGARI_RA &&
 					iter + 3 < last && codepoints[iter + 3].syllable == Unicode_Indic_Syllable_VIRAMA) {
+					break;
 				} else {
 					auto temp0            = codepoints[iter + 0];
 					auto temp1            = codepoints[iter + 1];
-					memmove(&codepoints[iter + 0], &codepoints[iter + 2], last - base_index);
+					memmove(&codepoints[iter + 0], &codepoints[iter + 2], (base_index - iter - 1) * sizeof(Glyph_Cluster));
+					base_index -= 2;
 					codepoints[base_index + 1] = temp0;
 					codepoints[base_index + 2] = temp1;
+					break;
 				}
 			}
 		}
+		#endif
 
 		codepoints[base_index].base = true;
 

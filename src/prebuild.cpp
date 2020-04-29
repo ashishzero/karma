@@ -8,6 +8,7 @@
 #include "stb_image.h"
 
 #include "tokenizer.h"
+#include ".generated/tokenizer.typeinfo"
 
 #include "systems.h"
 #include "string.h"

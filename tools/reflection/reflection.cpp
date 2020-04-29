@@ -855,6 +855,7 @@ bool parse_command_line(String command_line, Array<char *> *options, Array<char 
 	array_add(options, (char *)"-x");
 	array_add(options, (char *)"c++");
 	array_add(options, (char *)"-std=c++17");
+	array_add(options, (char *)"-Wno-pragma-once-outside-header");
 	array_add(options, (char *)"-DRUN_REFLECTION");
 	*output = 0;
 

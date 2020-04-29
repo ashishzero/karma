@@ -3,7 +3,6 @@
 #include "stream.h"
 #include "string.h"
 #include "systems.h"
-#include "reflection.h"
 
 static const GLenum COLOR_INTERNAL_FORMATS[] = {
 	0, GL_R32F, GL_RG32F, GL_RGB32F, GL_RGBA32F
@@ -148,10 +147,6 @@ struct Gfx_Platform_OpenGL : public Gfx_Platform {
 
 Gfx_Platform *create_opengl_context(Handle platform, s32 vsync, s32 multisamples, s32 framebuffer_w, s32 framebuffer_h) {
 	static Gfx_Platform_OpenGL gfx;
-
-	assert(static_count(COLOR_INTERNAL_FORMATS) == enum_count<Color_Format>());
-	assert(static_count(COLOR_FORMATS) == enum_count<Color_Format>());
-	assert(static_count(INDEX_TYPE) == enum_count<Render_Index_Type>());
 
 	// NOTE: set these, they are used by *load_library* function
 	gfx.platform_handle = platform;

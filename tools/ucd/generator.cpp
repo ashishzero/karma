@@ -229,11 +229,13 @@ void ucd_generate_unicode_data(const char *file_name) {
 		for (s64 index = 0; index < unicode_data.count; ++index) {
 			if (unicode_data[index].decomposed) {
 				char *name_of_decomposed = lower_caps(unicode_data[index].information);
+				int   number_of_normals  = 1;
 				ostream_write_formatted(&normals_code, "\tstatic uint32_t %s [] = { ", name_of_decomposed);
 				String_Iter iter;
 				while (string_iter_next(unicode_data[index].decomposed, &iter)) {
 					if (iter.index == 0) ostream_write_formatted(&normals_code, "0x");
 					if (iter.codepoint.code == ' ') {
+						number_of_normals += 1;
 						ostream_write_formatted(&normals_code, ", 0x");
 					} else if (iter.codepoint.code == '<') {
 						while (string_iter_next(unicode_data[index].decomposed, &iter)) {
@@ -247,8 +249,8 @@ void ucd_generate_unicode_data(const char *file_name) {
 				}
 				ostream_write_formatted(&normals_code, " };\n");
 
-				ostream_write_formatted(&switch_code, "\t\tcase 0x%s:\n\t\t\t*normals = %s;\n\t\t\treturn static_count(%s);\n",
-										tto_cstring(unicode_data[index].codepoint), name_of_decomposed, name_of_decomposed);
+				ostream_write_formatted(&switch_code, "\t\tcase 0x%s:\n\t\t\t*normals = %s;\n\t\t\treturn %d;\n",
+										tto_cstring(unicode_data[index].codepoint), name_of_decomposed, number_of_normals);
 			}
 		}
 

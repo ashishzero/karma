@@ -154,18 +154,23 @@ struct Type_Info_Function : public Type_Info {
 template <typename T>
 struct Enum_Info {
 	static constexpr size_t get_count() {
+		assert(!"File not added for reflection!");
 		return 0;
 	}
 	static constexpr s64 get_min_value() {
+		assert(!"File not added for reflection!");
 		return 0;
 	}
 	static constexpr s64 get_max_value() {
+		assert(!"File not added for reflection!");
 		return 0;
 	}
 	static const T index_value(s64 index) {
+		assert(!"File not added for reflection!");
 		return (T)0;
 	}
 	static const String string(T value) {
+		assert(!"File not added for reflection!");
 		return "";
 	}
 };
@@ -175,6 +180,7 @@ struct Reflect {
 	static constexpr Type_Id      id = Type_Id_UNKNOWN;
 	static const Type_Info *const info() {
 		static const Type_Info i(id, 0, "-unknown-");
+		assert(!"File not added for reflection!");
 		return &i;
 	}
 };

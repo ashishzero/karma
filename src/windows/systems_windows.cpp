@@ -1,6 +1,7 @@
 #define OEMRESOURCE
 #include "../length_string.h"
 #include "../systems.h"
+#include "../stb_sprintf.h"
 #include "resource.h"
 #include <ShlObj_core.h>
 #include <Windows.h>
