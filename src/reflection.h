@@ -1,6 +1,60 @@
 #pragma once
 #include "karma.h"
 
+/*
+ * Reflection
+ * To use reflection feature, see src/.generated/readme.txt
+*/
+
+// Here's the example usage
+#if 0
+
+enum Number {
+	ONE,
+	TWO,
+	THREE,
+	FOUR,
+	FIVE,
+};
+
+struct My_Handle {
+	size_t size;
+	union {
+		void *ptr;
+		uint32_t h32;
+	};
+};
+
+struct My_Struct {
+	float a, b, c, d;
+	attribute("no-display") My_Handle handle;
+};
+
+void foo(const My_Struct &data) {
+
+	for (int i = 0; i < enum_count<Number>(); ++i) {
+		Number n = enum_index_value<Number>(i);
+		String name = enum_string(n);
+		printf("Enum String: %s\n", name.data);
+	}
+
+	const Type_Info *info = reflect_info(data); // reflect_info<My_Struct>() is also possible
+	if (info->id == Type_Id_STRUCT) { // must be true because My_Struct is struct
+		auto       struct_info = (Type_Info_Struct *)info; // because id is Type_Id_STRUCT
+		String struct_name = info->name;
+		s64 member_count = struct_info->member_count;
+		const Struct_Member *members    = struct_info->members;
+		// members[i].info gives Type_Info for members of the structs
+	}
+
+	// reflect_info works for enums, structs, unions and functions
+	// by checking the Type_Id, Type_Info can be casted to Type_Info_Struct, Type_Info_Enum, Type_Info_Pointer,
+	// Type_Info_Function and Type_Info_Union, for details of the data contained in these structures
+	// check the code below
+}
+
+#endif
+
 #ifdef RUN_REFLECTION
 #	define attribute(...) __attribute__((annotate(#    __VA_ARGS__)))
 #else
