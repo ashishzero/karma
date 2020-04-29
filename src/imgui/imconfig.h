@@ -122,6 +122,6 @@ namespace ImGui {
 void Initialize();
 void Shutdown();
 bool HandleEvent(const Event &event);
-void UpdateFrame(r32 dt, r32 event_time, r32 simulate_time, r32 render_time, r32 gpu_time);
+void UpdateFrame(r32 dt, r32 event_time = 0, r32 simulate_time = 0, r32 render_time = 0, r32 gpu_time = 0);
 void RenderFrame();
 } // namespace ImGui

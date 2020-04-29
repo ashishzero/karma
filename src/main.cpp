@@ -22,7 +22,6 @@
 
 #include "stream.h"
 
-
 #define timed_begin(x) u64 timed_counter_##x = system_get_counter()
 #define timed_end(x)   ((1000000.0f * (r32)(system_get_counter() - timed_counter_##x)) / (r32)system_get_frequency()) / 1000.0f
 
@@ -30,7 +29,7 @@ int system_main() {
 	do_pre_build_steps(u8"../res", u8"./data");
 
 	Handle platform = system_create_window(u8"Karma", 1280, 720, System_Window_Show_NORMAL);
-	gfx_create_context(platform, Render_Backend_OPENGL, 1, 4, 800, 600);
+	gfx_create_context(platform, Render_Backend_OPENGL, 1, 4);
 	ImGui::Initialize();
 
 	Rng rng = random_init(0, 0);

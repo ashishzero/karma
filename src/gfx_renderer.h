@@ -3,7 +3,7 @@
 #include "lin_maths.h"
 #include "gfx_types.h"
 
-bool gfx_create_context(Handle platform, Render_Backend backend, s32 vsync, s32 multisamples, s32 framebuffer_w, s32 framebuffer_h);
+bool gfx_create_context(Handle platform, Render_Backend backend, s32 vsync, s32 multisamples, s32 framebuffer_w = 0, s32 framebuffer_h = 0);
 void gfx_destroy_context();
 
 Render_Backend gfx_render_backend();
@@ -42,5 +42,5 @@ void gfx2d_texture(Handle texture);
 void gfx2d_no_texture();
 void gfx2d_color(Color4 color);
 void gfx2d_color(Color4 a, Color4 b, Color4 c, Color4 d);
-void gfx2d_quad(Vec2 v0, Vec2 v1, Vec2 v2, Vec2 v3, Mm_Rect texture_rect, r32 depth = 0);
-void gfx2d_rect(Vec2 p, Vec2 d, Mm_Rect texture_rect, r32 depth = 0);
+void gfx2d_quad(Vec2 v0, Vec2 v1, Vec2 v2, Vec2 v3, Mm_Rect texture_rect = mm_rect(0, 0, 1, 1), r32 depth = 0);
+void gfx2d_rect(Vec2 p, Vec2 d, Mm_Rect texture_rect = mm_rect(0, 0, 1, 1), r32 depth = 0);

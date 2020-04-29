@@ -49,6 +49,10 @@ static Handle            quad_index_buffer;
 
 bool gfx_create_context(Handle platform, Render_Backend backend, s32 vsync, s32 multisamples, s32 framebuffer_w, s32 framebuffer_h) {
 	if (backend == Render_Backend_OPENGL) {
+		auto window_size = system_get_client_size();
+		if (framebuffer_w == 0) framebuffer_w = window_size.x;
+		if (framebuffer_h == 0) framebuffer_h = window_size.y;
+
 		system_log(LOG_INFO, "Gfx", "gfx.backend = Render_Backend_OPENGL");
 		gfx = create_opengl_context(platform, vsync, multisamples, framebuffer_w, framebuffer_h);
 		if (gfx->backend == Render_Backend_NONE) {
