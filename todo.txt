@@ -1,13 +1,13 @@
-# These things need sorting / cleanup
+# TODO
 
-- Create *get_user_save_directory*, *create_directory*, *check_for_directory_presence* and such functions
-
-- Defered Shading for optimized lighting
-- Physically Based Renbering
-- Some rendering warning / errors are ignored in OpenGL Debug callback, need to take a look at those
-- Support for instanced rendering in the engine
-
-- Local Thread Allocator
-- In utils.h file, cleanup random and hash util functions
-
-- Make it easier to import and and load assets into the engine
+- Audio using DirectSound or Windows Core Audio
+- Addition of lights and lighting in the shader
+- Framerate independent Game Physics (consistency is required)
+- Complex Font Shaping and Rendering
+- Add *system_get_user_directory*, *system_create_directory*, *system_directory_exists* functions (systems.h)
+- Add Instanced Rendering (gfx_renderer.h)
+- Create a Local Thread Allocator instead of using HeapAlloc (src/windows/systems_windows.cpp)
+- Create generic HashTable (utility.h)
+- Make asset loading system
+- Serializing and Deserializing save data
+- Particles systems
