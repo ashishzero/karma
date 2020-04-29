@@ -1,5 +1,5 @@
 #include "../gfx_renderer.h"
-#include "string.h"
+#include "../systems.h"
 
 #include "imconfig.h"
 #include "imgui.h"
@@ -28,6 +28,19 @@ void ImGui::Initialize() {
 	io.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;  // We can honor io.WantSetMousePos requests (optional, rarely used)
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 	io.BackendPlatformName = "Karma";
+	io.IniFilename         = 0;
+
+	auto user_name = system_get_user_name();
+	String ini_content = system_read_entire_file(tprintf("imgui/%s_config.ini", tto_cstring(user_name)));
+
+	defer {
+		mfree(user_name.data);
+		mfree(ini_content.data);
+	};
+
+	if (ini_content) {
+		ImGui::LoadIniSettingsFromMemory((char *)ini_content.data, ini_content.count);
+	}
 
 	ImFontConfig config;
 	config.SizePixels  = 16;
@@ -180,6 +193,16 @@ void ImGui::Initialize() {
 }
 
 void ImGui::Shutdown() {
+	String ini_content;
+	size_t size = 0;
+	ini_content.data = (utf8 *)ImGui::SaveIniSettingsToMemory(&size);
+	ini_content.count = (s64)size;
+	
+	auto   user_name   = system_get_user_name();
+	system_write_entire_file(tprintf("imgui/%s_config.ini", tto_cstring(user_name)), ini_content);
+	
+	mfree(user_name.data);
+
 	ImGui_ImplOpenGL3_DestroyDeviceObjects();
 	ImGui::DestroyContext();
 }

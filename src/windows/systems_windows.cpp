@@ -9,6 +9,7 @@
 #include <strsafe.h>
 #include <windowsx.h>
 #include <winreg.h>
+#include <Lmcons.h> // for UNLEN
 
 #pragma comment(lib, "kernel32.lib")
 #pragma comment(lib, "user32.lib")
@@ -237,7 +238,6 @@ static void win32_check_for_error_info(const Compile_Info &compile_info) {
 		system_log(LOG_ERROR, "Platform", "File: %s, Line: %d, Function: %s", compile_info.file, compile_info.line, compile_info.current_function);
 		system_log(LOG_ERROR, "Platform", "Message: %s", message);
 		LocalFree(message);
-		trigger_breakpoint();
 	}
 }
 
@@ -1185,6 +1185,20 @@ String system_get_command_line() {
 	result.data  = (u8 *)HeapAlloc(GetProcessHeap(), 0, len);
 	result.count = WideCharToMultiByte(CP_UTF8, 0, cmd_line, -1, (char *)result.data, len, 0, 0);
 	return result;
+}
+
+String system_get_user_name() {
+	DWORD buffer_len = UNLEN + 1;
+	wchar_t buffer[UNLEN + 1];
+
+	if (GetUserNameW(buffer, &buffer_len)) {
+		String name;
+		name.data = (utf8 *)mallocate(buffer_len);
+		name.count = WideCharToMultiByte(CP_UTF8, 0, buffer, -1, (char *)name.data, buffer_len, 0, 0);
+		return name;
+	}
+
+	return String("", 0);
 }
 
 Handle system_create_window(const char *title, s32 width, s32 height, System_Window_Show show, System_Window_State *state) {

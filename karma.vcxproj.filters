@@ -21,9 +21,6 @@
     <ClCompile Include="src\glad\src\glad.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\shared_newdelete.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -72,6 +69,12 @@
     <ClCompile Include="src\opengl\gfx_opengl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\karma_newdelete.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\stream.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\gfx_platform.h">
@@ -93,9 +96,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\utility.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\shared_crt_impl.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\stream.h">
@@ -164,6 +164,9 @@
     <ClInclude Include="src\unicode.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\karma_crt_impl.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitattributes" />
@@ -171,7 +174,6 @@
     <None Include="readme.md" />
     <None Include="res\shaders\quad.glsl" />
     <None Include=".clang-format" />
-    <None Include="..\harfbuzz\msbuild-x64\harfbuzz.sln" />
     <None Include="src\prebuild.bat">
       <Filter>Source Files</Filter>
     </None>

@@ -15,6 +15,7 @@ bin/*
 
 # generated files
 *.typeinfo
+run_tree/imgui/*.ini
 
 # execuables
 /run_tree/karma_x64_Debug.exe

@@ -227,13 +227,14 @@ popd
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Developer|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="src\stream.cpp" />
     <ClCompile Include="src\tokenizer.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Developer|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="src\pcg\pcg_basic.c" />
-    <ClCompile Include="src\shared_newdelete.cpp">
+    <ClCompile Include="src\karma_newdelete.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Developer|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
@@ -277,7 +278,7 @@ popd
     <ClInclude Include="src\tokenizer.h" />
     <ClInclude Include="src\pcg\pcg_basic.h" />
     <ClInclude Include="src\karma.h" />
-    <ClInclude Include="src\shared_crt_impl.hpp" />
+    <ClInclude Include="src\karma_crt_impl.hpp" />
     <ClInclude Include="src\stb_image.h" />
     <ClInclude Include="src\stb_sprintf.h" />
     <ClInclude Include="src\stream.h" />
@@ -287,7 +288,6 @@ popd
     <ClInclude Include="src\utility.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\harfbuzz\msbuild-x64\harfbuzz.sln" />
     <None Include=".clang-format" />
     <None Include=".gitattributes" />
     <None Include=".gitignore" />

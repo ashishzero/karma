@@ -1,9 +1,8 @@
 #pragma once
 
 #include "karma.h"
-#include "string.h"
-#include "stb_sprintf.h"
 
+// TODO: remove or clean this up!
 inline u8 *move_ahead(u8 **ptr, int bytes) {
 	u8 *r = *ptr;
 	*ptr  = *ptr + bytes;
@@ -69,48 +68,12 @@ struct Istream {
 	u8 *current;
 };
 
-inline Istream istream(void *ptr, size_t length) {
-	Istream res;
-	res.base    = (u8 *)ptr;
-	res.end     = res.base + length;
-	res.current = res.base;
-	return res;
-}
-
-inline Istream istream(Array_View<u8> buffer) {
-	Istream result;
-	result = istream(buffer.data, buffer.count);
-	return result;
-}
-
-inline void *istream_consume_size(Istream *b, size_t size) {
-	assert(b->current + size <= b->end);
-	void *ptr = b->current;
-	b->current += size;
-	return ptr;
-}
+Istream istream(void *ptr, size_t length);
+Istream istream(Array_View<u8> buffer);
+void *  istream_consume_size(Istream *b, size_t size);
+String istream_consume_line(Istream *b);
 #define istream_consume(stream, type) (type *)istream_consume_size(stream, sizeof(type))
-
-inline bool istream_eof(Istream *b) {
-	return b->current >= b->end;
-}
-
-inline String istream_consume_line(Istream *b) {
-	String string;
-
-	u8 *ptr    = b->current;
-	s64 length = 0;
-	while (!istream_eof(b)) {
-		auto c = *istream_consume(b, u8);
-		if (c == '\n' || c == '\r') break;
-		length += 1;
-	}
-
-	string.data  = ptr;
-	string.count = length;
-
-	return string;
-}
+bool istream_eof(Istream *b);
 
 //
 //
@@ -133,74 +96,10 @@ struct Ostream {
 	Allocator allocator = context.allocator;
 };
 
-inline void ostream_write_buffer(Ostream *stream, const void *ptr, s64 size) {
-	s64 left = size;
-	u8 *data = (u8 *)ptr;
-
-	while (left >= OSTREAM_BUCKET_SIZE - stream->tail->filled) {
-		auto write = OSTREAM_BUCKET_SIZE - stream->tail->filled;
-		memcpy(stream->tail->data + stream->tail->filled, data + size - left, write);
-		stream->tail->filled += write;
-		left -= write;
-		stream->tail->next       = new (stream->allocator) Ostream::Bucket;
-		stream->tail->next->prev = stream->tail;
-		stream->tail             = stream->tail->next;
-	}
-
-	if (left) {
-		memcpy(stream->tail->data + stream->tail->filled, data + size - left, left);
-		stream->tail->filled += left;
-	}
-}
-
-template <typename T>
-inline void ostream_write(Ostream *stream, const T &v) {
+void ostream_write_buffer(Ostream *stream, const void *ptr, s64 size);
+template <typename T> void ostream_write(Ostream *stream, const T &v) {
 	ostream_write_buffer(stream, (void *)&v, sizeof(T));
 }
-
-inline void ostream_write_formatted(Ostream *stream, const char *fmt, ...) {
-	char working_buffer[512]; // TODO: This MUST equal STB_SPRINTF_MIN, move this to length_string.cpp
-
-	va_list ap;
-	va_start(ap, fmt);
-	stbsp_vsprintfcb([](char const *buf, void *user, int len) -> char * {
-		ostream_write_buffer((Ostream *)user, buf, len);
-		return (char *)buf;
-	},
-					 stream, working_buffer, fmt, ap);
-	va_end(ap);
-}
-
-inline String ostream_build_string(Ostream *stream, bool null_terminate = false) {
-	s64 count = 0;
-
-	for (auto buk = &stream->head; buk != 0; buk = buk->next) {
-		count += buk->filled;
-	}
-
-	String string;
-	string.data  = new u8[count + (s64)(null_terminate)];
-	string.count = 0;
-
-	for (auto buk = &stream->head; buk != 0; buk = buk->next) {
-		memcpy(string.data + string.count, buk->data, buk->filled);
-		string.count += buk->filled;
-	}
-
-	if (null_terminate) string.data[count] = 0;
-
-	return string;
-}
-
-inline void ostream_free(Ostream *stream) {
-	assert(stream->tail->next == 0);
-
-	for (auto buk = stream->tail; buk != &stream->head;) {
-		auto prev = buk->prev;
-		mfree(buk, stream->allocator);
-		buk = prev;
-	}
-
-	stream->tail        = &stream->head;
-	stream->head.filled = 0;
-}
+void ostream_write_formatted(Ostream *stream, const char *fmt, ...);
+String ostream_build_string(Ostream *stream, bool null_terminate = false);
+void   ostream_free(Ostream *stream);

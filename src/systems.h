@@ -347,6 +347,7 @@ String system_get_clipboard_text();
 void   system_set_clipboard_text(const String string);
 
 String system_get_command_line();
+String system_get_user_name();
 
 Handle system_create_window(const char *title, s32 width, s32 height, System_Window_Show show, System_Window_State *state = 0);
 void   system_request_quit();
