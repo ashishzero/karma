@@ -11,3 +11,10 @@
 - Make asset loading system
 - Serializing and Deserializing save data
 - Particles systems
+
+# TODO in Files
+- length_string.h (32)
+- gfx_opengl.cpp (823)
+- Handle error in load_library function during opengl context creation (gfx_opengl.cpp, 929)
+- stream.h inline functions needs to be cleaned up
+- systems_windows.cpp, use of _ReadWriteBarrier() which is deprecated (923, 930)

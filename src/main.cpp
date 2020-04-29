@@ -7,9 +7,12 @@
 #include "systems.h"
 #include "utility.h"
 
-#pragma comment(lib, "W:/harfbuzz/msbuild-x64/Release/harfbuzz.lib")
+//#define THIS_IS_ZERO
 
+#ifdef THIS_IS_ZERO
+#pragma comment(lib, "W:/harfbuzz/msbuild-x64/Release/harfbuzz.lib")
 #include "../../harfbuzz/src/hb.h"
+#endif
 
 // TEMP
 #ifdef BUILD_RELEASE
@@ -104,6 +107,7 @@ int system_main() {
 
 	Font_Shape font_shape = font_shape_string(&font, string);
 
+	#ifdef THIS_IS_ZERO
 	hb_buffer_t *hb_buffer;
 	hb_buffer = hb_buffer_create();
 	hb_buffer_add_utf8(hb_buffer, (char *)string.data, -1, 0, -1);
@@ -119,6 +123,7 @@ int system_main() {
 	unsigned int         hb_glyph_count;
 	hb_glyph_info_t *    hb_info = hb_buffer_get_glyph_infos(hb_buffer, &hb_glyph_count);
 	hb_glyph_position_t *hb_pos  = hb_buffer_get_glyph_positions(hb_buffer, &hb_glyph_count);
+	#endif
 
 #if 0
 	struct Render_Glyph {
@@ -364,6 +369,7 @@ int system_main() {
 			}
 		}
 
+		#ifdef THIS_IS_ZERO
 		p = display_position + vec2(170, 350 + 150);
 		{
 			if (draw_baseline)
@@ -459,6 +465,7 @@ int system_main() {
 				p.x += (r32)(advance)*scale;
 			}
 		}
+		#endif
 
 #if 0
 		utf8 buffer[50];
@@ -509,6 +516,7 @@ int system_main() {
 		ImGui::Checkbox("Codepoints", &should_display_codepoints);
 		ImGui::DragFloat("Scale", &scale, 0.0001f, 0, 1);
 
+		#ifdef THIS_IS_ZERO
 		auto g_counts = font_shape.codepoints.count > hb_glyph_count ? font_shape.codepoints.count : hb_glyph_count;
 
 		int codepoint_index = 0;
@@ -525,6 +533,8 @@ int system_main() {
 
 			if (ImGui::IsItemClicked()) region_index = id;
 		}
+
+		#endif
 
 		ImGui::End();
 
