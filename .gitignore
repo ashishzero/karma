@@ -13,6 +13,9 @@ bin/*
 .clang-format
 *.log
 
+# generated files
+*.typeinfo
+
 # execuables
 /run_tree/karma_x64_Debug.exe
 /run_tree/karma_x64_Developer.exe
