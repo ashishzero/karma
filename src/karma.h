@@ -640,13 +640,19 @@ inline s64 array_get_grow_capacity(s64 c, s64 n) {
 }
 
 template <typename T>
-void array_add(Array<T> *a, const T &d) {
+T *array_add(Array<T> *a) {
 	if (a->count == a->capacity) {
 		s64 c = array_get_grow_capacity(a->capacity, 1);
 		array_resize(a, c);
 	}
-	a->data[a->count] = T { d };
 	a->count++;
+	return a->data + (a->count - 1);
+}
+
+template <typename T>
+void array_add(Array<T> *a, const T &d) {
+	T *m = array_add(a);
+	*m = d;
 }
 
 template <typename T>
