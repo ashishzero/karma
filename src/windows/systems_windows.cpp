@@ -1188,13 +1188,37 @@ String system_get_command_line() {
 	return result;
 }
 
+System_Info system_get_info() {
+	System_Info info;
+	SYSTEM_INFO winfo;
+	GetSystemInfo(&winfo);
+
+	auto arch = winfo.wProcessorArchitecture;
+	switch (arch) {
+		case PROCESSOR_ARCHITECTURE_AMD64: info.architecture = Processor_Architecture_AMD64; break;
+		case PROCESSOR_ARCHITECTURE_ARM: info.architecture = Processor_Architecture_ARM; break;
+		case PROCESSOR_ARCHITECTURE_ARM64: info.architecture = Processor_Architecture_ARM64; break;
+		case PROCESSOR_ARCHITECTURE_IA64: info.architecture = Processor_Architecture_IA64; break;
+		case PROCESSOR_ARCHITECTURE_INTEL: info.architecture = Processor_Architecture_INTEL; break;
+		default: info.architecture = Processor_Architecture_UNKNOWN;
+	}
+
+	info.page_size               = winfo.dwPageSize;
+	info.min_application_address = (ptrsize)winfo.lpMinimumApplicationAddress;
+	info.max_application_address = (ptrsize)winfo.lpMaximumApplicationAddress;
+	info.number_of_processors    = winfo.dwNumberOfProcessors;
+	info.allocation_granularity  = winfo.dwAllocationGranularity;
+
+	return info;
+}
+
 String system_get_user_name() {
-	DWORD buffer_len = UNLEN + 1;
+	DWORD   buffer_len = UNLEN + 1;
 	wchar_t buffer[UNLEN + 1];
 
 	if (GetUserNameW(buffer, &buffer_len)) {
 		String name;
-		name.data = (utf8 *)mallocate(buffer_len);
+		name.data  = (utf8 *)mallocate(buffer_len);
 		name.count = WideCharToMultiByte(CP_UTF8, 0, buffer, -1, (char *)name.data, buffer_len, 0, 0);
 		return name;
 	}

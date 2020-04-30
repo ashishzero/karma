@@ -304,6 +304,28 @@ enum Cursor_Kind {
 //
 //
 //
+
+enum Processor_Architecture {
+	Processor_Architecture_UNKNOWN,
+	Processor_Architecture_AMD64,
+	Processor_Architecture_ARM,
+	Processor_Architecture_ARM64,
+	Processor_Architecture_IA64,
+	Processor_Architecture_INTEL,
+};
+
+struct System_Info {
+	Processor_Architecture architecture;
+	u32                    page_size;
+	ptrsize                min_application_address;
+	ptrsize                max_application_address;
+	u32                    number_of_processors;
+	u32                    allocation_granularity;
+};
+
+//
+//
+//
 constexpr int SYSTEM_ENABLE  = 1;
 constexpr int SYSTEM_DISABLE = 0;
 constexpr int SYSTEM_TOGGLE  = 2;
@@ -346,8 +368,9 @@ bool system_is_cursor_visible();
 String system_get_clipboard_text();
 void   system_set_clipboard_text(const String string);
 
-String system_get_command_line();
-String system_get_user_name();
+String      system_get_command_line();
+System_Info system_get_info();
+String      system_get_user_name();
 
 Handle system_create_window(const char *title, s32 width, s32 height, System_Window_Show show, System_Window_State *state = 0);
 void   system_request_quit();
