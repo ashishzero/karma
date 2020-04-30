@@ -308,7 +308,7 @@ bool system_write_entire_file(const String path, Array_View<u8> content) {
 	auto     length = path.count + 1;
 	wchar_t *wpath  = (wchar_t *)tallocate(length * sizeof(wchar_t));
 	MultiByteToWideChar(CP_UTF8, 0, (char *)path.data, (int)path.count, wpath, (int)length);
-	wpath[length] = 0;
+	wpath[path.count] = 0;
 
 	auto handle = CreateFileW(wpath, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
 	if (handle != INVALID_HANDLE_VALUE) {
@@ -489,7 +489,8 @@ Array_View<System_Find_File_Info> system_find_files(const String search, bool re
 
 	Array<String> find_directories;
 	defer {
-		foreach (index, it, find_directories) {
+		for (s64 index = 0; index < find_directories.count; ++index) {
+			auto &it = find_directories[index];
 			if (index) mfree(it.data);
 		}
 		array_free(&find_directories);
