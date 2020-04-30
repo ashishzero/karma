@@ -1132,14 +1132,65 @@ constexpr u32 UNICODE_ANUDATTA      = 0x0952;
 constexpr u32 UNICODE_DEVANAGARI_RA = 0x0930;
 constexpr u32 UNICODE_NBSP          = 0x00A0;
 
-enum Devanagari {
-	Devanagari_RELF,
-	Devanagari_HALF_CONSONANT,
-	Devanagari_MAIN_CONSONANT,
-	Devanagari_BELOW_BASE_CONSONANT,
-	Devanagari_POST_BASE_CONSONANT,
-	Devanagari_PRE_BASE_CONSONANT,
-	Devanagari_MATRAS_AND_SIGN
+enum Shape_Class {
+	Shape_Class_INVALID,
+	Shape_Class_BASE,
+	Shape_Class_CGJ,
+	Shape_Class_CONS_MOD,
+	Shape_Class_CONS_WITH_STACKER,
+	Shape_Class_CONS_FINAL,
+	Shape_Class_CONS_FINAL_MOD,
+	Shape_Class_BASE_OTHER,
+	Shape_Class_HALANT,
+	Shape_Class_HALANT_NUM,
+	Shape_Class_BASE_IND,
+	Shape_Class_CONS_MED,
+	Shape_Class_BASE_NUM,
+	Shape_Class_OTHER,
+	Shape_Class_REPHA,
+	Shape_Class_SYM,
+	Shape_Class_SYM_MOD,
+	Shape_Class_CONS_SUB,
+	Shape_Class_VOWEL,
+	Shape_Class_VOWEL_MOD,
+	Shape_Class_VARIATION_SELECTOR,
+	Shape_Class_WORD_JOINER,
+	Shape_Class_ZERO_WIDTH_JOINER,
+	Shape_Class_ZERO_WIDTH_NON_JOINER,
+
+	Shape_Class_COUNT
+};
+
+enum Shape_Subclass {
+	Shape_Subclass_NONE,
+	Shape_Subclass_CONS_MOD_ABOVE,
+	Shape_Subclass_CONS_MOD_BELOW,
+	Shape_Subclass_CONS_FINAL_ABOVE,
+	Shape_Subclass_CONS_FINAL_BELOW,
+	Shape_Subclass_CONS_FINAL_POST,
+	Shape_Subclass_CONS_MED_ABOVE,
+	Shape_Subclass_CONS_MED_BELOW,
+	Shape_Subclass_CONS_MED_PRE,
+	Shape_Subclass_CONS_MED_POST,
+	Shape_Subclass_SYM_MOD_ABOVE,
+	Shape_Subclass_SYM_MOD_BELOW,
+	Shape_Subclass_VOWEL_ABOVE,
+	Shape_Subclass_VOWEL_ABOVE_BELOW,
+	Shape_Subclass_VOWEL_ABOVE_BELOW_POST,
+	Shape_Subclass_VOWEL_ABOVE_POST,
+	Shape_Subclass_VOWEL_BELOW,
+	Shape_Subclass_VOWEL_BELOW_POST,
+	Shape_Subclass_VOWEL_PRE,
+	Shape_Subclass_VOWEL_POST,
+	Shape_Subclass_VOWEL_PRE_ABOVE,
+	Shape_Subclass_VOWEL_PRE_ABOVE_POST,
+	Shape_Subclass_VOWEL_PRE_POST,
+	Shape_Subclass_VOWEL_MOD_ABOVE,
+	Shape_Subclass_VOWEL_MOD_BELOW,
+	Shape_Subclass_VOWEL_MOD_PRE,
+	Shape_Subclass_VOWEL_MOD_POST,
+
+	Shape_Subclass_COUNT
 };
 
 struct Glyph_Cluster {
@@ -1147,8 +1198,9 @@ struct Glyph_Cluster {
 	u32                    glyph_id;
 	Unicode_Indic_Syllable syllable;
 	Unicode_Indic_Position position;
+	Shape_Class            shape_class;
+	Shape_Subclass         shape_subclass;
 	bool                   base;
-	Devanagari             type;
 	int                    value;
 };
 
@@ -2144,6 +2196,169 @@ Font_Shape font_shape_string(Dynamic_Font *font, String string) {
 	for (s64 index = 0; index < codepoints.count; ++index) {
 		codepoints[index].syllable = unicode_indic_syllable(codepoints[index].codepoint);
 		codepoints[index].position = unicode_indic_position(codepoints[index].codepoint);
+
+		auto syllable  = codepoints[index].syllable;
+		auto position  = codepoints[index].position;
+		auto category  = unicode_category(codepoints[index].codepoint);
+		auto codepoint = codepoints[index].codepoint;
+
+		Shape_Class shape_class = Shape_Class_INVALID;
+
+		if (syllable == Unicode_Indic_Syllable_NUMBER ||
+			(syllable == Unicode_Indic_Syllable_AVAGRAHA && category == Unicode_Category_LO) ||
+			(syllable == Unicode_Indic_Syllable_BINDU && category == Unicode_Category_LO) ||
+			syllable == Unicode_Indic_Syllable_CONSONANT ||
+			(syllable == Unicode_Indic_Syllable_CONSONANT_FINAL && category == Unicode_Category_LO) ||
+			syllable == Unicode_Indic_Syllable_CONSONANT_HEAD_LETTER ||
+			(syllable == Unicode_Indic_Syllable_CONSONANT_MEDIAL && category == Unicode_Category_LO) ||
+			(syllable == Unicode_Indic_Syllable_CONSONANT_SUBJOINED && category == Unicode_Category_LO) ||
+			syllable == Unicode_Indic_Syllable_TONE_LETTER ||
+			(syllable == Unicode_Indic_Syllable_VOWEL && category == Unicode_Category_LO) ||
+			syllable == Unicode_Indic_Syllable_VOWEL_INDEPENDENT ||
+			(syllable == Unicode_Indic_Syllable_VOWEL_DEPENDENT && category == Unicode_Category_LO)) {
+			shape_class = Shape_Class_BASE;
+		} else if (codepoint == 0x034F) {
+			shape_class = Shape_Class_CGJ;
+		} else if (syllable == Unicode_Indic_Syllable_NUKTA ||
+				   syllable == Unicode_Indic_Syllable_GEMINATION_MARK ||
+				   syllable == Unicode_Indic_Syllable_CONSONANT_KILLER) {
+			shape_class = Shape_Class_CONS_MOD;
+		} else if (syllable == Unicode_Indic_Syllable_CONSONANT_WITH_STACKER) {
+			shape_class = Shape_Class_CONS_WITH_STACKER;
+		} else if ((syllable == Unicode_Indic_Syllable_CONSONANT_FINAL && category != Unicode_Category_LO) ||
+				   syllable == Unicode_Indic_Syllable_CONSONANT_SUCCEEDING_REPHA) {
+			shape_class = Shape_Class_CONS_FINAL;
+		} else if (syllable == Unicode_Indic_Syllable_SYLLABLE_MODIFIER) {
+			shape_class = Shape_Class_CONS_FINAL_MOD;
+		} else if (syllable == Unicode_Indic_Syllable_CONSONANT_PLACEHOLDER ||
+				   codepoint == 0x2015 || codepoint == 0x2022 || (codepoint >= 0x25FB && codepoint <= 0x25FE)) {
+			shape_class = Shape_Class_BASE_OTHER;
+		} else if (syllable == Unicode_Indic_Syllable_VIRAMA ||
+				   syllable == Unicode_Indic_Syllable_INVISIBLE_STACKER) {
+			shape_class = Shape_Class_HALANT;
+		} else if (syllable == Unicode_Indic_Syllable_NUMBER_JOINER) {
+			shape_class = Shape_Class_HALANT_NUM;
+		} else if (syllable == Unicode_Indic_Syllable_CONSONANT_DEAD ||
+				   syllable == Unicode_Indic_Syllable_MODIFYING_LETTER ||
+				   (category == Unicode_Category_PO && codepoint != 0x104E && codepoint != 0x2022) ||
+				   codepoint == 0x002D) {
+			shape_class = Shape_Class_BASE_IND;
+		} else if (syllable == Unicode_Indic_Syllable_CONSONANT_MEDIAL && category != Unicode_Category_LO) {
+			shape_class = Shape_Class_CONS_MED;
+		} else if (syllable == Unicode_Indic_Syllable_BRAHMI_JOINING_NUMBER) {
+			shape_class = Shape_Class_BASE_NUM;
+		} else if (unicode_script(codepoint) == Unicode_Script_COMMON ||
+				   category == Unicode_Category_ZS) {
+			shape_class = Shape_Class_OTHER;
+		} else if (syllable == Unicode_Indic_Syllable_CONSONANT_PRECEDING_REPHA ||
+				   syllable == Unicode_Indic_Syllable_CONSONANT_PREFIXED) {
+			shape_class = Shape_Class_REPHA;
+		} else if ((category == Unicode_Category_SO && codepoint != 0x25CC) ||
+				   category == Unicode_Category_SC) {
+			shape_class = Shape_Class_SYM;
+		} else if (
+			codepoint == 0x1B6B || codepoint == 0x1B6C || 
+			codepoint == 0x1B6D || codepoint == 0x1B6E ||
+			codepoint == 0x1B6F || codepoint == 0x1B70 ||
+			codepoint == 0x1B71 || codepoint == 0x1B72 ||
+			codepoint == 0x1B73) {
+			shape_class = Shape_Class_SYM_MOD;
+		} else if (syllable == Unicode_Indic_Syllable_CONSONANT_SUBJOINED && category != Unicode_Category_LO) {
+			shape_class = Shape_Class_CONS_SUB;
+		} else if ((syllable == Unicode_Indic_Syllable_VOWEL && category != Unicode_Category_LO) ||
+			(syllable == Unicode_Indic_Syllable_VOWEL_DEPENDENT && category != Unicode_Category_LO) ||
+			syllable == Unicode_Indic_Syllable_PURE_KILLER) {
+			shape_class = Shape_Class_VOWEL;
+		} else if ((syllable == Unicode_Indic_Syllable_BINDU && category != Unicode_Category_LO) ||
+				   syllable == Unicode_Indic_Syllable_TONE_MARK ||
+				   syllable == Unicode_Indic_Syllable_CANTILLATION_MARK ||
+				   syllable == Unicode_Indic_Syllable_REGISTER_SHIFTER ||
+				   syllable == Unicode_Indic_Syllable_VISARGA) {
+			shape_class = Shape_Class_VOWEL_MOD;
+		} else if (codepoint >= 0xFE00 && codepoint <= 0xFE0F) {
+			shape_class = Shape_Class_VARIATION_SELECTOR;
+		} else if (codepoint == 0x2060) {
+			shape_class = Shape_Class_WORD_JOINER;
+		} else if (syllable == Unicode_Indic_Syllable_JOINER) {
+			shape_class = Shape_Class_ZERO_WIDTH_JOINER;
+		} else if (syllable == Unicode_Indic_Syllable_NON_JOINER) {
+			shape_class = Shape_Class_ZERO_WIDTH_NON_JOINER;
+		}
+
+		codepoints[index].shape_class = shape_class;
+
+		Shape_Subclass shape_subclass = Shape_Subclass_NONE;
+
+		if (shape_class == Shape_Class_CONS_MOD) {
+			if (position == Unicode_Indic_Position_TOP) {
+				shape_subclass = Shape_Subclass_CONS_MOD_ABOVE;
+			} else if (position == Unicode_Indic_Position_BOTTOM) {
+				shape_subclass = Shape_Subclass_CONS_MOD_BELOW;
+			}
+		} else if (shape_class == Shape_Class_CONS_FINAL) {
+			if (position == Unicode_Indic_Position_TOP) {
+				shape_subclass = Shape_Subclass_CONS_FINAL_ABOVE;
+			} else if (position == Unicode_Indic_Position_BOTTOM) {
+				shape_subclass = Shape_Subclass_CONS_FINAL_BELOW;
+			} else if (position == Unicode_Indic_Position_RIGHT) {
+				shape_subclass = Shape_Subclass_CONS_FINAL_POST;
+			}
+		} else if (shape_class == Shape_Class_CONS_MED) {
+			if (position == Unicode_Indic_Position_TOP) {
+				shape_subclass = Shape_Subclass_CONS_MED_ABOVE;
+			} else if (position == Unicode_Indic_Position_BOTTOM) {
+				shape_subclass = Shape_Subclass_CONS_MED_BELOW;
+			} else if (position == Unicode_Indic_Position_LEFT) {
+				shape_subclass = Shape_Subclass_CONS_MED_PRE;
+			} else if (position == Unicode_Indic_Position_RIGHT) {
+				shape_subclass = Shape_Subclass_CONS_MED_POST;
+			}
+		} else if (shape_class == Shape_Class_SYM_MOD) {
+			if (codepoint == 0x1B6B || codepoint == 0x1B6D ||
+				codepoint == 0x1B6E || codepoint == 0x1B6F ||
+				codepoint == 0x1B70 || codepoint == 0x1B71 ||
+				codepoint == 0x1B72 || codepoint == 0x1B73) {
+				shape_subclass = Shape_Subclass_SYM_MOD_ABOVE;
+			} else if (codepoint == 0x1B6C) {
+				shape_subclass = Shape_Subclass_SYM_MOD_BELOW;
+			}
+		} else if (shape_class == Shape_Class_VOWEL) {
+			if (position == Unicode_Indic_Position_TOP) {
+				shape_subclass = Shape_Subclass_VOWEL_ABOVE;
+			} else if (position == Unicode_Indic_Position_TOP_AND_BOTTOM) {
+				shape_subclass = Shape_Subclass_VOWEL_ABOVE_BELOW;
+			} else if (position == Unicode_Indic_Position_TOP_AND_BOTTOM_AND_RIGHT) {
+				shape_subclass = Shape_Subclass_VOWEL_ABOVE_BELOW_POST;
+			} else if (position == Unicode_Indic_Position_TOP_AND_RIGHT) {
+				shape_subclass = Shape_Subclass_VOWEL_ABOVE_POST;
+			} else if (position == Unicode_Indic_Position_BOTTOM || position == Unicode_Indic_Position_OVERSTRUCK) {
+				shape_subclass = Shape_Subclass_VOWEL_BELOW;
+			} else if (position == Unicode_Indic_Position_BOTTOM_AND_RIGHT) {
+				shape_subclass = Shape_Subclass_VOWEL_BELOW_POST;
+			} else if (position == Unicode_Indic_Position_LEFT) {
+				shape_subclass = Shape_Subclass_VOWEL_PRE;
+			} else if (position == Unicode_Indic_Position_RIGHT) {
+				shape_subclass = Shape_Subclass_VOWEL_POST;
+			} else if (position == Unicode_Indic_Position_TOP_AND_LEFT) {
+				shape_subclass = Shape_Subclass_VOWEL_PRE_ABOVE;
+			} else if (position == Unicode_Indic_Position_TOP_AND_LEFT_AND_RIGHT) {
+				shape_subclass = Shape_Subclass_VOWEL_PRE_ABOVE_POST;
+			} else if (position == Unicode_Indic_Position_LEFT_AND_RIGHT) {
+				shape_subclass = Shape_Subclass_VOWEL_PRE_POST;
+			}
+		} else if (shape_class == Shape_Class_VOWEL_MOD) {
+			if (position == Unicode_Indic_Position_TOP) {
+				shape_subclass = Shape_Subclass_VOWEL_MOD_ABOVE;
+			} else if (position == Unicode_Indic_Position_BOTTOM || position == Unicode_Indic_Position_OVERSTRUCK) {
+				shape_subclass = Shape_Subclass_VOWEL_MOD_BELOW;
+			} else if (position == Unicode_Indic_Position_LEFT) {
+				shape_subclass = Shape_Subclass_VOWEL_MOD_PRE;
+			} else if (position == Unicode_Indic_Position_RIGHT) {
+				shape_subclass = Shape_Subclass_VOWEL_MOD_POST;
+			}
+		}
+
+		codepoints[index].shape_subclass = shape_subclass;
 	}
 
 	int cluster_value = 0;
@@ -2361,7 +2576,7 @@ Font_Shape font_shape_string(Dynamic_Font *font, String string) {
 			}
 		}
 
-		#if 0
+#if 0
 		for (auto iter = first; iter + 2 <= last; ++iter) {
 			if (codepoints[iter + 0].codepoint == UNICODE_DEVANAGARI_RA &&
 				codepoints[iter + 1].syllable == Unicode_Indic_Syllable_VIRAMA &&
@@ -2380,7 +2595,7 @@ Font_Shape font_shape_string(Dynamic_Font *font, String string) {
 				}
 			}
 		}
-		#endif
+#endif
 
 		codepoints[base_index].base = true;
 
