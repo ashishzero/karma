@@ -1532,14 +1532,14 @@ void *system_allocator(Allocation_Type type, ptrsize size, const void *ptr, void
 	// TODO: Make a local thread allocator
 
 	if (type == Allocation_Type_NEW) {
-		void *new_ptr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
+		void *new_ptr = HeapAlloc(GetProcessHeap(), 0, size);
 		return new_ptr;
 	} else if (type == Allocation_Type_RESIZE) {
 		void *new_ptr;
 		if (ptr)
-			new_ptr = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (void *)ptr, size);
+			new_ptr = HeapReAlloc(GetProcessHeap(), 0, (void *)ptr, size);
 		else
-			new_ptr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
+			new_ptr = HeapAlloc(GetProcessHeap(), 0, size);
 		return new_ptr;
 	} else if (type == Allocation_Type_FREE) {
 		if (ptr) {
