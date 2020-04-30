@@ -7,7 +7,7 @@
 #include "systems.h"
 #include "utility.h"
 
-#define THIS_IS_ZERO
+#define THIS_IS_ZERO // uncomment this to make your program work!
 
 #ifdef THIS_IS_ZERO
 #pragma comment(lib, "W:/harfbuzz/msbuild-x64/Release/harfbuzz.lib")
