@@ -413,7 +413,7 @@ void system_display_critical_message(const String msg);
 
 void *system_allocator(Allocation_Type type, ptrsize size, void *ptr, void *user_ptr);
 
-Handle      system_thread_create(Thread_Proc proc, void *arg, Allocator allocator = { 0, 0 }, ptrsize temporary_memory_size = TEMPORARY_MEMORY_SIZE, String name = String((char *)0, 0));
+Handle      system_thread_create(Thread_Proc proc, void *arg, ptrsize temporary_memory_size = TEMPORARY_MEMORY_SIZE, String name = String((char *)0, 0));
 void        system_thread_run(Handle handle);
 Thread_Wait system_thread_wait(Handle handle, u32 millisecs);
 void        system_thread_terminate(Handle handle, int exit_code);

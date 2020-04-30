@@ -1529,21 +1529,21 @@ void system_display_critical_message(const String msg) {
 }
 
 void *system_allocator(Allocation_Type type, ptrsize size, const void *ptr, void *user_ptr) {
-	// TODO: Make a local thread allocator
+	HANDLE heap = (HANDLE)user_ptr;
 
 	if (type == Allocation_Type_NEW) {
-		void *new_ptr = HeapAlloc(GetProcessHeap(), 0, size);
+		void *new_ptr = HeapAlloc(heap, 0, size);
 		return new_ptr;
 	} else if (type == Allocation_Type_RESIZE) {
 		void *new_ptr;
 		if (ptr)
-			new_ptr = HeapReAlloc(GetProcessHeap(), 0, (void *)ptr, size);
+			new_ptr = HeapReAlloc(heap, 0, (void *)ptr, size);
 		else
-			new_ptr = HeapAlloc(GetProcessHeap(), 0, size);
+			new_ptr = HeapAlloc(heap, 0, size);
 		return new_ptr;
 	} else if (type == Allocation_Type_FREE) {
 		if (ptr) {
-			HRESULT hr = HeapFree(GetProcessHeap(), 0, (void *)ptr);
+			HRESULT hr = HeapFree(heap, 0, (void *)ptr);
 			if (FAILED(hr)) {
 				win32_check_for_error();
 			}
@@ -1611,20 +1611,15 @@ DWORD WINAPI win_thread_proc(LPVOID param) {
 
 	int result = thread->proc(thread->arg);
 
-	if (thread->temporary_memory_size) {
-		mfree(context.temp_memory.base);
-	}
-
-	mfree(thread);
+	HeapDestroy(thread->allocator.data);
 
 	return result;
 }
 
-Handle system_thread_create(Thread_Proc proc, void *arg, Allocator allocator, ptrsize temporary_memory_size, String name) {
-	if (allocator.proc == NULL) {
-		allocator.proc = system_allocator;
-		allocator.data = 0;
-	}
+Handle system_thread_create(Thread_Proc proc, void *arg, ptrsize temporary_memory_size, String name) {
+	Allocator allocator;
+	allocator.proc = system_allocator;
+	allocator.data = HeapCreate(HEAP_NO_SERIALIZE, 0, 0);
 
 	Windows_Thread *thread        = (Windows_Thread *)mallocate(sizeof(Windows_Thread), allocator);
 	thread->proc                  = proc;
@@ -1636,7 +1631,6 @@ Handle system_thread_create(Thread_Proc proc, void *arg, Allocator allocator, pt
 	thread->handle = CreateThread(0, 0, win_thread_proc, thread, CREATE_SUSPENDED, 0);
 	if (thread->handle != NULL) {
 		result.hptr = thread;
-
 		if (name) {
 			wchar_t *desc = (wchar_t *)tallocate(name.count + 1);
 			MultiByteToWideChar(CP_UTF8, 0, (char *)name.data, (int)name.count, desc, (int)name.count + 1);
@@ -1671,7 +1665,7 @@ Thread_Wait system_thread_wait(Handle handle, u32 millisecs) {
 void system_thread_terminate(Handle handle, int exit_code) {
 	auto thread = (Windows_Thread *)handle.hptr;
 	TerminateThread(thread->handle, exit_code);
-	mfree(thread, thread->allocator);
+	HeapDestroy(thread->allocator.data);
 }
 
 void system_thread_exit(int exit_code) {
@@ -1700,10 +1694,10 @@ int __stdcall wWinMain(HINSTANCE instance, HINSTANCE prev_instance, LPWSTR cmd_l
 
 	context.id             = GetCurrentThreadId();
 	context.allocator.proc = system_allocator;
-	context.allocator.data = 0;
+	context.allocator.data = HeapCreate(HEAP_NO_SERIALIZE, 0, 0);
 	context.data           = 0;
 
-	void *ptr = VirtualAlloc(0, static_cast<SIZE_T>(TEMPORARY_MEMORY_SIZE), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+	void *ptr = mallocate(static_cast<SIZE_T>(TEMPORARY_MEMORY_SIZE));
 	if (ptr == 0) {
 		win32_check_for_error();
 		system_fatal_error("Out of memory: Unable to allocate temporary storage memory!");
@@ -1714,7 +1708,7 @@ int __stdcall wWinMain(HINSTANCE instance, HINSTANCE prev_instance, LPWSTR cmd_l
 
 	int result = system_main();
 
-	VirtualFree(context.temp_memory.ptr, 0, MEM_RELEASE);
+	HeapDestroy(context.allocator.data);
 
 	CoUninitialize();
 
@@ -1730,7 +1724,7 @@ int main(int argc, char *argv[]) {
 
 	context.id             = GetCurrentThreadId();
 	context.allocator.proc = system_allocator;
-	context.allocator.data = 0;
+	context.allocator.data = HeapCreate(HEAP_NO_SERIALIZE, 0, 0);
 	context.data           = 0;
 
 	void *ptr = VirtualAlloc(0, static_cast<SIZE_T>(TEMPORARY_MEMORY_SIZE), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
