@@ -6,7 +6,6 @@
 - Complex Font Shaping and Rendering
 - Add *system_get_user_directory*, *system_create_directory*, *system_directory_exists* functions (systems.h)
 - Add Instanced Rendering (gfx_renderer.h)
-- Create a Local Thread Allocator instead of using HeapAlloc (src/windows/systems_windows.cpp)
 - Create generic HashTable (utility.h)
 - Make asset loading system
 - Serializing and Deserializing save data
