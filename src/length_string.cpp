@@ -283,15 +283,15 @@ String string_concat(String a, String b) {
 
 String string_concat(Array_View<String> strings) {
 	s64 len = 0;
-	foreach (index, string, strings) {
-		len += string.count;
+	for (s64 index = 0; index < strings.count; ++index) {
+		len += strings[index].count;
 	}
 	u8 *data = new u8[len];
 
 	s64 pos = 0;
-	foreach (index, string, strings) {
-		memcpy(data + pos, string.data, string.count);
-		pos += string.count;
+	for (s64 index = 0; index < strings.count; ++index) {
+		memcpy(data + pos, strings[index].data, strings[index].count);
+		pos += strings[index].count;
 	}
 	return String(data, len);
 }
@@ -305,15 +305,15 @@ String string_tconcat(String a, String b) {
 
 String string_tconcat(Array_View<String> strings) {
 	s64 len = 0;
-	foreach (index, string, strings) {
-		len += string.count;
+	for (s64 index = 0; index < strings.count; ++index) {
+		len += strings[index].count;
 	}
 	u8 *data = (u8 *)tallocate(len);
 
 	s64 pos = 0;
-	foreach (index, string, strings) {
-		memcpy(data + pos, string.data, string.count);
-		pos += string.count;
+	for (s64 index = 0; index < strings.count; ++index) {
+		memcpy(data + pos, strings[index].data, strings[index].count);
+		pos += strings[index].count;
 	}
 	return String(data, len);
 }

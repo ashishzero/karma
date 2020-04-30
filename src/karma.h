@@ -562,6 +562,14 @@ struct Array_View {
 		assert(index < count);
 		return data[index];
 	}
+
+	inline T *begin() {
+		return data;
+	}
+
+	inline T *end() {
+		return data + count;
+	}
 };
 
 template <typename T>
@@ -593,6 +601,14 @@ struct Array {
 	inline T &operator[](s64 index) {
 		assert(index < count);
 		return data[index];
+	}
+
+	inline T *begin() {
+		return data;
+	}
+
+	inline T* end() {
+		return data + count;
 	}
 };
 
@@ -690,10 +706,6 @@ void array_emplace(Array<T> *a, const Args &... args) {
 	a->data[a->count] = T(args...);
 	a->count++;
 }
-
-#define foreach(index, item, arr)                                                     \
-	for (s64 keep = 1, index = 0; keep && index < (arr).count; keep = !keep, ++index) \
-		for (auto &item = ((arr)[index]); keep; keep = !keep)
 
 //
 // UTF-8 Strings

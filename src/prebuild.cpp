@@ -303,7 +303,7 @@ void generate_glsl_shader(const String file, const String out) {
 
 		{
 			ostream_write_buffer(&stream, header.data, header.count);
-			foreach (index, s, shared) {
+			for (auto &s : shared) {
 				ostream_write_formatted(&stream, "out %s %s;\n", s.type, s.name);
 			}
 			ostream_write_buffer(&stream, vertex_code.data, vertex_code.count);
@@ -313,7 +313,7 @@ void generate_glsl_shader(const String file, const String out) {
 
 		{
 			ostream_write_buffer(&stream, header.data, header.count);
-			foreach (index, s, shared) {
+			for (auto &s : shared) {
 				ostream_write_formatted(&stream, "in %s %s;\n", s.type, s.name);
 			}
 			ostream_write_buffer(&stream, fragment_code.data, fragment_code.count);
@@ -333,7 +333,7 @@ void generate_glsl_shader(const String file, const String out) {
 		outf.write(outf.handle, &flags, sizeof(flags));
 
 		outf.write(outf.handle, &attribute.count, sizeof(attribute.count));
-		foreach (index, a, attribute) {
+		for (auto &a : attribute) {
 			outf.write(outf.handle, &a, sizeof(a));
 		}
 
@@ -343,14 +343,14 @@ void generate_glsl_shader(const String file, const String out) {
 		outf.write(outf.handle, fragment.data, fragment.count);
 
 		outf.write(outf.handle, &uniforms.count, sizeof(uniforms.count));
-		foreach (index, u, uniforms) {
+		for (auto &u : uniforms) {
 			outf.write(outf.handle, &u.name.count, sizeof(u.name.count));
 			outf.write(outf.handle, u.name.data, u.name.count);
 			outf.write(outf.handle, &u.type, sizeof(u.type));
 		}
 
 		outf.write(outf.handle, &textures.count, sizeof(textures.count));
-		foreach (index, u, textures) {
+		for (auto &u : textures) {
 			outf.write(outf.handle, &u.name.count, sizeof(u.name.count));
 			outf.write(outf.handle, u.name.data, u.name.count);
 			outf.write(outf.handle, &u.type, sizeof(u.type));
@@ -367,11 +367,11 @@ void generate_glsl_shader(const String file, const String out) {
 void generate_glsl_shaders(const char *dir, const char *out) {
 	auto files = system_find_files(tprintf("%s/shaders/*.glsl", dir), false);
 
-	foreach (index, file, files) {
+	for (auto &file : files) {
 		generate_glsl_shader(file.path, tprintf("%s/%s.fx.glsl", out, tto_cstring(file.name)));
 	}
 
-	foreach (index, file, files) {
+	for (auto &file : files) {
 		mfree(file.path.data);
 	}
 

@@ -581,7 +581,8 @@ Handle Gfx_Platform_OpenGL::create_shader(String src) {
 	shader->stride             = 0;
 	assert(shader->in_attribute_count < MAX_IN_ATTRIBUTE_LAYOUT);
 
-	foreach (index, a, atts) {
+	for (s64 index = 0; index < atts.count; ++index) {
+		auto &a                             = atts[index];
 		shader->in_attributes[index].index  = a.index;
 		shader->in_attributes[index].count  = a.count;
 		shader->in_attributes[index].offset = shader->stride;
