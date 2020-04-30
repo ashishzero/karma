@@ -1,5 +1,6 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include "src/stream.cpp"
 #include "src/karma_crt_impl.hpp"
-#include "src/stream.h"
 #include "src/tokenizer.cpp"
 
 #include <clang-c/Index.h>

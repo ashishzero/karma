@@ -1,3 +1,5 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include "src/stream.cpp"
 #include "src/karma_crt_impl.hpp"
 #include <ctype.h>
 
@@ -185,7 +187,7 @@ bool parse_for_unicode_data(String line, Unicode_Data *data) {
 		find_res = string_isearch(line, ";", search_index);
 		if (find_res.found) {
 			terminators[put_index] = (int)find_res.start_index;
-			search_index = (int)find_res.start_index + 1;
+			search_index           = (int)find_res.start_index + 1;
 		} else {
 			return false;
 		}
@@ -207,18 +209,24 @@ void ucd_generate_unicode_data(const char *file_name) {
 		mfree(content.data);
 	};
 
-	if (content) {
-		Array<Unicode_Data> unicode_data;
+	if (!content) return;
+	Array<Unicode_Data> unicode_data;
+	defer {
+		array_free(&unicode_data);
+	};
 
-		auto stream = istream(content);
+	auto stream = istream(content);
 
-		Unicode_Data data;
-		while (!istream_eof(&stream)) {
-			if (parse_for_unicode_data(istream_consume_line(&stream), &data)) {
-				array_add(&unicode_data, data);
-			}
+	Unicode_Data data;
+	while (!istream_eof(&stream)) {
+		if (parse_for_unicode_data(istream_consume_line(&stream), &data)) {
+			array_add(&unicode_data, data);
 		}
+	}
 
+	// Normalization code generation
+	{
+		scoped_temporary_allocation();
 		fprintf(header, "int unicode_normalize(uint32_t codepoint, uint32_t **normals);\n\n");
 
 		fprintf(source, "int unicode_normalize(uint32_t codepoint, uint32_t **normals) {\n");
@@ -226,19 +234,19 @@ void ucd_generate_unicode_data(const char *file_name) {
 		Ostream switch_code;
 		Ostream normals_code;
 
-		for (s64 index = 0; index < unicode_data.count; ++index) {
-			if (unicode_data[index].decomposed) {
-				char *name_of_decomposed = lower_caps(unicode_data[index].information);
+		for (auto &unicode : unicode_data) {
+			if (unicode.decomposed) {
+				char *name_of_decomposed = lower_caps(unicode.information);
 				int   number_of_normals  = 1;
 				ostream_write_formatted(&normals_code, "\tstatic uint32_t %s [] = { ", name_of_decomposed);
 				String_Iter iter;
-				while (string_iter_next(unicode_data[index].decomposed, &iter)) {
+				while (string_iter_next(unicode.decomposed, &iter)) {
 					if (iter.index == 0) ostream_write_formatted(&normals_code, "0x");
 					if (iter.codepoint.code == ' ') {
 						number_of_normals += 1;
 						ostream_write_formatted(&normals_code, ", 0x");
 					} else if (iter.codepoint.code == '<') {
-						while (string_iter_next(unicode_data[index].decomposed, &iter)) {
+						while (string_iter_next(unicode.decomposed, &iter)) {
 							if (iter.codepoint.code == ' ') break;
 						}
 					} else {
@@ -250,7 +258,7 @@ void ucd_generate_unicode_data(const char *file_name) {
 				ostream_write_formatted(&normals_code, " };\n");
 
 				ostream_write_formatted(&switch_code, "\t\tcase 0x%s:\n\t\t\t*normals = %s;\n\t\t\treturn %d;\n",
-										tto_cstring(unicode_data[index].codepoint), name_of_decomposed, number_of_normals);
+										tto_cstring(unicode.codepoint), name_of_decomposed, number_of_normals);
 			}
 		}
 
@@ -266,6 +274,44 @@ void ucd_generate_unicode_data(const char *file_name) {
 
 		mfree(switch_string.data);
 		mfree(normals_string.data);
+	}
+
+	// Category code generation
+	{
+		scoped_temporary_allocation();
+
+		Array<String> category;
+		defer {
+			array_free(&category);
+		};
+
+
+		fprintf(source, "Unicode_Category unicode_category(uint32_t codepoint) {\n");
+		fprintf(source, "\tswitch (codepoint) {\n");
+		for (auto &unicode : unicode_data) {
+			bool category_already_present = false;
+			for (auto &cat : category) {
+				if (string_match(cat, unicode.category)) {
+					category_already_present = true;
+					break;
+				}
+			}
+			if (!category_already_present) array_add(&category, unicode.category);
+
+			fprintf(source, "\t\tcase 0x%s: return Unicode_Category_%s;\n", tto_cstring(unicode.codepoint), upper_caps(unicode.category));
+		}
+		fprintf(source, "\t}\n");
+		fprintf(source, "\treturn Unicode_Category_UNKNOWN;\n");
+		fprintf(source, "}\n\n");
+
+		fprintf(header, "enum Unicode_Category {\n");
+		fprintf(header, "\tUnicode_Category_UNKNOWN,\n");
+		for (auto &cat : category) {
+			fprintf(header, "\tUnicode_Category_%s,\n", upper_caps(cat));
+		}
+		fprintf(header, "\tUnicode_Category_COUNT,\n");
+		fprintf(header, "};\n");
+		fprintf(header, "Unicode_Category unicode_category(uint32_t codepoint);\n\n");
 	}
 }
 

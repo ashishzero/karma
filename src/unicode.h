@@ -670,3 +670,38 @@ Unicode_Grapheme_Property unicode_grapheme_property(uint32_t codepoint);
 
 int unicode_normalize(uint32_t codepoint, uint32_t **normals);
 
+enum Unicode_Category {
+	Unicode_Category_UNKNOWN,
+	Unicode_Category_CC,
+	Unicode_Category_ZS,
+	Unicode_Category_PO,
+	Unicode_Category_SC,
+	Unicode_Category_PS,
+	Unicode_Category_PE,
+	Unicode_Category_SM,
+	Unicode_Category_PD,
+	Unicode_Category_ND,
+	Unicode_Category_LU,
+	Unicode_Category_SK,
+	Unicode_Category_PC,
+	Unicode_Category_LL,
+	Unicode_Category_SO,
+	Unicode_Category_LO,
+	Unicode_Category_PI,
+	Unicode_Category_CF,
+	Unicode_Category_NO,
+	Unicode_Category_PF,
+	Unicode_Category_LT,
+	Unicode_Category_LM,
+	Unicode_Category_MN,
+	Unicode_Category_ME,
+	Unicode_Category_MC,
+	Unicode_Category_NL,
+	Unicode_Category_ZL,
+	Unicode_Category_ZP,
+	Unicode_Category_CS,
+	Unicode_Category_CO,
+	Unicode_Category_COUNT,
+};
+Unicode_Category unicode_category(uint32_t codepoint);
+
