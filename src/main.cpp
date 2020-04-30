@@ -20,7 +20,6 @@
 #endif
 #include "stb_image.h"
 
-#include "reflection.h"
 #include "opentype.h"
 
 #include "stream.h"

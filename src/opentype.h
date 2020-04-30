@@ -1369,7 +1369,7 @@ enum Glyph_Type {
 
 Glyph_Type font_get_glyph_type(Dynamic_Font *font, u32 glyph_id) {
 	auto glyph_class = font_find_glyph_class(font->glyph_class_defination, glyph_id);
-	assert(glyph_class < enum_count<Glyph_Type>());
+	assert(glyph_class <= Glyph_Type_COMPONENT);
 	return (Glyph_Type)glyph_class;
 }
 

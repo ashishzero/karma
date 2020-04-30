@@ -19,6 +19,15 @@ static r32                gpu_frame_time;
 
 void ImGui::Initialize() {
 	IMGUI_CHECKVERSION();
+
+	ImGui::SetAllocatorFunctions(
+		[](size_t size, void *user_data) -> void * {
+			return mallocate(size);
+		},
+		[](void *ptr, void *user_data) {
+			mfree(ptr);
+		});
+
 	ImGui::CreateContext();
 	ImGui::StyleColorsDark();
 
@@ -30,7 +39,7 @@ void ImGui::Initialize() {
 	io.BackendPlatformName = "Karma";
 	io.IniFilename         = 0;
 
-	auto user_name = system_get_user_name();
+	auto   user_name   = system_get_user_name();
 	String ini_content = system_read_entire_file(tprintf("imgui/%s_config.ini", tto_cstring(user_name)));
 
 	defer {
@@ -194,13 +203,13 @@ void ImGui::Initialize() {
 
 void ImGui::Shutdown() {
 	String ini_content;
-	size_t size = 0;
-	ini_content.data = (utf8 *)ImGui::SaveIniSettingsToMemory(&size);
+	size_t size       = 0;
+	ini_content.data  = (utf8 *)ImGui::SaveIniSettingsToMemory(&size);
 	ini_content.count = (s64)size;
-	
-	auto   user_name   = system_get_user_name();
+
+	auto user_name = system_get_user_name();
 	system_write_entire_file(tprintf("imgui/%s_config.ini", tto_cstring(user_name)), ini_content);
-	
+
 	mfree(user_name.data);
 
 	ImGui_ImplOpenGL3_DestroyDeviceObjects();
