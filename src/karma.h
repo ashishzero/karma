@@ -95,7 +95,7 @@ struct Compile_Info {
 #endif
 
 #if defined(_MSC_VER)
-#	define trigger_breakpoint() __debugbreak();
+#	define trigger_breakpoint() __debugbreak()
 #elif ((!defined(__NACL__)) && ((defined(__GNUC__) || defined(__clang__)) && (defined(__i386__) || defined(__x86_64__))))
 #	define trigger_breakpoint() __asm__ __volatile__("int $3\n\t")
 #elif defined(__386__) && defined(__WATCOMC__)
@@ -106,11 +106,14 @@ struct Compile_Info {
 #	define trigger_breakpoint() ((int *)0) = 0
 #endif
 
+inline void runtime_assert(bool exp) {
+	if (!exp) {
+		trigger_breakpoint();
+	}
+}
+
 #if defined(BUILD_DEBUG) || defined(BUILD_DEVELOPER)
-#	define assert(expression)    \
-		if (!(expression)) {      \
-			trigger_breakpoint(); \
-		}
+#	define assert(expression) runtime_assert(expression)
 #	define unimplemented() \
 		{ trigger_breakpoint(); }
 #	define trigger_if(x)         \
@@ -123,18 +126,15 @@ struct Compile_Info {
 		} break
 #	define invalid_code_path() trigger_breakpoint()
 #else
-#	define assert(expression)
+#	define assert(expression)  \
+		do {                    \
+			sizeof(expression); \
+		} while (0)
 #	define unimplemented()
 #	define trigger_if(x)
 #	define invalid_default_case()
 #	define invalid_code_path()
 #endif
-
-inline void runtime_assert(bool exp) {
-	if (!exp) {
-		trigger_breakpoint();
-	}
-}
 
 #define static_count(a) (s64)(sizeof(a) / sizeof((a)[0]))
 
@@ -607,7 +607,7 @@ struct Array {
 		return data;
 	}
 
-	inline T* end() {
+	inline T *end() {
 		return data + count;
 	}
 };
@@ -668,7 +668,7 @@ T *array_add(Array<T> *a) {
 template <typename T>
 void array_add(Array<T> *a, const T &d) {
 	T *m = array_add(a);
-	*m = d;
+	*m   = d;
 }
 
 template <typename T>

@@ -11,7 +11,7 @@
 #define stbtt_int32        s32
 #define STBTT_malloc(x, u) ((void)(u), mallocate(x))
 #define STBTT_free(x, u)   ((void)(u), mfree(x))
-#define STBTT_assert(x)    runtime_assert(x)
+#define STBTT_assert(x)    assert(x)
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "stb_truetype.h"
 
