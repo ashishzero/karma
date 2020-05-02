@@ -223,7 +223,7 @@ static constexpr int WINDOWS_MAX_EVENTS = 65535; // this number should be enough
 static Event         windows_event_queue[WINDOWS_MAX_EVENTS];
 static u32           windows_event_queue_push_index;
 static u32           windows_event_pop_index;
-static volatile u32  windows_event_count;
+static u32           windows_event_count;
 
 static Win32_Controller windows_controllers_state[XUSER_MAX_COUNT];
 static Controller       controllers[XUSER_MAX_COUNT];
@@ -920,15 +920,13 @@ void win32_mouse_button_event(Mouse_Button_Event *event, WPARAM wparam, LPARAM l
 void win32_push_event(Event event) {
 	windows_event_queue[windows_event_queue_push_index] = event;
 	windows_event_queue_push_index                      = (windows_event_queue_push_index + 1) % WINDOWS_MAX_EVENTS;
-	MemoryBarrier();
-	_ReadWriteBarrier(); // TODO: deprecated
-	InterlockedExchangeAdd(&windows_event_count, 1);
+	//InterlockedExchangeAdd(&windows_event_count, 1);
+	windows_event_count += 1;
 }
 
 Event win32_pop_event() {
-	InterlockedExchangeSubtract(&windows_event_count, 1);
-	MemoryBarrier();
-	_ReadWriteBarrier(); // TODO: deprecated
+	//InterlockedExchangeSubtract(&windows_event_count, 1);
+	windows_event_count -= 1;
 	Event event             = windows_event_queue[windows_event_pop_index];
 	windows_event_pop_index = (windows_event_pop_index + 1) % WINDOWS_MAX_EVENTS;
 	return event;
