@@ -42,6 +42,8 @@ struct Particle_Emitter_Property {
 
 	Random_Distribution life_span;
 	s32                 emission_rate; // in particles per milli secs
+	r32                 fade_in;       // in secs
+	r32                 fade_out;      // in secs
 };
 
 struct Particle {
@@ -55,8 +57,8 @@ struct Particle {
 	r32    spin;
 	Color4 color_a;
 	Color4 color_b;
-	r32    life_span;
-	r32    life;
+	r32    life_span; // in secs
+	r32    life;      // in secs
 	Vec2   external_force;
 };
 
@@ -69,7 +71,7 @@ struct Particle_Emitter {
 	Particle *                particles;
 	int                       particles_count;
 	int                       emit_count;
-	r32                       time_elapsed;
+	r32                       time_elapsed; // in secs
 };
 
 Particle *particle_emitter_find_dead(Particle_Emitter *emitter) {
@@ -78,7 +80,8 @@ Particle *particle_emitter_find_dead(Particle_Emitter *emitter) {
 		if (particle->life > particle->life_span) return particle;
 	}
 
-	return 0;
+	// If we don't find a dead particle, we just return the last particle
+	return emitter->particles + emitter->emit_count;
 }
 
 void particle_create_new(Particle_Emitter_Property &properties, Vec2 center, Random_Series *rng, Particle *particle) {
@@ -196,8 +199,10 @@ Particle_Emitter_Property particle_emitter_default_property() {
 	props.color_a            = vec4(0.2f, 1.0f, 1.0f, 0.0f);
 	props.color_b            = vec4(0.0f, 1.0f, 1.0f, 1.0f);
 	props.opacity            = 1;
-	props.life_span          = random_distribution(Distribution_Control_UNIFORM, 2.0f, 2.5f);
+	props.life_span          = random_distribution(Distribution_Control_UNIFORM, 1.5f, 2.0f);
 	props.emission_rate      = 50;
+	props.fade_in            = 0.06f;
+	props.fade_out           = 0.3f;
 
 	return props;
 }

@@ -157,12 +157,19 @@ inline r32 random_get_zero_to_one(Random_Series *rng, Distribution_Control contr
 			x *= x;
 		} break;
 		case Distribution_Control_EXTREMES: {
+#if 0		// This is much extreme, but powf is expensive and maybe we'll never need this extreme
+			x = x - 0.5f;
+			r32 sign = sgn(x);
+			x = sign * sign * sign * powf(3.0f * fabsf(x), 1.0f / 3.0f);
+			x = (x + 1) * 0.5f;
+#else
 			x = x * x - 1;
 			if (random_get(rng) & 1) x = -x;
 			x = (x + 1) * 0.5f;
+#endif
 		} break;
 
-		invalid_default_case();
+			invalid_default_case();
 	}
 
 	return x;

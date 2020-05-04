@@ -9,13 +9,13 @@
 #include "particle_system.h"
 
 #ifdef BUILD_RELEASE
-#define STB_IMAGE_IMPLEMENTATION
+#	define STB_IMAGE_IMPLEMENTATION
 #endif
 #include "stb_image.h"
 
 void imgui_distribution_control(Distribution_Control *dist) {
-	int  item_current = *dist;
-	const char *items[] = {
+	int         item_current = *dist;
+	const char *items[]      = {
         "Distribution_Control_UNIFORM",
         "Distribution_Control_SQUARED",
         "Distribution_Control_CUBED",
@@ -68,7 +68,7 @@ void imgui_particle_kind(Particle_Emitter_Property::Kind *kind, Vec2 *a, Vec2 *b
 	}
 }
 
-void imgui_random_distribution(Random_Distribution *dist, const char * min, const char *max) {
+void imgui_random_distribution(Random_Distribution *dist, const char *min, const char *max) {
 	imgui_distribution_control(&dist->control);
 	ImGui::DragFloat(min, &dist->min);
 	ImGui::DragFloat(max, &dist->max);
@@ -102,16 +102,16 @@ void imgui_particle_emitter(Particle_Emitter *emitter) {
 	if (ImGui::CollapsingHeader("Spin")) {
 		imgui_random_distribution(&props.spin, "Min##Spin", "Max##Spin");
 	}
-	
+
 	if (ImGui::CollapsingHeader("Rotation")) {
 		imgui_random_distribution(&props.rotation, "Min##Rotation", "Max##Rotation");
 	}
-	
+
 	if (ImGui::CollapsingHeader("Initial Velocity")) {
 		imgui_random_distribution(&props.initial_velocity_x, "Min X##InitialVelocity", "Max X##InitialVelocity");
 		imgui_random_distribution(&props.initial_velocity_y, "Min Y##InitialVelocity", "Max Y##InitialVelocity");
 	}
-	
+
 	if (ImGui::CollapsingHeader("Force")) {
 		imgui_random_distribution(&props.force_x, "Min X##Force", "Max X##Force");
 		imgui_random_distribution(&props.force_y, "Min Y##Force", "Max Y##Force");
@@ -129,8 +129,9 @@ void imgui_particle_emitter(Particle_Emitter *emitter) {
 
 	if (ImGui::CollapsingHeader("Life Span")) {
 		imgui_random_distribution(&props.life_span, "Min##LifeSpan", "Max##LifeSpan");
+		ImGui::DragFloat("Fade In", &props.fade_in, 0.001f);
+		ImGui::DragFloat("Fade Out", &props.fade_out, 0.001f);
 	}
-
 }
 
 int system_main() { // Entry point
@@ -150,7 +151,7 @@ int system_main() { // Entry point
 
 	Random_Series rng = random_init(0, 0);
 
-	Particle_Emitter emitter = particle_emitter_create(rectangle, mm_rect(0, 0, 1, 1), &rng, 1000, 750);
+	Particle_Emitter emitter = particle_emitter_create(rectangle, mm_rect(0, 0, 1, 1), &rng, 1000, 800);
 
 	Render_Region region = {};
 
@@ -224,9 +225,16 @@ int system_main() { // Entry point
 		for (int i = 0; i < emitter.emit_count; ++i) {
 			Particle *particle = emitter.particles + i;
 			if (particle->life <= particle->life_span) {
-				r32 t = particle->life / particle->life_span;
-				assert(t >= 0 && t <= 1);
-				auto particle_color = hsv_to_rgb(lerp(particle->color_a, particle->color_b, t)) * emitter.properties.opacity;
+				r32 t      = particle->life / particle->life_span;
+
+				r32 fade_t = 1;
+				if (particle->life < emitter.properties.fade_in) {
+					fade_t *= particle->life / emitter.properties.fade_in;
+				} else if (particle->life_span - particle->life < emitter.properties.fade_out) {
+					fade_t *= (particle->life_span - particle->life) / emitter.properties.fade_out;
+				}
+
+				auto particle_color = fade_t * hsv_to_rgb(lerp(particle->color_a, particle->color_b, t)) * emitter.properties.opacity;
 				gfx2d_color(particle_color);
 				gfx2d_rotated_rect(particle->position, vec2(lerp(particle->scale_a, particle->scale_b, t)), particle->rotation);
 			}
@@ -239,7 +247,7 @@ int system_main() { // Entry point
 			ImGui::End();
 		}
 
-		#if 0
+#if 0
 		//static Color4 color_a, color_b;
 		emitter.properties.color_a = hsv_to_rgb(emitter.properties.color_a);
 		emitter.properties.color_b = hsv_to_rgb(emitter.properties.color_b);
@@ -259,7 +267,7 @@ int system_main() { // Entry point
 		emitter.properties.color_b = rgb_to_hsv(emitter.properties.color_b);
 
 		ImGui::End();
-		#endif
+#endif
 
 		ImGui::RenderFrame();
 
