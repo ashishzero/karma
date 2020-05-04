@@ -28,6 +28,6 @@ uniform sampler2D tex;
 
 void main() {
 	// TODO: Clean this up, this is for font rendering
-	float a     = texture(tex, tex_coord).r;
-	pixel_color = vec4(1, 1, 1, a) * color;
+	vec4 sampled = texture(tex, tex_coord);
+	pixel_color  = sampled * color;
 }

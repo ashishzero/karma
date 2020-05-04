@@ -356,3 +356,38 @@ void gfx2d_rect(Vec2 p, Vec2 d, Mm_Rect texture_rect, r32 depth) {
 	auto v3 = vec2(p.x + d.x, p.y);
 	gfx2d_quad(v0, v1, v2, v3, texture_rect, depth);
 }
+
+void gfx2d_rotated_quad(Vec2 v0, Vec2 v1, Vec2 v2, Vec2 v3, Vec2 center, r32 angle, Mm_Rect texture_rect, r32 depth) {
+	auto r0 = v0 - center;
+	auto r1 = v1 - center;
+	auto r2 = v2 - center;
+	auto r3 = v3 - center;
+
+	r32 c = cosf(angle);
+	r32 s = sinf(angle);
+
+	v0.x = r0.x * c - r0.y * s;
+	v0.y = r0.x * s + r0.y * c;
+	v1.x = r1.x * c - r1.y * s;
+	v1.y = r1.x * s + r1.y * c;
+	v2.x = r2.x * c - r2.y * s;
+	v2.y = r2.x * s + r2.y * c;
+	v3.x = r3.x * c - r3.y * s;
+	v3.y = r3.x * s + r3.y * c;
+
+	v0 += center;
+	v1 += center;
+	v2 += center;
+	v3 += center;
+
+	gfx2d_quad(v0, v1, v2, v3, texture_rect, depth);
+}
+
+void gfx2d_rotated_rect(Vec2 p, Vec2 d, r32 angle, Mm_Rect texture_rect, r32 depth) {
+	auto v0 = p;
+	auto v1 = vec2(p.x, p.y + d.y);
+	auto v2 = p + d;
+	auto v3 = vec2(p.x + d.x, p.y);
+	Vec2 center = (v0 + v1 + v2 + v3) * 0.25f;
+	gfx2d_rotated_quad(v0, v1, v2, v3, center, angle, texture_rect, depth);
+}

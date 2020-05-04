@@ -14,10 +14,10 @@ Vec2s vec2s_add(Vec2s a, Vec2s b) {
 	return vec2s(a.x + b.x, a.y + b.y);
 }
 Vec3s vec3s_add(Vec3s a, Vec3s b) {
-	return vec3s(a.r + b.r, a.g + b.g, a.b + b.g);
+	return vec3s(a.x + b.x, a.y + b.y, a.z + b.z);
 }
 Vec4s vec4s_add(Vec4s a, Vec4s b) {
-	return vec4s(a.r + b.r, a.g + b.g, a.b + b.g, a.a + b.a);
+	return vec4s(a.x + b.x, a.y + b.y, a.z + b.z, a.w + b.w);
 }
 
 //
@@ -37,10 +37,10 @@ Vec2s vec2s_sub(Vec2s a, Vec2s b) {
 	return vec2s(a.x - b.x, a.y - b.y);
 }
 Vec3s vec3s_sub(Vec3s a, Vec3s b) {
-	return vec3s(a.r - b.r, a.g - b.g, a.b - b.b);
+	return vec3s(a.x - b.x, a.y - b.y, a.z - b.z);
 }
 Vec4s vec4s_sub(Vec4s a, Vec4s b) {
-	return vec4s(a.r - b.r, a.g - b.g, a.b - b.g, a.a - b.a);
+	return vec4s(a.x - b.x, a.y - b.y, a.z - b.z, a.w - b.w);
 }
 
 //
@@ -1041,10 +1041,10 @@ bool quat_equals(Quat a, Quat b, r32 tolerance) {
 //
 
 Colorh color4_to_hex(Color4 v) {
-	u8 r = static_cast<u8>(255.0f * v.r);
-	u8 g = static_cast<u8>(255.0f * v.g);
-	u8 b = static_cast<u8>(255.0f * v.b);
-	u8 a = static_cast<u8>(255.0f * v.a);
+	u8 r = static_cast<u8>(255.0f * v.x);
+	u8 g = static_cast<u8>(255.0f * v.y);
+	u8 b = static_cast<u8>(255.0f * v.z);
+	u8 a = static_cast<u8>(255.0f * v.w);
 	return colorh(r, g, b, a);
 }
 
@@ -1065,67 +1065,73 @@ Color3 hex_to_color3(Colorh c) {
 	return vec3(r, g, b);
 }
 
-Color3 hsv_to_rgb(Color_HSV col) {
-	Color3 result = vec3(col.v, col.v, col.v);
+// http://en.wikipedia.org/wiki/HSL_and_HSV
+Color3 hsv_to_rgb(Color3 col) {
+	Color3 res;
 
-	if (col.s) {
-		if (col.h == 1.0f) col.h = 0;
-		col.h *= 6;
-		s32 i = (s32)col.h;
-		r32 f = col.h - i;
-		r32 a = col.v * (1 - col.s);
-		r32 b = col.v * (1 - (col.s * f));
-		r32 c = col.v * (1 - (col.s * (1 - f)));
-		switch (i) {
-			case 0:
-				result = vec3(col.v, c, a);
-				break;
-			case 1:
-				result = vec3(b, col.v, a);
-				break;
-			case 2:
-				result = vec3(a, col.v, c);
-				break;
-			case 3:
-				result = vec3(a, b, col.v);
-				break;
-			case 4:
-				result = vec3(c, a, col.v);
-				break;
-			case 5:
-				result = vec3(col.v, a, b);
-				break;
-		}
+	r32 h = col.x;
+	r32 s = col.y;
+	r32 v = col.z;
+
+	if (s == 0.0f) {
+		// gray
+		res.x = res.y = res.z = v;
+		return res;
 	}
 
-	return result;
+	h       = fmodf(h, 1.0f) / (60.0f / 360.0f);
+	int   i = (int)h;
+	float f = h - (float)i;
+	float p = v * (1.0f - s);
+	float q = v * (1.0f - s * f);
+	float t = v * (1.0f - s * (1.0f - f));
+
+	switch (i) {
+		case 0: res = vec3(v, t, p); break;
+		case 1: res = vec3(q, v, p); break;
+		case 2: res = vec3(p, v, t); break;
+		case 3: res = vec3(p, q, v); break;
+		case 4: res = vec3(t, p, v); break;
+		case 5: default: res = vec3(v, p, q); break;
+	}
+
+	return res;
 }
 
-Color_HSV rgb_to_hsv(Color3 c) {
-	r32 max = max_value(c.r, max_value(c.g, c.b));
-	r32 min = min_value(c.r, min_value(c.g, c.b));
-	r32 d   = max - min;
+// http://lolengine.net/blog/2013/01/13/fast-rgb-to-hsv
+Color3 rgb_to_hsv(Color3 c) {
+	r32 r = c.x;
+	r32 g = c.y;
+	r32 b = c.z;
 
-	Color_HSV result = {};
-	result.v         = max;
-
-	if (max)
-		result.s = d / max;
-
-	if (result.s) {
-		if (c.r == max)
-			result.h = (c.g - c.b) / d;
-		else if (c.g == max)
-			result.h = 2 + (c.b - c.r) / d;
-		else
-			result.h = 4 + (c.r - c.g) / d;
-
-		result.h *= 60;
-		if (result.h < 0) result.h += 360.0f;
-		result.h /= 306.0f;
+	r32 k = 0.f;
+	if (g < b) {
+		auto t = b;
+		b      = g;
+		g      = t;
+		k = -1.f;
+	}
+	if (r < g) {
+		auto t = g;
+		g      = r;
+		r      = t;
+		k = -2.f / 6.f - k;
 	}
 
-	return result;
+	Color3 res;
+	r32 chroma = r - (g < b ? g : b);
+	res.x = fabsf(k + (g - b) / (6.f * chroma + 1e-20f));
+	res.y = chroma / (r + 1e-20f);
+	res.z = r;
+	return res;
+}
+
+Color4 hsv_to_rgb(Color4 c) {
+	return vec4(hsv_to_rgb(c.xyz), c.w);
+}
+
+Color4 rgb_to_hsv(Color4 c) {
+	return vec4(rgb_to_hsv(c.xyz), c.w);
 }
 
 //

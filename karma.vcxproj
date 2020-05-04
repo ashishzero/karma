@@ -264,6 +264,8 @@ popd
     <ClInclude Include="src\imgui\imstb_textedit.h" />
     <ClInclude Include="src\imgui\imstb_truetype.h" />
     <ClInclude Include="src\opentype.h" />
+    <ClInclude Include="src\particle_system.h" />
+    <ClInclude Include="src\random.h" />
     <ClInclude Include="src\reflection.h" />
     <ClInclude Include="src\unicode.h" />
     <ClInclude Include="src\windows\resource.h" />

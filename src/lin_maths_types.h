@@ -55,9 +55,6 @@ union Vec3 {
 		r32 x, y, z;
 	};
 	struct {
-		r32 r, g, b;
-	};
-	struct {
 		Vec2 xy;
 		r32  _ignorez;
 	};
@@ -100,9 +97,6 @@ union Vec3s {
 		s32 x, y, z;
 	};
 	struct {
-		s32 r, g, b;
-	};
-	struct {
 		Vec2s xy;
 		s32   _ignorez;
 	};
@@ -143,9 +137,6 @@ union Vec4 {
 		r32 x, y, z, w;
 	};
 	struct {
-		r32 r, g, b, a;
-	};
-	struct {
 		Vec2 xy;
 		Vec2 zw;
 	};
@@ -156,10 +147,6 @@ union Vec4 {
 	struct {
 		r32  _ignorex;
 		Vec3 yzw;
-	};
-	struct {
-		Vec3 rgb;
-		r32  alpha;
 	};
 	r32 m[4];
 };
@@ -208,9 +195,6 @@ union Vec4s {
 		s32 x, y, z, w;
 	};
 	struct {
-		s32 r, g, b, a;
-	};
-	struct {
 		Vec2s xy;
 		Vec2s zw;
 	};
@@ -221,10 +205,6 @@ union Vec4s {
 	struct {
 		s32   _ignorex;
 		Vec3s yzw;
-	};
-	struct {
-		Vec3s rgb;
-		s32   alpha;
 	};
 	s32 m[4];
 };
@@ -264,10 +244,6 @@ inline Vec4s vec4s(int a, Vec3s b) {
 typedef Vec4 Color4;
 typedef Vec3 Color3;
 
-struct Color_HSV {
-	r32 h, s, v; // [0, 1]
-};
-
 union Colorh {
 	struct {
 		u8 r, g, b, a;
@@ -292,7 +268,7 @@ inline Colorh colorh(u32 color) {
 union Mat3 {
 	Vec3 rows[3];
 	r32  m[9];
-	r32  m2[4][4];
+	r32  m2[3][3];
 };
 
 inline Mat3 mat3(Vec3 r0, Vec3 r1, Vec3 r2) {

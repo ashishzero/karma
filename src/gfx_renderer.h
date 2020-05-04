@@ -44,3 +44,5 @@ void gfx2d_color(Color4 color);
 void gfx2d_color(Color4 a, Color4 b, Color4 c, Color4 d);
 void gfx2d_quad(Vec2 v0, Vec2 v1, Vec2 v2, Vec2 v3, Mm_Rect texture_rect = mm_rect(0, 0, 1, 1), r32 depth = 0);
 void gfx2d_rect(Vec2 p, Vec2 d, Mm_Rect texture_rect = mm_rect(0, 0, 1, 1), r32 depth = 0);
+void gfx2d_rotated_quad(Vec2 v0, Vec2 v1, Vec2 v2, Vec2 v3, Vec2 center, r32 angle, Mm_Rect texture_rect = mm_rect(0, 0, 1, 1), r32 depth = 0);
+void gfx2d_rotated_rect(Vec2 p, Vec2 d, r32 angle, Mm_Rect texture_rect = mm_rect(0, 0, 1, 1), r32 depth = 0);
