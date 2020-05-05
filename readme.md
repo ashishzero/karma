@@ -126,11 +126,9 @@ int system_main() { // Entry point
 		gfx_frame(0, region, Clear_Flag_ALL, hex_to_color4(colorh(0x00, 0x45, 0x4f)));
 		auto view = orthographic_view(0, window_w, window_h, 0);
 
-		gfx2d_begin(vec2(0), 1, view, quad_shader);
-		gfx2d_no_texture();
-		gfx2d_color(box_color);
-		gfx2d_rect(position, dimension);
-		gfx2d_end();
+		im_begin(quad_shader, view);
+		im_rect(position, dimension, box_color);
+		im_end();
 
 		// ImGui Rendering here
 		ImGui::Begin("Edit");
