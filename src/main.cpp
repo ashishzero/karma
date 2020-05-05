@@ -218,10 +218,9 @@ int system_main() { // Entry point
 
 		gfx_frame(0, region, Clear_Flag_ALL, hex_to_color4(colorh(0x00, 0x45, 0x4f)));
 		auto view = orthographic_view(0, window_w, window_h, 0);
-		//auto view = perspective_view(to_radians(45), window_w / window_h, 0.1f, 100.0f);
 
+		# if 0
 		im_begin(quad_shader, view);
-		//im_bind_texture(circle);
 
 		im_triangle(vec3(50, 50, 0), vec3(150, 150, 0), vec3(300, 50, 0), vec4(0.5f, 0.5f, 0.8f));
 		im_triangle(vec3(150, 150, 0), vec3(350, 350, 0), vec3(400, 150, 0), vec4(1, 0, 0));
@@ -240,12 +239,10 @@ int system_main() { // Entry point
 		im_bezier_quadratic2d(vec2(0), vec2(300, 250), vec2(400, 500), vec4(0, 1, 1), 2);
 		im_bezier_cubic2d(vec2(0), vec2(300, 250), vec2(350, 350), vec2(400, 500), vec4(1, 1, 0), 2);
 		
-		//im_cube(vec3(0, 0, -2), quat_identity(), vec3(0.5f), vec4(0.1f, 0.6f, 0.2f));
-		//im_cube_outline(vec3(0, 0, -2), quat_identity(), vec3(0.5f), vec4(1), 2);
-
 		im_end();
+		#endif
 
-		#if 0
+		#if 1
 		im_begin(quad_shader, view);
 		im_bind_texture(emitter.texture);
 
