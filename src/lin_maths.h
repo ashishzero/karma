@@ -547,8 +547,10 @@ Colorh color4_to_hex(Color4 v);
 Color4 hex_to_color4(Colorh c);
 Color3 hex_to_color3(Colorh c);
 
-Color3    hsv_to_rgb(Color_HSV c);
-Color_HSV rgb_to_hsv(Color3 c);
+Color3 hsv_to_rgb(Color3 c);
+Color3 rgb_to_hsv(Color3 c);
+Color4 hsv_to_rgb(Color4 c);
+Color4 rgb_to_hsv(Color4 c);
 
 //
 //
