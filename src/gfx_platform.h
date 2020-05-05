@@ -69,11 +69,11 @@ struct Gfx_Platform {
 	virtual void begin(Handle shader, u8 *data, ptrsize size) = 0;
 	virtual void end()                                        = 0;
 
-	virtual void bind_vertex_buffer(Handle buffer)                        = 0;
-	virtual void bind_index_buffer(Handle buffer, Render_Index_Type type) = 0;
-	virtual void bind_texture(Handle texture, u32 index)                  = 0;
-	virtual void draw(ptrsize count, ptrsize offset)                      = 0;
-	virtual void draw_indexed(ptrsize count, ptrsize offset)              = 0;
+	virtual void bind_vertex_buffer(Handle buffer)                                = 0;
+	virtual void bind_index_buffer(Handle buffer, Render_Index_Type type)         = 0;
+	virtual void bind_texture(Handle texture, u32 index)                          = 0;
+	virtual void draw(ptrsize count, ptrsize offset)                              = 0;
+	virtual void draw_indexed(ptrsize count, ptrsize offset, ptrsize base_vertex) = 0;
 
 	virtual void destroy() = 0;
 };

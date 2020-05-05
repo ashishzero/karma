@@ -125,7 +125,7 @@ struct Gfx_Platform_OpenGL : public Gfx_Platform {
 	virtual void bind_index_buffer(Handle buffer, Render_Index_Type type) final;
 	virtual void bind_texture(Handle texture, u32 index) final;
 	virtual void draw(ptrsize count, ptrsize offset) final;
-	virtual void draw_indexed(ptrsize count, ptrsize offset) final;
+	virtual void draw_indexed(ptrsize count, ptrsize offset, ptrsize base_vertex) final;
 
 	virtual void destroy() final;
 
@@ -780,9 +780,9 @@ void Gfx_Platform_OpenGL::draw(ptrsize count, ptrsize offset) {
 	glDrawArrays(GL_TRIANGLES, (GLint)offset, (GLsizei)count);
 }
 
-void Gfx_Platform_OpenGL::draw_indexed(ptrsize count, ptrsize offset) {
+void Gfx_Platform_OpenGL::draw_indexed(ptrsize count, ptrsize offset, ptrsize base_vertex) {
 	assert(current_render_index_type != 0);
-	glDrawElementsBaseVertex(GL_TRIANGLES, (GLsizei)count, current_render_index_type, 0, (GLint)offset);
+	glDrawElementsBaseVertex(GL_TRIANGLES, (GLsizei)count, current_render_index_type, (void *)offset, (GLint)base_vertex);
 }
 
 Gfx_Platform_Info Gfx_Platform_OpenGL::get_info() {

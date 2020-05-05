@@ -218,9 +218,36 @@ int system_main() { // Entry point
 
 		gfx_frame(0, region, Clear_Flag_ALL, hex_to_color4(colorh(0x00, 0x45, 0x4f)));
 		auto view = orthographic_view(0, window_w, window_h, 0);
+		//auto view = perspective_view(to_radians(45), window_w / window_h, 0.1f, 100.0f);
 
-		gfx2d_begin(vec2(0), 1, view, quad_shader);
-		gfx2d_texture(emitter.texture);
+		im_begin(quad_shader, view);
+		//im_bind_texture(circle);
+
+		im_triangle(vec3(50, 50, 0), vec3(150, 150, 0), vec3(300, 50, 0), vec4(0.5f, 0.5f, 0.8f));
+		im_triangle(vec3(150, 150, 0), vec3(350, 350, 0), vec3(400, 150, 0), vec4(1, 0, 0));
+
+		im_triangle_outline2d(vec3(50, 50, 0), vec3(150, 150, 0), vec3(300, 50, 0), vec4(1));
+		im_triangle_outline2d(vec3(150, 150, 0), vec3(350, 350, 0), vec3(400, 150, 0), vec4(1));
+
+		im_ellipse(vec3(400, 400, 0), 150, 150, vec4(0.3f, 0.5f, 0.9f));
+		im_ellipse_outline(vec3(400, 400, 0), 150, 150, vec4(1));
+		im_pie(vec3(600, 400, 0), 100, 100, MATH_TAU / 2, MATH_TAU + MATH_PI, vec4(0.9f, 0.63f, 0.2f));
+		im_arc_outline(vec3(600, 400, 0), 100, 100, MATH_TAU / 2, MATH_TAU + MATH_PI, vec4(1), true);
+
+		im_quad(vec3(200, 200, 0), vec3(200, 400, 0), vec3(400, 400, 0), vec3(400, 200, 0), vec4(0.8f, 0.7f, 0.3f));
+		im_quad_outline2d(vec3(200, 200, 0), vec3(200, 400, 0), vec3(400, 400, 0), vec3(400, 200, 0), vec4(1));
+		im_line2d(vec2(0), vec2(500, 500), vec4(1, 0, 1), 2);
+		im_bezier_quadratic2d(vec2(0), vec2(300, 250), vec2(400, 500), vec4(0, 1, 1), 2);
+		im_bezier_cubic2d(vec2(0), vec2(300, 250), vec2(350, 350), vec2(400, 500), vec4(1, 1, 0), 2);
+		
+		//im_cube(vec3(0, 0, -2), quat_identity(), vec3(0.5f), vec4(0.1f, 0.6f, 0.2f));
+		//im_cube_outline(vec3(0, 0, -2), quat_identity(), vec3(0.5f), vec4(1), 2);
+
+		im_end();
+
+		#if 0
+		im_begin(quad_shader, view);
+		im_bind_texture(emitter.texture);
 
 		for (int i = 0; i < emitter.emit_count; ++i) {
 			Particle *particle = emitter.particles + i;
@@ -235,39 +262,16 @@ int system_main() { // Entry point
 				}
 
 				auto particle_color = fade_t * hsv_to_rgb(lerp(particle->color_a, particle->color_b, t)) * emitter.properties.opacity;
-				gfx2d_color(particle_color);
-				gfx2d_rotated_rect(particle->position, vec2(lerp(particle->scale_a, particle->scale_b, t)), particle->rotation);
+				im_rect_rotated(particle->position, vec2(lerp(particle->scale_a, particle->scale_b, t)), particle->rotation, particle_color);
 			}
 		}
-
-		gfx2d_end();
+		im_end();
+		#endif
 
 		if (ImGui::Begin("Particle Emitter")) {
 			imgui_particle_emitter(&emitter);
 			ImGui::End();
 		}
-
-#if 0
-		//static Color4 color_a, color_b;
-		emitter.properties.color_a = hsv_to_rgb(emitter.properties.color_a);
-		emitter.properties.color_b = hsv_to_rgb(emitter.properties.color_b);
-
-		// ImGui Rendering here
-		ImGui::Begin("Edit");
-		ImGui::DragFloat2("Position", emitter.position.m);
-		ImGui::DragInt("Particle Count", &emitter.emit_count, 1, 1, emitter.particles_count);
-		ImGui::DragFloat2("Min Initial Velocity", emitter.properties.initial_velocity.min.m);
-		ImGui::DragFloat2("Max Initial Velocity", emitter.properties.initial_velocity.max.m);
-		ImGui::ColorEdit3("Color A", emitter.properties.color_a.m);
-		ImGui::ColorEdit3("Color B", emitter.properties.color_b.m);
-		ImGui::DragFloat("Min Life Span", &emitter.properties.life_span.min);
-		ImGui::DragFloat("Max Life Span", &emitter.properties.life_span.max);
-
-		emitter.properties.color_a = rgb_to_hsv(emitter.properties.color_a);
-		emitter.properties.color_b = rgb_to_hsv(emitter.properties.color_b);
-
-		ImGui::End();
-#endif
 
 		ImGui::RenderFrame();
 
