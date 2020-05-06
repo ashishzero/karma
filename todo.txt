@@ -11,6 +11,9 @@
 - Serializing and Deserializing save data
 - Particles systems
 
+# Bug
+- Handle WM_ENTERSIZEMOVE and WM_EXITSIZEMOVE in windows proc
+
 # TODO in Files
 - length_string.h (32)
 - gfx_opengl.cpp (823)
