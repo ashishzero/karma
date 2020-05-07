@@ -10,6 +10,7 @@
 - Make asset loading system
 - Serializing and Deserializing save data
 - Particles systems
+- Add SSE1-4, AVX1-2 support for particles and mathematics operations
 
 # Bug
 - Handle WM_ENTERSIZEMOVE and WM_EXITSIZEMOVE in windows proc
