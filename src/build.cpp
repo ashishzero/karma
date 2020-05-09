@@ -34,9 +34,10 @@
 // uncomment to exclude systems from build process
 // #define EXCLUDE_SYSTEMS_BUILD
 
-#define BUILD_RENDERER_NONE   0
-#define BUILD_RENDERER_ALL    1
-#define BUILD_RENDERER_OPENGL 2
+#define BUILD_RENDERER_NONE      0
+#define BUILD_RENDERER_ALL       1
+#define BUILD_RENDERER_OPENGL    2
+#define BUILD_RENDERER_DIRECTX11 3
 
 /*
  * Renderer
@@ -44,6 +45,7 @@
  *      - BUILD_RENDERER_NONE       Builds none renderer
  *      - BUILD_RENDERER_ALL        Builds all renderer
  *      - BUILD_RENDERER_OPENGL     Builds OpenGL renderer
+ *      - BUILD_RENDERER_DIRECTX11  Builds DirectX renderer
 */
 #define BUILD_RENDERER_TYPE BUILD_RENDERER_ALL
 
@@ -84,24 +86,4 @@
 #	else
 #		error "Platform not supported!"
 #	endif
-#endif
-
-//
-//
-//
-
-#ifndef BUILD_RENDERER_TYPE
-#	define BUILD_RENDERER_TYPE BUILD_RENDERER_ALL
-#endif
-
-#if BUILD_RENDERER_TYPE == BUILD_RENDERER_ALL
-#	define INCLUDE_OPENGL_RENDERER
-#endif
-
-#if BUILD_RENDERER_TYPE == BUILD_RENDERER_OPENGL
-#	define INCLUDE_OPENGL_RENDERER
-#endif
-
-#ifdef INCLUDE_OPENGL_RENDERER
-#	include "opengl/gfx_opengl.cpp"
 #endif

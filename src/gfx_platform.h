@@ -2,13 +2,6 @@
 
 #include "gfx_types.h"
 
-enum Render_Index_Type {
-	Render_Index_Type_NONE,
-	Render_Index_Type_U8,
-	Render_Index_Type_U16,
-	Render_Index_Type_U32,
-};
-
 struct Gfx_Platform_Info {
 	const u8 *vendor;
 	const u8 *renderer;
@@ -20,62 +13,87 @@ struct Gfx_Platform {
 	Render_Backend    backend;
 	Gfx_Platform_Info info;
 
-	virtual s32  get_max_supported_framebuffer_size() = 0;
-	virtual void resize_framebuffer(s32 w, s32 h)     = 0;
-	virtual void get_framebuffer_size(s32 *w, s32 *h) = 0;
+	virtual void *get_backend_device()  = 0;
+	virtual void *get_backend_context() = 0;
 
-	virtual s32  get_maximum_supported_multisamples() = 0;
-	virtual s32  get_multisamples()                   = 0;
-	virtual void set_multisamples(s32 multisamples)   = 0;
+	virtual void               resize_render_view(u32 w, u32 h)     = 0;
+	virtual void               get_render_view_size(u32 *w, u32 *h) = 0;
+	virtual Render_Target_View get_default_render_target_view()     = 0;
+
+	virtual u32 get_maximum_supported_multisamples() = 0;
+	virtual u32 get_multisamples()                   = 0;
 
 	virtual void set_swap_interval(s32 interval) = 0;
 	virtual s32  get_swap_interval()             = 0;
 
 	virtual void present() = 0;
 
-	virtual Handle create_query()              = 0;
-	virtual void   destroy_query(Handle query) = 0;
-	virtual void   begin_query(Handle query)   = 0;
-	virtual r32    end_query(Handle query)     = 0;
+	virtual Texture2d create_texture2d(u32 w, u32 h, u32 channels, Data_Format format, const u8 **pixels, Buffer_Usage usage, Texture_Bind_Flags flags, u32 mip_levels) = 0;
+	virtual void      update_texture2d(Texture2d texture, u32 xoffset, u32 yoffset, u32 w, u32 h, u32 n, u8 *pixels)                                                    = 0;
+	virtual void      destroy_texture2d(Texture2d texture)                                                                                                              = 0;
 
-	virtual Handle create_texture2d(s32 w, s32 h, s32 n, const u8 *pixels, Sampler_Params *params = 0)         = 0;
-	virtual void   update_texture2d(Handle texture, s32 xoffset, s32 yoffset, s32 w, s32 h, s32 n, u8 *pixels) = 0;
-	virtual void   destroy_texture2d(Handle texture)                                                           = 0;
+	virtual void generate_mipmaps(Texture_View view) = 0;
 
-	virtual Handle create_vertex_buffer(Buffer_Type type, u32 size, void *data) = 0;
-	virtual Handle create_index_buffer(Buffer_Type type, u32 size, void *data)  = 0;
+	virtual Texture_View       create_texture_view(Texture2d texture)       = 0;
+	virtual Render_Target_View create_render_target_view(Texture2d texture) = 0;
+	virtual Depth_Stencil_View create_depth_stencil_view(Texture2d texture) = 0;
 
-	virtual void update_vertex_buffer(Handle handle, u32 offset, u32 size, void *data) = 0;
-	virtual void update_index_buffer(Handle handle, u32 offset, u32 size, void *data)  = 0;
+	virtual void destroy_texture_view(Texture_View view)             = 0;
+	virtual void destroy_render_target_view(Render_Target_View view) = 0;
+	virtual void destroy_depth_stencil_view(Depth_Stencil_View view) = 0;
 
-	virtual void *map_vertex_buffer(Handle handle, u32 offset, u32 length) = 0;
-	virtual void  unmap_vertex_buffer(Handle handle)                       = 0;
-	virtual void *map_index_buffer(Handle handle, u32 offset, u32 length)  = 0;
-	virtual void  unmap_index_buffer(Handle handle)                        = 0;
+	virtual Sampler create_sampler(const Filter &filer, const Texture_Address &address, const Level_Of_Detail &lod) = 0;
+	virtual void    destory_sampler(Sampler sampler)                                                                = 0;
 
-	virtual void destroy_vertex_buffer(Handle handle) = 0;
-	virtual void destroy_index_buffer(Handle handle)  = 0;
+	virtual Vertex_Buffer  create_vertex_buffer(Buffer_Usage usage, Cpu_Access_Flags flags, u32 size, void *data)  = 0;
+	virtual Index_Buffer   create_index_buffer(Buffer_Usage usage, Cpu_Access_Flags flags, u32 size, void *data)   = 0;
+	virtual Uniform_Buffer create_uniform_buffer(Buffer_Usage usage, Cpu_Access_Flags flags, u32 size, void *data) = 0;
 
-	virtual Framebuffer create_framebuffer(s32 width, s32 height, Color_Format color, Depth_Format depth) = 0;
-	virtual void        destroy_framebuffer(Framebuffer framebuffer)                                      = 0;
+	virtual void destroy_vertex_buffer(Vertex_Buffer buffer)   = 0;
+	virtual void destroy_index_buffer(Index_Buffer buffer)     = 0;
+	virtual void destroy_uniform_buffer(Uniform_Buffer buffer) = 0;
 
-	virtual Handle create_shader(String src)     = 0;
-	virtual void   destroy_shader(Handle shader) = 0;
+	virtual void update_vertex_buffer(Vertex_Buffer buffer, u32 offset, u32 size, void *data) = 0;
+	virtual void update_index_buffer(Index_Buffer buffer, u32 offset, u32 size, void *data)   = 0;
+	virtual void update_uniform_buffer(Uniform_Buffer buffer, void *data)                     = 0;
 
-	virtual void bind_framebuffer(Framebuffer *framebuffer) = 0;
-	virtual void set_render_region(Render_Region &region)   = 0;
-	virtual void clear(Clear_Flag flags, Color4 color)      = 0;
+	virtual void *map(Vertex_Buffer buffer, Map_Type type)  = 0;
+	virtual void *map(Index_Buffer buffer, Map_Type type)   = 0;
+	virtual void *map(Uniform_Buffer buffer, Map_Type type) = 0;
+	virtual void  unmap(Vertex_Buffer buffer)               = 0;
+	virtual void  unmap(Index_Buffer buffer)                = 0;
+	virtual void  unmap(Uniform_Buffer buffer)              = 0;
 
-	virtual void begin(Handle shader, u8 *data, ptrsize size) = 0;
-	virtual void end()                                        = 0;
+	virtual Render_Pipeline create_render_pipeline(const Shader_Info &    shader,
+												   const Rasterizer_Info &rasterizer,
+												   const Blend_Info &     blend,
+												   const Depth_Info &     depth,
+												   const String           name)         = 0;
+	virtual void            destory_render_pipeline(Render_Pipeline pipeline) = 0;
 
-	virtual void bind_vertex_buffer(Handle buffer)                                = 0;
-	virtual void bind_index_buffer(Handle buffer, Render_Index_Type type)         = 0;
-	virtual void bind_texture(Handle texture, u32 index)                          = 0;
-	virtual void draw(ptrsize count, ptrsize offset)                              = 0;
-	virtual void draw_indexed(ptrsize count, ptrsize offset, ptrsize base_vertex) = 0;
+	virtual void begin_drawing(u32                       view_count,
+							   Color_Clear_Info *        color_clear_info,
+							   Render_Target_View *      render_views,
+							   Depth_Stencil_Clear_Info *depth_stencil_clear_info = 0,
+							   Depth_Stencil_View *      depth_stencil_view       = 0) = 0;
+	virtual void end_drawing()                                             = 0;
+
+	virtual void cmd_set_viewport(r32 x, r32 y, r32 w, r32 h) = 0;
+
+	virtual void cmd_bind_pipeline(Render_Pipeline pipeline)                                    = 0;
+	virtual void cmd_bind_vertex_buffer(Vertex_Buffer buffer, u32 offset, u32 stride)           = 0;
+	virtual void cmd_bind_index_buffer(Index_Buffer buffer, Index_Type type, u32 offset)        = 0;
+	virtual void cmd_bind_vs_uniform_buffers(u32 slot_index, u32 count, Uniform_Buffer *buffer) = 0;
+	virtual void cmd_bind_ps_uniform_buffers(u32 slot_index, u32 count, Uniform_Buffer *buffer) = 0;
+	virtual void cmd_bind_textures(u32 slot_index, u32 count, Texture_View *views)              = 0;
+	virtual void cmd_bind_samplers(u32 slot_index, u32 count, Sampler *samplers)                = 0;
+
+	virtual void cmd_draw(u32 vertex_count, u32 start_vertex)                        = 0;
+	virtual void cmd_draw_indexed(u32 index_count, u32 start_index, u32 base_vertex) = 0;
 
 	virtual void destroy() = 0;
 };
 
-Gfx_Platform *create_opengl_context(Handle platform, s32 vsync, s32 multisamples, s32 framebuffer_w, s32 framebuffer_h);
+//Gfx_Platform *create_opengl_context(Handle platform, s32 vsync, s32 multisamples);
+
+Gfx_Platform *create_directx11_context(Handle platform, s32 vsync, s32 multisamples);

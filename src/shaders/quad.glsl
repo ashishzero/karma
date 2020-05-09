@@ -1,8 +1,3 @@
-.version = 330;
-.depth = false;
-.cull = false;
-.blend = true;
-
 @ vec2 tex_coord;
 @ vec4 color;
 
@@ -27,7 +22,6 @@ layout (location = 0) out vec4 pixel_color;
 uniform sampler2D tex;
 
 void main() {
-	// TODO: Clean this up, this is for font rendering
 	vec4 sampled = texture(tex, tex_coord);
 	pixel_color  = sampled * color;
 }

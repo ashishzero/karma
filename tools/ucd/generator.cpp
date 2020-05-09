@@ -110,7 +110,7 @@ bool parse_for_fmt_range_type_category(const char *file, String line, Fmt_Range_
 }
 
 void ucd_generate_fmt_range_type_category(const char *file_name, const char *name) {
-	const String file    = tprintf("../../res/ucd/%s", file_name);
+	const String file    = tprintf("res/ucd/%s", file_name);
 	String       content = read_entire_file(file);
 	defer {
 		mfree(content.data);
@@ -203,7 +203,7 @@ bool parse_for_unicode_data(String line, Unicode_Data *data) {
 }
 
 void ucd_generate_unicode_data(const char *file_name) {
-	const String file    = tprintf("../../res/ucd/%s", file_name);
+	const String file    = tprintf("res/ucd/%s", file_name);
 	String       content = read_entire_file(file);
 	defer {
 		mfree(content.data);
@@ -316,8 +316,8 @@ void ucd_generate_unicode_data(const char *file_name) {
 }
 
 int system_main() {
-	header = fopen("../../src/unicode.h", "wb");
-	source = fopen("../../src/unicode.cpp", "wb");
+	header = fopen("src/unicode.h", "wb");
+	source = fopen("src/unicode.cpp", "wb");
 
 	fprintf(header, "#pragma once\n");
 	fprintf(header, "#include <stdint.h>\n\n");

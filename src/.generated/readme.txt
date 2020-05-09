@@ -6,13 +6,13 @@ Files with .typeinfo extension are reflected code, and should be ignored from ve
 # How to add code for reflection and use the reflection
 Add to `src/prebuild.bat` the following line:
 ```
-..\tools\reflection\reflection.exe include: '.' build: '{file_to_reflect}.h' output: '.generated/{file_to_reflect}.typeinfo'
+..\tools\reflection\reflection.exe include: 'src/.' build: '{file_to_reflect}.h' output: 'src/.generated/{file_to_reflect}.typeinfo'
 ```
-where {file_to_reflect} is the file you want to reflect from `src` directory.
+where {file_to_reflect} is the file you want to reflect.
 
 You must include the reflected file after the header file before the usage of the reflection. For example, 
 for the following command:
-	"..\tools\reflection\reflection.exe include: '.' build: 'tokenizer.h' output: '.generated/tokenizer.typeinfo'"
+	"..\tools\reflection\reflection.exe include: 'src/.' build: 'tokenizer.h' output: 'src/.generated/tokenizer.typeinfo'"
 The source file using this reflection should include reflected code in following order
 ```
 #include "tokenizer.h"

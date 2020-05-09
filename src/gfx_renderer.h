@@ -12,37 +12,33 @@ bool gfx_create_context(Handle platform, Render_Backend backend, s32 vsync, s32 
 void gfx_destroy_context();
 
 Render_Backend gfx_render_backend();
+void *         gfx_render_device();
+void *         gfx_render_context();
 
-Handle gfx_create_query();
-void   gfx_destroy_query(Handle query);
-void   gfx_begin_query(Handle query);
-r32    gfx_end_query(Handle query);
-
-void gfx_resize_framebuffer(s32 w, s32 h);
-void gfx_get_framebuffer_size(s32 *w, s32 *h);
+void gfx_resize_render_view(u32 w, u32 h);
+void gfx_get_render_view_size(u32 *w, u32 *h);
 
 void gfx_set_swap_interval(s32 interval);
 s32  gfx_get_swap_interval();
 
-s32  gfx_get_multisamples();
-void gfx_set_multisamples(s32 multisamples);
+s32 gfx_get_multisamples();
 
-Handle gfx_create_shader(const String path);
-void   gfx_destroy_shader(Handle shader);
-
-Handle gfx_create_texture2d(s32 w, s32 h, s32 n, const u8 *pixels, Sampler_Params *params = 0);
-void   gfx_update_texture2d(Handle texture, s32 xoffset, s32 yoffset, s32 w, s32 h, s32 n, u8 *pixels);
-void   gfx_destroy_texture2d(Handle texture);
+Texture2d_Handle gfx_create_texture2d(u32 w, u32 h, u32 channels, Data_Format fmt, const u8 **pixels, Buffer_Usage usage, u32 mip_levels);
+void             gfx_update_texture2d(Texture2d_Handle handle, u32 xoffset, u32 yoffset, u32 w, u32 h, u32 channels, u8 *pixels);
+void             gfx_destroy_texture2d(Texture2d_Handle handle);
 
 void gfx_present();
 
-void gfx_frame(Framebuffer *framebuffer, Render_Region &region, Clear_Flag flags, Color4 color = vec4(0, 0, 0, 1));
+void gfx_begin_drawing(Render_Target_View *view = 0);
+void gfx_begin_drawing(Render_Target_View *view = 0, Color4 color = vec4(4));
+void gfx_end_drawing();
 
-void im_begin(Handle shader, Camera_View &view, Mat4 &transform = mat4_identity());
-void im_flush();
+void gfx_viewport(r32 x, r32 y, r32 w, r32 h);
+
+void im_begin(Camera_View &view, Mat4 &transform = mat4_identity());
 void im_end();
 
-void im_bind_texture(Handle texture);
+void im_bind_texture(Texture2d_Handle handle);
 void im_unbind_texture();
 
 void im_push_matrix(const Mat4 &matrix);

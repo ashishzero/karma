@@ -711,6 +711,27 @@ Mat4 mat4_perspective_gl(r32 fov, r32 aspect_ratio, r32 n, r32 f) {
 	return m;
 }
 
+Mat4 mat4_ortho_dx(r32 l, r32 r, r32 t, r32 b, r32 n, r32 f) {
+	Mat4 m;
+	m.rows[0] = vec4(2 / (r - l), 0.0f, 0.0f, -(l + r) / (r - l));
+	m.rows[1] = vec4(0.0f, 2 / (t - b), 0.0f, -(t + b) / (t - b));
+	m.rows[2] = vec4(0.0f, 0.0f, 2 / (f - n), -(f + n) / (f - n));
+	m.rows[3] = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	return m;
+}
+
+Mat4 mat4_perspective_dx(r32 fov, r32 aspect_ratio, r32 n, r32 f) {
+	r32  cot = 1.0f / tanf(fov * 0.5f);
+	r32  fpn = f + n;
+	r32  fmn = f - n;
+	Mat4 m;
+	m.rows[0] = vec4(cot / aspect_ratio, 0.0f, 0.0f, 0.0f);
+	m.rows[1] = vec4(0.0f, cot, 0.0f, 0.0f);
+	m.rows[2] = vec4(0.0f, 0.0f, fpn / fmn, 2.0f * f * n / fmn);
+	m.rows[3] = vec4(0.0f, 0.0f, 1.0f, 0.0f);
+	return m;
+}
+
 Vec3 mat4_right(const Mat4 &m) {
 	Vec3 v;
 	v.x = m.m2[0][0];
@@ -1039,6 +1060,67 @@ bool quat_equals(Quat a, Quat b, r32 tolerance) {
 //
 //
 //
+
+Color3 linear_to_srgb(Color3 color) {
+	Color3 res;
+	res.x = sqrtf(color.x);
+	res.y = sqrtf(color.y);
+	res.z = sqrtf(color.z);
+	return res;
+}
+
+Color4 linear_to_srgb(Color4 color) {
+	Color4 res;
+	res.xyz = linear_to_srgb(color.xyz);
+	res.w   = color.w;
+	return res;
+}
+
+Color3 linear_to_srgb(Color3 color, r32 gamma) {
+	r32    igamma = 1.0f / gamma;
+	Color3 res;
+	res.x = powf(color.x, igamma);
+	res.y = powf(color.y, igamma);
+	res.z = powf(color.z, igamma);
+	return res;
+}
+
+Color4 linear_to_srgb(Color4 color, r32 gamma) {
+	Color4 res;
+	res.xyz = linear_to_srgb(color.xyz, gamma);
+	res.w   = color.w;
+	return res;
+}
+
+Color3 srgb_to_linear(Color3 color) {
+	Color3 res;
+	res.x = color.x * color.x;
+	res.y = color.y * color.y;
+	res.z = color.z * color.z;
+	return res;
+}
+
+Color4 srgb_to_linear(Color4 color) {
+	Color4 res;
+	res.xyz = srgb_to_linear(color.xyz);
+	res.w   = color.w;
+	return res;
+}
+
+Color3 srgb_to_linear(Color3 color, r32 gamma) {
+	Color3 res;
+	res.x = powf(color.x, gamma);
+	res.y = powf(color.y, gamma);
+	res.z = powf(color.z, gamma);
+	return res;
+}
+
+Color4 srgb_to_linear(Color4 color, r32 gamma) {
+	Color4 res;
+	res.xyz = srgb_to_linear(color.xyz, gamma);
+	res.w   = color.w;
+	return res;
+}
 
 Colorh color4_to_hex(Color4 v) {
 	u8 r = static_cast<u8>(255.0f * v.x);

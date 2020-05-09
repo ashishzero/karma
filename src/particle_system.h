@@ -63,7 +63,7 @@ struct Particle {
 };
 
 struct Particle_Emitter {
-	Handle                    texture;
+	Texture2d_Handle          *texture;
 	Mm_Rect                   texture_rect;
 	Random_Series *           rng;
 	Vec2                      position;
@@ -207,7 +207,7 @@ Particle_Emitter_Property particle_emitter_default_property() {
 	return props;
 }
 
-Particle_Emitter particle_emitter_create(Handle texture, Mm_Rect tex_rect, Random_Series *rng, int max_partices, int emit_count) {
+Particle_Emitter particle_emitter_create(Texture2d_Handle *texture, Mm_Rect tex_rect, Random_Series *rng, int max_partices, int emit_count) {
 	Particle_Emitter emitter;
 	emitter.texture         = texture;
 	emitter.texture_rect    = tex_rect;

@@ -4,18 +4,13 @@
 #include "imconfig.h"
 #include "imgui.h"
 #include "imgui_impl_opengl3.h"
+#include "imgui_impl_dx11.h"
 
 static bool               window_is_active = true;
 static bool               mouse_pressed[3];
 static Cursor_Kind        mouse_cursor[ImGuiMouseCursor_COUNT];
 static ImGuiDockNodeFlags dockspace_flags;
 ImGuiWindowFlags          dockspace_main_window_flags;
-static bool               show_overlay;
-static r32                cpu_frame_time;
-static r32                event_frame_time;
-static r32                simulate_frame_time;
-static r32                render_frame_time;
-static r32                gpu_frame_time;
 
 void ImGui::Initialize() {
 	IMGUI_CHECKVERSION();
@@ -87,53 +82,53 @@ void ImGui::Initialize() {
 	style.GrabRounding  = 0;
 
 	ImVec4 *colors                         = style.Colors;
-	colors[ImGuiCol_Text]                  = ImVec4(0.95f, 0.96f, 0.98f, 1.00f);
-	colors[ImGuiCol_TextDisabled]          = ImVec4(0.36f, 0.42f, 0.47f, 1.00f);
-	colors[ImGuiCol_WindowBg]              = ImVec4(0.11f, 0.15f, 0.17f, 1.00f);
-	colors[ImGuiCol_PopupBg]               = ImVec4(0.08f, 0.08f, 0.08f, 0.94f);
-	colors[ImGuiCol_Border]                = ImVec4(0.08f, 0.10f, 0.12f, 1.00f);
-	colors[ImGuiCol_BorderShadow]          = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
-	colors[ImGuiCol_FrameBg]               = ImVec4(0.20f, 0.25f, 0.29f, 1.00f);
-	colors[ImGuiCol_FrameBgHovered]        = ImVec4(0.12f, 0.20f, 0.28f, 1.00f);
-	colors[ImGuiCol_FrameBgActive]         = ImVec4(0.09f, 0.12f, 0.14f, 1.00f);
-	colors[ImGuiCol_TitleBg]               = ImVec4(0.09f, 0.12f, 0.14f, 0.65f);
-	colors[ImGuiCol_TitleBgActive]         = ImVec4(0.08f, 0.10f, 0.12f, 1.00f);
-	colors[ImGuiCol_TitleBgCollapsed]      = ImVec4(0.00f, 0.00f, 0.00f, 0.51f);
-	colors[ImGuiCol_MenuBarBg]             = ImVec4(0.15f, 0.18f, 0.22f, 1.00f);
-	colors[ImGuiCol_ScrollbarBg]           = ImVec4(0.02f, 0.02f, 0.02f, 0.39f);
-	colors[ImGuiCol_ScrollbarGrab]         = ImVec4(0.20f, 0.25f, 0.29f, 1.00f);
-	colors[ImGuiCol_ScrollbarGrabHovered]  = ImVec4(0.18f, 0.22f, 0.25f, 1.00f);
-	colors[ImGuiCol_ScrollbarGrabActive]   = ImVec4(0.09f, 0.21f, 0.31f, 1.00f);
-	colors[ImGuiCol_CheckMark]             = ImVec4(0.28f, 0.56f, 1.00f, 1.00f);
-	colors[ImGuiCol_SliderGrab]            = ImVec4(0.28f, 0.56f, 1.00f, 1.00f);
-	colors[ImGuiCol_SliderGrabActive]      = ImVec4(0.37f, 0.61f, 1.00f, 1.00f);
-	colors[ImGuiCol_Button]                = ImVec4(0.20f, 0.25f, 0.29f, 1.00f);
-	colors[ImGuiCol_ButtonHovered]         = ImVec4(0.28f, 0.56f, 1.00f, 1.00f);
-	colors[ImGuiCol_ButtonActive]          = ImVec4(0.06f, 0.53f, 0.98f, 1.00f);
-	colors[ImGuiCol_Header]                = ImVec4(0.20f, 0.25f, 0.29f, 0.55f);
-	colors[ImGuiCol_HeaderHovered]         = ImVec4(0.26f, 0.59f, 0.98f, 0.80f);
-	colors[ImGuiCol_HeaderActive]          = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
-	colors[ImGuiCol_Separator]             = ImVec4(0.20f, 0.25f, 0.29f, 1.00f);
-	colors[ImGuiCol_SeparatorHovered]      = ImVec4(0.10f, 0.40f, 0.75f, 0.78f);
-	colors[ImGuiCol_SeparatorActive]       = ImVec4(0.10f, 0.40f, 0.75f, 1.00f);
-	colors[ImGuiCol_ResizeGrip]            = ImVec4(0.26f, 0.59f, 0.98f, 0.25f);
-	colors[ImGuiCol_ResizeGripHovered]     = ImVec4(0.26f, 0.59f, 0.98f, 0.67f);
-	colors[ImGuiCol_ResizeGripActive]      = ImVec4(0.26f, 0.59f, 0.98f, 0.95f);
-	colors[ImGuiCol_Tab]                   = ImVec4(0.11f, 0.15f, 0.17f, 1.00f);
-	colors[ImGuiCol_TabHovered]            = ImVec4(0.26f, 0.59f, 0.98f, 0.80f);
-	colors[ImGuiCol_TabActive]             = ImVec4(0.20f, 0.25f, 0.29f, 1.00f);
-	colors[ImGuiCol_TabUnfocused]          = ImVec4(0.11f, 0.15f, 0.17f, 1.00f);
-	colors[ImGuiCol_TabUnfocusedActive]    = ImVec4(0.11f, 0.15f, 0.17f, 1.00f);
-	colors[ImGuiCol_PlotLines]             = ImVec4(0.61f, 0.61f, 0.61f, 1.00f);
-	colors[ImGuiCol_PlotLinesHovered]      = ImVec4(1.00f, 0.43f, 0.35f, 1.00f);
-	colors[ImGuiCol_PlotHistogram]         = ImVec4(0.90f, 0.70f, 0.00f, 1.00f);
-	colors[ImGuiCol_PlotHistogramHovered]  = ImVec4(1.00f, 0.60f, 0.00f, 1.00f);
-	colors[ImGuiCol_TextSelectedBg]        = ImVec4(0.26f, 0.59f, 0.98f, 0.35f);
-	colors[ImGuiCol_DragDropTarget]        = ImVec4(1.00f, 1.00f, 0.00f, 0.90f);
-	colors[ImGuiCol_NavHighlight]          = ImVec4(0.26f, 0.59f, 0.98f, 1.00f);
-	colors[ImGuiCol_NavWindowingHighlight] = ImVec4(1.00f, 1.00f, 1.00f, 0.70f);
-	colors[ImGuiCol_NavWindowingDimBg]     = ImVec4(0.80f, 0.80f, 0.80f, 0.20f);
-	colors[ImGuiCol_ModalWindowDimBg]      = ImVec4(0.80f, 0.80f, 0.80f, 0.35f);
+	colors[ImGuiCol_Text]                  = srgb_to_linear(vec4(0.95f, 0.96f, 0.98f, 1.00f));
+	colors[ImGuiCol_TextDisabled]          = srgb_to_linear(vec4(0.36f, 0.42f, 0.47f, 1.00f));
+	colors[ImGuiCol_WindowBg]              = srgb_to_linear(vec4(0.11f, 0.15f, 0.17f, 1.00f));
+	colors[ImGuiCol_PopupBg]               = srgb_to_linear(vec4(0.08f, 0.08f, 0.08f, 0.94f));
+	colors[ImGuiCol_Border]                = srgb_to_linear(vec4(0.08f, 0.10f, 0.12f, 1.00f));
+	colors[ImGuiCol_BorderShadow]          = srgb_to_linear(vec4(0.00f, 0.00f, 0.00f, 0.00f));
+	colors[ImGuiCol_FrameBg]               = srgb_to_linear(vec4(0.20f, 0.25f, 0.29f, 1.00f));
+	colors[ImGuiCol_FrameBgHovered]        = srgb_to_linear(vec4(0.12f, 0.20f, 0.28f, 1.00f));
+	colors[ImGuiCol_FrameBgActive]         = srgb_to_linear(vec4(0.09f, 0.12f, 0.14f, 1.00f));
+	colors[ImGuiCol_TitleBg]               = srgb_to_linear(vec4(0.09f, 0.12f, 0.14f, 0.65f));
+	colors[ImGuiCol_TitleBgActive]         = srgb_to_linear(vec4(0.08f, 0.10f, 0.12f, 1.00f));
+	colors[ImGuiCol_TitleBgCollapsed]      = srgb_to_linear(vec4(0.00f, 0.00f, 0.00f, 0.51f));
+	colors[ImGuiCol_MenuBarBg]             = srgb_to_linear(vec4(0.15f, 0.18f, 0.22f, 1.00f));
+	colors[ImGuiCol_ScrollbarBg]           = srgb_to_linear(vec4(0.02f, 0.02f, 0.02f, 0.39f));
+	colors[ImGuiCol_ScrollbarGrab]         = srgb_to_linear(vec4(0.20f, 0.25f, 0.29f, 1.00f));
+	colors[ImGuiCol_ScrollbarGrabHovered]  = srgb_to_linear(vec4(0.18f, 0.22f, 0.25f, 1.00f));
+	colors[ImGuiCol_ScrollbarGrabActive]   = srgb_to_linear(vec4(0.09f, 0.21f, 0.31f, 1.00f));
+	colors[ImGuiCol_CheckMark]             = srgb_to_linear(vec4(0.28f, 0.56f, 1.00f, 1.00f));
+	colors[ImGuiCol_SliderGrab]            = srgb_to_linear(vec4(0.28f, 0.56f, 1.00f, 1.00f));
+	colors[ImGuiCol_SliderGrabActive]      = srgb_to_linear(vec4(0.37f, 0.61f, 1.00f, 1.00f));
+	colors[ImGuiCol_Button]                = srgb_to_linear(vec4(0.20f, 0.25f, 0.29f, 1.00f));
+	colors[ImGuiCol_ButtonHovered]         = srgb_to_linear(vec4(0.28f, 0.56f, 1.00f, 1.00f));
+	colors[ImGuiCol_ButtonActive]          = srgb_to_linear(vec4(0.06f, 0.53f, 0.98f, 1.00f));
+	colors[ImGuiCol_Header]                = srgb_to_linear(vec4(0.20f, 0.25f, 0.29f, 0.55f));
+	colors[ImGuiCol_HeaderHovered]         = srgb_to_linear(vec4(0.26f, 0.59f, 0.98f, 0.80f));
+	colors[ImGuiCol_HeaderActive]          = srgb_to_linear(vec4(0.26f, 0.59f, 0.98f, 1.00f));
+	colors[ImGuiCol_Separator]             = srgb_to_linear(vec4(0.20f, 0.25f, 0.29f, 1.00f));
+	colors[ImGuiCol_SeparatorHovered]      = srgb_to_linear(vec4(0.10f, 0.40f, 0.75f, 0.78f));
+	colors[ImGuiCol_SeparatorActive]       = srgb_to_linear(vec4(0.10f, 0.40f, 0.75f, 1.00f));
+	colors[ImGuiCol_ResizeGrip]            = srgb_to_linear(vec4(0.26f, 0.59f, 0.98f, 0.25f));
+	colors[ImGuiCol_ResizeGripHovered]     = srgb_to_linear(vec4(0.26f, 0.59f, 0.98f, 0.67f));
+	colors[ImGuiCol_ResizeGripActive]      = srgb_to_linear(vec4(0.26f, 0.59f, 0.98f, 0.95f));
+	colors[ImGuiCol_Tab]                   = srgb_to_linear(vec4(0.11f, 0.15f, 0.17f, 1.00f));
+	colors[ImGuiCol_TabHovered]            = srgb_to_linear(vec4(0.26f, 0.59f, 0.98f, 0.80f));
+	colors[ImGuiCol_TabActive]             = srgb_to_linear(vec4(0.20f, 0.25f, 0.29f, 1.00f));
+	colors[ImGuiCol_TabUnfocused]          = srgb_to_linear(vec4(0.11f, 0.15f, 0.17f, 1.00f));
+	colors[ImGuiCol_TabUnfocusedActive]    = srgb_to_linear(vec4(0.11f, 0.15f, 0.17f, 1.00f));
+	colors[ImGuiCol_PlotLines]             = srgb_to_linear(vec4(0.61f, 0.61f, 0.61f, 1.00f));
+	colors[ImGuiCol_PlotLinesHovered]      = srgb_to_linear(vec4(1.00f, 0.43f, 0.35f, 1.00f));
+	colors[ImGuiCol_PlotHistogram]         = srgb_to_linear(vec4(0.90f, 0.70f, 0.00f, 1.00f));
+	colors[ImGuiCol_PlotHistogramHovered]  = srgb_to_linear(vec4(1.00f, 0.60f, 0.00f, 1.00f));
+	colors[ImGuiCol_TextSelectedBg]        = srgb_to_linear(vec4(0.26f, 0.59f, 0.98f, 0.35f));
+	colors[ImGuiCol_DragDropTarget]        = srgb_to_linear(vec4(1.00f, 1.00f, 0.00f, 0.90f));
+	colors[ImGuiCol_NavHighlight]          = srgb_to_linear(vec4(0.26f, 0.59f, 0.98f, 1.00f));
+	colors[ImGuiCol_NavWindowingHighlight] = srgb_to_linear(vec4(1.00f, 1.00f, 1.00f, 0.70f));
+	colors[ImGuiCol_NavWindowingDimBg]     = srgb_to_linear(vec4(0.80f, 0.80f, 0.80f, 0.20f));
+	colors[ImGuiCol_ModalWindowDimBg]      = srgb_to_linear(vec4(0.80f, 0.80f, 0.80f, 0.35f));
 
 	// Keyboard mapping. ImGui will use those indices to peek into the io.KeysDown[] array.
 	io.KeyMap[ImGuiKey_Tab]        = Key_TAB;
@@ -187,7 +182,11 @@ void ImGui::Initialize() {
 	io.BackendRendererName = "Karma Renderer";
 	io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;
 
-	if (gfx_render_backend() == Render_Backend_OPENGL) ImGui_ImplOpenGL3_Init("#version 150");
+	auto backend = gfx_render_backend();
+	if (backend == Render_Backend_OPENGL)
+		ImGui_ImplOpenGL3_Init("#version 150");
+	else if (backend == Render_Backend_DIRECTX11)
+		ImGui_ImplDX11_Init((ID3D11Device *)gfx_render_device(), (ID3D11DeviceContext *)gfx_render_context());
 
 	dockspace_flags |= ImGuiDockNodeFlags_PassthruCentralNode;
 	dockspace_flags |= ImGuiDockNodeFlags_AutoHideTabBar;
@@ -212,15 +211,16 @@ void ImGui::Shutdown() {
 
 	mfree(user_name.data);
 
-	ImGui_ImplOpenGL3_DestroyDeviceObjects();
+	auto backend = gfx_render_backend();
+	if (backend == Render_Backend_OPENGL)
+		ImGui_ImplOpenGL3_DestroyDeviceObjects();
+	else if (backend == Render_Backend_DIRECTX11)
+		ImGui_ImplDX11_Shutdown();
+
 	ImGui::DestroyContext();
 }
 
 bool ImGui::HandleEvent(const Event &event) {
-	if ((event.type & Event_Type_KEY_UP) && event.key.symbol == Key_F1) {
-		show_overlay = !show_overlay;
-	}
-
 	ImGuiIO &io = ImGui::GetIO();
 
 	switch (event.type) {
@@ -270,7 +270,11 @@ bool ImGui::HandleEvent(const Event &event) {
 }
 
 void ImGui::UpdateFrame(r32 dt, r32 event_time, r32 simulate_time, r32 render_time, r32 gpu_time) {
-	if (gfx_render_backend() == Render_Backend_OPENGL) ImGui_ImplOpenGL3_NewFrame();
+	auto backend = gfx_render_backend();
+	if (backend == Render_Backend_OPENGL)
+		ImGui_ImplOpenGL3_NewFrame();
+	else if (backend == Render_Backend_DIRECTX11)
+		ImGui_ImplDX11_NewFrame();
 
 	ImGuiIO &io = ImGui::GetIO();
 	IM_ASSERT(io.Fonts->IsBuilt() && "Font atlas not built! It is generally built by the renderer back-end. Missing call to renderer _NewFrame() function? e.g. ImGui_ImplOpenGL3_NewFrame().");
@@ -316,48 +320,14 @@ void ImGui::UpdateFrame(r32 dt, r32 event_time, r32 simulate_time, r32 render_ti
 	ImGui::PopStyleVar();
 	ImGui::DockSpace(ImGui::GetID("Playground"), ImVec2(0.0f, 0.0f), dockspace_flags);
 	ImGui::End();
-
-	cpu_frame_time      = 0.8f * cpu_frame_time + 0.2f * 1000.0f * dt;
-	event_frame_time    = 0.8f * event_frame_time + 0.2f * event_time;
-	simulate_frame_time = 0.8f * simulate_frame_time + 0.2f * simulate_time;
-	render_frame_time   = 0.8f * render_frame_time + 0.2f * render_time;
-	gpu_frame_time      = 0.8f * gpu_frame_time + 0.2f * gpu_time;
-
-	// Overlay
-	if (show_overlay) {
-		ImVec2 work_area_pos = viewport->GetWorkPos();
-		ImGui::SetNextWindowPos(ImVec2(work_area_pos.x + 10, work_area_pos.y + 10), ImGuiCond_Always, ImVec2(0, 0));
-		ImGui::SetNextWindowViewport(viewport->ID);
-
-		ImGui::SetNextWindowBgAlpha(0.95f);
-		if (ImGui::Begin("Information Overlay", 0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav)) {
-			float x = ImGui::CalcTextSize("#############").x;
-			float y = ImGui::GetCursorPosY();
-
-			ImGui::TextUnformatted("Frame time");
-			ImGui::TextUnformatted("Event time");
-			ImGui::TextUnformatted("Simulate time");
-			ImGui::TextUnformatted("Render time");
-			ImGui::TextUnformatted("GPU time");
-
-			ImGui::SetCursorPosY(y);
-			ImGui::SetCursorPosX(x);
-			ImGui::Text(": %.3f ms, %d fps", cpu_frame_time, (int)(1000.0f / cpu_frame_time));
-			ImGui::SetCursorPosX(x);
-			ImGui::Text(": %.3f ms", event_frame_time);
-			ImGui::SetCursorPosX(x);
-			ImGui::Text(": %.3f ms", simulate_frame_time);
-			ImGui::SetCursorPosX(x);
-			ImGui::Text(": %.3f ms", render_frame_time);
-			ImGui::SetCursorPosX(x);
-			ImGui::Text(": %.3f ms", gpu_frame_time);
-		}
-		ImGui::End();
-	}
 }
 
 void ImGui::RenderFrame() {
 	ImGui::Render();
 
-	if (gfx_render_backend() == Render_Backend_OPENGL) ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+	auto backend = gfx_render_backend();
+	if (backend == Render_Backend_OPENGL)
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+	else if (backend == Render_Backend_DIRECTX11)
+		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 }

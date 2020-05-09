@@ -1,9 +1,10 @@
-#include "gfx_platform.h"
-#include "glad/include/glad/glad.h"
-#include "stream.h"
-#include "string.h"
-#include "systems.h"
+#include "../gfx_platform.h"
+#include "../glad/include/glad/glad.h"
+#include "../stream.h"
+#include "../length_string.h"
+#include "../systems.h"
 
+#if 0
 static const GLenum COLOR_INTERNAL_FORMATS[] = {
 	0, GL_R32F, GL_RG32F, GL_RGB32F, GL_RGBA32F
 };
@@ -52,19 +53,58 @@ struct Shader {
 	u32     texture_count;
 };
 
-constexpr int QUAD_TEXTURE_SLOT = 0;
+static constexpr int HDR_TEXTURE_SLOT_INDEX = 5;
+
+static const String hdr_vertex_shader_code = R"(
+#version 330 core
+const vec2 vertices[] = {
+	vec2(-1.0, -1.0), vec2(-1.0,  1.0), vec2( 1.0,  1.0),
+	vec2(-1.0, -1.0), vec2( 1.0,  1.0), vec2( 1.0, -1.0)
+};
+const vec2 texture_coords[] = {
+	vec2(0, 0), vec2(0, 1), vec2(1, 1),
+	vec2(0, 0), vec2(1, 1), vec2(1, 0)
+};
+
+out vec2 tex_coord;
+
+void main() {
+	gl_Position = vec4(vertices[gl_VertexID], 0, 1);
+	tex_coord   = texture_coords[gl_VertexID];
+}
+)";
+
+static const String hdr_fragment_shader_code = R"(
+#version 330 core
+
+layout (location = 0) out vec4 fragment_color;
+
+in vec2 tex_coord;
+uniform sampler2D hdr_texture;
+
+void main() {
+	vec4 hdr_color = texture(hdr_texture, tex_coord);
+	fragment_color = hdr_color;
+}
+)";
 
 struct Gfx_Platform_OpenGL : public Gfx_Platform {
 	Handle platform_handle;
-	s32    multisamples;
+	void * gl_context;
 
-	s32 framebuffer_w;
-	s32 framebuffer_h;
+	u32 multisamples;
+
+	GLuint hdr_shader;
+
+	//s32 framebuffer_w;
+	//s32 framebuffer_h;
+	u32 render_view_w;
+	u32 render_view_h;
 
 	GLuint vertex_array;
-	GLuint color_renderbuffer;
-	GLuint depth_renderbuffer;
-	GLuint framebuffer;
+	//GLuint color_attachment;
+	//GLuint depth_attachment;
+	//GLuint framebuffer;
 
 	Shader *current_shader            = 0;
 	GLenum  current_render_index_type = 0;
@@ -72,62 +112,62 @@ struct Gfx_Platform_OpenGL : public Gfx_Platform {
 	int (*set_swap_interval_func)(int interval);
 	int (*get_swap_interval_func)();
 
-	virtual s32  get_max_supported_framebuffer_size() final;
-	virtual void resize_framebuffer(s32 w, s32 h) final;
-	virtual void get_framebuffer_size(s32 *w, s32 *h) final;
+	virtual void *get_backend_device() final override {
+		return 0;
+	}
+	virtual void *get_backend_context() final override {
+		return gl_context;
+	};
 
-	virtual s32  get_maximum_supported_multisamples() final;
-	virtual s32  get_multisamples() final;
-	virtual void set_multisamples(s32 multisamples) final;
+	virtual void resize_render_view(u32 w, u32 h) final override;
+	virtual void get_render_view_size(u32 *w, u32 *h) final override;
 
-	virtual void set_swap_interval(s32 interval) final;
-	virtual s32  get_swap_interval() final;
+	virtual u32  get_maximum_supported_multisamples() final override;
+	virtual u32  get_multisamples() final override;
 
-	virtual void present() final;
+	virtual void set_swap_interval(s32 interval) final override;
+	virtual s32  get_swap_interval() final override;
 
-	virtual Handle create_query() final;
-	virtual void   destroy_query(Handle query) final;
-	virtual void   begin_query(Handle query) final;
-	virtual r32    end_query(Handle query) final;
+	virtual void present() final override;
 
-	virtual Handle create_texture2d(s32 w, s32 h, s32 n, const u8 *pixels, Sampler_Params *params = 0) final;
-	virtual void   update_texture2d(Handle texture, s32 xoffset, s32 yoffset, s32 w, s32 h, s32 n, u8 *pixels) final;
-	virtual void   destroy_texture2d(Handle texture) final;
+	virtual Handle create_texture2d(s32 w, s32 h, s32 n, const u8 *pixels, Sampler_Params *params = 0) final override;
+	virtual void   update_texture2d(Handle texture, s32 xoffset, s32 yoffset, s32 w, s32 h, s32 n, u8 *pixels) final override;
+	virtual void   destroy_texture2d(Handle texture) final override;
 
-	virtual Handle create_vertex_buffer(Buffer_Type type, u32 size, void *data) final;
-	virtual Handle create_index_buffer(Buffer_Type type, u32 size, void *data) final;
+	virtual Handle create_vertex_buffer(Buffer_Type type, u32 size, void *data) final override;
+	virtual Handle create_index_buffer(Buffer_Type type, u32 size, void *data) final override;
 
-	virtual void update_vertex_buffer(Handle handle, u32 offset, u32 size, void *data) final;
-	virtual void update_index_buffer(Handle handle, u32 offset, u32 size, void *data) final;
+	virtual void update_vertex_buffer(Handle handle, u32 offset, u32 size, void *data) final override;
+	virtual void update_index_buffer(Handle handle, u32 offset, u32 size, void *data) final override;
 
-	virtual void *map_vertex_buffer(Handle handle, u32 offset, u32 length) final;
-	virtual void  unmap_vertex_buffer(Handle handle) final;
-	virtual void *map_index_buffer(Handle handle, u32 offset, u32 length) final;
-	virtual void  unmap_index_buffer(Handle handle) final;
+	virtual void *map_vertex_buffer(Handle handle, u32 offset, u32 length) final override;
+	virtual void  unmap_vertex_buffer(Handle handle) final override;
+	virtual void *map_index_buffer(Handle handle, u32 offset, u32 length) final override;
+	virtual void  unmap_index_buffer(Handle handle) final override;
 
-	virtual void destroy_vertex_buffer(Handle handle) final;
-	virtual void destroy_index_buffer(Handle handle) final;
+	virtual void destroy_vertex_buffer(Handle handle) final override;
+	virtual void destroy_index_buffer(Handle handle) final override;
 
-	virtual Framebuffer create_framebuffer(s32 width, s32 height, Color_Format color, Depth_Format depth) final;
-	virtual void        destroy_framebuffer(Framebuffer framebuffer) final;
+	virtual Framebuffer create_framebuffer(s32 width, s32 height, Texture_Format color, Texture_Format depth) final override;
+	virtual void        destroy_framebuffer(Framebuffer framebuffer) final override;
 
-	virtual Handle create_shader(String src) final;
-	virtual void   destroy_shader(Handle shader) final;
+	virtual Handle create_shader(String src) final override;
+	virtual void   destroy_shader(Handle shader) final override;
 
-	virtual void bind_framebuffer(Framebuffer *framebuffer) final;
-	virtual void set_render_region(Render_Region &region) final;
-	virtual void clear(Clear_Flag flags, Color4 color) final;
+	virtual void bind_framebuffer(Framebuffer *framebuffer) final override;
+	virtual void set_render_region(Render_Region &region) final override;
+	virtual void clear(Clear_Flag flags, Color4 color) final override;
 
-	virtual void begin(Handle shader, u8 *data, ptrsize size) final;
-	virtual void end() final;
+	virtual void begin(Handle shader, u8 *data, ptrsize size) final override;
+	virtual void end() final override;
 
-	virtual void bind_vertex_buffer(Handle buffer) final;
-	virtual void bind_index_buffer(Handle buffer, Render_Index_Type type) final;
-	virtual void bind_texture(Handle texture, u32 index) final;
-	virtual void draw(ptrsize count, ptrsize offset) final;
-	virtual void draw_indexed(ptrsize count, ptrsize offset, ptrsize base_vertex) final;
+	virtual void bind_vertex_buffer(Handle buffer) final override;
+	virtual void bind_index_buffer(Handle buffer, Render_Index_Type type) final override;
+	virtual void bind_texture(Handle texture, u32 index) final override;
+	virtual void draw(ptrsize count, ptrsize offset) final override;
+	virtual void draw_indexed(ptrsize count, ptrsize offset, ptrsize base_vertex) final override;
 
-	virtual void destroy() final;
+	virtual void destroy() final override;
 
 	GLuint create_shader(GLenum type, const String source);
 
@@ -145,7 +185,7 @@ struct Gfx_Platform_OpenGL : public Gfx_Platform {
 							 const void *  user_param);
 };
 
-Gfx_Platform *create_opengl_context(Handle platform, s32 vsync, s32 multisamples, s32 framebuffer_w, s32 framebuffer_h) {
+Gfx_Platform *create_opengl_context(Handle platform, s32 vsync, s32 multisamples) {
 	static Gfx_Platform_OpenGL gfx;
 
 	// NOTE: set these, they are used by *load_library* function
@@ -178,71 +218,95 @@ Gfx_Platform *create_opengl_context(Handle platform, s32 vsync, s32 multisamples
 	glBindVertexArray(gfx.vertex_array);
 
 	// Defaults
-	//glEnable(GL_FRAMEBUFFER_SRGB);
 	glEnable(GL_MULTISAMPLE);
 	glFrontFace(GL_CW);
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	glGenRenderbuffers(1, &gfx.color_renderbuffer);
-	glGenRenderbuffers(1, &gfx.depth_renderbuffer);
-	glGenFramebuffers(1, &gfx.framebuffer);
+	//glGenTextures(1, &gfx.color_attachment);
+	//glGenRenderbuffers(1, &gfx.depth_attachment);
+	//glGenFramebuffers(1, &gfx.framebuffer);
 
-	gfx.resize_framebuffer(framebuffer_w, framebuffer_h);
+	auto size = system_get_client_size();
+	gfx.resize_render_view(size.x, size.y);
+
+	auto program         = glCreateProgram();
+	auto vertex_shader   = gfx.create_shader(GL_VERTEX_SHADER, hdr_vertex_shader_code);
+	auto fragment_shader = gfx.create_shader(GL_FRAGMENT_SHADER, hdr_fragment_shader_code);
+
+	glAttachShader(program, vertex_shader);
+	glAttachShader(program, fragment_shader);
+	glLinkProgram(program);
+
+	GLint program_linked;
+	glGetProgramiv(program, GL_LINK_STATUS, &program_linked);
+	if (program_linked != GL_TRUE) {
+		GLsizei log_length = 0;
+		GLchar  message[2048];
+		glGetProgramInfoLog(program, 2048, &log_length, message);
+		system_log(LOG_WARNING, "Gfx:OpenGL", "OpenGL Shader program link failed (%s):", message);
+		glDeleteProgram(program);
+		return 0;
+	}
+
+	glDeleteShader(vertex_shader);
+	glDeleteShader(fragment_shader);
+
+	auto hdr_texture = glGetUniformLocation(program, "hdr_texture");
+	assert(hdr_texture != -1);
+	glUseProgram(program);
+	glUniform1i(hdr_texture, HDR_TEXTURE_SLOT_INDEX);
+	glUseProgram(0);
+
+	gfx.hdr_shader = program;
 
 	gfx.backend = Render_Backend_OPENGL;
 
 	return &gfx;
 }
 
-void Gfx_Platform_OpenGL::resize_framebuffer(s32 w, s32 h) {
+void Gfx_Platform_OpenGL::resize_render_view(u32 w, u32 h) {
 	if (w > 0 && h > 0) {
-		glBindRenderbuffer(GL_RENDERBUFFER, color_renderbuffer);
-		glRenderbufferStorageMultisample(GL_RENDERBUFFER, multisamples, GL_RGBA8, w, h);
-		glBindRenderbuffer(GL_RENDERBUFFER, depth_renderbuffer);
-		glRenderbufferStorageMultisample(GL_RENDERBUFFER, multisamples, GL_DEPTH_COMPONENT32F, w, h);
-		glBindRenderbuffer(GL_RENDERBUFFER, 0);
-
-		glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, color_renderbuffer);
-		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_renderbuffer);
-
-		GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-		if (status != GL_FRAMEBUFFER_COMPLETE) {
-			system_fatal_error("OpenGL: Framebuffer failed to resize!");
-		}
-
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		//glBindTexture(GL_TEXTURE_2D, color_attachment);
+		//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		//glBindTexture(GL_TEXTURE_2D, 0);
+		//
+		//glBindRenderbuffer(GL_RENDERBUFFER, depth_attachment);
+		//glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT32F, w, h);
+		//glBindRenderbuffer(GL_RENDERBUFFER, 0);
+		//
+		//glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+		//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, color_attachment, 0);
+		//glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_attachment);
+		//
+		//GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+		//if (status != GL_FRAMEBUFFER_COMPLETE) {
+		//	trigger_breakpoint();
+		//	system_fatal_error("OpenGL: Framebuffer failed to resize!");
+		//}
+		//
+		//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
-	framebuffer_w = w;
-	framebuffer_h = h;
+	render_view_w = w;
+	render_view_h = h;
 }
 
-s32 Gfx_Platform_OpenGL::get_max_supported_framebuffer_size() {
-	GLint multisamples;
-	glGetIntegerv(GL_MAX_RENDERBUFFER_SIZE, &multisamples);
-	return multisamples;
+void Gfx_Platform_OpenGL::get_render_view_size(u32 *w, u32 *h) {
+	*w = render_view_w;
+	*h = render_view_h;
 }
 
-void Gfx_Platform_OpenGL::get_framebuffer_size(s32 *w, s32 *h) {
-	*w = framebuffer_w;
-	*h = framebuffer_h;
-}
-
-void Gfx_Platform_OpenGL::set_multisamples(s32 multisamples_) {
-	multisamples = multisamples_;
-	resize_framebuffer(framebuffer_w, framebuffer_h);
-}
-
-s32 Gfx_Platform_OpenGL::get_maximum_supported_multisamples() {
+u32 Gfx_Platform_OpenGL::get_maximum_supported_multisamples() {
 	GLint multisamples;
 	glGetIntegerv(GL_MAX_SAMPLES, &multisamples);
-	return multisamples;
+	return (u32)multisamples;
 }
 
-s32 Gfx_Platform_OpenGL::get_multisamples() {
+u32 Gfx_Platform_OpenGL::get_multisamples() {
 	return multisamples;
 }
 
@@ -261,38 +325,19 @@ s32 Gfx_Platform_OpenGL::get_swap_interval() {
 }
 
 void Gfx_Platform_OpenGL::present() {
-	if (framebuffer_w > 0 && framebuffer_h > 0) {
-		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-		glBindFramebuffer(GL_READ_FRAMEBUFFER, framebuffer);
-
-		glReadBuffer(GL_COLOR_ATTACHMENT0);
-		glBlitFramebuffer(0, 0, framebuffer_w, framebuffer_h, 0, 0, framebuffer_w, framebuffer_h, GL_COLOR_BUFFER_BIT, GL_LINEAR);
-	}
+	//if (framebuffer_w > 0 && framebuffer_h > 0) {
+	//	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	//
+	//	glUseProgram(hdr_shader);
+	//	glActiveTexture(GL_TEXTURE0 + HDR_TEXTURE_SLOT_INDEX);
+	//	glBindTexture(GL_TEXTURE_2D, color_attachment);
+	//	glDrawArrays(GL_TRIANGLES, 0, 6);
+	//	glBindTexture(GL_TEXTURE_2D, 0);
+	//
+	//	current_shader = 0; // reset shader because we used glUseProgram
+	//}
 
 	swap_buffers();
-}
-
-Handle Gfx_Platform_OpenGL::create_query() {
-	GLuint id;
-	glGenQueries(1, &id);
-	Handle handle;
-	handle.h32 = id;
-	return handle;
-}
-
-void Gfx_Platform_OpenGL::destroy_query(Handle query) {
-	glDeleteQueries(1, &query.h32);
-}
-
-void Gfx_Platform_OpenGL::begin_query(Handle query) {
-	glBeginQuery(GL_TIME_ELAPSED, query.h32);
-}
-
-r32 Gfx_Platform_OpenGL::end_query(Handle query) {
-	glEndQuery(GL_TIME_ELAPSED);
-	GLuint64 param = 0;
-	glGetQueryObjectui64v(query.h32, GL_QUERY_RESULT, &param);
-	return (r32)((r64)param / 1000000.0);
 }
 
 Handle Gfx_Platform_OpenGL::create_texture2d(s32 w, s32 h, s32 n, const u8 *pixels, Sampler_Params *params) {
@@ -484,13 +529,13 @@ void Gfx_Platform_OpenGL::destroy_index_buffer(Handle handle) {
 	glDeleteBuffers(1, &handle.h32);
 }
 
-Framebuffer Gfx_Platform_OpenGL::create_framebuffer(int width, int height, Color_Format color, Depth_Format depth) {
+Framebuffer Gfx_Platform_OpenGL::create_framebuffer(int width, int height, Texture_Format color, Texture_Format depth) {
 	assert(color || depth);
 
 	GLuint color_map = 0;
 	GLuint depth_map = 0;
 
-	if (color != Color_Format_NONE) {
+	if (color != Texture_Format_UNKNOWN) {
 		glGenTextures(1, &color_map);
 		glBindTexture(GL_TEXTURE_2D, color_map);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -501,32 +546,22 @@ Framebuffer Gfx_Platform_OpenGL::create_framebuffer(int width, int height, Color
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
-	if (depth == Depth_Format_STORAGE) {
+	if (depth != Texture_Format_UNKNOWN) {
 		glGenRenderbuffers(1, &depth_map);
 		glBindRenderbuffer(GL_RENDERBUFFER, depth_map);
 		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
 		glBindRenderbuffer(GL_RENDERBUFFER, 0);
-	} else if (depth == Depth_Format_TEXTURE) {
-		glGenTextures(1, &depth_map);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, width, height, 0, GL_RED, GL_FLOAT, 0);
-		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
 	GLuint id;
 	glGenFramebuffers(1, &id);
 	glBindFramebuffer(GL_FRAMEBUFFER, id);
 	glBindFramebuffer(GL_FRAMEBUFFER, id);
-	if (color != Color_Format_NONE) {
+	if (color != Texture_Format_UNKNOWN) {
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, color_map, 0);
 	}
-	if (depth == Depth_Format_STORAGE) {
+	if (depth != Texture_Format_UNKNOWN) {
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_map);
-	} else if (depth == Depth_Format_TEXTURE) {
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depth_map, 0);
 	}
 
 	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
@@ -555,9 +590,9 @@ void Gfx_Platform_OpenGL::destroy_framebuffer(Framebuffer framebuffer) {
 }
 
 void Gfx_Platform_OpenGL::destroy() {
-	glDeleteRenderbuffers(1, &color_renderbuffer);
-	glDeleteRenderbuffers(1, &depth_renderbuffer);
-	glDeleteFramebuffers(1, &framebuffer);
+	//glDeleteTextures(1, &color_attachment);
+	//glDeleteRenderbuffers(1, &depth_attachment);
+	//glDeleteFramebuffers(1, &framebuffer);
 
 	glDeleteVertexArrays(1, &vertex_array);
 }
@@ -660,7 +695,7 @@ void Gfx_Platform_OpenGL::bind_framebuffer(Framebuffer *pframebuffer) {
 	if (pframebuffer)
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, pframebuffer->id);
 	else
-		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebuffer);
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 }
 
 void Gfx_Platform_OpenGL::set_render_region(Render_Region &region) {
@@ -814,7 +849,14 @@ GLuint Gfx_Platform_OpenGL::create_shader(GLenum type, const String source) {
 		GLsizei log_length = 0;
 		GLchar  message[2048];
 		glGetShaderInfoLog(shaderid, 2048, &log_length, message);
-		system_log(LOG_WARNING, "Gfx:OpenGL", "OpenGL Shader compilation failed: %s", message);
+		const char *shader_type_name = "-unknown-";
+		if (type == GL_VERTEX_SHADER)
+			shader_type_name = "Vertex";
+		else if (type == GL_FRAGMENT_SHADER)
+			shader_type_name = "Fragment";
+		else if (type == GL_GEOMETRY_SHADER)
+			shader_type_name = "Geometry";
+		system_log(LOG_WARNING, "Gfx:OpenGL", "OpenGL %s Shader compilation failed: %s", shader_type_name, message);
 	}
 
 	return shaderid;
@@ -1091,6 +1133,8 @@ bool Gfx_Platform_OpenGL::load_library(s32 vsync) {
 		WGL_DEPTH_BITS_ARB, 24,
 		WGL_STENCIL_BITS_ARB, 8,
 		WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB, GL_TRUE,
+		WGL_SAMPLE_BUFFERS_ARB, GL_TRUE,
+		WGL_SAMPLES_ARB, (int)multisamples,
 		0
 	};
 
@@ -1166,8 +1210,11 @@ bool Gfx_Platform_OpenGL::load_library(s32 vsync) {
 
 		return false;
 	}
+	gl_context = glContext;
 
 	return true;
 }
+
+#endif
 
 #endif

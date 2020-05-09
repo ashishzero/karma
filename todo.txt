@@ -10,6 +10,8 @@
 - Make asset loading system
 - Serializing and Deserializing save data
 - Particles systems
+- Implement better way for multisampling
+- Add Depth of Field in Camera (https://developer.nvidia.com/gpugems/gpugems/part-iv-image-processing/chapter-23-depth-field-survey-techniques)
 
 # TODO in Files
 - length_string.h (32)

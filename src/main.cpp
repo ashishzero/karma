@@ -134,26 +134,10 @@ void imgui_particle_emitter(Particle_Emitter *emitter) {
 	}
 }
 
-int system_main() { // Entry point
-	do_pre_build_steps(u8"../res", u8"./data");
-
+int system_main2() {
 	Handle platform = system_create_window(u8"Karma", 1280, 720, System_Window_Show_NORMAL);
-	gfx_create_context(platform, Render_Backend_OPENGL, 1, 4);
+	gfx_create_context(platform, Render_Backend_DIRECTX11, 1, 2);
 	ImGui::Initialize();
-
-	int  w, h, n;
-	auto pixels      = stbi_load("../res/misc/circle.png", &w, &h, &n, 4);
-	auto circle      = gfx_create_texture2d(w, h, 4, pixels);
-	auto rect_pixels = 0xffffffff;
-	auto rectangle   = gfx_create_texture2d(1, 1, 4, (u8 *)&rect_pixels);
-
-	Handle quad_shader = gfx_create_shader("./data/quad.fx");
-
-	Random_Series rng = random_init(0, 0);
-
-	Particle_Emitter emitter = particle_emitter_create(rectangle, mm_rect(0, 0, 1, 1), &rng, 1000, 800);
-
-	Render_Region region = {};
 
 	Event event;
 	bool  running = true;
@@ -189,9 +173,97 @@ int system_main() { // Entry point
 			if (event.type & Event_Type_WINDOW_RESIZE) {
 				s32 w = event.window.dimension.x;
 				s32 h = event.window.dimension.y;
-				gfx_resize_framebuffer(w, h);
-				region.viewport = { 0, 0, w, h };
-				region.scissor  = region.viewport;
+				gfx_resize_render_view(w, h);
+				window_w        = (r32)w;
+				window_h        = (r32)h;
+				continue;
+			}
+
+			if ((event.type & Event_Type_KEY_UP) && event.key.symbol == Key_ESCAPE) {
+				system_request_quit();
+				break;
+			}
+		}
+
+		while (accumulator >= dt) {
+			// simulate here
+
+			t += dt;
+			accumulator -= dt;
+		}
+
+		float alpha = accumulator / dt;
+
+		ImGui::UpdateFrame(frame_time);
+
+		gfx_begin_drawing(0, vec4(0.2f, 0.3f, 0.4f));
+		gfx_end_drawing();
+
+		ImGui::ShowDemoWindow();
+
+		ImGui::RenderFrame();
+
+		gfx_present();
+
+		reset_temporary_memory();
+	}
+
+	ImGui::Shutdown();
+	gfx_destroy_context();
+
+	return 0;
+}
+
+int system_main() { // Entry point
+	//do_pre_build_steps(u8"../res", u8"./data");
+
+	Handle platform = system_create_window(u8"Karma", 1280, 720, System_Window_Show_NORMAL);
+	gfx_create_context(platform, Render_Backend_DIRECTX11, 1, 2);
+	ImGui::Initialize();
+
+	int  w, h, n;
+	auto pixels      = stbi_load("../res/misc/circle.png", &w, &h, &n, 4);
+	auto circle      = gfx_create_texture2d(w, h, 4, Data_Format_RGBA8_UNORM, (const u8**)&pixels, Buffer_Usage_IMMUTABLE, 1);
+
+	Random_Series rng = random_init(0, 0);
+
+	Particle_Emitter emitter = particle_emitter_create(0, mm_rect(0, 0, 1, 1), &rng, 1000, 800);
+
+	Event event;
+	bool  running = true;
+
+	const float dt = 1.0f / 60.0f;
+
+	float t           = 0.0f;
+	float accumulator = 0.0f;
+	float frame_time  = 0.0f;
+
+	u64 frequency = system_get_frequency();
+	u64 counter   = system_get_counter();
+
+	r32 window_w = 0, window_h = 0;
+
+	while (running) {
+		auto new_counter = system_get_counter();
+		auto counts      = new_counter - counter;
+		counter          = new_counter;
+
+		frame_time = ((1000000.0f * (r32)counts) / (r32)frequency) / 1000000.0f;
+		accumulator += frame_time;
+		accumulator = min_value(accumulator, 0.2f);
+
+		while (system_poll_events(&event)) {
+			if (ImGui::HandleEvent(event)) continue;
+
+			if (event.type & Event_Type_EXIT) {
+				running = false;
+				break;
+			}
+
+			if (event.type & Event_Type_WINDOW_RESIZE) {
+				s32 w = event.window.dimension.x;
+				s32 h = event.window.dimension.y;
+				gfx_resize_render_view(w, h);
 				window_w        = (r32)w;
 				window_h        = (r32)h;
 				continue;
@@ -216,11 +288,13 @@ int system_main() { // Entry point
 
 		ImGui::UpdateFrame(frame_time);
 
-		gfx_frame(0, region, Clear_Flag_ALL, hex_to_color4(colorh(0x00, 0x45, 0x4f)));
+		gfx_begin_drawing(0, vec4(0.2f, 0.3f, 0.4f));
+		gfx_viewport(0, 0, window_w, window_h);
+
 		auto view = orthographic_view(0, window_w, window_h, 0);
 
-		# if 0
-		im_begin(quad_shader, view);
+		# if 1
+		im_begin(view);
 
 		im_triangle(vec3(50, 50, 0), vec3(150, 150, 0), vec3(300, 50, 0), vec4(0.5f, 0.5f, 0.8f));
 		im_triangle(vec3(150, 150, 0), vec3(350, 350, 0), vec3(400, 150, 0), vec4(1, 0, 0));
@@ -243,8 +317,10 @@ int system_main() { // Entry point
 		#endif
 
 		#if 1
-		im_begin(quad_shader, view);
-		im_bind_texture(emitter.texture);
+
+		im_begin(view);
+		im_unbind_texture();
+		//im_bind_texture(emitter.texture);
 
 		for (int i = 0; i < emitter.emit_count; ++i) {
 			Particle *particle = emitter.particles + i;
@@ -263,7 +339,10 @@ int system_main() { // Entry point
 			}
 		}
 		im_end();
+
 		#endif
+
+		gfx_end_drawing();
 
 		if (ImGui::Begin("Particle Emitter")) {
 			imgui_particle_emitter(&emitter);

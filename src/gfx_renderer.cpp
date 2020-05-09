@@ -2,20 +2,20 @@
 #include "gfx_platform.h"
 #include "string.h"
 #include "systems.h"
-#include "utility.h"
+#include "gfx_shaders.h"
 
 struct Im_Vertex {
 	Vec3   position;
-	Vec2   texture_coord;
+	Vec2   tex_coord;
 	Color4 color;
 };
 typedef u16 Im_Index;
 
 struct Im_Draw_Cmd {
-	Handle texture;
-	u32    vertex;
-	u32    index;
-	u32    count;
+	Texture_View texture;
+	u32          vertex;
+	u32          index;
+	u32          count;
 };
 
 static constexpr int IM_CONTEXT_MAX_VERTICES        = 2048 * 4;
@@ -25,14 +25,18 @@ static r32           im_unit_circle_cos[IM_MAX_CIRCLE_SEGMENTS];
 static r32           im_unit_circle_sin[IM_MAX_CIRCLE_SEGMENTS];
 
 struct Im_Context {
-	Handle vertex_buffer;
-	Handle index_buffer;
+	Render_Pipeline pipeline;
+	Uniform_Buffer  uniform_buffer;
+	Vertex_Buffer   vertex_buffer;
+	Index_Buffer    index_buffer;
+	Sampler         sampler;
 
 	Im_Draw_Cmd draw_cmds[IM_CONTEXT_MAX_VERTICES];
-	Im_Vertex   vertices[IM_CONTEXT_MAX_VERTICES];
-	Im_Index    indices[IM_CONTEXT_MAX_INDICES];
 	int         draw_cmd;
+	Im_Vertex * vertex_ptr;
 	int         vertex;
+	Im_Index *  index_ptr;
+	Im_Index    last_index;
 	int         index;
 	Im_Index    counter;
 
@@ -40,40 +44,108 @@ struct Im_Context {
 	int  transformation;
 };
 
-static Im_Context im_context;
+struct Gfx_Global_Data {
+	Texture2d          hdr_color_buffer;
+	Texture2d          hdr_depth_buffer;
+	Texture_View       hdr_texture_view;
+	Depth_Stencil_View hdr_depth_view;
+	Render_Target_View hdr_render_target_view;
+};
+
+static Im_Context       im_context;
+static Texture2d_Handle white_texture;
 
 static Gfx_Platform *gfx;
-static Handle        white_texture;
+static u32           shader_lang;
+
+static String igfx_find_shader(String content, u32 shader_tag, const char *name = 0) {
+	if (name == 0) name = "-unknown-";
+	shader_tag |= shader_lang;
+
+	u32 magic_number = bswap32p_le(content.data);
+	if (magic_number != SHADER_MAGIC_NUMBER) {
+		system_log(LOG_ERROR, "Gfx", "Shader: %s is invalid or corrupted", name);
+		return {};
+	}
+
+	String                result     = {};
+	u32                   elem_count = bswap32p_le(content.data + 4);
+	Shader_Table_Element *elem       = (Shader_Table_Element *)(content.data + 8);
+	u8 *                  ptr        = content.data + 8 + sizeof(Shader_Table_Element) * elem_count;
+
+	for (u32 index = 0; index < elem_count; ++elem_count) {
+		if (elem->flag == shader_tag) {
+			result.data  = ptr + elem->offset;
+			result.count = elem->size;
+			break;
+		}
+		elem += 1;
+	}
+
+	if (!result) {
+		system_log(LOG_ERROR, "Gfx", "Shader %s not found", name);
+	}
+
+	return result;
+}
 
 bool gfx_create_context(Handle platform, Render_Backend backend, s32 vsync, s32 multisamples, s32 framebuffer_w, s32 framebuffer_h) {
 	if (backend == Render_Backend_OPENGL) {
-		auto window_size = system_get_client_size();
-		if (framebuffer_w == 0) framebuffer_w = window_size.x;
-		if (framebuffer_h == 0) framebuffer_h = window_size.y;
-
 		system_log(LOG_INFO, "Gfx", "gfx.backend = Render_Backend_OPENGL");
-		gfx = create_opengl_context(platform, vsync, multisamples, framebuffer_w, framebuffer_h);
+		trigger_breakpoint();
+		//gfx = create_opengl_context(platform, vsync, multisamples);
 		if (gfx->backend == Render_Backend_NONE) {
 			system_log(LOG_ERROR, "Gfx", "create_opengl_context() failed.");
 			return false;
 		}
+		shader_lang = SHADER_LANG_GLSL;
+	} else if (backend == Render_Backend_DIRECTX11) {
+		system_log(LOG_INFO, "Gfx", "gfx.backend = Render_Backend_DIRECTX11");
+		gfx = create_directx11_context(platform, vsync, multisamples);
+		if (gfx->backend == Render_Backend_NONE) {
+			system_log(LOG_ERROR, "Gfx", "create_directx11_context() failed.");
+			return false;
+		}
+		shader_lang = SHADER_LANG_HLSL;
 	} else {
 		return false;
 	}
 
-	Sampler_Params params;
-	params.gen_mipmaps = false;
-	params.mag_filter  = Texture_Filter_NEAREST;
-	params.min_filter  = Texture_Filter_NEAREST;
-	params.srgb        = false;
-	params.wrap_s      = Texture_Wrap_REPEAT;
-	params.wrap_t      = Texture_Wrap_REPEAT;
+	const u8  white_pixels[] = { 0xff, 0xff, 0xff, 0xff };
+	const u8 *pixels[]       = { white_pixels };
+	white_texture.buffer     = gfx->create_texture2d(1, 1, 4, Data_Format_RGBA8_UNORM, pixels, Buffer_Usage_IMMUTABLE, Texture_Bind_SHADER_RESOURCE, 1);
+	white_texture.view       = gfx->create_texture_view(white_texture.buffer);
 
-	const u8 white_pixels[] = { 0xff, 0xff, 0xff, 0xff };
-	white_texture           = gfx->create_texture2d(1, 1, 4, white_pixels, &params);
+	Input_Element_Layout layouts[] = {
+		{ "POSITION", Data_Format_RGB32_FLOAT, offsetof(Im_Vertex, position), Input_Type_PER_VERTEX_DATA, 0 },
+		{ "TEX_COORD", Data_Format_RG32_FLOAT, offsetof(Im_Vertex, tex_coord), Input_Type_PER_VERTEX_DATA, 0 },
+		{ "COLOR", Data_Format_RGBA32_FLOAT, offsetof(Im_Vertex, color), Input_Type_PER_VERTEX_DATA, 0 }
+	};
 
-	im_context.vertex_buffer      = gfx->create_vertex_buffer(Buffer_Type_DYNAMIC, sizeof(*im_context.vertices) * IM_CONTEXT_MAX_VERTICES, 0);
-	im_context.index_buffer       = gfx->create_index_buffer(Buffer_Type_DYNAMIC, sizeof(Im_Index) * IM_CONTEXT_MAX_INDICES, 0);
+	String quad_shader_content = system_read_entire_file("data/shaders/quad.kfx");
+
+	Shader_Info shader;
+	shader.input_layouts       = layouts;
+	shader.input_layouts_count = static_count(layouts);
+	shader.vertex              = igfx_find_shader(quad_shader_content, SHADER_TYPE_VERTEX, "quad.kfx.vertex");
+	shader.pixel               = igfx_find_shader(quad_shader_content, SHADER_TYPE_PIXEL, "quad.kfx.pixel");
+	shader.stride              = sizeof(Im_Vertex);
+
+	Rasterizer_Info rasterizer = rasterizer_info_create();
+	Blend_Info      blend      = blend_info_create(Blend_SRC_ALPHA, Blend_INV_SRC_ALPHA, Blend_Operation_ADD,
+                                         Blend_SRC_ALPHA, Blend_INV_SRC_ALPHA, Blend_Operation_ADD);
+	Depth_Info      depth      = depth_info_create(false);
+
+	im_context.pipeline = gfx->create_render_pipeline(shader, rasterizer, blend, depth, "Im_Pipeline");
+
+	mfree(quad_shader_content.data);
+
+	im_context.uniform_buffer = gfx->create_uniform_buffer(Buffer_Usage_DYNAMIC, Cpu_Access_WRITE, sizeof(Mat4), 0);
+	im_context.vertex_buffer  = gfx->create_vertex_buffer(Buffer_Usage_DYNAMIC, Cpu_Access_WRITE, sizeof(Im_Vertex) * IM_CONTEXT_MAX_VERTICES, 0);
+	im_context.index_buffer   = gfx->create_index_buffer(Buffer_Usage_DYNAMIC, Cpu_Access_WRITE, sizeof(Im_Index) * IM_CONTEXT_MAX_INDICES, 0);
+
+	im_context.sampler = gfx->create_sampler(filter_create(), texture_address_create(), level_of_detail_create());
+
 	im_context.transformations[0] = mat4_identity();
 	im_context.transformation     = 1;
 
@@ -92,6 +164,11 @@ bool gfx_create_context(Handle platform, Render_Backend backend, s32 vsync, s32 
 void gfx_destroy_context() {
 	gfx->destroy_vertex_buffer(im_context.vertex_buffer);
 	gfx->destroy_index_buffer(im_context.index_buffer);
+	gfx->destroy_uniform_buffer(im_context.uniform_buffer);
+	gfx->destory_render_pipeline(im_context.pipeline);
+	gfx->destory_sampler(im_context.sampler);
+	gfx->destroy_texture_view(white_texture.view);
+	gfx->destroy_texture2d(white_texture.buffer);
 	gfx->destroy();
 }
 
@@ -99,28 +176,20 @@ Render_Backend gfx_render_backend() {
 	return gfx->backend;
 }
 
-Handle gfx_create_query() {
-	return gfx->create_query();
+void *gfx_render_device() {
+	return gfx->get_backend_device();
 }
 
-void gfx_destroy_query(Handle query) {
-	gfx->destroy_query(query);
+void *gfx_render_context() {
+	return gfx->get_backend_context();
 }
 
-void gfx_begin_query(Handle query) {
-	gfx->begin_query(query);
+void gfx_resize_render_view(u32 w, u32 h) {
+	gfx->resize_render_view(w, h);
 }
 
-r32 gfx_end_query(Handle query) {
-	return gfx->end_query(query);
-}
-
-void gfx_resize_framebuffer(s32 w, s32 h) {
-	gfx->resize_framebuffer(w, h);
-}
-
-void gfx_get_framebuffer_size(s32 *w, s32 *h) {
-	gfx->get_framebuffer_size(w, h);
+void gfx_get_render_view_size(u32 *w, u32 *h) {
+	gfx->get_render_view_size(w, h);
 }
 
 void gfx_set_swap_interval(s32 interval) {
@@ -135,47 +204,27 @@ s32 gfx_get_multisamples() {
 	return gfx->get_multisamples();
 }
 
-void gfx_set_multisamples(s32 multisamples) {
-	gfx->set_multisamples(multisamples);
-}
-
-Handle gfx_create_shader(const String path) {
-	String content = system_read_entire_file(tprintf("%s.glsl", tto_cstring(path)));
-	Handle handle  = {};
-	if (content) {
-		handle = gfx->create_shader(content);
-	}
-	mfree(content.data);
-	return handle;
-}
-
-void gfx_destroy_shader(Handle shader) {
-	gfx->destroy_shader(shader);
-}
-
 void gfx_present() {
 	gfx->present();
 }
 
-Handle gfx_create_texture2d(s32 w, s32 h, s32 n, const u8 *pixels, Sampler_Params *params) {
-	return gfx->create_texture2d(w, h, n, pixels, params);
+Texture2d_Handle gfx_create_texture2d(u32 w, u32 h, u32 channels, Data_Format fmt, const u8 **pixels, Buffer_Usage usage, u32 mip_levels) {
+	Texture2d_Handle handle;
+	handle.buffer = gfx->create_texture2d(w, h, channels, fmt, pixels, usage, Texture_Bind_SHADER_RESOURCE, mip_levels);
+	handle.view   = gfx->create_texture_view(handle.buffer);
+	return handle;
 }
 
-void gfx_update_texture2d(Handle texture, s32 xoffset, s32 yoffset, s32 w, s32 h, s32 n, u8 *pixels) {
-	gfx->update_texture2d(texture, xoffset, yoffset, w, h, n, pixels);
+void gfx_update_texture2d(Texture2d_Handle handle, u32 xoffset, u32 yoffset, u32 w, u32 h, u32 channels, u8 *pixels) {
+	gfx->update_texture2d(handle.buffer, xoffset, yoffset, w, h, channels, pixels);
 }
 
-void gfx_destroy_texture2d(Handle texture) {
-	gfx->destroy_texture2d(texture);
+void gfx_destroy_texture2d(Texture2d_Handle handle) {
+	gfx->destroy_texture_view(handle.view);
+	gfx->destroy_texture2d(handle.buffer);
 }
 
-void gfx_frame(Framebuffer *framebuffer, Render_Region &region, Clear_Flag flags, Color4 color) {
-	gfx->bind_framebuffer(framebuffer);
-	gfx->clear(flags, color);
-	gfx->set_render_region(region);
-}
-
-inline void im_start_cmd_record(Handle texture) {
+inline void im_start_cmd_record(Texture_View texture) {
 	auto draw_cmd     = im_context.draw_cmds + im_context.draw_cmd;
 	draw_cmd->index   = im_context.index;
 	draw_cmd->vertex  = im_context.vertex;
@@ -183,43 +232,51 @@ inline void im_start_cmd_record(Handle texture) {
 	draw_cmd->count   = 0;
 }
 
-inline Im_Vertex *im_push_vertex_count(int count) {
+inline Im_Vertex *iim_push_vertex_count(int count) {
 	assert(im_context.vertex + count <= IM_CONTEXT_MAX_VERTICES);
 
-	auto vertex = im_context.vertices + im_context.vertex;
+	auto vertex = im_context.vertex_ptr;
+	im_context.vertex_ptr += count;
 	im_context.vertex += count;
 	return vertex;
 }
 
-inline void im_push_vertex(Vec3 position, Vec2 texture_coord, Color4 color) {
-	auto vertex = im_push_vertex_count(1);
-
-	if (im_context.transformation) {
-		position = (im_context.transformations[im_context.transformation - 1] * vec4(position, 0)).xyz;
-	}
-
-	vertex->position      = position;
-	vertex->texture_coord = texture_coord;
-	vertex->color         = color;
+inline void im_push_vertices(Im_Vertex *vertices, int count) {
+	auto dst = iim_push_vertex_count(count);
+	memcpy(dst, vertices, sizeof(Im_Vertex) * count);
 }
 
-inline Im_Index *im_push_index_count(int count) {
+inline void im_push_vertex(Vec3 position, Vec2 texture_coord, Color4 color) {
+	Im_Vertex src = { position, texture_coord, color };
+	im_push_vertices(&src, 1);
+}
+
+inline Im_Index *iim_push_index_count(int count) {
 	assert(im_context.index + count <= IM_CONTEXT_MAX_INDICES);
-	auto index = im_context.indices + im_context.index;
-	im_context.index += count;
+	auto index = im_context.index_ptr;
+	im_context.index_ptr += count;
 	im_context.counter += count;
 	return index;
 }
 
-#define im_get_next_index() (im_context.counter ? im_context.indices[im_context.index - 1] + 1 : 0)
+#define im_get_last_index() (im_context.counter ? im_context.last_index + 1 : im_context.last_index)
 #define im_get_draw_cmd()   (im_context.draw_cmds + im_context.draw_cmd)
 
-inline void im_push_index(int count) {
+inline void im_push_indices(Im_Index *indices, int count) {
 	assert(im_context.index + count <= IM_CONTEXT_MAX_INDICES);
-	auto index   = im_get_next_index();
-	auto indices = im_push_index_count(count);
-	for (int i = 0; i < count; ++i)
-		indices[i] = index + i;
+	auto prev_counter = im_context.counter;
+
+	auto dst = iim_push_index_count(count);
+
+	if (prev_counter) {
+		auto next_index = im_context.last_index + 1;
+		for (int i = 0; i < count; ++i) {
+			indices[i] += next_index;
+		}
+	}
+
+	im_context.last_index = indices[count - 1];
+	memcpy(dst, indices, count * sizeof(Im_Vertex));
 }
 
 inline void im_push_draw_cmd() {
@@ -229,59 +286,122 @@ inline void im_push_draw_cmd() {
 	im_context.counter = 0;
 }
 
+void iim_flush(bool restart = true);
+
 inline void im_ensure_size(int vertex_count, int index_count) {
 	if (im_context.index + index_count - 1 >= IM_CONTEXT_MAX_INDICES ||
 		im_context.vertex + vertex_count - 1 >= IM_CONTEXT_MAX_VERTICES) {
 		im_push_draw_cmd();
-		im_flush();
+		iim_flush();
 	}
 }
 
-void im_begin(Handle shader, Camera_View &view, Mat4 &transform) {
+void gfx_begin_drawing(Render_Target_View *view) {
+	Color_Clear_Info color_info = {};
+
+	if (view) {
+		gfx->begin_drawing(1, &color_info, view, 0, 0);
+	} else {
+		Render_Target_View def = gfx->get_default_render_target_view();
+		gfx->begin_drawing(1, &color_info, &def, 0, 0);
+	}
+}
+
+void gfx_begin_drawing(Render_Target_View *view, Color4 color) {
+	auto             render_target_view = gfx->get_default_render_target_view();
+	Color_Clear_Info color_info;
+	color_info.clear = true;
+	color_info.color = color;
+
+	if (view) {
+		gfx->begin_drawing(1, &color_info, view, 0, 0);
+	} else {
+		Render_Target_View def = gfx->get_default_render_target_view();
+		gfx->begin_drawing(1, &color_info, &def, 0, 0);
+	}
+}
+
+void gfx_end_drawing() {
+	gfx->end_drawing();
+}
+
+void gfx_viewport(r32 x, r32 y, r32 w, r32 h) {
+	gfx->cmd_set_viewport(x, y, w, h);
+}
+
+void im_begin(Camera_View &view, Mat4 &transform) {
 	im_context.draw_cmd       = 0;
 	im_context.vertex         = 0;
 	im_context.index          = 0;
 	im_context.counter        = 0;
 	im_context.transformation = 1;
 
-	im_start_cmd_record(white_texture);
+	im_context.vertex_ptr = (Im_Vertex *)gfx->map(im_context.vertex_buffer, Map_Type_WRITE_DISCARD);
+	im_context.index_ptr  = (Im_Index *)gfx->map(im_context.index_buffer, Map_Type_WRITE_DISCARD);
+
+	im_start_cmd_record(white_texture.view);
 
 	Mat4 projection;
-	if (gfx->backend == Render_Backend_OPENGL) {
-		if (view.kind == ORTHOGRAPHIC)
-			projection = mat4_ortho_gl(view.orthographic.left,
-									   view.orthographic.right,
-									   view.orthographic.top,
-									   view.orthographic.bottom,
-									   view.orthographic.near,
-									   view.orthographic.far);
-		else
-			projection = mat4_perspective_gl(view.perspective.field_of_view,
-											 view.perspective.aspect_ratio,
-											 view.perspective.near_plane,
-											 view.perspective.far_plane);
-	} else {
-		projection = mat4_identity();
+	switch (gfx->backend) {
+		case Render_Backend_OPENGL: {
+			if (view.kind == ORTHOGRAPHIC)
+				projection = mat4_ortho_gl(view.orthographic.left,
+										   view.orthographic.right,
+										   view.orthographic.top,
+										   view.orthographic.bottom,
+										   view.orthographic.near,
+										   view.orthographic.far);
+			else
+				projection = mat4_perspective_gl(view.perspective.field_of_view,
+												 view.perspective.aspect_ratio,
+												 view.perspective.near_plane,
+												 view.perspective.far_plane);
+		} break;
+
+		case Render_Backend_DIRECTX11: {
+			if (view.kind == ORTHOGRAPHIC)
+				projection = mat4_ortho_dx(view.orthographic.left,
+										   view.orthographic.right,
+										   view.orthographic.top,
+										   view.orthographic.bottom,
+										   view.orthographic.near,
+										   view.orthographic.far);
+			else
+				projection = mat4_perspective_dx(view.perspective.field_of_view,
+												 view.perspective.aspect_ratio,
+												 view.perspective.near_plane,
+												 view.perspective.far_plane);
+		} break;
+
+			invalid_default_case();
 	}
 
-	transform = projection * transform;
+	transform = mat4_transpose(projection * transform);
 
-	gfx->begin(shader, (u8 *)&transform, sizeof(transform));
+	void *ptr = gfx->map(im_context.uniform_buffer, Map_Type_WRITE_DISCARD);
+	memcpy(ptr, &transform, sizeof(Mat4));
+	gfx->unmap(im_context.uniform_buffer);
 }
 
-void im_flush() {
-	if (im_context.draw_cmd) {
-		gfx->update_vertex_buffer(im_context.vertex_buffer, 0, im_context.vertex * sizeof(*im_context.vertices), im_context.vertices);
-		gfx->update_index_buffer(im_context.index_buffer, 0, im_context.index * sizeof(*im_context.indices), im_context.indices);
+void iim_flush(bool restart) {
+	gfx->unmap(im_context.vertex_buffer);
+	gfx->unmap(im_context.index_buffer);
 
-		gfx->bind_vertex_buffer(im_context.vertex_buffer);
-		gfx->bind_index_buffer(im_context.index_buffer, Render_Index_Type_U16);
+	if (im_context.draw_cmd) {
+		gfx->cmd_bind_pipeline(im_context.pipeline);
+		gfx->cmd_bind_vs_uniform_buffers(0, 1, &im_context.uniform_buffer);
+		gfx->cmd_bind_vertex_buffer(im_context.vertex_buffer, 0, sizeof(Im_Vertex));
+		gfx->cmd_bind_index_buffer(im_context.index_buffer, Index_Type_U16, 0);
+		gfx->cmd_bind_samplers(0, 1, &im_context.sampler);
 
 		for (int draw_cmd_index = 0; draw_cmd_index < im_context.draw_cmd; ++draw_cmd_index) {
 			Im_Draw_Cmd *cmd = im_context.draw_cmds + draw_cmd_index;
-			gfx->bind_texture(cmd->texture, 0);
-			gfx->draw_indexed(cmd->count, cmd->index * sizeof(Im_Index), cmd->vertex);
+
+			gfx->cmd_bind_textures(0, 1, &cmd->texture);
+			gfx->cmd_draw_indexed(cmd->count, cmd->index * sizeof(Im_Index), cmd->vertex);
 		}
+
+		gfx->end_drawing();
 
 		auto bound_texture = im_context.draw_cmds[im_context.draw_cmd - 1].texture;
 
@@ -292,23 +412,27 @@ void im_flush() {
 
 		im_start_cmd_record(bound_texture);
 	}
+
+	if (restart) {
+		im_context.vertex_ptr = (Im_Vertex *)gfx->map(im_context.vertex_buffer, Map_Type_WRITE_DISCARD);
+		im_context.index_ptr  = (Im_Index *)gfx->map(im_context.index_buffer, Map_Type_WRITE_DISCARD);
+	}
 }
 
 void im_end() {
 	if (im_context.counter) {
 		im_push_draw_cmd();
 	}
-	im_flush();
-	gfx->end();
+	iim_flush(false);
 }
 
-void im_bind_texture(Handle texture) {
+void im_bind_texture(Texture2d_Handle handle) {
 	if (im_context.counter) {
 		im_push_draw_cmd();
-		im_start_cmd_record(texture);
+		im_start_cmd_record(handle.view);
 	} else {
 		auto draw_cmd     = im_get_draw_cmd();
-		draw_cmd->texture = texture;
+		draw_cmd->texture = handle.view;
 	}
 }
 
@@ -333,10 +457,16 @@ void im_flush_transformations() {
 
 void im_triangle(Vec3 a, Vec3 b, Vec3 c, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Color4 color) {
 	im_ensure_size(3, 3);
-	im_push_index(3);
-	im_push_vertex(a, uv_a, color);
-	im_push_vertex(b, uv_b, color);
-	im_push_vertex(c, uv_c, color);
+
+	Im_Index  indices[]  = { 0, 1, 2 };
+	Im_Vertex vertices[] = {
+		{ a, uv_a, color },
+		{ b, uv_b, color },
+		{ c, uv_c, color },
+	};
+
+	im_push_indices(indices, static_count(indices));
+	im_push_vertices(vertices, static_count(vertices));
 }
 
 void im_triangle(Vec2 a, Vec2 b, Vec2 c, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Color4 color) {
@@ -353,19 +483,17 @@ void im_triangle(Vec2 a, Vec2 b, Vec2 c, Color4 color) {
 
 void im_quad(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Vec2 uv_d, Color4 color) {
 	im_ensure_size(4, 6);
-	auto count   = im_get_next_index();
-	auto indices = im_push_index_count(6);
-	indices[0]   = count + 0;
-	indices[1]   = count + 1;
-	indices[2]   = count + 2;
-	indices[3]   = count + 0;
-	indices[4]   = count + 2;
-	indices[5]   = count + 3;
 
-	im_push_vertex(a, uv_a, color);
-	im_push_vertex(b, uv_b, color);
-	im_push_vertex(c, uv_c, color);
-	im_push_vertex(d, uv_d, color);
+	Im_Index  indices[]  = { 0, 1, 2, 0, 2, 3 };
+	Im_Vertex vertices[] = {
+		{ a, uv_a, color },
+		{ b, uv_b, color },
+		{ c, uv_c, color },
+		{ d, uv_d, color },
+	};
+
+	im_push_indices(indices, static_count(indices));
+	im_push_vertices(vertices, static_count(vertices));
 }
 
 void im_quad(Vec2 a, Vec2 b, Vec2 c, Vec2 d, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Vec2 uv_d, Color4 color) {
