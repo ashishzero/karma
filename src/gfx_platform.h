@@ -16,7 +16,7 @@ struct Gfx_Platform {
 	virtual void *get_backend_device()  = 0;
 	virtual void *get_backend_context() = 0;
 
-	virtual void               resize_render_view(u32 w, u32 h)     = 0;
+	virtual void               on_client_resize(u32 w, u32 h)       = 0;
 	virtual void               get_render_view_size(u32 *w, u32 *h) = 0;
 	virtual Render_Target_View get_default_render_target_view()     = 0;
 
@@ -41,6 +41,8 @@ struct Gfx_Platform {
 	virtual void destroy_texture_view(Texture_View view)             = 0;
 	virtual void destroy_render_target_view(Render_Target_View view) = 0;
 	virtual void destroy_depth_stencil_view(Depth_Stencil_View view) = 0;
+
+	virtual void get_texture2d_dimension(Texture2d texture, u32 *w, u32 *h) = 0;
 
 	virtual Sampler create_sampler(const Filter &filer, const Texture_Address &address, const Level_Of_Detail &lod) = 0;
 	virtual void    destory_sampler(Sampler sampler)                                                                = 0;

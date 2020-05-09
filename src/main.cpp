@@ -134,86 +134,6 @@ void imgui_particle_emitter(Particle_Emitter *emitter) {
 	}
 }
 
-int system_main2() {
-	Handle platform = system_create_window(u8"Karma", 1280, 720, System_Window_Show_NORMAL);
-	gfx_create_context(platform, Render_Backend_DIRECTX11, 1, 2);
-	ImGui::Initialize();
-
-	Event event;
-	bool  running = true;
-
-	const float dt = 1.0f / 60.0f;
-
-	float t           = 0.0f;
-	float accumulator = 0.0f;
-	float frame_time  = 0.0f;
-
-	u64 frequency = system_get_frequency();
-	u64 counter   = system_get_counter();
-
-	r32 window_w = 0, window_h = 0;
-
-	while (running) {
-		auto new_counter = system_get_counter();
-		auto counts      = new_counter - counter;
-		counter          = new_counter;
-
-		frame_time = ((1000000.0f * (r32)counts) / (r32)frequency) / 1000000.0f;
-		accumulator += frame_time;
-		accumulator = min_value(accumulator, 0.2f);
-
-		while (system_poll_events(&event)) {
-			if (ImGui::HandleEvent(event)) continue;
-
-			if (event.type & Event_Type_EXIT) {
-				running = false;
-				break;
-			}
-
-			if (event.type & Event_Type_WINDOW_RESIZE) {
-				s32 w = event.window.dimension.x;
-				s32 h = event.window.dimension.y;
-				gfx_resize_render_view(w, h);
-				window_w        = (r32)w;
-				window_h        = (r32)h;
-				continue;
-			}
-
-			if ((event.type & Event_Type_KEY_UP) && event.key.symbol == Key_ESCAPE) {
-				system_request_quit();
-				break;
-			}
-		}
-
-		while (accumulator >= dt) {
-			// simulate here
-
-			t += dt;
-			accumulator -= dt;
-		}
-
-		float alpha = accumulator / dt;
-
-		ImGui::UpdateFrame(frame_time);
-
-		gfx_begin_drawing(0, vec4(0.2f, 0.3f, 0.4f));
-		gfx_end_drawing();
-
-		ImGui::ShowDemoWindow();
-
-		ImGui::RenderFrame();
-
-		gfx_present();
-
-		reset_temporary_memory();
-	}
-
-	ImGui::Shutdown();
-	gfx_destroy_context();
-
-	return 0;
-}
-
 int system_main() { // Entry point
 	//do_pre_build_steps(u8"../res", u8"./data");
 
@@ -263,7 +183,7 @@ int system_main() { // Entry point
 			if (event.type & Event_Type_WINDOW_RESIZE) {
 				s32 w = event.window.dimension.x;
 				s32 h = event.window.dimension.y;
-				gfx_resize_render_view(w, h);
+				gfx_on_client_resize(w, h);
 				window_w        = (r32)w;
 				window_h        = (r32)h;
 				continue;

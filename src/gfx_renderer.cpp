@@ -47,12 +47,13 @@ struct Im_Context {
 struct Gfx_Global_Data {
 	Texture2d          hdr_color_buffer;
 	Texture2d          hdr_depth_buffer;
-	Texture_View       hdr_texture_view;
+	Texture_View       hdr_color_view;
 	Depth_Stencil_View hdr_depth_view;
 	Render_Target_View hdr_render_target_view;
 };
 
 static Im_Context       im_context;
+static Gfx_Global_Data  global;
 static Texture2d_Handle white_texture;
 
 static Gfx_Platform *gfx;
@@ -89,7 +90,7 @@ static String igfx_find_shader(String content, u32 shader_tag, const char *name 
 	return result;
 }
 
-bool gfx_create_context(Handle platform, Render_Backend backend, s32 vsync, s32 multisamples, s32 framebuffer_w, s32 framebuffer_h) {
+bool gfx_create_context(Handle platform, Render_Backend backend, s32 vsync, u32 multisamples, u32 framebuffer_w, u32 framebuffer_h) {
 	if (backend == Render_Backend_OPENGL) {
 		system_log(LOG_INFO, "Gfx", "gfx.backend = Render_Backend_OPENGL");
 		trigger_breakpoint();
@@ -110,6 +111,7 @@ bool gfx_create_context(Handle platform, Render_Backend backend, s32 vsync, s32 
 	} else {
 		return false;
 	}
+	gfx_resize_render_targets(framebuffer_w, framebuffer_h);
 
 	const u8  white_pixels[] = { 0xff, 0xff, 0xff, 0xff };
 	const u8 *pixels[]       = { white_pixels };
@@ -161,6 +163,29 @@ bool gfx_create_context(Handle platform, Render_Backend backend, s32 vsync, s32 
 	return true;
 }
 
+void igfx_destory_global_data() {
+	if (global.hdr_color_buffer.id) gfx->destroy_texture2d(global.hdr_color_buffer);
+	if (global.hdr_depth_buffer.id) gfx->destroy_texture2d(global.hdr_depth_buffer);
+	if (global.hdr_color_view.id) gfx->destroy_texture_view(global.hdr_color_view);
+	if (global.hdr_depth_view.id) gfx->destroy_depth_stencil_view(global.hdr_depth_view);
+	if (global.hdr_render_target_view.id) gfx->destroy_render_target_view(global.hdr_render_target_view);
+	memset(&global, 0, sizeof(global));
+}
+
+void gfx_resize_render_targets(u32 width, u32 height) {
+	igfx_destory_global_data();
+
+	global.hdr_color_buffer       = gfx->create_texture2d(width, height, 4, Data_Format_RGBA32_FLOAT, 0, Buffer_Usage_DEFAULT, Texture_Bind_SHADER_RESOURCE | Texture_Bind_RENDER_TARGET, 0);
+	global.hdr_depth_buffer       = gfx->create_texture2d(width, height, 1, Data_Format_D32_FLOAT, 0, Buffer_Usage_DEFAULT, Texture_Bind_DEPTH_STENCIL, 1);
+	global.hdr_color_view         = gfx->create_texture_view(global.hdr_color_buffer);
+	global.hdr_depth_view         = gfx->create_depth_stencil_view(global.hdr_depth_buffer);
+	global.hdr_render_target_view = gfx->create_render_target_view(global.hdr_color_buffer);
+}
+
+void gfx_get_render_target_size(u32 *width, u32 *height) {
+	gfx->get_texture2d_dimension(global.hdr_color_buffer, width, height);
+}
+
 void gfx_destroy_context() {
 	gfx->destroy_vertex_buffer(im_context.vertex_buffer);
 	gfx->destroy_index_buffer(im_context.index_buffer);
@@ -169,6 +194,7 @@ void gfx_destroy_context() {
 	gfx->destory_sampler(im_context.sampler);
 	gfx->destroy_texture_view(white_texture.view);
 	gfx->destroy_texture2d(white_texture.buffer);
+	igfx_destory_global_data();
 	gfx->destroy();
 }
 
@@ -184,8 +210,8 @@ void *gfx_render_context() {
 	return gfx->get_backend_context();
 }
 
-void gfx_resize_render_view(u32 w, u32 h) {
-	gfx->resize_render_view(w, h);
+void gfx_on_client_resize(u32 w, u32 h) {
+	gfx->on_client_resize(w, h);
 }
 
 void gfx_get_render_view_size(u32 *w, u32 *h) {

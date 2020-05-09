@@ -8,14 +8,17 @@ static constexpr int IM_MAX_CIRCLE_SEGMENTS     = 512;
 static constexpr int IM_DEFAULT_CIRCLE_SEGMENTS = 48;
 static constexpr int IM_DEFAULT_BEZIER_SEGMENTS = 48;
 
-bool gfx_create_context(Handle platform, Render_Backend backend, s32 vsync, s32 multisamples, s32 framebuffer_w = 0, s32 framebuffer_h = 0);
+bool gfx_create_context(Handle platform, Render_Backend backend, s32 vsync, u32 multisamples, u32 framebuffer_w = 1280, u32 framebuffer_h = 720);
 void gfx_destroy_context();
+
+void gfx_resize_render_targets(u32 width, u32 height);
+void gfx_get_render_target_size(u32 *width, u32 *height);
 
 Render_Backend gfx_render_backend();
 void *         gfx_render_device();
 void *         gfx_render_context();
 
-void gfx_resize_render_view(u32 w, u32 h);
+void gfx_on_client_resize(u32 w, u32 h);
 void gfx_get_render_view_size(u32 *w, u32 *h);
 
 void gfx_set_swap_interval(s32 interval);

@@ -278,7 +278,7 @@ struct Gfx_Platform_Directx11 : public Gfx_Platform {
 		return swap_interval;
 	}
 
-	virtual void resize_render_view(u32 w, u32 h) final override {
+	virtual void on_client_resize(u32 w, u32 h) final override {
 		if (w > 0 && h > 0) {
 			destory_resources();
 			swap_chain->ResizeBuffers(DX_BUFFER_COUNT, 0, 0, DXGI_FORMAT_UNKNOWN, swap_chain_flags);
@@ -329,16 +329,20 @@ struct Gfx_Platform_Directx11 : public Gfx_Platform {
 			mip_counts = (u32)min_value(log2(w), log2(h)) + 1;
 		}
 
+		D3D11_SUBRESOURCE_DATA *initial_data = NULL;
+
 		scoped_temporary_allocation();
-		D3D11_SUBRESOURCE_DATA *initial_data = (D3D11_SUBRESOURCE_DATA *)tallocate(sizeof(D3D11_SUBRESOURCE_DATA) * mip_counts);
-		for (u32 m = 0; m < mip_counts; ++m) {
-			initial_data[m].pSysMem          = pixels[m];
-			initial_data[m].SysMemPitch      = (w >> m) * channels;
-			initial_data[m].SysMemSlicePitch = 0;
+		if (pixels) {
+			initial_data = (D3D11_SUBRESOURCE_DATA *)tallocate(sizeof(D3D11_SUBRESOURCE_DATA) * mip_counts);
+			for (u32 m = 0; m < mip_counts; ++m) {
+				initial_data[m].pSysMem          = pixels[m];
+				initial_data[m].SysMemPitch      = (w >> m) * channels;
+				initial_data[m].SysMemSlicePitch = 0;
+			}
 		}
 
 		ID3D11Texture2D *texture = 0;
-		HRESULT          hresult = device->CreateTexture2D(&desc, pixels ? initial_data : NULL, &texture);
+		HRESULT          hresult = device->CreateTexture2D(&desc, initial_data, &texture);
 
 		if (FAILED(hresult)) {
 			system_log(LOG_ERROR, "DirectX11", "Failed to create Texture2D: %s", dx_error_string(hresult));
@@ -411,6 +415,14 @@ struct Gfx_Platform_Directx11 : public Gfx_Platform {
 	virtual void destroy_depth_stencil_view(Depth_Stencil_View view) final override {
 		ID3D11DepthStencilView *ptr = (ID3D11DepthStencilView *)view.id.hptr;
 		ptr->Release();
+	}
+
+	virtual void get_texture2d_dimension(Texture2d texture, u32 *w, u32 *h) final override {
+		D3D11_TEXTURE2D_DESC desc;
+		ID3D11Texture2D *    ptr = (ID3D11Texture2D *)texture.id.hptr;
+		ptr->GetDesc(&desc);
+		*w = desc.Width;
+		*h = desc.Height;
 	}
 
 	virtual Sampler create_sampler(const Filter &filter, const Texture_Address &address, const Level_Of_Detail &lod) final override {

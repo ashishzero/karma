@@ -83,6 +83,7 @@ void shader_process_batch(Shader_Batch &batch) {
 
 void build_batch(Array_View<Shader_Batch> batch) {
 	for (auto &b : batch) {
+		printf("Compiling Shader: %s to %s\n", b.dx11, b.name);
 		shader_process_batch(b);
 	}
 }
