@@ -208,7 +208,8 @@ int system_main() { // Entry point
 
 		ImGui::UpdateFrame(frame_time);
 
-		gfx_begin_drawing(0, vec4(0.2f, 0.3f, 0.4f));
+		//gfx_begin_drawing(0, vec4(0.2f, 0.3f, 0.4f));
+		gfx_begin_hdr(vec4(0.2f, 0.3f, 0.4f));
 		gfx_viewport(0, 0, window_w, window_h);
 
 		auto view = orthographic_view(0, window_w, window_h, 0);
@@ -262,14 +263,21 @@ int system_main() { // Entry point
 
 		#endif
 
-		gfx_end_drawing();
+		//gfx_end_drawing();
+		gfx_end_hdr();
+
+		gfx_apply_hdr(0, 0, window_w, window_h);
 
 		if (ImGui::Begin("Particle Emitter")) {
 			imgui_particle_emitter(&emitter);
 			ImGui::End();
 		}
+		
+		gfx_begin_drawing(0, vec4(1), false);
 
 		ImGui::RenderFrame();
+
+		gfx_end_drawing();
 
 		gfx_present();
 

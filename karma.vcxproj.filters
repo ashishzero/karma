@@ -215,5 +215,6 @@
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="src\shaders\quad.hlsl" />
+    <FxCompile Include="src\shaders\hdr.hlsl" />
   </ItemGroup>
 </Project>

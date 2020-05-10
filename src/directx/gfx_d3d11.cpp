@@ -702,6 +702,8 @@ struct Gfx_Platform_Directx11 : public Gfx_Platform {
 		ptr->rasterizer_state->Release();
 		ptr->blend_state->Release();
 		ptr->depth_stencil_state->Release();
+
+		delete ptr;
 	}
 
 	virtual void begin_drawing(u32                       view_count,
@@ -725,10 +727,13 @@ struct Gfx_Platform_Directx11 : public Gfx_Platform {
 			device_context->ClearDepthStencilView(d3d11_depth_stencil_view, flags, depth_stencil_clear_info->depth_clear_value, depth_stencil_clear_info->stencil_clear_value);
 		}
 
-		device_context->OMSetRenderTargets(view_count, (ID3D11RenderTargetView **)render_views, d3d11_depth_stencil_view);
+		auto targets = (ID3D11RenderTargetView **)render_views;
+
+		device_context->OMSetRenderTargets(view_count, targets, d3d11_depth_stencil_view);
 	}
 
 	virtual void end_drawing() final override {
+		device_context->ClearState();
 	}
 
 	virtual void cmd_set_viewport(r32 x, r32 y, r32 w, r32 h) final override {

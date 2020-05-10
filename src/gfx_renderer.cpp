@@ -55,6 +55,8 @@ struct Gfx_Global_Data {
 static Im_Context       im_context;
 static Gfx_Global_Data  global;
 static Texture2d_Handle white_texture;
+static Render_Pipeline  postprocess_pipeline;
+static Sampler          postprocess_sampler;
 
 static Gfx_Platform *gfx;
 static u32           shader_lang;
@@ -118,35 +120,58 @@ bool gfx_create_context(Handle platform, Render_Backend backend, s32 vsync, u32 
 	white_texture.buffer     = gfx->create_texture2d(1, 1, 4, Data_Format_RGBA8_UNORM, pixels, Buffer_Usage_IMMUTABLE, Texture_Bind_SHADER_RESOURCE, 1);
 	white_texture.view       = gfx->create_texture_view(white_texture.buffer);
 
-	Input_Element_Layout layouts[] = {
-		{ "POSITION", Data_Format_RGB32_FLOAT, offsetof(Im_Vertex, position), Input_Type_PER_VERTEX_DATA, 0 },
-		{ "TEX_COORD", Data_Format_RG32_FLOAT, offsetof(Im_Vertex, tex_coord), Input_Type_PER_VERTEX_DATA, 0 },
-		{ "COLOR", Data_Format_RGBA32_FLOAT, offsetof(Im_Vertex, color), Input_Type_PER_VERTEX_DATA, 0 }
-	};
+	{
+		String hdr_shader = system_read_entire_file("data/shaders/hdr.kfx");
 
-	String quad_shader_content = system_read_entire_file("data/shaders/quad.kfx");
+		Shader_Info shader;
+		shader.input_layouts       = NULL;
+		shader.input_layouts_count = 0;
+		shader.vertex              = igfx_find_shader(hdr_shader, SHADER_TYPE_VERTEX, "hdr.kfx.vertex");
+		shader.pixel               = igfx_find_shader(hdr_shader, SHADER_TYPE_PIXEL, "hdr.kfx.pixel");
+		shader.stride              = 0;
 
-	Shader_Info shader;
-	shader.input_layouts       = layouts;
-	shader.input_layouts_count = static_count(layouts);
-	shader.vertex              = igfx_find_shader(quad_shader_content, SHADER_TYPE_VERTEX, "quad.kfx.vertex");
-	shader.pixel               = igfx_find_shader(quad_shader_content, SHADER_TYPE_PIXEL, "quad.kfx.pixel");
-	shader.stride              = sizeof(Im_Vertex);
+		Rasterizer_Info rasterizer = rasterizer_info_create();
+		Blend_Info      blend      = blend_info_disabled();
+		Depth_Info      depth      = depth_info_create(false);
 
-	Rasterizer_Info rasterizer = rasterizer_info_create();
-	Blend_Info      blend      = blend_info_create(Blend_SRC_ALPHA, Blend_INV_SRC_ALPHA, Blend_Operation_ADD,
-                                         Blend_SRC_ALPHA, Blend_INV_SRC_ALPHA, Blend_Operation_ADD);
-	Depth_Info      depth      = depth_info_create(false);
+		postprocess_pipeline = gfx->create_render_pipeline(shader, rasterizer, blend, depth, "postprocess");
 
-	im_context.pipeline = gfx->create_render_pipeline(shader, rasterizer, blend, depth, "Im_Pipeline");
+		mfree(hdr_shader.data);
+	}
 
-	mfree(quad_shader_content.data);
+	postprocess_sampler = gfx->create_sampler(filter_create(), texture_address_create(), level_of_detail_create());
+
+	{
+		Input_Element_Layout layouts[] = {
+			{ "POSITION", Data_Format_RGB32_FLOAT, offsetof(Im_Vertex, position), Input_Type_PER_VERTEX_DATA, 0 },
+			{ "TEX_COORD", Data_Format_RG32_FLOAT, offsetof(Im_Vertex, tex_coord), Input_Type_PER_VERTEX_DATA, 0 },
+			{ "COLOR", Data_Format_RGBA32_FLOAT, offsetof(Im_Vertex, color), Input_Type_PER_VERTEX_DATA, 0 }
+		};
+
+		String quad_shader_content = system_read_entire_file("data/shaders/quad.kfx");
+
+		Shader_Info shader;
+		shader.input_layouts       = layouts;
+		shader.input_layouts_count = static_count(layouts);
+		shader.vertex              = igfx_find_shader(quad_shader_content, SHADER_TYPE_VERTEX, "quad.kfx.vertex");
+		shader.pixel               = igfx_find_shader(quad_shader_content, SHADER_TYPE_PIXEL, "quad.kfx.pixel");
+		shader.stride              = sizeof(Im_Vertex);
+
+		Rasterizer_Info rasterizer = rasterizer_info_create();
+		Blend_Info      blend      = blend_info_create(Blend_SRC_ALPHA, Blend_INV_SRC_ALPHA, Blend_Operation_ADD,
+                                             Blend_SRC_ALPHA, Blend_INV_SRC_ALPHA, Blend_Operation_ADD);
+		Depth_Info      depth      = depth_info_create(false);
+
+		im_context.pipeline = gfx->create_render_pipeline(shader, rasterizer, blend, depth, "Im_Pipeline");
+
+		mfree(quad_shader_content.data);
+	}
 
 	im_context.uniform_buffer = gfx->create_uniform_buffer(Buffer_Usage_DYNAMIC, Cpu_Access_WRITE, sizeof(Mat4), 0);
 	im_context.vertex_buffer  = gfx->create_vertex_buffer(Buffer_Usage_DYNAMIC, Cpu_Access_WRITE, sizeof(Im_Vertex) * IM_CONTEXT_MAX_VERTICES, 0);
 	im_context.index_buffer   = gfx->create_index_buffer(Buffer_Usage_DYNAMIC, Cpu_Access_WRITE, sizeof(Im_Index) * IM_CONTEXT_MAX_INDICES, 0);
 
-	im_context.sampler = gfx->create_sampler(filter_create(), texture_address_create(), level_of_detail_create());
+	im_context.sampler = gfx->create_sampler(filter_create(Filter_Type_MIN_MAG_MIP_POINT), texture_address_create(), level_of_detail_create());
 
 	im_context.transformations[0] = mat4_identity();
 	im_context.transformation     = 1;
@@ -322,21 +347,36 @@ inline void im_ensure_size(int vertex_count, int index_count) {
 	}
 }
 
-void gfx_begin_drawing(Render_Target_View *view) {
-	Color_Clear_Info color_info = {};
+void gfx_begin_hdr(Color4 color, bool clear) {
+	Color_Clear_Info color_info;
+	color_info.clear = clear;
+	color_info.color = color;
 
-	if (view) {
-		gfx->begin_drawing(1, &color_info, view, 0, 0);
-	} else {
-		Render_Target_View def = gfx->get_default_render_target_view();
-		gfx->begin_drawing(1, &color_info, &def, 0, 0);
-	}
+	Depth_Stencil_Clear_Info depth_stencil_info;
+	depth_stencil_info.flags               = Depth_Stencil_Clear_DEPTH;
+	depth_stencil_info.depth_clear_value   = 1;
+	depth_stencil_info.stencil_clear_value = 0xff;
+
+	gfx->begin_drawing(1, &color_info, &global.hdr_render_target_view, &depth_stencil_info, &global.hdr_depth_view);
 }
 
-void gfx_begin_drawing(Render_Target_View *view, Color4 color) {
-	auto             render_target_view = gfx->get_default_render_target_view();
+void gfx_end_hdr() {
+	gfx->end_drawing();
+}
+
+void gfx_apply_hdr(r32 x, r32 y, r32 w, r32 h) {
+	gfx_begin_drawing(0, vec4(0));
+	gfx->cmd_bind_pipeline(postprocess_pipeline);
+	gfx->cmd_set_viewport(x, y, w, h);
+	gfx->cmd_bind_samplers(0, 1, &postprocess_sampler);
+	gfx->cmd_bind_textures(0, 1, &global.hdr_color_view);
+	gfx->cmd_draw(6, 0);
+	gfx_end_drawing();
+}
+
+void gfx_begin_drawing(Render_Target_View *view, Color4 color, bool clear) {
 	Color_Clear_Info color_info;
-	color_info.clear = true;
+	color_info.clear = clear;
 	color_info.color = color;
 
 	if (view) {
@@ -402,11 +442,15 @@ void im_begin(Camera_View &view, Mat4 &transform) {
 			invalid_default_case();
 	}
 
-	transform = mat4_transpose(projection * transform);
+	transform = projection * transform;
 
 	void *ptr = gfx->map(im_context.uniform_buffer, Map_Type_WRITE_DISCARD);
 	memcpy(ptr, &transform, sizeof(Mat4));
 	gfx->unmap(im_context.uniform_buffer);
+
+	gfx->cmd_bind_pipeline(im_context.pipeline);
+	gfx->cmd_bind_samplers(0, 1, &im_context.sampler);
+	gfx->cmd_bind_vs_uniform_buffers(0, 1, &im_context.uniform_buffer);
 }
 
 void iim_flush(bool restart) {
@@ -414,11 +458,8 @@ void iim_flush(bool restart) {
 	gfx->unmap(im_context.index_buffer);
 
 	if (im_context.draw_cmd) {
-		gfx->cmd_bind_pipeline(im_context.pipeline);
-		gfx->cmd_bind_vs_uniform_buffers(0, 1, &im_context.uniform_buffer);
 		gfx->cmd_bind_vertex_buffer(im_context.vertex_buffer, 0, sizeof(Im_Vertex));
 		gfx->cmd_bind_index_buffer(im_context.index_buffer, Index_Type_U16, 0);
-		gfx->cmd_bind_samplers(0, 1, &im_context.sampler);
 
 		for (int draw_cmd_index = 0; draw_cmd_index < im_context.draw_cmd; ++draw_cmd_index) {
 			Im_Draw_Cmd *cmd = im_context.draw_cmds + draw_cmd_index;
@@ -426,8 +467,6 @@ void iim_flush(bool restart) {
 			gfx->cmd_bind_textures(0, 1, &cmd->texture);
 			gfx->cmd_draw_indexed(cmd->count, cmd->index * sizeof(Im_Index), cmd->vertex);
 		}
-
-		gfx->end_drawing();
 
 		auto bound_texture = im_context.draw_cmds[im_context.draw_cmd - 1].texture;
 

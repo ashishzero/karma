@@ -19,7 +19,7 @@ SamplerState u_sampler : register(s0);
 
 Vs_Out vs_main(Vs_In input) {
 	Vs_Out output;
-	output.position  = mul(float4(input.position, 1.0f), projection);
+	output.position  = mul(projection, float4(input.position, 1.0f));
 	output.tex_coord = input.tex_coord;
 	output.color     = input.color;
 	return output;

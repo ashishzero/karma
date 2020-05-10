@@ -98,6 +98,7 @@ int system_main() {
 	Array<Shader_Batch> batch;
 
 	add_batch(&batch, "run_tree/data/shaders/quad.kfx", "src/shaders/quad.hlsl");
+	add_batch(&batch, "run_tree/data/shaders/hdr.kfx", "src/shaders/hdr.hlsl");
 
 	build_batch(batch);
 

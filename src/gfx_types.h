@@ -360,11 +360,6 @@ struct Blend_Info {
 	Blend_Mask      mask;
 };
 
-inline Blend_Info blend_info_disabled() {
-	Blend_Info blend = {};
-	return blend;
-}
-
 inline Blend_Info blend_info_create(Blend           src       = Blend_ONE,
 									Blend           dst       = Blend_ZERO,
 									Blend_Operation op        = Blend_Operation_ADD,
@@ -381,6 +376,12 @@ inline Blend_Info blend_info_create(Blend           src       = Blend_ONE,
 	blend.dst_alpha = dst_alpha;
 	blend.op_alpha  = op_alpha;
 	blend.mask      = mask;
+	return blend;
+}
+
+inline Blend_Info blend_info_disabled() {
+	Blend_Info blend = blend_info_create();
+	blend.enable = false;
 	return blend;
 }
 
