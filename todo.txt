@@ -12,6 +12,11 @@
 - Particles systems
 - Implement better way for multisampling
 - Add Depth of Field in Camera (https://developer.nvidia.com/gpugems/gpugems/part-iv-image-processing/chapter-23-depth-field-survey-techniques)
+- Add SSE1-4, AVX1-2 support for particles and mathematics operations
+
+# Bug
+- Handle WM_ENTERSIZEMOVE and WM_EXITSIZEMOVE in windows proc
+>>>>>>> 6afbb7c1b6519136a441626ffd862fcbb8ff54b4
 
 # TODO in Files
 - length_string.h (32)
