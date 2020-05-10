@@ -26,5 +26,7 @@ Vs_Out vs_main(Vs_In input) {
 }
 
 float4 ps_main(Vs_Out input) : SV_TARGET {
-	return u_texture.Sample(u_sampler, input.tex_coord) * input.color;
+	float2 tex_coord = input.tex_coord;
+	tex_coord.y      = 1.0f - tex_coord.y;
+	return u_texture.Sample(u_sampler, tex_coord) * input.color;
 }
