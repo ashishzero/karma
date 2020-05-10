@@ -338,9 +338,17 @@ constexpr u32 tag32le(const char (&string)[5]) {
 //
 
 union Handle {
-	u32   h32;
-	u64   h64;
 	void *hptr;
+	u64   h64;
+
+	struct {
+		u32 h32;
+		u32 l32;
+	};
+
+	Handle() {
+		hptr = 0;
+	}
 
 	inline operator bool() {
 		return hptr != 0;

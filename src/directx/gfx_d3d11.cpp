@@ -183,8 +183,6 @@ static const D3D11_BLEND BLEND_KARMA_TO_D3D11[] = {
 	D3D11_BLEND_DEST_COLOR,
 	D3D11_BLEND_INV_DEST_COLOR,
 	D3D11_BLEND_SRC_ALPHA_SAT,
-	D3D11_BLEND_BLEND_FACTOR,
-	D3D11_BLEND_INV_BLEND_FACTOR,
 	D3D11_BLEND_SRC1_COLOR,
 	D3D11_BLEND_INV_SRC1_COLOR,
 	D3D11_BLEND_SRC1_ALPHA,
@@ -220,6 +218,22 @@ static const DXGI_FORMAT INDEX_FMT_KARMA_TO_D3D11[] = {
 };
 static_assert(static_count(INDEX_FMT_KARMA_TO_D3D11) == Index_Type_COUNT, "The mapping from Index_Type to DXGI_FORMAT is invalid");
 
+struct Internal_Framebuffer {
+	u32                      count;
+	ID3D11RenderTargetView **views;
+	ID3D11DepthStencilView * depth_stencil;
+};
+
+struct Internal_Pipeline {
+	ID3D11InputLayout *      input_layout        = 0;
+	ID3D11VertexShader *     vertex_shader       = 0;
+	ID3D11PixelShader *      pixel_shader        = 0;
+	D3D11_PRIMITIVE_TOPOLOGY primitive_topology  = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+	ID3D11RasterizerState *  rasterizer_state    = 0;
+	ID3D11BlendState *       blend_state         = 0;
+	ID3D11DepthStencilState *depth_stencil_state = 0;
+};
+
 struct Gfx_Platform_Directx11 : public Gfx_Platform {
 	ID3D11Device *       device;
 	ID3D11DeviceContext *device_context;
@@ -228,26 +242,33 @@ struct Gfx_Platform_Directx11 : public Gfx_Platform {
 	s32                  swap_interval;
 
 	// Resources
-	ID3D11Texture2D *       frame_buffer;
+	ID3D11Texture2D *       render_target_texture;
 	ID3D11RenderTargetView *render_target_view;
+	Internal_Framebuffer    default_framebuffer;
+
+	Gfx_Platform_Info info;
 
 	void create_resources() {
 		HRESULT hresult;
 
-		hresult = swap_chain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void **>(&frame_buffer));
+		hresult = swap_chain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void **>(&render_target_texture));
 		if (FAILED(hresult)) {
 			system_log(LOG_ERROR, "DirectX11", "SwapChain::GetBuffer failed: %s", dx_error_string(hresult));
 		}
 
-		hresult = device->CreateRenderTargetView(frame_buffer, 0, &render_target_view);
+		hresult = device->CreateRenderTargetView(render_target_texture, 0, &render_target_view);
 		if (FAILED(hresult)) {
 			system_log(LOG_ERROR, "Failed to create default Render Target View: %s", dx_error_string(hresult));
 		}
+
+		default_framebuffer.count         = 1;
+		default_framebuffer.views         = &render_target_view;
+		default_framebuffer.depth_stencil = NULL;
 	}
 
 	void destory_resources() {
 		render_target_view->Release();
-		frame_buffer->Release();
+		render_target_texture->Release();
 		device_context->ClearState();
 		device_context->Flush();
 	}
@@ -258,6 +279,10 @@ struct Gfx_Platform_Directx11 : public Gfx_Platform {
 
 	virtual void *get_backend_context() final override {
 		return device_context;
+	}
+
+	virtual const Gfx_Platform_Info *get_info() final override {
+		return &info;
 	}
 
 	virtual u32 get_maximum_supported_multisamples() final override {
@@ -293,10 +318,10 @@ struct Gfx_Platform_Directx11 : public Gfx_Platform {
 		*h = desc.Height;
 	}
 
-	virtual Render_Target_View get_default_render_target_view() final override {
-		Render_Target_View view;
-		view.id.hptr = render_target_view;
-		return view;
+	virtual Framebuffer get_default_framebuffer() final override {
+		Framebuffer        result;
+		result.id.hptr = &default_framebuffer;
+		return result;
 	}
 
 	virtual void present() final override {
@@ -384,15 +409,6 @@ struct Gfx_Platform_Directx11 : public Gfx_Platform {
 		return result;
 	}
 
-	virtual Render_Target_View create_render_target_view(Texture2d texture) final override {
-		ID3D11Resource *        resource = (ID3D11Resource *)texture.id.hptr;
-		ID3D11RenderTargetView *view     = 0;
-		device->CreateRenderTargetView(resource, NULL, &view);
-		Render_Target_View result;
-		result.id.hptr = view;
-		return result;
-	}
-
 	virtual Depth_Stencil_View create_depth_stencil_view(Texture2d texture) final override {
 		ID3D11Resource *        resource = (ID3D11Resource *)texture.id.hptr;
 		ID3D11DepthStencilView *view     = 0;
@@ -402,13 +418,27 @@ struct Gfx_Platform_Directx11 : public Gfx_Platform {
 		return result;
 	}
 
-	virtual void destroy_texture_view(Texture_View view) final override {
-		ID3D11ShaderResourceView *ptr = (ID3D11ShaderResourceView *)view.id.hptr;
-		ptr->Release();
+	virtual Framebuffer create_framebuffer(u32 count, Texture2d *textures, Texture_View *views, Depth_Stencil_View *depth_view) final override {
+		void *                mem         = mallocate(sizeof(Internal_Framebuffer) + (sizeof(ID3D11RenderTargetView *) * count));
+		Internal_Framebuffer *framebuffer = (Internal_Framebuffer *)mem;
+		framebuffer->views                = (ID3D11RenderTargetView **)((u8 *)mem + sizeof(Internal_Framebuffer));
+
+		framebuffer->count         = count;
+		framebuffer->depth_stencil = depth_view ? (ID3D11DepthStencilView *)depth_view->id.hptr : NULL;
+
+		for (u32 index = 0; index < count; ++index) {
+			ID3D11Resource *resource = (ID3D11Resource *)textures[index].id.hptr;
+			device->CreateRenderTargetView(resource, NULL, &framebuffer->views[index]);
+		}
+
+		Framebuffer result;
+		result.id.hptr = framebuffer;
+
+		return result;
 	}
 
-	virtual void destroy_render_target_view(Render_Target_View view) final override {
-		ID3D11RenderTargetView *ptr = (ID3D11RenderTargetView *)view.id.hptr;
+	virtual void destroy_texture_view(Texture_View view) final override {
+		ID3D11ShaderResourceView *ptr = (ID3D11ShaderResourceView *)view.id.hptr;
 		ptr->Release();
 	}
 
@@ -417,12 +447,12 @@ struct Gfx_Platform_Directx11 : public Gfx_Platform {
 		ptr->Release();
 	}
 
-	virtual void get_texture2d_dimension(Texture2d texture, u32 *w, u32 *h) final override {
-		D3D11_TEXTURE2D_DESC desc;
-		ID3D11Texture2D *    ptr = (ID3D11Texture2D *)texture.id.hptr;
-		ptr->GetDesc(&desc);
-		*w = desc.Width;
-		*h = desc.Height;
+	virtual void destroy_framebuffer(Framebuffer handle) final override {
+		Internal_Framebuffer *framebuffer = (Internal_Framebuffer *)handle.id.hptr;
+		for (u32 index = 0; index < framebuffer->count; ++index) {
+			framebuffer->views[index]->Release();
+		}
+		mfree(framebuffer);
 	}
 
 	virtual Sampler create_sampler(const Filter &filter, const Texture_Address &address, const Level_Of_Detail &lod) final override {
@@ -576,16 +606,6 @@ struct Gfx_Platform_Directx11 : public Gfx_Platform {
 		device_context->Unmap(resource, 0);
 	}
 
-	struct Internal_Pipeline {
-		ID3D11InputLayout *      input_layout        = 0;
-		ID3D11VertexShader *     vertex_shader       = 0;
-		ID3D11PixelShader *      pixel_shader        = 0;
-		D3D11_PRIMITIVE_TOPOLOGY primitive_topology  = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-		ID3D11RasterizerState *  rasterizer_state    = 0;
-		ID3D11BlendState *       blend_state         = 0;
-		ID3D11DepthStencilState *depth_stencil_state = 0;
-	};
-
 	virtual Render_Pipeline create_render_pipeline(const Shader_Info &    shader_info,
 												   const Rasterizer_Info &rasterizer_info,
 												   const Blend_Info &     blend_info,
@@ -706,29 +726,23 @@ struct Gfx_Platform_Directx11 : public Gfx_Platform {
 		delete ptr;
 	}
 
-	virtual void begin_drawing(u32                 view_count,
-							   Render_Target_View *render_views,
-							   Depth_Stencil_View *depth_stencil_view,
-							   Clear_Flags flags, Color4 color, r32 depth, u8 stencil) final override {
-		for (u32 view_index = 0; view_index < view_count; ++view_index) {
-			ID3D11RenderTargetView *view = (ID3D11RenderTargetView *)render_views[view_index].id.hptr;
-			if ((flags & Clear_COLOR) == Clear_COLOR) {
-				device_context->ClearRenderTargetView(view, color.m);
+	virtual void begin_drawing(Framebuffer handle, Clear_Flags flags, Color4 color, r32 depth, u8 stencil) final override {
+		Internal_Framebuffer *framebuffer = (Internal_Framebuffer *)handle.id.hptr;
+
+		if ((flags & Clear_COLOR) == Clear_COLOR) {
+			for (u32 view_index = 0; view_index < framebuffer->count; ++view_index) {
+				device_context->ClearRenderTargetView(framebuffer->views[view_index], color.m);
 			}
 		}
 
-		ID3D11DepthStencilView *d3d11_depth_stencil_view = 0;
-		if (depth_stencil_view) {
-			d3d11_depth_stencil_view = (ID3D11DepthStencilView *)depth_stencil_view->id.hptr;
-			UINT flags               = 0;
+		if (framebuffer->depth_stencil) {
+			UINT flags = 0;
 			if ((flags & Clear_DEPTH) == Clear_DEPTH) flags |= D3D11_CLEAR_DEPTH;
 			if ((flags & Clear_STENCIL) == Clear_STENCIL) flags |= D3D11_CLEAR_STENCIL;
-			device_context->ClearDepthStencilView(d3d11_depth_stencil_view, flags, depth, stencil);
+			device_context->ClearDepthStencilView(framebuffer->depth_stencil, flags, depth, stencil);
 		}
 
-		auto targets = (ID3D11RenderTargetView **)render_views;
-
-		device_context->OMSetRenderTargets(view_count, targets, d3d11_depth_stencil_view);
+		device_context->OMSetRenderTargets(framebuffer->count, framebuffer->views, framebuffer->depth_stencil);
 	}
 
 	virtual void end_drawing() final override {
@@ -763,12 +777,14 @@ struct Gfx_Platform_Directx11 : public Gfx_Platform {
 		device_context->OMSetBlendState(ptr->blend_state, 0, 0xffffffff);
 	}
 
-	virtual void cmd_bind_vertex_buffer(Vertex_Buffer buffer, u32 offset, u32 stride) final override {
+	virtual void cmd_bind_vertex_buffer(Vertex_Buffer buffer, u32 stride) final override {
+		UINT          offset              = 0;
 		ID3D11Buffer *d3d11_vertex_buffer = (ID3D11Buffer *)buffer.id.hptr;
 		device_context->IASetVertexBuffers(0, 1, &d3d11_vertex_buffer, &stride, &offset);
 	}
 
-	virtual void cmd_bind_index_buffer(Index_Buffer buffer, Index_Type type, u32 offset) final override {
+	virtual void cmd_bind_index_buffer(Index_Buffer buffer, Index_Type type) final override {
+		UINT offset = 0;
 		device_context->IASetIndexBuffer((ID3D11Buffer *)buffer.id.hptr, INDEX_FMT_KARMA_TO_D3D11[type], offset);
 	}
 
@@ -820,6 +836,8 @@ void directx_error_cleanup(Gfx_Platform_Directx11 &gfx) {
 
 Gfx_Platform *create_directx11_context(Handle platform, s32 vsync, s32 multisamples) {
 	static Gfx_Platform_Directx11 gfx;
+
+	gfx.backend = Render_Backend_NONE;
 
 	IDXGIFactory2 *factory;
 
@@ -875,11 +893,12 @@ Gfx_Platform *create_directx11_context(Handle platform, s32 vsync, s32 multisamp
 
 	HRESULT hresult;
 
+	D3D_FEATURE_LEVEL feature;
 	hresult = D3D11CreateDevice(adapter,
 								D3D_DRIVER_TYPE_UNKNOWN,
 								NULL, flags,
 								feature_levels, static_count(feature_levels),
-								D3D11_SDK_VERSION, &gfx.device, 0, &gfx.device_context);
+								D3D11_SDK_VERSION, &gfx.device, &feature, &gfx.device_context);
 	dx_error_check(hresult, gfx);
 
 	gfx.swap_chain_flags = 0;
@@ -922,19 +941,22 @@ Gfx_Platform *create_directx11_context(Handle platform, s32 vsync, s32 multisamp
 
 	if (SUCCEEDED(gfx.device->QueryInterface(__uuidof(ID3D11Debug), (void **)&debug))) {
 		ID3D11InfoQueue *info_queue = nullptr;
-		if (SUCCEEDED(gfx.device->QueryInterface(__uuidof(ID3D11InfoQueue), (void **)&info_queue)))
+		if (SUCCEEDED(gfx.device->QueryInterface(__uuidof(ID3D11InfoQueue), (void **)&info_queue))) {
+			system_log(LOG_INFO, "DirectX", "GL_DEBUG_OUTPUT_SYNCHRONOUS enabled.");
+
 			info_queue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_CORRUPTION, true);
-		info_queue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_ERROR, true);
+			info_queue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_ERROR, true);
 
-		D3D11_MESSAGE_ID hide[] = {
-			D3D11_MESSAGE_ID_SETPRIVATEDATA_CHANGINGPARAMS,
-		};
+			D3D11_MESSAGE_ID hide[] = {
+				D3D11_MESSAGE_ID_SETPRIVATEDATA_CHANGINGPARAMS,
+			};
 
-		D3D11_INFO_QUEUE_FILTER filter = {};
-		filter.DenyList.NumIDs         = static_count(hide);
-		filter.DenyList.pIDList        = hide;
-		info_queue->AddStorageFilterEntries(&filter);
-		info_queue->Release();
+			D3D11_INFO_QUEUE_FILTER filter = {};
+			filter.DenyList.NumIDs         = static_count(hide);
+			filter.DenyList.pIDList        = hide;
+			info_queue->AddStorageFilterEntries(&filter);
+			info_queue->Release();
+		}
 	}
 	debug->Release();
 #endif
@@ -943,5 +965,57 @@ Gfx_Platform *create_directx11_context(Handle platform, s32 vsync, s32 multisamp
 
 	gfx.swap_interval = vsync;
 	gfx.backend       = Render_Backend_DIRECTX11;
+
+	DXGI_ADAPTER_DESC adapter_desc = {};
+	adapter->GetDesc(&adapter_desc);
+
+	gfx.info.vendor = (char *)HeapAlloc(GetProcessHeap(), 0, 128);
+	WideCharToMultiByte(CP_UTF8, 0, adapter_desc.Description, -1, (char *)gfx.info.vendor, 128, 0, 0);
+	gfx.info.renderer = "Direct X";
+
+	switch (feature) {
+		case D3D_FEATURE_LEVEL_9_1:
+			gfx.info.version      = "Feature Level 9.1";
+			gfx.info.shading_lang = "HLSL Shader Model 2.x";
+			break;
+		case D3D_FEATURE_LEVEL_9_2:
+			gfx.info.version      = "Feature Level 9.2";
+			gfx.info.shading_lang = "HLSL Shader Model 2.x";
+			break;
+		case D3D_FEATURE_LEVEL_9_3:
+			gfx.info.version      = "Feature Level 9.3";
+			gfx.info.shading_lang = "HLSL Shader Model 2.x";
+			break;
+		case D3D_FEATURE_LEVEL_10_0:
+			gfx.info.version      = "Feature Level 10.0";
+			gfx.info.shading_lang = "HLSL 4.0";
+			break;
+		case D3D_FEATURE_LEVEL_10_1:
+			gfx.info.version      = "Feature Level 10.1";
+			gfx.info.shading_lang = "HLSL 4.1";
+			break;
+		case D3D_FEATURE_LEVEL_11_0:
+			gfx.info.version      = "Feature Level 11.0";
+			gfx.info.shading_lang = "HLSL 5.0";
+			break;
+		case D3D_FEATURE_LEVEL_11_1:
+			gfx.info.version      = "Feature Level 11.1";
+			gfx.info.shading_lang = "HLSL 5.0";
+			break;
+		case D3D_FEATURE_LEVEL_12_0:
+			gfx.info.version      = "Feature Level 12.0";
+			gfx.info.shading_lang = "HLSL 5.0";
+			break;
+		case D3D_FEATURE_LEVEL_12_1:
+			gfx.info.version      = "Feature Level 12.1";
+			gfx.info.shading_lang = "HLSL 5.0";
+			break;
+		default: {
+			gfx.info.version      = "Unknown";
+			gfx.info.shading_lang = "HLSL";
+			break;
+		}
+	}
+
 	return &gfx;
 }

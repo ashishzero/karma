@@ -23,3 +23,5 @@ inline void report_error(const char *category, const char *fmt, ...) {
 #if defined(TARGET_WINDOWS)
 bool hlsl_compile_shader(const char *name, String src, Shader_Code *out);
 #endif
+
+bool glsl_compile_shader(const char *name, String src, int version, Shader_Code *out);

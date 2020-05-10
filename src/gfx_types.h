@@ -9,11 +9,11 @@ struct Texture_View {
 	Handle id;
 };
 
-struct Render_Target_View {
+struct Depth_Stencil_View {
 	Handle id;
 };
 
-struct Depth_Stencil_View {
+struct Framebuffer {
 	Handle id;
 };
 
@@ -64,10 +64,10 @@ enum Data_Format {
 	Data_Format_D32_FLOAT_S8X24_UINT,
 	Data_Format_R32_FLOAT_X8X24_TYPELESS,
 	Data_Format_X32_TYPELESS_G8X24_UINT,
-	Data_Format_R10G10B10A2_TYPELESS,
-	Data_Format_R10G10B10A2_UNORM,
-	Data_Format_R10G10B10A2_UINT,
-	Data_Format_R11G11B10_FLOAT,
+	Data_Format_RGB10A2_TYPELESS,
+	Data_Format_RGB10A2_UNORM,
+	Data_Format_RGB10A2_UINT,
+	Data_Format_RG11B10_FLOAT,
 	Data_Format_RGBA8_UNORM,
 	Data_Format_RGBA8_UNORM_SRGB,
 	Data_Format_RGBA8_UINT,
@@ -293,7 +293,7 @@ inline Rasterizer_Info rasterizer_info_create(Primitive  primitive  = Primitive_
 											  Front_Face front_face = Front_Face_CLOCKWISE,
 											  s32 depth_bias = 0, r32 depth_bias_clamp = 0,
 											  bool depth_clip = true, bool scissor_enable = false,
-											  bool multisample = false) {
+											  bool multisample = true) {
 	Rasterizer_Info rasterizer;
 	rasterizer.primitive        = primitive;
 	rasterizer.fill_mode        = fill_mode;
@@ -319,8 +319,6 @@ enum Blend {
 	Blend_DEST_COLOR,
 	Blend_INV_DEST_COLOR,
 	Blend_SRC_ALPHA_SAT,
-	Blend_BLEND_FACTOR,
-	Blend_INV_BLEND_FACTOR,
 	Blend_SRC1_COLOR,
 	Blend_INV_SRC1_COLOR,
 	Blend_SRC1_ALPHA,
@@ -462,12 +460,11 @@ struct Texture2d_Handle {
 	Texture2d    buffer;
 };
 
-enum Render_Target {
-	Render_Target_NONE,
-	Render_Target_DEFAULT,
-	Render_Target_HDR,
+enum Framebuffer_Type {
+	Framebuffer_Type_DEFAULT,
+	Framebuffer_Type_HDR,
 
-	Render_Target_COUNT
+	Framebuffer_Type_COUNT
 };
 
 enum Camera_View_Kind {

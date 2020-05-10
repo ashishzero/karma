@@ -4,185 +4,1074 @@
 #include "../length_string.h"
 #include "../systems.h"
 
-#if 0
-static const GLenum COLOR_INTERNAL_FORMATS[] = {
-	0, GL_R32F, GL_RG32F, GL_RGB32F, GL_RGBA32F
+#if 1
+
+static const GLint INT_FMT_KARMA_TO_OPENGL[] = {
+	GL_RGBA,
+	GL_RGBA32F,
+	GL_RGBA32UI,
+	GL_RGBA32I,
+	GL_RGB32F,
+	GL_RGB32UI,
+	GL_RGB32I,
+	GL_RGBA16F,
+	GL_RGBA16,
+	GL_RGBA16UI,
+	GL_RGBA16_SNORM,
+	GL_RGBA16I,
+	GL_RG32F,
+	GL_RG32UI,
+	GL_RG32I,
+	GL_DEPTH_STENCIL,
+	GL_R32F,
+	GL_R8,
+	GL_RGB10_A2,
+	GL_RGB10_A2,
+	GL_RGB10_A2UI,
+	GL_R11F_G11F_B10F,
+	GL_RGBA8,
+	GL_SRGB8_ALPHA8,
+	GL_RGBA8UI,
+	GL_RGBA8_SNORM,
+	GL_RGBA8I,
+	GL_RG16F,
+	GL_RG16,
+	GL_RG16UI,
+	GL_RG16_SNORM,
+	GL_RG16I,
+	GL_DEPTH_COMPONENT32F,
+	GL_R32F,
+	GL_R32UI,
+	GL_R32I,
+	GL_DEPTH24_STENCIL8,
+	GL_RG8,
+	GL_RG8UI,
+	GL_RG8_SNORM,
+	GL_RG8I,
+	GL_R16F,
+	GL_DEPTH_COMPONENT16,
+	GL_R16,
+	GL_R16UI,
+	GL_R16_SNORM,
+	GL_R16I,
+	GL_R8,
+	GL_R8UI,
+	GL_R8_SNORM,
+	GL_R8I,
+	GL_R8,
 };
-static const GLenum COLOR_FORMATS[] = {
-	0, GL_RED, GL_RG, GL_RGB, GL_RGBA
+static_assert(static_count(INT_FMT_KARMA_TO_OPENGL) == Data_Format_COUNT, "The mapping from Data_Format to Internal Format is invalid");
+
+static const GLenum TEX_ADD_KARMA_TO_OPENGL[] = {
+	GL_REPEAT,
+	GL_MIRRORED_REPEAT,
+	GL_CLAMP_TO_EDGE,
+	GL_CLAMP_TO_BORDER,
+	GL_CLAMP_TO_EDGE,
 };
-static const GLenum INDEX_TYPE[] = {
-	0, GL_UNSIGNED_BYTE, GL_UNSIGNED_SHORT, GL_UNSIGNED_INT
+static_assert(static_count(TEX_ADD_KARMA_TO_OPENGL) == Texture_Address_Mode_COUNT, "The mapping from Texture_Address_Mode to GL_TEXTURE_WRAP is invalid");
+
+static const GLenum BUFFER_USAGE_KARMA_TO_OPENGL[] = {
+	GL_STATIC_DRAW,
+	GL_STATIC_DRAW,
+	GL_DYNAMIC_DRAW,
+	GL_STREAM_DRAW,
+};
+static_assert(static_count(BUFFER_USAGE_KARMA_TO_OPENGL) == Buffer_Usage_COUNT, "The mapping from Buffer_Usage to OpenGL Buffer Usage is invalid");
+
+static GLenum COMP_FUNC_KARMA_TO_OPENGL[] = {
+	GL_NEVER,
+	GL_LESS,
+	GL_EQUAL,
+	GL_LEQUAL,
+	GL_GREATER,
+	GL_NOTEQUAL,
+	GL_GEQUAL,
+	GL_ALWAYS,
+};
+static_assert(static_count(COMP_FUNC_KARMA_TO_OPENGL) == Comparison_Function_COUNT, "The mapping from Comparison_Function to GL_TEXTURE_COMPARE_FUNC is invaid");
+
+GLenum karma_to_gl_texture_min_filter(Filter_Type filter) {
+	switch (filter) {
+		case Filter_Type_MIN_MAG_MIP_POINT: return GL_NEAREST;
+		case Filter_Type_MIN_MAG_POINT_MIP_LINEAR: return GL_NEAREST_MIPMAP_LINEAR;
+		case Filter_Type_MIN_POINT_MAG_LINEAR_MIP_POINT: return GL_NEAREST_MIPMAP_NEAREST;
+		case Filter_Type_MIN_POINT_MAG_MIP_LINEAR: return GL_NEAREST_MIPMAP_LINEAR;
+		case Filter_Type_MIN_LINEAR_MAG_MIP_POINT: return GL_LINEAR_MIPMAP_NEAREST;
+		case Filter_Type_MIN_LINEAR_MAG_POINT_MIP_LINEAR: return GL_LINEAR_MIPMAP_LINEAR;
+		case Filter_Type_MIN_MAG_LINEAR_MIP_POINT: return GL_LINEAR_MIPMAP_NEAREST;
+		case Filter_Type_MIN_MAG_MIP_LINEAR: return GL_LINEAR;
+		case Filter_Type_ANISOTROPIC: return GL_LINEAR;
+		case Filter_Type_COMPARISON_MIN_MAG_MIP_POINT: return GL_NEAREST;
+		case Filter_Type_COMPARISON_MIN_MAG_POINT_MIP_LINEAR: return GL_NEAREST_MIPMAP_LINEAR;
+		case Filter_Type_COMPARISON_MIN_POINT_MAG_LINEAR_MIP_POINT: return GL_NEAREST_MIPMAP_NEAREST;
+		case Filter_Type_COMPARISON_MIN_POINT_MAG_MIP_LINEAR: return GL_NEAREST_MIPMAP_LINEAR;
+		case Filter_Type_COMPARISON_MIN_LINEAR_MAG_MIP_POINT: return GL_LINEAR_MIPMAP_NEAREST;
+		case Filter_Type_COMPARISON_MIN_LINEAR_MAG_POINT_MIP_LINEAR: return GL_LINEAR_MIPMAP_LINEAR;
+		case Filter_Type_COMPARISON_MIN_MAG_LINEAR_MIP_POINT: return GL_LINEAR_MIPMAP_NEAREST;
+		case Filter_Type_COMPARISON_MIN_MAG_MIP_LINEAR: return GL_LINEAR;
+		case Filter_Type_COMPARISON_ANISOTROPIC: return GL_LINEAR;
+		case Filter_Type_MINIMUM_MIN_MAG_MIP_POINT: return GL_NEAREST;
+		case Filter_Type_MINIMUM_MIN_MAG_POINT_MIP_LINEAR: return GL_NEAREST_MIPMAP_LINEAR;
+		case Filter_Type_MINIMUM_MIN_POINT_MAG_LINEAR_MIP_POINT: return GL_NEAREST_MIPMAP_NEAREST;
+		case Filter_Type_MINIMUM_MIN_POINT_MAG_MIP_LINEAR: return GL_NEAREST_MIPMAP_LINEAR;
+		case Filter_Type_MINIMUM_MIN_LINEAR_MAG_MIP_POINT: return GL_LINEAR_MIPMAP_NEAREST;
+		case Filter_Type_MINIMUM_MIN_LINEAR_MAG_POINT_MIP_LINEAR: return GL_LINEAR_MIPMAP_LINEAR;
+		case Filter_Type_MINIMUM_MIN_MAG_LINEAR_MIP_POINT: return GL_LINEAR_MIPMAP_NEAREST;
+		case Filter_Type_MINIMUM_MIN_MAG_MIP_LINEAR: return GL_LINEAR;
+		case Filter_Type_MINIMUM_ANISOTROPIC: return GL_LINEAR;
+		case Filter_Type_MAXIMUM_MIN_MAG_MIP_POINT: return GL_NEAREST;
+		case Filter_Type_MAXIMUM_MIN_MAG_POINT_MIP_LINEAR: return GL_NEAREST_MIPMAP_LINEAR;
+		case Filter_Type_MAXIMUM_MIN_POINT_MAG_LINEAR_MIP_POINT: return GL_NEAREST_MIPMAP_NEAREST;
+		case Filter_Type_MAXIMUM_MIN_POINT_MAG_MIP_LINEAR: return GL_NEAREST_MIPMAP_LINEAR;
+		case Filter_Type_MAXIMUM_MIN_LINEAR_MAG_MIP_POINT: return GL_LINEAR_MIPMAP_NEAREST;
+		case Filter_Type_MAXIMUM_MIN_LINEAR_MAG_POINT_MIP_LINEAR: return GL_LINEAR_MIPMAP_LINEAR;
+		case Filter_Type_MAXIMUM_MIN_MAG_LINEAR_MIP_POINT: return GL_LINEAR_MIPMAP_NEAREST;
+		case Filter_Type_MAXIMUM_MIN_MAG_MIP_LINEAR: return GL_LINEAR;
+		case Filter_Type_MAXIMUM_ANISOTROPIC:
+			return GL_LINEAR;
+
+			invalid_default_case();
+	}
+
+	return 0;
 };
 
-enum Render_Option : u32 {
-	Render_Option_DEPTH_TEST = 0x1,
-	Render_Option_BLEND      = 0x2,
-	Render_Option_CULL       = 0x4,
-};
-typedef u32 Render_Options;
+GLenum karma_to_gl_texture_mag_filter(Filter_Type filter) {
+	switch (filter) {
+		case Filter_Type_MIN_MAG_MIP_POINT: return GL_NEAREST;
+		case Filter_Type_MIN_MAG_POINT_MIP_LINEAR: return GL_NEAREST_MIPMAP_LINEAR;
+		case Filter_Type_MIN_POINT_MAG_LINEAR_MIP_POINT: return GL_LINEAR_MIPMAP_NEAREST;
+		case Filter_Type_MIN_POINT_MAG_MIP_LINEAR: return GL_LINEAR_MIPMAP_LINEAR;
+		case Filter_Type_MIN_LINEAR_MAG_MIP_POINT: return GL_NEAREST_MIPMAP_NEAREST;
+		case Filter_Type_MIN_LINEAR_MAG_POINT_MIP_LINEAR: return GL_NEAREST_MIPMAP_LINEAR;
+		case Filter_Type_MIN_MAG_LINEAR_MIP_POINT: return GL_LINEAR_MIPMAP_NEAREST;
+		case Filter_Type_MIN_MAG_MIP_LINEAR: return GL_LINEAR;
+		case Filter_Type_ANISOTROPIC: return GL_LINEAR;
+		case Filter_Type_COMPARISON_MIN_MAG_MIP_POINT: return GL_NEAREST;
+		case Filter_Type_COMPARISON_MIN_MAG_POINT_MIP_LINEAR: return GL_NEAREST_MIPMAP_LINEAR;
+		case Filter_Type_COMPARISON_MIN_POINT_MAG_LINEAR_MIP_POINT: return GL_LINEAR_MIPMAP_NEAREST;
+		case Filter_Type_COMPARISON_MIN_POINT_MAG_MIP_LINEAR: return GL_LINEAR_MIPMAP_LINEAR;
+		case Filter_Type_COMPARISON_MIN_LINEAR_MAG_MIP_POINT: return GL_NEAREST_MIPMAP_NEAREST;
+		case Filter_Type_COMPARISON_MIN_LINEAR_MAG_POINT_MIP_LINEAR: return GL_NEAREST_MIPMAP_LINEAR;
+		case Filter_Type_COMPARISON_MIN_MAG_LINEAR_MIP_POINT: return GL_LINEAR_MIPMAP_NEAREST;
+		case Filter_Type_COMPARISON_MIN_MAG_MIP_LINEAR: return GL_LINEAR;
+		case Filter_Type_COMPARISON_ANISOTROPIC: return GL_LINEAR;
+		case Filter_Type_MINIMUM_MIN_MAG_MIP_POINT: return GL_NEAREST;
+		case Filter_Type_MINIMUM_MIN_MAG_POINT_MIP_LINEAR: return GL_NEAREST_MIPMAP_LINEAR;
+		case Filter_Type_MINIMUM_MIN_POINT_MAG_LINEAR_MIP_POINT: return GL_LINEAR_MIPMAP_NEAREST;
+		case Filter_Type_MINIMUM_MIN_POINT_MAG_MIP_LINEAR: return GL_LINEAR_MIPMAP_LINEAR;
+		case Filter_Type_MINIMUM_MIN_LINEAR_MAG_MIP_POINT: return GL_NEAREST_MIPMAP_NEAREST;
+		case Filter_Type_MINIMUM_MIN_LINEAR_MAG_POINT_MIP_LINEAR: return GL_NEAREST_MIPMAP_LINEAR;
+		case Filter_Type_MINIMUM_MIN_MAG_LINEAR_MIP_POINT: return GL_LINEAR_MIPMAP_NEAREST;
+		case Filter_Type_MINIMUM_MIN_MAG_MIP_LINEAR: return GL_LINEAR;
+		case Filter_Type_MINIMUM_ANISOTROPIC: return GL_LINEAR;
+		case Filter_Type_MAXIMUM_MIN_MAG_MIP_POINT: return GL_NEAREST;
+		case Filter_Type_MAXIMUM_MIN_MAG_POINT_MIP_LINEAR: return GL_NEAREST_MIPMAP_LINEAR;
+		case Filter_Type_MAXIMUM_MIN_POINT_MAG_LINEAR_MIP_POINT: return GL_LINEAR_MIPMAP_NEAREST;
+		case Filter_Type_MAXIMUM_MIN_POINT_MAG_MIP_LINEAR: return GL_LINEAR_MIPMAP_LINEAR;
+		case Filter_Type_MAXIMUM_MIN_LINEAR_MAG_MIP_POINT: return GL_NEAREST_MIPMAP_NEAREST;
+		case Filter_Type_MAXIMUM_MIN_LINEAR_MAG_POINT_MIP_LINEAR: return GL_NEAREST_MIPMAP_LINEAR;
+		case Filter_Type_MAXIMUM_MIN_MAG_LINEAR_MIP_POINT: return GL_LINEAR_MIPMAP_NEAREST;
+		case Filter_Type_MAXIMUM_MIN_MAG_MIP_LINEAR: return GL_LINEAR;
+		case Filter_Type_MAXIMUM_ANISOTROPIC:
+			return GL_LINEAR;
 
-struct Attribute_Layout {
-	GLuint  index;
-	GLint   count;
-	ptrsize offset;
-};
+			invalid_default_case();
+	}
 
-struct Uniform {
-	GLint location;
-	int   type;
-};
-
-constexpr int MAX_IN_ATTRIBUTE_LAYOUT = 10;
-constexpr int MAX_UNIFORM             = 10;
-constexpr int MAX_TEXTURES            = 5;
-
-struct Shader {
-	GLuint id;
-
-	Render_Options option;
-
-	Attribute_Layout in_attributes[MAX_IN_ATTRIBUTE_LAYOUT];
-	u32              in_attribute_count;
-	ptrsize          stride;
-
-	Uniform uniforms[MAX_UNIFORM];
-	u32     uniform_count;
-
-	Uniform textures[MAX_TEXTURES];
-	u32     texture_count;
-};
-
-static constexpr int HDR_TEXTURE_SLOT_INDEX = 5;
-
-static const String hdr_vertex_shader_code = R"(
-#version 330 core
-const vec2 vertices[] = {
-	vec2(-1.0, -1.0), vec2(-1.0,  1.0), vec2( 1.0,  1.0),
-	vec2(-1.0, -1.0), vec2( 1.0,  1.0), vec2( 1.0, -1.0)
-};
-const vec2 texture_coords[] = {
-	vec2(0, 0), vec2(0, 1), vec2(1, 1),
-	vec2(0, 0), vec2(1, 1), vec2(1, 0)
+	return 0;
 };
 
-out vec2 tex_coord;
+bool karma_to_gl_filter_comparison(Filter_Type filter) {
+	switch (filter) {
+		case Filter_Type_MIN_MAG_MIP_POINT:
+		case Filter_Type_MIN_MAG_POINT_MIP_LINEAR:
+		case Filter_Type_MIN_POINT_MAG_LINEAR_MIP_POINT:
+		case Filter_Type_MIN_POINT_MAG_MIP_LINEAR:
+		case Filter_Type_MIN_LINEAR_MAG_MIP_POINT:
+		case Filter_Type_MIN_LINEAR_MAG_POINT_MIP_LINEAR:
+		case Filter_Type_MIN_MAG_LINEAR_MIP_POINT:
+		case Filter_Type_MIN_MAG_MIP_LINEAR:
+		case Filter_Type_ANISOTROPIC:
+		case Filter_Type_MINIMUM_MIN_MAG_MIP_POINT:
+		case Filter_Type_MINIMUM_MIN_MAG_POINT_MIP_LINEAR:
+		case Filter_Type_MINIMUM_MIN_POINT_MAG_LINEAR_MIP_POINT:
+		case Filter_Type_MINIMUM_MIN_POINT_MAG_MIP_LINEAR:
+		case Filter_Type_MINIMUM_MIN_LINEAR_MAG_MIP_POINT:
+		case Filter_Type_MINIMUM_MIN_LINEAR_MAG_POINT_MIP_LINEAR:
+		case Filter_Type_MINIMUM_MIN_MAG_LINEAR_MIP_POINT:
+		case Filter_Type_MINIMUM_MIN_MAG_MIP_LINEAR:
+		case Filter_Type_MINIMUM_ANISOTROPIC:
+		case Filter_Type_MAXIMUM_MIN_MAG_MIP_POINT:
+		case Filter_Type_MAXIMUM_MIN_MAG_POINT_MIP_LINEAR:
+		case Filter_Type_MAXIMUM_MIN_POINT_MAG_LINEAR_MIP_POINT:
+		case Filter_Type_MAXIMUM_MIN_POINT_MAG_MIP_LINEAR:
+		case Filter_Type_MAXIMUM_MIN_LINEAR_MAG_MIP_POINT:
+		case Filter_Type_MAXIMUM_MIN_LINEAR_MAG_POINT_MIP_LINEAR:
+		case Filter_Type_MAXIMUM_MIN_MAG_LINEAR_MIP_POINT:
+		case Filter_Type_MAXIMUM_MIN_MAG_MIP_LINEAR:
+		case Filter_Type_MAXIMUM_ANISOTROPIC:
+			return false;
 
-void main() {
-	gl_Position = vec4(vertices[gl_VertexID], 0, 1);
-	tex_coord   = texture_coords[gl_VertexID];
+		case Filter_Type_COMPARISON_MIN_MAG_MIP_POINT:
+		case Filter_Type_COMPARISON_MIN_MAG_POINT_MIP_LINEAR:
+		case Filter_Type_COMPARISON_MIN_POINT_MAG_LINEAR_MIP_POINT:
+		case Filter_Type_COMPARISON_MIN_POINT_MAG_MIP_LINEAR:
+		case Filter_Type_COMPARISON_MIN_LINEAR_MAG_MIP_POINT:
+		case Filter_Type_COMPARISON_MIN_LINEAR_MAG_POINT_MIP_LINEAR:
+		case Filter_Type_COMPARISON_MIN_MAG_LINEAR_MIP_POINT:
+		case Filter_Type_COMPARISON_MIN_MAG_MIP_LINEAR:
+		case Filter_Type_COMPARISON_ANISOTROPIC:
+			return true;
+	}
+
+	return false;
 }
-)";
 
-static const String hdr_fragment_shader_code = R"(
-#version 330 core
+static const GLenum MAP_TYPE_KARMA_TO_OPENGL[] = {
+	GL_READ_ONLY,
+	GL_WRITE_ONLY,
+	GL_READ_WRITE,
+	GL_READ_WRITE,
+};
+static_assert(static_count(MAP_TYPE_KARMA_TO_OPENGL) == Map_Type_COUNT, "The mapping from Map_Type to OpenGL Buffer map type is invalid");
 
-layout (location = 0) out vec4 fragment_color;
+static const GLenum INDEX_TYPE_KARMA_TO_OPENGL[] {
+	GL_UNSIGNED_BYTE,
+	GL_UNSIGNED_SHORT,
+	GL_UNSIGNED_INT,
+};
+static_assert(static_count(INDEX_TYPE_KARMA_TO_OPENGL) == Index_Type_COUNT, "The mapping from Index_Type to OpenGL index type is invalid");
 
-in vec2 tex_coord;
-uniform sampler2D hdr_texture;
+static const GLenum PRIMITIVE_KARMA_TO_OPENGL[] = {
+	GL_TRIANGLES,
+	GL_POINTS,
+	GL_LINES,
+	GL_LINE_STRIP,
+	GL_TRIANGLES,
+	GL_TRIANGLE_STRIP,
+};
+static_assert(static_count(PRIMITIVE_KARMA_TO_OPENGL) == Primitive_COUNT, "The mapping from Primitive to OpenGL draw primitive is invalid");
 
-void main() {
-	vec4 hdr_color = texture(hdr_texture, tex_coord);
-	fragment_color = hdr_color;
+static const GLenum FILL_MODE_KARMA_TO_OPENGL[] {
+	GL_LINE,
+	GL_FILL,
+};
+static_assert(static_count(FILL_MODE_KARMA_TO_OPENGL) == Fill_Mode_COUNT, "The mapping from Fill_Mode to OpenGL polygon mode is invalid");
+
+static const GLenum CULL_MODE_KARMA_TO_OPENGL[] = {
+	0,
+	GL_FRONT,
+	GL_BACK,
+};
+static_assert(static_count(CULL_MODE_KARMA_TO_OPENGL) == Cull_Mode_COUNT, "The mapping from Cull_Mode to OpenGL cull mode is invalid");
+
+static const GLenum FRONT_FACE_KARMA_TO_OPENGL[] = {
+	GL_CW,
+	GL_CCW,
+};
+static_assert(static_count(FRONT_FACE_KARMA_TO_OPENGL) == Front_Face_COUNT, "The mapping from Front_Face to OpenGL front face is invalid");
+
+static const GLenum BLEND_KARMA_TO_OPENGL[] = {
+	GL_ZERO,
+	GL_ONE,
+	GL_SRC_COLOR,
+	GL_ONE_MINUS_SRC_COLOR,
+	GL_SRC_ALPHA,
+	GL_ONE_MINUS_SRC_ALPHA,
+	GL_DST_ALPHA,
+	GL_ONE_MINUS_DST_ALPHA,
+	GL_DST_COLOR,
+	GL_ONE_MINUS_DST_COLOR,
+	GL_SRC_ALPHA_SATURATE,
+	GL_SRC1_COLOR,
+	GL_ONE_MINUS_SRC1_COLOR,
+	GL_SRC1_ALPHA,
+	GL_ONE_MINUS_SRC1_ALPHA,
+};
+static_assert(static_count(BLEND_KARMA_TO_OPENGL) == Blend_COUNT, "The mapping from Blend to OpenGL blend is invalid");
+
+static const GLenum BLEND_OP_KARMA_TO_OPENGL[] = {
+	GL_FUNC_ADD,
+	GL_FUNC_SUBTRACT,
+	GL_FUNC_REVERSE_SUBTRACT,
+	GL_MIN,
+	GL_MAX,
+};
+static_assert(static_count(BLEND_OP_KARMA_TO_OPENGL) == Blend_Operation_COUNT, "The mapping from Blend_Operation to OpenGL blend operation is invalid");
+
+GLenum type_karma_to_opengl(Data_Format fmt) {
+	switch (fmt) {
+		case Data_Format_RGBA32_FLOAT: return GL_FLOAT;
+		case Data_Format_RGBA32_UINT: return GL_UNSIGNED_INT;
+		case Data_Format_RGBA32_SINT: return GL_INT;
+		case Data_Format_RGB32_FLOAT: return GL_FLOAT;
+		case Data_Format_RGB32_SINT: return GL_INT;
+		case Data_Format_RGBA16_SINT: return GL_SHORT;
+		case Data_Format_RG32_FLOAT: return GL_FLOAT;
+		case Data_Format_RG32_UINT: return GL_UNSIGNED_INT;
+		case Data_Format_RG32_SINT: return GL_INT;
+		case Data_Format_RGBA8_UINT: return GL_UNSIGNED_BYTE;
+		case Data_Format_RGBA8_SINT: return GL_BYTE;
+		case Data_Format_RG16_SINT: return GL_SHORT;
+		case Data_Format_R32_FLOAT: return GL_FLOAT;
+		case Data_Format_R32_UINT: return GL_UNSIGNED_INT;
+		case Data_Format_R32_SINT: return GL_INT;
+		case Data_Format_RG8_UINT: return GL_UNSIGNED_BYTE;
+		case Data_Format_RG8_SINT: return GL_BYTE;
+		case Data_Format_R16_SINT: return GL_SHORT;
+		case Data_Format_R8_UINT: return GL_UNSIGNED_BYTE;
+		case Data_Format_R8_SINT:
+			return GL_BYTE;
+
+			invalid_default_case();
+	}
+
+	return 0;
 }
-)";
+
+GLint count_karma_to_opengl(Data_Format fmt) {
+	switch (fmt) {
+		case Data_Format_RGBA32_FLOAT: return 4;
+		case Data_Format_RGBA32_UINT: return 4;
+		case Data_Format_RGBA32_SINT: return 4;
+		case Data_Format_RGB32_FLOAT: return 3;
+		case Data_Format_RGB32_SINT: return 3;
+		case Data_Format_RGBA16_SINT: return 4;
+		case Data_Format_RG32_FLOAT: return 2;
+		case Data_Format_RG32_UINT: return 2;
+		case Data_Format_RG32_SINT: return 2;
+		case Data_Format_RGBA8_UINT: return 4;
+		case Data_Format_RGBA8_SINT: return 4;
+		case Data_Format_RG16_SINT: return 2;
+		case Data_Format_R32_FLOAT: return 1;
+		case Data_Format_R32_UINT: return 1;
+		case Data_Format_R32_SINT: return 1;
+		case Data_Format_RG8_UINT: return 2;
+		case Data_Format_RG8_SINT: return 2;
+		case Data_Format_R16_SINT: return 1;
+		case Data_Format_R8_UINT: return 1;
+		case Data_Format_R8_SINT:
+			return 1;
+
+			invalid_default_case();
+	}
+
+	return 0;
+}
+
+struct Internal_Input_Element_Layout {
+	GLint      count;
+	GLenum     type;
+	u32        offset;
+	Input_Type input_type;
+	u32        instance_data_step_rate;
+};
+
+struct Internal_Pipeline {
+	GLuint                         program;
+	Internal_Input_Element_Layout *input_layouts;
+	u32                            input_layouts_count;
+	u32                            uniform_block_index;
+
+	GLenum primitive;
+	GLenum fill_mode;
+	GLenum cull_mode;
+	GLenum front_face;
+	bool   scissor_enable;
+
+	bool      blend_enable;
+	GLenum    blend_src;
+	GLenum    blend_dst;
+	GLenum    blend_op;
+	GLenum    blend_src_alpha;
+	GLenum    blend_dst_alpha;
+	GLenum    blend_op_alpha;
+	GLboolean blend_mask[4];
+
+	bool      depth_test_enable;
+	GLboolean depth_write_mask;
+	GLenum    depth_compare;
+};
 
 struct Gfx_Platform_OpenGL : public Gfx_Platform {
 	Handle platform_handle;
 	void * gl_context;
 
 	u32 multisamples;
+	u32 framebuffer_w;
+	u32 framebuffer_h;
 
-	GLuint hdr_shader;
-
-	//s32 framebuffer_w;
-	//s32 framebuffer_h;
-	u32 render_view_w;
-	u32 render_view_h;
-
-	GLuint vertex_array;
-	//GLuint color_attachment;
-	//GLuint depth_attachment;
-	//GLuint framebuffer;
-
-	Shader *current_shader            = 0;
-	GLenum  current_render_index_type = 0;
+	GLuint             vertex_array;
+	Internal_Pipeline *current_pipeline = 0;
+	GLenum             current_index_type;
 
 	int (*set_swap_interval_func)(int interval);
 	int (*get_swap_interval_func)();
 
-	virtual void *get_backend_device() final override {
-		return 0;
-	}
-	virtual void *get_backend_context() final override {
-		return gl_context;
-	};
-
-	virtual void resize_render_view(u32 w, u32 h) final override;
-	virtual void get_render_view_size(u32 *w, u32 *h) final override;
-
-	virtual u32  get_maximum_supported_multisamples() final override;
-	virtual u32  get_multisamples() final override;
-
-	virtual void set_swap_interval(s32 interval) final override;
-	virtual s32  get_swap_interval() final override;
-
-	virtual void present() final override;
-
-	virtual Handle create_texture2d(s32 w, s32 h, s32 n, const u8 *pixels, Sampler_Params *params = 0) final override;
-	virtual void   update_texture2d(Handle texture, s32 xoffset, s32 yoffset, s32 w, s32 h, s32 n, u8 *pixels) final override;
-	virtual void   destroy_texture2d(Handle texture) final override;
-
-	virtual Handle create_vertex_buffer(Buffer_Type type, u32 size, void *data) final override;
-	virtual Handle create_index_buffer(Buffer_Type type, u32 size, void *data) final override;
-
-	virtual void update_vertex_buffer(Handle handle, u32 offset, u32 size, void *data) final override;
-	virtual void update_index_buffer(Handle handle, u32 offset, u32 size, void *data) final override;
-
-	virtual void *map_vertex_buffer(Handle handle, u32 offset, u32 length) final override;
-	virtual void  unmap_vertex_buffer(Handle handle) final override;
-	virtual void *map_index_buffer(Handle handle, u32 offset, u32 length) final override;
-	virtual void  unmap_index_buffer(Handle handle) final override;
-
-	virtual void destroy_vertex_buffer(Handle handle) final override;
-	virtual void destroy_index_buffer(Handle handle) final override;
-
-	virtual Framebuffer create_framebuffer(s32 width, s32 height, Texture_Format color, Texture_Format depth) final override;
-	virtual void        destroy_framebuffer(Framebuffer framebuffer) final override;
-
-	virtual Handle create_shader(String src) final override;
-	virtual void   destroy_shader(Handle shader) final override;
-
-	virtual void bind_framebuffer(Framebuffer *framebuffer) final override;
-	virtual void set_render_region(Render_Region &region) final override;
-	virtual void clear(Clear_Flag flags, Color4 color) final override;
-
-	virtual void begin(Handle shader, u8 *data, ptrsize size) final override;
-	virtual void end() final override;
-
-	virtual void bind_vertex_buffer(Handle buffer) final override;
-	virtual void bind_index_buffer(Handle buffer, Render_Index_Type type) final override;
-	virtual void bind_texture(Handle texture, u32 index) final override;
-	virtual void draw(ptrsize count, ptrsize offset) final override;
-	virtual void draw_indexed(ptrsize count, ptrsize offset, ptrsize base_vertex) final override;
-
-	virtual void destroy() final override;
-
-	GLuint create_shader(GLenum type, const String source);
-
-	Gfx_Platform_Info get_info();
+	Gfx_Platform_Info info;
 
 	bool load_library(s32 vsync);
 	void swap_buffers();
 
-	static void debug_output(GLenum        source,
-							 GLenum        type,
-							 GLuint        id,
-							 GLenum        severity,
-							 GLsizei       msgLength,
-							 const GLchar *message,
-							 const void *  user_param);
+	virtual void *get_backend_device() final override {
+		return 0;
+	}
+
+	virtual void *get_backend_context() final override {
+		return gl_context;
+	}
+
+	virtual const Gfx_Platform_Info *get_info() final override {
+		return &info;
+	}
+
+	virtual void on_client_resize(u32 w, u32 h) final override {
+		framebuffer_w = w;
+		framebuffer_h = h;
+	}
+
+	virtual void get_render_view_size(u32 *w, u32 *h) final override {
+		*w = framebuffer_w;
+		*h = framebuffer_h;
+	}
+
+	virtual Framebuffer get_default_framebuffer() final override {
+		Framebuffer result;
+		result.id.h32 = 0;
+		return result;
+	}
+
+	virtual u32 get_maximum_supported_multisamples() final override {
+		GLint multisamples;
+		glGetIntegerv(GL_MAX_SAMPLES, &multisamples);
+		return (u32)multisamples;
+	}
+
+	virtual u32 get_multisamples() final override {
+		return multisamples;
+	}
+
+	virtual void set_swap_interval(s32 interval) final override {
+		if (set_swap_interval_func) {
+			set_swap_interval_func(interval);
+		}
+	}
+
+	virtual s32 get_swap_interval() final override {
+		if (get_swap_interval_func) {
+			return get_swap_interval_func();
+		} else {
+			return 0;
+		}
+	}
+
+	virtual void present() final override {
+		swap_buffers();
+	}
+
+	virtual Texture2d create_texture2d(u32 w, u32 h, u32 channels, Data_Format format, const u8 **pixels, Buffer_Usage usage, Texture_Bind_Flags flags, u32 mip_levels) final override {
+		GLenum gl_format;
+
+		switch (channels) {
+			case 1: gl_format = GL_RED;
+			case 2: gl_format = GL_RG;
+			case 3: gl_format = GL_RGB;
+			case 4: gl_format = GL_RGBA;
+		}
+
+		GLint gl_internal_format = INT_FMT_KARMA_TO_OPENGL[format];
+
+		GLuint texid;
+
+		u32 mip_counts = mip_levels;
+		if (mip_counts == 0) {
+			mip_counts = (u32)min_value(log2(w), log2(h)) + 1;
+		}
+
+		GLenum target;
+
+		// TODO: Multisampling
+		if ((flags & Texture_Bind_DEPTH_STENCIL) == Texture_Bind_DEPTH_STENCIL) {
+			glGenRenderbuffers(1, &texid);
+			glBindRenderbuffer(GL_RENDERBUFFER, texid);
+			glRenderbufferStorage(GL_RENDERBUFFER, gl_internal_format, w, h);
+			target = GL_RENDERBUFFER;
+		} else if ((flags & Texture_Bind_RENDER_TARGET) && (flags & Texture_Bind_SHADER_RESOURCE) != Texture_Bind_SHADER_RESOURCE) {
+			glGenRenderbuffers(1, &texid);
+			glBindRenderbuffer(GL_RENDERBUFFER, texid);
+			glRenderbufferStorage(GL_RENDERBUFFER, gl_internal_format, w, h);
+			target = GL_RENDERBUFFER;
+		} else {
+			glGenTextures(1, &texid);
+			glBindTexture(GL_TEXTURE_2D, texid);
+			for (u32 i = 0; i < mip_counts; ++i) {
+				glTexImage2D(GL_TEXTURE_2D, i, gl_internal_format, w >> i, h >> i, 0, gl_format, GL_UNSIGNED_BYTE, pixels ? pixels[i] : NULL);
+			}
+			target = GL_TEXTURE_2D;
+		}
+
+		Texture2d result = {};
+		result.id.l32    = target;
+		result.id.h32    = texid;
+		return result;
+	}
+
+	virtual void update_texture2d(Texture2d texture, u32 xoffset, u32 yoffset, u32 w, u32 h, u32 n, u8 *pixels) final override {
+		GLenum gl_format;
+
+		switch (n) {
+			case 1: gl_format = GL_RED;
+			case 2: gl_format = GL_RG;
+			case 3: gl_format = GL_RGB;
+			case 4: gl_format = GL_RGBA;
+		}
+
+		glBindTexture(GL_TEXTURE_2D, texture.id.h32);
+		glTexSubImage2D(GL_TEXTURE_2D, 0, xoffset, yoffset, w, h, gl_format, GL_UNSIGNED_BYTE, pixels);
+	}
+
+	virtual void destroy_texture2d(Texture2d texture) final override {
+		auto id = texture.id.h32;
+
+		GLenum target = texture.id.l32;
+
+		switch (target) {
+			case GL_RENDERBUFFER: glDeleteFramebuffers(1, &texture.id.h32); break;
+			case GL_TEXTURE_2D: glDeleteTextures(1, &texture.id.h32); break;
+			case GL_TEXTURE_2D_MULTISAMPLE:
+				glDeleteTextures(1, &texture.id.h32);
+				break;
+
+				invalid_default_case();
+		}
+	}
+
+	virtual void generate_mipmaps(Texture_View view) final override {
+		glBindTexture(GL_TEXTURE_2D, view.id.h32);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+
+	virtual Texture_View create_texture_view(Texture2d texture) final override {
+		// we just copy the same id
+		Texture_View view;
+		view.id = texture.id;
+		return view;
+	}
+
+	virtual Depth_Stencil_View create_depth_stencil_view(Texture2d texture) final override {
+		// we just copy the same id
+		Depth_Stencil_View view;
+		view.id = texture.id;
+		return view;
+	}
+
+	virtual Framebuffer create_framebuffer(u32 count, Texture2d *textures, Texture_View *views, Depth_Stencil_View *depth_view) final override {
+		GLuint id;
+		glGenFramebuffers(1, &id);
+		glBindFramebuffer(GL_FRAMEBUFFER, id);
+
+		for (u32 index = 0; index < count; ++index) {
+			if (views[index].id.l32 != GL_RENDERBUFFER) {
+				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + index, views[index].id.l32, views[index].id.h32, 0);
+			} else {
+				glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + index, views[index].id.l32, views[index].id.h32);
+			}
+		}
+
+		if (depth_view) {
+			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_view->id.h32);
+		}
+
+		GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+		if (status != GL_FRAMEBUFFER_COMPLETE) {
+			system_log(LOG_WARNING, "OpenGL", "Incomplete framebuffer!");
+			trigger_breakpoint();
+		}
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+		Framebuffer result;
+		result.id.h32 = id;
+		return result;
+	}
+
+	virtual void destroy_texture_view(Texture_View view) final override {
+		// do nothing; we destory textures instead
+	}
+
+	virtual void destroy_depth_stencil_view(Depth_Stencil_View view) final override {
+		// do nothing; we destory textures instead
+	}
+
+	virtual void destroy_framebuffer(Framebuffer handle) final override {
+		glDeleteFramebuffers(1, &handle.id.h32);
+	}
+
+	virtual Sampler create_sampler(const Filter &filter, const Texture_Address &address, const Level_Of_Detail &lod) final override {
+		GLuint id;
+		glGenSamplers(1, &id);
+
+		// glSamplerParameteri(id, GL_TEXTURE_MAX_ANISOTROPY_EXT, filter.max_anisotropy); TODO: Use this extension is available
+		glSamplerParameteri(id, GL_TEXTURE_MIN_FILTER, karma_to_gl_texture_min_filter(filter.type));
+		glSamplerParameteri(id, GL_TEXTURE_MAG_FILTER, karma_to_gl_texture_mag_filter(filter.type));
+
+		if (karma_to_gl_filter_comparison(filter.type)) {
+			glSamplerParameteri(id, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+			glSamplerParameteri(id, GL_TEXTURE_COMPARE_FUNC, COMP_FUNC_KARMA_TO_OPENGL[filter.comparison]);
+		} else {
+			glSamplerParameteri(id, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+		}
+
+		glSamplerParameteri(id, GL_TEXTURE_WRAP_S, TEX_ADD_KARMA_TO_OPENGL[address.u]);
+		glSamplerParameteri(id, GL_TEXTURE_WRAP_T, TEX_ADD_KARMA_TO_OPENGL[address.v]);
+		glSamplerParameteri(id, GL_TEXTURE_WRAP_R, TEX_ADD_KARMA_TO_OPENGL[address.w]);
+		glSamplerParameterfv(id, GL_TEXTURE_BORDER_COLOR, address.border_color.m);
+
+		glSamplerParameteri(id, GL_TEXTURE_MIN_LOD, (GLint)lod.min);
+		glSamplerParameteri(id, GL_TEXTURE_MAX_LOD, (GLint)lod.max);
+		glSamplerParameteri(id, GL_TEXTURE_LOD_BIAS, (GLint)lod.bias);
+
+		Sampler result;
+		result.id.h32 = id;
+		return result;
+	}
+
+	virtual void destory_sampler(Sampler sampler) final override {
+		glDeleteSamplers(1, &sampler.id.h32);
+	}
+
+	virtual Vertex_Buffer create_vertex_buffer(Buffer_Usage usage, Cpu_Access_Flags flags, u32 size, void *data) final override {
+		GLuint id;
+		glGenBuffers(1, &id);
+		glBindBuffer(GL_ARRAY_BUFFER, id);
+		glBufferData(GL_ARRAY_BUFFER, size, data, BUFFER_USAGE_KARMA_TO_OPENGL[usage]);
+
+		Vertex_Buffer buffer;
+		buffer.id.h32 = id;
+		return buffer;
+	}
+
+	virtual Index_Buffer create_index_buffer(Buffer_Usage usage, Cpu_Access_Flags flags, u32 size, void *data) final override {
+		GLuint id;
+
+		glGenBuffers(1, &id);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, id);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, data, BUFFER_USAGE_KARMA_TO_OPENGL[usage]);
+
+		Index_Buffer buffer;
+		buffer.id.h32 = id;
+		return buffer;
+	}
+
+	virtual Uniform_Buffer create_uniform_buffer(Buffer_Usage usage, Cpu_Access_Flags flags, u32 size, void *data) final override {
+		GLuint id;
+
+		glGenBuffers(1, &id);
+		glBindBuffer(GL_UNIFORM_BUFFER, id);
+		glBufferData(GL_UNIFORM_BUFFER, size, data, BUFFER_USAGE_KARMA_TO_OPENGL[usage]);
+
+		Uniform_Buffer buffer;
+		buffer.id.h32 = id;
+		buffer.id.l32 = size;
+		return buffer;
+	}
+
+	virtual void destroy_vertex_buffer(Vertex_Buffer buffer) final override {
+		glDeleteBuffers(1, &buffer.id.h32);
+	}
+
+	virtual void destroy_index_buffer(Index_Buffer buffer) final override {
+		glDeleteBuffers(1, &buffer.id.h32);
+	}
+
+	virtual void destroy_uniform_buffer(Uniform_Buffer buffer) final override {
+		glDeleteBuffers(1, &buffer.id.h32);
+	}
+
+	virtual void update_vertex_buffer(Vertex_Buffer buffer, u32 offset, u32 size, void *data) final override {
+		glBindBuffer(GL_ARRAY_BUFFER, buffer.id.h32);
+		glBufferSubData(GL_ARRAY_BUFFER, offset, size, data);
+	}
+
+	virtual void update_index_buffer(Index_Buffer buffer, u32 offset, u32 size, void *data) final override {
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer.id.h32);
+		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, offset, size, data);
+	}
+
+	virtual void update_uniform_buffer(Uniform_Buffer buffer, void *data) final override {
+		glBindBuffer(GL_UNIFORM_BUFFER, buffer.id.h32);
+		glBufferSubData(GL_UNIFORM_BUFFER, 0, buffer.id.l32, data);
+	}
+
+	virtual void *map(Vertex_Buffer buffer, Map_Type type) final override {
+		glBindBuffer(GL_ARRAY_BUFFER, buffer.id.h32);
+		return glMapBuffer(GL_ARRAY_BUFFER, MAP_TYPE_KARMA_TO_OPENGL[type]);
+	}
+
+	virtual void *map(Index_Buffer buffer, Map_Type type) final override {
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer.id.h32);
+		return glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, MAP_TYPE_KARMA_TO_OPENGL[type]);
+	}
+
+	virtual void *map(Uniform_Buffer buffer, Map_Type type) final override {
+		glBindBuffer(GL_UNIFORM_BUFFER, buffer.id.h32);
+		return glMapBuffer(GL_UNIFORM_BUFFER, MAP_TYPE_KARMA_TO_OPENGL[type]);
+	}
+
+	virtual void unmap(Vertex_Buffer buffer) final override {
+		glBindBuffer(GL_ARRAY_BUFFER, buffer.id.h32);
+		glUnmapBuffer(GL_ARRAY_BUFFER);
+	}
+
+	virtual void unmap(Index_Buffer buffer) final override {
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer.id.h32);
+		glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
+	}
+
+	virtual void unmap(Uniform_Buffer buffer) final override {
+		glBindBuffer(GL_UNIFORM_BUFFER, buffer.id.h32);
+		glUnmapBuffer(GL_UNIFORM_BUFFER);
+	}
+
+	GLuint create_shader(GLenum type, String source) {
+		GLuint shaderid = glCreateShader(type);
+
+		const GLchar *sources[] = {
+			(GLchar *)source.data,
+		};
+		const GLint lens[] = {
+			(GLint)source.count
+		};
+
+		glShaderSource(shaderid, static_count(sources), sources, lens);
+
+		glCompileShader(shaderid);
+
+		GLint compiled;
+		glGetShaderiv(shaderid, GL_COMPILE_STATUS, &compiled);
+		if (compiled != GL_TRUE) {
+			GLsizei log_length = 0;
+			GLchar  message[2048];
+			glGetShaderInfoLog(shaderid, 2048, &log_length, message);
+			const char *shader_type_name = "-unknown-";
+			if (type == GL_VERTEX_SHADER)
+				shader_type_name = "Vertex";
+			else if (type == GL_FRAGMENT_SHADER)
+				shader_type_name = "Fragment";
+			else if (type == GL_GEOMETRY_SHADER)
+				shader_type_name = "Geometry";
+			system_log(LOG_WARNING, "OpenGL", "OpenGL %s Shader compilation failed: %s", shader_type_name, message);
+		}
+
+		return shaderid;
+	}
+
+	virtual Render_Pipeline create_render_pipeline(const Shader_Info &    shader,
+												   const Rasterizer_Info &rasterizer,
+												   const Blend_Info &     blend,
+												   const Depth_Info &     depth,
+												   const String           name) final override {
+		void *             mem      = mallocate(sizeof(Internal_Pipeline) + sizeof(Input_Element_Layout) * shader.input_layouts_count);
+		Internal_Pipeline *pipeline = (Internal_Pipeline *)mem;
+		pipeline->input_layouts     = (Internal_Input_Element_Layout *)((u8 *)mem + sizeof(Internal_Pipeline));
+
+		GLuint vertex   = create_shader(GL_VERTEX_SHADER, shader.vertex);
+		GLuint fragment = create_shader(GL_FRAGMENT_SHADER, shader.pixel);
+
+		GLuint program = glCreateProgram();
+		glAttachShader(program, vertex);
+		glAttachShader(program, fragment);
+		glLinkProgram(program);
+
+		glDeleteShader(vertex);
+		glDeleteShader(fragment);
+
+		GLint program_linked;
+		glGetProgramiv(program, GL_LINK_STATUS, &program_linked);
+		if (program_linked != GL_TRUE) {
+			GLsizei log_length = 0;
+			GLchar  message[2048];
+			glGetProgramInfoLog(program, 2048, &log_length, message);
+			system_log(LOG_WARNING, "OpenGL", "OpenGL Shader program link failed (%s) in pipeline %s", message, tto_cstring(name));
+			glDeleteProgram(program);
+			delete pipeline;
+			return {};
+		}
+
+		pipeline->program             = program;
+		pipeline->input_layouts_count = shader.input_layouts_count;
+		pipeline->uniform_block_index = 0;
+
+		auto dst = pipeline->input_layouts;
+		auto src = shader.input_layouts;
+		for (u32 index = 0; index < shader.input_layouts_count; ++index) {
+			dst->type                    = type_karma_to_opengl(src->format);
+			dst->count                   = count_karma_to_opengl(src->format);
+			dst->offset                  = src->offset;
+			dst->input_type              = src->input_type;
+			dst->instance_data_step_rate = src->instance_data_step_rate;
+			dst += 1;
+			src += 1;
+		}
+
+		pipeline->primitive      = PRIMITIVE_KARMA_TO_OPENGL[rasterizer.primitive];
+		pipeline->fill_mode      = FILL_MODE_KARMA_TO_OPENGL[rasterizer.fill_mode];
+		pipeline->cull_mode      = CULL_MODE_KARMA_TO_OPENGL[rasterizer.cull_mode];
+		pipeline->front_face     = FRONT_FACE_KARMA_TO_OPENGL[rasterizer.front_face];
+		pipeline->scissor_enable = rasterizer.scissor_enable;
+
+		pipeline->blend_enable    = blend.enable;
+		pipeline->blend_src       = BLEND_KARMA_TO_OPENGL[blend.src];
+		pipeline->blend_dst       = BLEND_KARMA_TO_OPENGL[blend.dst];
+		pipeline->blend_op        = BLEND_OP_KARMA_TO_OPENGL[blend.op];
+		pipeline->blend_src_alpha = BLEND_KARMA_TO_OPENGL[blend.src_alpha];
+		pipeline->blend_dst_alpha = BLEND_KARMA_TO_OPENGL[blend.dst_alpha];
+		pipeline->blend_op_alpha  = BLEND_OP_KARMA_TO_OPENGL[blend.op_alpha];
+		pipeline->blend_mask[0]   = ((blend.mask & Blend_Mask_R) == Blend_Mask_R);
+		pipeline->blend_mask[1]   = ((blend.mask & Blend_Mask_B) == Blend_Mask_B);
+		pipeline->blend_mask[2]   = ((blend.mask & Blend_Mask_B) == Blend_Mask_B);
+		pipeline->blend_mask[3]   = ((blend.mask & Blend_Mask_A) == Blend_Mask_A);
+
+		pipeline->depth_test_enable = depth.test_enable;
+		pipeline->depth_write_mask  = depth.write_mask == Depth_Write_Mask_ALL ? GL_TRUE : GL_FALSE;
+		pipeline->depth_compare     = COMP_FUNC_KARMA_TO_OPENGL[depth.compare];
+
+		Render_Pipeline result;
+		result.id.hptr = pipeline;
+
+		return result;
+	}
+
+	virtual void destory_render_pipeline(Render_Pipeline handle) final override {
+		Internal_Pipeline *pipeline = (Internal_Pipeline *)handle.id.hptr;
+		glDeleteProgram(pipeline->program);
+		mfree(pipeline);
+	}
+
+	virtual void begin_drawing(Framebuffer framebuffer, Clear_Flags flags, Color4 color, r32 depth, u8 stencil) final override {
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebuffer.id.h32);
+
+		u32 gl_flags = 0;
+		if (flags & Clear_COLOR) gl_flags |= GL_COLOR_BUFFER_BIT;
+		if (flags & Clear_DEPTH) gl_flags |= GL_DEPTH_BUFFER_BIT;
+		if (flags & Clear_STENCIL) gl_flags |= GL_STENCIL_BUFFER_BIT;
+
+		if (gl_flags) {
+			glClearDepth(depth);
+			glClearStencil(stencil);
+			glClearColor(vec_expand4(color));
+
+			glClear(gl_flags);
+		}
+	}
+
+	virtual void end_drawing() final override {
+		current_pipeline = NULL;
+	}
+
+	virtual void cmd_set_viewport(r32 x, r32 y, r32 w, r32 h) final override {
+		glViewport((GLint)x, (GLint)y, (GLsizei)w, (GLsizei)h);
+	}
+
+	virtual void cmd_bind_pipeline(Render_Pipeline handle) final override {
+		Internal_Pipeline *pipeline = (Internal_Pipeline *)handle.id.hptr;
+
+		if (pipeline != current_pipeline) {
+			current_pipeline = pipeline;
+
+			glUseProgram(pipeline->program);
+
+			glPolygonMode(GL_FRONT_AND_BACK, pipeline->fill_mode);
+			if (pipeline->cull_mode != 0) {
+				glEnable(GL_CULL_FACE);
+				glCullFace(pipeline->cull_mode);
+				glFrontFace(pipeline->front_face);
+			} else {
+				glDisable(GL_CULL_FACE);
+			}
+
+			if (pipeline->scissor_enable) {
+				glEnable(GL_SCISSOR_TEST);
+			} else {
+				glDisable(GL_SCISSOR_TEST);
+			}
+
+			if (pipeline->blend_enable) {
+				glEnable(GL_BLEND);
+				glBlendFuncSeparate(pipeline->blend_src, pipeline->blend_dst, pipeline->blend_src_alpha, pipeline->blend_dst_alpha);
+				glBlendEquationSeparate(pipeline->blend_op, pipeline->blend_op_alpha);
+			} else {
+				glDisable(GL_BLEND);
+			}
+
+			glColorMask(pipeline->blend_mask[0], pipeline->blend_mask[1], pipeline->blend_mask[2], pipeline->blend_mask[3]);
+
+			if (pipeline->depth_test_enable) {
+				glEnable(GL_DEPTH_TEST);
+				glDepthMask(pipeline->depth_write_mask);
+				glDepthFunc(pipeline->depth_compare);
+			} else {
+				glDisable(GL_DEPTH_TEST);
+			}
+
+			pipeline->uniform_block_index = 0;
+		}
+	}
+
+	virtual void cmd_bind_vertex_buffer(Vertex_Buffer buffer, u32 stride) final override {
+		glBindBuffer(GL_ARRAY_BUFFER, buffer.id.h32);
+
+		assert(current_pipeline);
+
+		auto count  = current_pipeline->input_layouts_count;
+		auto layout = current_pipeline->input_layouts;
+
+		for (u32 index = 0; index < count; ++index) {
+			glEnableVertexAttribArray(index);
+			size_t offset = layout->offset;
+			glVertexAttribPointer(index, layout->count, layout->type, GL_FALSE, stride, (void *)offset);
+			if (layout->input_type == Input_Type_PER_VERTEX_DATA) {
+				glVertexAttribDivisor(index, 0);
+			} else {
+				glVertexAttribDivisor(index, layout->instance_data_step_rate);
+			}
+			layout += 1;
+		}
+	}
+
+	virtual void cmd_bind_index_buffer(Index_Buffer buffer, Index_Type type) final override {
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer.id.h32);
+		current_index_type = INDEX_TYPE_KARMA_TO_OPENGL[type];
+	}
+
+	virtual void cmd_bind_vs_uniform_buffers(u32 slot_index, u32 count, Uniform_Buffer *buffer) final override {
+		assert(current_pipeline);
+		auto ubo_index = current_pipeline->uniform_block_index;
+		for (u32 index = 0; index < count; ++index) {
+			glUniformBlockBinding(current_pipeline->program, slot_index + index, ubo_index + index);
+			glBindBufferBase(GL_UNIFORM_BUFFER, ubo_index + index, buffer[index].id.h32);
+		}
+		current_pipeline->uniform_block_index += count;
+	}
+
+	virtual void cmd_bind_ps_uniform_buffers(u32 slot_index, u32 count, Uniform_Buffer *buffer) final override {
+		cmd_bind_vs_uniform_buffers(slot_index, count, buffer); // it's the same for opengl
+	}
+
+	virtual void cmd_bind_textures(u32 slot_index, u32 count, Texture_View *views) final override {
+		for (u32 index = 0; index < count; ++index) {
+			glActiveTexture(GL_TEXTURE0 + index + slot_index);
+			glBindTexture(views[index].id.l32, views[index].id.h32);
+		}
+	}
+
+	virtual void cmd_bind_samplers(u32 slot_index, u32 count, Sampler *samplers) final override {
+		for (u32 index = 0; index < count; ++index) {
+			glBindSampler(slot_index + index, samplers[index].id.h32);
+		}
+	}
+
+	virtual void cmd_draw(u32 vertex_count, u32 start_vertex) final override {
+		glDrawArrays(current_pipeline->primitive, start_vertex, vertex_count);
+	}
+
+	virtual void cmd_draw_indexed(u32 index_count, u32 start_index, u32 base_vertex) final override {
+		size_t offset = start_index;
+		glDrawElementsBaseVertex(current_pipeline->primitive, index_count, current_index_type, (void *)offset, base_vertex);
+	}
+
+	virtual void destroy() final override {
+		glDeleteVertexArrays(1, &vertex_array);
+	}
+
+	static void debug_output(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei msgLength, const GLchar *message, const void *user_param) {
+		// TODO: Ignoring these low severity messages during development
+		// These messages probably need to be studied properly and resolved
+
+		// MSG: API_ID_REDUNDANT_FBO performance warning has been generated.
+		// Redundant state change in glBindFramebuffer API call, FBO 1, "", already bound.
+		if (id == 8) return;
+
+		const char *srcstr  = 0;
+		const char *typestr = 0;
+		const char *svrstr  = 0;
+		int         log     = LOG_INFO;
+
+		switch (source) {
+			case GL_DEBUG_SOURCE_API_ARB:
+				srcstr = "API";
+				break;
+			case GL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB:
+				srcstr = "ARB";
+				break;
+			case GL_DEBUG_SOURCE_SHADER_COMPILER_ARB:
+				srcstr = "COMPILER";
+				break;
+			case GL_DEBUG_SOURCE_THIRD_PARTY_ARB:
+				srcstr = "3RD PARTY";
+				break;
+			case GL_DEBUG_SOURCE_APPLICATION_ARB:
+				srcstr = "APP";
+				break;
+			case GL_DEBUG_SOURCE_OTHER_ARB:
+				srcstr = "OTHER";
+				break;
+			default:
+				srcstr = "UNKNOWN";
+		}
+
+		switch (type) {
+			case GL_DEBUG_TYPE_ERROR_ARB:
+				typestr = "ERROR";
+				break;
+			case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB:
+				typestr = "DEPRECATED BEHAVIOR";
+				break;
+			case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB:
+				typestr = "UNDEFINED BEHAVIOR";
+				break;
+			case GL_DEBUG_TYPE_PORTABILITY_ARB:
+				typestr = "PORTABILITY";
+				break;
+			case GL_DEBUG_TYPE_PERFORMANCE_ARB:
+				typestr = "PERFORMANCE";
+				break;
+			case GL_DEBUG_TYPE_OTHER_ARB:
+				typestr = "OTHER";
+				break;
+			default:
+				typestr = "UNKNOWN";
+		}
+
+		switch (severity) {
+			case GL_DEBUG_SEVERITY_HIGH_ARB:
+				svrstr = "HIGH";
+				log    = LOG_ERROR;
+				break;
+			case GL_DEBUG_SEVERITY_MEDIUM_ARB:
+				svrstr = "MEDIUM";
+				log    = LOG_WARNING;
+				break;
+			case GL_DEBUG_SEVERITY_LOW_ARB:
+				svrstr = "LOW";
+				log    = LOG_WARNING;
+				break;
+			default:
+				svrstr = "UNKNOWN";
+		}
+
+		system_log(LOG_WARNING, "OpenGL", "=======================================");
+		system_log(LOG_WARNING, "OpenGL", "   Code: %u", id);
+		system_log(LOG_WARNING, "OpenGL", "   Source: %s", srcstr);
+		system_log(LOG_WARNING, "OpenGL", "   Type: %s", typestr);
+		system_log(LOG_WARNING, "OpenGL", "   Severity: %s", svrstr);
+		system_log(LOG_WARNING, "OpenGL", "   Message: %s", message);
+		system_log(LOG_WARNING, "OpenGL", "=======================================");
+
+		trigger_if(log == LOG_ERROR);
+	}
 };
 
 Gfx_Platform *create_opengl_context(Handle platform, s32 vsync, s32 multisamples) {
@@ -197,771 +1086,46 @@ Gfx_Platform *create_opengl_context(Handle platform, s32 vsync, s32 multisamples
 		return &gfx;
 	}
 
-#if defined(BUILD_DEBUG) || defined(BUILD_DEVELOPER)
+#	if defined(BUILD_DEBUG) || defined(BUILD_DEVELOPER)
 	{
-		system_log(LOG_INFO, "Gfx:OpenGL", "GL_DEBUG_OUTPUT_SYNCHRONOUS enabled.");
+		system_log(LOG_INFO, "OpenGL", "GL_DEBUG_OUTPUT_SYNCHRONOUS enabled.");
 		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
 		glDebugMessageCallbackARB((GLDEBUGPROCKHR)Gfx_Platform_OpenGL::debug_output, 0);
 		glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
 		// Disable notification message callback
 		glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_LOW_ARB, 0, nullptr, GL_FALSE);
 	}
-#endif
+#	endif
 
-	gfx.info = gfx.get_info();
-	system_log(LOG_INFO, "Gfx:OpenGL", "gfx.info.vendor               = %s", gfx.info.vendor);
-	system_log(LOG_INFO, "Gfx:OpenGL", "gfx.info.renderer             = %s", gfx.info.renderer);
-	system_log(LOG_INFO, "Gfx:OpenGL", "gfx.info.version              = %s", gfx.info.version);
-	system_log(LOG_INFO, "Gfx:OpenGL", "gfx.info.shading_lang_version = %s", gfx.info.shading_lang_version);
+	gfx.info.vendor       = (const char *)glGetString(GL_VENDOR);
+	gfx.info.renderer     = (const char *)glGetString(GL_RENDERER);
+	gfx.info.version      = (const char *)glGetString(GL_VERSION);
+	gfx.info.shading_lang = (const char *)glGetString(GL_SHADING_LANGUAGE_VERSION);
 
 	glGenVertexArrays(1, &gfx.vertex_array);
 	glBindVertexArray(gfx.vertex_array);
 
-	// Defaults
 	glEnable(GL_MULTISAMPLE);
-	glFrontFace(GL_CW);
-
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	//glGenTextures(1, &gfx.color_attachment);
-	//glGenRenderbuffers(1, &gfx.depth_attachment);
-	//glGenFramebuffers(1, &gfx.framebuffer);
-
-	auto size = system_get_client_size();
-	gfx.resize_render_view(size.x, size.y);
-
-	auto program         = glCreateProgram();
-	auto vertex_shader   = gfx.create_shader(GL_VERTEX_SHADER, hdr_vertex_shader_code);
-	auto fragment_shader = gfx.create_shader(GL_FRAGMENT_SHADER, hdr_fragment_shader_code);
-
-	glAttachShader(program, vertex_shader);
-	glAttachShader(program, fragment_shader);
-	glLinkProgram(program);
-
-	GLint program_linked;
-	glGetProgramiv(program, GL_LINK_STATUS, &program_linked);
-	if (program_linked != GL_TRUE) {
-		GLsizei log_length = 0;
-		GLchar  message[2048];
-		glGetProgramInfoLog(program, 2048, &log_length, message);
-		system_log(LOG_WARNING, "Gfx:OpenGL", "OpenGL Shader program link failed (%s):", message);
-		glDeleteProgram(program);
-		return 0;
-	}
-
-	glDeleteShader(vertex_shader);
-	glDeleteShader(fragment_shader);
-
-	auto hdr_texture = glGetUniformLocation(program, "hdr_texture");
-	assert(hdr_texture != -1);
-	glUseProgram(program);
-	glUniform1i(hdr_texture, HDR_TEXTURE_SLOT_INDEX);
-	glUseProgram(0);
-
-	gfx.hdr_shader = program;
+	glEnable(GL_FRAMEBUFFER_SRGB);
 
 	gfx.backend = Render_Backend_OPENGL;
 
 	return &gfx;
 }
 
-void Gfx_Platform_OpenGL::resize_render_view(u32 w, u32 h) {
-	if (w > 0 && h > 0) {
-		//glBindTexture(GL_TEXTURE_2D, color_attachment);
-		//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		//glBindTexture(GL_TEXTURE_2D, 0);
-		//
-		//glBindRenderbuffer(GL_RENDERBUFFER, depth_attachment);
-		//glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT32F, w, h);
-		//glBindRenderbuffer(GL_RENDERBUFFER, 0);
-		//
-		//glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-		//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, color_attachment, 0);
-		//glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_attachment);
-		//
-		//GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-		//if (status != GL_FRAMEBUFFER_COMPLETE) {
-		//	trigger_breakpoint();
-		//	system_fatal_error("OpenGL: Framebuffer failed to resize!");
-		//}
-		//
-		//glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	}
-
-	render_view_w = w;
-	render_view_h = h;
-}
-
-void Gfx_Platform_OpenGL::get_render_view_size(u32 *w, u32 *h) {
-	*w = render_view_w;
-	*h = render_view_h;
-}
-
-u32 Gfx_Platform_OpenGL::get_maximum_supported_multisamples() {
-	GLint multisamples;
-	glGetIntegerv(GL_MAX_SAMPLES, &multisamples);
-	return (u32)multisamples;
-}
-
-u32 Gfx_Platform_OpenGL::get_multisamples() {
-	return multisamples;
-}
-
-void Gfx_Platform_OpenGL::set_swap_interval(s32 interval) {
-	if (set_swap_interval_func) {
-		set_swap_interval_func(interval);
-	}
-}
-
-s32 Gfx_Platform_OpenGL::get_swap_interval() {
-	if (get_swap_interval_func) {
-		return get_swap_interval_func();
-	} else {
-		return 0;
-	}
-}
-
-void Gfx_Platform_OpenGL::present() {
-	//if (framebuffer_w > 0 && framebuffer_h > 0) {
-	//	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	//
-	//	glUseProgram(hdr_shader);
-	//	glActiveTexture(GL_TEXTURE0 + HDR_TEXTURE_SLOT_INDEX);
-	//	glBindTexture(GL_TEXTURE_2D, color_attachment);
-	//	glDrawArrays(GL_TRIANGLES, 0, 6);
-	//	glBindTexture(GL_TEXTURE_2D, 0);
-	//
-	//	current_shader = 0; // reset shader because we used glUseProgram
-	//}
-
-	swap_buffers();
-}
-
-Handle Gfx_Platform_OpenGL::create_texture2d(s32 w, s32 h, s32 n, const u8 *pixels, Sampler_Params *params) {
-	assert(n == 1 || n == 3 || n == 4);
-
-	GLenum min_filter  = GL_NEAREST;
-	GLenum mag_filter  = GL_LINEAR;
-	GLenum wrap_s      = GL_REPEAT;
-	GLenum wrap_t      = GL_REPEAT;
-	bool   gen_mipmaps = false;
-	bool   srgb        = false;
-
-	if (params) {
-		switch (params->min_filter) {
-			case Texture_Filter_LINEAR:
-				min_filter = GL_LINEAR;
-				break;
-			case Texture_Filter_NEAREST:
-				min_filter = GL_NEAREST;
-				break;
-				invalid_default_case();
-		}
-		switch (params->mag_filter) {
-			case Texture_Filter_LINEAR:
-				mag_filter = GL_LINEAR;
-				break;
-			case Texture_Filter_NEAREST:
-				mag_filter = GL_NEAREST;
-				break;
-				invalid_default_case();
-		}
-		switch (params->wrap_s) {
-			case Texture_Wrap_CLAMP:
-				wrap_s = GL_CLAMP_TO_EDGE;
-				break;
-			case Texture_Wrap_REPEAT:
-				wrap_s = GL_REPEAT;
-				break;
-				invalid_default_case();
-		}
-		switch (params->wrap_t) {
-			case Texture_Wrap_CLAMP:
-				wrap_t = GL_CLAMP_TO_EDGE;
-				break;
-			case Texture_Wrap_REPEAT:
-				wrap_t = GL_REPEAT;
-				break;
-				invalid_default_case();
-		}
-		gen_mipmaps = params->gen_mipmaps;
-		srgb        = params->srgb;
-	}
-
-	GLenum format, internal_format;
-	if (n == 1) {
-		format          = GL_RED;
-		internal_format = GL_RED;
-		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	} else if (n == 3) {
-		format = GL_RGB;
-		if (srgb) {
-			internal_format = GL_SRGB8;
-		} else {
-			internal_format = GL_RGB8;
-		}
-	} else if (n == 4) {
-		format = GL_RGBA;
-		if (srgb) {
-			internal_format = GL_SRGB8_ALPHA8;
-		} else {
-			internal_format = GL_RGBA8;
-		}
-	}
-
-	GLuint texid;
-	glGenTextures(1, &texid);
-	glBindTexture(GL_TEXTURE_2D, texid);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, min_filter);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, mag_filter);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap_s);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap_t);
-	glTexImage2D(GL_TEXTURE_2D, 0, internal_format, w, h, 0, format, GL_UNSIGNED_BYTE, pixels);
-
-	if (gen_mipmaps) {
-		glGenerateMipmap(GL_TEXTURE_2D);
-	}
-
-	Handle hres = {};
-	hres.h32    = texid;
-	return hres;
-}
-
-void Gfx_Platform_OpenGL::update_texture2d(Handle texture, s32 xoffset, s32 yoffset, s32 w, s32 h, s32 n, u8 *pixels) {
-	assert(n == 1 || n == 3 || n == 4);
-
-	GLenum format;
-	if (n == 1) {
-		format = GL_RED;
-		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	} else if (n == 3) {
-		format = GL_RGB;
-	} else if (n == 4) {
-		format = GL_RGBA;
-	}
-
-	glBindTexture(GL_TEXTURE_2D, texture.h32);
-	glTexSubImage2D(GL_TEXTURE_2D, 0, xoffset, yoffset, w, h, format, GL_UNSIGNED_BYTE, pixels);
-}
-
-void Gfx_Platform_OpenGL::destroy_texture2d(Handle texture) {
-	glDeleteTextures(1, &texture.h32);
-}
-
-Handle Gfx_Platform_OpenGL::create_vertex_buffer(Buffer_Type type, u32 size, void *data) {
-	GLenum usage;
-	if (type == Buffer_Type_DYNAMIC) {
-		usage = GL_DYNAMIC_DRAW;
-	} else if (type == Buffer_Type_STATIC) {
-		usage = GL_STATIC_DRAW;
-	} else {
-		assert(!"Invalid code path");
-	}
-
-	GLuint id;
-	glGenBuffers(1, &id);
-	glBindBuffer(GL_ARRAY_BUFFER, id);
-	glBufferData(GL_ARRAY_BUFFER, size, data, usage);
-
-	Handle result = {};
-	result.h32    = id;
-	return result;
-}
-
-Handle Gfx_Platform_OpenGL::create_index_buffer(Buffer_Type type, u32 size, void *data) {
-	GLenum usage;
-	if (type == Buffer_Type_DYNAMIC) {
-		usage = GL_DYNAMIC_DRAW;
-	} else if (type == Buffer_Type_STATIC) {
-		usage = GL_STATIC_DRAW;
-	} else {
-		assert(!"Invalid code path");
-	}
-
-	GLuint id;
-	glGenBuffers(1, &id);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, id);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, data, usage);
-
-	Handle result = {};
-	result.h32    = id;
-	return result;
-}
-
-void Gfx_Platform_OpenGL::update_vertex_buffer(Handle handle, u32 offset, u32 size, void *data) {
-	glBindBuffer(GL_ARRAY_BUFFER, handle.h32);
-	glBufferSubData(GL_ARRAY_BUFFER, offset, size, data);
-}
-
-void Gfx_Platform_OpenGL::update_index_buffer(Handle handle, u32 offset, u32 size, void *data) {
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, handle.h32);
-	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, offset, size, data);
-}
-
-void *Gfx_Platform_OpenGL::map_vertex_buffer(Handle handle, u32 offset, u32 length) {
-	glBindBuffer(GL_ARRAY_BUFFER, handle.h32);
-	return glMapBufferRange(GL_ARRAY_BUFFER, offset, length, GL_MAP_WRITE_BIT);
-}
-
-void Gfx_Platform_OpenGL::unmap_vertex_buffer(Handle handle) {
-	(void)handle;
-	glUnmapBuffer(GL_ARRAY_BUFFER);
-}
-
-void *Gfx_Platform_OpenGL::map_index_buffer(Handle handle, u32 offset, u32 length) {
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, handle.h32);
-	return glMapBufferRange(GL_ELEMENT_ARRAY_BUFFER, offset, length, GL_MAP_WRITE_BIT);
-}
-
-void Gfx_Platform_OpenGL::unmap_index_buffer(Handle handle) {
-	(void)handle;
-	glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
-}
-
-void Gfx_Platform_OpenGL::destroy_vertex_buffer(Handle handle) {
-	glDeleteBuffers(1, &handle.h32);
-}
-
-void Gfx_Platform_OpenGL::destroy_index_buffer(Handle handle) {
-	glDeleteBuffers(1, &handle.h32);
-}
-
-Framebuffer Gfx_Platform_OpenGL::create_framebuffer(int width, int height, Texture_Format color, Texture_Format depth) {
-	assert(color || depth);
-
-	GLuint color_map = 0;
-	GLuint depth_map = 0;
-
-	if (color != Texture_Format_UNKNOWN) {
-		glGenTextures(1, &color_map);
-		glBindTexture(GL_TEXTURE_2D, color_map);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glTexImage2D(GL_TEXTURE_2D, 0, COLOR_INTERNAL_FORMATS[color], width, height, 0, COLOR_FORMATS[color], GL_FLOAT, NULL);
-		glBindTexture(GL_TEXTURE_2D, 0);
-	}
-
-	if (depth != Texture_Format_UNKNOWN) {
-		glGenRenderbuffers(1, &depth_map);
-		glBindRenderbuffer(GL_RENDERBUFFER, depth_map);
-		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
-		glBindRenderbuffer(GL_RENDERBUFFER, 0);
-	}
-
-	GLuint id;
-	glGenFramebuffers(1, &id);
-	glBindFramebuffer(GL_FRAMEBUFFER, id);
-	glBindFramebuffer(GL_FRAMEBUFFER, id);
-	if (color != Texture_Format_UNKNOWN) {
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, color_map, 0);
-	}
-	if (depth != Texture_Format_UNKNOWN) {
-		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_map);
-	}
-
-	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-	if (status != GL_FRAMEBUFFER_COMPLETE) {
-		system_log(LOG_WARNING, "Gfx:OpenGL", "Incomplete framebuffer!");
-		trigger_breakpoint();
-	}
-
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-	Framebuffer f;
-	f.id.h32       = id;
-	f.color_format = color;
-	f.depth_format = depth;
-	f.color.h32    = color_map;
-	f.depth.h32    = depth_map;
-	f.width        = width;
-	f.height       = height;
-	return f;
-}
-
-void Gfx_Platform_OpenGL::destroy_framebuffer(Framebuffer framebuffer) {
-	glDeleteFramebuffers(1, &framebuffer.id.h32);
-	glDeleteTextures(1, &framebuffer.color.h32);
-	glDeleteTextures(1, &framebuffer.depth.h32);
-}
-
-void Gfx_Platform_OpenGL::destroy() {
-	//glDeleteTextures(1, &color_attachment);
-	//glDeleteRenderbuffers(1, &depth_attachment);
-	//glDeleteFramebuffers(1, &framebuffer);
-
-	glDeleteVertexArrays(1, &vertex_array);
-}
-
-Handle Gfx_Platform_OpenGL::create_shader(String src) {
-	Shader *shader = new Shader;
-
-	Istream stream  = istream(src.data, src.count);
-	auto    options = *istream_consume(&stream, Render_Options);
-
-	struct Attr_Info {
-		int index;
-		int count;
-	};
-
-	Array_View<Attr_Info> atts;
-	atts.count = *istream_consume(&stream, s64);
-	atts.data  = (Attr_Info *)istream_consume_size(&stream, sizeof(Attr_Info) * atts.count);
-
-	shader->in_attribute_count = (u32)atts.count;
-	shader->stride             = 0;
-	assert(shader->in_attribute_count < MAX_IN_ATTRIBUTE_LAYOUT);
-
-	for (s64 index = 0; index < atts.count; ++index) {
-		auto &a                             = atts[index];
-		shader->in_attributes[index].index  = a.index;
-		shader->in_attributes[index].count  = a.count;
-		shader->in_attributes[index].offset = shader->stride;
-		shader->stride += a.count * sizeof(float);
-	}
-
-	String vertex_src, fragment_src;
-
-	vertex_src.count   = *istream_consume(&stream, s64);
-	vertex_src.data    = (u8 *)istream_consume_size(&stream, vertex_src.count);
-	fragment_src.count = *istream_consume(&stream, s64);
-	fragment_src.data  = (u8 *)istream_consume_size(&stream, fragment_src.count);
-
-	GLuint vertex   = create_shader(GL_VERTEX_SHADER, vertex_src);
-	GLuint fragment = create_shader(GL_FRAGMENT_SHADER, fragment_src);
-	defer {
-		glDeleteShader(vertex);
-		glDeleteShader(fragment);
-	};
-
-	GLuint program = glCreateProgram();
-	glAttachShader(program, vertex);
-	glAttachShader(program, fragment);
-	glLinkProgram(program);
-
-	GLint program_linked;
-	glGetProgramiv(program, GL_LINK_STATUS, &program_linked);
-	if (program_linked != GL_TRUE) {
-		GLsizei log_length = 0;
-		GLchar  message[2048];
-		glGetProgramInfoLog(program, 2048, &log_length, message);
-		system_log(LOG_WARNING, "Gfx:OpenGL", "OpenGL Shader program link failed (%s):", message);
-		glDeleteProgram(program);
-		Handle result = {};
-		return result;
-	}
-
-	shader->id     = program;
-	shader->option = options;
-
-	String string;
-
-	shader->uniform_count = (u32)(*istream_consume(&stream, s64));
-	assert(shader->uniform_count < MAX_UNIFORM);
-	for (u32 i = 0; i < shader->uniform_count; ++i) {
-		string.count                 = *istream_consume(&stream, s64);
-		string.data                  = (u8 *)istream_consume_size(&stream, string.count);
-		const char *name             = tto_cstring(string);
-		shader->uniforms[i].location = glGetUniformLocation(shader->id, name);
-		shader->uniforms[i].type     = *istream_consume(&stream, int);
-	}
-
-	shader->texture_count = (u32)(*istream_consume(&stream, s64));
-	assert(shader->texture_count < MAX_UNIFORM);
-	for (u32 i = 0; i < shader->texture_count; ++i) {
-		string.count                 = *istream_consume(&stream, s64);
-		string.data                  = (u8 *)istream_consume_size(&stream, string.count);
-		const char *name             = tto_cstring(string);
-		shader->textures[i].location = glGetUniformLocation(shader->id, name);
-		shader->textures[i].type     = *istream_consume(&stream, int);
-	}
-
-	Handle handle = {};
-	handle.hptr   = shader;
-	return handle;
-}
-
-void Gfx_Platform_OpenGL::destroy_shader(Handle handle) {
-	Shader *shader = (Shader *)handle.hptr;
-	glDeleteProgram(shader->id);
-	delete shader;
-}
-
-void Gfx_Platform_OpenGL::bind_framebuffer(Framebuffer *pframebuffer) {
-	if (pframebuffer)
-		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, pframebuffer->id);
-	else
-		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-}
-
-void Gfx_Platform_OpenGL::set_render_region(Render_Region &region) {
-	auto &v = region.viewport;
-	auto &s = region.scissor;
-	glViewport(v.x, v.y, v.w, v.h);
-	glScissor(s.x, s.y, s.w, s.h);
-}
-
-void Gfx_Platform_OpenGL::clear(Clear_Flag flags, Color4 color) {
-	GLenum f = 0;
-	if (flags & Clear_Flag_COLOR) f |= GL_COLOR_BUFFER_BIT;
-	if (flags & Clear_Flag_DEPTH) f |= GL_DEPTH_BUFFER_BIT;
-	if (flags & Clear_Flag_STENCIL) f |= GL_STENCIL_BUFFER_BIT;
-	if (f) {
-		glClearColor(color.x, color.y, color.z, color.w);
-		glClear(f);
-	}
-}
-
-void Gfx_Platform_OpenGL::begin(Handle hshader, u8 *data, ptrsize size) {
-	Shader *shader = (Shader *)hshader.hptr;
-
-	if (shader != current_shader) {
-		current_shader = shader;
-
-		glUseProgram(shader->id);
-
-		if (shader->option & Render_Option_BLEND) {
-			glEnable(GL_BLEND);
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		} else {
-			glDisable(GL_BLEND);
-		}
-
-		if (shader->option & Render_Option_CULL)
-			glEnable(GL_CULL_FACE);
-		else
-			glDisable(GL_CULL_FACE);
-
-		if (shader->option & Render_Option_DEPTH_TEST)
-			glEnable(GL_DEPTH_TEST);
-		else
-			glDisable(GL_DEPTH_TEST);
-	}
-
-	Istream stream = istream(data, (s64)size);
-
-	for (u32 i = 0; i < shader->uniform_count; ++i) {
-		auto &u = shader->uniforms[i];
-
-		r32 *data;
-
-		switch (u.type) {
-			case 1:
-				data = istream_consume(&stream, r32);
-				glUniform1fv(u.location, 1, data);
-				break;
-
-			case 2:
-				data = (r32 *)(istream_consume(&stream, Vec2));
-				glUniform2fv(u.location, 1, data);
-				break;
-
-			case 3:
-				data = (r32 *)(istream_consume(&stream, Vec3));
-				glUniform3fv(u.location, 1, data);
-				break;
-
-			case 4:
-				data = (r32 *)(istream_consume(&stream, Vec4));
-				glUniform4fv(u.location, 1, data);
-				break;
-
-			case 16:
-				data = (r32 *)(istream_consume(&stream, Mat4));
-				glUniformMatrix4fv(u.location, 1, GL_TRUE, data);
-				break;
-
-			default:
-				invalid_code_path();
-				break;
-		}
-	}
-
-	assert(istream_eof(&stream));
-}
-
-void Gfx_Platform_OpenGL::end() {
-	current_render_index_type = 0;
-}
-
-void Gfx_Platform_OpenGL::bind_vertex_buffer(Handle buffer) {
-	glBindBuffer(GL_ARRAY_BUFFER, buffer.h32);
-
-	for (u32 i = 0; i < current_shader->in_attribute_count; ++i) {
-		auto &in = current_shader->in_attributes[i];
-		glVertexAttribPointer(in.index, in.count, GL_FLOAT, GL_FALSE, (GLsizei)current_shader->stride, (void *)in.offset);
-		glEnableVertexAttribArray(in.index);
-	}
-}
-
-void Gfx_Platform_OpenGL::bind_index_buffer(Handle buffer, Render_Index_Type type) {
-	assert(type != Render_Index_Type_NONE);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer.h32);
-	current_render_index_type = INDEX_TYPE[type];
-}
-
-void Gfx_Platform_OpenGL::bind_texture(Handle texture, u32 index) {
-	assert(index < current_shader->texture_count);
-	glActiveTexture(GL_TEXTURE0 + index);
-	glBindTexture(GL_TEXTURE_2D, texture.h32);
-	glUniform1i(current_shader->textures[index].location, (int)index);
-}
-
-void Gfx_Platform_OpenGL::draw(ptrsize count, ptrsize offset) {
-	glDrawArrays(GL_TRIANGLES, (GLint)offset, (GLsizei)count);
-}
-
-void Gfx_Platform_OpenGL::draw_indexed(ptrsize count, ptrsize offset, ptrsize base_vertex) {
-	assert(current_render_index_type != 0);
-	glDrawElementsBaseVertex(GL_TRIANGLES, (GLsizei)count, current_render_index_type, (void *)offset, (GLint)base_vertex);
-}
-
-Gfx_Platform_Info Gfx_Platform_OpenGL::get_info() {
-	Gfx_Platform_Info info    = {};
-	info.vendor               = glGetString(GL_VENDOR);
-	info.renderer             = glGetString(GL_RENDERER);
-	info.version              = glGetString(GL_VERSION);
-	info.shading_lang_version = glGetString(GL_SHADING_LANGUAGE_VERSION);
-	return info;
-}
-
-GLuint Gfx_Platform_OpenGL::create_shader(GLenum type, const String source) {
-	GLuint shaderid = glCreateShader(type);
-
-	const GLchar *sources[] = {
-		(GLchar *)source.data,
-	};
-	const GLint lens[] = {
-		(GLint)source.count
-	};
-
-	glShaderSource(shaderid, static_count(sources), sources, lens);
-
-	glCompileShader(shaderid);
-
-	GLint compiled;
-	glGetShaderiv(shaderid, GL_COMPILE_STATUS, &compiled);
-	if (compiled != GL_TRUE) {
-		GLsizei log_length = 0;
-		GLchar  message[2048];
-		glGetShaderInfoLog(shaderid, 2048, &log_length, message);
-		const char *shader_type_name = "-unknown-";
-		if (type == GL_VERTEX_SHADER)
-			shader_type_name = "Vertex";
-		else if (type == GL_FRAGMENT_SHADER)
-			shader_type_name = "Fragment";
-		else if (type == GL_GEOMETRY_SHADER)
-			shader_type_name = "Geometry";
-		system_log(LOG_WARNING, "Gfx:OpenGL", "OpenGL %s Shader compilation failed: %s", shader_type_name, message);
-	}
-
-	return shaderid;
-}
-
-void Gfx_Platform_OpenGL::debug_output(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei msgLength, const GLchar *message, const void *user_param) {
-	// TODO: Ignoring these low severity messages during development
-	// These messages probably need to be studied properly and resolved
-
-	// MSG: API_ID_REDUNDANT_FBO performance warning has been generated.
-	// Redundant state change in glBindFramebuffer API call, FBO 1, "", already bound.
-	if (id == 8) return;
-
-	const char *srcstr  = 0;
-	const char *typestr = 0;
-	const char *svrstr  = 0;
-	int         log     = LOG_INFO;
-
-	switch (source) {
-		case GL_DEBUG_SOURCE_API_ARB:
-			srcstr = "API";
-			break;
-		case GL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB:
-			srcstr = "ARB";
-			break;
-		case GL_DEBUG_SOURCE_SHADER_COMPILER_ARB:
-			srcstr = "COMPILER";
-			break;
-		case GL_DEBUG_SOURCE_THIRD_PARTY_ARB:
-			srcstr = "3RD PARTY";
-			break;
-		case GL_DEBUG_SOURCE_APPLICATION_ARB:
-			srcstr = "APP";
-			break;
-		case GL_DEBUG_SOURCE_OTHER_ARB:
-			srcstr = "OTHER";
-			break;
-		default:
-			srcstr = "UNKNOWN";
-	}
-
-	switch (type) {
-		case GL_DEBUG_TYPE_ERROR_ARB:
-			typestr = "ERROR";
-			break;
-		case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB:
-			typestr = "DEPRECATED BEHAVIOR";
-			break;
-		case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB:
-			typestr = "UNDEFINED BEHAVIOR";
-			break;
-		case GL_DEBUG_TYPE_PORTABILITY_ARB:
-			typestr = "PORTABILITY";
-			break;
-		case GL_DEBUG_TYPE_PERFORMANCE_ARB:
-			typestr = "PERFORMANCE";
-			break;
-		case GL_DEBUG_TYPE_OTHER_ARB:
-			typestr = "OTHER";
-			break;
-		default:
-			typestr = "UNKNOWN";
-	}
-
-	switch (severity) {
-		case GL_DEBUG_SEVERITY_HIGH_ARB:
-			svrstr = "HIGH";
-			log    = LOG_ERROR;
-			break;
-		case GL_DEBUG_SEVERITY_MEDIUM_ARB:
-			svrstr = "MEDIUM";
-			log    = LOG_WARNING;
-			break;
-		case GL_DEBUG_SEVERITY_LOW_ARB:
-			svrstr = "LOW";
-			log    = LOG_WARNING;
-			break;
-		default:
-			svrstr = "UNKNOWN";
-	}
-
-	system_log(LOG_WARNING, "Gfx:OpenGL", "=======================================");
-	system_log(LOG_WARNING, "Gfx:OpenGL", "   Code: %u", id);
-	system_log(LOG_WARNING, "Gfx:OpenGL", "   Source: %s", srcstr);
-	system_log(LOG_WARNING, "Gfx:OpenGL", "   Type: %s", typestr);
-	system_log(LOG_WARNING, "Gfx:OpenGL", "   Severity: %s", svrstr);
-	system_log(LOG_WARNING, "Gfx:OpenGL", "   Message: %s", message);
-	system_log(LOG_WARNING, "Gfx:OpenGL", "=======================================");
-
-	trigger_if(log == LOG_ERROR);
-}
-
-#if defined(TARGET_WINDOWS)
+#	if defined(TARGET_WINDOWS)
 
 //
 // Windows OpenGL Context Creation
 //
 
 // windows uh...
-#	ifdef APIENTRY
-#		undef APIENTRY
-#	endif
+#		ifdef APIENTRY
+#			undef APIENTRY
+#		endif
 
-#	define WIN32_LEAN_AND_MEAN
-#	include <Windows.h>
+#		define WIN32_LEAN_AND_MEAN
+#		include <Windows.h>
 
 static HDC wnd_dc;
 
@@ -1174,13 +1338,13 @@ bool Gfx_Platform_OpenGL::load_library(s32 vsync) {
 		WGL_CONTEXT_MAJOR_VERSION_ARB,
 		4,
 		WGL_CONTEXT_MINOR_VERSION_ARB,
-		0,
+		2,
 		WGL_CONTEXT_PROFILE_MASK_ARB,
 		WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
-#	if defined(BUILD_DEBUG) || defined(BUILD_DEVELOPER)
+#		if defined(BUILD_DEBUG) || defined(BUILD_DEVELOPER)
 		WGL_CONTEXT_FLAGS_ARB,
 		WGL_CONTEXT_DEBUG_BIT_ARB,
-#	endif
+#		endif
 		0,
 	};
 	HGLRC glContext = wgl_create_context_attribs_arb(wnd_dc, 0, gl_version_attribs);
@@ -1191,18 +1355,18 @@ bool Gfx_Platform_OpenGL::load_library(s32 vsync) {
 	if (set_swap_interval_func) {
 		if (vsync == -1) {
 			if (!set_swap_interval_func(vsync)) {
-				system_log(0, "Gfx:OpenGL", "Tearing (-1 swap interval) not supported.");
+				system_log(0, "OpenGL", "Tearing (-1 swap interval) not supported.");
 				set_swap_interval_func(1);
 			}
 		} else {
 			set_swap_interval_func(vsync);
 		}
 	} else {
-		system_log(LOG_WARNING, "Gfx:OpenGL", "WGL_EXT_swap_control extension is not present, Vertical swapping disabled");
+		system_log(LOG_WARNING, "OpenGL", "WGL_EXT_swap_control extension is not present, Vertical swapping disabled");
 	}
 
 	if (!gladLoadGL()) {
-		system_log(LOG_ERROR, "Gfx:OpenGL", "gladLoadGLLoader() - Failed to Load Proc Address for OpenGL");
+		system_log(LOG_ERROR, "OpenGL", "gladLoadGLLoader() - Failed to Load Proc Address for OpenGL");
 
 		// if error occurs do release resources and return
 		wgl_make_current(0, 0);
@@ -1215,6 +1379,6 @@ bool Gfx_Platform_OpenGL::load_library(s32 vsync) {
 	return true;
 }
 
-#endif
+#	endif
 
 #endif

@@ -51,12 +51,6 @@
     <ClCompile Include="src\tokenizer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\build.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\prebuild.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\lin_maths.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -198,6 +192,7 @@
       <Filter>Source Files</Filter>
     </None>
     <None Include="src\shaders\quad.glsl" />
+    <None Include="src\shaders\hdr.glsl" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="todo.txt" />

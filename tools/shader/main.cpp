@@ -8,6 +8,7 @@
 struct Shader_Batch {
 	const char *name;
 	const char *dx11;
+	const char *opengl;
 };
 
 String read_entire_file(const char *file) {
@@ -65,6 +66,18 @@ void shader_process_batch(Shader_Batch &batch) {
 		}
 	}
 
+	if (batch.opengl) {
+		String content = read_entire_file(batch.opengl);
+		defer {
+			mfree(content.data);
+		};
+
+		if (glsl_compile_shader(batch.opengl, content, 420, &code)) {
+			write_code(&out, &elems, code, SHADER_LANG_GLSL);
+			free_shader_code(&code);
+		}
+	}
+
 	if (elems) {
 		FILE * file         = fopen(batch.name, "wb");
 		u32    magic_number = SHADER_MAGIC_NUMBER;
@@ -88,17 +101,18 @@ void build_batch(Array_View<Shader_Batch> batch) {
 	}
 }
 
-void add_batch(Array<Shader_Batch> *batch, const char *name, const char *dx11) {
-	auto b  = array_add(batch);
-	b->name = name;
-	b->dx11 = dx11;
+void add_batch(Array<Shader_Batch> *batch, const char *name, const char *dx11, const char *opengl) {
+	auto b    = array_add(batch);
+	b->name   = name;
+	b->dx11   = dx11;
+	b->opengl = opengl;
 }
 
 int system_main() {
 	Array<Shader_Batch> batch;
 
-	add_batch(&batch, "run_tree/data/shaders/quad.kfx", "src/shaders/quad.hlsl");
-	add_batch(&batch, "run_tree/data/shaders/hdr.kfx", "src/shaders/hdr.hlsl");
+	add_batch(&batch, "run_tree/data/shaders/quad.kfx", "src/shaders/quad.hlsl", "src/shaders/quad.glsl");
+	add_batch(&batch, "run_tree/data/shaders/hdr.kfx", "src/shaders/hdr.hlsl", "src/shaders/hdr.glsl");
 
 	build_batch(batch);
 

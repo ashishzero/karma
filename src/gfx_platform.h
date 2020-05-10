@@ -3,22 +3,23 @@
 #include "gfx_types.h"
 
 struct Gfx_Platform_Info {
-	const u8 *vendor;
-	const u8 *renderer;
-	const u8 *version;
-	const u8 *shading_lang_version;
+	const char *vendor;
+	const char *renderer;
+	const char *version;
+	const char *shading_lang;
 };
 
 struct Gfx_Platform {
-	Render_Backend    backend;
-	Gfx_Platform_Info info;
+	Render_Backend backend;
 
 	virtual void *get_backend_device()  = 0;
 	virtual void *get_backend_context() = 0;
 
-	virtual void               on_client_resize(u32 w, u32 h)       = 0;
-	virtual void               get_render_view_size(u32 *w, u32 *h) = 0;
-	virtual Render_Target_View get_default_render_target_view()     = 0;
+	virtual const Gfx_Platform_Info *get_info() = 0;
+
+	virtual void        on_client_resize(u32 w, u32 h)       = 0;
+	virtual void        get_render_view_size(u32 *w, u32 *h) = 0;
+	virtual Framebuffer get_default_framebuffer()            = 0;
 
 	virtual u32 get_maximum_supported_multisamples() = 0;
 	virtual u32 get_multisamples()                   = 0;
@@ -34,18 +35,16 @@ struct Gfx_Platform {
 
 	virtual void generate_mipmaps(Texture_View view) = 0;
 
-	virtual Texture_View       create_texture_view(Texture2d texture)       = 0;
-	virtual Render_Target_View create_render_target_view(Texture2d texture) = 0;
-	virtual Depth_Stencil_View create_depth_stencil_view(Texture2d texture) = 0;
+	virtual Texture_View       create_texture_view(Texture2d texture)                                                                  = 0;
+	virtual Depth_Stencil_View create_depth_stencil_view(Texture2d texture)                                                            = 0;
+	virtual Framebuffer        create_framebuffer(u32 count, Texture2d *textures, Texture_View *views, Depth_Stencil_View *depth_view) = 0;
 
 	virtual void destroy_texture_view(Texture_View view)             = 0;
-	virtual void destroy_render_target_view(Render_Target_View view) = 0;
 	virtual void destroy_depth_stencil_view(Depth_Stencil_View view) = 0;
+	virtual void destroy_framebuffer(Framebuffer framebuffer)        = 0;
 
-	virtual void get_texture2d_dimension(Texture2d texture, u32 *w, u32 *h) = 0;
-
-	virtual Sampler create_sampler(const Filter &filer, const Texture_Address &address, const Level_Of_Detail &lod) = 0;
-	virtual void    destory_sampler(Sampler sampler)                                                                = 0;
+	virtual Sampler create_sampler(const Filter &filter, const Texture_Address &address, const Level_Of_Detail &lod) = 0;
+	virtual void    destory_sampler(Sampler sampler)                                                                 = 0;
 
 	virtual Vertex_Buffer  create_vertex_buffer(Buffer_Usage usage, Cpu_Access_Flags flags, u32 size, void *data)  = 0;
 	virtual Index_Buffer   create_index_buffer(Buffer_Usage usage, Cpu_Access_Flags flags, u32 size, void *data)   = 0;
@@ -73,17 +72,14 @@ struct Gfx_Platform {
 												   const String           name)         = 0;
 	virtual void            destory_render_pipeline(Render_Pipeline pipeline) = 0;
 
-	virtual void begin_drawing(u32                 view_count,
-							   Render_Target_View *render_views,
-							   Depth_Stencil_View *depth_stencil_view,
-							   Clear_Flags         flags, Color4 color, r32 depth, u8 stencil) = 0;
-	virtual void end_drawing()                    = 0;
+	virtual void begin_drawing(Framebuffer framebuffer, Clear_Flags flags, Color4 color, r32 depth, u8 stencil) = 0;
+	virtual void end_drawing()                                                                                  = 0;
 
 	virtual void cmd_set_viewport(r32 x, r32 y, r32 w, r32 h) = 0;
 
 	virtual void cmd_bind_pipeline(Render_Pipeline pipeline)                                    = 0;
-	virtual void cmd_bind_vertex_buffer(Vertex_Buffer buffer, u32 offset, u32 stride)           = 0;
-	virtual void cmd_bind_index_buffer(Index_Buffer buffer, Index_Type type, u32 offset)        = 0;
+	virtual void cmd_bind_vertex_buffer(Vertex_Buffer buffer, u32 stride)                       = 0;
+	virtual void cmd_bind_index_buffer(Index_Buffer buffer, Index_Type type)                    = 0;
 	virtual void cmd_bind_vs_uniform_buffers(u32 slot_index, u32 count, Uniform_Buffer *buffer) = 0;
 	virtual void cmd_bind_ps_uniform_buffers(u32 slot_index, u32 count, Uniform_Buffer *buffer) = 0;
 	virtual void cmd_bind_textures(u32 slot_index, u32 count, Texture_View *views)              = 0;
@@ -95,6 +91,5 @@ struct Gfx_Platform {
 	virtual void destroy() = 0;
 };
 
-//Gfx_Platform *create_opengl_context(Handle platform, s32 vsync, s32 multisamples);
-
+Gfx_Platform *create_opengl_context(Handle platform, s32 vsync, s32 multisamples);
 Gfx_Platform *create_directx11_context(Handle platform, s32 vsync, s32 multisamples);

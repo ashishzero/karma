@@ -11,8 +11,7 @@ static constexpr int IM_DEFAULT_BEZIER_SEGMENTS = 48;
 bool gfx_create_context(Handle platform, Render_Backend backend, s32 vsync, u32 multisamples, u32 framebuffer_w = 1280, u32 framebuffer_h = 720);
 void gfx_destroy_context();
 
-void gfx_resize_render_targets(u32 width, u32 height);
-void gfx_get_render_target_size(u32 *width, u32 *height);
+void gfx_resize_framebuffer(u32 width, u32 height);
 
 Render_Backend gfx_render_backend();
 void *         gfx_render_device();
@@ -34,7 +33,7 @@ void gfx_present();
 
 void gfx_blit_hdr(r32 x, r32 y, r32 w, r32 h);
 
-void gfx_begin_drawing(Render_Target target, Clear_Flags flags, Color4 color = vec4(1), r32 depth = 1, u8 stencil = 0xff);
+void gfx_begin_drawing(Framebuffer_Type target, Clear_Flags flags, Color4 color = vec4(1), r32 depth = 1, u8 stencil = 0xff);
 void gfx_end_drawing();
 
 void gfx_viewport(r32 x, r32 y, r32 w, r32 h);

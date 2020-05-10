@@ -1010,7 +1010,6 @@ int system_main() {
 	};
 
 	fprintf(header, "#pragma once\n");
-	fprintf(header, "#include \"reflection.h\"\n\n");
 	fprintf(header, "\n%s", reflected_enum.data);
 	fprintf(header, "\n%s", reflected_struct.data);
 

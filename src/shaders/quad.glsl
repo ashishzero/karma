@@ -3,16 +3,18 @@
 
 ::Vertex
 
-layout (location = 0) in vec3 vertex_position;
-layout (location = 1) in vec2 vertex_tex_coord;
-layout (location = 2) in vec4 vertex_color;
+layout (location = 0) in vec3 POSITION;
+layout (location = 1) in vec2 TEX_COORD;
+layout (location = 2) in vec4 COLOR;
 
-uniform mat4 projection;
+layout(row_major, std140, binding = 2) uniform Constants {
+	mat4 projection;
+};
 
 void main() {
-	tex_coord = vertex_tex_coord;
-	color = vertex_color;
-	gl_Position = projection * vec4(vertex_position, 1);
+	tex_coord   = TEX_COORD;
+	color       = COLOR;
+	gl_Position = projection * vec4(POSITION, 1);
 }
 
 ::Fragment

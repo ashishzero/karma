@@ -8,9 +8,7 @@
 #include "random.h"
 #include "particle_system.h"
 
-#ifdef BUILD_RELEASE
-#	define STB_IMAGE_IMPLEMENTATION
-#endif
+#define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
 void imgui_distribution_control(Distribution_Control *dist) {
@@ -134,9 +132,7 @@ void imgui_particle_emitter(Particle_Emitter *emitter) {
 	}
 }
 
-int system_main() { // Entry point
-	//do_pre_build_steps(u8"../res", u8"./data");
-
+int system_main() { 
 	Handle platform = system_create_window(u8"Karma", 1280, 720, System_Window_Show_NORMAL);
 	gfx_create_context(platform, Render_Backend_DIRECTX11, 1, 2);
 	ImGui::Initialize();
@@ -147,7 +143,7 @@ int system_main() { // Entry point
 
 	Random_Series rng = random_init(0, 0);
 
-	Particle_Emitter emitter = particle_emitter_create(0, mm_rect(0, 0, 1, 1), &rng, 1000, 800);
+	Particle_Emitter emitter = particle_emitter_create(&circle, mm_rect(0, 0, 1, 1), &rng, 1000, 800);
 
 	Event event;
 	bool  running = true;
@@ -208,7 +204,7 @@ int system_main() { // Entry point
 
 		ImGui::UpdateFrame(frame_time);
 
-		gfx_begin_drawing(Render_Target_HDR, Clear_COLOR | Clear_DEPTH, vec4(0.3f, 0.5f, 0.8f));
+		gfx_begin_drawing(Framebuffer_Type_HDR, Clear_COLOR | Clear_DEPTH, vec4(0.3f, 0.5f, 0.8f));
 		gfx_viewport(0, 0, window_w, window_h);
 
 		auto view = orthographic_view(0, window_w, window_h, 0);
@@ -240,7 +236,7 @@ int system_main() { // Entry point
 
 		im_begin(view);
 		im_unbind_texture();
-		//im_bind_texture(emitter.texture);
+		im_bind_texture(*emitter.texture);
 
 		for (int i = 0; i < emitter.emit_count; ++i) {
 			Particle *particle = emitter.particles + i;
@@ -264,7 +260,7 @@ int system_main() { // Entry point
 
 		gfx_end_drawing();
 
-		gfx_begin_drawing(Render_Target_DEFAULT, Clear_COLOR, vec4(0));
+		gfx_begin_drawing(Framebuffer_Type_DEFAULT, Clear_COLOR, vec4(0));
 
 		gfx_blit_hdr(0, 0, window_w, window_h);
 

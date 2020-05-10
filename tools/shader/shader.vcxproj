@@ -86,6 +86,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="glsl.cpp" />
     <ClCompile Include="hlsl.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
