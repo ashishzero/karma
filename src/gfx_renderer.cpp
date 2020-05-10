@@ -347,43 +347,30 @@ inline void im_ensure_size(int vertex_count, int index_count) {
 	}
 }
 
-void gfx_begin_hdr(Color4 color, bool clear) {
-	Color_Clear_Info color_info;
-	color_info.clear = clear;
-	color_info.color = color;
-
-	Depth_Stencil_Clear_Info depth_stencil_info;
-	depth_stencil_info.flags               = Depth_Stencil_Clear_DEPTH;
-	depth_stencil_info.depth_clear_value   = 1;
-	depth_stencil_info.stencil_clear_value = 0xff;
-
-	gfx->begin_drawing(1, &color_info, &global.hdr_render_target_view, &depth_stencil_info, &global.hdr_depth_view);
-}
-
-void gfx_end_hdr() {
-	gfx->end_drawing();
-}
-
-void gfx_apply_hdr(r32 x, r32 y, r32 w, r32 h) {
-	gfx_begin_drawing(0, vec4(0));
+void gfx_blit_hdr(r32 x, r32 y, r32 w, r32 h) {
 	gfx->cmd_bind_pipeline(postprocess_pipeline);
 	gfx->cmd_set_viewport(x, y, w, h);
 	gfx->cmd_bind_samplers(0, 1, &postprocess_sampler);
 	gfx->cmd_bind_textures(0, 1, &global.hdr_color_view);
 	gfx->cmd_draw(6, 0);
-	gfx_end_drawing();
 }
 
-void gfx_begin_drawing(Render_Target_View *view, Color4 color, bool clear) {
-	Color_Clear_Info color_info;
-	color_info.clear = clear;
-	color_info.color = color;
+void gfx_begin_drawing(Render_Target target, Clear_Flags flags, Color4 color, r32 depth, u8 stencil) {
+	switch (target) {
+		case Render_Target_NONE: {
+			gfx->begin_drawing(0, NULL, NULL, flags, color, depth, stencil);
+		} break;
 
-	if (view) {
-		gfx->begin_drawing(1, &color_info, view, 0, 0);
-	} else {
-		Render_Target_View def = gfx->get_default_render_target_view();
-		gfx->begin_drawing(1, &color_info, &def, 0, 0);
+		case Render_Target_DEFAULT: {
+			Render_Target_View view = gfx->get_default_render_target_view();
+			gfx->begin_drawing(1, &view, NULL, flags, color, depth, stencil);
+		} break;
+
+		case Render_Target_HDR: {
+			gfx->begin_drawing(1, &global.hdr_render_target_view, &global.hdr_depth_view, flags, color, depth, stencil);
+		} break;
+
+		invalid_default_case();
 	}
 }
 

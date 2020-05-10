@@ -706,25 +706,24 @@ struct Gfx_Platform_Directx11 : public Gfx_Platform {
 		delete ptr;
 	}
 
-	virtual void begin_drawing(u32                       view_count,
-							   Color_Clear_Info *        color_clear_info,
-							   Render_Target_View *      render_views,
-							   Depth_Stencil_Clear_Info *depth_stencil_clear_info,
-							   Depth_Stencil_View *      depth_stencil_view) final override {
+	virtual void begin_drawing(u32                 view_count,
+							   Render_Target_View *render_views,
+							   Depth_Stencil_View *depth_stencil_view,
+							   Clear_Flags flags, Color4 color, r32 depth, u8 stencil) final override {
 		for (u32 view_index = 0; view_index < view_count; ++view_index) {
 			ID3D11RenderTargetView *view = (ID3D11RenderTargetView *)render_views[view_index].id.hptr;
-			if (color_clear_info[view_index].clear) {
-				device_context->ClearRenderTargetView(view, color_clear_info[view_index].color.m);
+			if ((flags & Clear_COLOR) == Clear_COLOR) {
+				device_context->ClearRenderTargetView(view, color.m);
 			}
 		}
 
 		ID3D11DepthStencilView *d3d11_depth_stencil_view = 0;
-		if (depth_stencil_view && depth_stencil_clear_info->flags != 0) {
+		if (depth_stencil_view) {
 			d3d11_depth_stencil_view = (ID3D11DepthStencilView *)depth_stencil_view->id.hptr;
 			UINT flags               = 0;
-			if (depth_stencil_clear_info->flags & Depth_Stencil_Clear_DEPTH) flags |= D3D11_CLEAR_DEPTH;
-			if (depth_stencil_clear_info->flags & Depth_Stencil_Clear_STENCIL) flags |= D3D11_CLEAR_STENCIL;
-			device_context->ClearDepthStencilView(d3d11_depth_stencil_view, flags, depth_stencil_clear_info->depth_clear_value, depth_stencil_clear_info->stencil_clear_value);
+			if ((flags & Clear_DEPTH) == Clear_DEPTH) flags |= D3D11_CLEAR_DEPTH;
+			if ((flags & Clear_STENCIL) == Clear_STENCIL) flags |= D3D11_CLEAR_STENCIL;
+			device_context->ClearDepthStencilView(d3d11_depth_stencil_view, flags, depth, stencil);
 		}
 
 		auto targets = (ID3D11RenderTargetView **)render_views;

@@ -32,11 +32,9 @@ void             gfx_destroy_texture2d(Texture2d_Handle handle);
 
 void gfx_present();
 
-void gfx_begin_hdr(Color4 color, bool clear = true);
-void gfx_end_hdr();
-void gfx_apply_hdr(r32 x, r32 y, r32 w, r32 h);
+void gfx_blit_hdr(r32 x, r32 y, r32 w, r32 h);
 
-void gfx_begin_drawing(Render_Target_View *view = 0, Color4 color = vec4(4), bool clear = true);
+void gfx_begin_drawing(Render_Target target, Clear_Flags flags, Color4 color = vec4(1), r32 depth = 1, u8 stencil = 0xff);
 void gfx_end_drawing();
 
 void gfx_viewport(r32 x, r32 y, r32 w, r32 h);

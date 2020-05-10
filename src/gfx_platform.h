@@ -73,12 +73,11 @@ struct Gfx_Platform {
 												   const String           name)         = 0;
 	virtual void            destory_render_pipeline(Render_Pipeline pipeline) = 0;
 
-	virtual void begin_drawing(u32                       view_count,
-							   Color_Clear_Info *        color_clear_info,
-							   Render_Target_View *      render_views,
-							   Depth_Stencil_Clear_Info *depth_stencil_clear_info = 0,
-							   Depth_Stencil_View *      depth_stencil_view       = 0) = 0;
-	virtual void end_drawing()                                             = 0;
+	virtual void begin_drawing(u32                 view_count,
+							   Render_Target_View *render_views,
+							   Depth_Stencil_View *depth_stencil_view,
+							   Clear_Flags         flags, Color4 color, r32 depth, u8 stencil) = 0;
+	virtual void end_drawing()                    = 0;
 
 	virtual void cmd_set_viewport(r32 x, r32 y, r32 w, r32 h) = 0;
 

@@ -381,7 +381,7 @@ inline Blend_Info blend_info_create(Blend           src       = Blend_ONE,
 
 inline Blend_Info blend_info_disabled() {
 	Blend_Info blend = blend_info_create();
-	blend.enable = false;
+	blend.enable     = false;
 	return blend;
 }
 
@@ -436,24 +436,14 @@ struct Shader_Info {
 //
 //
 
-struct Color_Clear_Info {
-	Color4 color;
-	bool   clear;
+enum Clear_Flag_Bit : u8 {
+	Clear_NONE    = 0,
+	Clear_COLOR   = bit(1),
+	Clear_DEPTH   = bit(2),
+	Clear_STENCIL = bit(3),
+	Clear_ALL     = Clear_COLOR | Clear_DEPTH | Clear_STENCIL,
 };
-
-enum Depth_Stencil_Clear_Flag_Bit : u8 {
-	Depth_Stencil_Clear_NONE    = 0,
-	Depth_Stencil_Clear_DEPTH   = bit(1),
-	Depth_Stencil_Clear_STENCIL = bit(2),
-	Depth_Stencil_Clear_ALL     = Depth_Stencil_Clear_DEPTH | Depth_Stencil_Clear_STENCIL
-};
-typedef u8 Depth_Stencil_Clear_Flags;
-
-struct Depth_Stencil_Clear_Info {
-	r32                       depth_clear_value;
-	u8                        stencil_clear_value;
-	Depth_Stencil_Clear_Flags flags;
-};
+typedef u8 Clear_Flags;
 
 enum Index_Type {
 	Index_Type_U8,
@@ -470,6 +460,14 @@ enum Index_Type {
 struct Texture2d_Handle {
 	Texture_View view;
 	Texture2d    buffer;
+};
+
+enum Render_Target {
+	Render_Target_NONE,
+	Render_Target_DEFAULT,
+	Render_Target_HDR,
+
+	Render_Target_COUNT
 };
 
 enum Camera_View_Kind {
