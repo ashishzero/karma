@@ -297,6 +297,7 @@ popd
     <None Include=".gitattributes" />
     <None Include=".gitignore" />
     <None Include="readme.md" />
+    <None Include="src\shaders\blur.glsl" />
     <None Include="src\shaders\hdr.glsl" />
     <None Include="src\shaders\quad.glsl" />
     <None Include="src\prebuild.bat" />
@@ -312,6 +313,11 @@ popd
     <Image Include="src\windows\karma.ico" />
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="src\shaders\blur.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Developer|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
     <FxCompile Include="src\shaders\hdr.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Developer|x64'">true</ExcludedFromBuild>

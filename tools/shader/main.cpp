@@ -9,6 +9,10 @@ struct Shader_Batch {
 	const char *name;
 	const char *dx11;
 	const char *opengl;
+	const char *vs_entry_point = 0;
+	const char *ps_entry_point = 0;
+	const char *vs_define      = 0;
+	const char *ps_define      = 0;
 };
 
 String read_entire_file(const char *file) {
@@ -60,7 +64,7 @@ void shader_process_batch(Shader_Batch &batch) {
 			mfree(content.data);
 		};
 
-		if (hlsl_compile_shader(batch.dx11, content, &code)) {
+		if (hlsl_compile_shader(batch.dx11, content, &code, batch.vs_entry_point, batch.ps_entry_point)) {
 			write_code(&out, &elems, code, SHADER_LANG_HLSL);
 			free_shader_code(&code);
 		}
@@ -72,7 +76,7 @@ void shader_process_batch(Shader_Batch &batch) {
 			mfree(content.data);
 		};
 
-		if (glsl_compile_shader(batch.opengl, content, 420, &code)) {
+		if (glsl_compile_shader(batch.opengl, content, 420, &code, batch.vs_define, batch.ps_define)) {
 			write_code(&out, &elems, code, SHADER_LANG_GLSL);
 			free_shader_code(&code);
 		}
@@ -101,11 +105,15 @@ void build_batch(Array_View<Shader_Batch> batch) {
 	}
 }
 
-void add_batch(Array<Shader_Batch> *batch, const char *name, const char *dx11, const char *opengl) {
-	auto b    = array_add(batch);
-	b->name   = name;
-	b->dx11   = dx11;
-	b->opengl = opengl;
+void add_batch(Array<Shader_Batch> *batch, const char *name, const char *dx11, const char *opengl, const char *vs = "vs_main", const char *ps = "ps_main", const char *vs_define = 0, const char *ps_define = 0) {
+	auto b            = array_add(batch);
+	b->name           = name;
+	b->dx11           = dx11;
+	b->opengl         = opengl;
+	b->vs_entry_point = vs;
+	b->ps_entry_point = ps;
+	b->vs_define      = vs_define;
+	b->ps_define      = ps_define;
 }
 
 int system_main() {
@@ -113,6 +121,9 @@ int system_main() {
 
 	add_batch(&batch, "run_tree/data/shaders/quad.kfx", "src/shaders/quad.hlsl", "src/shaders/quad.glsl");
 	add_batch(&batch, "run_tree/data/shaders/hdr.kfx", "src/shaders/hdr.hlsl", "src/shaders/hdr.glsl");
+
+	add_batch(&batch, "run_tree/data/shaders/hblur.kfx", "src/shaders/blur.hlsl", "src/shaders/blur.glsl", "vs_main", "ps_main_h", 0, "BLUR_HORIZONTAL");
+	add_batch(&batch, "run_tree/data/shaders/vblur.kfx", "src/shaders/blur.hlsl", "src/shaders/blur.glsl", "vs_main", "ps_main_v", 0, "BLUR_VERTICAL");
 
 	build_batch(batch);
 

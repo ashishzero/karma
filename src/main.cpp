@@ -210,7 +210,7 @@ int system_main() {
 
 		auto view = orthographic_view(0, window_w, window_h, 0);
 
-		# if 0
+		# if 1
 		im_begin(view);
 
 		im_triangle(vec3(50, 50, 0), vec3(150, 150, 0), vec3(300, 50, 0), vec4(0.5f, 0.5f, 0.8f));
@@ -262,6 +262,8 @@ int system_main() {
 		#endif
 
 		gfx_end_drawing();
+
+		gfx_apply_bloom(2);
 
 		gfx_begin_drawing(Framebuffer_Type_DEFAULT, Clear_COLOR, vec4(0));
 

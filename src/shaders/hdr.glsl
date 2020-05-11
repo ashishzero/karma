@@ -19,6 +19,7 @@ void main() {
 layout (location = 0) out vec4 pixel_color;
 
 layout (binding = 0) uniform sampler2D tex;
+layout (binding = 1) uniform sampler2D bloom;
 
 //
 // ACES Tone mapping curve
@@ -52,6 +53,8 @@ vec3 aces_fitted(vec3 color) {
 
 void main() {
 	vec4 sampled = texture(tex, tex_coord);
+	vec3 bloom_color = texture(bloom, tex_coord).rgb;
+	sampled.xyz += bloom_color;
 	sampled.xyz  = aces_fitted(sampled.xyz);
 	pixel_color  = sampled;
 }

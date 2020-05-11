@@ -905,7 +905,9 @@ struct Gfx_Platform_OpenGL : public Gfx_Platform {
 			}
 
 			if (pipeline->blend_enable) {
-				glEnable(GL_BLEND);
+				glEnablei(GL_BLEND, 0);
+				glEnablei(GL_BLEND, 1);
+				//glEnable(GL_BLEND);
 				glBlendFuncSeparate(pipeline->blend_src, pipeline->blend_dst, pipeline->blend_src_alpha, pipeline->blend_dst_alpha);
 				glBlendEquationSeparate(pipeline->blend_op, pipeline->blend_op_alpha);
 			} else {

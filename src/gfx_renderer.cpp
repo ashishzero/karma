@@ -52,22 +52,31 @@ struct Im_Context {
 	int  transformation;
 };
 
-struct Gfx_Global_Data {
+struct Hdr_Data {
 	Texture2d          hdr_color_buffer[2];
 	Texture2d          hdr_depth_buffer;
 	Texture_View       hdr_color_view[2];
 	Depth_Stencil_View hdr_depth_view;
 	Framebuffer        hdr_framebuffer;
+	// TODO: Currently we are using full window width and window height for bloom effect
+	// which is very expensive and not worth it!!
+	Texture2d          bloom_color_buffer[2];
+	Texture_View       bloom_color_view[2];
+	Framebuffer        bloom_framebuffer[2];
 };
 
 static Im_Context       im_context;
-static Gfx_Global_Data  global;
+static Hdr_Data         hdr_data;
+static Render_Pipeline  blur_pipelines[2];
 static Texture2d_Handle white_texture;
-static Render_Pipeline  postprocess_pipeline;
+static Render_Pipeline  hdr_pipeline;
 static Sampler          postprocess_sampler;
-
-static Gfx_Platform *gfx;
-static u32           shader_lang;
+static u32              framebuffer_w;
+static u32              framebuffer_h;
+static u32              bloom_texture_w;
+static u32              bloom_texture_h;
+static Gfx_Platform *   gfx;
+static u32              shader_lang;
 
 static String igfx_find_shader(String content, u32 shader_tag, const char *name = 0) {
 	if (name == 0) name = "-unknown-";
@@ -149,9 +158,37 @@ bool gfx_create_context(Handle platform, Render_Backend backend, s32 vsync, u32 
 		Blend_Info      blend      = blend_info_disabled();
 		Depth_Info      depth      = depth_info_create(false);
 
-		postprocess_pipeline = gfx->create_render_pipeline(shader, rasterizer, blend, depth, "postprocess");
+		hdr_pipeline = gfx->create_render_pipeline(shader, rasterizer, blend, depth, "postprocess");
 
 		mfree(hdr_shader.data);
+	}
+
+	{
+		String h_blur_shader = system_read_entire_file("data/shaders/hblur.kfx");
+		String v_blur_shader = system_read_entire_file("data/shaders/vblur.kfx");
+
+		Shader_Info shader[2];
+		shader[0].input_layouts       = NULL;
+		shader[0].input_layouts_count = 0;
+		shader[0].vertex              = igfx_find_shader(h_blur_shader, SHADER_TYPE_VERTEX, "hblur.kfx.vertex");
+		shader[0].pixel               = igfx_find_shader(h_blur_shader, SHADER_TYPE_PIXEL, "hblur.kfx.pixel");
+		shader[0].stride              = 0;
+
+		shader[1].input_layouts       = NULL;
+		shader[1].input_layouts_count = 0;
+		shader[1].vertex              = igfx_find_shader(v_blur_shader, SHADER_TYPE_VERTEX, "vblur.kfx.vertex");
+		shader[1].pixel               = igfx_find_shader(v_blur_shader, SHADER_TYPE_PIXEL, "vblur.kfx.pixel");
+		shader[1].stride              = 0;
+
+		Rasterizer_Info rasterizer = rasterizer_info_create();
+		Blend_Info      blend      = blend_info_disabled();
+		Depth_Info      depth      = depth_info_create(false);
+
+		blur_pipelines[0] = gfx->create_render_pipeline(shader[0], rasterizer, blend, depth, "h_blur");
+		blur_pipelines[1] = gfx->create_render_pipeline(shader[1], rasterizer, blend, depth, "v_blur");
+
+		mfree(h_blur_shader.data);
+		mfree(v_blur_shader.data);
 	}
 
 	postprocess_sampler = gfx->create_sampler(filter_create(), texture_address_create(), level_of_detail_create());
@@ -173,8 +210,7 @@ bool gfx_create_context(Handle platform, Render_Backend backend, s32 vsync, u32 
 		shader.stride              = sizeof(Im_Vertex);
 
 		Rasterizer_Info rasterizer = rasterizer_info_create();
-		Blend_Info      blend      = blend_info_create(Blend_SRC_ALPHA, Blend_INV_SRC_ALPHA, Blend_Operation_ADD,
-                                             Blend_SRC_ALPHA, Blend_INV_SRC_ALPHA, Blend_Operation_ADD);
+		Blend_Info      blend      = blend_info_create(Blend_SRC_ALPHA, Blend_INV_SRC_ALPHA, Blend_Operation_ADD, Blend_SRC_ALPHA, Blend_INV_SRC_ALPHA, Blend_Operation_ADD);
 		Depth_Info      depth      = depth_info_create(false);
 
 		im_context.pipeline = gfx->create_render_pipeline(shader, rasterizer, blend, depth, "Im_Pipeline");
@@ -204,26 +240,45 @@ bool gfx_create_context(Handle platform, Render_Backend backend, s32 vsync, u32 
 }
 
 void igfx_destory_global_data() {
-	if (global.hdr_color_buffer[0].id) gfx->destroy_texture2d(global.hdr_color_buffer[0]);
-	if (global.hdr_color_buffer[1].id) gfx->destroy_texture2d(global.hdr_color_buffer[1]);
-	if (global.hdr_depth_buffer.id) gfx->destroy_texture2d(global.hdr_depth_buffer);
-	if (global.hdr_color_view[0].id) gfx->destroy_texture_view(global.hdr_color_view[0]);
-	if (global.hdr_color_view[1].id) gfx->destroy_texture_view(global.hdr_color_view[1]);
-	if (global.hdr_depth_view.id) gfx->destroy_depth_stencil_view(global.hdr_depth_view);
-	if (global.hdr_framebuffer.id) gfx->destroy_framebuffer(global.hdr_framebuffer);
-	memset(&global, 0, sizeof(global));
+	if (hdr_data.hdr_color_buffer[0].id) gfx->destroy_texture2d(hdr_data.hdr_color_buffer[0]);
+	if (hdr_data.hdr_color_buffer[1].id) gfx->destroy_texture2d(hdr_data.hdr_color_buffer[1]);
+	if (hdr_data.hdr_depth_buffer.id) gfx->destroy_texture2d(hdr_data.hdr_depth_buffer);
+	if (hdr_data.hdr_color_view[0].id) gfx->destroy_texture_view(hdr_data.hdr_color_view[0]);
+	if (hdr_data.hdr_color_view[1].id) gfx->destroy_texture_view(hdr_data.hdr_color_view[1]);
+	if (hdr_data.hdr_depth_view.id) gfx->destroy_depth_stencil_view(hdr_data.hdr_depth_view);
+	if (hdr_data.hdr_framebuffer.id) gfx->destroy_framebuffer(hdr_data.hdr_framebuffer);
+
+	for (int index = 0; index < 2; ++index) {
+		if (hdr_data.bloom_framebuffer[index].id) gfx->destroy_framebuffer(hdr_data.bloom_framebuffer[index]);
+		if (hdr_data.bloom_color_view[index].id) gfx->destroy_texture_view(hdr_data.bloom_color_view[index]);
+		if (hdr_data.bloom_color_buffer[index].id) gfx->destroy_texture2d(hdr_data.bloom_color_buffer[index]);
+	}
+
+	memset(&hdr_data, 0, sizeof(hdr_data));
 }
 
-void gfx_resize_framebuffer(u32 width, u32 height) {
+void gfx_resize_framebuffer(u32 width, u32 height, u32 bloom_w, u32 bloom_h) {
 	igfx_destory_global_data();
 
-	global.hdr_color_buffer[0] = gfx->create_texture2d(width, height, 4, Data_Format_RGBA32_FLOAT, 0, Buffer_Usage_DEFAULT, Texture_Bind_SHADER_RESOURCE | Texture_Bind_RENDER_TARGET, 0);
-	global.hdr_color_buffer[1] = gfx->create_texture2d(width, height, 4, Data_Format_RGBA32_FLOAT, 0, Buffer_Usage_DEFAULT, Texture_Bind_SHADER_RESOURCE | Texture_Bind_RENDER_TARGET, 0);
-	global.hdr_depth_buffer    = gfx->create_texture2d(width, height, 1, Data_Format_D32_FLOAT, 0, Buffer_Usage_DEFAULT, Texture_Bind_DEPTH_STENCIL, 1);
-	global.hdr_color_view[0]   = gfx->create_texture_view(global.hdr_color_buffer[0]);
-	global.hdr_color_view[1]   = gfx->create_texture_view(global.hdr_color_buffer[1]);
-	global.hdr_depth_view      = gfx->create_depth_stencil_view(global.hdr_depth_buffer);
-	global.hdr_framebuffer     = gfx->create_framebuffer(2, global.hdr_color_buffer, global.hdr_color_view, &global.hdr_depth_view);
+	framebuffer_w = width;
+	framebuffer_h = height;
+
+	bloom_texture_w = bloom_w;
+	bloom_texture_h = bloom_h;
+
+	for (int index = 0; index < 2; ++index) {
+		hdr_data.hdr_color_buffer[index] = gfx->create_texture2d(width, height, 4, Data_Format_RGBA16_FLOAT, 0, Buffer_Usage_DEFAULT, Texture_Bind_SHADER_RESOURCE | Texture_Bind_RENDER_TARGET, 0);
+		hdr_data.hdr_color_view[index]   = gfx->create_texture_view(hdr_data.hdr_color_buffer[index]);
+
+		hdr_data.bloom_color_buffer[index] = gfx->create_texture2d(bloom_w, bloom_h, 4, Data_Format_RGBA16_FLOAT, 0, Buffer_Usage_DEFAULT, Texture_Bind_SHADER_RESOURCE | Texture_Bind_RENDER_TARGET, 1);
+		hdr_data.bloom_color_view[index]   = gfx->create_texture_view(hdr_data.bloom_color_buffer[index]);
+		hdr_data.bloom_framebuffer[index]  = gfx->create_framebuffer(1, &hdr_data.bloom_color_buffer[index], &hdr_data.bloom_color_view[index], NULL);
+	}
+
+	hdr_data.hdr_depth_buffer = gfx->create_texture2d(width, height, 1, Data_Format_D32_FLOAT, 0, Buffer_Usage_DEFAULT, Texture_Bind_DEPTH_STENCIL, 1);
+	hdr_data.hdr_depth_view   = gfx->create_depth_stencil_view(hdr_data.hdr_depth_buffer);
+
+	hdr_data.hdr_framebuffer = gfx->create_framebuffer(2, hdr_data.hdr_color_buffer, hdr_data.hdr_color_view, &hdr_data.hdr_depth_view);
 }
 
 void gfx_destroy_context() {
@@ -362,14 +417,51 @@ inline void im_ensure_size(int vertex_count, int index_count) {
 	}
 }
 
-void gfx_blit_hdr(r32 x, r32 y, r32 w, r32 h) {
-	gfx->generate_mipmaps(global.hdr_color_view[0]);
-	gfx->generate_mipmaps(global.hdr_color_view[1]);
+void gfx_apply_blur(Texture_View src, Framebuffer ping_pongs[2], Texture_View dsts[2], Rect rect, int amount) {
+	amount *= 2;
 
-	gfx->cmd_bind_pipeline(postprocess_pipeline);
-	gfx->cmd_set_viewport(x, y, w, h);
+	gfx->begin_drawing(ping_pongs[0], Clear_COLOR, vec4(1), 1, 0xff);
+	gfx->cmd_bind_pipeline(blur_pipelines[0]);
+	gfx->cmd_set_viewport(rect.x, rect.y, rect.w, rect.h);
 	gfx->cmd_bind_samplers(0, 1, &postprocess_sampler);
-	gfx->cmd_bind_textures(0, 1, &global.hdr_color_view[0]);
+	gfx->cmd_bind_textures(0, 1, &src);
+	gfx->cmd_draw(6, 0);
+	gfx->end_drawing();
+
+	for (int i = 1; i < amount; ++i) {
+		int index = i & 1;
+		gfx->begin_drawing(ping_pongs[index], Clear_COLOR, vec4(1), 1, 0xff);
+		gfx->cmd_bind_pipeline(blur_pipelines[index]);
+		gfx->cmd_set_viewport(rect.x, rect.y, rect.w, rect.h);
+		gfx->cmd_bind_samplers(0, 1, &postprocess_sampler);
+		gfx->cmd_bind_textures(0, 1, &dsts[index != 1]);
+		gfx->cmd_draw(6, 0);
+		gfx->end_drawing();
+	}
+}
+
+void gfx_apply_bloom(int amount) {
+	auto viewport = rect(0, 0, (r32)bloom_texture_w, (r32)bloom_texture_h);
+	gfx_apply_blur(hdr_data.hdr_color_view[1], hdr_data.bloom_framebuffer, hdr_data.bloom_color_view, viewport, 2);
+}
+
+void gfx_blit_hdr(r32 x, r32 y, r32 w, r32 h) {
+	gfx->generate_mipmaps(hdr_data.hdr_color_view[0]);
+
+	Sampler samplers[] = {
+		postprocess_sampler,
+		postprocess_sampler
+	};
+
+	Texture_View textures[] = {
+		hdr_data.hdr_color_view[0],
+		hdr_data.bloom_color_view[1]
+	};
+
+	gfx->cmd_bind_pipeline(hdr_pipeline);
+	gfx->cmd_set_viewport(x, y, w, h);
+	gfx->cmd_bind_samplers(0, static_count(samplers), samplers);
+	gfx->cmd_bind_textures(0, static_count(textures), textures);
 	gfx->cmd_draw(6, 0);
 }
 
@@ -380,7 +472,7 @@ void gfx_begin_drawing(Framebuffer_Type type, Clear_Flags flags, Color4 color, r
 		} break;
 
 		case Framebuffer_Type_HDR: {
-			gfx->begin_drawing(global.hdr_framebuffer, flags, color, depth, stencil);
+			gfx->begin_drawing(hdr_data.hdr_framebuffer, flags, color, depth, stencil);
 		} break;
 
 			invalid_default_case();

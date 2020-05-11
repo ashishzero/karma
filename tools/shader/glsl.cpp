@@ -23,7 +23,7 @@ Token parser_expect_token_kind(Array_View<Token> tokens, s64 index, Token_Kind k
 	}
 }
 
-bool glsl_compile_shader(const char *name, String src, int version, Shader_Code *out) {
+bool glsl_compile_shader(const char *name, String src, int version, Shader_Code *out, const char *vs_define, const char *ps_define) {
 	Tokenization_Status status;
 	auto                tokens = tokenize(src, &status);
 	defer {
@@ -124,6 +124,9 @@ bool glsl_compile_shader(const char *name, String src, int version, Shader_Code 
 	Ostream stream;
 
 	ostream_write_buffer(&stream, header.data, header.count);
+	if (vs_define) {
+		ostream_write_formatted(&stream, "\n#define %s\n", vs_define);
+	}
 	for (auto &s : shared) {
 		ostream_write_formatted(&stream, "out %s %s;\n", s.type, s.name);
 	}
@@ -132,6 +135,9 @@ bool glsl_compile_shader(const char *name, String src, int version, Shader_Code 
 	ostream_free(&stream);
 
 	ostream_write_buffer(&stream, header.data, header.count);
+	if (ps_define) {
+		ostream_write_formatted(&stream, "\n#define %s\n", ps_define);
+	}
 	for (auto &s : shared) {
 		ostream_write_formatted(&stream, "in %s %s;\n", s.type, s.name);
 	}

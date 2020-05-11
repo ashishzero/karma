@@ -35,8 +35,8 @@ void main() {
 	float brightness = luminance(pixel_color.rgb);
 
 	if (brightness > 1) {
-		bright_color = vec4(pixel_color.rgb, 1);
+		bright_color = pixel_color;
 	} else {
-		bright_color = vec4(0, 0, 0, 1);
+		bright_color = vec4(0, 0, 0, 0);
 	}
 }

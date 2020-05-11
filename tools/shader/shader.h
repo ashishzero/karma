@@ -21,7 +21,7 @@ inline void report_error(const char *category, const char *fmt, ...) {
 }
 
 #if defined(TARGET_WINDOWS)
-bool hlsl_compile_shader(const char *name, String src, Shader_Code *out);
+bool hlsl_compile_shader(const char *name, String src, Shader_Code *out, const char *vs, const char *ps);
 #endif
 
-bool glsl_compile_shader(const char *name, String src, int version, Shader_Code *out);
+bool glsl_compile_shader(const char *name, String src, int version, Shader_Code *out, const char *vs_define, const char *ps_define);

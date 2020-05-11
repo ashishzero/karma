@@ -8,12 +8,12 @@
 #	include <d3dcompiler.h>
 #	include "src/directx/dx_error.h"
 
-bool hlsl_compile_shader(const char *name, String src, Shader_Code *out) {
+bool hlsl_compile_shader(const char *name, String src, Shader_Code *out, const char *vs_main, const char *ps_main) {
 	ID3DBlob *vs_code = 0, *vs_error = 0;
 	ID3DBlob *ps_code = 0, *ps_error = 0;
 
-	HRESULT vs_result = D3DCompile2(src.data, src.count, name, NULL, NULL, "vs_main", "vs_5_0", 0, 0, 0, NULL, 0, &vs_code, &vs_error);
-	HRESULT ps_result = D3DCompile2(src.data, src.count, name, NULL, NULL, "ps_main", "ps_5_0", 0, 0, 0, NULL, 0, &ps_code, &ps_error);
+	HRESULT vs_result = D3DCompile2(src.data, src.count, name, NULL, NULL, vs_main, "vs_5_0", 0, 0, 0, NULL, 0, &vs_code, &vs_error);
+	HRESULT ps_result = D3DCompile2(src.data, src.count, name, NULL, NULL, ps_main, "ps_5_0", 0, 0, 0, NULL, 0, &ps_code, &ps_error);
 
 	bool success = true;
 	if (FAILED(vs_result)) {
