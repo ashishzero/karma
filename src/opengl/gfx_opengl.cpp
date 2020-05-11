@@ -590,9 +590,13 @@ struct Gfx_Platform_OpenGL : public Gfx_Platform {
 			trigger_breakpoint();
 		}
 
+		for (GLuint index = 0; index < count; ++index)
+			glDrawBuffer(GL_COLOR_ATTACHMENT0 + index);
+
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 		Framebuffer result;
+		result.id.l32 = count;
 		result.id.h32 = id;
 		return result;
 	}

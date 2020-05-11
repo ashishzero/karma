@@ -205,12 +205,12 @@ int system_main() {
 
 		ImGui::UpdateFrame(frame_time);
 
-		gfx_begin_drawing(Framebuffer_Type_HDR, Clear_COLOR | Clear_DEPTH, vec4(0.3f, 0.5f, 0.8f));
+		gfx_begin_drawing(Framebuffer_Type_HDR, Clear_COLOR | Clear_DEPTH, vec4(0, 0, 0));
 		gfx_viewport(0, 0, window_w, window_h);
 
 		auto view = orthographic_view(0, window_w, window_h, 0);
 
-		# if 1
+		# if 0
 		im_begin(view);
 
 		im_triangle(vec3(50, 50, 0), vec3(150, 150, 0), vec3(300, 50, 0), vec4(0.5f, 0.5f, 0.8f));
