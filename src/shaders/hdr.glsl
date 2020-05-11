@@ -18,7 +18,7 @@ void main() {
 
 layout (location = 0) out vec4 pixel_color;
 
-uniform sampler2D tex;
+layout (binding = 0) uniform sampler2D tex;
 
 void main() {
 	pixel_color  = texture(tex, tex_coord);
