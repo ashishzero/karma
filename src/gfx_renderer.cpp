@@ -53,9 +53,9 @@ struct Im_Context {
 };
 
 struct Gfx_Global_Data {
-	Texture2d          hdr_color_buffer;
+	Texture2d          hdr_color_buffer[2];
 	Texture2d          hdr_depth_buffer;
-	Texture_View       hdr_color_view;
+	Texture_View       hdr_color_view[2];
 	Depth_Stencil_View hdr_depth_view;
 	Framebuffer        hdr_framebuffer;
 };
@@ -204,9 +204,11 @@ bool gfx_create_context(Handle platform, Render_Backend backend, s32 vsync, u32 
 }
 
 void igfx_destory_global_data() {
-	if (global.hdr_color_buffer.id) gfx->destroy_texture2d(global.hdr_color_buffer);
+	if (global.hdr_color_buffer[0].id) gfx->destroy_texture2d(global.hdr_color_buffer[0]);
+	if (global.hdr_color_buffer[1].id) gfx->destroy_texture2d(global.hdr_color_buffer[1]);
 	if (global.hdr_depth_buffer.id) gfx->destroy_texture2d(global.hdr_depth_buffer);
-	if (global.hdr_color_view.id) gfx->destroy_texture_view(global.hdr_color_view);
+	if (global.hdr_color_view[0].id) gfx->destroy_texture_view(global.hdr_color_view[0]);
+	if (global.hdr_color_view[1].id) gfx->destroy_texture_view(global.hdr_color_view[1]);
 	if (global.hdr_depth_view.id) gfx->destroy_depth_stencil_view(global.hdr_depth_view);
 	if (global.hdr_framebuffer.id) gfx->destroy_framebuffer(global.hdr_framebuffer);
 	memset(&global, 0, sizeof(global));
@@ -215,11 +217,13 @@ void igfx_destory_global_data() {
 void gfx_resize_framebuffer(u32 width, u32 height) {
 	igfx_destory_global_data();
 
-	global.hdr_color_buffer = gfx->create_texture2d(width, height, 4, Data_Format_RGBA32_FLOAT, 0, Buffer_Usage_DEFAULT, Texture_Bind_SHADER_RESOURCE | Texture_Bind_RENDER_TARGET, 0);
-	global.hdr_depth_buffer = gfx->create_texture2d(width, height, 1, Data_Format_D32_FLOAT, 0, Buffer_Usage_DEFAULT, Texture_Bind_DEPTH_STENCIL, 1);
-	global.hdr_color_view   = gfx->create_texture_view(global.hdr_color_buffer);
-	global.hdr_depth_view   = gfx->create_depth_stencil_view(global.hdr_depth_buffer);
-	global.hdr_framebuffer  = gfx->create_framebuffer(1, &global.hdr_color_buffer, &global.hdr_color_view, &global.hdr_depth_view);
+	global.hdr_color_buffer[0] = gfx->create_texture2d(width, height, 4, Data_Format_RGBA32_FLOAT, 0, Buffer_Usage_DEFAULT, Texture_Bind_SHADER_RESOURCE | Texture_Bind_RENDER_TARGET, 0);
+	global.hdr_color_buffer[1] = gfx->create_texture2d(width, height, 4, Data_Format_RGBA32_FLOAT, 0, Buffer_Usage_DEFAULT, Texture_Bind_SHADER_RESOURCE | Texture_Bind_RENDER_TARGET, 0);
+	global.hdr_depth_buffer    = gfx->create_texture2d(width, height, 1, Data_Format_D32_FLOAT, 0, Buffer_Usage_DEFAULT, Texture_Bind_DEPTH_STENCIL, 1);
+	global.hdr_color_view[0]   = gfx->create_texture_view(global.hdr_color_buffer[0]);
+	global.hdr_color_view[1]   = gfx->create_texture_view(global.hdr_color_buffer[1]);
+	global.hdr_depth_view      = gfx->create_depth_stencil_view(global.hdr_depth_buffer);
+	global.hdr_framebuffer     = gfx->create_framebuffer(2, global.hdr_color_buffer, global.hdr_color_view, &global.hdr_depth_view);
 }
 
 void gfx_destroy_context() {
@@ -359,12 +363,13 @@ inline void im_ensure_size(int vertex_count, int index_count) {
 }
 
 void gfx_blit_hdr(r32 x, r32 y, r32 w, r32 h) {
-	gfx->generate_mipmaps(global.hdr_color_view);
+	gfx->generate_mipmaps(global.hdr_color_view[0]);
+	gfx->generate_mipmaps(global.hdr_color_view[1]);
 
 	gfx->cmd_bind_pipeline(postprocess_pipeline);
 	gfx->cmd_set_viewport(x, y, w, h);
 	gfx->cmd_bind_samplers(0, 1, &postprocess_sampler);
-	gfx->cmd_bind_textures(0, 1, &global.hdr_color_view);
+	gfx->cmd_bind_textures(0, 1, &global.hdr_color_view[0]);
 	gfx->cmd_draw(6, 0);
 }
 
@@ -378,7 +383,7 @@ void gfx_begin_drawing(Framebuffer_Type type, Clear_Flags flags, Color4 color, r
 			gfx->begin_drawing(global.hdr_framebuffer, flags, color, depth, stencil);
 		} break;
 
-		invalid_default_case();
+			invalid_default_case();
 	}
 }
 

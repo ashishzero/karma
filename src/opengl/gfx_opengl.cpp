@@ -590,8 +590,10 @@ struct Gfx_Platform_OpenGL : public Gfx_Platform {
 			trigger_breakpoint();
 		}
 
+		GLuint *attachments = (GLuint *)tallocate(sizeof(GLuint) * count);
 		for (GLuint index = 0; index < count; ++index)
-			glDrawBuffer(GL_COLOR_ATTACHMENT0 + index);
+			attachments[index] = GL_COLOR_ATTACHMENT0 + index;
+		glDrawBuffers(count, attachments);
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
