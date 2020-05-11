@@ -4,6 +4,14 @@
 #include "systems.h"
 #include "gfx_shaders.h"
 
+#pragma pack(push, 4)
+
+struct alignas(16) Im_Uniform {
+	Mat4 projection;
+};
+
+#pragma pack(pop)
+
 struct Im_Vertex {
 	Vec3   position;
 	Vec2   tex_coord;
@@ -429,10 +437,11 @@ void im_begin(Camera_View &view, Mat4 &transform) {
 			invalid_default_case();
 	}
 
-	transform = projection * transform;
+	Im_Uniform uniform;
+	uniform.projection = projection * transform;
 
 	void *ptr = gfx->map(im_context.uniform_buffer, Map_Type_WRITE_DISCARD);
-	memcpy(ptr, &transform, sizeof(Mat4));
+	memcpy(ptr, &uniform, sizeof(uniform));
 	gfx->unmap(im_context.uniform_buffer);
 
 	gfx->cmd_bind_pipeline(im_context.pipeline);
