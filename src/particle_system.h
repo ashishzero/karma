@@ -39,6 +39,7 @@ struct Particle_Emitter_Property {
 	Color4 color_a;
 	Color4 color_b;
 	r32    opacity;
+	r32    intensity; // TODO: Make this per particle!
 
 	Random_Distribution life_span;
 	s32                 emission_rate; // in particles per milli secs
@@ -199,6 +200,7 @@ Particle_Emitter_Property particle_emitter_default_property() {
 	props.color_a            = vec4(0.2f, 1.0f, 1.0f, 0.0f);
 	props.color_b            = vec4(0.0f, 1.0f, 1.0f, 1.0f);
 	props.opacity            = 1;
+	props.intensity          = 1;
 	props.life_span          = random_distribution(Distribution_Control_UNIFORM, 1.5f, 2.0f);
 	props.emission_rate      = 50;
 	props.fade_in            = 0.06f;

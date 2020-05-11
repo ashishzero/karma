@@ -123,6 +123,7 @@ void imgui_particle_emitter(Particle_Emitter *emitter) {
 		ImGui::ColorEdit4("Color A", props.color_a.m, ImGuiColorEditFlags_InputHSV);
 		ImGui::ColorEdit4("Color B", props.color_b.m, ImGuiColorEditFlags_InputHSV);
 		ImGui::DragFloat("Opacity", &props.opacity, 0.01f, 0, 1);
+		ImGui::DragFloat("Intensity", &props.intensity, 0.01f);
 	}
 
 	if (ImGui::CollapsingHeader("Life Span")) {
@@ -134,7 +135,7 @@ void imgui_particle_emitter(Particle_Emitter *emitter) {
 
 int system_main() { 
 	Handle platform = system_create_window(u8"Karma", 1280, 720, System_Window_Show_NORMAL);
-	gfx_create_context(platform, Render_Backend_OPENGL, 1, 2);
+	gfx_create_context(platform, Render_Backend_DIRECTX11, 1, 2);
 	ImGui::Initialize();
 
 	int  w, h, n;
@@ -250,7 +251,9 @@ int system_main() {
 					fade_t *= (particle->life_span - particle->life) / emitter.properties.fade_out;
 				}
 
-				auto particle_color = fade_t * hsv_to_rgb(lerp(particle->color_a, particle->color_b, t)) * emitter.properties.opacity;
+				auto particle_color = hsv_to_rgb(lerp(particle->color_a, particle->color_b, t));
+				particle_color.xyz *= emitter.properties.intensity;
+				particle_color.w *= (fade_t * emitter.properties.opacity);
 				im_rect_rotated(particle->position, vec2(lerp(particle->scale_a, particle->scale_b, t)), particle->rotation, particle_color);
 			}
 		}
