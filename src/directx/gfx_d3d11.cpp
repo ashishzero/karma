@@ -933,12 +933,6 @@ Gfx_Platform *create_directx11_context(Handle platform, s32 vsync, s32 multisamp
 #if defined(BUILD_DEBUG) || defined(BUILD_DEVELOPER)
 	ID3D11Debug *debug = 0;
 
-#	if 0
-	if (SUCCEEDED(gfx.device->QueryInterface(__uuidof(ID3D11Debug), reinterpret_cast<void **>(&debug)))) {
-		debug->ReportLiveDeviceObjects(D3D11_RLDO_DETAIL);
-	}
-#	endif
-
 	if (SUCCEEDED(gfx.device->QueryInterface(__uuidof(ID3D11Debug), (void **)&debug))) {
 		ID3D11InfoQueue *info_queue = nullptr;
 		if (SUCCEEDED(gfx.device->QueryInterface(__uuidof(ID3D11InfoQueue), (void **)&info_queue))) {
@@ -955,6 +949,7 @@ Gfx_Platform *create_directx11_context(Handle platform, s32 vsync, s32 multisamp
 			filter.DenyList.NumIDs         = static_count(hide);
 			filter.DenyList.pIDList        = hide;
 			info_queue->AddStorageFilterEntries(&filter);
+
 			info_queue->Release();
 		}
 	}

@@ -25,50 +25,44 @@ Vs_Out vs_main(Vs_In input) {
 	return output;
 }
 
-//
-// ACES Tone mapping curve
-// https://64.github.io/tonemapping/
-//
-
-static const float3x3 aces_input_mat = {
-	{ 0.59719, 0.35458, 0.04823 },
-	{ 0.07600, 0.90834, 0.01566 },
-	{ 0.02840, 0.13383, 0.83777 }
-};
-
-static const float3x3 aces_output_mat = {
-	{ 1.60475, -0.53108, -0.07367 },
-	{ -0.10208, 1.10813, -0.00605 },
-	{ -0.00327, -0.07276, 1.07602 }
-};
-
-float3 rrt_and_odt_fit(float3 v) {
-	float3 a = v * (v + 0.0245786f) - 0.000090537f;
-	float3 b = v * (0.983729f * v + 0.4329510f) + 0.238081f;
-	return a / b;
-}
-
-float3 aces_fitted(float3 color) {
-	color = mul(aces_input_mat, color);
-	color = rrt_and_odt_fit(color);
-	color = mul(aces_output_mat, color);
-	return saturate(color);
-}
+static const float weight[5] = { 0.227027, 0.1945946, 0.1216216, 0.054054, 0.016216 };
 
 float4 ps_main_h(Vs_Out input) :
 	SV_TARGET {
 	float2 tex_coord = input.tex_coord;
 	tex_coord.y      = 1.0f - tex_coord.y;
-	float4 sampled   = u_texture.Sample(u_sampler, tex_coord);
-	sampled.xyz      = aces_fitted(sampled.xyz);
-	return sampled;
+
+	float2 tex_size;
+	u_texture.GetDimensions(tex_size.x, tex_size.y);
+	tex_size = 1.0f / tex_size;
+
+	float4 sampled = u_texture.Sample(u_sampler, tex_coord);
+	float3 result  = sampled.xyz * weight[0];
+
+	for (int i = 1; i < 5; ++i) {
+		result += u_texture.Sample(u_sampler, tex_coord + float2(tex_size.x * i, 0.0f)).xyz * weight[i];
+		result += u_texture.Sample(u_sampler, tex_coord - float2(tex_size.x * i, 0.0f)).xyz * weight[i];
+	}
+
+	return float4(result, sampled.w);
 }
 
 float4 ps_main_v(Vs_Out input) :
 	SV_TARGET {
 	float2 tex_coord = input.tex_coord;
 	tex_coord.y      = 1.0f - tex_coord.y;
-	float4 sampled   = u_texture.Sample(u_sampler, tex_coord);
-	sampled.xyz      = aces_fitted(sampled.xyz);
-	return sampled;
+
+	float2 tex_size;
+	u_texture.GetDimensions(tex_size.x, tex_size.y);
+	tex_size = 1.0f / tex_size;
+
+	float4 sampled = u_texture.Sample(u_sampler, tex_coord);
+	float3 result  = sampled.xyz * weight[0];
+
+	for (int i = 1; i < 5; ++i) {
+		result += u_texture.Sample(u_sampler, tex_coord - float2(0.0f, tex_size.y * i)).xyz * weight[i];
+		result += u_texture.Sample(u_sampler, tex_coord + float2(0.0f, tex_size.y * i)).xyz * weight[i];
+	}
+
+	return float4(result, sampled.w);
 }

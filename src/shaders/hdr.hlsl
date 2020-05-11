@@ -9,7 +9,9 @@ struct Vs_Out {
 };
 
 Texture2D    u_texture : register(t0);
-SamplerState u_sampler : register(s0);
+Texture2D    u_bloom : register(t1);
+SamplerState u_texture_sampler : register(s0);
+SamplerState u_bloom_sampler : register(s1);
 
 static const float2 vertices[] = {
 	{ -1, -1 }, { -1, 1 }, { 1, 1 }, { -1, -1 }, { 1, 1 }, { 1, -1 }
@@ -56,9 +58,11 @@ float3 aces_fitted(float3 color) {
 }
 
 float4 ps_main(Vs_Out input) : SV_TARGET {
-	float2 tex_coord = input.tex_coord;
-	tex_coord.y      = 1.0f - tex_coord.y;
-	float4 sampled   = u_texture.Sample(u_sampler, tex_coord);
-	sampled.xyz      = aces_fitted(sampled.xyz);
+	float2 tex_coord   = input.tex_coord;
+	tex_coord.y        = 1.0f - tex_coord.y;
+	float4 sampled     = u_texture.Sample(u_texture_sampler, tex_coord);
+	float3 bloom_color = u_bloom.Sample(u_bloom_sampler, tex_coord).xyz;
+	sampled.xyz += bloom_color;
+	sampled.xyz = aces_fitted(sampled.xyz);
 	return sampled;
 }

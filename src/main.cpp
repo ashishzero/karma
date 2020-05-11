@@ -135,7 +135,7 @@ void imgui_particle_emitter(Particle_Emitter *emitter) {
 
 int system_main() { 
 	Handle platform = system_create_window(u8"Karma", 1280, 720, System_Window_Show_NORMAL);
-	gfx_create_context(platform, Render_Backend_OPENGL, 1, 2);
+	gfx_create_context(platform, Render_Backend_DIRECTX11, 1, 2);
 	ImGui::Initialize();
 
 	int  w, h, n;
@@ -209,7 +209,7 @@ int system_main() {
 		gfx_viewport(0, 0, window_w, window_h);
 
 		auto view = orthographic_view(0, window_w, window_h, 0);
-
+		
 		# if 1
 		im_begin(view);
 

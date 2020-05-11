@@ -28,7 +28,7 @@ const float weight[5] = { 0.227027, 0.1945946, 0.1216216, 0.054054, 0.016216 };
  
 void main(void) {
     vec2 tex_size = 1.0 / textureSize(tex, 0);
-    vec4 sampled = texture(tex, vec2(gl_FragCoord) / tex_size);
+    vec4 sampled = texture(tex, tex_coord);
     vec3 result = sampled.rgb * weight[0];
 
 #ifdef BLUR_HORIZONTAL

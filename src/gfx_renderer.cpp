@@ -60,9 +60,9 @@ struct Hdr_Data {
 	Framebuffer        hdr_framebuffer;
 	// TODO: Currently we are using full window width and window height for bloom effect
 	// which is very expensive and not worth it!!
-	Texture2d          bloom_color_buffer[2];
-	Texture_View       bloom_color_view[2];
-	Framebuffer        bloom_framebuffer[2];
+	Texture2d    bloom_color_buffer[2];
+	Texture_View bloom_color_view[2];
+	Framebuffer  bloom_framebuffer[2];
 };
 
 static Im_Context       im_context;
@@ -267,7 +267,7 @@ void gfx_resize_framebuffer(u32 width, u32 height, u32 bloom_w, u32 bloom_h) {
 	bloom_texture_h = bloom_h;
 
 	for (int index = 0; index < 2; ++index) {
-		hdr_data.hdr_color_buffer[index] = gfx->create_texture2d(width, height, 4, Data_Format_RGBA16_FLOAT, 0, Buffer_Usage_DEFAULT, Texture_Bind_SHADER_RESOURCE | Texture_Bind_RENDER_TARGET, 0);
+		hdr_data.hdr_color_buffer[index] = gfx->create_texture2d(width, height, 4, Data_Format_RGBA16_FLOAT, 0, Buffer_Usage_DEFAULT, Texture_Bind_SHADER_RESOURCE | Texture_Bind_RENDER_TARGET, 1);
 		hdr_data.hdr_color_view[index]   = gfx->create_texture_view(hdr_data.hdr_color_buffer[index]);
 
 		hdr_data.bloom_color_buffer[index] = gfx->create_texture2d(bloom_w, bloom_h, 4, Data_Format_RGBA16_FLOAT, 0, Buffer_Usage_DEFAULT, Texture_Bind_SHADER_RESOURCE | Texture_Bind_RENDER_TARGET, 1);
@@ -430,7 +430,7 @@ void gfx_apply_blur(Texture_View src, Framebuffer ping_pongs[2], Texture_View ds
 
 	for (int i = 1; i < amount; ++i) {
 		int index = i & 1;
-		gfx->begin_drawing(ping_pongs[index], Clear_COLOR, vec4(1), 1, 0xff);
+		gfx->begin_drawing(ping_pongs[index], Clear_NONE, vec4(1), 1, 0xff);
 		gfx->cmd_bind_pipeline(blur_pipelines[index]);
 		gfx->cmd_set_viewport(rect.x, rect.y, rect.w, rect.h);
 		gfx->cmd_bind_samplers(0, 1, &postprocess_sampler);
@@ -442,12 +442,10 @@ void gfx_apply_blur(Texture_View src, Framebuffer ping_pongs[2], Texture_View ds
 
 void gfx_apply_bloom(int amount) {
 	auto viewport = rect(0, 0, (r32)bloom_texture_w, (r32)bloom_texture_h);
-	gfx_apply_blur(hdr_data.hdr_color_view[1], hdr_data.bloom_framebuffer, hdr_data.bloom_color_view, viewport, 2);
+	gfx_apply_blur(hdr_data.hdr_color_view[1], hdr_data.bloom_framebuffer, hdr_data.bloom_color_view, viewport, 4);
 }
 
 void gfx_blit_hdr(r32 x, r32 y, r32 w, r32 h) {
-	gfx->generate_mipmaps(hdr_data.hdr_color_view[0]);
-
 	Sampler samplers[] = {
 		postprocess_sampler,
 		postprocess_sampler

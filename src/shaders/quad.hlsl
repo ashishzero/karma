@@ -3,15 +3,15 @@ cbuffer constants : register(b0) {
 }
 
 struct Vs_In {
-	float3 position  : POSITION;
+	float3 position : POSITION;
 	float2 tex_coord : TEX_COORD;
-	float4 color     : COLOR;
+	float4 color : COLOR;
 };
 
 struct Vs_Out {
-	float4 position  : SV_POSITION;
+	float4 position : SV_POSITION;
 	float2 tex_coord : TEX_COORD;
-	float4 color     : COLOR;
+	float4 color : COLOR;
 };
 
 Texture2D    u_texture : register(t0);
@@ -25,8 +25,30 @@ Vs_Out vs_main(Vs_In input) {
 	return output;
 }
 
-float4 ps_main(Vs_Out input) : SV_TARGET {
+struct Ps_Out {
+	float4 pixel : SV_TARGET0;
+	float4 bloom : SV_TARGET1;
+};
+
+float luminance(float3 color) {
+	return dot(color, float3(0.2126, 0.7152, 0.0722));
+}
+
+Ps_Out ps_main(Vs_Out input) {
 	float2 tex_coord = input.tex_coord;
 	tex_coord.y      = 1.0f - tex_coord.y;
-	return u_texture.Sample(u_sampler, tex_coord) * input.color;
+
+	Ps_Out output;
+
+	output.pixel = u_texture.Sample(u_sampler, tex_coord) * input.color;
+
+	float brightness = luminance(output.pixel.rgb);
+
+	if (brightness > 1) {
+		output.bloom = output.pixel;
+	} else {
+		output.bloom = float4(0, 0, 0, 0);
+	}
+
+	return output;
 }
