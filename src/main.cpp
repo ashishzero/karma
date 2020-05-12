@@ -133,14 +133,14 @@ void imgui_particle_emitter(Particle_Emitter *emitter) {
 	}
 }
 
-int system_main() { 
+int system_main() {
 	Handle platform = system_create_window(u8"Karma", 1280, 720, System_Window_Show_NORMAL);
 	gfx_create_context(platform, Render_Backend_DIRECTX11, 1, 2);
 	ImGui::Initialize();
 
 	int  w, h, n;
-	auto pixels      = stbi_load("../res/misc/circle.png", &w, &h, &n, 4);
-	auto circle      = gfx_create_texture2d(w, h, 4, Data_Format_RGBA8_UNORM, (const u8**)&pixels, Buffer_Usage_IMMUTABLE, 1);
+	auto pixels = stbi_load("../res/misc/circle.png", &w, &h, &n, 4);
+	auto circle = gfx_create_texture2d(w, h, 4, Data_Format_RGBA8_UNORM, (const u8 **)&pixels, Buffer_Usage_IMMUTABLE, 1);
 
 	Random_Series rng = random_init(0, 0);
 
@@ -149,7 +149,8 @@ int system_main() {
 	Event event;
 	bool  running = true;
 
-	const float dt = 1.0f / 60.0f;
+	const r32 aspect_ratio = 16.0f / 9.0f;
+	const r32 dt           = 1.0f / 60.0f;
 
 	float t           = 0.0f;
 	float accumulator = 0.0f;
@@ -181,8 +182,8 @@ int system_main() {
 				s32 w = event.window.dimension.x;
 				s32 h = event.window.dimension.y;
 				gfx_on_client_resize(w, h);
-				window_w        = (r32)w;
-				window_h        = (r32)h;
+				window_w = (r32)w;
+				window_h = (r32)h;
 				continue;
 			}
 
@@ -205,12 +206,12 @@ int system_main() {
 
 		ImGui::UpdateFrame(frame_time);
 
-		gfx_begin_drawing(Framebuffer_Type_HDR, Clear_COLOR | Clear_DEPTH, vec4(0, 0, 0));
+		gfx_begin_drawing(Framebuffer_Type_HDR, Clear_COLOR | Clear_DEPTH, vec4(0.0f, 0.0f, 0.0f));
 		gfx_viewport(0, 0, window_w, window_h);
 
-		auto view = orthographic_view(0, window_w, window_h, 0);
-		
-		# if 1
+		auto view = orthographic_view(0, 1280, 720, 0);
+
+#if 1
 		im_begin(view);
 
 		im_triangle(vec3(50, 50, 0), vec3(150, 150, 0), vec3(300, 50, 0), vec4(0.5f, 0.5f, 0.8f));
@@ -229,11 +230,11 @@ int system_main() {
 		im_line2d(vec2(0), vec2(500, 500), vec4(1, 0, 1), 2);
 		im_bezier_quadratic2d(vec2(0), vec2(300, 250), vec2(400, 500), vec4(0, 1, 1), 2);
 		im_bezier_cubic2d(vec2(0), vec2(300, 250), vec2(350, 350), vec2(400, 500), vec4(1, 1, 0), 2);
-		
-		im_end();
-		#endif
 
-		#if 1
+		im_end();
+#endif
+
+#if 1
 
 		im_begin(view);
 		im_unbind_texture();
@@ -242,7 +243,7 @@ int system_main() {
 		for (int i = 0; i < emitter.emit_count; ++i) {
 			Particle *particle = emitter.particles + i;
 			if (particle->life <= particle->life_span) {
-				r32 t      = particle->life / particle->life_span;
+				r32 t = particle->life / particle->life_span;
 
 				r32 fade_t = 1;
 				if (particle->life < emitter.properties.fade_in) {
@@ -259,21 +260,31 @@ int system_main() {
 		}
 		im_end();
 
-		#endif
+#endif
 
 		gfx_end_drawing();
 
 		gfx_apply_bloom(2);
 
-		gfx_begin_drawing(Framebuffer_Type_DEFAULT, Clear_COLOR, vec4(0));
+		gfx_begin_drawing(Framebuffer_Type_DEFAULT, Clear_COLOR, vec4(0, 0, 0, 1));
 
-		gfx_blit_hdr(0, 0, window_w, window_h);
+		r32 render_w = window_w;
+		r32 render_h = floorf(window_w / aspect_ratio);
+		if (render_h > window_h) {
+			render_h = window_h;
+			render_w = floorf(window_h * aspect_ratio);
+		}
+
+		r32 render_x = floorf((window_w - render_w) * 0.5f);
+		r32 render_y = floorf((window_h - render_h) * 0.5f);
+
+		gfx_blit_hdr(render_x, render_y, render_w, render_h);
 
 		if (ImGui::Begin("Particle Emitter")) {
 			imgui_particle_emitter(&emitter);
-			ImGui::End();
 		}
-		
+		ImGui::End();
+
 		ImGui::RenderFrame();
 
 		gfx_end_drawing();
