@@ -12,11 +12,14 @@
 #include "stb_image.h"
 
 int system_main() {
+	const r32 framebuffer_w = 1280.0f;
+	const r32 framebuffer_h = 720.0f;
+
 	Handle platform = system_create_window(u8"Karma", 1280, 720, System_Window_Show_NORMAL);
-	gfx_create_context(platform, Render_Backend_DIRECTX11, 1, 2);
+	gfx_create_context(platform, Render_Backend_DIRECTX11, 1, 2, (u32)framebuffer_w, (u32)framebuffer_h);
 	ImGui::Initialize();
 
-	int  w, h, n;
+	s32  w, h, n;
 	auto pixels = stbi_load("../res/misc/circle.png", &w, &h, &n, 4);
 	auto circle = gfx_create_texture2d(w, h, 4, Data_Format_RGBA8_UNORM, (const u8 **)&pixels, Buffer_Usage_IMMUTABLE, 1);
 
@@ -27,12 +30,12 @@ int system_main() {
 	Event event;
 	bool  running = true;
 
-	const r32 aspect_ratio = 16.0f / 9.0f;
+	const r32 aspect_ratio = framebuffer_w / framebuffer_h;
 	const r32 dt           = 1.0f / 60.0f;
 
-	float t           = 0.0f;
-	float accumulator = 0.0f;
-	float frame_time  = 0.0f;
+	r32 t           = 0.0f;
+	r32 accumulator = 0.0f;
+	r32 frame_time  = 0.0f;
 
 	u64 frequency = system_get_frequency();
 	u64 counter   = system_get_counter();
@@ -83,42 +86,30 @@ int system_main() {
 			accumulator -= dt;
 		}
 
-		float alpha = accumulator / dt;
+		r32 alpha = accumulator / dt;
 
 		ImGui::UpdateFrame(frame_time);
 
-		float world_height_half = 400;
-		float world_width_half  = aspect_ratio * world_height_half;
-
-		auto camera_transform = mat4_identity();
-		auto  view              = orthographic_view(-world_width_half, world_width_half, world_height_half, -world_height_half, -2.0f, 2.0f);
+		r32  world_height_half = 4.5f;
+		r32  world_width_half  = aspect_ratio * world_height_half;
+		auto view              = orthographic_view(-world_width_half, world_width_half, world_height_half, -world_height_half, -2.0f, 2.0f);
 
 		gfx_begin_drawing(Framebuffer_Type_HDR, Clear_COLOR | Clear_DEPTH, vec4(0.02f, 0.02f, 0.02f));
-		gfx_viewport(0, 0, 1280, 720);
+		gfx_viewport(0, 0, framebuffer_w, framebuffer_h);
 
-		//auto camera_transform = mat4_inverse(mat4_scalar(vec3(800, 800, 1)));
-		//auto view             = perspective_view(to_radians(90), aspect_ratio, 0.1f, 10.0f);
+		im_begin(view);
 
-		im_begin(view, camera_transform);
-		//im_begin(camera_transform);
-
-		static Vec3 position_a  = vec3(150, 0, 2);
-		static Vec2 dimension_a = vec2(100);
-		static Vec4 color_a     = vec4(1, 1, 0, 1);
-		static Vec3 position_b  = vec3(0, 0, 2);
-		static Vec2 dimension_b = vec2(100);
-		static Vec4 color_b     = vec4(1, 0, 1, 1);
-
-		im_rect(position_a, dimension_a, color_a);
-		im_rect(position_b, dimension_b, color_b);
-
-		//{
-		//	const Vec4  line_color     = vec4(1.1f, 1.1f, 1.1f);
-		//	const float line_thickness = 1;
-		//	for (float x = -world_width_half; x < world_width_half; x += 1) {
-		//		im_line2d(vec2(x, -world_height_half), vec2(x, world_height_half), line_color, line_thickness);
-		//	}
-		//}
+		{
+			const Vec4  line_color       = vec4(0.2f, 0.2f, 0.2f, 1.0f);
+			const float x_line_thickness = world_width_half / framebuffer_w;
+			const float y_line_thickness = world_height_half / framebuffer_h;
+			for (float x = -world_width_half; x <= world_width_half; x += 1) {
+				im_line2d(vec2(x, -world_height_half), vec2(x, world_height_half), line_color, x_line_thickness);
+			}
+			for (float y = -world_height_half; y <= world_height_half; y += 1) {
+				im_line2d(vec2(-world_width_half, y), vec2(world_width_half, y), line_color, y_line_thickness);
+			}
+		}
 
 		im_end();
 
