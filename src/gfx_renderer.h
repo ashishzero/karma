@@ -41,6 +41,7 @@ void gfx_end_drawing();
 
 void gfx_viewport(r32 x, r32 y, r32 w, r32 h);
 
+void im_begin(Mat4 &transform = mat4_identity());
 void im_begin(Camera_View &view, Mat4 &transform = mat4_identity());
 void im_end();
 

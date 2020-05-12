@@ -7,7 +7,7 @@
 #pragma pack(push, 4)
 
 struct alignas(16) Im_Uniform {
-	Mat4 projection;
+	Mat4 transform;
 };
 
 #pragma pack(pop)
@@ -210,8 +210,10 @@ bool gfx_create_context(Handle platform, Render_Backend backend, s32 vsync, u32 
 		shader.stride              = sizeof(Im_Vertex);
 
 		Rasterizer_Info rasterizer = rasterizer_info_create();
-		Blend_Info      blend      = blend_info_create(Blend_SRC_ALPHA, Blend_INV_SRC_ALPHA, Blend_Operation_ADD, Blend_SRC_ALPHA, Blend_INV_SRC_ALPHA, Blend_Operation_ADD);
-		Depth_Info      depth      = depth_info_create(false);
+		rasterizer.cull_mode       = Cull_Mode_NONE;
+
+		Blend_Info blend = blend_info_create(Blend_SRC_ALPHA, Blend_INV_SRC_ALPHA, Blend_Operation_ADD, Blend_SRC_ALPHA, Blend_INV_SRC_ALPHA, Blend_Operation_ADD);
+		Depth_Info depth = depth_info_create(true, Depth_Write_Mask_ALL, Comparison_Function_LESS);
 
 		im_context.pipeline = gfx->create_render_pipeline(shader, rasterizer, blend, depth, "Im_Pipeline");
 
@@ -485,7 +487,7 @@ void gfx_viewport(r32 x, r32 y, r32 w, r32 h) {
 	gfx->cmd_set_viewport(x, y, w, h);
 }
 
-void im_begin(Camera_View &view, Mat4 &transform) {
+void im_begin(Mat4 &transform) {
 	im_context.draw_cmd       = 0;
 	im_context.vertex         = 0;
 	im_context.index          = 0;
@@ -497,6 +499,19 @@ void im_begin(Camera_View &view, Mat4 &transform) {
 
 	im_start_cmd_record(white_texture.view);
 
+	Im_Uniform uniform;
+	uniform.transform = transform;
+
+	void *ptr = gfx->map(im_context.uniform_buffer, Map_Type_WRITE_DISCARD);
+	memcpy(ptr, &uniform, sizeof(uniform));
+	gfx->unmap(im_context.uniform_buffer);
+
+	gfx->cmd_bind_pipeline(im_context.pipeline);
+	gfx->cmd_bind_samplers(0, 1, &im_context.sampler);
+	gfx->cmd_bind_vs_uniform_buffers(0, 1, &im_context.uniform_buffer);
+}
+
+void im_begin(Camera_View &view, Mat4 &transform) {
 	Mat4 projection;
 	switch (gfx->backend) {
 		case Render_Backend_OPENGL: {
@@ -532,16 +547,7 @@ void im_begin(Camera_View &view, Mat4 &transform) {
 			invalid_default_case();
 	}
 
-	Im_Uniform uniform;
-	uniform.projection = projection * transform;
-
-	void *ptr = gfx->map(im_context.uniform_buffer, Map_Type_WRITE_DISCARD);
-	memcpy(ptr, &uniform, sizeof(uniform));
-	gfx->unmap(im_context.uniform_buffer);
-
-	gfx->cmd_bind_pipeline(im_context.pipeline);
-	gfx->cmd_bind_samplers(0, 1, &im_context.sampler);
-	gfx->cmd_bind_vs_uniform_buffers(0, 1, &im_context.uniform_buffer);
+	im_begin(projection * transform);
 }
 
 void iim_flush(bool restart) {
@@ -626,7 +632,7 @@ void im_triangle(Vec3 a, Vec3 b, Vec3 c, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Color4
 }
 
 void im_triangle(Vec2 a, Vec2 b, Vec2 c, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Color4 color) {
-	im_triangle(vec3(a, 0), vec3(b, 0), vec3(c, 0), uv_a, uv_b, uv_c, color);
+	im_triangle(vec3(a, 1), vec3(b, 1), vec3(c, 1), uv_a, uv_b, uv_c, color);
 }
 
 void im_triangle(Vec3 a, Vec3 b, Vec3 c, Color4 color) {
@@ -634,7 +640,7 @@ void im_triangle(Vec3 a, Vec3 b, Vec3 c, Color4 color) {
 }
 
 void im_triangle(Vec2 a, Vec2 b, Vec2 c, Color4 color) {
-	im_triangle(vec3(a, 0), vec3(b, 0), vec3(c, 0), color);
+	im_triangle(vec3(a, 1), vec3(b, 1), vec3(c, 1), color);
 }
 
 void im_quad(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Vec2 uv_d, Color4 color) {
@@ -653,7 +659,7 @@ void im_quad(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Ve
 }
 
 void im_quad(Vec2 a, Vec2 b, Vec2 c, Vec2 d, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Vec2 uv_d, Color4 color) {
-	im_quad(vec3(a, 0), vec3(b, 0), vec3(c, 0), vec3(d, 0), uv_a, uv_b, uv_c, uv_d, color);
+	im_quad(vec3(a, 1), vec3(b, 1), vec3(c, 1), vec3(d, 1), uv_a, uv_b, uv_c, uv_d, color);
 }
 
 void im_quad(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Color4 color) {
@@ -661,7 +667,7 @@ void im_quad(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Color4 color) {
 }
 
 void im_quad(Vec2 a, Vec2 b, Vec2 c, Vec2 d, Color4 color) {
-	im_quad(vec3(a, 0), vec3(b, 0), vec3(c, 0), vec3(d, 0), color);
+	im_quad(vec3(a, 1), vec3(b, 1), vec3(c, 1), vec3(d, 1), color);
 }
 
 void im_quad(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Mm_Rect rect, Color4 color) {
@@ -673,7 +679,7 @@ void im_quad(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Mm_Rect rect, Color4 color) {
 }
 
 void im_quad(Vec2 a, Vec2 b, Vec2 c, Vec2 d, Mm_Rect rect, Color4 color) {
-	im_quad(vec3(a, 0), vec3(b, 0), vec3(c, 0), vec3(d, 0), rect, color);
+	im_quad(vec3(a, 1), vec3(b, 1), vec3(c, 1), vec3(d, 1), rect, color);
 }
 
 void im_rect(Vec3 pos, Vec2 dim, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Vec2 uv_d, Color4 color) {
@@ -685,7 +691,7 @@ void im_rect(Vec3 pos, Vec2 dim, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Vec2 uv_d, Col
 }
 
 void im_rect(Vec2 pos, Vec2 dim, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Vec2 uv_d, Color4 color) {
-	im_rect(vec3(pos, 0), dim, uv_a, uv_b, uv_c, uv_d, color);
+	im_rect(vec3(pos, 1), dim, uv_a, uv_b, uv_c, uv_d, color);
 }
 
 void im_rect(Vec3 pos, Vec2 dim, Color4 color) {
@@ -693,7 +699,7 @@ void im_rect(Vec3 pos, Vec2 dim, Color4 color) {
 }
 
 void im_rect(Vec2 pos, Vec2 dim, Color4 color) {
-	im_rect(vec3(pos, 0), dim, color);
+	im_rect(vec3(pos, 1), dim, color);
 }
 
 void im_rect(Vec3 pos, Vec2 dim, Mm_Rect rect, Color4 color) {
@@ -705,7 +711,7 @@ void im_rect(Vec3 pos, Vec2 dim, Mm_Rect rect, Color4 color) {
 }
 
 void im_rect(Vec2 pos, Vec2 dim, Mm_Rect rect, Color4 color) {
-	im_rect(vec3(pos, 0), dim, rect, color);
+	im_rect(vec3(pos, 1), dim, rect, color);
 }
 
 void im_rect_rotated(Vec3 pos, Vec2 dim, r32 angle, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Vec2 uv_d, Color4 color) {
@@ -742,7 +748,7 @@ void im_rect_rotated(Vec3 pos, Vec2 dim, r32 angle, Vec2 uv_a, Vec2 uv_b, Vec2 u
 }
 
 void im_rect_rotated(Vec2 pos, Vec2 dim, r32 angle, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Vec2 uv_d, Color4 color) {
-	im_rect_rotated(vec3(pos, 0), dim, angle, uv_a, uv_b, uv_c, uv_d, color);
+	im_rect_rotated(vec3(pos, 1), dim, angle, uv_a, uv_b, uv_c, uv_d, color);
 }
 
 void im_rect_rotated(Vec3 pos, Vec2 dim, r32 angle, Color4 color) {
@@ -750,7 +756,7 @@ void im_rect_rotated(Vec3 pos, Vec2 dim, r32 angle, Color4 color) {
 }
 
 void im_rect_rotated(Vec2 pos, Vec2 dim, r32 angle, Color4 color) {
-	im_rect_rotated(vec3(pos, 0), dim, angle, color);
+	im_rect_rotated(vec3(pos, 1), dim, angle, color);
 }
 
 void im_rect_rotated(Vec3 pos, Vec2 dim, r32 angle, Mm_Rect rect, Color4 color) {
@@ -762,7 +768,7 @@ void im_rect_rotated(Vec3 pos, Vec2 dim, r32 angle, Mm_Rect rect, Color4 color) 
 }
 
 void im_rect_rotated(Vec2 pos, Vec2 dim, r32 angle, Mm_Rect rect, Color4 color) {
-	im_rect_rotated(vec3(pos, 0), dim, angle, rect, color);
+	im_rect_rotated(vec3(pos, 1), dim, angle, rect, color);
 }
 
 void im_ellipse(Vec3 pos, r32 radius_a, r32 radius_b, Color4 color, int segments) {
@@ -786,7 +792,7 @@ void im_ellipse(Vec3 pos, r32 radius_a, r32 radius_b, Color4 color, int segments
 }
 
 void im_ellipse(Vec2 pos, r32 radius_a, r32 radius_b, Color4 color, int segments) {
-	im_ellipse(vec3(pos, 0), radius_a, radius_b, color, segments);
+	im_ellipse(vec3(pos, 1), radius_a, radius_b, color, segments);
 }
 
 void im_circle(Vec3 pos, r32 radius, Color4 color, int segments) {
@@ -794,7 +800,7 @@ void im_circle(Vec3 pos, r32 radius, Color4 color, int segments) {
 }
 
 void im_circle(Vec2 pos, r32 radius, Color4 color, int segments) {
-	im_ellipse(vec3(pos, 0), radius, radius, color, segments);
+	im_ellipse(vec3(pos, 1), radius, radius, color, segments);
 }
 
 void im_pie(Vec3 pos, r32 radius_a, r32 radius_b, r32 theta_a, r32 theta_b, Color4 color, int segments) {
@@ -824,7 +830,7 @@ void im_pie(Vec3 pos, r32 radius_a, r32 radius_b, r32 theta_a, r32 theta_b, Colo
 }
 
 void im_pie(Vec2 pos, r32 radius_a, r32 radius_b, r32 theta_a, r32 theta_b, Color4 color, int segments) {
-	im_pie(vec3(pos, 0), radius_a, radius_b, theta_a, theta_b, color, segments);
+	im_pie(vec3(pos, 1), radius_a, radius_b, theta_a, theta_b, color, segments);
 }
 
 void im_pie(Vec3 pos, r32 radius, r32 theta_a, r32 theta_b, Color4 color, int segments) {
@@ -832,7 +838,7 @@ void im_pie(Vec3 pos, r32 radius, r32 theta_a, r32 theta_b, Color4 color, int se
 }
 
 void im_pie(Vec2 pos, r32 radius, r32 theta_a, r32 theta_b, Color4 color, int segments) {
-	im_pie(vec3(pos, 0), radius, radius, theta_a, theta_b, color, segments);
+	im_pie(vec3(pos, 1), radius, radius, theta_a, theta_b, color, segments);
 }
 
 void im_cube(Vec3 position, Quat rotation, Vec3 scale,
@@ -886,7 +892,7 @@ void im_line2d(Vec3 a, Vec3 b, Color4 color, r32 thickness) {
 }
 
 void im_line2d(Vec2 a, Vec2 b, Color4 color, r32 thickness) {
-	im_line2d(vec3(a, 0), vec3(b, 0), color, thickness);
+	im_line2d(vec3(a, 1), vec3(b, 1), color, thickness);
 }
 
 void im_bezier_quadratic2d(Vec3 a, Vec3 b, Vec3 c, Color4 color, r32 thickness, int segments) {
@@ -900,7 +906,7 @@ void im_bezier_quadratic2d(Vec3 a, Vec3 b, Vec3 c, Color4 color, r32 thickness, 
 }
 
 void im_bezier_quadratic2d(Vec2 a, Vec2 b, Vec2 c, Color4 color, r32 thickness, int segments) {
-	im_bezier_quadratic2d(vec3(a, 0), vec3(b, 0), vec3(c, 0), color, thickness, segments);
+	im_bezier_quadratic2d(vec3(a, 1), vec3(b, 1), vec3(c, 1), color, thickness, segments);
 }
 
 void im_bezier_cubic2d(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Color4 color, r32 thickness, int segments) {
@@ -914,7 +920,7 @@ void im_bezier_cubic2d(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Color4 color, r32 thickne
 }
 
 void im_bezier_cubic2d(Vec2 a, Vec2 b, Vec2 c, Vec2 d, Color4 color, r32 thickness, int segments) {
-	im_bezier_cubic2d(vec3(a, 0), vec3(b, 0), vec3(c, 0), vec3(d, 0), color, thickness, segments);
+	im_bezier_cubic2d(vec3(a, 1), vec3(b, 1), vec3(c, 1), vec3(d, 1), color, thickness, segments);
 }
 
 void im_triangle_outline2d(Vec3 a, Vec3 b, Vec3 c, Color4 color, r32 thickness) {
@@ -978,7 +984,7 @@ void im_ellipse_outline(Vec3 position, r32 radius_a, r32 radius_b, Color4 color,
 }
 
 void im_ellipse_outline(Vec2 position, r32 radius_a, r32 radius_b, Color4 color, r32 thickness, int segments) {
-	im_ellipse_outline(vec3(position, 0), radius_a, radius_b, color, thickness, segments);
+	im_ellipse_outline(vec3(position, 1), radius_a, radius_b, color, thickness, segments);
 }
 
 void im_circle_outline(Vec3 position, r32 radius, Color4 color, r32 thickness, int segments) {
@@ -986,7 +992,7 @@ void im_circle_outline(Vec3 position, r32 radius, Color4 color, r32 thickness, i
 }
 
 void im_circle_outline(Vec2 position, r32 radius, Color4 color, r32 thickness, int segments) {
-	im_ellipse_outline(vec3(position, 0), radius, radius, color, thickness, segments);
+	im_ellipse_outline(vec3(position, 1), radius, radius, color, thickness, segments);
 }
 
 void im_arc_outline(Vec3 position, r32 radius_a, r32 radius_b, r32 theta_a, r32 theta_b, Color4 color, bool closed, r32 thickness, int segments) {
@@ -1024,7 +1030,7 @@ void im_arc_outline(Vec3 position, r32 radius_a, r32 radius_b, r32 theta_a, r32 
 }
 
 void im_arc_outline(Vec2 position, r32 radius_a, r32 radius_b, r32 theta_a, r32 theta_b, Color4 color, bool closed, r32 thickness, int segments) {
-	im_arc_outline(vec3(position, 0), radius_a, radius_b, theta_a, theta_b, color, closed, thickness, segments);
+	im_arc_outline(vec3(position, 1), radius_a, radius_b, theta_a, theta_b, color, closed, thickness, segments);
 }
 
 void im_arc_outline(Vec3 position, r32 radius, r32 theta_a, r32 theta_b, Color4 color, bool closed, r32 thickness, int segments) {
@@ -1032,5 +1038,5 @@ void im_arc_outline(Vec3 position, r32 radius, r32 theta_a, r32 theta_b, Color4 
 }
 
 void im_arc_outline(Vec2 position, r32 radius, r32 theta_a, r32 theta_b, Color4 color, bool closed, r32 thickness, int segments) {
-	im_arc_outline(vec3(position, 0), radius, radius, theta_a, theta_b, color, closed, thickness, segments);
+	im_arc_outline(vec3(position, 1), radius, radius, theta_a, theta_b, color, closed, thickness, segments);
 }

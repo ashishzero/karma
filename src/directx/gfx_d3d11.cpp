@@ -736,10 +736,10 @@ struct Gfx_Platform_Directx11 : public Gfx_Platform {
 		}
 
 		if (framebuffer->depth_stencil) {
-			UINT flags = 0;
-			if ((flags & Clear_DEPTH) == Clear_DEPTH) flags |= D3D11_CLEAR_DEPTH;
-			if ((flags & Clear_STENCIL) == Clear_STENCIL) flags |= D3D11_CLEAR_STENCIL;
-			device_context->ClearDepthStencilView(framebuffer->depth_stencil, flags, depth, stencil);
+			UINT d3d11_flags = 0;
+			if ((flags & Clear_DEPTH) == Clear_DEPTH) d3d11_flags |= D3D11_CLEAR_DEPTH;
+			if ((flags & Clear_STENCIL) == Clear_STENCIL) d3d11_flags |= D3D11_CLEAR_STENCIL;
+			device_context->ClearDepthStencilView(framebuffer->depth_stencil, d3d11_flags, depth, stencil);
 		}
 
 		device_context->OMSetRenderTargets(framebuffer->count, framebuffer->views, framebuffer->depth_stencil);
