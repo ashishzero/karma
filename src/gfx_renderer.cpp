@@ -156,7 +156,7 @@ bool gfx_create_context(Handle platform, Render_Backend backend, s32 vsync, u32 
 
 		Rasterizer_Info rasterizer = rasterizer_info_create();
 		Blend_Info      blend      = blend_info_disabled();
-		Depth_Info      depth      = depth_info_create(false);
+		Depth_Info      depth      = depth_info_create(false, Depth_Write_Mask_ZERO);
 
 		hdr_pipeline = gfx->create_render_pipeline(shader, rasterizer, blend, depth, "postprocess");
 

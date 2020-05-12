@@ -694,7 +694,7 @@ Mat4 mat4_ortho_gl(r32 l, r32 r, r32 t, r32 b, r32 n, r32 f) {
 	Mat4 m;
 	m.rows[0] = vec4(2 / (r - l), 0.0f, 0.0f, -(l + r) / (r - l));
 	m.rows[1] = vec4(0.0f, 2 / (t - b), 0.0f, -(t + b) / (t - b));
-	m.rows[2] = vec4(0.0f, 0.0f, 2 / (f - n), -(f + n) / (f - n));
+	m.rows[2] = vec4(0.0f, 0.0f, -2 / (f - n), -(f + n) / (f - n));
 	m.rows[3] = vec4(0.0f, 0.0f, 0.0f, 1.0f);
 	return m;
 }
@@ -715,7 +715,7 @@ Mat4 mat4_ortho_dx(r32 l, r32 r, r32 t, r32 b, r32 n, r32 f) {
 	Mat4 m;
 	m.rows[0] = vec4(2 / (r - l), 0.0f, 0.0f, -(l + r) / (r - l));
 	m.rows[1] = vec4(0.0f, 2 / (t - b), 0.0f, -(t + b) / (t - b));
-	m.rows[2] = vec4(0.0f, 0.0f, 1 / (f - n), -n / (f - n));
+	m.rows[2] = vec4(0.0f, 0.0f, -1 / (f - n), -n / (f - n));
 	m.rows[3] = vec4(0.0f, 0.0f, 0.0f, 1.0f);
 	return m;
 }
