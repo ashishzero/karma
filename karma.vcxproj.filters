@@ -51,12 +51,6 @@
     <ClCompile Include="src\tokenizer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\build.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\prebuild.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\lin_maths.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -75,7 +69,10 @@
     <ClCompile Include="src\stream.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\physics.cpp">
+    <ClCompile Include="src\directx\gfx_d3d11.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\imgui\imgui_impl_dx11.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -170,7 +167,19 @@
     <ClInclude Include="src\karma_crt_impl.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\physics.h">
+    <ClInclude Include="src\particle_system.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\random.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\imgui\imgui_impl_dx11.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\directx\dx_error.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gfx_shaders.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -178,11 +187,13 @@
     <None Include=".gitattributes" />
     <None Include=".gitignore" />
     <None Include="readme.md" />
-    <None Include="res\shaders\quad.glsl" />
     <None Include=".clang-format" />
     <None Include="src\prebuild.bat">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="src\shaders\quad.glsl" />
+    <None Include="src\shaders\hdr.glsl" />
+    <None Include="src\shaders\blur.glsl" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="todo.txt" />
@@ -197,5 +208,10 @@
     <Image Include="src\windows\karma.ico">
       <Filter>Resource Files</Filter>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="src\shaders\quad.hlsl" />
+    <FxCompile Include="src\shaders\hdr.hlsl" />
+    <FxCompile Include="src\shaders\blur.hlsl" />
   </ItemGroup>
 </Project>

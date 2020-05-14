@@ -71,7 +71,7 @@ struct Istream {
 Istream istream(void *ptr, size_t length);
 Istream istream(Array_View<u8> buffer);
 void *  istream_consume_size(Istream *b, size_t size);
-String istream_consume_line(Istream *b);
+String  istream_consume_line(Istream *b);
 #define istream_consume(stream, type) (type *)istream_consume_size(stream, sizeof(type))
 bool istream_eof(Istream *b);
 
@@ -92,14 +92,17 @@ struct Ostream {
 
 	Bucket  head;
 	Bucket *tail = &head;
+	s64     size = 0;
 
 	Allocator allocator = context.allocator;
 };
 
 void ostream_write_buffer(Ostream *stream, const void *ptr, s64 size);
-template <typename T> void ostream_write(Ostream *stream, const T &v) {
+template <typename T>
+void ostream_write(Ostream *stream, const T &v) {
 	ostream_write_buffer(stream, (void *)&v, sizeof(T));
 }
-void ostream_write_formatted(Ostream *stream, const char *fmt, ...);
+void   ostream_write_formatted(Ostream *stream, const char *fmt, ...);
+s64    ostream_get_size(Ostream *stream);
 String ostream_build_string(Ostream *stream, bool null_terminate = false);
 void   ostream_free(Ostream *stream);

@@ -111,8 +111,6 @@ void InitializeRigidBodies() {
 		rigidBody->min_max_points.min = { rigidBody->position.x, rigidBody->position.y };
 		rigidBody->min_max_points.max = { rigidBody->position.x + rigidBody->shape.width, rigidBody->position.y + rigidBody->shape.height };
 
-
-		x += 5;
 	}
 }
 
@@ -156,43 +154,38 @@ bool AABB_collision_check(RigidBody *a, RigidBody *b)
 void PrintRigidBodies() {
 	for (int i = 0; i < NUM_RIGID_BODIES; i++) {
 		RigidBody *rigidBody = &rigidBodies[i];
-		gfx2d_rect(vec2(rigidBody->position.x, rigidBody->position.y), vec2(rigidBody->shape.width, rigidBody->shape.height));
+		im_rect(vec2(rigidBody->position.x, rigidBody->position.y), vec2(rigidBody->shape.width, rigidBody->shape.height), vec4 (1));
 	}
 }
 
 
 
 int system_main() { // Entry point
+	r32 framebuffer_w = 1280;
+	r32 framebuffer_h = 720;
 	Handle platform = system_create_window(u8"Karma", 1280, 720, System_Window_Show_NORMAL);
-	gfx_create_context(platform, Render_Backend_OPENGL, 1, 4);
+	gfx_create_context(platform, Render_Backend_DIRECTX11, 1, 2, (u32)framebuffer_w, (u32)framebuffer_h);
 	ImGui::Initialize();
 
-	Handle quad_shader = gfx_create_shader("./data/quad.fx");
-
-	Render_Region region = {};
 
 	Event event;
 	bool  running = true;
 
-	const float dt = 1.0f / 60.0f;
+	const r32 aspect_ratio = framebuffer_w / framebuffer_h;
+	const r32 dt           = 1.0f / 60.0f;
 
-	float t = 0.0f;
-	float accumulator = 0.0f;
-	float frame_time = 0.0f;
+	r32 t           = 0.0f;
+	r32 accumulator = 0.0f;
+	r32 frame_time  = 0.0f;
 
 	u64 frequency = system_get_frequency();
 	u64 counter = system_get_counter();
 
 	r32 window_w = 0, window_h = 0;
 
-	Vec2 position = vec2(250, 250);
-	Vec2 dimension = vec2(200, 200);
-	Color4 box_color = vec4(0.88f, 0.8f, 0.02f);
-
-	float x = 500, y = 200;
-
 
 	InitializeRigidBodies();
+
 
 	while (running) {
 		auto new_counter = system_get_counter();
@@ -214,9 +207,8 @@ int system_main() { // Entry point
 			if (event.type & Event_Type_WINDOW_RESIZE) {
 				s32 w = event.window.dimension.x;
 				s32 h = event.window.dimension.y;
-				gfx_resize_framebuffer(w, h);
-				region.viewport = { 0, 0, w, h };
-				region.scissor = region.viewport;
+
+				gfx_on_client_resize(w, h);
 				window_w = (r32)w;
 				window_h = (r32)h;
 				continue;
@@ -226,6 +218,13 @@ int system_main() { // Entry point
 				system_request_quit();
 				break;
 			}
+
+
+			if ((event.type & Event_Type_KEY_UP) && event.key.symbol == Key_F11) {
+				system_fullscreen_state(SYSTEM_TOGGLE);
+				break;
+			}
+
 		}
 
 		while (accumulator >= dt) {
@@ -347,7 +346,6 @@ int system_main() { // Entry point
 
 			}
 
-			x += 1;
 			t += dt;
 			accumulator -= dt;
 		}
@@ -356,16 +354,51 @@ int system_main() { // Entry point
 
 		ImGui::UpdateFrame(frame_time);
 
-		gfx_frame(0, region, Clear_Flag_ALL, hex_to_color4(colorh(0x00, 0x45, 0x4f)));
-		auto view = orthographic_view(0, window_w, window_h, 0);
 
-		gfx2d_begin(vec2(0), 1, view, quad_shader);
-		gfx2d_no_texture();
-		gfx2d_color(box_color);
-		//gfx2d_rect(position, dimension);
-		
+
+		r32  world_height_half = 4.5f;
+		r32  world_width_half  = aspect_ratio * world_height_half;
+		auto view   = orthographic_view(0, framebuffer_w, framebuffer_h, 0, -2.0f, 2.0f);
+		//auto view              = orthographic_view(-world_width_half, world_width_half, world_height_half, -world_height_half, -2.0f, 2.0f);
+
+		gfx_begin_drawing(Framebuffer_Type_HDR, Clear_COLOR | Clear_DEPTH, vec4(0.02f, 0.02f, 0.02f));
+		gfx_viewport(0, 0, framebuffer_w, framebuffer_h);
+
+		im_begin(view);
 		PrintRigidBodies();
-		gfx2d_end();
+		//{
+		//	const Vec4  line_color       = vec4(0.2f, 0.2f, 0.2f, 1.0f);
+		//	const float x_line_thickness = world_width_half / framebuffer_w;
+		//	const float y_line_thickness = world_height_half / framebuffer_h;
+		//	for (float x = -world_width_half; x <= world_width_half; x += 1) {
+		//		im_line2d(vec2(x, -world_height_half), vec2(x, world_height_half), line_color, x_line_thickness);
+		//	}
+		//	for (float y = -world_height_half; y <= world_height_half; y += 1) {
+		//		im_line2d(vec2(-world_width_half, y), vec2(world_width_half, y), line_color, y_line_thickness);
+		//	}
+		//}
+
+		im_end();
+
+		gfx_end_drawing();
+
+
+		gfx_apply_bloom(2);
+
+		r32 render_w = window_w;
+		r32 render_h = floorf(window_w / aspect_ratio);
+		if (render_h > window_h) {
+			render_h = window_h;
+			render_w = floorf(window_h * aspect_ratio);
+		}
+
+		r32 render_x = floorf((window_w - render_w) * 0.5f);
+		r32 render_y = floorf((window_h - render_h) * 0.5f);
+
+		gfx_begin_drawing(Framebuffer_Type_DEFAULT, Clear_COLOR, vec4(0, 0, 0));
+
+		gfx_blit_hdr(render_x, render_y, render_w, render_h);
+		gfx_viewport(0, 0, window_w, window_h);
 
 		// ImGui Rendering here
 		ImGui::Begin("Edit");
@@ -380,12 +413,10 @@ int system_main() { // Entry point
 		ImGui::DragFloat("Angle", &rb.angle);
 		ImGui::DragFloat2("Force", rb.force.m);
 		ImGui::DragFloat("Torque", &rb.torque);
-		ImGui::DragFloat2("Position", position.m);
-		ImGui::DragFloat2("Dimension", dimension.m);
-		ImGui::ColorEdit4("Color", box_color.m);
 		ImGui::End();
 
 		ImGui::RenderFrame();
+		gfx_end_drawing();
 
 		gfx_present();
 

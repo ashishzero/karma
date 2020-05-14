@@ -987,7 +987,7 @@ int system_main() {
 
 		clang_visitChildren(clang_getTranslationUnitCursor(unit), ast_visitor, 0);
 
-		printf("done!\n");
+		printf("done.\n");
 		clang_disposeTranslationUnit(unit);
 	}
 
@@ -1010,11 +1010,10 @@ int system_main() {
 	};
 
 	fprintf(header, "#pragma once\n");
-	fprintf(header, "#include \"reflection.h\"\n\n");
 	fprintf(header, "\n%s", reflected_enum.data);
 	fprintf(header, "\n%s", reflected_struct.data);
 
-	printf("done.");
+	printf("done.\n");
 
 	clang_disposeIndex(index);
 	return 0;

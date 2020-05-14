@@ -59,11 +59,13 @@ void ostream_write_buffer(Ostream *stream, const void *ptr, s64 size) {
 		stream->tail->next       = new (stream->allocator) Ostream::Bucket;
 		stream->tail->next->prev = stream->tail;
 		stream->tail             = stream->tail->next;
+		stream->size += write;
 	}
 
 	if (left) {
 		memcpy(stream->tail->data + stream->tail->filled, data + size - left, left);
 		stream->tail->filled += left;
+		stream->size += left;
 	}
 }
 
@@ -80,12 +82,12 @@ void ostream_write_formatted(Ostream *stream, const char *fmt, ...) {
 	va_end(ap);
 }
 
-String ostream_build_string(Ostream *stream, bool null_terminate) {
-	s64 count = 0;
+s64 ostream_get_size(Ostream *stream) {
+	return stream->size;
+}
 
-	for (auto buk = &stream->head; buk != 0; buk = buk->next) {
-		count += buk->filled;
-	}
+String ostream_build_string(Ostream *stream, bool null_terminate) {
+	s64 count = stream->size;
 
 	String string;
 	string.data  = new u8[count + (s64)(null_terminate)];

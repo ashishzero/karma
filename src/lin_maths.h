@@ -470,6 +470,9 @@ Mat4 mat4_lookat(Vec3 from, Vec3 to, Vec3 world_up = WORLD_UP);
 Mat4 mat4_ortho_gl(r32 l, r32 r, r32 t, r32 b, r32 n, r32 f);
 Mat4 mat4_perspective_gl(r32 fov, r32 aspect_ratio, r32 n, r32 f);
 
+Mat4 mat4_ortho_dx(r32 l, r32 r, r32 t, r32 b, r32 n, r32 f);
+Mat4 mat4_perspective_dx(r32 fov, r32 aspect_ratio, r32 n, r32 f);
+
 Vec3 mat4_right(const Mat4 &m);
 Vec3 mat4_up(const Mat4 &m);
 Vec3 mat4_forward(const Mat4 &m);
@@ -543,12 +546,24 @@ bool quat_equals(Quat a, Quat b, r32 tolerance = MATH_R32_EQUALS_DEFAULT_TOLERAN
 //
 //
 
+Color3 linear_to_srgb(Color3 color);
+Color4 linear_to_srgb(Color4 color);
+Color3 linear_to_srgb(Color3 color, r32 gamma);
+Color4 linear_to_srgb(Color4 color, r32 gamma);
+
+Color3 srgb_to_linear(Color3 color);
+Color4 srgb_to_linear(Color4 color);
+Color3 srgb_to_linear(Color3 color, r32 gamma);
+Color4 srgb_to_linear(Color4 color, r32 gamma);
+
 Colorh color4_to_hex(Color4 v);
 Color4 hex_to_color4(Colorh c);
 Color3 hex_to_color3(Colorh c);
 
-Color3    hsv_to_rgb(Color_HSV c);
-Color_HSV rgb_to_hsv(Color3 c);
+Color3 hsv_to_rgb(Color3 c);
+Color3 rgb_to_hsv(Color3 c);
+Color4 hsv_to_rgb(Color4 c);
+Color4 rgb_to_hsv(Color4 c);
 
 //
 //
