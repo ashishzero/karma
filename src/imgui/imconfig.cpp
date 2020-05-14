@@ -56,7 +56,7 @@ void ImGui::Initialize() {
 	config.OversampleH = 4;
 	config.OversampleV = 4;
 	config.PixelSnapH  = true;
-	//io.Fonts->AddFontFromFileTTF("imgui/Roboto/Roboto-Regular.ttf", 16, &config);
+	io.Fonts->AddFontFromFileTTF("imgui/Roboto/RobotoMono-Medium.ttf", 16, &config);
 
 	static const ImWchar devanagari_ranges[] = {
 		0x0900,
@@ -64,15 +64,15 @@ void ImGui::Initialize() {
 		0,
 	};
 
-	ImVector<ImWchar>        ranges;
-	ImFontGlyphRangesBuilder builder;
-	builder.AddRanges(io.Fonts->GetGlyphRangesDefault());
-	builder.AddRanges(devanagari_ranges);
-	//builder.AddRanges(io.Fonts->GetGlyphRangesJapanese());
-	builder.BuildRanges(&ranges);
+	//ImVector<ImWchar>        ranges;
+	//ImFontGlyphRangesBuilder builder;
+	//builder.AddRanges(io.Fonts->GetGlyphRangesDefault());
+	//builder.AddRanges(devanagari_ranges);
+	////builder.AddRanges(io.Fonts->GetGlyphRangesJapanese());
+	//builder.BuildRanges(&ranges);
 
-	io.Fonts->AddFontFromFileTTF("c:/windows/fonts/mangal.ttf", 24, NULL, ranges.Data);
-	io.Fonts->Build();
+	//io.Fonts->AddFontFromFileTTF("c:/windows/fonts/mangal.ttf", 24, NULL, ranges.Data);
+	//io.Fonts->Build();
 
 	auto &style             = ImGui::GetStyle();
 	style.ChildRounding     = 0;

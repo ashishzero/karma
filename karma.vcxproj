@@ -195,6 +195,7 @@ popd
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\build.cpp" />
+    <ClCompile Include="src\physics.cpp" />
     <ClCompile Include="src\prebuild.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Developer|x64'">true</ExcludedFromBuild>
@@ -264,6 +265,7 @@ popd
     <ClInclude Include="src\imgui\imstb_textedit.h" />
     <ClInclude Include="src\imgui\imstb_truetype.h" />
     <ClInclude Include="src\opentype.h" />
+    <ClInclude Include="src\physics.h" />
     <ClInclude Include="src\reflection.h" />
     <ClInclude Include="src\unicode.h" />
     <ClInclude Include="src\windows\resource.h" />
