@@ -726,7 +726,7 @@ Mat4 mat4_perspective_dx(r32 fov, r32 aspect_ratio, r32 n, r32 f) {
 	Mat4 m;
 	m.rows[0] = vec4(cot / aspect_ratio, 0.0f, 0.0f, 0.0f);
 	m.rows[1] = vec4(0.0f, cot, 0.0f, 0.0f);
-	m.rows[2] = vec4(0.0f, 0.0f, f / fmn, - f * n / fmn);
+	m.rows[2] = vec4(0.0f, 0.0f, f / fmn, -f * n / fmn);
 	m.rows[3] = vec4(0.0f, 0.0f, 1.0f, 0.0f);
 	return m;
 }
@@ -1173,7 +1173,8 @@ Color3 hsv_to_rgb(Color3 col) {
 		case 2: res = vec3(p, v, t); break;
 		case 3: res = vec3(p, q, v); break;
 		case 4: res = vec3(t, p, v); break;
-		case 5: default: res = vec3(v, p, q); break;
+		case 5:
+		default: res = vec3(v, p, q); break;
 	}
 
 	return res;
@@ -1190,20 +1191,20 @@ Color3 rgb_to_hsv(Color3 c) {
 		auto t = b;
 		b      = g;
 		g      = t;
-		k = -1.f;
+		k      = -1.f;
 	}
 	if (r < g) {
 		auto t = g;
 		g      = r;
 		r      = t;
-		k = -2.f / 6.f - k;
+		k      = -2.f / 6.f - k;
 	}
 
 	Color3 res;
-	r32 chroma = r - (g < b ? g : b);
-	res.x = fabsf(k + (g - b) / (6.f * chroma + 1e-20f));
-	res.y = chroma / (r + 1e-20f);
-	res.z = r;
+	r32    chroma = r - (g < b ? g : b);
+	res.x         = fabsf(k + (g - b) / (6.f * chroma + 1e-20f));
+	res.y         = chroma / (r + 1e-20f);
+	res.z         = r;
 	return res;
 }
 
@@ -1399,14 +1400,20 @@ Vec2 rotate_around(Vec2 point, Vec2 center, r32 angle) {
 //
 //
 
-bool point_inside_rect(Mm_Rect rect, Vec2 point) {
+bool point_inside_rect(Vec2 point, Mm_Rect rect) {
 	if (point.x < rect.min.x || point.y < rect.min.y) return false;
 	if (point.x > rect.max.x || point.y > rect.max.y) return false;
 	return true;
 }
 
-bool aabb_vs_aabb(const Mm_Rect &a, const Mm_Rect &b) {
-	if (a.max.x < b.min.x || a.min.x > b.max.x) return false;
-	if (a.max.y < b.min.y || a.min.y > b.max.y) return false;
+bool aabb_collision(const Mm_Rect &a, const Mm_Rect &b) {
+	float d1x = b.min.x - a.max.x;
+	float d1y = b.min.y - a.max.y;
+	float d2x = a.min.x - b.max.x;
+	float d2y = a.min.y - b.max.y;
+
+	if (d1x > 0.0f || d1y > 0.0f || d2x > 0.0f || d2y > 0.0f)
+		return false;
+
 	return true;
 }

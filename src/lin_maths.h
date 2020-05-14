@@ -671,5 +671,5 @@ inline T integrate_rk4(const T &x, r32 t, r32 h, Function f) {
 //
 //
 
-bool point_inside_rect(Mm_Rect rect, Vec2 point);
-bool aabb_vs_aabb(const Mm_Rect &a, const Mm_Rect &b);
+bool point_inside_rect(Vec2 point, Mm_Rect rect);
+bool aabb_collision(const Mm_Rect &a, const Mm_Rect &b);

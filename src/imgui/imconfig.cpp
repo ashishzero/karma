@@ -65,6 +65,7 @@ void ImGui::Initialize() {
 	//builder.AddRanges(devanagari_ranges);
 	////builder.AddRanges(io.Fonts->GetGlyphRangesJapanese());
 	//builder.BuildRanges(&ranges);
+
 	//
 	//io.Fonts->AddFontFromFileTTF("c:/windows/fonts/mangal.ttf", 24, NULL, ranges.Data);
 	//io.Fonts->Build();

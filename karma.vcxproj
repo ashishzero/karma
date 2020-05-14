@@ -227,6 +227,7 @@ popd
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Developer|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="src\physics.cpp" />
     <ClCompile Include="src\stream.cpp" />
     <ClCompile Include="src\tokenizer.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
@@ -268,6 +269,7 @@ popd
     <ClInclude Include="src\imgui\imstb_truetype.h" />
     <ClInclude Include="src\opentype.h" />
     <ClInclude Include="src\particle_system.h" />
+    <ClInclude Include="src\physics.h" />
     <ClInclude Include="src\random.h" />
     <ClInclude Include="src\reflection.h" />
     <ClInclude Include="src\unicode.h" />
