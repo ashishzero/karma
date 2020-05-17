@@ -24,19 +24,19 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>ClangCL</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>ClangCL</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Developer|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>ClangCL</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
@@ -60,7 +60,8 @@
     <TargetName>$(ProjectName)_$(Platform)_$(Configuration)</TargetName>
     <RunCodeAnalysis>false</RunCodeAnalysis>
     <PreBuildEventUseInBuild>true</PreBuildEventUseInBuild>
-    <EnableMicrosoftCodeAnalysis>true</EnableMicrosoftCodeAnalysis>
+    <EnableMicrosoftCodeAnalysis>false</EnableMicrosoftCodeAnalysis>
+    <EnableClangTidyCodeAnalysis>false</EnableClangTidyCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Developer|x64'">
     <OutDir>$(SolutionDir)run_tree\</OutDir>
@@ -68,7 +69,8 @@
     <TargetName>$(ProjectName)_$(Platform)_$(Configuration)</TargetName>
     <RunCodeAnalysis>false</RunCodeAnalysis>
     <PreBuildEventUseInBuild>true</PreBuildEventUseInBuild>
-    <EnableMicrosoftCodeAnalysis>true</EnableMicrosoftCodeAnalysis>
+    <EnableMicrosoftCodeAnalysis>false</EnableMicrosoftCodeAnalysis>
+    <EnableClangTidyCodeAnalysis>false</EnableClangTidyCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>$(SolutionDir)run_tree\</OutDir>
@@ -76,7 +78,8 @@
     <TargetName>$(ProjectName)</TargetName>
     <RunCodeAnalysis>false</RunCodeAnalysis>
     <PreBuildEventUseInBuild>true</PreBuildEventUseInBuild>
-    <EnableMicrosoftCodeAnalysis>true</EnableMicrosoftCodeAnalysis>
+    <EnableMicrosoftCodeAnalysis>false</EnableMicrosoftCodeAnalysis>
+    <EnableClangTidyCodeAnalysis>false</EnableClangTidyCodeAnalysis>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -103,11 +106,12 @@
       <EnforceTypeConversionRules>true</EnforceTypeConversionRules>
       <TreatWarningAsError>true</TreatWarningAsError>
       <SmallerTypeCheck>false</SmallerTypeCheck>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <SDLCheck>false</SDLCheck>
       <ExceptionHandling>SyncCThrow</ExceptionHandling>
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
+      <AdditionalOptions>-Wno-unused-parameter -Wno-unused-variable -Wno-switch -Wno-unused-command-line-argument -Wno-unused-function %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <AdditionalDependencies>
@@ -140,11 +144,12 @@ popd
       <EnforceTypeConversionRules>true</EnforceTypeConversionRules>
       <TreatWarningAsError>true</TreatWarningAsError>
       <SmallerTypeCheck>false</SmallerTypeCheck>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <SDLCheck>false</SDLCheck>
       <ExceptionHandling>SyncCThrow</ExceptionHandling>
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
+      <AdditionalOptions>-Wno-unused-parameter -Wno-unused-variable -Wno-switch -Wno-unused-command-line-argument -Wno-unused-function %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <AdditionalDependencies>
@@ -171,11 +176,12 @@ popd
       <EnforceTypeConversionRules>true</EnforceTypeConversionRules>
       <TreatWarningAsError>true</TreatWarningAsError>
       <SmallerTypeCheck>false</SmallerTypeCheck>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <SDLCheck>false</SDLCheck>
       <ExceptionHandling>SyncCThrow</ExceptionHandling>
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
+      <AdditionalOptions>-Wno-unused-parameter -Wno-unused-variable -Wno-switch -Wno-unused-command-line-argument -Wno-unused-function %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <AdditionalDependencies>
@@ -194,6 +200,7 @@ popd
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\debug_service.cpp" />
     <ClCompile Include="src\directx\gfx_d3d11.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Developer|x64'">false</ExcludedFromBuild>
@@ -257,6 +264,7 @@ popd
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\debug_service.h" />
     <ClInclude Include="src\directx\dx_error.h" />
     <ClInclude Include="src\gfx_shaders.h" />
     <ClInclude Include="src\imgui\imconfig.h" />
@@ -267,6 +275,7 @@ popd
     <ClInclude Include="src\imgui\imstb_rectpack.h" />
     <ClInclude Include="src\imgui\imstb_textedit.h" />
     <ClInclude Include="src\imgui\imstb_truetype.h" />
+    <ClInclude Include="src\intrinsics.h" />
     <ClInclude Include="src\opentype.h" />
     <ClInclude Include="src\particle_system.h" />
     <ClInclude Include="src\physics.h" />

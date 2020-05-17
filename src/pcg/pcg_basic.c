@@ -32,7 +32,7 @@
 
 // state for global RNGs
 
-static pcg32_random_t pcg32_global = PCG32_INITIALIZER;
+pcg32_random_t pcg32_global = PCG32_INITIALIZER;
 
 // pcg32_srandom(initstate, initseq)
 // pcg32_srandom_r(rng, initstate, initseq):

@@ -36,7 +36,6 @@ float luminance(float3 color) {
 
 Ps_Out ps_main(Vs_Out input) {
 	float2 tex_coord = input.tex_coord;
-	tex_coord.y      = 1.0f - tex_coord.y;
 
 	Ps_Out output;
 

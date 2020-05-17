@@ -17,7 +17,7 @@ static const float2 vertices[] = {
 	{ -1, -1 }, { -1, 1 }, { 1, 1 }, { -1, -1 }, { 1, 1 }, { 1, -1 }
 };
 static const float2 tex_coords[] = {
-	{ 0, 0 }, { 0, 1 }, { 1, 1 }, { 0, 0 }, { 1, 1 }, { 1, 0 }
+	{ 0, 1 }, { 0, 0 }, { 1, 0 }, { 0, 1 }, { 1, 0 }, { 1, 1 }
 };
 
 Vs_Out vs_main(Vs_In input) {
@@ -59,7 +59,6 @@ float3 aces_fitted(float3 color) {
 
 float4 ps_main(Vs_Out input) : SV_TARGET {
 	float2 tex_coord   = input.tex_coord;
-	tex_coord.y        = 1.0f - tex_coord.y;
 	float4 sampled     = u_texture.Sample(u_texture_sampler, tex_coord);
 	float3 bloom_color = u_bloom.Sample(u_bloom_sampler, tex_coord).xyz;
 	sampled.xyz += bloom_color;

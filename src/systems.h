@@ -336,6 +336,26 @@ struct System_Info {
 	u32                    allocation_granularity;
 };
 
+enum Virtual_Memory_Flag_Bit {
+	Virtual_Memory_COMMIT     = 0x1,
+	Virtual_Memory_RESERVE    = 0x2,
+	Virtual_Memory_RESET      = 0x4,
+	Virtual_Memory_UNDO_RESET = 0x8,
+	Virtual_Memory_DECOMMIT   = 0x10,
+	Virtual_Memory_RELEASE    = 0x20,
+};
+typedef u32 Vitual_Memory_Flags;
+
+constexpr u32 WAIT_INFINITE = 0xFFFFFFFF;
+
+enum Wait_Result {
+	Wait_Result_SUCCESS,
+	Wait_Result_ABANDONED,
+	Wait_Result_SIGNALED,
+	Wait_Result_TIMEOUT,
+	Wait_Result_FAILED
+};
+
 //
 //
 //
@@ -412,12 +432,19 @@ void system_fatal_error(const String msg);
 void system_display_critical_message(const String msg);
 
 void *system_allocator(Allocation_Type type, ptrsize size, void *ptr, void *user_ptr);
+void *system_virtual_alloc(void *address, ptrsize size, Vitual_Memory_Flags flags);
+void  system_virtual_free(void *ptr, ptrsize size, Vitual_Memory_Flags flags);
 
-Handle      system_thread_create(Thread_Proc proc, void *arg, ptrsize temporary_memory_size = TEMPORARY_MEMORY_SIZE, String name = String((char *)0, 0));
+Handle      system_thread_create(Thread_Proc proc, void *arg, Allocator allocator = { 0, 0 }, ptrsize temporary_memory_size = TEMPORARY_MEMORY_SIZE, String name = String((char *)0, 0));
 void        system_thread_run(Handle handle);
 Thread_Wait system_thread_wait(Handle handle, u32 millisecs);
 void        system_thread_terminate(Handle handle, int exit_code);
 void        system_thread_exit(int exit_code);
+
+Handle      system_create_mutex();
+void        system_destory_mutex(Handle handle);
+Wait_Result system_lock_mutex(Handle handle, u32 millisecs);
+void        system_unlock_mutex(Handle handle);
 
 int system_main();
 

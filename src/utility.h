@@ -1,6 +1,7 @@
 #pragma once
 #include "karma.h"
 #include "lin_maths.h"
+#include <algorithm>
 
 inline u32 murmur3_32(const void *ptr, size_t len, u32 seed) {
 	const u8 *key = (u8 *)ptr;
@@ -73,7 +74,7 @@ inline void sort_insert(Type *a, s64 n, Compare cmp) {
 	for (i = 1; i < n; ++i) {
 		Type t = a[i];
 		j      = i - 1;
-		for (; j >= 0 && cmp(a + j, &t) > 0; --j) {
+		for (; j >= 0 && cmp(a[j], t) > 0; --j) {
 			swap(a + j, a + j + 1);
 		}
 		a[j + 1] = t;
@@ -81,71 +82,8 @@ inline void sort_insert(Type *a, s64 n, Compare cmp) {
 }
 
 template <typename Type, typename Compare>
-inline Type *median3(Type *a, Type *b, Type *c, Compare cmp) {
-	return cmp(a, b) < 0 ? (cmp(b, c) < 0 ? b : cmp(a, c) < 0 ? c : a) : (cmp(b, c) > 0 ? b : cmp(a, c) > 0 ? c : a);
-}
-
-// Link: https://cs.fit.edu/~pkc/classes/writing/papers/bentley93engineering.pdf
-template <typename Type, typename Compare>
-void sort_quick(Type *a, s64 n, Compare cmp) {
-	Type *pa, *pb, *pc, *pd, *pl, *pm, *pn, *pv;
-	int   r;
-	s64   s;
-
-	// Insertion sort on smallest arrays
-	if (n < 7) {
-		sort_insert(a, n, cmp);
-		return;
-	}
-
-	// Small arrays, middle element
-	pm = a + (n / 2);
-	if (n > 7) {
-		pl = a;
-		pn = a + (n - 1);
-		// Big arrays, pseudomedian of 9
-		if (n > 40) {
-			s  = (n / 8);
-			pl = median3(pl, pl + s, pl + 2 * s, cmp);
-			pm = median3(pm - s, pm, pm + s, cmp);
-			pn = median3(pn - 2 * s, pn - s, pn, cmp);
-		}
-		pm = median3(pl, pm, pn, cmp);
-	}
-
-	pv = a;
-	swap(pv, pm);
-
-	pa = pb = a;
-	pc = pd = a + (n - 1);
-	for (;;) {
-		while (pb <= pc && (r = cmp(pb, pv)) <= 0) {
-			if (r == 0) {
-				swap(pa, pb);
-				pa += 1;
-			}
-			pb += 1;
-		}
-		while (pc >= pb && (r = cmp(pc, pv)) >= 0) {
-			if (r == 0) {
-				swap(pc, pd);
-				pd -= 1;
-			}
-			pc -= 1;
-		}
-		if (pb > pc) break;
-		swap(pb, pc);
-		pb += 1;
-		pc -= 1;
-	}
-
-	pn = a + n;
-	s  = min_value(pa - a, pb - pa);
-	swap_vec(a, pb - s, s);
-	s = min_value(pd - pc, pn - pd - 1);
-	swap_vec(pb, pn - s, s);
-	if ((s = pb - pa) > 1) sort_quick(a, s, cmp);
-	if ((s = pd - pc) > 1) sort_quick(pn - s, s, cmp);
+void sort(Type *a, s64 n, Compare cmp) {
+	std::sort(a, a + n, cmp);
 }
 
 // NOTE: *left* is inclusive but *right* is exclusive

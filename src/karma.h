@@ -50,40 +50,40 @@
 #	define TARGET_MOBILE
 #endif
 
-// current function name
+// current procedure name
 #if defined(__GNUC__) || (defined(__MWERKS__) && (__MWERKS__ >= 0x3000)) || (defined(__ICC) && (__ICC >= 600)) || defined(__ghs__)
-#	define CURRENT_FUNCTION __PRETTY_FUNCTION__
+#	define CURRENT_PROCEDURE __PRETTY_PROCEDURE__
 #elif defined(__DMC__) && (__DMC__ >= 0x810)
-#	define CURRENT_FUNCTION __PRETTY_FUNCTION__
+#	define CURRENT_PROCEDURE __PRETTY_PROCEDURE__
 #elif defined(__FUNCSIG__)
-#	define CURRENT_FUNCTION __FUNCSIG__
+#	define CURRENT_PROCEDURE __FUNCSIG__
 #elif (defined(__INTEL_COMPILER) && (__INTEL_COMPILER >= 600)) || \
 	(defined(__IBMCPP__) && (__IBMCPP__ >= 500))
-#	define CURRENT_FUNCTION __FUNCTION__
+#	define CURRENT_PROCEDURE __PROCEDURE__
 #elif defined(__BORLANDC__) && (__BORLANDC__ >= 0x550)
-#	define CURRENT_FUNCTION __FUNC__
+#	define CURRENT_PROCEDURE __FUNC__
 #elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901)
-#	define CURRENT_FUNCTION __func__
+#	define CURRENT_PROCEDURE __func__
 #elif defined(__cplusplus) && (__cplusplus >= 201103)
-#	define CURRENT_FUNCTION __func__
+#	define CURRENT_PROCEDURE __func__
 #elif defined(_MSC_VER)
-#	define CURRENT_FUNCTION __FUNCSIG__
+#	define CURRENT_PROCEDURE __FUNCSIG__
 #else
-#	define CURRENT_FUNCTION "_unknown_"
+#	define CURRENT_PROCEDURE "_unknown_"
 #endif
 
 struct Compile_Info {
 	const char *file;
 	const int   line;
-	const char *current_function;
+	const char *procedure;
 };
 
 #define CURRENT_FILE __FILE__
 #define CURRENT_LINE __LINE__
 
-#define COMPILE_INFO                                 \
-	Compile_Info {                                   \
-		CURRENT_FILE, CURRENT_LINE, CURRENT_FUNCTION \
+#define COMPILE_INFO                                  \
+	Compile_Info {                                    \
+		CURRENT_FILE, CURRENT_LINE, CURRENT_PROCEDURE \
 	}
 
 #if defined(HAVE_SIGNAL_H) && !defined(__WATCOMC__)
@@ -355,6 +355,13 @@ union Handle {
 	}
 };
 
+inline bool operator==(Handle a, Handle b) {
+	return a.h64 == b.h64;
+}
+inline bool operator!=(Handle a, Handle b) {
+	return a.h64 != b.h64;
+}
+
 //
 // Defer
 //
@@ -386,7 +393,7 @@ struct ExitScopeHelp {
 //
 
 #ifndef DEFAULT_TEMPORARY_MEMORY_SIZE
-#	define DEFAULT_TEMPORARY_MEMORY_SIZE mega_bytes(32)
+#	define DEFAULT_TEMPORARY_MEMORY_SIZE mega_bytes(128)
 #endif
 
 const ptrsize MEMORY_ALIGNMENT = sizeof(ptrsize);

@@ -3,6 +3,7 @@
 #include "string.h"
 #include "systems.h"
 #include "gfx_shaders.h"
+#include "debug_service.h"
 
 #pragma pack(push, 4)
 
@@ -487,7 +488,9 @@ void gfx_viewport(r32 x, r32 y, r32 w, r32 h) {
 	gfx->cmd_set_viewport(x, y, w, h);
 }
 
-void im_begin(Mat4 &transform) {
+void im_begin(const Mat4 &transform) {
+	kdTimedProcedure();
+
 	im_context.draw_cmd       = 0;
 	im_context.vertex         = 0;
 	im_context.index          = 0;
@@ -511,7 +514,7 @@ void im_begin(Mat4 &transform) {
 	gfx->cmd_bind_vs_uniform_buffers(0, 1, &im_context.uniform_buffer);
 }
 
-void im_begin(Camera_View &view, Mat4 &transform) {
+void im_begin(Camera_View &view, const Mat4 &transform) {
 	Mat4 projection;
 	switch (gfx->backend) {
 		case Render_Backend_OPENGL: {
@@ -551,6 +554,8 @@ void im_begin(Camera_View &view, Mat4 &transform) {
 }
 
 void iim_flush(bool restart) {
+	kdTimedProcedure();
+
 	gfx->unmap(im_context.vertex_buffer);
 	gfx->unmap(im_context.index_buffer);
 
@@ -582,6 +587,8 @@ void iim_flush(bool restart) {
 }
 
 void im_end() {
+	kdTimedProcedure();
+
 	if (im_context.counter) {
 		im_push_draw_cmd();
 	}
@@ -589,6 +596,9 @@ void im_end() {
 }
 
 void im_bind_texture(Texture2d_Handle handle) {
+	if (im_context.draw_cmds[im_context.draw_cmd].texture.id == handle.view.id)
+		return;
+
 	if (im_context.counter) {
 		im_push_draw_cmd();
 		im_start_cmd_record(handle.view);
@@ -1039,4 +1049,28 @@ void im_arc_outline(Vec3 position, r32 radius, r32 theta_a, r32 theta_b, Color4 
 
 void im_arc_outline(Vec2 position, r32 radius, r32 theta_a, r32 theta_b, Color4 color, bool closed, r32 thickness, int segments) {
 	im_arc_outline(vec3(position, 1), radius, radius, theta_a, theta_b, color, closed, thickness, segments);
+}
+
+void im_text(Vec3 position, r32 scale, Monospaced_Font_Info &font, const String string, Color4 color) {
+	Vec2 dimension;
+	Vec3 render_pos;
+	render_pos.z = position.z;
+	for (s64 c_index = 0; c_index < string.count; ++c_index) {
+		s32 index = (s32)(string[c_index] - font.first) + 1;
+
+		if (index >= font.count || index < 0) index = 0;
+
+		auto &info    = font.range[index];
+		render_pos.xy = position.xy + info.offset * scale;
+
+		dimension.x = info.width * scale;
+		dimension.y = info.height * scale;
+		im_rect(render_pos, dimension, info.rect, color);
+
+		position.x += font.advance * scale;
+	}
+}
+
+void im_text(Vec2 position, r32 scale, Monospaced_Font_Info &font, const String string, Color4 color) {
+	im_text(vec3(position, 1), scale, font, string, color);
 }

@@ -1407,13 +1407,7 @@ bool point_inside_rect(Vec2 point, Mm_Rect rect) {
 }
 
 bool aabb_collision(const Mm_Rect &a, const Mm_Rect &b) {
-	float d1x = b.min.x - a.max.x;
-	float d1y = b.min.y - a.max.y;
-	float d2x = a.min.x - b.max.x;
-	float d2y = a.min.y - b.max.y;
-
-	if (d1x > 0.0f || d1y > 0.0f || d2x > 0.0f || d2y > 0.0f)
-		return false;
-
+	if (a.max.x < b.min.x || a.min.x > b.max.x) return false;
+	if (a.max.y < b.min.y || a.min.y > b.max.y) return false;
 	return true;
 }

@@ -53,23 +53,6 @@ void ImGui::Initialize() {
 	config.PixelSnapH  = true;
 	io.Fonts->AddFontFromFileTTF("imgui/Roboto/RobotoMono-Medium.ttf", 16, &config);
 
-	static const ImWchar devanagari_ranges[] = {
-		0x0900,
-		0x097F,
-		0,
-	};
-
-	//ImVector<ImWchar>        ranges;
-	//ImFontGlyphRangesBuilder builder;
-	//builder.AddRanges(io.Fonts->GetGlyphRangesDefault());
-	//builder.AddRanges(devanagari_ranges);
-	////builder.AddRanges(io.Fonts->GetGlyphRangesJapanese());
-	//builder.BuildRanges(&ranges);
-
-	//
-	//io.Fonts->AddFontFromFileTTF("c:/windows/fonts/mangal.ttf", 24, NULL, ranges.Data);
-	//io.Fonts->Build();
-
 	auto &style             = ImGui::GetStyle();
 	style.ChildRounding     = 0;
 	style.PopupRounding     = 0;

@@ -1,5 +1,6 @@
 #pragma once
 #include "random.h"
+#include "gfx_renderer.h"
 
 struct Particle_Emitter_Property {
 	enum Kind {
@@ -66,7 +67,6 @@ struct Particle {
 struct Particle_Emitter {
 	Texture2d_Handle          *texture;
 	Mm_Rect                   texture_rect;
-	Random_Series *           rng;
 	Vec2                      position;
 	Particle_Emitter_Property properties; // TODO: perhaps we should we same emitter for multiple particle system
 	Particle *                particles;
@@ -85,35 +85,35 @@ Particle *particle_emitter_find_dead(Particle_Emitter *emitter) {
 	return emitter->particles + emitter->emit_count;
 }
 
-void particle_create_new(Particle_Emitter_Property &properties, Vec2 center, Random_Series *rng, Particle *particle) {
+void particle_create_new(Particle_Emitter_Property &properties, Vec2 center, Particle *particle) {
 	switch (properties.kind) {
 		case Particle_Emitter_Property::POINT: {
 			particle->position = center;
 		} break;
 
 		case Particle_Emitter_Property::LINE: {
-			auto value         = random_get_zero_to_one(rng, properties.control);
+			auto value         = random_get_zero_to_one(properties.control);
 			particle->position = value * (properties.a) + center;
 		} break;
 
 		case Particle_Emitter_Property::ELLIPSE: {
-			auto value_a         = random_get_zero_to_one(rng, properties.control);
-			auto value_b         = random_get_zero_to_one(rng, properties.control) * MATH_PI * 2;
+			auto value_a         = random_get_zero_to_one(properties.control);
+			auto value_b         = random_get_zero_to_one(properties.control) * MATH_PI * 2;
 			particle->position.x = sqrtf(value_a) * properties.a.x * cosf(value_b) + center.x;
 			particle->position.y = sqrtf(value_a) * properties.a.y * sinf(value_b) + center.y;
 		} break;
 
 		case Particle_Emitter_Property::TRIANGLE: {
 			// https://www.cs.princeton.edu/~funk/tog02.pdf, Section 4.2
-			auto value_a       = sqrtf(random_get_zero_to_one(rng, properties.control));
-			auto value_b       = random_get_zero_to_one(rng, properties.control);
+			auto value_a       = sqrtf(random_get_zero_to_one(properties.control));
+			auto value_b       = random_get_zero_to_one(properties.control);
 			particle->position = (1 - value_a) * properties.a + (value_a * (1 - value_b)) * properties.b + (value_a * value_b) * properties.c;
 			particle->position += center;
 		} break;
 
 		case Particle_Emitter_Property::RECT: {
-			auto value_x         = random_get_zero_to_one(rng, properties.control);
-			auto value_y         = random_get_zero_to_one(rng, properties.control);
+			auto value_x         = random_get_zero_to_one(properties.control);
+			auto value_y         = random_get_zero_to_one(properties.control);
 			particle->position.x = value_x * properties.a.x + center.x;
 			particle->position.y = value_y * properties.a.y + center.y;
 		} break;
@@ -121,17 +121,17 @@ void particle_create_new(Particle_Emitter_Property &properties, Vec2 center, Ran
 			invalid_default_case();
 	}
 
-	particle->density        = random_get_range(rng, properties.density);
-	particle->scale_a        = random_get_range(rng, properties.scale_a);
-	particle->scale_b        = random_get_range(rng, properties.scale_b);
-	particle->rotation       = random_get_range(rng, properties.rotation);
-	particle->velocity.x     = random_get_range(rng, properties.initial_velocity_x);
-	particle->velocity.y     = random_get_range(rng, properties.initial_velocity_y);
-	particle->drag           = random_get_range(rng, properties.drag);
-	particle->spin           = random_get_range(rng, properties.spin);
+	particle->density        = random_get_range(properties.density);
+	particle->scale_a        = random_get_range(properties.scale_a);
+	particle->scale_b        = random_get_range(properties.scale_b);
+	particle->rotation       = random_get_range(properties.rotation);
+	particle->velocity.x     = random_get_range(properties.initial_velocity_x);
+	particle->velocity.y     = random_get_range(properties.initial_velocity_y);
+	particle->drag           = random_get_range(properties.drag);
+	particle->spin           = random_get_range(properties.spin);
 	particle->color_a        = properties.color_a;
 	particle->color_b        = properties.color_b;
-	particle->life_span      = random_get_range(rng, properties.life_span);
+	particle->life_span      = random_get_range(properties.life_span);
 	particle->life           = 0;
 	particle->external_force = vec2(0);
 
@@ -148,8 +148,8 @@ void particle_emitter_update_single_particle(Particle_Emitter *emitter, Particle
 		r32  mass   = (particle->density * volume);
 		r32  imass  = 1.0f / mass;
 		Vec2 force;
-		force.x = random_get_range(emitter->rng, emitter->properties.force_x);
-		force.y = random_get_range(emitter->rng, emitter->properties.force_y);
+		force.x = random_get_range(emitter->properties.force_x);
+		force.y = random_get_range(emitter->properties.force_y);
 		force += particle->external_force;
 		Vec2 acceleration = force * imass;
 		particle->velocity += dt * acceleration;
@@ -170,7 +170,7 @@ void particle_emitter_update_particles(Particle_Emitter *emitter, r32 dt) {
 			// TODO: Should we replace the old particle, or perhaps we should not limit the particles count?
 			auto new_particle = particle_emitter_find_dead(emitter);
 			if (new_particle) {
-				particle_create_new(emitter->properties, emitter->position, emitter->rng, new_particle);
+				particle_create_new(emitter->properties, emitter->position, new_particle);
 			} else {
 				break;
 			}
@@ -200,7 +200,7 @@ Particle_Emitter_Property particle_emitter_default_property() {
 	props.color_a            = vec4(0.2f, 1.0f, 1.0f, 0.0f);
 	props.color_b            = vec4(0.0f, 1.0f, 1.0f, 1.0f);
 	props.opacity            = 1;
-	props.intensity          = 1;
+	props.intensity          = 4.5f;
 	props.life_span          = random_distribution(Distribution_Control_UNIFORM, 1.5f, 2.0f);
 	props.emission_rate      = 50;
 	props.fade_in            = 0.06f;
@@ -209,11 +209,10 @@ Particle_Emitter_Property particle_emitter_default_property() {
 	return props;
 }
 
-Particle_Emitter particle_emitter_create(Texture2d_Handle *texture, Mm_Rect tex_rect, Random_Series *rng, int max_partices, int emit_count) {
+Particle_Emitter particle_emitter_create(Texture2d_Handle *texture, Mm_Rect tex_rect, int max_partices, int emit_count) {
 	Particle_Emitter emitter;
 	emitter.texture         = texture;
 	emitter.texture_rect    = tex_rect;
-	emitter.rng             = rng;
 	emitter.position        = vec2(250, 250);
 	emitter.properties      = particle_emitter_default_property();
 	emitter.particles_count = max_partices;

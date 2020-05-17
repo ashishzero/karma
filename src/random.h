@@ -2,53 +2,57 @@
 #include "pcg/pcg_basic.h"
 #include "lin_maths.h"
 
-struct Random_Series {
-	pcg_state_setseq_64 state;
-};
+typedef pcg_state_setseq_64 Random_Series;
+
+extern "C" pcg32_random_t pcg32_global;
+
+inline void random_init_global(u64 state, u64 seq) {
+	pcg32_srandom(state, seq);
+}
 
 inline Random_Series random_init(u64 state, u64 seq) {
 	Random_Series rng;
-	pcg32_srandom_r(&rng.state, state, seq);
+	pcg32_srandom_r(&rng, state, seq);
 	return rng;
 }
 
-inline u32 random_get(Random_Series *rng) {
-	return pcg32_random_r(&rng->state);
+inline u32 random_get(Random_Series *rng = &pcg32_global) {
+	return pcg32_random_r(rng);
 }
 
-inline u32 random_get_bound(Random_Series *rng, u32 bound) {
-	return pcg32_boundedrand_r(&rng->state, bound);
+inline u32 random_get_bound(u32 bound, Random_Series *rng = &pcg32_global) {
+	return pcg32_boundedrand_r(rng, bound);
 }
 
-inline u32 random_get_range(Random_Series *rng, u32 min, u32 max) {
-	return min + pcg32_boundedrand_r(&rng->state, max - min);
+inline u32 random_get_range(u32 min, u32 max, Random_Series *rng = &pcg32_global) {
+	return min + pcg32_boundedrand_r(rng, max - min);
 }
 
-inline r32 random_get_zero_to_one(Random_Series *rng) {
-	return (float)ldexpf((float)pcg32_random_r(&rng->state), -32);
+inline r32 random_get_zero_to_one(Random_Series *rng = &pcg32_global) {
+	return (float)ldexpf((float)pcg32_random_r(rng), -32);
 }
 
-inline r32 random_get_bound(Random_Series *rng, float bound) {
+inline r32 random_get_bound(float bound, Random_Series *rng = &pcg32_global) {
 	return random_get_zero_to_one(rng) * bound;
 }
 
-inline r32 random_r32_range(Random_Series *rng, float min, float max) {
+inline r32 random_r32_range(float min, float max, Random_Series *rng = &pcg32_global) {
 	return min + random_get_zero_to_one(rng) * (max - min);
 }
 
-inline Vec2 random_vec2_zero_to_one(Random_Series *rng) {
+inline Vec2 random_vec2_zero_to_one(Random_Series *rng = &pcg32_global) {
 	return vec2(random_get_zero_to_one(rng), random_get_zero_to_one(rng));
 }
 
-inline Vec3 random_vec3_zero_to_one(Random_Series *rng) {
+inline Vec3 random_vec3_zero_to_one(Random_Series *rng = &pcg32_global) {
 	return vec3(random_get_zero_to_one(rng), random_get_zero_to_one(rng), random_get_zero_to_one(rng));
 }
 
-inline Vec4 random_vec4_zero_to_one(Random_Series *rng) {
+inline Vec4 random_vec4_zero_to_one(Random_Series *rng = &pcg32_global) {
 	return vec4(random_get_zero_to_one(rng), random_get_zero_to_one(rng), random_get_zero_to_one(rng), random_get_zero_to_one(rng));
 }
 
-inline Color3 random_color_hsv(Random_Series *rng, float s, float v) {
+inline Color3 random_color_hsv(float s, float v, Random_Series *rng = &pcg32_global) {
 	Color3 color;
 	color.x = random_get_zero_to_one(rng);
 	color.y = s;
@@ -56,12 +60,12 @@ inline Color3 random_color_hsv(Random_Series *rng, float s, float v) {
 	return color;
 }
 
-inline Color3 random_color3(Random_Series *rng, float s, float v) {
-	return hsv_to_rgb(random_color_hsv(rng, s, v));
+inline Color3 random_color3(float s, float v, Random_Series *rng = &pcg32_global) {
+	return hsv_to_rgb(random_color_hsv(s, v, rng));
 }
 
-inline Color4 random_color4(Random_Series *rng, float s, float v) {
-	return vec4(hsv_to_rgb(random_color_hsv(rng, s, v)), random_get_zero_to_one(rng));
+inline Color4 random_color4(float s, float v, Random_Series *rng) {
+	return vec4(hsv_to_rgb(random_color_hsv(s, v, rng)), random_get_zero_to_one(rng));
 }
 
 //
@@ -98,7 +102,7 @@ inline Random_Distribution random_distribution(Distribution_Control control, r32
 	return result;
 }
 
-inline r32 random_get_zero_to_one(Random_Series *rng, Distribution_Control control) {
+inline r32 random_get_zero_to_one(Distribution_Control control, Random_Series *rng = &pcg32_global) {
 	r32 x = random_get_zero_to_one(rng);
 
 	switch (control) {
@@ -175,10 +179,10 @@ inline r32 random_get_zero_to_one(Random_Series *rng, Distribution_Control contr
 	return x;
 }
 
-inline r32 random_get_range(Random_Series *rng, Distribution_Control control, r32 min, r32 max) {
-	return random_get_zero_to_one(rng, control) * (max - min) + min;
+inline r32 random_get_range(Distribution_Control control, r32 min, r32 max, Random_Series *rng = &pcg32_global) {
+	return random_get_zero_to_one(control, rng) * (max - min) + min;
 }
 
-inline r32 random_get_range(Random_Series *rng, Random_Distribution dist) {
-	return random_get_range(rng, dist.control, dist.min, dist.max);
+inline r32 random_get_range(Random_Distribution dist, Random_Series *rng = &pcg32_global) {
+	return random_get_range(dist.control, dist.min, dist.max, rng);
 }

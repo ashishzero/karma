@@ -235,7 +235,7 @@ static void win32_check_for_error_info(const Compile_Info &compile_info) {
 		FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
 					   NULL, error, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
 					   (LPSTR)&message, 0, NULL);
-		system_log(LOG_ERROR, "Platform", "File: %s, Line: %d, Function: %s", compile_info.file, compile_info.line, compile_info.current_function);
+		system_log(LOG_ERROR, "Platform", "File: %s, Line: %d, Function: %s", compile_info.file, compile_info.line, compile_info.procedure);
 		system_log(LOG_ERROR, "Platform", "Message: %s", message);
 		LocalFree(message);
 	}
@@ -606,7 +606,8 @@ int system_fullscreen_state(int toggle) {
 	switch (toggle) {
 		case SYSTEM_ENABLE: {
 			if (!is_full) {
-				MONITORINFO mi = { sizeof(mi) };
+				MONITORINFO mi;
+				mi.cbSize = sizeof(mi);
 				if (GetWindowPlacement(window_handle, &windowed_placement) &&
 					GetMonitorInfoW(MonitorFromWindow(window_handle,
 													  MONITOR_DEFAULTTONEAREST),
@@ -816,43 +817,43 @@ void system_set_clipboard_text(const String string) {
 //
 
 void win32_map_keys() {
-	windows_key_map['A'] = Key_A;
-	windows_key_map['B'] = Key_B;
-	windows_key_map['C'] = Key_C;
-	windows_key_map['D'] = Key_D;
-	windows_key_map['E'] = Key_E;
-	windows_key_map['F'] = Key_F;
-	windows_key_map['G'] = Key_G;
-	windows_key_map['H'] = Key_H;
-	windows_key_map['I'] = Key_I;
-	windows_key_map['J'] = Key_J;
-	windows_key_map['K'] = Key_K;
-	windows_key_map['L'] = Key_L;
-	windows_key_map['M'] = Key_M;
-	windows_key_map['N'] = Key_N;
-	windows_key_map['O'] = Key_O;
-	windows_key_map['P'] = Key_P;
-	windows_key_map['Q'] = Key_Q;
-	windows_key_map['R'] = Key_R;
-	windows_key_map['S'] = Key_S;
-	windows_key_map['T'] = Key_T;
-	windows_key_map['U'] = Key_U;
-	windows_key_map['V'] = Key_V;
-	windows_key_map['W'] = Key_W;
-	windows_key_map['X'] = Key_X;
-	windows_key_map['Y'] = Key_Y;
-	windows_key_map['Z'] = Key_Z;
+	windows_key_map[(u32)'A'] = Key_A;
+	windows_key_map[(u32)'B'] = Key_B;
+	windows_key_map[(u32)'C'] = Key_C;
+	windows_key_map[(u32)'D'] = Key_D;
+	windows_key_map[(u32)'E'] = Key_E;
+	windows_key_map[(u32)'F'] = Key_F;
+	windows_key_map[(u32)'G'] = Key_G;
+	windows_key_map[(u32)'H'] = Key_H;
+	windows_key_map[(u32)'I'] = Key_I;
+	windows_key_map[(u32)'J'] = Key_J;
+	windows_key_map[(u32)'K'] = Key_K;
+	windows_key_map[(u32)'L'] = Key_L;
+	windows_key_map[(u32)'M'] = Key_M;
+	windows_key_map[(u32)'N'] = Key_N;
+	windows_key_map[(u32)'O'] = Key_O;
+	windows_key_map[(u32)'P'] = Key_P;
+	windows_key_map[(u32)'Q'] = Key_Q;
+	windows_key_map[(u32)'R'] = Key_R;
+	windows_key_map[(u32)'S'] = Key_S;
+	windows_key_map[(u32)'T'] = Key_T;
+	windows_key_map[(u32)'U'] = Key_U;
+	windows_key_map[(u32)'V'] = Key_V;
+	windows_key_map[(u32)'W'] = Key_W;
+	windows_key_map[(u32)'X'] = Key_X;
+	windows_key_map[(u32)'Y'] = Key_Y;
+	windows_key_map[(u32)'Z'] = Key_Z;
 
-	windows_key_map['0'] = Key_0;
-	windows_key_map['1'] = Key_1;
-	windows_key_map['2'] = Key_2;
-	windows_key_map['3'] = Key_3;
-	windows_key_map['4'] = Key_4;
-	windows_key_map['5'] = Key_5;
-	windows_key_map['6'] = Key_6;
-	windows_key_map['7'] = Key_7;
-	windows_key_map['8'] = Key_8;
-	windows_key_map['9'] = Key_9;
+	windows_key_map[(u32)'0'] = Key_0;
+	windows_key_map[(u32)'1'] = Key_1;
+	windows_key_map[(u32)'2'] = Key_2;
+	windows_key_map[(u32)'3'] = Key_3;
+	windows_key_map[(u32)'4'] = Key_4;
+	windows_key_map[(u32)'5'] = Key_5;
+	windows_key_map[(u32)'6'] = Key_6;
+	windows_key_map[(u32)'7'] = Key_7;
+	windows_key_map[(u32)'8'] = Key_8;
+	windows_key_map[(u32)'9'] = Key_9;
 
 	windows_key_map[VK_RETURN]  = Key_RETURN;
 	windows_key_map[VK_ESCAPE]  = Key_ESCAPE;
@@ -1553,6 +1554,28 @@ void *system_allocator(Allocation_Type type, ptrsize size, const void *ptr, void
 	return 0;
 }
 
+void *system_virtual_alloc(void *address, ptrsize size, Vitual_Memory_Flags flags) {
+	DWORD allocation_type = 0;
+	if (flags & Virtual_Memory_COMMIT) allocation_type |= MEM_COMMIT;
+	if (flags & Virtual_Memory_RESERVE) allocation_type |= MEM_RESERVE;
+	if (flags & Virtual_Memory_RESET) allocation_type |= MEM_RESET;
+	if (flags & Virtual_Memory_UNDO_RESET) allocation_type |= MEM_RESET_UNDO;
+	assert(allocation_type);
+	void *ptr = VirtualAlloc(address, size, allocation_type, PAGE_READWRITE);
+	win32_check_for_error();
+	return ptr;
+}
+
+void system_virtual_free(void *ptr, ptrsize size, Vitual_Memory_Flags flags) {
+	DWORD free_type = 0;
+	if (flags & Virtual_Memory_DECOMMIT) free_type |= MEM_DECOMMIT;
+	if (flags & Virtual_Memory_RELEASE) {
+		assert(size == 0);
+		free_type |= MEM_RELEASE;
+	}
+	VirtualFree(ptr, size, free_type);
+}
+
 void win32_initialize_xinput() {
 	const wchar_t *xinput_libs[] = {
 		L"xinput1_4.dll", L"xinput9_1_0.dll"
@@ -1609,15 +1632,19 @@ DWORD WINAPI win_thread_proc(LPVOID param) {
 
 	int result = thread->proc(thread->arg);
 
-	HeapDestroy(thread->allocator.data);
+	Allocator_Proc default_allocator = system_allocator;
+	if (context.allocator.proc == default_allocator) {
+		HeapDestroy(thread->allocator.data);
+	}
 
 	return result;
 }
 
-Handle system_thread_create(Thread_Proc proc, void *arg, ptrsize temporary_memory_size, String name) {
-	Allocator allocator;
-	allocator.proc = system_allocator;
-	allocator.data = HeapCreate(HEAP_NO_SERIALIZE, 0, 0);
+Handle system_thread_create(Thread_Proc proc, void *arg, Allocator allocator, ptrsize temporary_memory_size, String name) {
+	if (allocator.proc == NULL) {
+		allocator.proc = system_allocator;
+		allocator.data = HeapCreate(HEAP_NO_SERIALIZE, 0, 0);
+	}
 
 	Windows_Thread *thread        = (Windows_Thread *)mallocate(sizeof(Windows_Thread), allocator);
 	thread->proc                  = proc;
@@ -1668,6 +1695,32 @@ void system_thread_terminate(Handle handle, int exit_code) {
 
 void system_thread_exit(int exit_code) {
 	ExitThread(exit_code);
+}
+
+Handle system_create_mutex() {
+	HANDLE mutex = CreateMutexA(NULL, FALSE, 0);
+	Handle result;
+	result.hptr = mutex;
+	return result;
+}
+
+void system_destory_mutex(Handle handle) {
+	CloseHandle(handle.hptr);
+}
+
+Wait_Result system_lock_mutex(Handle handle, u32 millisecs) {
+	auto result = WaitForSingleObject(handle.hptr, millisecs);
+	switch (result) {
+		case WAIT_ABANDONED: return Wait_Result_ABANDONED;
+		case WAIT_OBJECT_0: return Wait_Result_SIGNALED;
+		case WAIT_TIMEOUT: return Wait_Result_TIMEOUT;
+		case WAIT_FAILED: return Wait_Result_FAILED;
+	}
+	return Wait_Result_SUCCESS;
+}
+
+void system_unlock_mutex(Handle handle) {
+	ReleaseMutex(handle.hptr);
 }
 
 #ifndef SYSTEMS_RUN_WITH_CRT

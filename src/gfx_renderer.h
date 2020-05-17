@@ -8,6 +8,24 @@ static constexpr int IM_MAX_CIRCLE_SEGMENTS     = 512;
 static constexpr int IM_DEFAULT_CIRCLE_SEGMENTS = 48;
 static constexpr int IM_DEFAULT_BEZIER_SEGMENTS = 48;
 
+struct Monospaced_Font_Glyph_Range {
+	r32     width, height;
+	Vec2    offset;
+	Mm_Rect rect;
+};
+
+struct Monospaced_Font_Info {
+	Monospaced_Font_Glyph_Range *range;
+	s32                          first;
+	s32                          count;
+	r32                          advance;
+};
+
+struct Monospaced_Font {
+	Texture2d_Handle     texture;
+	Monospaced_Font_Info info;
+};
+
 bool gfx_create_context(Handle platform, Render_Backend backend, s32 vsync, u32 multisamples, u32 framebuffer_w = 1280, u32 framebuffer_h = 720);
 void gfx_destroy_context();
 
@@ -41,8 +59,8 @@ void gfx_end_drawing();
 
 void gfx_viewport(r32 x, r32 y, r32 w, r32 h);
 
-void im_begin(Mat4 &transform = mat4_identity());
-void im_begin(Camera_View &view, Mat4 &transform = mat4_identity());
+void im_begin(const Mat4 &transform = mat4_identity());
+void im_begin(Camera_View &view, const Mat4 &transform = mat4_identity());
 void im_end();
 
 void im_bind_texture(Texture2d_Handle handle);
@@ -129,3 +147,6 @@ void im_arc_outline(Vec3 position, r32 radius_a, r32 radius_b, r32 theta_a, r32 
 void im_arc_outline(Vec2 position, r32 radius_a, r32 radius_b, r32 theta_a, r32 theta_b, Color4 color, bool closed = false, r32 thickness = 1, int segments = IM_DEFAULT_CIRCLE_SEGMENTS);
 void im_arc_outline(Vec3 position, r32 radius, r32 theta_a, r32 theta_b, Color4 color, bool closed = false, r32 thickness = 1, int segments = IM_DEFAULT_CIRCLE_SEGMENTS);
 void im_arc_outline(Vec2 position, r32 radius, r32 theta_a, r32 theta_b, Color4 color, bool closed = false, r32 thickness = 1, int segments = IM_DEFAULT_CIRCLE_SEGMENTS);
+
+void im_text(Vec3 position, r32 scale, Monospaced_Font_Info &font, const String string, Color4 color);
+void im_text(Vec2 position, r32 scale, Monospaced_Font_Info &font, const String string, Color4 color);

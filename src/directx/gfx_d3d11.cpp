@@ -258,7 +258,7 @@ struct Gfx_Platform_Directx11 : public Gfx_Platform {
 
 		hresult = device->CreateRenderTargetView(render_target_texture, 0, &render_target_view);
 		if (FAILED(hresult)) {
-			system_log(LOG_ERROR, "Failed to create default Render Target View: %s", dx_error_string(hresult));
+			system_log(LOG_ERROR, "DirectX11", "Failed to create default Render Target View: %s", dx_error_string(hresult));
 		}
 
 		default_framebuffer.count         = 1;
@@ -403,7 +403,7 @@ struct Gfx_Platform_Directx11 : public Gfx_Platform {
 	virtual Texture_View create_texture_view(Texture2d texture) final override {
 		ID3D11Resource *          resource = (ID3D11Resource *)texture.id.hptr;
 		ID3D11ShaderResourceView *view     = 0;
-		HRESULT                   hresult  = device->CreateShaderResourceView(resource, NULL, &view);
+		device->CreateShaderResourceView(resource, NULL, &view);
 		Texture_View              result;
 		result.id.hptr = view;
 		return result;
