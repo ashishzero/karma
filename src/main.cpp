@@ -171,7 +171,6 @@ void ImGui_ItemDisplay(Entity *entity) {
 }
 
 void PrintRigidBodies() {
-	karma_timed_procedure();
 	for (int i = 0; i < NUM_RIGID_BODIES; i++) {
 		RigidBody *rigidBody = &rigidBodies[i];
 		im_rect(vec2(rigidBody->position.x, rigidBody->position.y), vec2(rigidBody->shape.width, rigidBody->shape.height), vec4(vec3(1.1f, 1.2f, 1.5f), 1.0f));
@@ -339,6 +338,9 @@ int system_main() { // Entry point
 					case Key_F3:
 						increase_game_speed(&factor);
 						break;
+					case Key_F5:
+						karma_frame_recording_toggle();
+						break;
 				}
 			}
 
@@ -417,6 +419,8 @@ int system_main() { // Entry point
 
 			if (state == Time_State_RESUME) {
 #if 1
+				karma_timed_block_begin(RigidBodiesUpdate);
+
 				for (int i = 0; i < NUM_RIGID_BODIES; i++) {
 					RigidBody *rigidBody = &rigidBodies[i];
 
@@ -518,10 +522,14 @@ int system_main() { // Entry point
 					RigidBody *rigidBody = &rigidBodies[i];
 					rigidBody->collided  = false;
 				}
+
+				karma_timed_block_end(RigidBodiesUpdate);
 #endif
 
 #if 1
+				karma_timed_block_begin(ParticlesUpdate);
 				particle_emitter_update_particles(&emitter, dt);
+				karma_timed_block_end(ParticlesUpdate);
 #endif
 			}
 
@@ -629,11 +637,6 @@ int system_main() { // Entry point
 		gfx_blit_hdr(render_x, render_y, render_w, render_h);
 		gfx_viewport(0, 0, window_w, window_h);
 
-		{
-			karma_timed_scope(DebugCollation);
-			karma_timed_frame_presentation(font, real_dt, window_w, window_h);
-		}
-
 		if (editor_on) {
 			ImGui::Begin("Primary");
 			ImGui::Text("Camera");
@@ -667,9 +670,19 @@ int system_main() { // Entry point
 		//ImGui::ShowDemoWindow();
 
 		ImGui::RenderFrame();
+
+		{
+			karma_timed_scope(DebugCollation);
+			karma_timed_frame_presentation(font, real_dt, window_w, window_h);
+		}
+
 		gfx_end_drawing();
 
+		karma_timed_block_begin(Present);
+
 		gfx_present();
+
+		karma_timed_block_end(Present);
 
 		karma_timed_block_end(Rendering);
 

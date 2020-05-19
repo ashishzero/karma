@@ -108,7 +108,7 @@
       <SmallerTypeCheck>false</SmallerTypeCheck>
       <WarningLevel>Level4</WarningLevel>
       <SDLCheck>false</SDLCheck>
-      <ExceptionHandling>SyncCThrow</ExceptionHandling>
+      <ExceptionHandling>false</ExceptionHandling>
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
       <AdditionalOptions>-Wno-unused-parameter -Wno-unused-variable -Wno-switch -Wno-unused-command-line-argument -Wno-unused-function %(AdditionalOptions)</AdditionalOptions>
@@ -146,7 +146,7 @@ popd
       <SmallerTypeCheck>false</SmallerTypeCheck>
       <WarningLevel>Level4</WarningLevel>
       <SDLCheck>false</SDLCheck>
-      <ExceptionHandling>SyncCThrow</ExceptionHandling>
+      <ExceptionHandling>false</ExceptionHandling>
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
       <AdditionalOptions>-Wno-unused-parameter -Wno-unused-variable -Wno-switch -Wno-unused-command-line-argument -Wno-unused-function %(AdditionalOptions)</AdditionalOptions>
@@ -178,7 +178,7 @@ popd
       <SmallerTypeCheck>false</SmallerTypeCheck>
       <WarningLevel>Level4</WarningLevel>
       <SDLCheck>false</SDLCheck>
-      <ExceptionHandling>SyncCThrow</ExceptionHandling>
+      <ExceptionHandling>false</ExceptionHandling>
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
       <AdditionalOptions>-Wno-unused-parameter -Wno-unused-variable -Wno-switch -Wno-unused-command-line-argument -Wno-unused-function %(AdditionalOptions)</AdditionalOptions>

@@ -27,9 +27,9 @@ struct Im_Draw_Cmd {
 	u32          count;
 };
 
-static constexpr int IM_CONTEXT_MAX_VERTICES        = 2048 * 4;
-static constexpr int IM_CONTEXT_MAX_INDICES         = IM_CONTEXT_MAX_VERTICES * 6;
-static constexpr int IM_CONTEXT_MAX_TRANSFORMATIONS = 100;
+static constexpr u32 IM_CONTEXT_MAX_VERTICES        = 4096 * 4;
+static constexpr u32 IM_CONTEXT_MAX_INDICES         = IM_CONTEXT_MAX_VERTICES * 6;
+static constexpr u32 IM_CONTEXT_MAX_TRANSFORMATIONS = 100;
 static r32           im_unit_circle_cos[IM_MAX_CIRCLE_SEGMENTS];
 static r32           im_unit_circle_sin[IM_MAX_CIRCLE_SEGMENTS];
 
@@ -41,16 +41,16 @@ struct Im_Context {
 	Sampler         sampler;
 
 	Im_Draw_Cmd draw_cmds[IM_CONTEXT_MAX_VERTICES];
-	int         draw_cmd;
+	u32         draw_cmd;
 	Im_Vertex * vertex_ptr;
-	int         vertex;
+	u32         vertex;
 	Im_Index *  index_ptr;
 	Im_Index    last_index;
-	int         index;
+	u32         index;
 	Im_Index    counter;
 
 	Mat4 transformations[IM_CONTEXT_MAX_TRANSFORMATIONS];
-	int  transformation;
+	u32  transformation;
 };
 
 struct Hdr_Data {
@@ -389,6 +389,7 @@ inline Im_Index *iim_push_index_count(int count) {
 	assert(im_context.index + count <= IM_CONTEXT_MAX_INDICES);
 	auto index = im_context.index_ptr;
 	im_context.index_ptr += count;
+	im_context.index += count;
 	im_context.counter += count;
 	return index;
 }
@@ -510,7 +511,7 @@ void im_debug_begin(r32 left, r32 right, r32 top, r32 bottom, r32 near, r32 far)
 			uniform.transform = mat4_ortho_dx(left, right, top, bottom, near, far);
 		} break;
 
-		invalid_default_case();
+			invalid_default_case();
 	}
 
 	im_context.draw_cmd       = 0;
@@ -604,11 +605,11 @@ void iim_flush(bool restart) {
 		gfx->cmd_bind_vertex_buffer(im_context.vertex_buffer, sizeof(Im_Vertex));
 		gfx->cmd_bind_index_buffer(im_context.index_buffer, Index_Type_U16);
 
-		for (int draw_cmd_index = 0; draw_cmd_index < im_context.draw_cmd; ++draw_cmd_index) {
+		for (u32 draw_cmd_index = 0; draw_cmd_index < im_context.draw_cmd; ++draw_cmd_index) {
 			Im_Draw_Cmd *cmd = im_context.draw_cmds + draw_cmd_index;
 
 			gfx->cmd_bind_textures(0, 1, &cmd->texture);
-			gfx->cmd_draw_indexed(cmd->count, cmd->index * sizeof(Im_Index), cmd->vertex);
+			gfx->cmd_draw_indexed(cmd->count, cmd->index, cmd->vertex);
 		}
 
 		auto bound_texture = im_context.draw_cmds[im_context.draw_cmd - 1].texture;
@@ -998,18 +999,16 @@ void im_quad_outline2d(Vec2 a, Vec2 b, Vec2 c, Vec2 d, Color4 color, r32 thickne
 	im_line2d(a, d, color, thickness);
 }
 
-void im_rect_outline2d(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Color4 color, r32 thickness) {
-	im_line2d(a, b, color, thickness);
-	im_line2d(b, c, color, thickness);
-	im_line2d(c, d, color, thickness);
-	im_line2d(a, d, color, thickness);
+void im_rect_outline2d(Vec3 pos, Vec2 dim, Color4 color, r32 thickness) {
+	Vec3 a = pos;
+	Vec3 b = pos + vec3(0, dim.y, 0);
+	Vec3 c = pos + vec3(dim, 0);
+	Vec3 d = pos + vec3(dim.x, 0, 0);
+	im_quad_outline2d(a, b, c, d, color, thickness);
 }
 
-void im_rect_outline2d(Vec2 a, Vec2 b, Vec2 c, Vec2 d, Color4 color, r32 thickness) {
-	im_line2d(a, b, color, thickness);
-	im_line2d(b, c, color, thickness);
-	im_line2d(c, d, color, thickness);
-	im_line2d(a, d, color, thickness);
+void im_rect_outline2d(Vec2 pos, Vec2 dim, Color4 color, r32 thickness) {
+	im_rect_outline2d(vec3(pos, 1), dim, color, thickness);
 }
 
 void im_ellipse_outline(Vec3 position, r32 radius_a, r32 radius_b, Color4 color, r32 thickness, int segments) {
@@ -1094,6 +1093,7 @@ void im_text(Vec3 position, r32 scale, Monospaced_Font_Info &font, const String 
 	Vec2 dimension;
 	Vec3 render_pos;
 	render_pos.z = position.z;
+	r32 advance  = font.advance * scale;
 	for (s64 c_index = 0; c_index < string.count; ++c_index) {
 		s32 index = (s32)(string[c_index] - font.first) + 1;
 
@@ -1106,12 +1106,40 @@ void im_text(Vec3 position, r32 scale, Monospaced_Font_Info &font, const String 
 		dimension.y = info.height * scale;
 		im_rect(render_pos, dimension, info.rect, color);
 
-		position.x += font.advance * scale;
+		position.x += advance;
 	}
 }
 
 void im_text(Vec2 position, r32 scale, Monospaced_Font_Info &font, const String string, Color4 color) {
 	im_text(vec3(position, 1), scale, font, string, color);
+}
+
+void im_text_region(Vec3 position, Vec2 region, Monospaced_Font_Info &font, const String string, Color4 color) {
+	r32 scale   = region.y;
+	r32 advance = font.advance * scale;
+	r32 max_x   = position.x + region.x - advance;
+
+	Vec2 dimension;
+	Vec3 render_pos;
+	render_pos.z = position.z;
+	for (s64 c_index = 0; c_index < string.count && position.x <= max_x; ++c_index) {
+		s32 index = (s32)(string[c_index] - font.first) + 1;
+
+		if (index >= font.count || index < 0) index = 0;
+
+		auto &info    = font.range[index];
+		render_pos.xy = position.xy + info.offset * scale;
+
+		dimension.x = info.width * scale;
+		dimension.y = info.height * scale;
+		im_rect(render_pos, dimension, info.rect, color);
+
+		position.x += advance;
+	}
+}
+
+void im_text_region(Vec2 position, Vec2 region, Monospaced_Font_Info &font, const String string, Color4 color) {
+	im_text_region(vec3(position, 1), region, font, string, color);
 }
 
 Vec2 im_calculate_text_region(r32 scale, Monospaced_Font_Info &font, const String string) {

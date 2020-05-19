@@ -225,6 +225,9 @@ static u32           windows_event_queue_push_index;
 static u32           windows_event_pop_index;
 static u32           windows_event_count;
 
+static int window_width;
+static int window_height;
+
 static Win32_Controller windows_controllers_state[XUSER_MAX_COUNT];
 static Controller       controllers[XUSER_MAX_COUNT];
 
@@ -953,6 +956,9 @@ static LRESULT CALLBACK win32_wnd_proc(HWND wnd, UINT msg, WPARAM wparam, LPARAM
 			int x = LOWORD(lparam);
 			int y = HIWORD(lparam);
 
+			window_width  = x;
+			window_height = y;
+
 			// need to re-set clip rectangle after resize
 			RECT rc;
 			GetClientRect(window_handle, &rc);
@@ -1435,13 +1441,13 @@ Key_Mods system_get_key_mods() {
 	return mods;
 }
 
-Vec2s system_get_cursor_position() {
-	Vec2s position;
+Vec2 system_get_cursor_position() {
+	Vec2  position;
 	POINT point;
 	GetCursorPos(&point);
 	ScreenToClient(window_handle, &point);
-	position.x = point.x;
-	position.y = point.y;
+	position.x = (r32)point.x;
+	position.y = (r32)(window_height - point.y);
 	return position;
 }
 

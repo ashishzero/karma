@@ -64,7 +64,7 @@ inline Color3 random_color3(float s, float v, Random_Series *rng = &pcg32_global
 	return hsv_to_rgb(random_color_hsv(s, v, rng));
 }
 
-inline Color4 random_color4(float s, float v, Random_Series *rng) {
+inline Color4 random_color4(float s, float v, Random_Series *rng = &pcg32_global) {
 	return vec4(hsv_to_rgb(random_color_hsv(s, v, rng)), random_get_zero_to_one(rng));
 }
 

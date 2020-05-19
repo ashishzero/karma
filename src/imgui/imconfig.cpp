@@ -276,7 +276,8 @@ void ImGui::UpdateFrame(r32 dt, r32 event_time, r32 simulate_time, r32 render_ti
 		io.MouseDown[1] = mouse_pressed[1] || (system_button(Button_RIGHT) == State_DOWN);
 		io.MouseDown[2] = mouse_pressed[2] || (system_button(Button_MIDDLE) == State_DOWN);
 		auto cursorp    = system_get_cursor_position();
-		io.MousePos     = ImVec2((r32)cursorp.x, (r32)cursorp.y);
+		cursorp.y = system_get_client_size().y - cursorp.y;
+		io.MousePos     = cursorp;
 	}
 
 	mouse_pressed[0] = mouse_pressed[1] = mouse_pressed[2] = false;

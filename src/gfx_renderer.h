@@ -135,8 +135,8 @@ void im_triangle_outline2d(Vec2 a, Vec2 b, Vec2 c, Color4 color, r32 thickness =
 
 void im_quad_outline2d(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Color4 color, r32 thickness = 1);
 void im_quad_outline2d(Vec2 a, Vec2 b, Vec2 c, Vec2 d, Color4 color, r32 thickness = 1);
-void im_rect_outline2d(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Color4 color, r32 thickness = 1);
-void im_rect_outline2d(Vec2 a, Vec2 b, Vec2 c, Vec2 d, Color4 color, r32 thickness = 1);
+void im_rect_outline2d(Vec3 pos, Vec2 dim, Color4 color, r32 thickness = 1);
+void im_rect_outline2d(Vec2 pos, Vec2 dim, Color4 color, r32 thickness = 1);
 
 void im_ellipse_outline(Vec3 position, r32 radius_a, r32 radius_b, Color4 color, r32 thickness = 1, int segments = IM_DEFAULT_CIRCLE_SEGMENTS);
 void im_ellipse_outline(Vec2 position, r32 radius_a, r32 radius_b, Color4 color, r32 thickness = 1, int segments = IM_DEFAULT_CIRCLE_SEGMENTS);
@@ -151,4 +151,6 @@ void im_arc_outline(Vec2 position, r32 radius, r32 theta_a, r32 theta_b, Color4 
 
 void im_text(Vec3 position, r32 scale, Monospaced_Font_Info &font, const String string, Color4 color);
 void im_text(Vec2 position, r32 scale, Monospaced_Font_Info &font, const String string, Color4 color);
+void im_text_region(Vec3 position, Vec2 region, Monospaced_Font_Info &font, const String string, Color4 color);
+void im_text_region(Vec2 position, Vec2 region, Monospaced_Font_Info &font, const String string, Color4 color);
 Vec2 im_calculate_text_region(r32 scale, Monospaced_Font_Info &font, const String string);

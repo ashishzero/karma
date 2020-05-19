@@ -2,7 +2,7 @@
 #include "karma.h"
 #include "gfx_renderer.h"
 
-typedef void *Timed_Block_Match;
+typedef String Timed_Block_Match;
 
 enum Timed_Record_Type {
 	Timed_Record_Type_BEGIN,
@@ -10,8 +10,8 @@ enum Timed_Record_Type {
 };
 
 struct Timed_Record {
-	const char *      id;
-	const char *      block_name;
+	String            id;
+	String            block_name;
 	s64               time_stamp;
 	u32               thread_id;
 	Timed_Record_Type type;
@@ -26,6 +26,11 @@ struct Timed_Frame {
 	u64           end_cycle_value;
 };
 
+bool frame_recording_is_on();
+void frame_recording_turn_on();
+void frame_recording_turn_off();
+void frame_recording_toggle();
+
 void debug_service_initialize();
 void debug_service_shutdown();
 
@@ -33,8 +38,8 @@ Timed_Frame *timed_frame_get();
 
 void              timed_frame_begin();
 void              timed_frame_end();
-Timed_Block_Match timed_block_begin(const char *id, const char *block_name);
-void              timed_block_end(Timed_Block_Match match, const char *block_name);
+Timed_Block_Match timed_block_begin(String id, String block_name);
+void              timed_block_end(Timed_Block_Match match, String block_name);
 
 void timed_frame_presentation(Monospaced_Font &font, r32 frame_time, r32 framebuffer_w, r32 framebuffer_h);
 
@@ -43,9 +48,9 @@ void timed_frame_presentation(Monospaced_Font &font, r32 frame_time, r32 framebu
 //
 
 struct Timed_Procedure {
-	const char *      name;
+	String            name;
 	Timed_Block_Match match;
-	inline Timed_Procedure(const char *id, const char *proc) {
+	inline Timed_Procedure(String id, String proc) {
 		name  = proc;
 		match = timed_block_begin(id, name);
 	}
@@ -65,10 +70,15 @@ struct Timed_Procedure {
 #define karma_timed_block_begin(name) auto name = timed_block_begin(CURRENT_FILE "(" MACRO_NUMBER_TO_STRING(CURRENT_LINE) ")", #name)
 #define karma_timed_block_end(name)   timed_block_end(name, #name)
 
-#define karma_timed_scoped_info(id, proc, line)                     \
-	Timed_Procedure CONCAT_INTERNAL(timed_block_, line)(id, proc)   \
+#define karma_timed_scoped_info(id, proc, line) \
+	Timed_Procedure CONCAT_INTERNAL(timed_block_, line)(id, proc)
 
 #define karma_timed_procedure() karma_timed_scoped_info(CURRENT_FILE "(" MACRO_NUMBER_TO_STRING(CURRENT_LINE) ")", CURRENT_PROCEDURE, CURRENT_LINE)
 #define karma_timed_scope(name) karma_timed_scoped_info(CURRENT_FILE "(" MACRO_NUMBER_TO_STRING(CURRENT_LINE) ")", #name, CURRENT_LINE)
 
-#define karma_timed_frame_presentation(font, dt, w, h) timed_frame_presentation(font, dt, w, h)
+#define karma_timed_frame_presentation timed_frame_presentation
+
+#define karma_frame_recording_is_on    frame_recording_is_on
+#define karma_frame_recording_turn_on  frame_recording_turn_on
+#define karma_frame_recording_turn_off frame_recording_turn_off
+#define karma_frame_recording_toggle   frame_recording_toggle

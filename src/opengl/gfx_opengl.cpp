@@ -244,6 +244,13 @@ static const GLenum INDEX_TYPE_KARMA_TO_OPENGL[] {
 };
 static_assert(static_count(INDEX_TYPE_KARMA_TO_OPENGL) == Index_Type_COUNT, "The mapping from Index_Type to OpenGL index type is invalid");
 
+static const GLenum INDEX_SIZE_KARMA_TO_OPENGL[] {
+	sizeof(GLubyte),
+	sizeof(GLushort),
+	sizeof(GLuint),
+};
+static_assert(static_count(INDEX_SIZE_KARMA_TO_OPENGL) == Index_Type_COUNT, "The mapping from Index_Type to OpenGL index type is invalid");
+
 static const GLenum PRIMITIVE_KARMA_TO_OPENGL[] = {
 	GL_TRIANGLES,
 	GL_POINTS,
@@ -406,6 +413,7 @@ struct Gfx_Platform_OpenGL : public Gfx_Platform {
 	GLuint             vertex_array;
 	Internal_Pipeline *current_pipeline = 0;
 	GLenum             current_index_type;
+	GLsizei            current_index_size;
 
 	int (*set_swap_interval_func)(int interval);
 	int (*get_swap_interval_func)();
@@ -950,6 +958,7 @@ struct Gfx_Platform_OpenGL : public Gfx_Platform {
 	virtual void cmd_bind_index_buffer(Index_Buffer buffer, Index_Type type) final override {
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer.id.h32);
 		current_index_type = INDEX_TYPE_KARMA_TO_OPENGL[type];
+		current_index_size = INDEX_SIZE_KARMA_TO_OPENGL[type];
 	}
 
 	virtual void cmd_bind_vs_uniform_buffers(u32 slot_index, u32 count, Uniform_Buffer *buffer) final override {
@@ -984,7 +993,7 @@ struct Gfx_Platform_OpenGL : public Gfx_Platform {
 	}
 
 	virtual void cmd_draw_indexed(u32 index_count, u32 start_index, u32 base_vertex) final override {
-		size_t offset = start_index;
+		size_t offset = start_index * current_index_size;
 		glDrawElementsBaseVertex(current_pipeline->primitive, index_count, current_index_type, (void *)offset, base_vertex);
 	}
 
