@@ -171,7 +171,7 @@ void ImGui_ItemDisplay(Entity *entity) {
 }
 
 void PrintRigidBodies() {
-	kdTimedProcedure();
+	karma_timed_procedure();
 	for (int i = 0; i < NUM_RIGID_BODIES; i++) {
 		RigidBody *rigidBody = &rigidBodies[i];
 		im_rect(vec2(rigidBody->position.x, rigidBody->position.y), vec2(rigidBody->shape.width, rigidBody->shape.height), vec4(vec3(1.1f, 1.2f, 1.5f), 1.0f));
@@ -246,9 +246,10 @@ int system_main() { // Entry point
 	r32    framebuffer_w = 1280;
 	r32    framebuffer_h = 720;
 	Handle platform      = system_create_window(u8"Karma", 1280, 720, System_Window_Show_NORMAL);
-	gfx_create_context(platform, Render_Backend_DIRECTX11, 1, 2, (u32)framebuffer_w, (u32)framebuffer_h);
+	gfx_create_context(platform, Render_Backend_OPENGL, 1, 2, (u32)framebuffer_w, (u32)framebuffer_h);
 	ImGui::Initialize();
-	kdInitializeDebugService();
+
+	karma_debug_service_initialize();
 
 	Monospaced_Font font;
 	load_debug_font(&font);
@@ -306,9 +307,9 @@ int system_main() { // Entry point
 	u64 counter   = system_get_counter();
 
 	while (running) {
-		kdBeginTimer(Frame);
+		karma_timed_frame_begin();
 
-		kdBeginTimer(EventHandling);
+		karma_timed_block_begin(EventHandling);
 
 		while (system_poll_events(&event)) {
 			if (ImGui::HandleEvent(event)) continue;
@@ -389,9 +390,9 @@ int system_main() { // Entry point
 			}
 		}
 
-		kdEndTimer(EventHandling);
+		karma_timed_block_end(EventHandling);
 
-		kdBeginTimer(Simulation);
+		karma_timed_block_begin(Simulation);
 
 		while (accumulator_t >= fixed_dt) {
 			const r32 gravity = 10;
@@ -527,8 +528,9 @@ int system_main() { // Entry point
 			accumulator_t -= fixed_dt;
 		}
 
-		kdEndTimer(Simulation);
+		karma_timed_block_end(Simulation);
 
+		karma_timed_block_begin(Rendering);
 		camera.position.x = player.position.x;
 
 		r32 alpha = accumulator_t / fixed_dt; // TODO: Use this
@@ -561,14 +563,7 @@ int system_main() { // Entry point
 
 		//im_begin(orthographic_view(-world_width_half, world_width_half, world_height_half, -world_height_half));
 		{
-			kdTimedScope(DrawRigidBodies);
-
 			im_begin(view);
-			im_bind_texture(font.texture);
-			static r32 display = fixed_dt;
-			display            = display * 0.8f + 0.2f * real_dt;
-			const r32 height   = 24.0f;
-			im_text(vec2(0, framebuffer_h - height), height, font.info, tprintf("Frame Time: %.3fms", display * 1000.0f), vec4(1, 1, 0));
 
 			if (emitter.texture)
 				im_bind_texture(*emitter.texture);
@@ -617,8 +612,6 @@ int system_main() { // Entry point
 		gfx_end_drawing();
 #endif
 
-		kdBeginTimer(PostProcess);
-
 		gfx_apply_bloom(2);
 
 		r32 render_w = window_w;
@@ -635,6 +628,11 @@ int system_main() { // Entry point
 
 		gfx_blit_hdr(render_x, render_y, render_w, render_h);
 		gfx_viewport(0, 0, window_w, window_h);
+
+		{
+			karma_timed_scope(DebugCollation);
+			karma_timed_frame_presentation(font, real_dt, window_w, window_h);
+		}
 
 		if (editor_on) {
 			ImGui::Begin("Primary");
@@ -666,25 +664,14 @@ int system_main() { // Entry point
 
 		ImGui::End();
 
-		kdEndTimer(PostProcess);
-
-#if 1
-		kdBeginTimer(Profiler);
-		ImGui::Begin("Instrumentation");
-		static auto overlay = Profile_Overlay_LIST;
-		debug_draw_profile_overlay(&overlay);
-		ImGui::End();
-		kdEndTimer(Profiler);
-#endif
-
 		//ImGui::ShowDemoWindow();
 
 		ImGui::RenderFrame();
 		gfx_end_drawing();
 
-		kdBeginTimer(Presentation);
 		gfx_present();
-		kdEndTimer(Presentation);
+
+		karma_timed_block_end(Rendering);
 
 		reset_temporary_memory();
 
@@ -705,15 +692,13 @@ int system_main() { // Entry point
 		accumulator_t += real_dt;
 		accumulator_t = min_value(accumulator_t, 0.3f);
 
-		kdEndTimer(Frame);
-		kdResetTimedRecords();
+		karma_timed_frame_end();
 	}
 
+	karma_debug_service_shutdown();
 
 	ImGui::Shutdown();
 	gfx_destroy_context();
-
-	kdShutdownDebugService();
 
 	return 0;
 }

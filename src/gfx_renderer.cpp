@@ -59,14 +59,14 @@ struct Hdr_Data {
 	Texture_View       hdr_color_view[2];
 	Depth_Stencil_View hdr_depth_view;
 	Framebuffer        hdr_framebuffer;
-	// TODO: Currently we are using full window width and window height for bloom effect
-	// which is very expensive and not worth it!!
+
 	Texture2d    bloom_color_buffer[2];
 	Texture_View bloom_color_view[2];
 	Framebuffer  bloom_framebuffer[2];
 };
 
 static Im_Context       im_context;
+Render_Pipeline         debug_pipeline;
 static Hdr_Data         hdr_data;
 static Render_Pipeline  blur_pipelines[2];
 static Texture2d_Handle white_texture;
@@ -211,14 +211,24 @@ bool gfx_create_context(Handle platform, Render_Backend backend, s32 vsync, u32 
 		shader.stride              = sizeof(Im_Vertex);
 
 		Rasterizer_Info rasterizer = rasterizer_info_create();
-		rasterizer.cull_mode       = Cull_Mode_NONE;
+		rasterizer.cull_mode       = Cull_Mode_BACK;
 
 		Blend_Info blend = blend_info_create(Blend_SRC_ALPHA, Blend_INV_SRC_ALPHA, Blend_Operation_ADD, Blend_SRC_ALPHA, Blend_INV_SRC_ALPHA, Blend_Operation_ADD);
 		Depth_Info depth = depth_info_create(true, Depth_Write_Mask_ALL, Comparison_Function_LESS);
 
 		im_context.pipeline = gfx->create_render_pipeline(shader, rasterizer, blend, depth, "Im_Pipeline");
-
 		mfree(quad_shader_content.data);
+
+		String      debug_shader_content = system_read_entire_file("data/shaders/debug.kfx");
+		Shader_Info debug_shader;
+		debug_shader.input_layouts       = layouts;
+		debug_shader.input_layouts_count = static_count(layouts);
+		debug_shader.vertex              = igfx_find_shader(debug_shader_content, SHADER_TYPE_VERTEX, "debug.kfx.vertex");
+		debug_shader.pixel               = igfx_find_shader(debug_shader_content, SHADER_TYPE_PIXEL, "debug.kfx.pixel");
+		debug_shader.stride              = sizeof(Im_Vertex);
+		depth                            = depth_info_create(false, Depth_Write_Mask_ZERO, Comparison_Function_NEVER);
+		debug_pipeline                   = gfx->create_render_pipeline(debug_shader, rasterizer, blend, depth, "Debug_Pipeline");
+		mfree(debug_shader_content.data);
 	}
 
 	im_context.uniform_buffer = gfx->create_uniform_buffer(Buffer_Usage_DYNAMIC, Cpu_Access_WRITE, sizeof(Mat4), 0);
@@ -488,9 +498,42 @@ void gfx_viewport(r32 x, r32 y, r32 w, r32 h) {
 	gfx->cmd_set_viewport(x, y, w, h);
 }
 
-void im_begin(const Mat4 &transform) {
-	kdTimedProcedure();
+void im_debug_begin(r32 left, r32 right, r32 top, r32 bottom, r32 near, r32 far) {
+	Im_Uniform uniform;
 
+	switch (gfx->backend) {
+		case Render_Backend_OPENGL: {
+			uniform.transform = mat4_ortho_gl(left, right, top, bottom, near, far);
+		} break;
+
+		case Render_Backend_DIRECTX11: {
+			uniform.transform = mat4_ortho_dx(left, right, top, bottom, near, far);
+		} break;
+
+		invalid_default_case();
+	}
+
+	im_context.draw_cmd       = 0;
+	im_context.vertex         = 0;
+	im_context.index          = 0;
+	im_context.counter        = 0;
+	im_context.transformation = 1;
+
+	im_context.vertex_ptr = (Im_Vertex *)gfx->map(im_context.vertex_buffer, Map_Type_WRITE_DISCARD);
+	im_context.index_ptr  = (Im_Index *)gfx->map(im_context.index_buffer, Map_Type_WRITE_DISCARD);
+
+	im_start_cmd_record(white_texture.view);
+
+	void *ptr = gfx->map(im_context.uniform_buffer, Map_Type_WRITE_DISCARD);
+	memcpy(ptr, &uniform, sizeof(uniform));
+	gfx->unmap(im_context.uniform_buffer);
+
+	gfx->cmd_bind_pipeline(debug_pipeline);
+	gfx->cmd_bind_samplers(0, 1, &im_context.sampler);
+	gfx->cmd_bind_vs_uniform_buffers(0, 1, &im_context.uniform_buffer);
+}
+
+void im_begin(const Mat4 &transform) {
 	im_context.draw_cmd       = 0;
 	im_context.vertex         = 0;
 	im_context.index          = 0;
@@ -554,8 +597,6 @@ void im_begin(Camera_View &view, const Mat4 &transform) {
 }
 
 void iim_flush(bool restart) {
-	kdTimedProcedure();
-
 	gfx->unmap(im_context.vertex_buffer);
 	gfx->unmap(im_context.index_buffer);
 
@@ -587,8 +628,6 @@ void iim_flush(bool restart) {
 }
 
 void im_end() {
-	kdTimedProcedure();
-
 	if (im_context.counter) {
 		im_push_draw_cmd();
 	}
@@ -1073,4 +1112,10 @@ void im_text(Vec3 position, r32 scale, Monospaced_Font_Info &font, const String 
 
 void im_text(Vec2 position, r32 scale, Monospaced_Font_Info &font, const String string, Color4 color) {
 	im_text(vec3(position, 1), scale, font, string, color);
+}
+
+Vec2 im_calculate_text_region(r32 scale, Monospaced_Font_Info &font, const String string) {
+	r32 y = scale;
+	r32 x = font.advance * string.count * scale;
+	return vec2(x, y);
 }

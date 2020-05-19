@@ -8,6 +8,14 @@
 #include <stdio.h>
 #include <string.h>
 
+#define MACRO_NUMBER_TO_STRING_HELPER(num) #num
+#define MACRO_NUMBER_TO_STRING(num)        MACRO_NUMBER_TO_STRING_HELPER(num)
+
+#define KARMA_MAJOR_VERSION 0
+#define KARMA_MINOR_VERSION 1
+#define KARMA_PATCH_VERSION 0
+#define KARMA_VERSION_STRING MACRO_NUMBER_TO_STRING(KARMA_MAJOR_VERSION) "." MACRO_NUMBER_TO_STRING(KARMA_MINOR_VERSION) "." MACRO_NUMBER_TO_STRING(KARMA_PATCH_VERSION)
+
 #if !defined(BUILD_DEBUG) && !defined(BUILD_DEVELOPER) && !defined(BUILD_RELEASE)
 #	if defined(_DEBUG) || defined(DEBUG)
 #		define BUILD_DEBUG
@@ -72,7 +80,7 @@
 #	define CURRENT_PROCEDURE "_unknown_"
 #endif
 
-struct Compile_Info {
+	struct Compile_Info {
 	const char *file;
 	const int   line;
 	const char *procedure;

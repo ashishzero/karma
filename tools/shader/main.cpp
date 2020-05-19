@@ -120,6 +120,7 @@ int system_main() {
 	Array<Shader_Batch> batch;
 
 	add_batch(&batch, "run_tree/data/shaders/quad.kfx", "src/shaders/quad.hlsl", "src/shaders/quad.glsl");
+	add_batch(&batch, "run_tree/data/shaders/debug.kfx", "src/shaders/debug.hlsl", "src/shaders/debug.glsl");
 	add_batch(&batch, "run_tree/data/shaders/hdr.kfx", "src/shaders/hdr.hlsl", "src/shaders/hdr.glsl");
 
 	add_batch(&batch, "run_tree/data/shaders/hblur.kfx", "src/shaders/blur.hlsl", "src/shaders/blur.glsl", "vs_main", "ps_main_h", 0, "BLUR_HORIZONTAL");

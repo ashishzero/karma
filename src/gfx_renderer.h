@@ -59,6 +59,7 @@ void gfx_end_drawing();
 
 void gfx_viewport(r32 x, r32 y, r32 w, r32 h);
 
+void im_debug_begin(r32 left, r32 right, r32 top, r32 bottom, r32 near = -1, r32 far = 1);
 void im_begin(const Mat4 &transform = mat4_identity());
 void im_begin(Camera_View &view, const Mat4 &transform = mat4_identity());
 void im_end();
@@ -150,3 +151,4 @@ void im_arc_outline(Vec2 position, r32 radius, r32 theta_a, r32 theta_b, Color4 
 
 void im_text(Vec3 position, r32 scale, Monospaced_Font_Info &font, const String string, Color4 color);
 void im_text(Vec2 position, r32 scale, Monospaced_Font_Info &font, const String string, Color4 color);
+Vec2 im_calculate_text_region(r32 scale, Monospaced_Font_Info &font, const String string);

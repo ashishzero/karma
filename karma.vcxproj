@@ -281,6 +281,12 @@ popd
     <ClInclude Include="src\physics.h" />
     <ClInclude Include="src\random.h" />
     <ClInclude Include="src\reflection.h" />
+    <FxCompile Include="src\shaders\debug.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <FileType>Document</FileType>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Developer|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
     <ClInclude Include="src\unicode.h" />
     <ClInclude Include="src\windows\resource.h" />
     <ClInclude Include="src\prebuild.h" />
@@ -309,6 +315,7 @@ popd
     <None Include=".gitignore" />
     <None Include="readme.md" />
     <None Include="src\shaders\blur.glsl" />
+    <None Include="src\shaders\debug.glsl" />
     <None Include="src\shaders\hdr.glsl" />
     <None Include="src\shaders\quad.glsl" />
     <None Include="src\prebuild.bat" />

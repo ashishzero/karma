@@ -209,6 +209,7 @@
     <None Include="src\shaders\quad.glsl" />
     <None Include="src\shaders\hdr.glsl" />
     <None Include="src\shaders\blur.glsl" />
+    <None Include="src\shaders\debug.glsl" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="todo.txt" />
@@ -228,5 +229,8 @@
     <FxCompile Include="src\shaders\quad.hlsl" />
     <FxCompile Include="src\shaders\hdr.hlsl" />
     <FxCompile Include="src\shaders\blur.hlsl" />
+    <FxCompile Include="src\shaders\debug.hlsl">
+      <Filter>Header Files</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>
