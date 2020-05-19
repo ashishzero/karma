@@ -14,8 +14,10 @@ static constexpr r32 PROFILER_PRESENTATION_X_OFFSET      = 5.0f;
 static constexpr r32 PROFILER_PRESENTATION_Y_OFFSET      = 0.0f;
 static constexpr r32 PROFILER_RESIZER_SIZE               = 10.0f;
 static constexpr r32 PROFILER_RESIZER_MIN_X              = 50.0f;
-static r32           profiler_resizer_x                  = 500.0f;
-static bool          profiler_resize_with_mouse          = false;
+static constexpr int MAX_PRESENTATION_COLORS             = 100;
+static constexpr int MAX_FRAME_TIME_LOGS                 = 150;
+static constexpr r32 FRAME_TIME_GRAPH_HEIGHT             = 100.0f;
+static constexpr r32 FRAME_TIME_GRAPH_PROGRESS           = 3.0f;
 
 struct Record {
 	String name;
@@ -46,16 +48,20 @@ static void * debug_memory;
 static Timed_Frame  timed_frames[RECORD_CIRCULAR_BUFFER_FRAMES_AHEAD];
 static Timed_Frame *timed_frame_writer;
 
-constexpr int MAX_PRESENTATION_COLORS = 100;
 static Color3 presentation_colors[MAX_PRESENTATION_COLORS];
 
-static r32             stablilized_frame_time = 0.0f;
+static r32  profiler_resizer_x         = 500.0f;
+static bool profiler_resize_with_mouse = false;
+
+static r32 stablilized_frame_time = 0.0f;
+static r32 frame_time_history[MAX_FRAME_TIME_LOGS];
+
 static Debug_Collation debug_collation;
 static Record *        record_collation_ptr;
 static Record *        record_collation_trav;
 
-bool frame_recording             = true;
-bool user_frame_recording_option = true;
+static bool frame_recording             = true;
+static bool user_frame_recording_option = true;
 
 bool frame_recording_is_on() {
 	return user_frame_recording_option;
@@ -257,14 +263,14 @@ Vec2 draw_profiler(Vec2 position, r32 width, r32 height, r32 font_height, r32 in
 		position.y -= bg_off.y;
 
 		// Make baground for all the children records, using height and children count
-		const Vec2 bg_pos = position - vec2(0, (children - 1) * height + font_height) - bg_off; // font_height for thread id
+		const Vec2 bg_pos = position - vec2(0, children * height + font_height) - bg_off; // font_height for thread id
 		const Vec2 bg_dim = vec2(width, children * height + font_height) + 2 * (bg_off);
 
 		im_unbind_texture();
 		im_rect(bg_pos, bg_dim, vec4(0, 0, 0, 0.8f));
 		im_rect_outline2d(bg_pos, bg_dim, vec4(1), 0.5f);
 
-		position.y -= font_height; // For displaying thread id
+		position.y -= 2 * font_height; // For displaying thread id and positioning for next font rendering
 		draw_timelines_recursive(record, position, width, height, 20, inv_cycles, cursor_p, hovered_record);
 
 		im_bind_texture(font.texture);
@@ -283,6 +289,9 @@ Vec2 draw_profiler(Vec2 position, r32 width, r32 height, r32 font_height, r32 in
 }
 
 void timed_frame_presentation(Monospaced_Font &font, r32 frame_time, r32 framebuffer_w, r32 framebuffer_h) {
+	memmove(frame_time_history + 1, frame_time_history, sizeof(r32) * (MAX_FRAME_TIME_LOGS - 1));
+	frame_time_history[0] = frame_time;
+
 	auto frame  = timed_frame_get();
 	auto counts = frame->end_counter_value - frame->begin_counter_value;
 	r32  dt     = ((1000000.0f * (r32)counts) / (r32)system_get_frequency()) / 1000000.0f;
@@ -302,7 +311,64 @@ void timed_frame_presentation(Monospaced_Font &font, r32 frame_time, r32 framebu
 	auto size = im_calculate_text_region(frame_rate_and_version_height, font.info, version_string);
 	im_text(vec2(framebuffer_w - size.x - 8.0f, framebuffer_h - frame_rate_and_version_height), frame_rate_and_version_height, font.info, version_string, vec4(1, 1, 0));
 
-	r32 prev_used_height_space = 2.0f * frame_rate_and_version_height;
+	r32 prev_used_height_space = frame_rate_and_version_height;
+
+	im_unbind_texture();
+
+	{
+		const Vec4    mark_color       = vec4(0, 1, 1);
+		const r32     mark_font_height = 15.0f;
+		const r32     mark_critical_y  = FRAME_TIME_GRAPH_HEIGHT * 0.2f;
+			const r32 mark_times[] = {
+				1.0f / 30.0f,
+				1.0f / 60.0f
+			};
+		r32 marked_times_y[static_count(mark_times)] = {};
+
+		r32 x = PROFILER_PRESENTATION_X_OFFSET;
+		r32 y = framebuffer_h - prev_used_height_space - FRAME_TIME_GRAPH_HEIGHT;
+
+		Vec2 region_dim = vec2(MAX_FRAME_TIME_LOGS * FRAME_TIME_GRAPH_PROGRESS, FRAME_TIME_GRAPH_HEIGHT);
+		im_rect(vec2(x, y), region_dim, vec4(0, 0, 0, 0.8f));
+		im_rect_outline2d(vec2(x, y), region_dim, vec4(1), 0.5f);
+
+		r32 max_frame_time = frame_time_history[0];
+		for (int frame_time_index = 1; frame_time_index < MAX_FRAME_TIME_LOGS; ++frame_time_index) {
+			if (frame_time_history[frame_time_index] > max_frame_time)
+				max_frame_time = frame_time_history[frame_time_index];
+		}
+		max_frame_time *= 1.2f;
+		r32 inv_max_frame_time = 1.0f / max_frame_time;
+
+		r32 t;
+		for (int mark_index = 0; mark_index < static_count(mark_times); ++mark_index) {
+			t = mark_times[mark_index] * inv_max_frame_time;
+			if (t <= 1) {
+				marked_times_y[mark_index] = t * FRAME_TIME_GRAPH_HEIGHT;
+				r32 mark_y                 = marked_times_y[mark_index] + y;
+				im_line2d(vec2(PROFILER_PRESENTATION_X_OFFSET, mark_y), vec2(region_dim.x, mark_y), mark_color, 0.6f);
+			}
+		}
+
+		r32 prev_y = frame_time_history[0] * inv_max_frame_time * FRAME_TIME_GRAPH_HEIGHT + y;
+		r32 next_y;
+		for (int frame_time_index = 1; frame_time_index < MAX_FRAME_TIME_LOGS; ++frame_time_index) {
+			next_y = frame_time_history[frame_time_index] * inv_max_frame_time * FRAME_TIME_GRAPH_HEIGHT + y;
+			im_line2d(vec2(x, prev_y), vec2(x + FRAME_TIME_GRAPH_PROGRESS, next_y), vec4(1), 0.6f);
+			x += FRAME_TIME_GRAPH_PROGRESS;
+			prev_y = next_y;
+		}
+
+		im_bind_texture(font.texture);
+		for (int mark_index = 0; mark_index < static_count(mark_times); ++mark_index) {
+			if (marked_times_y[mark_index] > mark_critical_y) {
+				String mark_string = tprintf("%.2fms", 1000.0f * mark_times[mark_index]);
+				im_text(vec2(PROFILER_PRESENTATION_X_OFFSET, y + marked_times_y[mark_index] - mark_font_height), mark_font_height, font.info, mark_string, mark_color);
+			}
+		}
+
+		prev_used_height_space += FRAME_TIME_GRAPH_HEIGHT;
+	}
 
 	if (frame->records_count == 0) {
 		return;
@@ -400,7 +466,7 @@ void timed_frame_presentation(Monospaced_Font &font, r32 frame_time, r32 framebu
 	auto left_button_state = system_button(Button_LEFT);
 
 	Record *hovered_record = NULL;
-	Vec2 next_pos = draw_profiler(vec2(x_pos, y_pos), profiler_presentation_width, PROFILER_PRESENTATION_RECORD_HEIGHT, PROFILER_PRESENTATION_FONT_HEIGHT, inv_cycles_count, cursor_p, font, &hovered_record);
+	Vec2    next_pos       = draw_profiler(vec2(x_pos, y_pos), profiler_presentation_width, PROFILER_PRESENTATION_RECORD_HEIGHT, PROFILER_PRESENTATION_FONT_HEIGHT, inv_cycles_count, cursor_p, font, &hovered_record);
 
 	Vec2 resize_dim   = vec2(PROFILER_RESIZER_SIZE);
 	Vec4 resize_color = vec4(1);
@@ -445,7 +511,6 @@ void timed_frame_presentation(Monospaced_Font &font, r32 frame_time, r32 framebu
 		const Vec2 overlay_offset = vec2(10.0f, -10.0f - max_h);
 		Vec2       pos            = cursor_p + overlay_offset;
 
-		im_unbind_texture();
 		im_rect(pos, vec2(max_w, max_h), vec4(0.02f, 0.02f, 0.02f));
 
 		im_bind_texture(font.texture);

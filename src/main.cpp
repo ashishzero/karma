@@ -245,7 +245,7 @@ int system_main() { // Entry point
 	r32    framebuffer_w = 1280;
 	r32    framebuffer_h = 720;
 	Handle platform      = system_create_window(u8"Karma", 1280, 720, System_Window_Show_NORMAL);
-	gfx_create_context(platform, Render_Backend_OPENGL, 1, 2, (u32)framebuffer_w, (u32)framebuffer_h);
+	gfx_create_context(platform, Render_Backend_DIRECTX11, 1, 2, (u32)framebuffer_w, (u32)framebuffer_h);
 	ImGui::Initialize();
 
 	karma_debug_service_initialize();
