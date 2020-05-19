@@ -414,6 +414,7 @@ bool system_poll_events(Event *event);
 State    system_button(Button button);
 Key_Mods system_get_key_mods();
 Vec2     system_get_cursor_position();
+Vec2     system_get_cursor_position_y_inverted();
 
 u32               system_max_controllers();
 bool              system_controller_is_available(u32 index);

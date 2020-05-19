@@ -1451,6 +1451,16 @@ Vec2 system_get_cursor_position() {
 	return position;
 }
 
+Vec2 system_get_cursor_position_y_inverted() {
+	Vec2  position;
+	POINT point;
+	GetCursorPos(&point);
+	ScreenToClient(window_handle, &point);
+	position.x = (r32)point.x;
+	position.y = (r32)point.y;
+	return position;
+}
+
 u32 system_max_controllers() {
 	return XUSER_MAX_COUNT;
 }
