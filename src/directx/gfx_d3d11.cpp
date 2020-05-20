@@ -239,7 +239,10 @@ struct Gfx_Platform_Directx11 : public Gfx_Platform {
 	ID3D11DeviceContext *device_context;
 	IDXGISwapChain1 *    swap_chain;
 	u32                  swap_chain_flags;
-	s32                  swap_interval;
+
+	u32  sync_interval;
+	u32  sync_flags;
+	bool tearing_capable;
 
 	// Resources
 	ID3D11Texture2D *       render_target_texture;
@@ -295,12 +298,21 @@ struct Gfx_Platform_Directx11 : public Gfx_Platform {
 		return desc.SampleDesc.Count;
 	}
 
-	virtual void set_swap_interval(s32 interval) final override {
-		swap_interval = interval;
+	virtual void set_sync_interval(Vsync vsync) final override {
+		if (vsync == Vsync_ADAPTIVE) {
+			if (tearing_capable)
+				sync_flags = DXGI_PRESENT_ALLOW_TEARING;
+			sync_interval = 1;
+		} else {
+			sync_interval = vsync;
+		}
 	}
 
-	virtual s32 get_swap_interval() final override {
-		return swap_interval;
+	virtual Vsync get_sync_interval() final override {
+		if (tearing_capable && (sync_flags & DXGI_PRESENT_ALLOW_TEARING) == DXGI_PRESENT_ALLOW_TEARING) {
+			return Vsync_ADAPTIVE;
+		}
+		return (Vsync)sync_interval;
 	}
 
 	virtual void on_client_resize(u32 w, u32 h) final override {
@@ -319,13 +331,13 @@ struct Gfx_Platform_Directx11 : public Gfx_Platform {
 	}
 
 	virtual Framebuffer get_default_framebuffer() final override {
-		Framebuffer        result;
+		Framebuffer result;
 		result.id.hptr = &default_framebuffer;
 		return result;
 	}
 
 	virtual void present() final override {
-		swap_chain->Present(swap_interval, 0);
+		swap_chain->Present(sync_interval, sync_flags);
 	}
 
 	virtual Texture2d create_texture2d(u32 w, u32 h, u32 channels, Data_Format format, const u8 **pixels, Buffer_Usage usage, Texture_Bind_Flags flags, u32 mip_levels) final override {
@@ -404,7 +416,7 @@ struct Gfx_Platform_Directx11 : public Gfx_Platform {
 		ID3D11Resource *          resource = (ID3D11Resource *)texture.id.hptr;
 		ID3D11ShaderResourceView *view     = 0;
 		device->CreateShaderResourceView(resource, NULL, &view);
-		Texture_View              result;
+		Texture_View result;
 		result.id.hptr = view;
 		return result;
 	}
@@ -834,7 +846,7 @@ void directx_error_cleanup(Gfx_Platform_Directx11 &gfx) {
 		return 0;                                                                                      \
 	}
 
-Gfx_Platform *create_directx11_context(Handle platform, s32 vsync, s32 multisamples) {
+Gfx_Platform *create_directx11_context(Handle platform, Vsync vsync, s32 multisamples) {
 	static Gfx_Platform_Directx11 gfx;
 
 	gfx.backend = Render_Backend_NONE;
@@ -902,6 +914,7 @@ Gfx_Platform *create_directx11_context(Handle platform, s32 vsync, s32 multisamp
 	dx_error_check(hresult, gfx);
 
 	gfx.swap_chain_flags = 0;
+	gfx.tearing_capable  = false;
 
 	IDXGIFactory5 *factory5;
 	if (SUCCEEDED(factory->GetParent(__uuidof(IDXGIFactory5), reinterpret_cast<void **>(&factory5)))) {
@@ -909,6 +922,7 @@ Gfx_Platform *create_directx11_context(Handle platform, s32 vsync, s32 multisamp
 		if (SUCCEEDED(factory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &tearing, sizeof(tearing)))) {
 			if (tearing == TRUE) {
 				gfx.swap_chain_flags |= DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
+				gfx.tearing_capable = true;
 			}
 		}
 	}
@@ -958,8 +972,17 @@ Gfx_Platform *create_directx11_context(Handle platform, s32 vsync, s32 multisamp
 
 	gfx.create_resources();
 
-	gfx.swap_interval = vsync;
-	gfx.backend       = Render_Backend_DIRECTX11;
+	gfx.sync_flags = 0;
+	if (vsync == Vsync_ADAPTIVE) {
+		gfx.sync_interval = 1;
+		if (gfx.tearing_capable) {
+			gfx.sync_flags |= DXGI_PRESENT_ALLOW_TEARING;
+		}
+	} else {
+		gfx.sync_interval = vsync;
+	}
+
+	gfx.backend = Render_Backend_DIRECTX11;
 
 	DXGI_ADAPTER_DESC adapter_desc = {};
 	adapter->GetDesc(&adapter_desc);

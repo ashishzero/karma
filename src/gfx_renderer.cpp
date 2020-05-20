@@ -110,7 +110,7 @@ static String igfx_find_shader(String content, u32 shader_tag, const char *name 
 	return result;
 }
 
-bool gfx_create_context(Handle platform, Render_Backend backend, s32 vsync, u32 multisamples, u32 framebuffer_w, u32 framebuffer_h) {
+bool gfx_create_context(Handle platform, Render_Backend backend, Vsync vsync, u32 multisamples, u32 framebuffer_w, u32 framebuffer_h) {
 	if (backend == Render_Backend_OPENGL) {
 		system_log(LOG_INFO, "Gfx", "gfx.backend = Render_Backend_OPENGL");
 		gfx = create_opengl_context(platform, vsync, multisamples);
@@ -326,12 +326,12 @@ void gfx_get_render_view_size(u32 *w, u32 *h) {
 	gfx->get_render_view_size(w, h);
 }
 
-void gfx_set_swap_interval(s32 interval) {
-	gfx->set_swap_interval(interval);
+void gfx_set_sync_interval(Vsync vsync) {
+	gfx->set_sync_interval(vsync);
 }
 
-s32 gfx_get_swap_interval() {
-	return gfx->get_swap_interval();
+Vsync gfx_get_sync_interval() {
+	return gfx->get_sync_interval();
 }
 
 s32 gfx_get_multisamples() {

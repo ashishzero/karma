@@ -18,6 +18,7 @@ static constexpr int MAX_PRESENTATION_COLORS             = 100;
 static constexpr int MAX_FRAME_TIME_LOGS                 = 150;
 static constexpr r32 FRAME_TIME_GRAPH_HEIGHT             = 100.0f;
 static constexpr r32 FRAME_TIME_GRAPH_PROGRESS           = 3.0f;
+static constexpr r32 FRAME_TIME_PROFILER_Y_OFFSET        = 3.0f;
 
 struct Record {
 	String name;
@@ -50,11 +51,11 @@ static Timed_Frame *timed_frame_writer;
 
 static Color3 presentation_colors[MAX_PRESENTATION_COLORS];
 
-static r32  profiler_resizer_x         = 500.0f;
-static bool profiler_resize_with_mouse = false;
-
 static r32 stablilized_frame_time = 0.0f;
 static r32 frame_time_history[MAX_FRAME_TIME_LOGS];
+
+static r32  profiler_resizer_x         = FRAME_TIME_GRAPH_PROGRESS * MAX_FRAME_TIME_LOGS + 0.5F * PROFILER_RESIZER_SIZE;
+static bool profiler_resize_with_mouse = false;
 
 static Debug_Collation debug_collation;
 static Record *        record_collation_ptr;
@@ -252,6 +253,8 @@ void write_timelines_info_recursive(Record *record, Vec2 position, r32 width, r3
 }
 
 Vec2 draw_profiler(Vec2 position, r32 width, r32 height, r32 font_height, r32 inv_cycles, Vec2 cursor_p, Monospaced_Font &font, Record **hovered_record) {
+	position.y -= FRAME_TIME_PROFILER_Y_OFFSET;
+
 	for (u32 thread_index = 0; thread_index < debug_collation.thread_count; ++thread_index) {
 		auto thread_record = debug_collation.thread_records + thread_index;
 		auto record        = thread_record->root_record;
@@ -263,20 +266,20 @@ Vec2 draw_profiler(Vec2 position, r32 width, r32 height, r32 font_height, r32 in
 		position.y -= bg_off.y;
 
 		// Make baground for all the children records, using height and children count
-		const Vec2 bg_pos = position - vec2(0, children * height + font_height) - bg_off; // font_height for thread id
-		const Vec2 bg_dim = vec2(width, children * height + font_height) + 2 * (bg_off);
+		const Vec2 bg_pos = position - vec2(0, children * height + height) - bg_off; // height for thread id
+		const Vec2 bg_dim = vec2(width, children * height + height) + 2 * (bg_off);
 
 		im_unbind_texture();
 		im_rect(bg_pos, bg_dim, vec4(0, 0, 0, 0.8f));
 		im_rect_outline2d(bg_pos, bg_dim, vec4(1), 0.5f);
 
-		position.y -= 2 * font_height; // For displaying thread id and positioning for next font rendering
+		position.y -= 2 * height; // For displaying thread id and positioning for next font rendering
 		draw_timelines_recursive(record, position, width, height, 20, inv_cycles, cursor_p, hovered_record);
 
 		im_bind_texture(font.texture);
 		// we print thread id here to decrease texture rebinding
-		im_text_region(position + vec2(0, height), vec2(width, font_height), font.info, tprintf("Thread: %u", thread_record->thread_id), vec4(1));
 		position.y += (height - font_height) * 0.5f; // align font to center vertically
+		im_text_region(position + vec2(0, height), vec2(width, font_height), font.info, tprintf("Thread: %u", thread_record->thread_id), vec4(1));
 		write_timelines_info_recursive(record, position, width, height, font_height, inv_cycles, font);
 
 		// Adjust for next thread
@@ -316,13 +319,13 @@ void timed_frame_presentation(Monospaced_Font &font, r32 frame_time, r32 framebu
 	im_unbind_texture();
 
 	{
-		const Vec4    mark_color       = vec4(0, 1, 1);
-		const r32     mark_font_height = 15.0f;
-		const r32     mark_critical_y  = FRAME_TIME_GRAPH_HEIGHT * 0.2f;
-			const r32 mark_times[] = {
-				1.0f / 30.0f,
-				1.0f / 60.0f
-			};
+		const Vec4 mark_color       = vec4(0, 1, 1);
+		const r32  mark_font_height = 15.0f;
+		const r32  mark_critical_y  = FRAME_TIME_GRAPH_HEIGHT * 0.2f;
+		const r32  mark_times[]     = {
+            1.0f / 30.0f,
+            1.0f / 60.0f
+		};
 		r32 marked_times_y[static_count(mark_times)] = {};
 
 		r32 x = PROFILER_PRESENTATION_X_OFFSET;

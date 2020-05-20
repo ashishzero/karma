@@ -24,8 +24,8 @@ struct Gfx_Platform {
 	virtual u32 get_maximum_supported_multisamples() = 0;
 	virtual u32 get_multisamples()                   = 0;
 
-	virtual void set_swap_interval(s32 interval) = 0;
-	virtual s32  get_swap_interval()             = 0;
+	virtual void  set_sync_interval(Vsync vsync) = 0;
+	virtual Vsync get_sync_interval()            = 0;
 
 	virtual void present() = 0;
 
@@ -91,5 +91,5 @@ struct Gfx_Platform {
 	virtual void destroy() = 0;
 };
 
-Gfx_Platform *create_opengl_context(Handle platform, s32 vsync, s32 multisamples);
-Gfx_Platform *create_directx11_context(Handle platform, s32 vsync, s32 multisamples);
+Gfx_Platform *create_opengl_context(Handle platform, Vsync vsync, s32 multisamples);
+Gfx_Platform *create_directx11_context(Handle platform, Vsync vsync, s32 multisamples);

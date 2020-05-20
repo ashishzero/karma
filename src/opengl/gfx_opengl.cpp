@@ -420,7 +420,7 @@ struct Gfx_Platform_OpenGL : public Gfx_Platform {
 
 	Gfx_Platform_Info info;
 
-	bool load_library(s32 vsync);
+	bool load_library(Vsync vsync);
 	void swap_buffers();
 
 	virtual void *get_backend_device() final override {
@@ -461,17 +461,24 @@ struct Gfx_Platform_OpenGL : public Gfx_Platform {
 		return multisamples;
 	}
 
-	virtual void set_swap_interval(s32 interval) final override {
+	virtual void set_sync_interval(Vsync vsync) final override {
 		if (set_swap_interval_func) {
-			set_swap_interval_func(interval);
+			if (vsync == Vsync_ADAPTIVE) {
+				if (!set_swap_interval_func((int)vsync)) {
+					system_log(LOG_WARNING, "OpenGL", "Negative swap interval not supported!");
+					set_swap_interval_func(1);
+				}
+			} else {
+				set_swap_interval_func((int)vsync);
+			}
 		}
 	}
 
-	virtual s32 get_swap_interval() final override {
+	virtual Vsync get_sync_interval() final override {
 		if (get_swap_interval_func) {
-			return get_swap_interval_func();
+			return (Vsync)get_swap_interval_func();
 		} else {
-			return 0;
+			return Vsync_0;
 		}
 	}
 
@@ -1089,7 +1096,7 @@ struct Gfx_Platform_OpenGL : public Gfx_Platform {
 	}
 };
 
-Gfx_Platform *create_opengl_context(Handle platform, s32 vsync, s32 multisamples) {
+Gfx_Platform *create_opengl_context(Handle platform, Vsync vsync, s32 multisamples) {
 	static Gfx_Platform_OpenGL gfx;
 
 	// NOTE: set these, they are used by *load_library* function
@@ -1148,7 +1155,7 @@ void Gfx_Platform_OpenGL::swap_buffers() {
 	SwapBuffers(wnd_dc);
 }
 
-bool Gfx_Platform_OpenGL::load_library(s32 vsync) {
+bool Gfx_Platform_OpenGL::load_library(Vsync vsync) {
 	HMODULE opengl = LoadLibraryW(L"opengl32.dll");
 	if (!opengl) {
 		// TODO: Handle win32 error!!!
@@ -1368,13 +1375,13 @@ bool Gfx_Platform_OpenGL::load_library(s32 vsync) {
 	wgl_make_current(wnd_dc, glContext);
 
 	if (set_swap_interval_func) {
-		if (vsync == -1) {
-			if (!set_swap_interval_func(vsync)) {
+		if (vsync == Vsync_ADAPTIVE) {
+			if (!set_swap_interval_func((int)vsync)) {
 				system_log(0, "OpenGL", "Tearing (-1 swap interval) not supported.");
 				set_swap_interval_func(1);
 			}
 		} else {
-			set_swap_interval_func(vsync);
+			set_swap_interval_func((int)vsync);
 		}
 	} else {
 		system_log(LOG_WARNING, "OpenGL", "WGL_EXT_swap_control extension is not present, Vertical swapping disabled");

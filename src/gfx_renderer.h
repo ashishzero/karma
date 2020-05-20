@@ -26,7 +26,7 @@ struct Monospaced_Font {
 	Monospaced_Font_Info info;
 };
 
-bool gfx_create_context(Handle platform, Render_Backend backend, s32 vsync, u32 multisamples, u32 framebuffer_w = 1280, u32 framebuffer_h = 720);
+bool gfx_create_context(Handle platform, Render_Backend backend, Vsync vsync, u32 multisamples, u32 framebuffer_w = 1280, u32 framebuffer_h = 720);
 void gfx_destroy_context();
 
 void gfx_resize_framebuffer(u32 width, u32 height, u32 bloom_w = 512, u32 bloom_h = 512);
@@ -38,8 +38,8 @@ void *         gfx_render_context();
 void gfx_on_client_resize(u32 w, u32 h);
 void gfx_get_render_view_size(u32 *w, u32 *h);
 
-void gfx_set_swap_interval(s32 interval);
-s32  gfx_get_swap_interval();
+void  gfx_set_sync_interval(Vsync vsync);
+Vsync gfx_get_sync_interval();
 
 s32 gfx_get_multisamples();
 

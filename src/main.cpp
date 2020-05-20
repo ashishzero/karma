@@ -245,7 +245,7 @@ int system_main() { // Entry point
 	r32    framebuffer_w = 1280;
 	r32    framebuffer_h = 720;
 	Handle platform      = system_create_window(u8"Karma", 1280, 720, System_Window_Show_NORMAL);
-	gfx_create_context(platform, Render_Backend_DIRECTX11, 1, 2, (u32)framebuffer_w, (u32)framebuffer_h);
+	gfx_create_context(platform, Render_Backend_DIRECTX11, Vsync_ADAPTIVE, 2, (u32)framebuffer_w, (u32)framebuffer_h);
 	ImGui::Initialize();
 
 	karma_debug_service_initialize();
@@ -290,7 +290,7 @@ int system_main() { // Entry point
 
 	Time_Speed_Factor factor;
 
-	r32 const fixed_dt      = 1.0f / 60.0f;
+	r32 const fixed_dt      = 1.0f / 30.0f;
 	r32       dt            = fixed_dt * factor.ratio;
 	r32       game_dt       = fixed_dt * factor.ratio;
 	r32       real_dt       = fixed_dt;
@@ -397,6 +397,8 @@ int system_main() { // Entry point
 		karma_timed_block_begin(Simulation);
 
 		while (accumulator_t >= fixed_dt) {
+			karma_timed_scope(SimulationFrame);
+
 			const r32 gravity = 10;
 			const r32 drag    = 5;
 
@@ -419,7 +421,6 @@ int system_main() { // Entry point
 
 			if (state == Time_State_RESUME) {
 #if 1
-				karma_timed_block_begin(RigidBodiesUpdate);
 
 				for (int i = 0; i < NUM_RIGID_BODIES; i++) {
 					RigidBody *rigidBody = &rigidBodies[i];
@@ -523,13 +524,10 @@ int system_main() { // Entry point
 					rigidBody->collided  = false;
 				}
 
-				karma_timed_block_end(RigidBodiesUpdate);
 #endif
 
 #if 1
-				karma_timed_block_begin(ParticlesUpdate);
 				particle_emitter_update_particles(&emitter, dt);
-				karma_timed_block_end(ParticlesUpdate);
 #endif
 			}
 
