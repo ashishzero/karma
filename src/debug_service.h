@@ -1,6 +1,7 @@
 #pragma once
 #include "karma.h"
 #include "gfx_renderer.h"
+#include "systems.h"
 
 typedef String Timed_Block_Match;
 
@@ -41,16 +42,8 @@ void              timed_frame_end();
 Timed_Block_Match timed_block_begin(String id, String block_name);
 void              timed_block_end(Timed_Block_Match match, String block_name);
 
-enum Frame_Present_Flag_Bit : u32 {
-	Frame_Present_NONE             = bit(0),
-	Frame_Present_HEADER           = bit(1),
-	Frame_Present_FRAME_TIME_GRAPH = bit(2),
-	Frame_Present_PROFILER         = bit(3),
-	Frame_Present_ALL              = Frame_Present_HEADER | Frame_Present_FRAME_TIME_GRAPH | Frame_Present_PROFILER,
-};
-typedef u32 Frame_Present_Flags;
-
-void timed_frame_presentation(Monospaced_Font &font, r32 frame_time, r32 framebuffer_w, r32 framebuffer_h, Frame_Present_Flags flags = Frame_Present_HEADER | Frame_Present_FRAME_TIME_GRAPH);
+void debug_service_handle_event(Event &event);
+void timed_frame_presentation(Monospaced_Font &font, r32 frame_time, r32 framebuffer_w, r32 framebuffer_h);
 
 //
 //
@@ -85,7 +78,8 @@ struct Timed_Procedure {
 #define karma_timed_procedure() karma_timed_scoped_info(CURRENT_FILE "(" MACRO_NUMBER_TO_STRING(CURRENT_LINE) ")", CURRENT_PROCEDURE, CURRENT_LINE)
 #define karma_timed_scope(name) karma_timed_scoped_info(CURRENT_FILE "(" MACRO_NUMBER_TO_STRING(CURRENT_LINE) ")", #name, CURRENT_LINE)
 
-#define karma_timed_frame_presentation timed_frame_presentation
+#define karma_debug_service_handle_event debug_service_handle_event
+#define karma_timed_frame_presentation   timed_frame_presentation
 
 #define karma_frame_recording_is_on    frame_recording_is_on
 #define karma_frame_recording_turn_on  frame_recording_turn_on

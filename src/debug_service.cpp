@@ -58,6 +58,7 @@ static r32 frame_time_history[MAX_FRAME_TIME_LOGS];
 
 static r32  profiler_resizer_x         = FRAME_TIME_GRAPH_PROGRESS * MAX_FRAME_TIME_LOGS + 0.5F * PROFILER_RESIZER_SIZE;
 static bool profiler_resize_with_mouse = false;
+static bool left_button_state		   = false;
 
 static Debug_Collation debug_collation;
 static Record *        record_collation_ptr;
@@ -65,6 +66,24 @@ static Record *        record_collation_trav;
 
 static bool frame_recording             = true;
 static bool user_frame_recording_option = true;
+
+enum Frame_Present_Flag_Bit : u32 {
+	Frame_Present_NONE             = bit(0),
+	Frame_Present_HEADER           = bit(1),
+	Frame_Present_FRAME_TIME_GRAPH = bit(2),
+	Frame_Present_PROFILER         = bit(3),
+	Frame_Present_ALL              = Frame_Present_HEADER | Frame_Present_FRAME_TIME_GRAPH | Frame_Present_PROFILER,
+};
+typedef u32 Frame_Present_Flags;
+
+static Frame_Present_Flags debug_frame_present_flags[] = {
+	Frame_Present_NONE,
+	Frame_Present_HEADER,
+	Frame_Present_FRAME_TIME_GRAPH | Frame_Present_HEADER,
+	Frame_Present_PROFILER | Frame_Present_HEADER,
+	Frame_Present_ALL,
+};
+static int debug_frame_present_flag_index = 1;
 
 bool frame_recording_is_on() {
 	return user_frame_recording_option;
@@ -188,6 +207,34 @@ void timed_block_end(Timed_Block_Match value, String block_name) {
 	}
 }
 
+void debug_service_handle_event(Event &event) {
+	switch (event.type) {
+		case Event_Type_KEY_UP: {
+			if (event.key.symbol == Key_F4) {
+				debug_frame_present_flag_index += 1;
+				if (debug_frame_present_flag_index >= static_count(debug_frame_present_flags)) {
+					debug_frame_present_flag_index = 0;
+				}
+			}
+			else if (event.key.symbol == Key_F5) {
+				karma_frame_recording_toggle();
+			}
+		} break;
+
+		case Event_Type_MOUSE_BUTTON_DOWN: {
+			if (event.mouse_button.symbol == Button_LEFT) {
+				left_button_state = true;
+			}
+		} break;
+
+		case Event_Type_MOUSE_BUTTON_UP: {
+			if (event.mouse_button.symbol == Button_LEFT) {
+				left_button_state = false;
+			}
+		} break;
+	}
+}
+
 int calculate_presetation_max_children(Record *record) {
 	int children = 1;
 	while (record) {
@@ -293,7 +340,9 @@ Vec2 draw_profiler(Vec2 position, r32 width, r32 height, r32 font_height, r32 in
 	return position;
 }
 
-void timed_frame_presentation(Monospaced_Font &font, r32 frame_time, r32 framebuffer_w, r32 framebuffer_h, Frame_Present_Flags flags) {
+void timed_frame_presentation(Monospaced_Font &font, r32 frame_time, r32 framebuffer_w, r32 framebuffer_h) {
+	Frame_Present_Flags flags = debug_frame_present_flags[debug_frame_present_flag_index];
+
 	memmove(frame_time_history + 1, frame_time_history, sizeof(r32) * (MAX_FRAME_TIME_LOGS - 1));
 	frame_time_history[0] = frame_time;
 
@@ -475,7 +524,6 @@ void timed_frame_presentation(Monospaced_Font &font, r32 frame_time, r32 framebu
 		r32 profiler_presentation_width = profiler_resizer_x - PROFILER_RESIZER_SIZE;
 
 		auto cursor_p          = system_get_cursor_position();
-		auto left_button_state = system_button(Button_LEFT);
 
 		Record *hovered_record = NULL;
 		Vec2    next_pos       = draw_profiler(vec2(x_pos, y_pos), profiler_presentation_width, PROFILER_PRESENTATION_RECORD_HEIGHT, PROFILER_PRESENTATION_FONT_HEIGHT, inv_cycles_count, cursor_p, font, &hovered_record);
@@ -494,14 +542,14 @@ void timed_frame_presentation(Monospaced_Font &font, r32 frame_time, r32 framebu
 		next_pos.y += PROFILER_PRESENTATION_RECORD_HEIGHT;
 
 		if (point_inside_rect(cursor_p, mm_rect(next_pos, next_pos + resize_dim))) {
-			if (left_button_state == State_DOWN) {
+			if (left_button_state) {
 				profiler_resize_with_mouse = true;
 			}
 			resize_color = vec4(1, 1, 0);
 			resize_dim.x = resize_dim.x * 1.5f;
 		}
 
-		if (left_button_state == State_UP) {
+		if (!left_button_state) {
 			profiler_resize_with_mouse = false;
 		}
 
