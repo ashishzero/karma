@@ -241,7 +241,7 @@ void write_timelines_info_recursive(Record *record, Vec2 position, r32 width, r3
 		Vec2 region = im_calculate_text_region(font_height, font.info, record->name);
 		if (dimension.x > region.x) {
 			// align font in center only if there is enough space for font to be displayed
-			render_position.x += (dimension.x - region.x) * 0.5;
+			render_position.x += (dimension.x - region.x) * 0.5f;
 		}
 
 		im_text_region(render_position, vec2(dimension.x, font_height), font.info, record->name, vec4(1));
@@ -261,7 +261,7 @@ Vec2 draw_profiler(Vec2 position, r32 width, r32 height, r32 font_height, r32 in
 		auto thread_record = debug_collation.thread_records + thread_index;
 		auto record        = thread_record->root_record;
 
-		r32        children = calculate_presetation_max_children(record);
+		r32        children = (r32)calculate_presetation_max_children(record);
 		const Vec2 bg_off   = vec2(3.0f);
 
 		position.x += bg_off.x;
@@ -416,7 +416,7 @@ void timed_frame_presentation(Monospaced_Font &font, r32 frame_time, r32 framebu
 					record->id          = frame_record->id;
 					record->name        = frame_record->block_name;
 					record->ms          = -1; // we use negative to endicate that END has not been reached
-					record->begin_cycle = frame_record->time_stamp - frame->begin_cycle_value;
+					record->begin_cycle = (u32)(frame_record->time_stamp - frame->begin_cycle_value);
 
 					thread_record->thread_id   = frame_record->thread_id;
 					thread_record->root_record = record;
@@ -430,7 +430,7 @@ void timed_frame_presentation(Monospaced_Font &font, r32 frame_time, r32 framebu
 						record->id          = frame_record->id;
 						record->name        = frame_record->block_name;
 						record->ms          = -1;
-						record->begin_cycle = frame_record->time_stamp - frame->begin_cycle_value;
+						record->begin_cycle = (u32)(frame_record->time_stamp - frame->begin_cycle_value);
 
 						thread_record->leaf_record->next = record;
 						thread_record->leaf_record       = record;
@@ -442,7 +442,7 @@ void timed_frame_presentation(Monospaced_Font &font, r32 frame_time, r32 framebu
 						record->id          = frame_record->id;
 						record->name        = frame_record->block_name;
 						record->ms          = -1;
-						record->begin_cycle = frame_record->time_stamp - frame->begin_cycle_value;
+						record->begin_cycle = (u32)(frame_record->time_stamp - frame->begin_cycle_value);
 
 						thread_record->leaf_record->child = record;
 						thread_record->leaf_record        = record;
@@ -460,7 +460,7 @@ void timed_frame_presentation(Monospaced_Font &font, r32 frame_time, r32 framebu
 					assert(parent);         // block begin/end mismatch
 					assert(parent->ms < 0); // block begin/end mismatch
 
-					parent->end_cycle = frame_record->time_stamp - frame->begin_cycle_value;
+					parent->end_cycle = (u32)(frame_record->time_stamp - frame->begin_cycle_value);
 					r32 cycles        = (r32)(parent->end_cycle - parent->begin_cycle);
 					parent->ms        = 1000.0f * dt * cycles * inv_cycles_count;
 

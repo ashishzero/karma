@@ -16,7 +16,7 @@
 #define KARMA_PATCH_VERSION 0
 #define KARMA_VERSION_STRING MACRO_NUMBER_TO_STRING(KARMA_MAJOR_VERSION) "." MACRO_NUMBER_TO_STRING(KARMA_MINOR_VERSION) "." MACRO_NUMBER_TO_STRING(KARMA_PATCH_VERSION)
 
-#if !defined(BUILD_DEBUG) && !defined(BUILD_DEVELOPER) && !defined(BUILD_RELEASE)
+#if !defined(BUILD_DEBUG) && !defined(BUILD_DEBUG_FAST) && !defined(BUILD_DEVELOPER) && !defined(BUILD_RELEASE)
 #	if defined(_DEBUG) || defined(DEBUG)
 #		define BUILD_DEBUG
 #	elif defined(NDEBUG) || defined(RELEASE)
@@ -120,7 +120,7 @@ inline void runtime_assert(bool exp) {
 	}
 }
 
-#if defined(BUILD_DEBUG) || defined(BUILD_DEVELOPER)
+#if defined(BUILD_DEBUG) || defined(BUILD_DEBUG_FAST)
 #	define assert(expression) runtime_assert(expression)
 #	define unimplemented() \
 		{ trigger_breakpoint(); }

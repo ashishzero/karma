@@ -1742,7 +1742,7 @@ void system_unlock_mutex(Handle handle) {
 #ifndef SYSTEMS_RUN_WITH_CRT
 
 int __stdcall wWinMain(HINSTANCE instance, HINSTANCE prev_instance, LPWSTR cmd_line, int show_cmd) {
-#	if defined(BUILD_DEBUG) || defined(BUILD_DEVELOPER)
+#	if defined(BUILD_DEBUG) || defined(BUILD_DEBUG_FAST)
 	AllocConsole();
 	SetConsoleOutputCP(CP_UTF8);
 #	endif

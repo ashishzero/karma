@@ -451,7 +451,7 @@ int system_main();
 
 void system_log(int type, const char *title, ANALYSE_PRINTF_FORMAT_STRING(const char *fmt), ...) ANALYSE_PRINTF_FORMAT(3, 4);
 
-#if defined(BUILD_DEBUG) || defined(BUILD_DEVELOPER)
+#if defined(BUILD_DEBUG) || defined(BUILD_DEBUG_FAST)
 #	define system_trace(fmt, ...) system_log(LOG_INFO, "Trace", fmt, ##__VA_ARGS__)
 #	define system_assert(exp, fmt, ...)                                                                                                \
 		if (!exp) {                                                                                                                     \

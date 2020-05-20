@@ -1108,7 +1108,7 @@ Gfx_Platform *create_opengl_context(Handle platform, Vsync vsync, s32 multisampl
 		return &gfx;
 	}
 
-#	if defined(BUILD_DEBUG) || defined(BUILD_DEVELOPER)
+#	if defined(BUILD_DEBUG) || defined(BUILD_DEBUG_FAST)
 	{
 		system_log(LOG_INFO, "OpenGL", "GL_DEBUG_OUTPUT_SYNCHRONOUS enabled.");
 		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
@@ -1363,7 +1363,7 @@ bool Gfx_Platform_OpenGL::load_library(Vsync vsync) {
 		2,
 		WGL_CONTEXT_PROFILE_MASK_ARB,
 		WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
-#		if defined(BUILD_DEBUG) || defined(BUILD_DEVELOPER)
+#		if defined(BUILD_DEBUG) || defined(BUILD_DEBUG_FAST)
 		WGL_CONTEXT_FLAGS_ARB,
 		WGL_CONTEXT_DEBUG_BIT_ARB,
 #		endif

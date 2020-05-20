@@ -854,7 +854,7 @@ Gfx_Platform *create_directx11_context(Handle platform, Vsync vsync, s32 multisa
 	IDXGIFactory2 *factory;
 
 	u32 factory_flags = 0;
-#if defined(BUILD_DEBUG) || defined(BUILD_DEVELOPER)
+#if defined(BUILD_DEBUG) || defined(BUILD_DEBUG_FAST)
 	factory_flags = DXGI_CREATE_FACTORY_DEBUG;
 #endif
 	dx_error_check(CreateDXGIFactory2(factory_flags, IID_PPV_ARGS(&factory)), gfx);
@@ -863,7 +863,7 @@ Gfx_Platform *create_directx11_context(Handle platform, Vsync vsync, s32 multisa
 	};
 
 	u32 flags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
-#if defined(BUILD_DEBUG) || defined(BUILD_DEVELOPER)
+#if defined(BUILD_DEBUG) || defined(BUILD_DEBUG_FAST)
 	flags |= D3D11_CREATE_DEVICE_DEBUG;
 #endif
 
@@ -944,7 +944,7 @@ Gfx_Platform *create_directx11_context(Handle platform, Vsync vsync, s32 multisa
 	hresult = factory->CreateSwapChainForHwnd(gfx.device, (HWND)platform.hptr, &swap_chain_desc, NULL, NULL, &gfx.swap_chain);
 	dx_error_check(hresult, gfx);
 
-#if defined(BUILD_DEBUG) || defined(BUILD_DEVELOPER)
+#if defined(BUILD_DEBUG) || defined(BUILD_DEBUG_FAST)
 	ID3D11Debug *debug = 0;
 
 	if (SUCCEEDED(gfx.device->QueryInterface(__uuidof(ID3D11Debug), (void **)&debug))) {

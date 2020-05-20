@@ -16,7 +16,7 @@
 
 //---- Define assertion handler. Defaults to calling assert().
 // If your macro uses multiple statements, make sure is enclosed in a 'do { .. } while (0)' block so it can be used as a single statement.
-#if defined(BUILD_DEBUG) || defined(BUILD_INTERNAL)
+#if defined(BUILD_DEBUG) || defined(BUILD_DEBUG_FAST)
 #	define IM_ASSERT(_EXPR) runtime_assert(_EXPR)
 #else
 #	define IM_ASSERT(_EXPR) ((void)(_EXPR)) // Disable asserts

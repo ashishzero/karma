@@ -149,9 +149,6 @@
     <ClInclude Include="src\tokenizer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\prebuild.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\reflection.h">
       <Filter>Header Files</Filter>
     </ClInclude>
