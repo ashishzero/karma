@@ -14,6 +14,12 @@
 #pragma once
 #include "../karma.h"
 
+#if defined(BUILD_DEBUG) || defined(BUILD_DEBUG_FAST) || defined(BUILD_DEVELOPER)
+#define BUILD_IMGUI
+#endif
+
+#ifdef BUILD_IMGUI
+
 //---- Define assertion handler. Defaults to calling assert().
 // If your macro uses multiple statements, make sure is enclosed in a 'do { .. } while (0)' block so it can be used as a single statement.
 #if defined(BUILD_DEBUG) || defined(BUILD_DEBUG_FAST)
@@ -122,6 +128,22 @@ namespace ImGui {
 void Initialize();
 void Shutdown();
 bool HandleEvent(const Event &event);
-void UpdateFrame(r32 dt, r32 event_time = 0, r32 simulate_time = 0, r32 render_time = 0, r32 gpu_time = 0);
+void UpdateFrame(r32 dt);
 void RenderFrame();
-} // namespace ImGui
+};
+
+#define ImGui_Initialize()			ImGui::Initialize()
+#define ImGui_Shutdown()			ImGui::Shutdown()
+#define ImGui_HandleEvent(event)	ImGui::HandleEvent(event)
+#define ImGui_UpdateFrame(dt)		ImGui::UpdateFrame(dt)
+#define ImGui_RenderFrame()			ImGui::RenderFrame()
+
+#else
+
+#define ImGui_Initialize()
+#define ImGui_Shutdown()
+#define ImGui_HandleEvent(...) (false)
+#define ImGui_UpdateFrame(...)
+#define ImGui_RenderFrame()
+
+#endif

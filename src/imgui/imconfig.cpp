@@ -6,6 +6,8 @@
 #include "imgui_impl_opengl3.h"
 #include "imgui_impl_dx11.h"
 
+#if defined(BUILD_DEBUG) || defined(BUILD_DEBUG_FAST) || defined(BUILD_DEVELOPER)
+
 static bool               window_is_active = true;
 static bool               mouse_pressed[3];
 static Cursor_Kind        mouse_cursor[ImGuiMouseCursor_COUNT];
@@ -253,7 +255,7 @@ bool ImGui::HandleEvent(const Event &event) {
 	return false;
 }
 
-void ImGui::UpdateFrame(r32 dt, r32 event_time, r32 simulate_time, r32 render_time, r32 gpu_time) {
+void ImGui::UpdateFrame(r32 dt) {
 	auto backend = gfx_render_backend();
 	if (backend == Render_Backend_OPENGL)
 		ImGui_ImplOpenGL3_NewFrame();
@@ -314,3 +316,5 @@ void ImGui::RenderFrame() {
 	else if (backend == Render_Backend_DIRECTX11)
 		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 }
+
+#endif

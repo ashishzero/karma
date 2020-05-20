@@ -246,8 +246,8 @@ int system_main() { // Entry point
 	r32    framebuffer_h = 720;
 	Handle platform      = system_create_window(u8"Karma", 1280, 720, System_Window_Show_NORMAL);
 	gfx_create_context(platform, Render_Backend_DIRECTX11, Vsync_ADAPTIVE, 2, (u32)framebuffer_w, (u32)framebuffer_h);
-	ImGui::Initialize();
 
+	ImGui_Initialize();
 	karma_debug_service_initialize();
 
 	Monospaced_Font font;
@@ -317,7 +317,7 @@ int system_main() { // Entry point
 			}
 			
 			karma_debug_service_handle_event(event);
-			if (ImGui::HandleEvent(event)) continue;
+			if (ImGui_HandleEvent(event)) continue;
 
 			//
 			// Developer Commands
@@ -541,7 +541,7 @@ int system_main() { // Entry point
 
 		r32 alpha = accumulator_t / fixed_dt; // TODO: Use this
 
-		ImGui::UpdateFrame(real_dt);
+		ImGui_UpdateFrame(real_dt);
 
 		r32 world_height_half = 4.5f;
 		r32 world_width_half  = aspect_ratio * world_height_half;
@@ -635,6 +635,8 @@ int system_main() { // Entry point
 		gfx_blit_hdr(render_x, render_y, render_w, render_h);
 		gfx_viewport(0, 0, window_w, window_h);
 
+
+#if defined(BUILD_IMGUI)
 		if (editor_on) {
 			ImGui::Begin("Primary");
 			ImGui::Text("Camera");
@@ -664,10 +666,10 @@ int system_main() { // Entry point
 		ImGui::DragFloat("Torque", &rb.torque);
 
 		ImGui::End();
-
 		//ImGui::ShowDemoWindow();
+#endif
 
-		ImGui::RenderFrame();
+		ImGui_RenderFrame();
 
 		{
 			karma_timed_scope(DebugCollation);
@@ -708,7 +710,7 @@ int system_main() { // Entry point
 
 	karma_debug_service_shutdown();
 
-	ImGui::Shutdown();
+	ImGui_Shutdown();
 	gfx_destroy_context();
 
 	return 0;
