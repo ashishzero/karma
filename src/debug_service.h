@@ -41,7 +41,16 @@ void              timed_frame_end();
 Timed_Block_Match timed_block_begin(String id, String block_name);
 void              timed_block_end(Timed_Block_Match match, String block_name);
 
-void timed_frame_presentation(Monospaced_Font &font, r32 frame_time, r32 framebuffer_w, r32 framebuffer_h);
+enum Frame_Present_Flag_Bit : u32 {
+	Frame_Present_NONE             = bit(0),
+	Frame_Present_HEADER           = bit(1),
+	Frame_Present_FRAME_TIME_GRAPH = bit(2),
+	Frame_Present_PROFILER         = bit(3),
+	Frame_Present_ALL              = Frame_Present_HEADER | Frame_Present_FRAME_TIME_GRAPH | Frame_Present_PROFILER,
+};
+typedef u32 Frame_Present_Flags;
+
+void timed_frame_presentation(Monospaced_Font &font, r32 frame_time, r32 framebuffer_w, r32 framebuffer_h, Frame_Present_Flags flags = Frame_Present_HEADER | Frame_Present_FRAME_TIME_GRAPH);
 
 //
 //

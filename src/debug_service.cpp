@@ -291,34 +291,40 @@ Vec2 draw_profiler(Vec2 position, r32 width, r32 height, r32 font_height, r32 in
 	return position;
 }
 
-void timed_frame_presentation(Monospaced_Font &font, r32 frame_time, r32 framebuffer_w, r32 framebuffer_h) {
+void timed_frame_presentation(Monospaced_Font &font, r32 frame_time, r32 framebuffer_w, r32 framebuffer_h, Frame_Present_Flags flags) {
 	memmove(frame_time_history + 1, frame_time_history, sizeof(r32) * (MAX_FRAME_TIME_LOGS - 1));
 	frame_time_history[0] = frame_time;
+
+	if (flags == Frame_Present_NONE) return;
 
 	auto frame  = timed_frame_get();
 	auto counts = frame->end_counter_value - frame->begin_counter_value;
 	r32  dt     = ((1000000.0f * (r32)counts) / (r32)system_get_frequency()) / 1000000.0f;
-
-	const r32 frame_rate_and_version_height = 24.0f;
-	stablilized_frame_time                  = stablilized_frame_time * 0.8f + 0.2f * frame_time;
-	String frame_time_string                = tprintf("FrameTime: %.3fms", stablilized_frame_time * 1000.0f);
-	String version_string                   = "v" KARMA_VERSION_STRING;
 
 	im_debug_begin(0, framebuffer_w, framebuffer_h, 0);
 	defer {
 		im_end();
 	};
 
-	im_bind_texture(font.texture);
-	im_text(vec2(5.0f, framebuffer_h - frame_rate_and_version_height), frame_rate_and_version_height, font.info, frame_time_string, vec4(1, 1, 0));
-	auto size = im_calculate_text_region(frame_rate_and_version_height, font.info, version_string);
-	im_text(vec2(framebuffer_w - size.x - 8.0f, framebuffer_h - frame_rate_and_version_height), frame_rate_and_version_height, font.info, version_string, vec4(1, 1, 0));
+	r32 frame_rate_and_version_height = 0;
+
+	if (flags & Frame_Present_HEADER) {
+		frame_rate_and_version_height = 24.0f;
+		stablilized_frame_time   = stablilized_frame_time * 0.8f + 0.2f * frame_time;
+		String frame_time_string = tprintf("FrameTime: %.3fms", stablilized_frame_time * 1000.0f);
+		String version_string    = "v" KARMA_VERSION_STRING;
+
+		im_bind_texture(font.texture);
+		im_text(vec2(5.0f, framebuffer_h - frame_rate_and_version_height), frame_rate_and_version_height, font.info, frame_time_string, vec4(1, 1, 0));
+		auto size = im_calculate_text_region(frame_rate_and_version_height, font.info, version_string);
+		im_text(vec2(framebuffer_w - size.x - 8.0f, framebuffer_h - frame_rate_and_version_height), frame_rate_and_version_height, font.info, version_string, vec4(1, 1, 0));
+	}
 
 	r32 prev_used_height_space = frame_rate_and_version_height;
 
 	im_unbind_texture();
 
-	{
+	if (flags & Frame_Present_FRAME_TIME_GRAPH) {
 		const Vec4 mark_color       = vec4(0, 1, 1);
 		const r32  mark_font_height = 15.0f;
 		const r32  mark_critical_y  = FRAME_TIME_GRAPH_HEIGHT * 0.2f;
@@ -377,148 +383,150 @@ void timed_frame_presentation(Monospaced_Font &font, r32 frame_time, r32 framebu
 		return;
 	}
 
-	r32 inv_cycles_count = 1.0f / ((r32)(frame->end_cycle_value - frame->begin_cycle_value));
-	{
-		reset_collation_record();
+	if (flags & Frame_Present_PROFILER) {
+		r32 inv_cycles_count = 1.0f / ((r32)(frame->end_cycle_value - frame->begin_cycle_value));
+		{
+			reset_collation_record();
 
-		Record *record = NULL;
+			Record *record = NULL;
 
-		for (s64 record_index = 0; record_index < frame->records_count; ++record_index) {
-			auto frame_record = frame->records + record_index;
+			for (s64 record_index = 0; record_index < frame->records_count; ++record_index) {
+				auto frame_record = frame->records + record_index;
 
-			Thread_Record *thread_record = NULL;
-			for (u32 thread_index = 0; thread_index < debug_collation.thread_count; ++thread_index) {
-				auto thread = debug_collation.thread_records + thread_index;
-				if (thread->thread_id == frame_record->thread_id) {
-					thread_record = thread;
-					break;
-				}
-			}
-
-			if (!thread_record) {
-				assert(debug_collation.thread_count < MAX_COLLATION_THREADS);
-				thread_record = debug_collation.thread_records + debug_collation.thread_count;
-				debug_collation.thread_count += 1;
-
-				record              = push_collation_record();
-				record->child       = NULL;
-				record->parent      = NULL;
-				record->next        = NULL;
-				record->id          = frame_record->id;
-				record->name        = frame_record->block_name;
-				record->ms          = -1; // we use negative to endicate that END has not been reached
-				record->begin_cycle = frame_record->time_stamp - frame->begin_cycle_value;
-
-				thread_record->thread_id   = frame_record->thread_id;
-				thread_record->root_record = record;
-				thread_record->leaf_record = record;
-			} else if (frame_record->type == Timed_Record_Type_BEGIN) {
-				if (thread_record->leaf_record->ms > 0) {
-					record              = push_collation_record();
-					record->child       = NULL;
-					record->parent      = thread_record->leaf_record->parent;
-					record->next        = NULL;
-					record->id          = frame_record->id;
-					record->name        = frame_record->block_name;
-					record->ms          = -1;
-					record->begin_cycle = frame_record->time_stamp - frame->begin_cycle_value;
-
-					thread_record->leaf_record->next = record;
-					thread_record->leaf_record       = record;
-				} else {
-					record              = push_collation_record();
-					record->child       = NULL;
-					record->parent      = thread_record->leaf_record;
-					record->next        = NULL;
-					record->id          = frame_record->id;
-					record->name        = frame_record->block_name;
-					record->ms          = -1;
-					record->begin_cycle = frame_record->time_stamp - frame->begin_cycle_value;
-
-					thread_record->leaf_record->child = record;
-					thread_record->leaf_record        = record;
-				}
-			} else {
-				auto parent = thread_record->leaf_record;
-
-				while (parent) {
-					if (parent->id.data == frame_record->id.data && parent->name.data == frame_record->block_name.data) {
+				Thread_Record *thread_record = NULL;
+				for (u32 thread_index = 0; thread_index < debug_collation.thread_count; ++thread_index) {
+					auto thread = debug_collation.thread_records + thread_index;
+					if (thread->thread_id == frame_record->thread_id) {
+						thread_record = thread;
 						break;
 					}
-					parent = parent->parent;
 				}
 
-				assert(parent);         // block begin/end mismatch
-				assert(parent->ms < 0); // block begin/end mismatch
+				if (!thread_record) {
+					assert(debug_collation.thread_count < MAX_COLLATION_THREADS);
+					thread_record = debug_collation.thread_records + debug_collation.thread_count;
+					debug_collation.thread_count += 1;
 
-				parent->end_cycle = frame_record->time_stamp - frame->begin_cycle_value;
-				r32 cycles        = (r32)(parent->end_cycle - parent->begin_cycle);
-				parent->ms        = 1000.0f * dt * cycles * inv_cycles_count;
+					record              = push_collation_record();
+					record->child       = NULL;
+					record->parent      = NULL;
+					record->next        = NULL;
+					record->id          = frame_record->id;
+					record->name        = frame_record->block_name;
+					record->ms          = -1; // we use negative to endicate that END has not been reached
+					record->begin_cycle = frame_record->time_stamp - frame->begin_cycle_value;
 
-				thread_record->leaf_record = parent;
+					thread_record->thread_id   = frame_record->thread_id;
+					thread_record->root_record = record;
+					thread_record->leaf_record = record;
+				} else if (frame_record->type == Timed_Record_Type_BEGIN) {
+					if (thread_record->leaf_record->ms > 0) {
+						record              = push_collation_record();
+						record->child       = NULL;
+						record->parent      = thread_record->leaf_record->parent;
+						record->next        = NULL;
+						record->id          = frame_record->id;
+						record->name        = frame_record->block_name;
+						record->ms          = -1;
+						record->begin_cycle = frame_record->time_stamp - frame->begin_cycle_value;
+
+						thread_record->leaf_record->next = record;
+						thread_record->leaf_record       = record;
+					} else {
+						record              = push_collation_record();
+						record->child       = NULL;
+						record->parent      = thread_record->leaf_record;
+						record->next        = NULL;
+						record->id          = frame_record->id;
+						record->name        = frame_record->block_name;
+						record->ms          = -1;
+						record->begin_cycle = frame_record->time_stamp - frame->begin_cycle_value;
+
+						thread_record->leaf_record->child = record;
+						thread_record->leaf_record        = record;
+					}
+				} else {
+					auto parent = thread_record->leaf_record;
+
+					while (parent) {
+						if (parent->id.data == frame_record->id.data && parent->name.data == frame_record->block_name.data) {
+							break;
+						}
+						parent = parent->parent;
+					}
+
+					assert(parent);         // block begin/end mismatch
+					assert(parent->ms < 0); // block begin/end mismatch
+
+					parent->end_cycle = frame_record->time_stamp - frame->begin_cycle_value;
+					r32 cycles        = (r32)(parent->end_cycle - parent->begin_cycle);
+					parent->ms        = 1000.0f * dt * cycles * inv_cycles_count;
+
+					thread_record->leaf_record = parent;
+				}
 			}
 		}
-	}
 
-	r32 x_pos = PROFILER_PRESENTATION_X_OFFSET;
-	r32 y_pos = framebuffer_h - prev_used_height_space - PROFILER_PRESENTATION_Y_OFFSET;
+		r32 x_pos = PROFILER_PRESENTATION_X_OFFSET;
+		r32 y_pos = framebuffer_h - prev_used_height_space - PROFILER_PRESENTATION_Y_OFFSET;
 
-	r32 profiler_presentation_width = profiler_resizer_x - PROFILER_RESIZER_SIZE;
+		r32 profiler_presentation_width = profiler_resizer_x - PROFILER_RESIZER_SIZE;
 
-	auto cursor_p          = system_get_cursor_position();
-	auto left_button_state = system_button(Button_LEFT);
+		auto cursor_p          = system_get_cursor_position();
+		auto left_button_state = system_button(Button_LEFT);
 
-	Record *hovered_record = NULL;
-	Vec2    next_pos       = draw_profiler(vec2(x_pos, y_pos), profiler_presentation_width, PROFILER_PRESENTATION_RECORD_HEIGHT, PROFILER_PRESENTATION_FONT_HEIGHT, inv_cycles_count, cursor_p, font, &hovered_record);
+		Record *hovered_record = NULL;
+		Vec2    next_pos       = draw_profiler(vec2(x_pos, y_pos), profiler_presentation_width, PROFILER_PRESENTATION_RECORD_HEIGHT, PROFILER_PRESENTATION_FONT_HEIGHT, inv_cycles_count, cursor_p, font, &hovered_record);
 
-	Vec2 resize_dim   = vec2(PROFILER_RESIZER_SIZE);
-	Vec4 resize_color = vec4(1);
+		Vec2 resize_dim   = vec2(PROFILER_RESIZER_SIZE);
+		Vec4 resize_color = vec4(1);
 
-	if (profiler_resize_with_mouse) {
-		profiler_resizer_x = cursor_p.x - 0.5f * PROFILER_RESIZER_SIZE;
-		profiler_resizer_x = max_value(PROFILER_RESIZER_MIN_X, profiler_resizer_x);
-		resize_color       = vec4(1, 1, 0);
-		resize_dim.x       = resize_dim.x * 1.5f;
-	}
-
-	next_pos.x = profiler_resizer_x;
-	next_pos.y += PROFILER_PRESENTATION_RECORD_HEIGHT;
-
-	if (point_inside_rect(cursor_p, mm_rect(next_pos, next_pos + resize_dim))) {
-		if (left_button_state == State_DOWN) {
-			profiler_resize_with_mouse = true;
+		if (profiler_resize_with_mouse) {
+			profiler_resizer_x = cursor_p.x - 0.5f * PROFILER_RESIZER_SIZE;
+			profiler_resizer_x = max_value(PROFILER_RESIZER_MIN_X, profiler_resizer_x);
+			resize_color       = vec4(1, 1, 0);
+			resize_dim.x       = resize_dim.x * 1.5f;
 		}
-		resize_color = vec4(1, 1, 0);
-		resize_dim.x = resize_dim.x * 1.5f;
-	}
 
-	if (left_button_state == State_UP) {
-		profiler_resize_with_mouse = false;
-	}
+		next_pos.x = profiler_resizer_x;
+		next_pos.y += PROFILER_PRESENTATION_RECORD_HEIGHT;
 
-	im_unbind_texture();
-	im_rect(next_pos, resize_dim, resize_color);
+		if (point_inside_rect(cursor_p, mm_rect(next_pos, next_pos + resize_dim))) {
+			if (left_button_state == State_DOWN) {
+				profiler_resize_with_mouse = true;
+			}
+			resize_color = vec4(1, 1, 0);
+			resize_dim.x = resize_dim.x * 1.5f;
+		}
 
-	if (hovered_record) {
-		r32    cycles = (r32)(hovered_record->end_cycle - hovered_record->begin_cycle) / 1000.0f;
-		String name   = hovered_record->name;
-		String desc   = hovered_record->id;
-		String time   = tprintf("%.3fms (%.3fkclocks)", hovered_record->ms, cycles);
+		if (left_button_state == State_UP) {
+			profiler_resize_with_mouse = false;
+		}
 
-		r32 max_w, max_h;
-		max_w = im_calculate_text_region(PROFILER_PRESENTATION_FONT_HEIGHT, font.info, name).x;
-		max_w = max_value(max_w, im_calculate_text_region(PROFILER_PRESENTATION_FONT_HEIGHT, font.info, desc).x);
-		max_w = max_value(max_w, im_calculate_text_region(PROFILER_PRESENTATION_FONT_HEIGHT, font.info, time).x);
-		max_h = PROFILER_PRESENTATION_FONT_HEIGHT * 3;
+		im_unbind_texture();
+		im_rect(next_pos, resize_dim, resize_color);
 
-		const Vec2 overlay_offset = vec2(10.0f, -10.0f - max_h);
-		Vec2       pos            = cursor_p + overlay_offset;
+		if (hovered_record) {
+			r32    cycles = (r32)(hovered_record->end_cycle - hovered_record->begin_cycle) / 1000.0f;
+			String name   = hovered_record->name;
+			String desc   = hovered_record->id;
+			String time   = tprintf("%.3fms (%.3fkclocks)", hovered_record->ms, cycles);
 
-		im_rect(pos, vec2(max_w, max_h), vec4(0.02f, 0.02f, 0.02f));
+			r32 max_w, max_h;
+			max_w = im_calculate_text_region(PROFILER_PRESENTATION_FONT_HEIGHT, font.info, name).x;
+			max_w = max_value(max_w, im_calculate_text_region(PROFILER_PRESENTATION_FONT_HEIGHT, font.info, desc).x);
+			max_w = max_value(max_w, im_calculate_text_region(PROFILER_PRESENTATION_FONT_HEIGHT, font.info, time).x);
+			max_h = PROFILER_PRESENTATION_FONT_HEIGHT * 3;
 
-		im_bind_texture(font.texture);
-		im_text(pos + vec2(0, 2 * PROFILER_PRESENTATION_FONT_HEIGHT), PROFILER_PRESENTATION_FONT_HEIGHT, font.info, name, vec4(1));
-		im_text(pos + vec2(0, PROFILER_PRESENTATION_FONT_HEIGHT), PROFILER_PRESENTATION_FONT_HEIGHT, font.info, desc, vec4(1));
-		im_text(pos, PROFILER_PRESENTATION_FONT_HEIGHT, font.info, time, vec4(1));
+			const Vec2 overlay_offset = vec2(10.0f, -10.0f - max_h);
+			Vec2       pos            = cursor_p + overlay_offset;
+
+			im_rect(pos, vec2(max_w, max_h), vec4(0.02f, 0.02f, 0.02f));
+
+			im_bind_texture(font.texture);
+			im_text(pos + vec2(0, 2 * PROFILER_PRESENTATION_FONT_HEIGHT), PROFILER_PRESENTATION_FONT_HEIGHT, font.info, name, vec4(1));
+			im_text(pos + vec2(0, PROFILER_PRESENTATION_FONT_HEIGHT), PROFILER_PRESENTATION_FONT_HEIGHT, font.info, desc, vec4(1));
+			im_text(pos, PROFILER_PRESENTATION_FONT_HEIGHT, font.info, time, vec4(1));
+		}
 	}
 }

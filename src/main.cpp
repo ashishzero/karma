@@ -241,6 +241,15 @@ enum Time_State {
 	Time_State_PAUSE,
 };
 
+static Frame_Present_Flags debug_frame_present_flags[] = {
+	Frame_Present_NONE,
+	Frame_Present_HEADER,
+	Frame_Present_FRAME_TIME_GRAPH | Frame_Present_HEADER,
+	Frame_Present_PROFILER | Frame_Present_HEADER,
+	Frame_Present_ALL,
+};
+static int debug_frame_present_flag_index = 1;
+
 int system_main() { // Entry point
 	r32    framebuffer_w = 1280;
 	r32    framebuffer_h = 720;
@@ -337,6 +346,12 @@ int system_main() { // Entry point
 						break;
 					case Key_F3:
 						increase_game_speed(&factor);
+						break;
+					case Key_F4:
+						debug_frame_present_flag_index += 1;
+						if (debug_frame_present_flag_index >= static_count(debug_frame_present_flags)) {
+							debug_frame_present_flag_index = 0;
+						}
 						break;
 					case Key_F5:
 						karma_frame_recording_toggle();
@@ -671,7 +686,7 @@ int system_main() { // Entry point
 
 		{
 			karma_timed_scope(DebugCollation);
-			karma_timed_frame_presentation(font, real_dt, window_w, window_h);
+			karma_timed_frame_presentation(font, real_dt, window_w, window_h, debug_frame_present_flags[debug_frame_present_flag_index]);
 		}
 
 		gfx_end_drawing();
