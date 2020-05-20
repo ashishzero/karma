@@ -8,6 +8,8 @@ static constexpr u32 RECORD_CIRCULAR_BUFFER_FRAMES_AHEAD = 2;
 static constexpr u32 MAX_COLLATION_THREADS               = 256;
 static constexpr u32 MAX_COLLATION_RECORDS               = MAX_RECORDS_LOGS / 2;
 
+static const Vec4    HEADER_FONT_COLOR                   = vec4(1.0f, 1.0f, 0.0f, 1.0f);
+static constexpr r32 HEADER_FONT_HEIGHT                  = 24.0f;
 static constexpr r32 PROFILER_PRESENTATION_RECORD_HEIGHT = 25.0f;
 static constexpr r32 PROFILER_PRESENTATION_FONT_HEIGHT   = 20.0f;
 static constexpr r32 PROFILER_PRESENTATION_X_OFFSET      = 5.0f;
@@ -309,15 +311,15 @@ void timed_frame_presentation(Monospaced_Font &font, r32 frame_time, r32 framebu
 	r32 frame_rate_and_version_height = 0;
 
 	if (flags & Frame_Present_HEADER) {
-		frame_rate_and_version_height = 24.0f;
-		stablilized_frame_time   = stablilized_frame_time * 0.8f + 0.2f * frame_time;
-		String frame_time_string = tprintf("FrameTime: %.3fms", stablilized_frame_time * 1000.0f);
-		String version_string    = "v" KARMA_VERSION_STRING;
+		frame_rate_and_version_height = HEADER_FONT_HEIGHT;
+		stablilized_frame_time        = stablilized_frame_time * 0.8f + 0.2f * frame_time;
+		String frame_time_string      = tprintf("FrameTime: %.3fms", stablilized_frame_time * 1000.0f);
+		String version_string         = "v" KARMA_VERSION_STRING;
 
 		im_bind_texture(font.texture);
-		im_text(vec2(5.0f, framebuffer_h - frame_rate_and_version_height), frame_rate_and_version_height, font.info, frame_time_string, vec4(1, 1, 0));
+		im_text(vec2(PROFILER_PRESENTATION_X_OFFSET, framebuffer_h - frame_rate_and_version_height), frame_rate_and_version_height, font.info, frame_time_string, HEADER_FONT_COLOR);
 		auto size = im_calculate_text_region(frame_rate_and_version_height, font.info, version_string);
-		im_text(vec2(framebuffer_w - size.x - 8.0f, framebuffer_h - frame_rate_and_version_height), frame_rate_and_version_height, font.info, version_string, vec4(1, 1, 0));
+		im_text(vec2(framebuffer_w - size.x - 8.0f, framebuffer_h - frame_rate_and_version_height), frame_rate_and_version_height, font.info, version_string, HEADER_FONT_COLOR);
 	}
 
 	r32 prev_used_height_space = frame_rate_and_version_height;
