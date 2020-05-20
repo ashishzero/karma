@@ -3,6 +3,10 @@
 #include "gfx_renderer.h"
 #include "systems.h"
 
+#if defined(BUILD_DEBUG) || defined(BUILD_DEBUG_FAST) || defined(BUILD_DEVELOPER)
+#define BUILD_DEBUG_SERVICE
+#endif
+
 typedef String Timed_Block_Match;
 
 enum Timed_Record_Type {
@@ -61,6 +65,8 @@ struct Timed_Procedure {
 	}
 };
 
+#if defined(BUILD_DEBUG_SERVICE)
+
 #define karma_debug_service_initialize() debug_service_initialize()
 #define karma_debug_service_shutdown()   debug_service_shutdown()
 
@@ -85,3 +91,23 @@ struct Timed_Procedure {
 #define karma_frame_recording_turn_on  frame_recording_turn_on
 #define karma_frame_recording_turn_off frame_recording_turn_off
 #define karma_frame_recording_toggle   frame_recording_toggle
+
+#else
+
+#define karma_debug_service_initialize() 
+#define karma_debug_service_shutdown()   
+#define karma_timed_frame_get() (nullptr)
+#define karma_timed_frame_begin() 
+#define karma_timed_frame_end()   
+#define karma_timed_block_begin(name) 
+#define karma_timed_block_end(name)   
+#define karma_timed_procedure() 
+#define karma_timed_scope(name) 
+#define karma_debug_service_handle_event(...) 
+#define karma_timed_frame_presentation(...)   
+#define karma_frame_recording_is_on(...)    
+#define karma_frame_recording_turn_on(...)  
+#define karma_frame_recording_turn_off(...) 
+#define karma_frame_recording_toggle(...)   
+
+#endif

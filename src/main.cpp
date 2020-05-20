@@ -323,6 +323,7 @@ int system_main() { // Entry point
 			// Developer Commands
 			//
 
+#if defined(BUILD_DEBUG) || defined(BUILD_DEBUG_FAST) || defined(BUILD_DEVELOPER)
 			if (event.type == Event_Type_KEY_UP) {
 				switch (event.key.symbol) {
 					case Key_F1:
@@ -341,6 +342,7 @@ int system_main() { // Entry point
 						break;
 				}
 			}
+#endif
 
 			//
 			//
