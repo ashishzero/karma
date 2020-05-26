@@ -1,17 +1,17 @@
 #include "karma.h"
 
 void *operator new(ptrsize size, Allocator allocator) {
-	return mallocate(size, allocator);
+	return memory_allocate(size, allocator);
 }
 
 void *operator new(ptrsize size) {
-	return mallocate(size);
+	return memory_allocate(size);
 }
 
 void operator delete(void *ptr, Allocator allocator) {
-	mfree(ptr, allocator);
+	memory_free(ptr, allocator);
 }
 
 void operator delete(void *ptr) noexcept {
-	mfree(ptr);
+	memory_free(ptr);
 }

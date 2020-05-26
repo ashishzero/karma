@@ -794,7 +794,7 @@ struct Gfx_Platform_OpenGL : public Gfx_Platform {
 												   const Blend_Info &     blend,
 												   const Depth_Info &     depth,
 												   const String           name) final override {
-		void *             mem      = mallocate(sizeof(Internal_Pipeline) + sizeof(Input_Element_Layout) * shader.input_layouts_count);
+		void *             mem      = memory_allocate(sizeof(Internal_Pipeline) + sizeof(Input_Element_Layout) * shader.input_layouts_count);
 		Internal_Pipeline *pipeline = (Internal_Pipeline *)mem;
 		pipeline->input_layouts     = (Internal_Input_Element_Layout *)((u8 *)mem + sizeof(Internal_Pipeline));
 
@@ -868,7 +868,7 @@ struct Gfx_Platform_OpenGL : public Gfx_Platform {
 	virtual void destory_render_pipeline(Render_Pipeline handle) final override {
 		Internal_Pipeline *pipeline = (Internal_Pipeline *)handle.id.hptr;
 		glDeleteProgram(pipeline->program);
-		mfree(pipeline);
+		memory_free(pipeline);
 	}
 
 	virtual void begin_drawing(Framebuffer framebuffer, Clear_Flags flags, Color4 color, r32 depth, u8 stencil) final override {

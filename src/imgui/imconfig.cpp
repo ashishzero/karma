@@ -19,10 +19,10 @@ void ImGui::Initialize() {
 
 	ImGui::SetAllocatorFunctions(
 		[](size_t size, void *user_data) -> void * {
-			return mallocate(size);
+			return memory_allocate(size);
 		},
 		[](void *ptr, void *user_data) {
-			mfree(ptr);
+			memory_free(ptr);
 		});
 
 	ImGui::CreateContext();
@@ -40,8 +40,8 @@ void ImGui::Initialize() {
 	String ini_content = system_read_entire_file(tprintf("imgui/%s_config.ini", tto_cstring(user_name)));
 
 	defer {
-		mfree(user_name.data);
-		mfree(ini_content.data);
+		memory_free(user_name.data);
+		memory_free(ini_content.data);
 	};
 
 	if (ini_content) {
@@ -149,7 +149,7 @@ void ImGui::Initialize() {
 			char *data = (char *)ImGui::MemAlloc(string.count + 1);
 			memcpy(data, string.data, string.count);
 			data[string.count] = 0;
-			mfree(string.data);
+			memory_free(string.data);
 			return data;
 		}
 		return 0;
@@ -195,7 +195,7 @@ void ImGui::Shutdown() {
 	auto user_name = system_get_user_name();
 	system_write_entire_file(tprintf("imgui/%s_config.ini", tto_cstring(user_name)), ini_content);
 
-	mfree(user_name.data);
+	memory_free(user_name.data);
 
 	auto backend = gfx_render_backend();
 	if (backend == Render_Backend_OPENGL)

@@ -305,8 +305,6 @@ enum Cursor_Kind {
 //
 //
 
-typedef int (*Thread_Proc)(void *arg);
-
 enum Thread_Wait {
 	Thread_Wait_ABANDONED,
 	Thread_Wait_OBJECT_0,
@@ -436,10 +434,10 @@ void *system_allocator(Allocation_Type type, ptrsize size, void *ptr, void *user
 void *system_virtual_alloc(void *address, ptrsize size, Vitual_Memory_Flags flags);
 void  system_virtual_free(void *ptr, ptrsize size, Vitual_Memory_Flags flags);
 
-Handle      system_thread_create(Thread_Proc proc, void *arg, Allocator allocator = { 0, 0 }, ptrsize temporary_memory_size = TEMPORARY_MEMORY_SIZE, String name = String((char *)0, 0));
-void        system_thread_run(Handle handle);
-Thread_Wait system_thread_wait(Handle handle, u32 millisecs);
-void        system_thread_terminate(Handle handle, int exit_code);
+bool		system_thread_create(Thread_Proc proc, void *arg, Allocator allocator, ptrsize temporary_memory_size, String name, Thread_Context *thread);
+void        system_thread_run(Thread_Context &thread);
+Thread_Wait system_thread_wait(Thread_Context &thread, u32 millisecs);
+void        system_thread_terminate(Thread_Context &thread, int exit_code);
 void        system_thread_exit(int exit_code);
 
 Handle      system_create_mutex();

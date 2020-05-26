@@ -431,7 +431,7 @@ struct Gfx_Platform_Directx11 : public Gfx_Platform {
 	}
 
 	virtual Framebuffer create_framebuffer(u32 count, Texture2d *textures, Texture_View *views, Depth_Stencil_View *depth_view) final override {
-		void *                mem         = mallocate(sizeof(Internal_Framebuffer) + (sizeof(ID3D11RenderTargetView *) * count));
+		void *                mem         = memory_allocate(sizeof(Internal_Framebuffer) + (sizeof(ID3D11RenderTargetView *) * count));
 		Internal_Framebuffer *framebuffer = (Internal_Framebuffer *)mem;
 		framebuffer->views                = (ID3D11RenderTargetView **)((u8 *)mem + sizeof(Internal_Framebuffer));
 
@@ -464,7 +464,7 @@ struct Gfx_Platform_Directx11 : public Gfx_Platform {
 		for (u32 index = 0; index < framebuffer->count; ++index) {
 			framebuffer->views[index]->Release();
 		}
-		mfree(framebuffer);
+		memory_free(framebuffer);
 	}
 
 	virtual Sampler create_sampler(const Filter &filter, const Texture_Address &address, const Level_Of_Detail &lod) final override {

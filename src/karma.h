@@ -354,10 +354,6 @@ union Handle {
 		u32 l32;
 	};
 
-	Handle() {
-		hptr = 0;
-	}
-
 	inline operator bool() {
 		return hptr != 0;
 	}
@@ -433,11 +429,15 @@ struct Temporary_Memory {
 	}
 };
 
+typedef int (*Thread_Proc)();
+
 struct Thread_Context {
+	Handle			 handle;
 	u64              id;
 	Allocator        allocator;
 	Temporary_Memory temp_memory;
-	void *           data;
+	Thread_Proc		 proc;			// Thread entry point
+	void *           data;			// Thread proc argument
 };
 
 struct Push_Allocator {
@@ -445,6 +445,10 @@ struct Push_Allocator {
 };
 
 extern thread_local Thread_Context context;
+
+inline void * thread_get_argument() {
+	return context.data;
+}
 
 inline void *temporary_allocator_proc(Allocation_Type type, ptrsize size, const void *ptr, void *user_ptr) {
 	Temporary_Memory *temp = (Temporary_Memory *)&context.temp_memory;
@@ -499,7 +503,12 @@ inline void *temporary_allocator_proc(Allocation_Type type, ptrsize size, const 
 	return 0;
 }
 
+inline void *null_allocator_proc(Allocation_Type type, ptrsize size, const void *ptr, void *user_ptr) {
+	return 0;
+}
+
 constexpr Allocator TEMPORARY_ALLOCATOR = { temporary_allocator_proc, 0 };
+constexpr Allocator NULL_ALLOCATOR = { null_allocator_proc, 0 };
 
 inline Push_Allocator push_temporary_allocator() {
 	Push_Allocator result;
@@ -541,15 +550,15 @@ inline void *tallocate(ptrsize size) {
 	return temporary_allocator_proc(Allocation_Type_NEW, size, 0, 0);
 }
 
-inline void *mallocate(ptrsize size, Allocator allocator = context.allocator) {
+inline void *memory_allocate(ptrsize size, Allocator allocator = context.allocator) {
 	return allocator.proc(Allocation_Type_NEW, size, 0, allocator.data);
 }
 
-inline void *mreallocate(void *ptr, ptrsize size, Allocator allocator = context.allocator) {
+inline void *memory_reallocate(void *ptr, ptrsize size, Allocator allocator = context.allocator) {
 	return allocator.proc(Allocation_Type_RESIZE, size, ptr, allocator.data);
 }
 
-inline void mfree(const void *ptr, Allocator allocator = context.allocator) {
+inline void memory_free(const void *ptr, Allocator allocator = context.allocator) {
 	allocator.proc(Allocation_Type_FREE, 0, ptr, allocator.data);
 }
 
@@ -558,11 +567,11 @@ void *operator new(ptrsize size);
 void  operator delete(void *ptr, Allocator allocator);
 void  operator delete(void *ptr) noexcept;
 
-//
-//
-//
+#define tnew new(TEMPORARY_ALLOCATOR)
 
-// inline void* operator new(ptrsize size, void* ptr) { return ptr; }
+//
+//
+//
 
 template <typename T>
 struct Array_View {
@@ -780,3 +789,5 @@ struct String {
 		return Array_View<utf8>(data, count);
 	}
 };
+
+using Buffer = Array_View<u8>;

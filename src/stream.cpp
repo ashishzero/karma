@@ -108,7 +108,7 @@ void ostream_free(Ostream *stream) {
 
 	for (auto buk = stream->tail; buk != &stream->head;) {
 		auto prev = buk->prev;
-		mfree(buk, stream->allocator);
+		memory_free(buk, stream->allocator);
 		buk = prev;
 	}
 

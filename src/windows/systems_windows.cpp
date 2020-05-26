@@ -2,6 +2,7 @@
 #include "../length_string.h"
 #include "../systems.h"
 #include "../stb_sprintf.h"
+#include "../debug_service.h"
 #include "resource.h"
 #include <ShlObj_core.h>
 #include <Windows.h>
@@ -11,6 +12,7 @@
 #include <winreg.h>
 #include <Lmcons.h> // for UNLEN
 
+
 #pragma comment(lib, "kernel32.lib")
 #pragma comment(lib, "user32.lib")
 #pragma comment(lib, "gdi32.lib")
@@ -18,6 +20,7 @@
 #pragma comment(lib, "Advapi32.lib")
 #pragma comment(lib, "Ole32.lib")
 #pragma comment(lib, "Shlwapi.lib")
+#pragma comment(lib, "Avrt.lib")
 
 //
 // XInput Header File
@@ -211,6 +214,15 @@ struct Win32_Controller {
 // XInput Header File
 //
 
+//
+// Windows Audio Client
+//
+
+
+//
+//
+//
+
 thread_local Thread_Context context;
 
 static HWND            window_handle;
@@ -268,7 +280,7 @@ Array_View<u8> system_read_entire_file(const String path) {
 
 		LARGE_INTEGER file_size;
 		GetFileSizeEx(handle, &file_size);
-		void *buffer = mallocate(file_size.QuadPart);
+		void *buffer = memory_allocate(file_size.QuadPart);
 
 		// this is done because ReadFile can with blocks of DWORD and not LARGE_INTEGER
 		DWORD read_size = 0;
@@ -291,7 +303,7 @@ Array_View<u8> system_read_entire_file(const String path) {
 				break;
 			} else {
 				if (GetLastError()) { // if no error is registered, it is regarded as success
-					mfree(buffer);
+					memory_free(buffer);
 					break;
 				} else {
 					// *read_size* went past the file size, so it's a success
@@ -494,7 +506,7 @@ Array_View<System_Find_File_Info> system_find_files(const String search, bool re
 	defer {
 		for (s64 index = 0; index < find_directories.count; ++index) {
 			auto &it = find_directories[index];
-			if (index) mfree(it.data);
+			if (index) memory_free(it.data);
 		}
 		array_free(&find_directories);
 	};
@@ -535,7 +547,7 @@ Array_View<System_Find_File_Info> system_find_files(const String search, bool re
 
 						size_t file_len = wcslen(data.cFileName);
 						new_dir.count   = file_len + directory.count + search_param.count;
-						new_dir.data    = (u8 *)mallocate(new_dir.count);
+						new_dir.data    = (u8 *)memory_allocate(new_dir.count);
 
 						memcpy(new_dir.data, directory.data, directory.count);
 						WideCharToMultiByte(CP_UTF8, 0, data.cFileName, -1, (char *)new_dir.data + directory.count, (int)(new_dir.count - directory.count), 0, 0);
@@ -547,7 +559,7 @@ Array_View<System_Find_File_Info> system_find_files(const String search, bool re
 					file.size = ((u64)data.nFileSizeHigh * ((u64)MAXDWORD + 1)) + (u64)data.nFileSizeLow;
 
 					file.path.count = (ptrsize)WideCharToMultiByte(CP_UTF8, 0, data.cFileName, -1, 0, 0, 0, 0) + directory.count - 1;
-					file.path.data  = (u8 *)mallocate(file.path.count);
+					file.path.data  = (u8 *)memory_allocate(file.path.count);
 					memcpy(file.path.data, directory.data, directory.count);
 					WideCharToMultiByte(CP_UTF8, 0, data.cFileName, -1, (char *)file.path.data + directory.count, (int)(file.path.count - directory.count), 0, 0);
 
@@ -688,13 +700,13 @@ int system_maximize_state(int toggle) {
 System_Window_State system_get_window_state() {
 	System_Window_State state = {};
 
-	WINDOWPLACEMENT *placement = (WINDOWPLACEMENT *)mallocate(sizeof(*placement));
+	WINDOWPLACEMENT *placement = (WINDOWPLACEMENT *)memory_allocate(sizeof(*placement));
 	placement->length          = sizeof(*placement);
 	if (GetWindowPlacement(window_handle, placement)) {
 		state.handle = placement;
 		state.size   = sizeof(*placement);
 	} else {
-		mfree(placement);
+		memory_free(placement);
 	}
 
 	return state;
@@ -789,7 +801,7 @@ String system_get_clipboard_text() {
 			int      length  = 0;
 			if (wstring) {
 				length = WideCharToMultiByte(CP_UTF8, 0, wstring, -1, 0, 0, 0, 0);
-				string = (char *)mallocate(length);
+				string = (char *)memory_allocate(length);
 				length = WideCharToMultiByte(CP_UTF8, 0, wstring, -1, string, length, 0, 0);
 				GlobalUnlock(buffer);
 			}
@@ -1184,13 +1196,8 @@ static LRESULT CALLBACK win32_wnd_proc(HWND wnd, UINT msg, WPARAM wparam, LPARAM
 }
 
 String system_get_command_line() {
-	wchar_t *cmd_line = GetCommandLineW();
-	int      len      = WideCharToMultiByte(CP_UTF8, 0, cmd_line, -1, 0, 0, 0, 0);
-	String   result;
-	// No need to free this because this function only get called once usually
-	result.data  = (u8 *)HeapAlloc(GetProcessHeap(), 0, len);
-	result.count = WideCharToMultiByte(CP_UTF8, 0, cmd_line, -1, (char *)result.data, len, 0, 0);
-	return result;
+	assert(context.proc == system_main);
+	return *((String *)context.data);
 }
 
 System_Info system_get_info() {
@@ -1223,7 +1230,7 @@ String system_get_user_name() {
 
 	if (GetUserNameW(buffer, &buffer_len)) {
 		String name;
-		name.data  = (utf8 *)mallocate(buffer_len);
+		name.data  = (utf8 *)memory_allocate(buffer_len);
 		name.count = WideCharToMultiByte(CP_UTF8, 0, buffer, -1, (char *)name.data, buffer_len, 0, 0);
 		return name;
 	}
@@ -1345,6 +1352,8 @@ static inline r32 xinput_trigger_deadzone_correction(SHORT value, SHORT deadzone
 
 bool system_poll_events(Event *event) {
 	MSG msg;
+
+	karma_timed_block_begin(WindowEvents);
 	while (PeekMessageW(&msg, 0, 0, 0, PM_REMOVE)) {
 		if (msg.message == WM_QUIT) {
 			event->type = Event_Type_EXIT;
@@ -1354,7 +1363,9 @@ bool system_poll_events(Event *event) {
 			DispatchMessageW(&msg);
 		}
 	}
+	karma_timed_block_end(WindowEvents);
 
+	karma_timed_block_begin(XInputEvents);
 	XINPUT_STATE state;
 	for (int user_index = 0; user_index < XUSER_MAX_COUNT; ++user_index) {
 		auto res = XInputGetState(user_index, &state);
@@ -1403,6 +1414,7 @@ bool system_poll_events(Event *event) {
 			memset(controller, 0, sizeof(*controllers));
 		}
 	}
+	karma_timed_block_end(XInputEvents);
 
 	if (windows_event_count) {
 		*event = win32_pop_event();
@@ -1524,7 +1536,7 @@ u64 system_get_frequency() {
 
 void system_fatal_error(const String msg) {
 	auto     write_len = msg.count;
-	wchar_t *pool      = (wchar_t *)mallocate(msg.count + 1);
+	wchar_t *pool      = (wchar_t *)memory_allocate(msg.count + 1);
 	MultiByteToWideChar(CP_UTF8, 0, (const char *)msg.data, (int)write_len, pool, (int)msg.count + 1);
 	pool[write_len] = 0;
 
@@ -1535,12 +1547,12 @@ void system_fatal_error(const String msg) {
 
 void system_display_critical_message(const String msg) {
 	auto     write_len = msg.count;
-	wchar_t *pool      = (wchar_t *)mallocate(msg.count + 1);
+	wchar_t *pool      = (wchar_t *)memory_allocate(msg.count + 1);
 	MultiByteToWideChar(CP_UTF8, 0, (const char *)msg.data, (int)write_len, pool, (int)msg.count + 1);
 	pool[write_len] = 0;
 
 	MessageBoxW(window_handle, pool, L"Karma - Critical Error", MB_TOPMOST | MB_ICONWARNING | MB_OK);
-	mfree(pool);
+	memory_free(pool);
 }
 
 void *system_allocator(Allocation_Type type, ptrsize size, const void *ptr, void *user_ptr) {
@@ -1620,80 +1632,55 @@ void win32_initialize_xinput() {
 	if (!XInputGetKeystroke) XInputGetKeystroke = xinput_get_keystroke_stub;
 }
 
-struct Windows_Thread {
-	HANDLE      handle;
-	Thread_Proc proc;
-	void *      arg;
-	Allocator   allocator;
-	ptrsize     temporary_memory_size;
-};
-
 DWORD WINAPI win_thread_proc(LPVOID param) {
-	Windows_Thread *thread = (Windows_Thread *)param;
+	Thread_Context *thread = (Thread_Context *)param;
+	context = *thread;
 
-	context.id        = GetCurrentThreadId();
-	context.data      = 0;
-	context.allocator = thread->allocator;
+	int result = thread->proc();
 
-	if (thread->temporary_memory_size) {
-		void *ptr = mallocate(thread->temporary_memory_size);
+	return result;
+}
+
+bool system_thread_create(Thread_Proc proc, void *arg, Allocator allocator, ptrsize temporary_memory_size, String name, Thread_Context *thread) {
+	thread->proc      = proc;
+	thread->data      = arg;
+	thread->allocator = allocator;
+
+	if (temporary_memory_size) {
+		void *ptr = memory_allocate(temporary_memory_size, thread->allocator);
 		if (ptr == 0) {
 			win32_check_for_error();
 			system_fatal_error("Out of memory: Unable to allocate temporary storage memory!");
 		}
-		context.temp_memory = Temporary_Memory(ptr, thread->temporary_memory_size);
+		thread->temp_memory = Temporary_Memory(ptr, temporary_memory_size);
 	} else {
-		context.temp_memory = Temporary_Memory(0, 0);
+		thread->temp_memory = Temporary_Memory(0, 0);
 	}
 
-	int result = thread->proc(thread->arg);
-
-	Allocator_Proc default_allocator = system_allocator;
-	if (context.allocator.proc == default_allocator) {
-		HeapDestroy(thread->allocator.data);
-	}
-
-	return result;
-}
-
-Handle system_thread_create(Thread_Proc proc, void *arg, Allocator allocator, ptrsize temporary_memory_size, String name) {
-	if (allocator.proc == NULL) {
-		allocator.proc = system_allocator;
-		allocator.data = HeapCreate(HEAP_NO_SERIALIZE, 0, 0);
-	}
-
-	Windows_Thread *thread        = (Windows_Thread *)mallocate(sizeof(Windows_Thread), allocator);
-	thread->proc                  = proc;
-	thread->arg                   = arg;
-	thread->allocator             = allocator;
-	thread->temporary_memory_size = temporary_memory_size;
-
-	Handle result;
-	thread->handle = CreateThread(0, 0, win_thread_proc, thread, CREATE_SUSPENDED, 0);
-	if (thread->handle != NULL) {
-		result.hptr = thread;
+	thread->handle.hptr = CreateThread(0, 0, win_thread_proc, &thread, CREATE_SUSPENDED, 0);
+	if (thread->handle.hptr != NULL) {
 		if (name) {
 			wchar_t *desc = (wchar_t *)tallocate(name.count + 1);
 			MultiByteToWideChar(CP_UTF8, 0, (char *)name.data, (int)name.count, desc, (int)name.count + 1);
 			desc[name.count] = 0;
-			SetThreadDescription(thread->handle, desc);
+			SetThreadDescription(thread->handle.hptr, desc);
 		}
 	} else {
 		win32_check_for_error();
-		mfree(thread);
-		result.hptr = 0;
+		return false;
 	}
-	return result;
+
+	thread->id = GetThreadId(thread->handle.hptr);
+
+	return true;
 }
 
-void system_thread_run(Handle handle) {
-	auto thread = (Windows_Thread *)handle.hptr;
-	ResumeThread(thread->handle);
+void system_thread_run(Thread_Context &thread) {
+	ResumeThread(thread.handle.hptr);
 }
 
-Thread_Wait system_thread_wait(Handle handle, u32 millisecs) {
-	auto thread = (Windows_Thread *)handle.hptr;
-	auto result = WaitForSingleObject(thread->handle, millisecs);
+Thread_Wait system_thread_wait(Thread_Context &thread, u32 millisecs) {
+	auto result = WaitForSingleObject(thread.handle.hptr, millisecs);
 	switch (result) {
 		case WAIT_ABANDONED: return Thread_Wait_ABANDONED;
 		case WAIT_OBJECT_0: return Thread_Wait_OBJECT_0;
@@ -1703,10 +1690,8 @@ Thread_Wait system_thread_wait(Handle handle, u32 millisecs) {
 	return Thread_Wait_FAILED;
 }
 
-void system_thread_terminate(Handle handle, int exit_code) {
-	auto thread = (Windows_Thread *)handle.hptr;
-	TerminateThread(thread->handle, exit_code);
-	HeapDestroy(thread->allocator.data);
+void system_thread_terminate(Thread_Context &thread, int exit_code) {
+	TerminateThread(thread.handle.hptr, exit_code);
 }
 
 void system_thread_exit(int exit_code) {
@@ -1739,19 +1724,20 @@ void system_unlock_mutex(Handle handle) {
 	ReleaseMutex(handle.hptr);
 }
 
-#ifndef SYSTEMS_RUN_WITH_CRT
-
 int __stdcall wWinMain(HINSTANCE instance, HINSTANCE prev_instance, LPWSTR cmd_line, int show_cmd) {
 #	if defined(BUILD_DEBUG) || defined(BUILD_DEBUG_FAST)
 	AllocConsole();
 	SetConsoleOutputCP(CP_UTF8);
 #	endif
 
+	DWORD task_index = 0;
+	//HANDLE task_handle = AvSetMmThreadCharacteristicsW(L"Games", &task_index);
+
 	win32_map_keys();
 
 	SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 
-	HRESULT res = CoInitializeEx(0, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+	HRESULT res = CoInitializeEx(0, COINIT_MULTITHREADED | COINIT_DISABLE_OLE1DDE);
 	if (FAILED(res)) {
 		win32_check_for_error();
 		system_fatal_error("Failed to Initialize COM Objects");
@@ -1759,12 +1745,19 @@ int __stdcall wWinMain(HINSTANCE instance, HINSTANCE prev_instance, LPWSTR cmd_l
 
 	SetThreadDescription(GetCurrentThread(), L"Main");
 
+	context.handle.hptr    = GetCurrentThread();
 	context.id             = GetCurrentThreadId();
 	context.allocator.proc = system_allocator;
 	context.allocator.data = HeapCreate(HEAP_NO_SERIALIZE, 0, 0);
-	context.data           = 0;
+	context.proc		   = system_main;
 
-	void *ptr = mallocate(static_cast<SIZE_T>(TEMPORARY_MEMORY_SIZE));
+	int      len = WideCharToMultiByte(CP_UTF8, 0, cmd_line, -1, 0, 0, 0, 0);
+	String   cmd_line_string;
+	cmd_line_string.data	  = new u8[len];
+	cmd_line_string.count	  = WideCharToMultiByte(CP_UTF8, 0, cmd_line, -1, (char *)cmd_line_string.data, len, 0, 0);
+	context.data			  = &cmd_line_string;
+
+	void *ptr = memory_allocate(static_cast<SIZE_T>(TEMPORARY_MEMORY_SIZE));
 	if (ptr == 0) {
 		win32_check_for_error();
 		system_fatal_error("Out of memory: Unable to allocate temporary storage memory!");
@@ -1773,45 +1766,16 @@ int __stdcall wWinMain(HINSTANCE instance, HINSTANCE prev_instance, LPWSTR cmd_l
 
 	win32_initialize_xinput();
 
+	
 	int result = system_main();
 
+	
 	HeapDestroy(context.allocator.data);
 
 	CoUninitialize();
 
 	return result;
 }
-
-#else
-
-int main(int argc, char *argv[]) {
-	win32_map_keys();
-
-	SetThreadDescription(GetCurrentThread(), L"Main");
-
-	context.id             = GetCurrentThreadId();
-	context.allocator.proc = system_allocator;
-	context.allocator.data = HeapCreate(HEAP_NO_SERIALIZE, 0, 0);
-	context.data           = 0;
-
-	void *ptr = VirtualAlloc(0, static_cast<SIZE_T>(TEMPORARY_MEMORY_SIZE), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-	if (ptr == 0) {
-		win32_check_for_error();
-		system_fatal_error("Out of memory: Unable to allocate temporary storage memory!");
-	}
-	context.temp_memory = Temporary_Memory(ptr, static_cast<ptrsize>(TEMPORARY_MEMORY_SIZE));
-
-	win32_initialize_xinput();
-
-	int result = system_main();
-
-	VirtualFree(context.temp_memory.ptr, 0, MEM_RELEASE);
-	context = {};
-
-	return result;
-}
-
-#endif
 
 void system_log(int type, const char *title, ANALYSE_PRINTF_FORMAT_STRING(const char *fmt), ...) {
 	char    pool[STB_SPRINTF_MIN];

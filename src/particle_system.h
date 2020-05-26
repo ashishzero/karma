@@ -217,7 +217,7 @@ Particle_Emitter particle_emitter_create(Texture2d_Handle *texture, Mm_Rect tex_
 	emitter.properties      = particle_emitter_default_property();
 	emitter.particles_count = max_partices;
 	emitter.emit_count      = emit_count;
-	emitter.particles       = (Particle *)mallocate(max_partices * sizeof(Particle));
+	emitter.particles       = (Particle *)memory_allocate(max_partices * sizeof(Particle));
 	emitter.time_elapsed    = 0;
 
 	// TODO: Cleanup

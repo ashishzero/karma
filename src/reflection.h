@@ -83,25 +83,10 @@ enum Type_Id {
 	Type_Id_STATIC_ARRAY,
 };
 
-inline uint32_t jenkins_one_at_a_time_hash(const uint8_t *key, size_t length) {
-	size_t   i    = 0;
-	uint32_t hash = 0;
-	while (i != length) {
-		hash += key[i++];
-		hash += hash << 10;
-		hash ^= hash >> 6;
-	}
-	hash += hash << 3;
-	hash ^= hash >> 11;
-	hash += hash << 15;
-	return hash;
-}
-
 struct Type_Info {
 	Type_Id id   = Type_Id_UNKNOWN;
 	ptrsize size = 0;
 	String  name;
-	u32     hash = 0;
 
 	inline Type_Info() {
 	}
@@ -109,12 +94,11 @@ struct Type_Info {
 		id   = tid;
 		size = sz;
 		name = n;
-		hash = jenkins_one_at_a_time_hash((u8 *)this, sz);
 	}
 };
 
-inline bool type_info_match(const Type_Info *a, const Type_Info *b) {
-	return a->hash == b->hash;
+inline bool type_are_same(const Type_Info *a, const Type_Info *b) {
+	return a == b;
 }
 
 struct Struct_Member {

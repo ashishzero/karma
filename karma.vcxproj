@@ -270,6 +270,7 @@ popd
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\audio.cpp" />
     <ClCompile Include="src\debug_service.cpp" />
     <ClCompile Include="src\directx\gfx_d3d11.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
@@ -344,6 +345,7 @@ popd
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\audio.h" />
     <ClInclude Include="src\debug_service.h" />
     <ClInclude Include="src\directx\dx_error.h" />
     <ClInclude Include="src\gfx_shaders.h" />

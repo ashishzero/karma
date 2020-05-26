@@ -161,7 +161,7 @@ bool gfx_create_context(Handle platform, Render_Backend backend, Vsync vsync, u3
 
 		hdr_pipeline = gfx->create_render_pipeline(shader, rasterizer, blend, depth, "postprocess");
 
-		mfree(hdr_shader.data);
+		memory_free(hdr_shader.data);
 	}
 
 	{
@@ -188,8 +188,8 @@ bool gfx_create_context(Handle platform, Render_Backend backend, Vsync vsync, u3
 		blur_pipelines[0] = gfx->create_render_pipeline(shader[0], rasterizer, blend, depth, "h_blur");
 		blur_pipelines[1] = gfx->create_render_pipeline(shader[1], rasterizer, blend, depth, "v_blur");
 
-		mfree(h_blur_shader.data);
-		mfree(v_blur_shader.data);
+		memory_free(h_blur_shader.data);
+		memory_free(v_blur_shader.data);
 	}
 
 	postprocess_sampler = gfx->create_sampler(filter_create(), texture_address_create(), level_of_detail_create());
@@ -217,7 +217,7 @@ bool gfx_create_context(Handle platform, Render_Backend backend, Vsync vsync, u3
 		Depth_Info depth = depth_info_create(true, Depth_Write_Mask_ALL, Comparison_Function_LESS);
 
 		im_context.pipeline = gfx->create_render_pipeline(shader, rasterizer, blend, depth, "Im_Pipeline");
-		mfree(quad_shader_content.data);
+		memory_free(quad_shader_content.data);
 
 		String      debug_shader_content = system_read_entire_file("data/shaders/debug.kfx");
 		Shader_Info debug_shader;
@@ -228,7 +228,7 @@ bool gfx_create_context(Handle platform, Render_Backend backend, Vsync vsync, u3
 		debug_shader.stride              = sizeof(Im_Vertex);
 		depth                            = depth_info_create(false, Depth_Write_Mask_ZERO, Comparison_Function_NEVER);
 		debug_pipeline                   = gfx->create_render_pipeline(debug_shader, rasterizer, blend, depth, "Debug_Pipeline");
-		mfree(debug_shader_content.data);
+		memory_free(debug_shader_content.data);
 	}
 
 	im_context.uniform_buffer = gfx->create_uniform_buffer(Buffer_Usage_DYNAMIC, Cpu_Access_WRITE, sizeof(Mat4), 0);
