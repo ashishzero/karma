@@ -11,7 +11,7 @@
 #include <windowsx.h>
 #include <winreg.h>
 #include <Lmcons.h> // for UNLEN
-
+#include <avrt.h>
 
 #pragma comment(lib, "kernel32.lib")
 #pragma comment(lib, "user32.lib")
@@ -1729,7 +1729,7 @@ int __stdcall wWinMain(HINSTANCE instance, HINSTANCE prev_instance, LPWSTR cmd_l
 #	endif
 
 	DWORD task_index = 0;
-	//HANDLE task_handle = AvSetMmThreadCharacteristicsW(L"Games", &task_index);
+	HANDLE task_handle = AvSetMmThreadCharacteristicsW(L"Games", &task_index);
 
 	win32_map_keys();
 
@@ -1764,9 +1764,7 @@ int __stdcall wWinMain(HINSTANCE instance, HINSTANCE prev_instance, LPWSTR cmd_l
 
 	win32_initialize_xinput();
 
-	
 	int result = system_main();
-
 	
 	HeapDestroy(context.allocator.data);
 
