@@ -1142,7 +1142,6 @@ static LRESULT CALLBACK win32_wnd_proc(HWND wnd, UINT msg, WPARAM wparam, LPARAM
 				event.key.state  = State_DOWN;
 				event.key.repeat = ((lparam & bit(30)) == bit(30));
 			}
-			result = DefWindowProcW(wnd, msg, wparam, lparam);
 		} break;
 
 		case WM_SYSKEYUP: {
@@ -1152,7 +1151,6 @@ static LRESULT CALLBACK win32_wnd_proc(HWND wnd, UINT msg, WPARAM wparam, LPARAM
 				event.key.state  = State_UP;
 				event.key.repeat = ((lparam & bit(30)) == bit(30));
 			}
-			result = DefWindowProcW(wnd, msg, wparam, lparam);
 		} break;
 
 		case WM_KEYDOWN: {

@@ -42,7 +42,7 @@ const IID IID_IAudioClock				= __uuidof(IAudioClock);
 constexpr u32 REFTIMES_PER_SEC			= 10000000;
 constexpr u32 REFTIMES_PER_MILLISEC		= 10000;
 
-constexpr u32 SYSTEM_AUDIO_BUFFER_SIZE_IN_SECS				= 1;
+constexpr u32 SYSTEM_AUDIO_BUFFER_SIZE_IN_MILLISECS			= 100;
 constexpr u32 SYSTEM_AUDIO_BUFFER_UPDATE_MAX_WAIT_MILLISECS = 1000; // wait for max one sec
 
 struct Audio_Master_Buffer {
@@ -197,7 +197,7 @@ public:
 				return false;
 			}
 
-			REFERENCE_TIME requested_duration = 0; //REFTIMES_PER_SEC * 1;
+			REFERENCE_TIME requested_duration = 0;
 			hr = client->Initialize(AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_EVENTCALLBACK, requested_duration, 0, format, nullptr);
 			if (hr == AUDCLNT_E_BUFFER_SIZE_NOT_ALIGNED) {
 				hr = client->GetBufferSize(&total_samples);
@@ -259,7 +259,7 @@ public:
 			}
 
 			ptrsize device_buffer_size	= sizeof(r32) * total_samples * format->nChannels;
-			ptrsize buffer_size			= sizeof(r32) * format->nSamplesPerSec * SYSTEM_AUDIO_BUFFER_SIZE_IN_SECS * format->nChannels;
+			ptrsize buffer_size			= (sizeof(r32) * format->nSamplesPerSec * SYSTEM_AUDIO_BUFFER_SIZE_IN_MILLISECS * format->nChannels) / 1000;
 
 			// TODO: Error or Log??
 			// If Audio device buffer can't be made smaller, and can't be overidden, then there'll be large audio lag
@@ -269,7 +269,7 @@ public:
 			buffer							= (r32 *)memory_allocate(buffer_size);
 			buffer_ptr						= buffer;
 			buffer_one_past_end				= (r32 *)((u8 *)buffer + buffer_size);
-			buffer_size_in_sample_count		= format->nSamplesPerSec * SYSTEM_AUDIO_BUFFER_SIZE_IN_SECS;
+			buffer_size_in_sample_count		= (format->nSamplesPerSec * SYSTEM_AUDIO_BUFFER_SIZE_IN_MILLISECS) / 1000;
 			previous_master_sample_index	= 0;
 			master_sample_index				= 0;
 			memset(buffer, 0, buffer_size);
@@ -405,7 +405,21 @@ public:
 		InterlockedExchange(&playing, false);
 	}
 
+	u64 GetNextSampleIndex() {
+		return master_sample_index;
+	}
+
+	u32 GetSampleCount() {
+		return buffer_size_in_sample_count;
+	}
+
 	bool LockBuffer(Audio_Master_Buffer *out) {
+		clock->GetPosition(&out->playing_sample_index, nullptr);
+		out->playing_sample_index /= clock_frequency;
+
+		out->buffer_size_in_sample_count	= buffer_size_in_sample_count;
+		out->buffer							= buffer;
+
 		auto wait_result = WaitForSingleObject(write_mutex, SYSTEM_AUDIO_BUFFER_UPDATE_MAX_WAIT_MILLISECS);
 		if (wait_result == WAIT_ABANDONED) {
 			return false;
@@ -418,13 +432,7 @@ public:
 			win32_check_for_error();
 			return false;
 		}
-
-		clock->GetPosition(&out->playing_sample_index, nullptr);
-		out->playing_sample_index /= clock_frequency;
-
 		out->next_sample_index				= master_sample_index;
-		out->buffer							= buffer;
-		out->buffer_size_in_sample_count	= buffer_size_in_sample_count;
 
 		return true;
 	}
@@ -568,7 +576,6 @@ void InitializeRigidBodies() {
 		BoxShape shape;
 		shape.mass = float(random_number_generator(5000));
 
-		system_trace("%.2f\t", shape.mass);
 		shape.width  = 20 * float(random_number_generator(2));
 		shape.height = 20 * float(random_number_generator(4));
 		CalculateBoxInertia(&shape);
@@ -719,22 +726,71 @@ const int FREQUENCY				= 128;
 const int SAMPLES_PER_SEC		= 48000;
 const int SAMPLES_COUNT			= SAMPLES_PER_SEC * FREQUENCY;
 
-static r32 sine_wave[SAMPLES_COUNT * sizeof(r32)];
-static r32 output_volume	= 0.1f;
+static s16 sine_wave[2 * SAMPLES_COUNT * sizeof(r32)];
+static r32 output_volume	= 0.5f;
 
 bool mix_second_sound				= false;
 u64 second_sound_sample_counter		= 0;
 
-void init_sine_wave() {
+
+#pragma pack(push, 1)
+
+struct Riff_Header {
+	u8	id[4];
+	u32 size;
+	u8	format[4];
+};
+
+struct Wave_Fmt {
+	u8	id[4];
+	u32 size;
+	u16 audio_format;
+	u16 channels_count;
+	u32 sample_rate;
+	u32 byte_rate;
+	u16 block_align;
+	u16 bits_per_sample;
+};
+
+struct Wave_Data {
+	u8 id[4];
+	u32 size;
+};
+
+#pragma pack(pop)
+
+struct Audio {
+	Riff_Header *header; // TODO: do we need this?
+	Wave_Fmt	*fmt;	 //	TODO: do we need this?
+	Wave_Data	*data;	 // TODO: do we need this?
+	s16			*samples;
+	u32			sample_count;
+};
+
+Audio make_sine_audio() {
 	float t = 0;
+	int sample_index = 0;
 	for (int i = 0; i < SAMPLES_COUNT; ++i) {
-		sine_wave[i] = sinf(2 * MATH_PI * FREQUENCY * t);
+		s16 sample_value = (s16)roundf(sinf(2 * MATH_PI * FREQUENCY * t) * MAX_INT16);
+		sine_wave[sample_index + 0] = sample_value;
+		sine_wave[sample_index + 1] = sample_value;
 		t += 1.0f / (r32)SAMPLES_PER_SEC;
+		sample_index += 2;
 	}
+
+	Audio audio = {};
+	audio.samples = sine_wave;
+	audio.sample_count = SAMPLES_COUNT;
+	return audio;
 }
 
-r32 get_next_sample(u32 sample_index) {
-	r32 sample_value = sine_wave[sample_index] * output_volume;
+r32 get_next_sample(Audio &audio, u64 sample_index) {
+	if (sample_index > audio.sample_count) {
+		sample_index = sample_index % audio.sample_count;
+	}
+
+	constexpr r32 imax = 1.0f / (r32)MAX_INT16;
+	r32 sample_value = audio.samples[sample_index] * output_volume * imax;
 
 	return sample_value;
 }
@@ -743,22 +799,39 @@ void fill_silence(u32 samples_count_to_write, r32 *write_ptr) {
 	memset(write_ptr, 0, sizeof(r32) * 2 * samples_count_to_write);
 }
 
-void fill_audio(u32 write_sample_index, u32 samples_count_to_write, r32 *write_ptr) {
+void fill_audio(Audio &audio, u64 write_sample_index, u32 samples_count_to_write, r32 *write_ptr) {
 	for (u32 sample_index = 0; sample_index < samples_count_to_write; ++sample_index) {
-		r32 sample_value = get_next_sample(write_sample_index + sample_index);
+		r32 sample_value = get_next_sample(audio, write_sample_index + sample_index);
 		write_ptr[0] = sample_value;
 		write_ptr[1] = sample_value;
 		write_ptr += 2;
 	}
 }
 
-void mix_audio(u32 sample_index, u32 samples_count_to_write, r32 *write_ptr) {
+void mix_audio(Audio &audio, u32 sample_index, u32 samples_count_to_write, r32 *write_ptr) {
 	for (u32 sample_counter = 0; sample_counter < samples_count_to_write; ++sample_counter) {
-		r32 sample_value = get_next_sample(sample_counter + sample_index);
+		r32 sample_value = get_next_sample(audio, sample_counter + sample_index);
 		write_ptr[0] += sample_value;
 		write_ptr[1] += sample_value;
 		write_ptr += 2;
 	}
+}
+
+Audio load_wave(String content) {
+	Istream stream			= istream(content);
+	Riff_Header *wav_header = istream_consume(&stream, Riff_Header);
+	Wave_Fmt	*wav_fmt	= istream_consume(&stream, Wave_Fmt);
+	Wave_Data	*wav_data	= istream_consume(&stream, Wave_Data);
+	s16			*data		= (s16 *)istream_consume_size(&stream, wav_data->size);
+
+	Audio audio;
+	audio.header		= wav_header;
+	audio.fmt			= wav_fmt;
+	audio.data			= wav_data;
+	audio.samples		= data;
+	audio.sample_count	= wav_data->size / sizeof(s16) / wav_fmt->channels_count;
+
+	return audio;
 }
 
 int system_main() { // Entry point
@@ -767,7 +840,9 @@ int system_main() { // Entry point
 	Handle platform      = system_create_window(u8"Karma", 1280, 720, System_Window_Show_NORMAL);
 	gfx_create_context(platform, Render_Backend_DIRECTX11, Vsync_ADAPTIVE, 2, (u32)framebuffer_w, (u32)framebuffer_h);
 
-	init_sine_wave();
+	auto sine_audio = make_sine_audio();
+
+	auto audio = load_wave(system_read_entire_file("../res/misc/POL-course-of-nature-short.wav"));
 
 	Audio_Client audio_client;
 	if (!audio_client.StartThread()) {
@@ -1068,12 +1143,42 @@ int system_main() { // Entry point
 		karma_timed_block_end(Simulation);
 
 
-		// Do Audio Here
+		karma_timed_block_begin(AudioUpdate);
+
+		auto next_sample_index = audio_client.GetNextSampleIndex();
+		r32 *audio_buffer = (r32 *)tallocate(sizeof(r32) * audio_client.channel_count * audio_client.format->nSamplesPerSec * 1);
+
+		auto buffer_size_in_sample_count = audio_client.format->nSamplesPerSec * 1;
+		fill_silence(buffer_size_in_sample_count, audio_buffer);
+		fill_audio(audio, next_sample_index, buffer_size_in_sample_count, audio_buffer);
+
+		if (mix_second_sound) {
+			if (second_sound_sample_counter == 0)
+				second_sound_sample_counter = next_sample_index;
+
+			u32 write_sample_index = (u32)(next_sample_index - second_sound_sample_counter);
+			if (write_sample_index < SAMPLES_PER_SEC) {
+				auto samples_to_mix = min_value(SAMPLES_PER_SEC - write_sample_index, buffer_size_in_sample_count);
+				mix_audio(sine_audio, write_sample_index, samples_to_mix, audio_buffer);
+			} else {
+				mix_second_sound = false;
+				second_sound_sample_counter = 0;
+			}
+		}
+		
+		Audio_Master_Buffer buffer;
+		if (audio_client.LockBuffer(&buffer)) {
+			u32 write_sample_index = (u32)(buffer.next_sample_index - next_sample_index);
+			memcpy(buffer.buffer, audio_buffer + audio_client.channel_count * write_sample_index, audio_client.channel_count * buffer.buffer_size_in_sample_count * sizeof(r32));
+			audio_client.UnlockBuffer(buffer.buffer_size_in_sample_count);
+		}
+
+#if 0
 		Audio_Master_Buffer buffer;
 		if (audio_client.LockBuffer(&buffer)) {
 			u32 write_sample_index = (u32)(buffer.next_sample_index % SAMPLES_COUNT);
-			//fill_audio(write_sample_index, buffer.buffer_size_in_sample_count, buffer.buffer);
 			fill_silence(buffer.buffer_size_in_sample_count, buffer.buffer);
+			fill_audio(write_sample_index, buffer.buffer_size_in_sample_count, buffer.buffer);
 
 			if (mix_second_sound) {
 				if (second_sound_sample_counter == 0)
@@ -1091,6 +1196,9 @@ int system_main() { // Entry point
 
 			audio_client.UnlockBuffer(buffer.buffer_size_in_sample_count);
 		}
+#endif
+
+		karma_timed_block_end(AudioUpdate);
 
 		karma_timed_block_begin(Rendering);
 		camera.position.x = player.position.x;

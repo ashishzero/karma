@@ -16,10 +16,12 @@ Istream istream(Array_View<u8> buffer) {
 }
 
 void *istream_consume_size(Istream *b, size_t size) {
-	assert(b->current + size <= b->end);
-	void *ptr = b->current;
-	b->current += size;
-	return ptr;
+	if (b->current + size <= b->end) {
+		void *ptr = b->current;
+		b->current += size;
+		return ptr;
+	}
+	return 0;
 }
 
 String istream_consume_line(Istream *b) {
