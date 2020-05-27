@@ -231,11 +231,9 @@ static WINDOWPLACEMENT windowed_placement;
 static constexpr int WINDOWS_MAX_KEYS = 256;
 static Key           windows_key_map[WINDOWS_MAX_KEYS]; // This number should be enough
 
-static constexpr int WINDOWS_MAX_EVENTS = 65535; // this number should be enough
-static Event         windows_event_queue[WINDOWS_MAX_EVENTS];
-static u32           windows_event_queue_push_index;
-static u32           windows_event_pop_index;
-static u32           windows_event_count;
+static constexpr int WINDOWS_MAX_EVENTS = 128000; // This number should be enough
+static Event         windows_event_buffer[WINDOWS_MAX_EVENTS];
+static u32			 windows_event_count;
 
 static int window_width;
 static int window_height;
@@ -959,25 +957,15 @@ Key win32_get_mapped_key(WPARAM wparam) {
 }
 
 void win32_mouse_button_event(Mouse_Button_Event *event, WPARAM wparam, LPARAM lparam) {
-	Vec2s wr        = system_get_client_size();
 	int   x         = GET_X_LPARAM(lparam);
 	int   y         = GET_Y_LPARAM(lparam);
-	event->position = vec2s(x, wr.y - y); // inverting y
+	event->position = vec2s(x, window_height - y); // inverting y
 }
 
-void win32_push_event(Event event) {
-	windows_event_queue[windows_event_queue_push_index] = event;
-	windows_event_queue_push_index                      = (windows_event_queue_push_index + 1) % WINDOWS_MAX_EVENTS;
-	//InterlockedExchangeAdd(&windows_event_count, 1);
-	windows_event_count += 1;
-}
-
-Event win32_pop_event() {
-	//InterlockedExchangeSubtract(&windows_event_count, 1);
-	windows_event_count -= 1;
-	Event event             = windows_event_queue[windows_event_pop_index];
-	windows_event_pop_index = (windows_event_pop_index + 1) % WINDOWS_MAX_EVENTS;
-	return event;
+void win32_add_event(Event event) {
+	windows_event_buffer[windows_event_count] = event;
+	// HACK: We just loop back to 0, if the event becomes larger than WINDOWS_MAX_EVENTS
+	windows_event_count = (windows_event_count + 1) % WINDOWS_MAX_EVENTS;
 }
 
 static LRESULT CALLBACK win32_wnd_proc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam) {
@@ -1219,7 +1207,7 @@ static LRESULT CALLBACK win32_wnd_proc(HWND wnd, UINT msg, WPARAM wparam, LPARAM
 	}
 
 	if (event.type != Event_Type_NONE) {
-		win32_push_event(event);
+		win32_add_event(event);
 	}
 
 	return result;
@@ -1380,78 +1368,90 @@ static inline r32 xinput_trigger_deadzone_correction(SHORT value, SHORT deadzone
 	return norm;
 }
 
-bool system_poll_events(Event *event) {
+const Array_View<Event> system_poll_events(int poll_count) {
 	MSG msg;
+	Event event;
 
-	karma_timed_block_begin(WindowEvents);
-	while (PeekMessageW(&msg, 0, 0, 0, PM_REMOVE)) {
-		if (msg.message == WM_QUIT) {
-			event->type = Event_Type_EXIT;
-			return true;
-		} else {
-			TranslateMessage(&msg);
-			DispatchMessageW(&msg);
+	// NOTE: windows_event_count is not cleared here but cleared during return 
+	// because events are polled when WindowUpdate function is called, after window
+	// has been created, while system_poll_events function is called later. So if
+	// we clear windows_event_count at the start of the function all the added events
+	// during windows creation and UpdateWindow call will be cleared without processing
+	// That's why we clear windows_event_count during this funtion return
+
+	for (int poll_index = 0; poll_index < poll_count; ++poll_index) {
+		karma_timed_block_begin(WindowEvents);
+		while (PeekMessageW(&msg, 0, 0, 0, PM_REMOVE)) {
+			if (msg.message == WM_QUIT) {
+				event.type = Event_Type_EXIT;
+				win32_add_event(event);
+				s64 event_count = (s64)windows_event_count;
+				windows_event_count = 0;
+				return Array_View<Event>(windows_event_buffer, event_count);
+			}
+			else {
+				TranslateMessage(&msg);
+				DispatchMessageW(&msg);
+			}
 		}
-	}
-	karma_timed_block_end(WindowEvents);
+		karma_timed_block_end(WindowEvents);
 
-	karma_timed_block_begin(XInputEvents);
-	XINPUT_STATE state;
-	for (int user_index = 0; user_index < XUSER_MAX_COUNT; ++user_index) {
-		auto res = XInputGetState(user_index, &state);
+		karma_timed_block_begin(XInputEvents);
+		XINPUT_STATE state;
+		for (int user_index = 0; user_index < XUSER_MAX_COUNT; ++user_index) {
+			auto res = XInputGetState(user_index, &state);
 
-		if (res == ERROR_SUCCESS) {
-			if (windows_controllers_state[user_index].packet_number != state.dwPacketNumber) {
-				if (!windows_controllers_state[user_index].connected) {
-					Event cevent;
-					cevent.type             = Event_Type_CONTROLLER_JOIN;
-					cevent.controller.index = user_index;
-					win32_push_event(cevent);
-					windows_controllers_state[user_index].connected = true;
+			if (res == ERROR_SUCCESS) {
+				if (windows_controllers_state[user_index].packet_number != state.dwPacketNumber) {
+					if (!windows_controllers_state[user_index].connected) {
+						Event cevent;
+						cevent.type = Event_Type_CONTROLLER_JOIN;
+						cevent.controller.index = user_index;
+						win32_add_event(cevent);
+						windows_controllers_state[user_index].connected = true;
+					}
+
+					Controller *controller = controllers + user_index;
+					memset(controller->buttons, State_UP, sizeof(controllers->buttons));
+
+					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_UP) controller->buttons[Gamepad_DPAD_UP] = State_DOWN;
+					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_DOWN) controller->buttons[Gamepad_DPAD_DOWN] = State_DOWN;
+					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_LEFT) controller->buttons[Gamepad_DPAD_LEFT] = State_DOWN;
+					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_RIGHT) controller->buttons[Gamepad_DPAD_RIGHT] = State_DOWN;
+					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_START) controller->buttons[Gamepad_START] = State_DOWN;
+					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_BACK) controller->buttons[Gamepad_BACK] = State_DOWN;
+					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_LEFT_THUMB) controller->buttons[Gamepad_LTHUMB] = State_DOWN;
+					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_RIGHT_THUMB) controller->buttons[Gamepad_RTHUMB] = State_DOWN;
+					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_LEFT_SHOULDER) controller->buttons[Gamepad_LSHOULDER] = State_DOWN;
+					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_RIGHT_SHOULDER) controller->buttons[Gamepad_RSHOULDER] = State_DOWN;
+					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_A) controller->buttons[Gamepad_A] = State_DOWN;
+					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_B) controller->buttons[Gamepad_B] = State_DOWN;
+					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_X) controller->buttons[Gamepad_X] = State_DOWN;
+					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_Y) controller->buttons[Gamepad_Y] = State_DOWN;
+
+					controller->left_trigger = xinput_trigger_deadzone_correction(state.Gamepad.bLeftTrigger, XINPUT_GAMEPAD_TRIGGER_THRESHOLD);
+					controller->right_trigger = xinput_trigger_deadzone_correction(state.Gamepad.bRightTrigger, XINPUT_GAMEPAD_TRIGGER_THRESHOLD);
+					controller->left_thumb = xinput_axis_deadzone_correction(state.Gamepad.sThumbLX, state.Gamepad.sThumbLY, XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
+					controller->right_thumb = xinput_axis_deadzone_correction(state.Gamepad.sThumbRX, state.Gamepad.sThumbRY, XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE);
 				}
+			}
+			else if (windows_controllers_state[user_index].connected) {
+				Event cevent;
+				cevent.type = Event_Type_CONTROLLER_LEAVE;
+				cevent.controller.index = user_index;
+				win32_add_event(cevent);
+				windows_controllers_state[user_index].connected = false;
 
 				Controller *controller = controllers + user_index;
-				memset(controller->buttons, State_UP, sizeof(controllers->buttons));
-
-				if (state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_UP) controller->buttons[Gamepad_DPAD_UP] = State_DOWN;
-				if (state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_DOWN) controller->buttons[Gamepad_DPAD_DOWN] = State_DOWN;
-				if (state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_LEFT) controller->buttons[Gamepad_DPAD_LEFT] = State_DOWN;
-				if (state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_RIGHT) controller->buttons[Gamepad_DPAD_RIGHT] = State_DOWN;
-				if (state.Gamepad.wButtons & XINPUT_GAMEPAD_START) controller->buttons[Gamepad_START] = State_DOWN;
-				if (state.Gamepad.wButtons & XINPUT_GAMEPAD_BACK) controller->buttons[Gamepad_BACK] = State_DOWN;
-				if (state.Gamepad.wButtons & XINPUT_GAMEPAD_LEFT_THUMB) controller->buttons[Gamepad_LTHUMB] = State_DOWN;
-				if (state.Gamepad.wButtons & XINPUT_GAMEPAD_RIGHT_THUMB) controller->buttons[Gamepad_RTHUMB] = State_DOWN;
-				if (state.Gamepad.wButtons & XINPUT_GAMEPAD_LEFT_SHOULDER) controller->buttons[Gamepad_LSHOULDER] = State_DOWN;
-				if (state.Gamepad.wButtons & XINPUT_GAMEPAD_RIGHT_SHOULDER) controller->buttons[Gamepad_RSHOULDER] = State_DOWN;
-				if (state.Gamepad.wButtons & XINPUT_GAMEPAD_A) controller->buttons[Gamepad_A] = State_DOWN;
-				if (state.Gamepad.wButtons & XINPUT_GAMEPAD_B) controller->buttons[Gamepad_B] = State_DOWN;
-				if (state.Gamepad.wButtons & XINPUT_GAMEPAD_X) controller->buttons[Gamepad_X] = State_DOWN;
-				if (state.Gamepad.wButtons & XINPUT_GAMEPAD_Y) controller->buttons[Gamepad_Y] = State_DOWN;
-
-				controller->left_trigger  = xinput_trigger_deadzone_correction(state.Gamepad.bLeftTrigger, XINPUT_GAMEPAD_TRIGGER_THRESHOLD);
-				controller->right_trigger = xinput_trigger_deadzone_correction(state.Gamepad.bRightTrigger, XINPUT_GAMEPAD_TRIGGER_THRESHOLD);
-				controller->left_thumb    = xinput_axis_deadzone_correction(state.Gamepad.sThumbLX, state.Gamepad.sThumbLY, XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
-				controller->right_thumb   = xinput_axis_deadzone_correction(state.Gamepad.sThumbRX, state.Gamepad.sThumbRY, XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE);
+				memset(controller, 0, sizeof(*controllers));
 			}
-		} else if (windows_controllers_state[user_index].connected) {
-			Event cevent;
-			cevent.type             = Event_Type_CONTROLLER_LEAVE;
-			cevent.controller.index = user_index;
-			win32_push_event(cevent);
-			windows_controllers_state[user_index].connected = false;
-
-			Controller *controller = controllers + user_index;
-			memset(controller, 0, sizeof(*controllers));
 		}
-	}
-	karma_timed_block_end(XInputEvents);
-
-	if (windows_event_count) {
-		*event = win32_pop_event();
-		return true;
+		karma_timed_block_end(XInputEvents);
 	}
 
-	return false;
+	s64 event_count = (s64)windows_event_count;
+	windows_event_count = 0;
+	return Array_View<Event>(windows_event_buffer, (s64)event_count);
 }
 
 State system_button(Button button) {

@@ -886,11 +886,7 @@ int system_main() { // Entry point
 	//
 	//
 
-	Event event;
 	bool  running = true;
-
-	bool first = true;
-	int sample_counter = 0;
 
 	const r32 aspect_ratio = framebuffer_w / framebuffer_h;
 
@@ -915,8 +911,10 @@ int system_main() { // Entry point
 		karma_timed_frame_begin();
 
 		karma_timed_block_begin(EventHandling);
+		auto events = system_poll_events();
+		for (s64 event_index = 0; event_index < events.count; ++event_index) {
+			Event &event = events[event_index];
 
-		while (system_poll_events(&event)) {
 			if (event.type & Event_Type_EXIT) {
 				running = false;
 				break;

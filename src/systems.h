@@ -406,7 +406,7 @@ Handle system_create_window(const char *title, s32 width, s32 height, System_Win
 void   system_request_quit();
 void   system_exit_process(int result);
 
-bool system_poll_events(Event *event);
+const Array_View<Event> system_poll_events(int poll_count = 1);
 
 State    system_button(Button button);
 Key_Mods system_get_key_mods();
