@@ -840,11 +840,10 @@ int system_main() { // Entry point
 	Handle platform      = system_create_window(u8"Karma", 1280, 720, System_Window_Show_NORMAL);
 	gfx_create_context(platform, Render_Backend_DIRECTX11, Vsync_ADAPTIVE, 2, (u32)framebuffer_w, (u32)framebuffer_h);
 
-	auto res = system_find_files("../src", ".h", true);
-
 	auto sine_audio = make_sine_audio();
 
 	auto audio = load_wave(system_read_entire_file("../res/misc/POL-course-of-nature-short.wav"));
+	auto bounce_sound = load_wave(system_read_entire_file("../res/misc/Boing Cartoonish-SoundBible.com-277290791.wav"));
 
 	Audio_Client audio_client;
 	if (!audio_client.StartThread()) {
@@ -1159,9 +1158,9 @@ int system_main() { // Entry point
 				second_sound_sample_counter = next_sample_index;
 
 			u32 write_sample_index = (u32)(next_sample_index - second_sound_sample_counter);
-			if (write_sample_index < SAMPLES_PER_SEC) {
-				auto samples_to_mix = min_value(SAMPLES_PER_SEC - write_sample_index, buffer_size_in_sample_count);
-				mix_audio(sine_audio, write_sample_index, samples_to_mix, audio_buffer);
+			if (write_sample_index < bounce_sound.sample_count) {
+				auto samples_to_mix = min_value(bounce_sound.sample_count - write_sample_index, buffer_size_in_sample_count);
+				mix_audio(bounce_sound, write_sample_index, samples_to_mix, audio_buffer);
 			} else {
 				mix_second_sound = false;
 				second_sound_sample_counter = 0;
