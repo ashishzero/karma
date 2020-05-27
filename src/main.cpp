@@ -795,24 +795,46 @@ r32 get_next_sample(Audio &audio, u64 sample_index) {
 	return sample_value;
 }
 
+r32 get_next_sample_left(Audio &audio, u64 sample_index) {
+	if (sample_index > audio.sample_count) {
+		sample_index = sample_index % audio.sample_count;
+	}
+
+	constexpr r32 imax = 1.0f / (r32)MAX_INT16;
+	r32 sample_value = audio.samples[2 * sample_index] * output_volume * imax;
+
+	return sample_value;
+}
+
+r32 get_next_sample_right(Audio &audio, u64 sample_index) {
+	if (sample_index > audio.sample_count) {
+		sample_index = sample_index % audio.sample_count;
+	}
+
+	constexpr r32 imax = 1.0f / (r32)MAX_INT16;
+	r32 sample_value = audio.samples[2 * sample_index + 1] * output_volume * imax;
+
+	return sample_value;
+}
+
 void fill_silence(u32 samples_count_to_write, r32 *write_ptr) {
 	memset(write_ptr, 0, sizeof(r32) * 2 * samples_count_to_write);
 }
 
 void fill_audio(Audio &audio, u64 write_sample_index, u32 samples_count_to_write, r32 *write_ptr) {
 	for (u32 sample_index = 0; sample_index < samples_count_to_write; ++sample_index) {
-		r32 sample_value = get_next_sample(audio, write_sample_index + sample_index);
-		write_ptr[0] = sample_value;
-		write_ptr[1] = sample_value;
+		//r32 sample_value = get_next_sample(audio, write_sample_index + sample_index);
+		write_ptr[0] = get_next_sample_left(audio, write_sample_index + sample_index);
+		write_ptr[1] = get_next_sample_right(audio, write_sample_index + sample_index);
 		write_ptr += 2;
 	}
 }
 
 void mix_audio(Audio &audio, u32 sample_index, u32 samples_count_to_write, r32 *write_ptr) {
 	for (u32 sample_counter = 0; sample_counter < samples_count_to_write; ++sample_counter) {
-		r32 sample_value = get_next_sample(audio, sample_counter + sample_index);
-		write_ptr[0] += sample_value;
-		write_ptr[1] += sample_value;
+		//r32 sample_value = get_next_sample(audio, sample_counter + sample_index);
+		write_ptr[0] += get_next_sample_left(audio, sample_counter + sample_index);
+		write_ptr[1] += get_next_sample_right(audio, sample_counter + sample_index);
 		write_ptr += 2;
 	}
 }
@@ -1171,31 +1193,6 @@ int system_main() { // Entry point
 			memcpy(buffer.buffer, audio_buffer + audio_client.channel_count * write_sample_index, audio_client.channel_count * buffer.buffer_size_in_sample_count * sizeof(r32));
 			audio_client.UnlockBuffer(buffer.buffer_size_in_sample_count);
 		}
-
-#if 0
-		Audio_Master_Buffer buffer;
-		if (audio_client.LockBuffer(&buffer)) {
-			u32 write_sample_index = (u32)(buffer.next_sample_index % SAMPLES_COUNT);
-			fill_silence(buffer.buffer_size_in_sample_count, buffer.buffer);
-			fill_audio(write_sample_index, buffer.buffer_size_in_sample_count, buffer.buffer);
-
-			if (mix_second_sound) {
-				if (second_sound_sample_counter == 0)
-					second_sound_sample_counter = buffer.next_sample_index;
-
-				write_sample_index = (u32)(buffer.next_sample_index - second_sound_sample_counter);
-				if (write_sample_index < SAMPLES_PER_SEC) {
-					auto samples_to_mix = min_value(SAMPLES_PER_SEC - write_sample_index, buffer.buffer_size_in_sample_count);
-					mix_audio(write_sample_index, samples_to_mix, buffer.buffer);
-				} else {
-					mix_second_sound = false;
-					second_sound_sample_counter = 0;
-				}
-			}
-
-			audio_client.UnlockBuffer(buffer.buffer_size_in_sample_count);
-		}
-#endif
 
 		karma_timed_block_end(AudioUpdate);
 
