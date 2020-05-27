@@ -456,43 +456,30 @@ inline void *temporary_allocator_proc(Allocation_Type type, ptrsize size, const 
 	if (type == Allocation_Type_NEW) {
 		ptrsize padding = (MEMORY_ALIGNMENT - ((ptrsize)temp->ptr % MEMORY_ALIGNMENT)) % MEMORY_ALIGNMENT;
 
-		u8 *nxtptr = temp->ptr + size + padding + sizeof(ptrsize); // for storing allocated size
+		u8 *nxtptr = temp->ptr + size + padding;
 		u8 *endptr = temp->base + temp->capacity;
 
 		if (nxtptr <= endptr) {
-			ptrsize *result = (ptrsize *)temp->ptr;
-			*result         = size;
-			temp->ptr       = nxtptr;
-			return (void *)(result + 1);
+			void *result = temp->ptr;
+			temp->ptr    = nxtptr;
+			return result;
 		}
 
 		return 0;
 	} else if (type == Allocation_Type_RESIZE) {
-		ptrsize allocated_size = *((ptrsize *)ptr - 1);
+		ptrsize padding = (MEMORY_ALIGNMENT - ((ptrsize)temp->ptr % MEMORY_ALIGNMENT)) % MEMORY_ALIGNMENT;
 
-		if (ptr == (temp->ptr - allocated_size)) { // if no allocation is done after the given *ptr* allocation
-			u8 *beg_ptr = temp->ptr - allocated_size;
-			u8 *nxtptr  = beg_ptr + size;
-			u8 *endptr  = temp->base + temp->capacity;
+		u8 *nxtptr = temp->ptr + size + padding;
+		u8 *endptr = temp->base + temp->capacity;
 
-			if (nxtptr <= endptr) {
-				ptrsize *result = (ptrsize *)beg_ptr - 1;
-				*result         = size;
-				temp->ptr       = nxtptr;
-				return (void *)(result + 1);
-			}
-
-			return 0;
-		} else { // another allocation is done after *ptr*, so new allocation is required
-			void *mem = temporary_allocator_proc(Allocation_Type_NEW, size, 0, user_ptr);
-
-			if (mem) {
-				memmove(mem, ptr, allocated_size);
-			}
-
-			return 0;
+		if (nxtptr <= endptr) {
+			memmove(temp->ptr, ptr, size);
+			void *result = temp->ptr;
+			temp->ptr    = nxtptr;
+			return result;
 		}
 
+		return 0;
 	} else if (type == Allocation_Type_FREE) {
 		// do nothing
 		return 0;

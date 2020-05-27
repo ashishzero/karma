@@ -499,90 +499,122 @@ void system_close_file(System_File *file) {
 	*file = {};
 }
 
-Array_View<System_Find_File_Info> system_find_files(const String search, bool recursive) {
-	Array<System_Find_File_Info> items;
+inline wchar_t *windows_get_file_extension(wchar_t *file) {
+	while (*file) {
+		if (*file == L'.') return file;
+		file += 1;
+	}
+	return 0;
+}
 
-	Array<String> find_directories;
-	defer {
-		for (s64 index = 0; index < find_directories.count; ++index) {
-			auto &it = find_directories[index];
-			if (index) memory_free(it.data);
-		}
-		array_free(&find_directories);
-	};
+u32 windows_find_files_count(const wchar_t *root_dir, int root_dir_len, const wchar_t *extension, bool recursive) {
+	scoped_temporary_allocation();
 
-	array_add(&find_directories, search);
+	wchar_t *search = (wchar_t *)tallocate((root_dir_len + 3) * sizeof(wchar_t));
+	memcpy(search, root_dir, root_dir_len * sizeof(wchar_t));
+	search[root_dir_len + 0] = '/';
+	search[root_dir_len + 1] = '*';
+	search[root_dir_len + 2] = 0;
 
-	String               search_param  = {};
-	String_Search_Result search_result = string_isearch_reverse(search, "/");
-	if (search_result.found) {
-		search_param = string_substring(search, search_result.start_index, search.count - search_result.start_index);
+	WIN32_FIND_DATA find_data;
+	auto find = FindFirstFileW(search, &find_data);
+	if (find == INVALID_HANDLE_VALUE) {
+		win32_check_for_error();
+		return 0;
 	}
 
-	for (s64 index = 0; index < find_directories.count; ++index) {
-		u8 *tp = get_temporary_allocator_point();
+	u32 count = 0;
 
-		int      length         = (int)find_directories[index].count + 1;
-		wchar_t *find_directory = (wchar_t *)tallocate(length * sizeof(wchar_t));
-		MultiByteToWideChar(CP_UTF8, 0, (const char *)find_directories[index].data, (int)find_directories[index].count, find_directory, length);
-		find_directory[length] = 0;
-
-		WIN32_FIND_DATAW data;
-		HANDLE           handle = FindFirstFileW(find_directory, &data);
-
-		set_temporary_allocator_point(tp);
-
-		if (handle != INVALID_HANDLE_VALUE) {
-			String               directory     = {};
-			String_Search_Result search_result = string_isearch_reverse(find_directories[index], "/");
-			if (search_result.found) {
-				directory = string_substring(find_directories[index], 0, search_result.start_index + 1);
+	do {
+		if (recursive && (find_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+			if (wcscmp(find_data.cFileName, L".") != 0 && wcscmp(find_data.cFileName, L"..") != 0) {
+				int next_dir_len = (int)(root_dir_len + wcslen(find_data.cFileName) + 1);
+				wchar_t *next_dir = (wchar_t *)tallocate((next_dir_len + 1) * sizeof(wchar_t));
+				wcscpy_s(next_dir, next_dir_len + 1, root_dir);
+				wcscat_s(next_dir, next_dir_len + 1, L"/");
+				wcscat_s(next_dir, next_dir_len + 1, find_data.cFileName);
+				count += windows_find_files_count(next_dir, next_dir_len, extension, recursive);
 			}
-
-			System_Find_File_Info file = {};
-			do {
-				if (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-					if (wcscmp(data.cFileName, L".") != 0 && wcscmp(data.cFileName, L"..") != 0 && recursive) {
-						String new_dir;
-
-						size_t file_len = wcslen(data.cFileName);
-						new_dir.count   = file_len + directory.count + search_param.count;
-						new_dir.data    = (u8 *)memory_allocate(new_dir.count);
-
-						memcpy(new_dir.data, directory.data, directory.count);
-						WideCharToMultiByte(CP_UTF8, 0, data.cFileName, -1, (char *)new_dir.data + directory.count, (int)(new_dir.count - directory.count), 0, 0);
-						memcpy(new_dir.data + directory.count + file_len, search_param.data, search_param.count);
-
-						array_add(&find_directories, new_dir);
-					}
-				} else {
-					file.size = ((u64)data.nFileSizeHigh * ((u64)MAXDWORD + 1)) + (u64)data.nFileSizeLow;
-
-					file.path.count = (ptrsize)WideCharToMultiByte(CP_UTF8, 0, data.cFileName, -1, 0, 0, 0, 0) + directory.count - 1;
-					file.path.data  = (u8 *)memory_allocate(file.path.count);
-					memcpy(file.path.data, directory.data, directory.count);
-					WideCharToMultiByte(CP_UTF8, 0, data.cFileName, -1, (char *)file.path.data + directory.count, (int)(file.path.count - directory.count), 0, 0);
-
-					file.name = String(file.path.data + directory.count, file.path.count - directory.count);
-
-					String_Search_Result result = string_isearch(file.name, ".");
-					if (result.found) {
-						file.extension = string_substring(file.name, result.start_index + 1, file.name.count - result.start_index - 1);
-						file.name.count -= file.extension.count + 1;
-					} else {
-						file.extension = {};
-					}
-
-					array_add(&items, file);
-				}
-
-			} while (FindNextFileW(handle, &data));
-
-			FindClose(handle);
-		} else {
-			win32_check_for_error();
+		} else if (wcscmp(windows_get_file_extension(find_data.cFileName), extension) == 0) {
+			count += 1;
 		}
+	} while (FindNextFileW(find, &find_data) != 0);
+
+	return count;
+}
+
+u32 windows_find_files_info(System_Find_File_Info *info, const System_Find_File_Info *info_one_past_end, const wchar_t *root_dir, int root_dir_len, const wchar_t *extension, bool recursive) {
+	scoped_temporary_allocation();
+
+	wchar_t *search = (wchar_t *)tallocate((root_dir_len + 3) * sizeof(wchar_t));
+	memcpy(search, root_dir, root_dir_len * sizeof(wchar_t));
+	search[root_dir_len + 0] = '/';
+	search[root_dir_len + 1] = '*';
+	search[root_dir_len + 2] = 0;
+
+	WIN32_FIND_DATA find_data;
+	auto find = FindFirstFileW(search, &find_data);
+	if (find == INVALID_HANDLE_VALUE) {
+		win32_check_for_error();
+		return 0;
 	}
+
+	u32 count = 0;
+
+	do {
+		if (recursive && (find_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+			if (wcscmp(find_data.cFileName, L".") != 0 && wcscmp(find_data.cFileName, L"..") != 0) {
+				int next_dir_len  = (int)(root_dir_len + wcslen(find_data.cFileName) + 1);
+				wchar_t *next_dir = (wchar_t *)tallocate((next_dir_len + 1) * sizeof(wchar_t));
+				wcscpy_s(next_dir, next_dir_len + 1, root_dir);
+				wcscat_s(next_dir, next_dir_len + 1, L"/");
+				wcscat_s(next_dir, next_dir_len + 1, find_data.cFileName);
+				u32 next_count = windows_find_files_info(info, info_one_past_end, next_dir, next_dir_len, extension, recursive);;
+				count += next_count;
+				info += next_count;
+			}
+		} else if (wcscmp(windows_get_file_extension(find_data.cFileName), extension) == 0) {
+			int found_file_len		= (int)wcslen(find_data.cFileName);
+			int found_full_file_len = root_dir_len + found_file_len + 1;
+			wchar_t *full_file_name	= (wchar_t *)tallocate((found_full_file_len + 1) * sizeof(wchar_t));
+			wcscpy_s(full_file_name, found_full_file_len + 1, root_dir);
+			wcscat_s(full_file_name, found_full_file_len + 1, L"/");
+			wcscat_s(full_file_name, found_full_file_len + 1, find_data.cFileName);
+
+			char *utf_full_file_name = (char *)memory_allocate(found_full_file_len + 1);
+			WideCharToMultiByte(CP_UTF8, 0, full_file_name, found_full_file_len, utf_full_file_name, found_full_file_len, 0, 0);
+			utf_full_file_name[found_full_file_len] = 0;
+
+			info->path.data		= (u8 *)utf_full_file_name;
+			info->path.count	= root_dir_len + 1;
+			info->name.data		= (u8 *)utf_full_file_name + root_dir_len + 1;
+			info->name.count	= found_file_len;
+			info->size			= (find_data.nFileSizeHigh * ((u64)MAXDWORD+1)) + find_data.nFileSizeLow;
+
+			count += 1;
+			info += 1;
+		}
+	} while (FindNextFileW(find, &find_data) != 0 && info != info_one_past_end);
+
+	return count;
+}
+
+Array_View<System_Find_File_Info> system_find_files(const String directory, const String extension, bool recursive) {
+	scoped_temporary_allocation();
+
+	int      length = MultiByteToWideChar(CP_UTF8, 0, (char *)directory.data, (int)directory.count, 0, 0);
+	wchar_t *wsearch = (wchar_t *)tallocate((length + 1) * sizeof(wchar_t));
+	MultiByteToWideChar(CP_UTF8, 0, (char *)directory.data, (int)directory.count, wsearch, length);
+	wsearch[length] = 0;
+
+	wchar_t wextension[50];
+	StringCbPrintfW(wextension, 50 * sizeof(wchar_t), L"%S", tto_cstring(extension));
+
+	u32 items_count = windows_find_files_count(wsearch, length, wextension, recursive);
+
+	Array_View<System_Find_File_Info> items;
+	items.data	= (System_Find_File_Info *)memory_allocate(items_count * sizeof(System_Find_File_Info));
+	items.count = windows_find_files_info(items.data, items.data + items_count, wsearch, length, wextension, recursive);
 
 	return items;
 }
@@ -1263,7 +1295,7 @@ Handle system_create_window(const char *title, s32 width, s32 height, System_Win
 	height = wrc.bottom - wrc.top;
 
 	int      length = MultiByteToWideChar(CP_UTF8, 0, title, -1, 0, 0);
-	wchar_t *wtitle = (wchar_t *)tallocate(length);
+	wchar_t *wtitle = (wchar_t *)tallocate(length * sizeof(wchar_t));
 	MultiByteToWideChar(CP_UTF8, 0, title, -1, wtitle, length);
 
 	window_handle = CreateWindowExW(0, L"Karma", wtitle, wnd_styles,
@@ -1534,7 +1566,7 @@ u64 system_get_frequency() {
 
 void system_fatal_error(const String msg) {
 	auto     write_len = msg.count;
-	wchar_t *pool      = (wchar_t *)memory_allocate(msg.count + 1);
+	wchar_t *pool      = (wchar_t *)memory_allocate((msg.count + 1) * sizeof(wchar_t));
 	MultiByteToWideChar(CP_UTF8, 0, (const char *)msg.data, (int)write_len, pool, (int)msg.count + 1);
 	pool[write_len] = 0;
 
@@ -1545,12 +1577,11 @@ void system_fatal_error(const String msg) {
 
 void system_display_critical_message(const String msg) {
 	auto     write_len = msg.count;
-	wchar_t *pool      = (wchar_t *)memory_allocate(msg.count + 1);
+	wchar_t *pool      = (wchar_t *)tallocate((msg.count + 1) * sizeof(wchar_t));
 	MultiByteToWideChar(CP_UTF8, 0, (const char *)msg.data, (int)write_len, pool, (int)msg.count + 1);
 	pool[write_len] = 0;
 
 	MessageBoxW(window_handle, pool, L"Karma - Critical Error", MB_TOPMOST | MB_ICONWARNING | MB_OK);
-	memory_free(pool);
 }
 
 void *system_allocator(Allocation_Type type, ptrsize size, const void *ptr, void *user_ptr) {
@@ -1658,7 +1689,7 @@ bool system_thread_create(Thread_Proc proc, void *arg, Allocator allocator, ptrs
 	thread->handle.hptr = CreateThread(0, 0, win_thread_proc, &thread, CREATE_SUSPENDED, 0);
 	if (thread->handle.hptr != NULL) {
 		if (name) {
-			wchar_t *desc = (wchar_t *)tallocate(name.count + 1);
+			wchar_t *desc = (wchar_t *)tallocate((name.count + 1) * sizeof(wchar_t));
 			MultiByteToWideChar(CP_UTF8, 0, (char *)name.data, (int)name.count, desc, (int)name.count + 1);
 			desc[name.count] = 0;
 			SetThreadDescription(thread->handle.hptr, desc);

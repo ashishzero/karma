@@ -247,7 +247,6 @@ struct Controller {
 struct System_Find_File_Info {
 	String path;
 	String name;
-	String extension;
 	u64    size;
 };
 
@@ -378,7 +377,7 @@ bool           system_write_entire_file(const String path, Array_View<u8> conten
 bool system_open_file(const String path, File_Operation op, System_File *file);
 void system_close_file(System_File *file);
 
-Array_View<System_Find_File_Info> system_find_files(const String directory, bool recursive);
+Array_View<System_Find_File_Info> system_find_files(const String directory, const String extension, bool recursive);
 
 Vec2s system_get_primary_monitor_size();
 Vec2s system_get_client_size();

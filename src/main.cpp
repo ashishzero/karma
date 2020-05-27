@@ -840,6 +840,8 @@ int system_main() { // Entry point
 	Handle platform      = system_create_window(u8"Karma", 1280, 720, System_Window_Show_NORMAL);
 	gfx_create_context(platform, Render_Backend_DIRECTX11, Vsync_ADAPTIVE, 2, (u32)framebuffer_w, (u32)framebuffer_h);
 
+	auto res = system_find_files("../src", ".h", true);
+
 	auto sine_audio = make_sine_audio();
 
 	auto audio = load_wave(system_read_entire_file("../res/misc/POL-course-of-nature-short.wav"));
