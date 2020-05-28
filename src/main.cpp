@@ -727,11 +727,12 @@ const int SAMPLES_PER_SEC		= 48000;
 const int SAMPLES_COUNT			= SAMPLES_PER_SEC * FREQUENCY;
 
 static s16 sine_wave[2 * SAMPLES_COUNT * sizeof(r32)];
-static r32 output_volume	= 0.5f;
 
+#if 0
+static r32 output_volume	= 0.5f;
 bool mix_second_sound				= false;
 u64 second_sound_sample_counter		= 0;
-
+#endif
 
 #pragma pack(push, 1)
 
@@ -784,6 +785,7 @@ Audio make_sine_audio() {
 	return audio;
 }
 
+#if 0
 r32 get_next_sample(Audio &audio, u64 sample_index) {
 	if (sample_index > audio.sample_count) {
 		sample_index = sample_index % audio.sample_count;
@@ -838,6 +840,7 @@ void mix_audio(Audio &audio, u32 sample_index, u32 samples_count_to_write, r32 *
 		write_ptr += 2;
 	}
 }
+#endif
 
 Audio load_wave(String content) {
 	Istream stream			= istream(content);
@@ -856,7 +859,120 @@ Audio load_wave(String content) {
 	return audio;
 }
 
-int system_main() { // Entry point
+struct Audio_List {
+	Audio		*audio; // TODO: Use somekind of reference!!
+	u64			stamp;
+	booli		playing;
+	booli		loop;
+	r32			volume;
+	Audio_List *next;
+};
+
+struct Voice {
+	r32 volume = 1;
+	Audio_List list			= {}; // NOTE: This is sentinel (first indicator), real node start from list.next
+	Audio_List *free_list	= 0;
+	Audio_List *buffer;
+	u32			buffer_index;
+	u32			buffer_count;
+};
+
+inline Voice audio_voice(u32 max_buffer_count) {
+	Voice voice;
+	voice.buffer_count	= max_buffer_count;
+	voice.buffer_index	= 0;
+	voice.buffer		= (Audio_List *)memory_allocate(sizeof(Audio_List) * voice.buffer_count);
+	return voice;
+}
+
+inline void play_audio(Voice *voice, Audio *audio, r32 volume = 1, bool looping = false) {
+	Audio_List *list;
+
+	// First try to find slot in free list
+	if (voice->free_list) {
+		list				= voice->free_list;
+		voice->free_list	= voice->free_list->next;
+	} else { // If slot is not available in free list, use from buffer
+		assert(voice->buffer_index < voice->buffer_count);
+		list = voice->buffer + voice->buffer_index;
+		voice->buffer_index += 1;
+	}
+	
+	list->audio		= audio;
+	list->playing	= false;
+	list->loop		= looping;
+	list->volume	= volume;
+
+	list->next			= voice->list.next;
+	voice->list.next	= list;
+}
+
+struct Master_Voice {
+	r32 volume = 1;
+};
+
+void mixer_update(Audio_Client &client, Master_Voice &master, Voice &voice) {
+	auto sample_index = client.GetNextSampleIndex();
+	auto sample_count = (client.GetSamplesPerSec() * SYSTEM_AUDIO_BUFFER_SIZE_IN_MILLISECS * 5) / 1000;
+	auto buffer_size  = sample_count * client.GetChannelCount() * sizeof(r32);
+	r32 *buffer		  = (r32 *)tallocate(buffer_size);
+
+	assert(client.GetChannelCount() == 2);
+
+	constexpr r32 imax = 1.0f / (r32)MAX_INT16;
+
+	memset(buffer, 0, buffer_size);
+
+	r32 effective_voice_volume = master.volume * voice.volume;
+	Audio_List *prev_audio = &voice.list;
+	for (Audio_List *audio = voice.list.next; audio; ) {
+		assert(audio->audio->fmt->channels_count == 2);
+
+		auto next_audio = audio->next;
+
+		if (audio->playing == false) {
+			audio->stamp	= sample_index;
+			audio->playing	= true;
+		}
+
+		u32 write_sample_index = (u32)(sample_index - audio->stamp);
+		if (audio->loop && write_sample_index >= audio->audio->sample_count) {
+			audio->stamp		= sample_index;
+			write_sample_index	= 0;
+		}
+
+		if (write_sample_index < audio->audio->sample_count) {
+			auto samples_to_mix = min_value(audio->audio->sample_count - write_sample_index, sample_count);
+
+			r32 *write_ptr = buffer;
+			for (u32 sample_counter = 0; sample_counter < samples_to_mix; ++sample_counter) {
+				// TODO: Here we expect both input audio and output buffer to be stero audio
+				write_ptr[0] += audio->audio->samples[2 * (write_sample_index + sample_counter) + 0] * effective_voice_volume * audio->volume * imax;
+				write_ptr[1] += audio->audio->samples[2 * (write_sample_index + sample_counter) + 1] * effective_voice_volume * audio->volume * imax;
+				write_ptr += 2;
+			}
+		} else {
+			prev_audio->next	= next_audio;
+			audio->next			= voice.free_list;
+			voice.free_list		= audio;
+			audio				= prev_audio;
+		}
+
+		prev_audio	= audio;
+		audio		= next_audio;
+	}
+
+	Audio_Master_Buffer master_buffer;
+	if (client.LockBuffer(&master_buffer)) {
+		u32 write_sample_index = (u32)(master_buffer.next_sample_index - sample_index);
+		auto send_start = buffer + client.GetChannelCount() * write_sample_index;
+		assert((u8 *)send_start < (u8 *)buffer + buffer_size); // HACK: We should never have such audio lag
+		memcpy(master_buffer.buffer, send_start, client.GetChannelCount() * master_buffer.buffer_size_in_sample_count * sizeof(r32));
+		client.UnlockBuffer(master_buffer.buffer_size_in_sample_count);
+	}
+}
+
+int system_main() {
 	r32    framebuffer_w = 1280;
 	r32    framebuffer_h = 720;
 	Handle platform      = system_create_window(u8"Karma", 1280, 720, System_Window_Show_NORMAL);
@@ -871,6 +987,11 @@ int system_main() { // Entry point
 	if (!audio_client.StartThread()) {
 		system_display_critical_message("Failed to load audio!");
 	}
+
+	Master_Voice master_voice;
+	master_voice.volume = 0.5f;
+
+	Voice voice = audio_voice(100);
 
 	ImGui_Initialize();
 	karma_debug_service_initialize();
@@ -903,6 +1024,8 @@ int system_main() { // Entry point
 	auto circle = gfx_create_texture2d(w, h, 4, Data_Format_RGBA8_UNORM_SRGB, (const u8 **)&pixels, Buffer_Usage_IMMUTABLE, 1);
 
 	Particle_Emitter emitter = particle_emitter_create(&circle, mm_rect(0, 0, 1, 1), 1000, 250);
+
+	play_audio(&voice, &audio, 1.0f, true);
 
 	//
 	//
@@ -1012,9 +1135,16 @@ int system_main() { // Entry point
 						break;
 				}
 
+				if ((event.type & Event_Type_KEY_DOWN) && event.key.symbol == Key_SPACE) {
+					play_audio(&voice, &bounce_sound);
+				}
+				if ((event.type & Event_Type_KEY_DOWN) && event.key.symbol == Key_M) {
+					play_audio(&voice, &audio);
+				}
+
 				if ((event.type & Event_Type_KEY_DOWN) && event.key.symbol == Key_SPACE && !event.key.repeat && player.position.y <= 0) {
 					controller.jump = true;
-					mix_second_sound = true;
+					//play_audio(&voice, &bounce_sound);
 				}
 			}
 		}
@@ -1166,6 +1296,9 @@ int system_main() { // Entry point
 
 		karma_timed_block_begin(AudioUpdate);
 
+		mixer_update(audio_client, master_voice, voice);
+
+#if 0
 		auto next_sample_index = audio_client.GetNextSampleIndex();
 		r32 *audio_buffer = (r32 *)tallocate(sizeof(r32) * audio_client.channel_count * audio_client.format->nSamplesPerSec * 1);
 
@@ -1193,6 +1326,8 @@ int system_main() { // Entry point
 			memcpy(buffer.buffer, audio_buffer + audio_client.channel_count * write_sample_index, audio_client.channel_count * buffer.buffer_size_in_sample_count * sizeof(r32));
 			audio_client.UnlockBuffer(buffer.buffer_size_in_sample_count);
 		}
+
+#endif
 
 		karma_timed_block_end(AudioUpdate);
 
