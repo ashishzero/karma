@@ -903,24 +903,38 @@ void mixer_update(Audio_Client &client, Master_Voice &master, Voice &voice) {
 		}
 
 		u32 write_sample_index = (u32)(sample_index - audio->stamp);
-		if (audio->loop && write_sample_index >= audio->audio->sample_count) {
-			audio->stamp		= sample_index;
-			write_sample_index	= 0;
-		}
-
-		if (write_sample_index < audio->audio->sample_count) {
-			auto samples_to_mix = min_value(audio->audio->sample_count - write_sample_index, sample_count);
-
+		if (write_sample_index < audio->audio->sample_count || audio->loop) {
 			r32 *write_ptr = buffer;
-			for (u32 sample_counter = 0; sample_counter < samples_to_mix; ++sample_counter) {
-				// TODO: Here we expect both input audio and output buffer to be stero audio
-				r32 volume_t = volume_time_in_samples / (r32)master.volume_span_in_samples;
-				r32 master_volume = lerp(master.volume_a, master.volume_b, clamp01(volume_t));
-				r32 effective_voice_volume = master_volume * voice.volume;
-				write_ptr[0] += audio->audio->samples[2 * (write_sample_index + sample_counter) + 0] * effective_voice_volume * audio->volume.m[0] * imax;
-				write_ptr[1] += audio->audio->samples[2 * (write_sample_index + sample_counter) + 1] * effective_voice_volume * audio->volume.m[1] * imax;
-				write_ptr += 2;
-				volume_time_in_samples += 1;
+			for (u32 sample_counter = 0; sample_counter < sample_count; ) {
+				assert((u8 *)write_ptr < (u8 *)buffer + buffer_size);
+
+				if (audio->loop && (u32)write_sample_index >= audio->audio->sample_count) {
+					audio->stamp		= sample_index;
+					write_sample_index	= 0;
+				}
+
+				r32 sample_rate_factor		  = 1.0f;
+				u32 samples_left_for_sampling = (u32)(sample_rate_factor * (sample_count - sample_counter) + 0.5f);
+
+				u32 samples_to_mix = min_value(audio->audio->sample_count - write_sample_index, samples_left_for_sampling);
+
+				for (u32 sample_mix_index = 0; sample_mix_index < samples_to_mix; ++sample_mix_index) {
+					// TODO: Here we expect both input audio and output buffer to be stero audio
+					r32 volume_t = volume_time_in_samples / (r32)master.volume_span_in_samples;
+					r32 master_volume = lerp(master.volume_a, master.volume_b, clamp01(volume_t));
+					r32 effective_voice_volume = master_volume * voice.volume;
+					write_ptr[0] += audio->audio->samples[2 * write_sample_index + 0] * effective_voice_volume * audio->volume.m[0] * imax;
+					write_ptr[1] += audio->audio->samples[2 * write_sample_index + 1] * effective_voice_volume * audio->volume.m[1] * imax;
+					write_ptr += 2;
+					write_sample_index += 1;
+					volume_time_in_samples += 1;
+				}
+
+				if (!audio->loop) {
+					break;
+				}
+
+				sample_counter += samples_to_mix;
 			}
 		} else {
 			prev_audio->next	= next_audio;
