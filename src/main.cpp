@@ -728,12 +728,6 @@ const int SAMPLES_COUNT			= SAMPLES_PER_SEC * FREQUENCY;
 
 static s16 sine_wave[2 * SAMPLES_COUNT * sizeof(r32)];
 
-#if 0
-static r32 output_volume	= 0.5f;
-bool mix_second_sound				= false;
-u64 second_sound_sample_counter		= 0;
-#endif
-
 #pragma pack(push, 1)
 
 struct Riff_Header {
