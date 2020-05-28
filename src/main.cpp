@@ -846,8 +846,29 @@ inline void play_audio(Voice *voice, Audio *audio, r32 volume = 1, bool looping 
 }
 
 struct Master_Voice {
-	r32 volume = 1;
+	booli	volume_changed			= true;
+	r32		volume_a				= 1;
+	r32		volume_b				= 1;
+	u32		volume_span_in_samples	= 1;
+	u64		volume_timestamp		= 0;
 };
+
+inline void master_voice_change_volume(Master_Voice *voice, r32 volume, r32 fade_time_in_secs, Audio_Client &client) {
+	if (fade_time_in_secs == 0) fade_time_in_secs = 0.000001f;
+	voice->volume_b					= volume;
+	voice->volume_span_in_samples	= (u32)(fade_time_in_secs * (r32)client.GetSamplesPerSec() + 0.5f);
+	voice->volume_changed			= true;
+}
+
+inline void master_voice_set_volume(Master_Voice *voice, r32 volume) {
+	voice->volume_a					= volume;
+	voice->volume_b					= volume;
+	voice->volume_changed			= true;
+}
+
+inline r32 master_voice_get_volume(Master_Voice &voice) {
+	return voice.volume_b;
+}
 
 void mixer_update(Audio_Client &client, Master_Voice &master, Voice &voice) {
 	auto sample_index = client.GetNextSampleIndex();
@@ -855,13 +876,21 @@ void mixer_update(Audio_Client &client, Master_Voice &master, Voice &voice) {
 	auto buffer_size  = sample_count * client.GetChannelCount() * sizeof(r32);
 	r32 *buffer		  = (r32 *)tallocate(buffer_size);
 
+	if (master.volume_changed) {
+		r32 t					= (r32)(sample_index - master.volume_timestamp) / (r32)master.volume_span_in_samples;
+		t						= clamp01(t);
+		master.volume_a			= lerp(master.volume_a, master.volume_b, t);
+		master.volume_timestamp = sample_index;
+		master.volume_changed	= false;
+	}
+	r32 volume_time_in_samples = (r32)(sample_index - master.volume_timestamp);
+
 	assert(client.GetChannelCount() == 2);
 
 	constexpr r32 imax = 1.0f / (r32)MAX_INT16;
 
 	memset(buffer, 0, buffer_size);
 
-	r32 effective_voice_volume = master.volume * voice.volume;
 	Audio_List *prev_audio = &voice.list;
 	for (Audio_List *audio = voice.list.next; audio; ) {
 		assert(audio->audio->fmt->channels_count == 2);
@@ -885,9 +914,13 @@ void mixer_update(Audio_Client &client, Master_Voice &master, Voice &voice) {
 			r32 *write_ptr = buffer;
 			for (u32 sample_counter = 0; sample_counter < samples_to_mix; ++sample_counter) {
 				// TODO: Here we expect both input audio and output buffer to be stero audio
+				r32 volume_t = volume_time_in_samples / (r32)master.volume_span_in_samples;
+				r32 master_volume = lerp(master.volume_a, master.volume_b, clamp01(volume_t));
+				r32 effective_voice_volume = master_volume * voice.volume;
 				write_ptr[0] += audio->audio->samples[2 * (write_sample_index + sample_counter) + 0] * effective_voice_volume * audio->volume.m[0] * imax;
 				write_ptr[1] += audio->audio->samples[2 * (write_sample_index + sample_counter) + 1] * effective_voice_volume * audio->volume.m[1] * imax;
 				write_ptr += 2;
+				volume_time_in_samples += 1;
 			}
 		} else {
 			prev_audio->next	= next_audio;
@@ -927,7 +960,8 @@ int system_main() {
 	}
 
 	Master_Voice master_voice;
-	master_voice.volume = 0.5f;
+	master_voice_set_volume(&master_voice, 0.0f);
+	master_voice_change_volume(&master_voice, 0.5f, 3, audio_client);
 
 	Voice voice = audio_voice(100);
 
@@ -1344,6 +1378,8 @@ int system_main() {
 			ImGui::End();
 		}
 
+		r32 master_volume = master_voice_get_volume(master_voice);
+
 		// ImGui Rendering here
 		ImGui::Begin("Edit");
 		static int index = 0;
@@ -1352,7 +1388,7 @@ int system_main() {
 		ImGui::Text("Speed N: %d", factor.numerator);
 		ImGui::Text("Speed D: %d", factor.demonimator);
 		ImGui::DragInt("Index", &index);
-		ImGui::DragFloat("Master Volume", &master_voice.volume, 0.01f, 0.0f, 1.0f);
+		ImGui::DragFloat("Master Volume", &master_volume, 0.01f, 0.0f, 1.0f);
 		ImGui::DragFloat3("Position", rb.position.m);
 		ImGui::DragFloat2("Velocity", rb.velocity.m);
 		ImGui::DragFloat2("Linear Velocity", rb.linear_velocity.m);
@@ -1363,6 +1399,9 @@ int system_main() {
 		ImGui::DragFloat("Torque", &rb.torque);
 
 		ImGui::End();
+
+		master_voice_change_volume(&master_voice, master_volume, 3, audio_client);
+
 		//ImGui::ShowDemoWindow();
 #endif
 
