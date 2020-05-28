@@ -785,63 +785,6 @@ Audio make_sine_audio() {
 	return audio;
 }
 
-#if 0
-r32 get_next_sample(Audio &audio, u64 sample_index) {
-	if (sample_index > audio.sample_count) {
-		sample_index = sample_index % audio.sample_count;
-	}
-
-	constexpr r32 imax = 1.0f / (r32)MAX_INT16;
-	r32 sample_value = audio.samples[sample_index] * output_volume * imax;
-
-	return sample_value;
-}
-
-r32 get_next_sample_left(Audio &audio, u64 sample_index) {
-	if (sample_index > audio.sample_count) {
-		sample_index = sample_index % audio.sample_count;
-	}
-
-	constexpr r32 imax = 1.0f / (r32)MAX_INT16;
-	r32 sample_value = audio.samples[2 * sample_index] * output_volume * imax;
-
-	return sample_value;
-}
-
-r32 get_next_sample_right(Audio &audio, u64 sample_index) {
-	if (sample_index > audio.sample_count) {
-		sample_index = sample_index % audio.sample_count;
-	}
-
-	constexpr r32 imax = 1.0f / (r32)MAX_INT16;
-	r32 sample_value = audio.samples[2 * sample_index + 1] * output_volume * imax;
-
-	return sample_value;
-}
-
-void fill_silence(u32 samples_count_to_write, r32 *write_ptr) {
-	memset(write_ptr, 0, sizeof(r32) * 2 * samples_count_to_write);
-}
-
-void fill_audio(Audio &audio, u64 write_sample_index, u32 samples_count_to_write, r32 *write_ptr) {
-	for (u32 sample_index = 0; sample_index < samples_count_to_write; ++sample_index) {
-		//r32 sample_value = get_next_sample(audio, write_sample_index + sample_index);
-		write_ptr[0] = get_next_sample_left(audio, write_sample_index + sample_index);
-		write_ptr[1] = get_next_sample_right(audio, write_sample_index + sample_index);
-		write_ptr += 2;
-	}
-}
-
-void mix_audio(Audio &audio, u32 sample_index, u32 samples_count_to_write, r32 *write_ptr) {
-	for (u32 sample_counter = 0; sample_counter < samples_count_to_write; ++sample_counter) {
-		//r32 sample_value = get_next_sample(audio, sample_counter + sample_index);
-		write_ptr[0] += get_next_sample_left(audio, sample_counter + sample_index);
-		write_ptr[1] += get_next_sample_right(audio, sample_counter + sample_index);
-		write_ptr += 2;
-	}
-}
-#endif
-
 Audio load_wave(String content) {
 	Istream stream			= istream(content);
 	Riff_Header *wav_header = istream_consume(&stream, Riff_Header);
@@ -1135,16 +1078,9 @@ int system_main() {
 						break;
 				}
 
-				if ((event.type & Event_Type_KEY_DOWN) && event.key.symbol == Key_SPACE) {
-					play_audio(&voice, &bounce_sound);
-				}
-				if ((event.type & Event_Type_KEY_DOWN) && event.key.symbol == Key_M) {
-					play_audio(&voice, &audio);
-				}
-
 				if ((event.type & Event_Type_KEY_DOWN) && event.key.symbol == Key_SPACE && !event.key.repeat && player.position.y <= 0) {
 					controller.jump = true;
-					//play_audio(&voice, &bounce_sound);
+					play_audio(&voice, &bounce_sound);
 				}
 			}
 		}
@@ -1293,42 +1229,8 @@ int system_main() {
 
 		karma_timed_block_end(Simulation);
 
-
 		karma_timed_block_begin(AudioUpdate);
-
 		mixer_update(audio_client, master_voice, voice);
-
-#if 0
-		auto next_sample_index = audio_client.GetNextSampleIndex();
-		r32 *audio_buffer = (r32 *)tallocate(sizeof(r32) * audio_client.channel_count * audio_client.format->nSamplesPerSec * 1);
-
-		auto buffer_size_in_sample_count = audio_client.format->nSamplesPerSec * 1;
-		fill_silence(buffer_size_in_sample_count, audio_buffer);
-		fill_audio(audio, next_sample_index, buffer_size_in_sample_count, audio_buffer);
-
-		if (mix_second_sound) {
-			if (second_sound_sample_counter == 0)
-				second_sound_sample_counter = next_sample_index;
-
-			u32 write_sample_index = (u32)(next_sample_index - second_sound_sample_counter);
-			if (write_sample_index < bounce_sound.sample_count) {
-				auto samples_to_mix = min_value(bounce_sound.sample_count - write_sample_index, buffer_size_in_sample_count);
-				mix_audio(bounce_sound, write_sample_index, samples_to_mix, audio_buffer);
-			} else {
-				mix_second_sound = false;
-				second_sound_sample_counter = 0;
-			}
-		}
-		
-		Audio_Master_Buffer buffer;
-		if (audio_client.LockBuffer(&buffer)) {
-			u32 write_sample_index = (u32)(buffer.next_sample_index - next_sample_index);
-			memcpy(buffer.buffer, audio_buffer + audio_client.channel_count * write_sample_index, audio_client.channel_count * buffer.buffer_size_in_sample_count * sizeof(r32));
-			audio_client.UnlockBuffer(buffer.buffer_size_in_sample_count);
-		}
-
-#endif
-
 		karma_timed_block_end(AudioUpdate);
 
 		karma_timed_block_begin(Rendering);
@@ -1451,6 +1353,7 @@ int system_main() {
 		ImGui::Text("Speed N: %d", factor.numerator);
 		ImGui::Text("Speed D: %d", factor.demonimator);
 		ImGui::DragInt("Index", &index);
+		ImGui::DragFloat("Master Volume", &master_voice.volume, 0.01f, 0.0f, 1.0f);
 		ImGui::DragFloat3("Position", rb.position.m);
 		ImGui::DragFloat2("Velocity", rb.velocity.m);
 		ImGui::DragFloat2("Linear Velocity", rb.linear_velocity.m);
