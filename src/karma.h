@@ -134,10 +134,7 @@ inline void runtime_assert(bool exp) {
 		} break
 #	define invalid_code_path() trigger_breakpoint()
 #else
-#	define assert(expression)  \
-		do {                    \
-			sizeof(expression); \
-		} while (0)
+#	define assert(expression) 
 #	define unimplemented()
 #	define trigger_if(x)
 #	define invalid_default_case()

@@ -64,7 +64,6 @@ public:
 	HANDLE				thread							= nullptr;
 	HANDLE				write_mutex						= nullptr;
 	HANDLE				write_event						= nullptr;
-	LONG volatile		playing							= false;
 	r32 *				buffer							= nullptr;
 	r32 *				buffer_ptr						= nullptr;
 	r32 *				buffer_one_past_end				= nullptr;
@@ -289,8 +288,6 @@ public:
 			AvSetMmThreadPriority(task, AVRT_PRIORITY_HIGH);
 		}
 
-		InterlockedExchange(&audio->playing, true);
-
 		u32 samples_padding		= 0;
 		u32 samples_available	= 0;
 		BYTE *data				= 0;
@@ -303,7 +300,7 @@ public:
 			return 0;
 		}
 
-		while (audio->playing) {
+		while (true) {
 			DWORD wait_res = WaitForSingleObject(audio->write_event, 2000);
 			if (wait_res != WAIT_OBJECT_0) {
 				// Event handle timed out after a 2-second wait.
@@ -402,7 +399,7 @@ public:
 	}
 
 	void StopThread() {
-		InterlockedExchange(&playing, false);
+		TerminateThread(thread, 0);
 	}
 
 	u64 GetNextSampleIndex() {
@@ -801,7 +798,7 @@ struct Audio_List {
 	u64			stamp;
 	booli		playing;
 	booli		loop;
-	r32			volumes[2]; // 0:left 1:right
+	Vec2		volume;
 	Audio_List *next;
 };
 
@@ -835,11 +832,10 @@ inline void play_audio(Voice *voice, Audio *audio, r32 left_volume, r32 right_vo
 		voice->buffer_index += 1;
 	}
 	
-	list->audio			= audio;
-	list->playing		= false;
-	list->loop			= looping;
-	list->volumes[0]	= left_volume;
-	list->volumes[1]	= right_volume;
+	list->audio		= audio;
+	list->playing	= false;
+	list->loop		= looping;
+	list->volume	= vec2(left_volume, right_volume);
 
 	list->next			= voice->list.next;
 	voice->list.next	= list;
@@ -889,8 +885,8 @@ void mixer_update(Audio_Client &client, Master_Voice &master, Voice &voice) {
 			r32 *write_ptr = buffer;
 			for (u32 sample_counter = 0; sample_counter < samples_to_mix; ++sample_counter) {
 				// TODO: Here we expect both input audio and output buffer to be stero audio
-				write_ptr[0] += audio->audio->samples[2 * (write_sample_index + sample_counter) + 0] * effective_voice_volume * audio->volumes[0] * imax;
-				write_ptr[1] += audio->audio->samples[2 * (write_sample_index + sample_counter) + 1] * effective_voice_volume * audio->volumes[1] * imax;
+				write_ptr[0] += audio->audio->samples[2 * (write_sample_index + sample_counter) + 0] * effective_voice_volume * audio->volume.m[0] * imax;
+				write_ptr[1] += audio->audio->samples[2 * (write_sample_index + sample_counter) + 1] * effective_voice_volume * audio->volume.m[1] * imax;
 				write_ptr += 2;
 			}
 		} else {
@@ -1020,9 +1016,11 @@ int system_main() {
 					case Key_F1:
 						if (state == Time_State_RESUME) {
 							state = Time_State_PAUSE;
+							audio_client.client->Stop();
 						} else {
 							state   = Time_State_RESUME;
 							game_dt = fixed_dt;
+							audio_client.client->Start();
 						}
 						break;
 					case Key_F2:
@@ -1091,27 +1089,27 @@ int system_main() {
 		while (accumulator_t >= fixed_dt) {
 			karma_timed_scope(SimulationFrame);
 
-			const r32 gravity = 10;
-			const r32 drag    = 5;
-
-			player.force = vec2(0);
-
-			player.force.x += 600 * controller.horizontal * dt;
-			player.force.y += 500 * controller.jump; // TODO: Make jump framerate independent!!!
-
-			Vec2 acceleration = (player.force / player.mass) - vec2(0, gravity);
-			player.velocity += dt * acceleration;
-			player.velocity *= powf(0.5f, drag * dt);
-			player.position.xy += dt * player.velocity;
-
-			if (player.position.y <= 0) {
-				player.position.y = 0;
-				player.velocity.y = 0;
-			}
-
-			controller.jump = false;
-
 			if (state == Time_State_RESUME) {
+				const r32 gravity = 10;
+				const r32 drag = 5;
+
+				player.force = vec2(0);
+
+				player.force.x += 600 * controller.horizontal * dt;
+				player.force.y += 500 * controller.jump; // TODO: Make jump framerate independent!!!
+
+				Vec2 acceleration = (player.force / player.mass) - vec2(0, gravity);
+				player.velocity += dt * acceleration;
+				player.velocity *= powf(0.5f, drag * dt);
+				player.position.xy += dt * player.velocity;
+
+				if (player.position.y <= 0) {
+					player.position.y = 0;
+					player.velocity.y = 0;
+				}
+
+				controller.jump = false;
+
 #if 1
 
 				for (int i = 0; i < NUM_RIGID_BODIES; i++) {
@@ -1256,7 +1254,9 @@ int system_main() {
 
 		static r32 angle = 0.0f;
 
-		angle += game_dt;
+		if (state == Time_State_RESUME) {
+			angle += game_dt;
+		}
 
 		im_rect_rotated(vec2(0), vec2(1), angle, vec4(0.6f, 0.2f, 0.3f));
 		im_rect(player.position, player.scale, vec4(1));
