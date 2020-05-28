@@ -870,7 +870,7 @@ inline r32 master_voice_get_volume(Master_Voice &voice) {
 	return voice.volume_b;
 }
 
-void mixer_update(Audio_Client &client, Master_Voice &master, Voice &voice) {
+void mixer_update(Audio_Client &client, Master_Voice &master, Voice &voice, r32 sample_rate_factor) {
 	auto sample_index = client.GetNextSampleIndex();
 	auto sample_count = (client.GetSamplesPerSec() * SYSTEM_AUDIO_BUFFER_SIZE_IN_MILLISECS * 5) / 1000;
 	auto buffer_size  = sample_count * client.GetChannelCount() * sizeof(r32);
@@ -902,31 +902,60 @@ void mixer_update(Audio_Client &client, Master_Voice &master, Voice &voice) {
 			audio->playing	= true;
 		}
 
-		u32 write_sample_index = (u32)(sample_index - audio->stamp);
-		if (write_sample_index < audio->audio->sample_count || audio->loop) {
+		u32 write_sampler_index	= (u32)(sample_index - audio->stamp);
+		r32 sampler_cursor		= (r32)write_sampler_index;
+
+		// TODO: Fix glittering issuse when sample_rate is changed
+
+		if (write_sampler_index < audio->audio->sample_count || audio->loop) {
 			r32 *write_ptr = buffer;
 			for (u32 sample_counter = 0; sample_counter < sample_count; ) {
 				assert((u8 *)write_ptr < (u8 *)buffer + buffer_size);
 
-				if (audio->loop && (u32)write_sample_index >= audio->audio->sample_count) {
+				if (audio->loop && (u32)(sampler_cursor + 0.5f) >= audio->audio->sample_count) {
 					audio->stamp		= sample_index;
-					write_sample_index	= 0;
+					sampler_cursor		= 0;
 				}
 
-				r32 sample_rate_factor		  = 1.0f;
-				u32 samples_left_for_sampling = (u32)(sample_rate_factor * (sample_count - sample_counter) + 0.5f);
+				u32 samples_left_for_sampling		= sample_count - sample_counter;
+				u32 samples_available_for_sampling	= audio->audio->sample_count - (u32)(sampler_cursor + 0.5f);
+				u32 samples_required_for_sampling	= (u32)((samples_available_for_sampling / sample_rate_factor) + 0.5f);
 
-				u32 samples_to_mix = min_value(audio->audio->sample_count - write_sample_index, samples_left_for_sampling);
+				u32 samples_to_mix = min_value(samples_available_for_sampling, samples_required_for_sampling);
+				if (samples_left_for_sampling < samples_to_mix) samples_to_mix = samples_left_for_sampling;
+
+				u32 u32_sampler_cursor_0;
+				u32 u32_sampler_cursor_1;
 
 				for (u32 sample_mix_index = 0; sample_mix_index < samples_to_mix; ++sample_mix_index) {
 					// TODO: Here we expect both input audio and output buffer to be stero audio
 					r32 volume_t = volume_time_in_samples / (r32)master.volume_span_in_samples;
 					r32 master_volume = lerp(master.volume_a, master.volume_b, clamp01(volume_t));
 					r32 effective_voice_volume = master_volume * voice.volume;
-					write_ptr[0] += audio->audio->samples[2 * write_sample_index + 0] * effective_voice_volume * audio->volume.m[0] * imax;
-					write_ptr[1] += audio->audio->samples[2 * write_sample_index + 1] * effective_voice_volume * audio->volume.m[1] * imax;
+
+					u32_sampler_cursor_0 = (u32)(sampler_cursor);
+					u32_sampler_cursor_1 = u32_sampler_cursor_0 + 1;
+
+					if (u32_sampler_cursor_1 == audio->audio->sample_count) {
+						u32_sampler_cursor_1 = u32_sampler_cursor_0;
+					}
+
+					assert(u32_sampler_cursor_0 < audio->audio->sample_count);
+					assert(u32_sampler_cursor_1 < audio->audio->sample_count);
+
+					Vec2 sample_values[2];
+					sample_values[0].x = audio->audio->samples[2 * u32_sampler_cursor_0 + 0] * imax;
+					sample_values[0].y = audio->audio->samples[2 * u32_sampler_cursor_0 + 1] * imax;
+					sample_values[1].x = audio->audio->samples[2 * u32_sampler_cursor_1 + 0] * imax;
+					sample_values[1].y = audio->audio->samples[2 * u32_sampler_cursor_1 + 1] * imax;
+					r32 second_sample_t = sampler_cursor - (r32)u32_sampler_cursor_0;
+
+					Vec2 result_sample_value = lerp(sample_values[0], sample_values[1], second_sample_t);
+
+					write_ptr[0] += result_sample_value.x * effective_voice_volume * audio->volume.m[0];
+					write_ptr[1] += result_sample_value.y * effective_voice_volume * audio->volume.m[1];
 					write_ptr += 2;
-					write_sample_index += 1;
+					sampler_cursor += sample_rate_factor;
 					volume_time_in_samples += 1;
 				}
 
@@ -1144,10 +1173,11 @@ int system_main() {
 				player.force = vec2(0);
 
 				player.force.x += 600 * controller.horizontal * dt;
-				player.force.y += 500 * controller.jump; // TODO: Make jump framerate independent!!!
 
-				Vec2 acceleration = (player.force / player.mass) - vec2(0, gravity);
+				Vec2 acceleration = (player.force / player.mass);
+				acceleration.y -= gravity; // TODO: Make jump framerate independent!!!
 				player.velocity += dt * acceleration;
+				player.velocity.y += 10 * controller.jump;
 				player.velocity *= powf(0.5f, drag * dt);
 				player.position.xy += dt * player.velocity;
 
@@ -1275,7 +1305,7 @@ int system_main() {
 		karma_timed_block_end(Simulation);
 
 		karma_timed_block_begin(AudioUpdate);
-		mixer_update(audio_client, master_voice, voice);
+		mixer_update(audio_client, master_voice, voice, factor.ratio);
 		karma_timed_block_end(AudioUpdate);
 
 		karma_timed_block_begin(Rendering);
