@@ -801,7 +801,7 @@ struct Audio_List {
 	u64			stamp;
 	booli		playing;
 	booli		loop;
-	r32			volume;
+	r32			volumes[2]; // 0:left 1:right
 	Audio_List *next;
 };
 
@@ -822,7 +822,7 @@ inline Voice audio_voice(u32 max_buffer_count) {
 	return voice;
 }
 
-inline void play_audio(Voice *voice, Audio *audio, r32 volume = 1, bool looping = false) {
+inline void play_audio(Voice *voice, Audio *audio, r32 left_volume, r32 right_volume, bool looping = false) {
 	Audio_List *list;
 
 	// First try to find slot in free list
@@ -835,13 +835,18 @@ inline void play_audio(Voice *voice, Audio *audio, r32 volume = 1, bool looping 
 		voice->buffer_index += 1;
 	}
 	
-	list->audio		= audio;
-	list->playing	= false;
-	list->loop		= looping;
-	list->volume	= volume;
+	list->audio			= audio;
+	list->playing		= false;
+	list->loop			= looping;
+	list->volumes[0]	= left_volume;
+	list->volumes[1]	= right_volume;
 
 	list->next			= voice->list.next;
 	voice->list.next	= list;
+}
+
+inline void play_audio(Voice *voice, Audio *audio, r32 volume = 1, bool looping = false) {
+	play_audio(voice, audio, volume, volume, looping);
 }
 
 struct Master_Voice {
@@ -884,8 +889,8 @@ void mixer_update(Audio_Client &client, Master_Voice &master, Voice &voice) {
 			r32 *write_ptr = buffer;
 			for (u32 sample_counter = 0; sample_counter < samples_to_mix; ++sample_counter) {
 				// TODO: Here we expect both input audio and output buffer to be stero audio
-				write_ptr[0] += audio->audio->samples[2 * (write_sample_index + sample_counter) + 0] * effective_voice_volume * audio->volume * imax;
-				write_ptr[1] += audio->audio->samples[2 * (write_sample_index + sample_counter) + 1] * effective_voice_volume * audio->volume * imax;
+				write_ptr[0] += audio->audio->samples[2 * (write_sample_index + sample_counter) + 0] * effective_voice_volume * audio->volumes[0] * imax;
+				write_ptr[1] += audio->audio->samples[2 * (write_sample_index + sample_counter) + 1] * effective_voice_volume * audio->volumes[1] * imax;
 				write_ptr += 2;
 			}
 		} else {
