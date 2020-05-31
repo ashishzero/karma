@@ -1111,6 +1111,7 @@ struct Audio_Mixer {
 	r32					*buffer;
 
 	r32 volume;
+	r32 pitch_factor;
 };
 
 Audio_Mixer audio_mixer(Audio_Client &client) {
@@ -1121,7 +1122,10 @@ Audio_Mixer audio_mixer(Audio_Client &client) {
 	mixer.buffer_size_in_bytes = sizeof(r32) * mixer.buffer_size_in_sample_count * client.format.Format.nChannels;
 	mixer.buffer = (r32 *)tallocate(mixer.buffer_size_in_bytes);
 	mixer.buffer_consumed_bytes = 0;
+
 	mixer.volume = 0.5f;
+	mixer.pitch_factor = 1;
+
 	return mixer;
 }
 
@@ -1195,7 +1199,7 @@ void audio_mixer_update(Audio_Mixer *mixer) {
 
 		if (node->audio.playing) {
 			Audio &audio = node->audio;
-			audio.buffered_pitch_factor	= audio.pitch_factor;
+			audio.buffered_pitch_factor	= audio.pitch_factor * mixer->pitch_factor;
 			//r32 inverse_audio_pitch_factor = 1.0f / audio.pitch_factor;
 
 			r32 *write_ptr = mixer->buffer;
@@ -1203,7 +1207,7 @@ void audio_mixer_update(Audio_Mixer *mixer) {
 
 			for (u32 sample_counter = 0; sample_counter < mixer->buffer_size_in_sample_count;) {
 				u32 more_samples_required	= (mixer->buffer_size_in_sample_count - sample_counter);
-				u32 samples_available		= (u32)lroundf(((r32)audio.stream->sample_count - read_cursor) / audio.pitch_factor);
+				u32 samples_available		= (u32)lroundf(((r32)audio.stream->sample_count - read_cursor) / audio.buffered_pitch_factor);
 				u32 samples_to_mix			= min_value(samples_available, more_samples_required);
 
 				r32 effective_volume = audio.volume * mixer->volume;
@@ -1214,7 +1218,7 @@ void audio_mixer_update(Audio_Mixer *mixer) {
 #define AUDIO_APPLY_PITCH_FILTERING
 					#ifdef AUDIO_APPLY_PITCH_FILTERING
 
-					r32 real_sample_index = read_cursor + sample_mix_index * audio.pitch_factor;
+					r32 real_sample_index = read_cursor + sample_mix_index * audio.buffered_pitch_factor;
 					u32 sample_index_0 = (u32)(real_sample_index);
 					assert(sample_index_0 < audio.stream->sample_count);
 					u32 sample_index_1 = (sample_index_0 + 1) % audio.stream->sample_count;
@@ -1232,7 +1236,7 @@ void audio_mixer_update(Audio_Mixer *mixer) {
 
 					#else
 
-					u32 sample_index = lroundf(read_cursor + sample_mix_index * audio.pitch_factor);
+					u32 sample_index = lroundf(read_cursor + sample_mix_index * audio.buffered_pitch_factor);
 					assert(sample_index < audio.stream->sample_count);
 
 					r32 sampled_left  = INVERSE_RANGE_S16 * ((r32)audio.stream->samples[2 * sample_index + 0] - (r32)MIN_INT16) - 1.0f;
@@ -1247,7 +1251,7 @@ void audio_mixer_update(Audio_Mixer *mixer) {
 				}
 
 				sample_counter += samples_to_mix;
-				read_cursor += samples_to_mix * audio.pitch_factor;
+				read_cursor += samples_to_mix * audio.buffered_pitch_factor;
 
 				if (!audio.loop) {
 					break;
@@ -1323,7 +1327,7 @@ int system_main() {
 
 	//play_audio(&voice, &audio, 1.0f, true);
 	auto music = play_audio(&mixer, &audio, true);
-	music->pitch_factor = 0.2f;
+	music->pitch_factor = 1;
 
 	//
 	//
@@ -1334,7 +1338,6 @@ int system_main() {
 	const r32 aspect_ratio = framebuffer_w / framebuffer_h;
 
 	Time_Speed_Factor factor;
-	decrease_game_speed(&factor);
 
 	r32 const fixed_dt      = 1.0f / 30.0f;
 	r32       dt            = fixed_dt * factor.ratio;
@@ -1590,6 +1593,8 @@ int system_main() {
 		karma_timed_block_end(Simulation);
 
 		karma_timed_block_begin(AudioUpdate);
+
+		mixer.pitch_factor = factor.ratio;
 		audio_mixer_update(&mixer);
 		//mixer_update(audio_client, master_voice, voice, factor.ratio);
 		karma_timed_block_end(AudioUpdate);
