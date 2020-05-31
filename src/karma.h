@@ -570,10 +570,6 @@ struct Array_View {
 		count = n;
 	}
 
-	inline operator bool() {
-		return count;
-	}
-
 	inline T &operator[](s64 index) const {
 		assert(index < count);
 		return data[index];
@@ -604,10 +600,6 @@ struct Array {
 	inline Array(Allocator_Proc proc, void *data = 0) {
 		allocator.proc = proc;
 		allocator.data = data;
-	}
-
-	inline operator bool() {
-		return count;
 	}
 
 	inline operator Array_View<T>() {
@@ -763,10 +755,6 @@ struct String {
 	inline const utf8 &operator[](s64 index) const {
 		assert(index < count);
 		return data[index];
-	}
-
-	inline operator bool() const {
-		return count;
 	}
 
 	inline operator Array_View<utf8>() {

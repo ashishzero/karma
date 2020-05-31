@@ -182,7 +182,7 @@ bool load_debug_font(Monospaced_Font *font) {
 		memory_free(content.data);
 	};
 
-	if (content) {
+	if (content.count) {
 		Istream in = istream(content);
 
 		u32 min_c   = *istream_consume(&in, u32);

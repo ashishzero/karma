@@ -2173,7 +2173,7 @@ bool system_thread_create(Thread_Proc proc, void *arg, Allocator allocator, ptrs
 
 	thread->handle.hptr = CreateThread(0, 0, win_thread_proc, &thread, CREATE_SUSPENDED, 0);
 	if (thread->handle.hptr != NULL) {
-		if (name) {
+		if (name.count) {
 			wchar_t *desc = (wchar_t *)tallocate((name.count + 1) * sizeof(wchar_t));
 			MultiByteToWideChar(CP_UTF8, 0, (char *)name.data, (int)name.count, desc, (int)name.count + 1);
 			desc[name.count] = 0;

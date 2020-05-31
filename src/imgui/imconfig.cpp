@@ -44,7 +44,7 @@ void ImGui::Initialize() {
 		memory_free(ini_content.data);
 	};
 
-	if (ini_content) {
+	if (ini_content.count) {
 		ImGui::LoadIniSettingsFromMemory((char *)ini_content.data, ini_content.count);
 	}
 
@@ -145,7 +145,7 @@ void ImGui::Initialize() {
 
 	io.GetClipboardTextFn = [](void *user_data) -> const char * {
 		String string = system_get_clipboard_text();
-		if (string) {
+		if (string.count) {
 			char *data = (char *)ImGui::MemAlloc(string.count + 1);
 			memcpy(data, string.data, string.count);
 			data[string.count] = 0;

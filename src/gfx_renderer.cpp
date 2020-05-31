@@ -103,7 +103,7 @@ static String igfx_find_shader(String content, u32 shader_tag, const char *name 
 		elem += 1;
 	}
 
-	if (!result) {
+	if (result.count == 0) {
 		system_log(LOG_ERROR, "Gfx", "Shader %s not found", name);
 	}
 
