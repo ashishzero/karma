@@ -11,6 +11,12 @@
 #include <windowsx.h>
 #include <winreg.h>
 #include <Lmcons.h> // for UNLEN
+
+#include <Mmdeviceapi.h>
+#include <Functiondiscoverykeys_devpkey.h>
+#include <Audioclient.h>
+#include <audiopolicy.h>
+
 #include <avrt.h>
 
 #pragma comment(lib, "kernel32.lib")
@@ -21,6 +27,29 @@
 #pragma comment(lib, "Ole32.lib")
 #pragma comment(lib, "Shlwapi.lib")
 #pragma comment(lib, "Avrt.lib")
+
+//
+// Win32 Error
+//
+
+static void win32_check_for_error_info(const Compile_Info &compile_info) {
+	DWORD error = GetLastError();
+	if (error) {
+		LPSTR message = 0;
+		FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+			NULL, error, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+			(LPSTR)&message, 0, NULL);
+		system_log(LOG_ERROR, "Platform", "File: %s, Line: %d, Function: %s", compile_info.file, compile_info.line, compile_info.procedure);
+		system_log(LOG_ERROR, "Platform", "Message: %s", message);
+		LocalFree(message);
+	}
+}
+
+#if defined(BUILD_DEBUG)
+#	define win32_check_for_error() win32_check_for_error_info(COMPILE_INFO)
+#else
+#	define win32_check_for_error()
+#endif
 
 //
 // XInput Header File
@@ -218,6 +247,449 @@ struct Win32_Controller {
 // Windows Audio Client
 //
 
+const CLSID CLSID_MMDeviceEnumerator	= __uuidof(MMDeviceEnumerator);
+const IID IID_IMMDeviceEnumerator		= __uuidof(IMMDeviceEnumerator);
+const IID IID_IAudioClient				= __uuidof(IAudioClient);
+const IID IID_IAudioRenderClient		= __uuidof(IAudioRenderClient);
+const IID IID_IAudioClock				= __uuidof(IAudioClock);
+const IID IID_IAudioSessionControl		= __uuidof(IAudioSessionControl);
+
+constexpr u32 REFTIMES_PER_SEC			= 10000000;
+constexpr u32 REFTIMES_PER_MILLISEC		= 10000;
+
+class Audio_Client : public IAudioSessionEvents {
+public:
+	LONG					reference_count					= 1;
+	IMMDeviceEnumerator		*enumerator						= nullptr;
+	IMMDevice				*device							= nullptr;
+	IAudioClient			*client							= nullptr;
+	IAudioSessionControl	*control						= nullptr;
+	IAudioClock				*clock							= nullptr;
+	IAudioRenderClient		*renderer						= nullptr;
+	WAVEFORMATEXTENSIBLE	 format							= {};
+	HANDLE					thread							= nullptr;
+	HANDLE					write_event						= nullptr;
+	u32						total_samples					= 0;
+	u64						clock_frequency					= 0;
+	u64						write_cursor					= 0;
+
+	Audio_Callback			on_update				= nullptr;
+	Audio_Device_Refresh	on_refresh				= nullptr;
+	void					*on_update_user_data	= nullptr;
+
+	void Cleanup() {
+		if (enumerator)		enumerator->Release();
+		if (device)			device->Release();
+		if (client)			client->Release();
+		if (renderer)		renderer->Release();
+
+		enumerator					= nullptr;
+		device						= nullptr;
+		client						= nullptr;
+		renderer					= nullptr;
+		total_samples				= 0;
+	}
+
+	void Destroy() {
+		Cleanup();
+
+		if (thread)			CloseHandle(thread);
+		if (write_event)	CloseHandle(write_event);
+	}
+
+	bool FindDevice() {
+		// TODO: Audio output device selection
+		auto hr = enumerator->GetDefaultAudioEndpoint(eRender, eConsole, &device);
+		if (FAILED(hr)) {
+			// NOTE: I don't know why there are two return codes when device is not available
+			// In the docs both these errors are returned when device is not found
+			if (hr == E_NOTFOUND || hr == ERROR_NOT_FOUND) {
+				system_display_critical_message("Audio Device is not present!");
+			} else {
+				// TODO: Logging
+				win32_check_for_error();
+				system_display_critical_message("Audio Thread could not be initialized");
+			}
+
+			Destroy();
+			return false;
+		}
+
+		return true;
+	}
+
+	bool RetriveInformation() {
+		auto hr = client->GetBufferSize(&total_samples);
+		if (FAILED(hr)) {
+			// TODO: Logging
+			win32_check_for_error();
+			return false;
+		}
+
+		hr = clock->GetFrequency(&clock_frequency);
+		if (FAILED(hr)) {
+			// TODO: Logging
+			win32_check_for_error();
+			return false;
+		}
+
+		return true;
+	}
+
+	static void StubAudioCallback(const System_Audio &sys_audio, void *user_data) {
+		(void)user_data;
+	}
+
+	bool Initialize() {
+		auto hr = CoCreateInstance(CLSID_MMDeviceEnumerator, nullptr, CLSCTX_ALL, IID_IMMDeviceEnumerator, (void**)&enumerator);
+		if (FAILED(hr)) {
+			// TODO: Better logging
+			win32_check_for_error();
+			return false;
+		}
+
+		if (FindDevice()) {
+			hr = device->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&client);
+			if (FAILED(hr)) {
+				if (hr == AUDCLNT_E_DEVICE_INVALIDATED) {
+					system_display_critical_message("Audio Device disconnected!");
+				}
+				else {
+					// TODO: Logging
+					win32_check_for_error();
+					system_display_critical_message("Audio Thread could not be initialized");
+				}
+
+				Destroy();
+				return false;
+			}
+
+			{
+				WAVEFORMATEX *mix_format = nullptr;
+				hr = client->GetMixFormat(&mix_format);
+				if (FAILED(hr)) {
+					if (hr == AUDCLNT_E_DEVICE_INVALIDATED) {
+						system_display_critical_message("Audio Device disconnected!");
+					}
+					else if (hr == AUDCLNT_E_SERVICE_NOT_RUNNING) {
+						system_display_critical_message("The Windows audio service is not running.");
+					}
+					else {
+						// TODO: Logging
+						win32_check_for_error();
+						system_display_critical_message("Audio Thread could not be initialized");
+					}
+					Destroy();
+					return false;
+				}
+
+				if (mix_format->wFormatTag == WAVE_FORMAT_EXTENSIBLE && mix_format->cbSize >= 22) {
+					memcpy(&format, mix_format, sizeof(WAVEFORMATEXTENSIBLE));
+				} else {
+					memcpy(&format, mix_format, sizeof(WAVEFORMATEX));
+				}
+				CoTaskMemFree(mix_format);
+
+				if (format.SubFormat != KSDATAFORMAT_SUBTYPE_IEEE_FLOAT || format.Format.wBitsPerSample != 32 || format.Samples.wValidBitsPerSample != 32) {
+					format.SubFormat = KSDATAFORMAT_SUBTYPE_IEEE_FLOAT;
+					format.Format.wBitsPerSample = 32;
+					format.Samples.wValidBitsPerSample = 32;
+
+					WAVEFORMATEX *closest_match = nullptr;
+					if (client->IsFormatSupported(AUDCLNT_SHAREMODE_SHARED, (WAVEFORMATEX *)&format, &closest_match) != S_OK) {
+						// TODO: We don't support IEEE 32 bit floating samples
+						win32_check_for_error();
+						Cleanup();
+						CoTaskMemFree(closest_match);
+						trigger_breakpoint();
+						return false;
+					}
+					CoTaskMemFree(closest_match);
+				}
+			}
+
+			REFERENCE_TIME requested_duration = 0;
+			DWORD init_flags = AUDCLNT_STREAMFLAGS_EVENTCALLBACK | AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM | AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY;
+			hr = client->Initialize(AUDCLNT_SHAREMODE_SHARED, init_flags, requested_duration, 0, (WAVEFORMATEX *)&format, nullptr);
+			if (hr == AUDCLNT_E_BUFFER_SIZE_NOT_ALIGNED) {
+				hr = client->GetBufferSize(&total_samples);
+				if (FAILED(hr)) {
+					// TODO: Logging
+					win32_check_for_error();
+				}
+
+				requested_duration = (REFERENCE_TIME)((10000.0 * 1000 / format.Format.nSamplesPerSec * total_samples) + 0.5);
+				client->Release();
+
+				hr = device->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&client);
+				if (FAILED(hr)) {
+					// TODO: Logging
+					win32_check_for_error();
+					return false;
+				}
+
+				WAVEFORMATEX *mix_format = nullptr;
+				hr = client->GetMixFormat(&mix_format);
+				if (FAILED(hr)) {
+					// TODO: Logging
+					win32_check_for_error();
+					Destroy();
+					return false;
+				}
+				CoTaskMemFree(mix_format);
+
+				if (format.SubFormat != KSDATAFORMAT_SUBTYPE_IEEE_FLOAT || format.Format.wBitsPerSample != 32 || format.Samples.wValidBitsPerSample != 32) {
+					format.SubFormat = KSDATAFORMAT_SUBTYPE_IEEE_FLOAT;
+					format.Format.wBitsPerSample = 32;
+					format.Samples.wValidBitsPerSample = 32;
+
+					WAVEFORMATEX *closest_match = nullptr;
+					if (client->IsFormatSupported(AUDCLNT_SHAREMODE_SHARED, (WAVEFORMATEX *)&format, &closest_match) != S_OK) {
+						// TODO: We don't support IEEE 32 bit floating samples
+						win32_check_for_error();
+						Destroy();
+						CoTaskMemFree(closest_match);
+						trigger_breakpoint();
+						return false;
+					}
+					CoTaskMemFree(closest_match);
+				}
+
+				hr = client->Initialize(AUDCLNT_SHAREMODE_SHARED, init_flags, requested_duration, requested_duration, mix_format, nullptr);
+				if (FAILED(hr)) {
+					// TODO: Logging
+					win32_check_for_error();
+					Destroy();
+					return false;
+				}
+			}
+
+			if (hr != S_OK) {
+				// TODO: Logging
+				win32_check_for_error();
+				Destroy();
+				return false;
+			}
+
+			hr = client->GetService(IID_IAudioSessionControl, (void **)&control);
+			if (FAILED(hr)) {
+				// TODO: Logging
+				win32_check_for_error();
+				Destroy();
+				return false;
+			}
+
+			control->RegisterAudioSessionNotification(this);
+
+			hr = client->GetService(IID_IAudioRenderClient, (void **)&renderer);
+			if (FAILED(hr)) {
+				// TODO: Logging
+				win32_check_for_error();
+				Destroy();
+				return false;
+			}
+
+			hr = client->GetService(IID_IAudioClock, (void **)&clock);
+			if (FAILED(hr)) {
+				// TODO: Logging
+				win32_check_for_error();
+				Destroy();
+				return false;
+			}
+
+			if (write_event == NULL) {
+				write_event = CreateEventW(nullptr, FALSE, FALSE, 0);
+				if (write_event == NULL) {
+					// TODO: Better logging
+					win32_check_for_error();
+					Destroy();
+					return false;
+				}
+			}
+
+			client->SetEventHandle(write_event);
+
+			if (!RetriveInformation()) {
+				Destroy();
+				return false;
+			}
+
+			ptrsize device_buffer_size	= sizeof(r32) * total_samples * format.Format.nChannels;
+			ptrsize buffer_size			= (sizeof(r32) * format.Format.nSamplesPerSec * SYSTEM_AUDIO_BUFFER_SIZE_IN_MILLISECS * format.Format.nChannels) / 1000;
+
+			if (device_buffer_size >= buffer_size) {
+				// TODO: Error or Log??
+				// If Audio device buffer can't be made smaller, and can't be overidden, then there'll be large audio lag
+				// What do we do in this case?
+				trigger_breakpoint();
+				Destroy();
+				return false;
+			}
+
+			return true;
+		}
+
+		return false;
+	}
+
+	static u8 *LockBuffer(System_Audio_Handle sys_audio, u32 *sample_count) {
+		Audio_Client *audio = (Audio_Client *)sys_audio;
+
+		// TODO: Error handling!!!
+		u32 samples_padding;
+		auto hr = audio->client->GetCurrentPadding(&samples_padding);
+		if (SUCCEEDED(hr)) {
+			*sample_count = audio->total_samples - samples_padding;
+
+			BYTE *data;
+			hr = audio->renderer->GetBuffer(*sample_count, &data);
+			if (SUCCEEDED(hr)) {
+				return data;
+			}
+		}
+
+		return nullptr;
+	}
+
+	static void UnlockBuffer(System_Audio_Handle sys_audio, u32 samples_written) {
+		Audio_Client *audio = (Audio_Client *)sys_audio;
+		audio->renderer->ReleaseBuffer(samples_written, 0);
+		audio->write_cursor += samples_written;
+	}
+
+	static DWORD WINAPI AudioThreadProcedure(LPVOID param) {
+		Audio_Client *audio = (Audio_Client *)param;
+
+		DWORD task_index = 0;
+		auto task = AvSetMmThreadCharacteristicsW(L"Audio", &task_index);
+		if (task) {
+			AvSetMmThreadPriority(task, AVRT_PRIORITY_HIGH);
+		}
+
+		context.handle.hptr = audio->thread;
+		context.id			= GetCurrentThreadId();
+		context.allocator	= NULL_ALLOCATOR;
+		context.temp_memory = Temporary_Memory(0, 0);
+		context.proc		= (Thread_Proc)AudioThreadProcedure;
+		context.data		= 0;
+
+		SetThreadDescription(audio->thread, L"Platform Audio Thread");
+
+		u32 samples_padding		= 0;
+		u32 samples_available	= 0;
+		BYTE *data				= 0;
+		u32 flags				= 0;
+
+		auto hr = audio->client->Start();
+		if (FAILED(hr)) {
+			// TODO: Handle error
+			win32_check_for_error();
+			return 0;
+		}
+
+		static const System_Audio sys_audio = { audio, LockBuffer, UnlockBuffer };
+
+		while (true) {
+			DWORD wait_res = WaitForSingleObject(audio->write_event, SYSTEM_AUDIO_BUFFER_SIZE_IN_MILLISECS);
+			if (wait_res != WAIT_OBJECT_0) {
+				// Event handle timed out after a SYSTEM_AUDIO_BUFFER_SIZE_IN_MILLISECS wait.
+				// If event is not signaled even after SYSTEM_AUDIO_BUFFER_SIZE_IN_MILLISECS millisecs, audio buffer is may be lost
+				// TODO: Handle timed out, (may be we delete and find default device again?)
+			}
+
+			audio->on_update(sys_audio, audio->on_update_user_data);
+		}
+
+		return 0;
+	}
+
+	bool StartThread(Audio_Callback callback, Audio_Device_Refresh refresh, void *user_ptr) {
+		if (callback) {
+			on_update = callback;
+			on_update_user_data = user_ptr;
+		} else {
+			on_update = StubAudioCallback;
+			on_update_user_data = 0;
+		}
+		on_refresh = refresh;
+
+		thread = CreateThread(nullptr, 0, AudioThreadProcedure, this, 0, nullptr);
+		if (thread == NULL) {
+			win32_check_for_error();
+			Destroy();
+			return false;
+		}
+
+		return true;
+	}
+
+	void StopThread() {
+		TerminateThread(thread, 0);
+	}
+
+	ULONG STDMETHODCALLTYPE AddRef() {
+		return InterlockedIncrement(&reference_count);
+	}
+
+	ULONG STDMETHODCALLTYPE Release() {
+		ULONG ulRef = InterlockedDecrement(&reference_count);
+		if (0 == ulRef) {} // we allocate this in stack
+		return ulRef;
+	}
+
+	HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, VOID **ppvInterface) {
+		if (IID_IUnknown == riid) {
+			AddRef();
+			*ppvInterface = (IUnknown*)this;
+		}
+		else if (__uuidof(IAudioSessionEvents) == riid) {
+			AddRef();
+			*ppvInterface = (IAudioSessionEvents*)this;
+		}
+		else {
+			*ppvInterface = NULL;
+			return E_NOINTERFACE;
+		}
+		return S_OK;
+	}
+
+	HRESULT OnChannelVolumeChanged(DWORD  ChannelCount, float NewChannelVolumeArray[], DWORD ChangedChannel, LPCGUID EventContext) {
+		return S_OK;
+	}
+
+	HRESULT OnDisplayNameChanged(LPCWSTR NewDisplayName, LPCGUID EventContext) {
+		return S_OK;
+	}
+
+	HRESULT OnGroupingParamChanged(LPCGUID NewGroupingParam, LPCGUID EventContext) {
+		return S_OK;
+	}
+
+	HRESULT OnIconPathChanged(LPCWSTR NewIconPath, LPCGUID EventContext) {
+		return S_OK;
+	}
+
+	HRESULT OnSimpleVolumeChanged(float NewVolume, BOOL NewMute, LPCGUID EventContext) {
+		return S_OK;
+	}
+
+	HRESULT OnStateChanged(AudioSessionState NewState) {
+		return S_OK;
+	}
+
+	HRESULT OnSessionDisconnected(AudioSessionDisconnectReason DisconnectReason) {
+		Cleanup();
+		if (Initialize()) {
+			if (on_refresh) {
+				on_refresh(format.Format.nSamplesPerSec, format.Format.nChannels, on_update_user_data);
+			}
+		} else {
+			// TODO: Log error
+			// Audio device removed and new device could not be initialized
+		}
+		return S_OK;
+	}
+};
 
 //
 //
@@ -238,27 +710,10 @@ static u32			 windows_event_count;
 static int window_width;
 static int window_height;
 
+static Audio_Client		windows_audio_client;
+
 static Win32_Controller windows_controllers_state[XUSER_MAX_COUNT];
 static Controller       controllers[XUSER_MAX_COUNT];
-
-static void win32_check_for_error_info(const Compile_Info &compile_info) {
-	DWORD error = GetLastError();
-	if (error) {
-		LPSTR message = 0;
-		FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-					   NULL, error, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-					   (LPSTR)&message, 0, NULL);
-		system_log(LOG_ERROR, "Platform", "File: %s, Line: %d, Function: %s", compile_info.file, compile_info.line, compile_info.procedure);
-		system_log(LOG_ERROR, "Platform", "Message: %s", message);
-		LocalFree(message);
-	}
-}
-
-#if defined(BUILD_DEBUG)
-#	define win32_check_for_error() win32_check_for_error_info(COMPILE_INFO)
-#else
-#	define win32_check_for_error()
-#endif
 
 Array_View<u8> system_read_entire_file(const String path) {
 	Array_View<u8> result = {};
@@ -1341,6 +1796,26 @@ void system_exit_process(int result) {
 	ExitProcess(result);
 }
 
+bool system_audio(Audio_Callback callback, Audio_Device_Refresh refresh, void *user_data) {
+	return windows_audio_client.StartThread(callback, refresh, user_data);
+}
+
+u32 system_audio_sample_rate() {
+	return windows_audio_client.format.Format.nSamplesPerSec;
+}
+
+u32 system_audio_channel_count() {
+	return windows_audio_client.format.Format.nChannels;
+}
+
+void system_audio_resume() {
+	windows_audio_client.client->Start();
+}
+
+void system_audio_pause() {
+	windows_audio_client.client->Stop();
+}
+
 static inline Vec2 xinput_axis_deadzone_correction(SHORT x, SHORT y, SHORT deadzone) {
 	r32 mag      = sqrtf((r32)(x * x + y * y));
 	r32 norm_x   = mag ? (r32)x / mag : 0;
@@ -1793,9 +2268,15 @@ int __stdcall wWinMain(HINSTANCE instance, HINSTANCE prev_instance, LPWSTR cmd_l
 	}
 	context.temp_memory = Temporary_Memory(ptr, static_cast<ptrsize>(TEMPORARY_MEMORY_SIZE));
 
+	if (!windows_audio_client.Initialize()) {
+		system_log(LOG_WARNING, "Windows", "Audio could not be initialized");
+	}
+
 	win32_initialize_xinput();
 
 	int result = system_main();
+
+	windows_audio_client.StopThread();
 	
 	HeapDestroy(context.allocator.data);
 

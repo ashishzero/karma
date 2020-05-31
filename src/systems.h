@@ -369,6 +369,7 @@ struct System_Audio {
 };
 
 typedef void(*Audio_Callback)(const System_Audio &sys_audio, void *user_data);
+typedef void(*Audio_Device_Refresh)(u32 sample_rate, u32 channel_count, void *user_data);
 
 //
 //
@@ -424,6 +425,12 @@ String      system_get_user_name();
 Handle system_create_window(const char *title, s32 width, s32 height, System_Window_Show show, System_Window_State *state = 0);
 void   system_request_quit();
 void   system_exit_process(int result);
+
+bool system_audio(Audio_Callback callback, Audio_Device_Refresh refresh, void *user_data);
+u32 system_audio_sample_rate();
+u32 system_audio_channel_count();
+void system_audio_resume();
+void system_audio_pause();
 
 const Array_View<Event> system_poll_events(int poll_count = 1);
 

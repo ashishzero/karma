@@ -8,471 +8,6 @@
 #include "particle_system.h"
 #include "stream.h"
 
-#include <Windows.h>
-#include <Mmdeviceapi.h>
-#include <Functiondiscoverykeys_devpkey.h>
-#include <Audioclient.h>
-#include <audiopolicy.h>
-
-#include <avrt.h>
-
-static void win32_check_for_error_info(const Compile_Info &compile_info) {
-	DWORD error = GetLastError();
-	if (error) {
-		LPSTR message = 0;
-		FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-			NULL, error, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-			(LPSTR)&message, 0, NULL);
-		system_log(LOG_ERROR, "Platform", "File: %s, Line: %d, Function: %s", compile_info.file, compile_info.line, compile_info.procedure);
-		system_log(LOG_ERROR, "Platform", "Message: %s", message);
-		LocalFree(message);
-	}
-}
-
-#if defined(BUILD_DEBUG)
-#	define win32_check_for_error() win32_check_for_error_info(COMPILE_INFO)
-#else
-#	define win32_check_for_error()
-#endif
-
-const CLSID CLSID_MMDeviceEnumerator	= __uuidof(MMDeviceEnumerator);
-const IID IID_IMMDeviceEnumerator		= __uuidof(IMMDeviceEnumerator);
-const IID IID_IAudioClient				= __uuidof(IAudioClient);
-const IID IID_IAudioRenderClient		= __uuidof(IAudioRenderClient);
-const IID IID_IAudioClock				= __uuidof(IAudioClock);
-const IID IID_IAudioSessionControl		= __uuidof(IAudioSessionControl);
-
-constexpr u32 REFTIMES_PER_SEC			= 10000000;
-constexpr u32 REFTIMES_PER_MILLISEC		= 10000;
-
-class Audio_Client : public IAudioSessionEvents {
-public:
-	LONG					reference_count					= 1;
-	IMMDeviceEnumerator		*enumerator						= nullptr;
-	IMMDevice				*device							= nullptr;
-	IAudioClient			*client							= nullptr;
-	IAudioSessionControl	*control						= nullptr;
-	IAudioClock				*clock							= nullptr;
-	IAudioRenderClient		*renderer						= nullptr;
-	WAVEFORMATEXTENSIBLE	 format							= {};
-	HANDLE					thread							= nullptr;
-	HANDLE					write_event						= nullptr;
-	u32						total_samples					= 0;
-	u64						clock_frequency					= 0;
-	u64						write_cursor					= 0;
-
-	Audio_Callback			on_update				= nullptr;
-	void					*on_update_user_data	= nullptr;
-
-	void Cleanup() {
-		if (enumerator)		enumerator->Release();
-		if (device)			device->Release();
-		if (client)			client->Release();
-		if (renderer)		renderer->Release();
-
-		enumerator					= nullptr;
-		device						= nullptr;
-		client						= nullptr;
-		renderer					= nullptr;
-		total_samples				= 0;
-	}
-
-	void Destroy() {
-		Cleanup();
-
-		if (thread)			CloseHandle(thread);
-		if (write_event)	CloseHandle(write_event);
-	}
-
-	bool FindDevice() {
-		// TODO: Audio output device selection
-		auto hr = enumerator->GetDefaultAudioEndpoint(eRender, eConsole, &device);
-		if (FAILED(hr)) {
-			// NOTE: I don't know why there are two return codes when device is not available
-			// In the docs both these errors are returned when device is not found
-			if (hr == E_NOTFOUND || hr == ERROR_NOT_FOUND) {
-				system_display_critical_message("Audio Device is not present!");
-			} else {
-				// TODO: Logging
-				win32_check_for_error();
-				system_display_critical_message("Audio Thread could not be initialized");
-			}
-
-			Destroy();
-			return false;
-		}
-
-		return true;
-	}
-
-	bool RetriveInformation() {
-		auto hr = client->GetBufferSize(&total_samples);
-		if (FAILED(hr)) {
-			// TODO: Logging
-			win32_check_for_error();
-			return false;
-		}
-
-		hr = clock->GetFrequency(&clock_frequency);
-		if (FAILED(hr)) {
-			// TODO: Logging
-			win32_check_for_error();
-			return false;
-		}
-
-		return true;
-	}
-
-	static void StubAudioCallback(const System_Audio &sys_audio, void *user_data) {
-		(void)user_data;
-	}
-
-	bool Initialize() {
-		auto hr = CoCreateInstance(CLSID_MMDeviceEnumerator, nullptr, CLSCTX_ALL, IID_IMMDeviceEnumerator, (void**)&enumerator);
-		if (FAILED(hr)) {
-			// TODO: Better logging
-			win32_check_for_error();
-			return false;
-		}
-
-		if (FindDevice()) {
-			hr = device->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&client);
-			if (FAILED(hr)) {
-				if (hr == AUDCLNT_E_DEVICE_INVALIDATED) {
-					system_display_critical_message("Audio Device disconnected!");
-				}
-				else {
-					// TODO: Logging
-					win32_check_for_error();
-					system_display_critical_message("Audio Thread could not be initialized");
-				}
-
-				Destroy();
-				return false;
-			}
-
-			{
-				WAVEFORMATEX *mix_format = nullptr;
-				hr = client->GetMixFormat(&mix_format);
-				if (FAILED(hr)) {
-					if (hr == AUDCLNT_E_DEVICE_INVALIDATED) {
-						system_display_critical_message("Audio Device disconnected!");
-					}
-					else if (hr == AUDCLNT_E_SERVICE_NOT_RUNNING) {
-						system_display_critical_message("The Windows audio service is not running.");
-					}
-					else {
-						// TODO: Logging
-						win32_check_for_error();
-						system_display_critical_message("Audio Thread could not be initialized");
-					}
-					Destroy();
-					return false;
-				}
-
-				if (mix_format->wFormatTag == WAVE_FORMAT_EXTENSIBLE && mix_format->cbSize >= 22) {
-					memcpy(&format, mix_format, sizeof(WAVEFORMATEXTENSIBLE));
-				} else {
-					memcpy(&format, mix_format, sizeof(WAVEFORMATEX));
-				}
-				CoTaskMemFree(mix_format);
-
-				if (format.SubFormat != KSDATAFORMAT_SUBTYPE_IEEE_FLOAT || format.Format.wBitsPerSample != 32 || format.Samples.wValidBitsPerSample != 32) {
-					format.SubFormat = KSDATAFORMAT_SUBTYPE_IEEE_FLOAT;
-					format.Format.wBitsPerSample = 32;
-					format.Samples.wValidBitsPerSample = 32;
-
-					WAVEFORMATEX *closest_match = nullptr;
-					if (client->IsFormatSupported(AUDCLNT_SHAREMODE_SHARED, (WAVEFORMATEX *)&format, &closest_match) != S_OK) {
-						// TODO: We don't support IEEE 32 bit floating samples
-						win32_check_for_error();
-						Cleanup();
-						CoTaskMemFree(closest_match);
-						trigger_breakpoint();
-						return false;
-					}
-					CoTaskMemFree(closest_match);
-				}
-			}
-
-			REFERENCE_TIME requested_duration = 0;
-			DWORD init_flags = AUDCLNT_STREAMFLAGS_EVENTCALLBACK | AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM | AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY;
-			hr = client->Initialize(AUDCLNT_SHAREMODE_SHARED, init_flags, requested_duration, 0, (WAVEFORMATEX *)&format, nullptr);
-			if (hr == AUDCLNT_E_BUFFER_SIZE_NOT_ALIGNED) {
-				hr = client->GetBufferSize(&total_samples);
-				if (FAILED(hr)) {
-					// TODO: Logging
-					win32_check_for_error();
-				}
-
-				requested_duration = (REFERENCE_TIME)((10000.0 * 1000 / format.Format.nSamplesPerSec * total_samples) + 0.5);
-				client->Release();
-
-				hr = device->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&client);
-				if (FAILED(hr)) {
-					// TODO: Logging
-					win32_check_for_error();
-					return false;
-				}
-
-				WAVEFORMATEX *mix_format = nullptr;
-				hr = client->GetMixFormat(&mix_format);
-				if (FAILED(hr)) {
-					// TODO: Logging
-					win32_check_for_error();
-					Destroy();
-					return false;
-				}
-				CoTaskMemFree(mix_format);
-
-				if (format.SubFormat != KSDATAFORMAT_SUBTYPE_IEEE_FLOAT || format.Format.wBitsPerSample != 32 || format.Samples.wValidBitsPerSample != 32) {
-					format.SubFormat = KSDATAFORMAT_SUBTYPE_IEEE_FLOAT;
-					format.Format.wBitsPerSample = 32;
-					format.Samples.wValidBitsPerSample = 32;
-
-					WAVEFORMATEX *closest_match = nullptr;
-					if (client->IsFormatSupported(AUDCLNT_SHAREMODE_SHARED, (WAVEFORMATEX *)&format, &closest_match) != S_OK) {
-						// TODO: We don't support IEEE 32 bit floating samples
-						win32_check_for_error();
-						Destroy();
-						CoTaskMemFree(closest_match);
-						trigger_breakpoint();
-						return false;
-					}
-					CoTaskMemFree(closest_match);
-				}
-				
-				hr = client->Initialize(AUDCLNT_SHAREMODE_SHARED, init_flags, requested_duration, requested_duration, mix_format, nullptr);
-				if (FAILED(hr)) {
-					// TODO: Logging
-					win32_check_for_error();
-					Destroy();
-					return false;
-				}
-			}
-
-			if (hr != S_OK) {
-				// TODO: Logging
-				win32_check_for_error();
-				Destroy();
-				return false;
-			}
-
-			hr = client->GetService(IID_IAudioSessionControl, (void **)&control);
-			if (FAILED(hr)) {
-				// TODO: Logging
-				win32_check_for_error();
-				Destroy();
-				return false;
-			}
-
-			control->RegisterAudioSessionNotification(this);
-
-			hr = client->GetService(IID_IAudioRenderClient, (void **)&renderer);
-			if (FAILED(hr)) {
-				// TODO: Logging
-				win32_check_for_error();
-				Destroy();
-				return false;
-			}
-
-			hr = client->GetService(IID_IAudioClock, (void **)&clock);
-			if (FAILED(hr)) {
-				// TODO: Logging
-				win32_check_for_error();
-				Destroy();
-				return false;
-			}
-
-			if (write_event == NULL) {
-				write_event = CreateEventW(nullptr, FALSE, FALSE, 0);
-				if (write_event == NULL) {
-					// TODO: Better logging
-					win32_check_for_error();
-					Destroy();
-					return false;
-				}
-			}
-
-			client->SetEventHandle(write_event);
-
-			if (!RetriveInformation()) {
-				Destroy();
-				return false;
-			}
-
-			ptrsize device_buffer_size	= sizeof(r32) * total_samples * format.Format.nChannels;
-			ptrsize buffer_size			= (sizeof(r32) * format.Format.nSamplesPerSec * SYSTEM_AUDIO_BUFFER_SIZE_IN_MILLISECS * format.Format.nChannels) / 1000;
-
-			if (device_buffer_size >= buffer_size) {
-				// TODO: Error or Log??
-				// If Audio device buffer can't be made smaller, and can't be overidden, then there'll be large audio lag
-				// What do we do in this case?
-				trigger_breakpoint();
-				Destroy();
-				return false;
-			}
-
-			return true;
-		}
-
-		return false;
-	}
-
-	static u8 *LockBuffer(System_Audio_Handle sys_audio, u32 *sample_count) {
-		Audio_Client *audio = (Audio_Client *)sys_audio;
-
-		// TODO: Error handling!!!
-		u32 samples_padding;
-		auto hr = audio->client->GetCurrentPadding(&samples_padding);
-		if (SUCCEEDED(hr)) {
-			*sample_count = audio->total_samples - samples_padding;
-
-			BYTE *data;
-			hr = audio->renderer->GetBuffer(*sample_count, &data);
-			if (SUCCEEDED(hr)) {
-				return data;
-			}
-		}
-
-		return nullptr;
-	}
-
-	static void UnlockBuffer(System_Audio_Handle sys_audio, u32 samples_written) {
-		Audio_Client *audio = (Audio_Client *)sys_audio;
-		audio->renderer->ReleaseBuffer(samples_written, 0);
-		audio->write_cursor += samples_written;
-	}
-
-	static DWORD WINAPI AudioThreadProcedure(LPVOID param) {
-		Audio_Client *audio = (Audio_Client *)param;
-
-		DWORD task_index = 0;
-		auto task = AvSetMmThreadCharacteristicsW(L"Audio", &task_index);
-		if (task) {
-			AvSetMmThreadPriority(task, AVRT_PRIORITY_HIGH);
-		}
-
-		context.handle.hptr = audio->thread;
-		context.id			= GetCurrentThreadId();
-		context.allocator	= NULL_ALLOCATOR;
-		context.temp_memory = Temporary_Memory(0, 0);
-		context.proc		= (Thread_Proc)AudioThreadProcedure;
-		context.data		= 0;
-
-		SetThreadDescription(audio->thread, L"Platform Audio Thread");
-
-		u32 samples_padding		= 0;
-		u32 samples_available	= 0;
-		BYTE *data				= 0;
-		u32 flags				= 0;
-
-		auto hr = audio->client->Start();
-		if (FAILED(hr)) {
-			// TODO: Handle error
-			win32_check_for_error();
-			return 0;
-		}
-
-		static const System_Audio sys_audio = { audio, LockBuffer, UnlockBuffer };
-
-		while (true) {
-			DWORD wait_res = WaitForSingleObject(audio->write_event, SYSTEM_AUDIO_BUFFER_SIZE_IN_MILLISECS);
-			if (wait_res != WAIT_OBJECT_0) {
-				// Event handle timed out after a SYSTEM_AUDIO_BUFFER_SIZE_IN_MILLISECS wait.
-				// If event is not signaled even after SYSTEM_AUDIO_BUFFER_SIZE_IN_MILLISECS millisecs, audio buffer is may be lost
-				// TODO: Handle timed out, (may be we delete and find default device again?)
-			}
-
-			audio->on_update(sys_audio, audio->on_update_user_data);
-		}
-
-		return 0;
-	}
-
-	bool StartThread(Audio_Callback callback, void *user_ptr) {
-		if (callback) {
-			on_update = callback;
-			on_update_user_data = user_ptr;
-		} else {
-			on_update = StubAudioCallback;
-			on_update_user_data = 0;
-		}
-
-		thread = CreateThread(nullptr, 0, AudioThreadProcedure, this, 0, nullptr);
-		if (thread == NULL) {
-			win32_check_for_error();
-			Destroy();
-			return false;
-		}
-
-		return true;
-	}
-
-	void StopThread() {
-		TerminateThread(thread, 0);
-	}
-
-	ULONG STDMETHODCALLTYPE AddRef() {
-		return InterlockedIncrement(&reference_count);
-	}
-
-	ULONG STDMETHODCALLTYPE Release() {
-		ULONG ulRef = InterlockedDecrement(&reference_count);
-		if (0 == ulRef) {} // we allocate this in stack
-		return ulRef;
-	}
-
-	HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, VOID **ppvInterface) {
-		if (IID_IUnknown == riid) {
-			AddRef();
-			*ppvInterface = (IUnknown*)this;
-		}
-		else if (__uuidof(IAudioSessionEvents) == riid) {
-			AddRef();
-			*ppvInterface = (IAudioSessionEvents*)this;
-		}
-		else {
-			*ppvInterface = NULL;
-			return E_NOINTERFACE;
-		}
-		return S_OK;
-	}
-
-	HRESULT OnChannelVolumeChanged(DWORD  ChannelCount, float NewChannelVolumeArray[], DWORD ChangedChannel, LPCGUID EventContext) {
-		return S_OK;
-	}
-
-	HRESULT OnDisplayNameChanged(LPCWSTR NewDisplayName, LPCGUID EventContext) {
-		return S_OK;
-	}
-
-	HRESULT OnGroupingParamChanged(LPCGUID NewGroupingParam, LPCGUID EventContext) {
-		return S_OK;
-	}
-
-	HRESULT OnIconPathChanged(LPCWSTR NewIconPath, LPCGUID EventContext) {
-		return S_OK;
-	}
-
-	HRESULT OnSimpleVolumeChanged(float NewVolume, BOOL NewMute, LPCGUID EventContext) {
-		return S_OK;
-	}
-
-	HRESULT OnStateChanged(AudioSessionState NewState) {
-		return S_OK;
-	}
-
-	HRESULT OnSessionDisconnected(AudioSessionDisconnectReason DisconnectReason) {
-		Cleanup();
-		if (!Initialize()) {
-			// TODO: Log error
-			// Audio device removed and new device could not be initialized
-		}
-		return S_OK;
-	}
-};
-
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
@@ -796,6 +331,9 @@ struct Audio_Node {
 };
 
 struct Audio_Mixer {
+	u32 samples_rate;
+	u32 channel_count;
+
 	Handle				mutex;
 	Audio_Node			list; // NOTE: This is sentinel (first indicator), real node start from list.next
 	u32					buffer_size_in_sample_count;
@@ -810,12 +348,20 @@ struct Audio_Mixer {
 	r32 pitch_factor;
 };
 
-Audio_Mixer audio_mixer(Audio_Client &client) {
+Audio_Mixer audio_mixer() {
 	Audio_Mixer mixer;
+
+	mixer.samples_rate = system_audio_sample_rate();
+	mixer.channel_count = system_audio_channel_count();
+
+	// TODO: We only support these currently
+	assert(mixer.samples_rate == 48000);
+	assert(mixer.channel_count == 2);
+
 	mixer.mutex = system_create_mutex();
 	mixer.list = {};
-	mixer.buffer_size_in_sample_count = (client.format.Format.nSamplesPerSec * SYSTEM_AUDIO_BUFFER_SIZE_IN_MILLISECS) / 1000;
-	mixer.buffer_size_in_bytes = sizeof(r32) * mixer.buffer_size_in_sample_count * client.format.Format.nChannels;
+	mixer.buffer_size_in_sample_count = (mixer.samples_rate * SYSTEM_AUDIO_BUFFER_SIZE_IN_MILLISECS) / 1000;
+	mixer.buffer_size_in_bytes = sizeof(r32) * mixer.buffer_size_in_sample_count * mixer.channel_count;
 	mixer.buffer = (r32 *)tallocate(mixer.buffer_size_in_bytes);
 	mixer.buffer_consumed_bytes = 0;
 
@@ -832,18 +378,18 @@ void audio_mixer_set_volume(Audio_Mixer *mixer, r32 volume) {
 	mixer->volume_a = mixer->volume_b = volume;
 }
 
-void audio_mixer_animate_volume_to(Audio_Mixer *mixer, r32 volume, r32 secs, Audio_Client &client) {
+void audio_mixer_animate_volume_to(Audio_Mixer *mixer, r32 volume, r32 secs) {
 	mixer->volume_a = lerp(mixer->volume_a, mixer->volume_b, clamp01(mixer->volume_position / mixer->volume_span));
 	mixer->volume_b = volume;
 	mixer->volume_position = 0;
-	mixer->volume_span = client.format.Format.nSamplesPerSec * secs;
+	mixer->volume_span = mixer->samples_rate * secs;
 }
 
-void audio_mixer_animate_volume(Audio_Mixer *mixer, r32 volume_a, r32 volume_b, r32 secs, Audio_Client &client) {
+void audio_mixer_animate_volume(Audio_Mixer *mixer, r32 volume_a, r32 volume_b, r32 secs) {
 	mixer->volume_a = volume_a;
 	mixer->volume_b = volume_b;
 	mixer->volume_position = 0;
-	mixer->volume_span = client.format.Format.nSamplesPerSec * secs;
+	mixer->volume_span = mixer->samples_rate * secs;
 }
 
 Audio *play_audio(Audio_Mixer *mixer, Audio_Stream *stream, bool loop) {
@@ -863,6 +409,26 @@ Audio *play_audio(Audio_Mixer *mixer, Audio_Stream *stream, bool loop) {
 	assert(node == (Audio_Node *)&node->audio); // This has to be same so as to remove audio from list easily
 
 	return &node->audio;
+}
+
+void system_refresh_audio_device(u32 sample_rate, u32 channel_count, void *user_data) {
+	Audio_Mixer *mixer = (Audio_Mixer *)user_data;
+
+	system_lock_mutex(mixer->mutex, WAIT_INFINITE);
+
+	mixer->samples_rate = sample_rate;
+	mixer->channel_count = channel_count;
+
+	// TODO: We only support these currently
+	assert(mixer->samples_rate == 48000);
+	assert(mixer->channel_count == 2);
+
+	mixer->buffer_size_in_sample_count = (mixer->samples_rate * SYSTEM_AUDIO_BUFFER_SIZE_IN_MILLISECS) / 1000;
+	mixer->buffer_size_in_bytes = sizeof(r32) * mixer->buffer_size_in_sample_count * mixer->channel_count;
+	mixer->buffer = (r32 *)tallocate(mixer->buffer_size_in_bytes);
+	mixer->buffer_consumed_bytes = 0;
+
+	system_unlock_mutex(mixer->mutex);
 }
 
 void system_update_audio(const System_Audio &sys_audio, void *user_data) {
@@ -1002,13 +568,10 @@ int system_main() {
 	auto audio = load_wave(system_read_entire_file("../res/misc/POL-course-of-nature-short.wav"));
 	auto bounce_sound = load_wave(system_read_entire_file("../res/misc/Boing Cartoonish-SoundBible.com-277290791.wav"));
 
-	Audio_Client audio_client;
-	audio_client.Initialize();
+	Audio_Mixer mixer = audio_mixer();
+	audio_mixer_animate_volume(&mixer, 0, 0.5f, 5);
 
-	Audio_Mixer mixer = audio_mixer(audio_client);
-	audio_mixer_animate_volume(&mixer, 0, 0.5f, 5, audio_client);
-
-	if (!audio_client.StartThread(system_update_audio, &mixer)) {
+	if (!system_audio(system_update_audio, nullptr, &mixer)) {
 		system_display_critical_message("Failed to load audio!");
 	}
 
@@ -1097,11 +660,11 @@ int system_main() {
 					case Key_F1:
 						if (state == Time_State_RESUME) {
 							state = Time_State_PAUSE;
-							audio_client.client->Stop();
+							system_audio_pause();
 						} else {
 							state   = Time_State_RESUME;
 							game_dt = fixed_dt;
-							audio_client.client->Start();
+							system_audio_resume();
 						}
 						break;
 					case Key_F2:
@@ -1451,7 +1014,7 @@ int system_main() {
 
 		ImGui::End();
 
-		audio_mixer_animate_volume_to(&mixer, master_volume, 5, audio_client);
+		audio_mixer_animate_volume_to(&mixer, master_volume, 5);
 
 		//ImGui::ShowDemoWindow();
 #endif
@@ -1540,8 +1103,6 @@ int system_main() {
 	}
 
 	karma_debug_service_shutdown();
-
-	audio_client.StopThread();
 
 	ImGui_Shutdown();
 	gfx_destroy_context();
