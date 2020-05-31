@@ -42,8 +42,8 @@ const IID IID_IAudioClock				= __uuidof(IAudioClock);
 constexpr u32 REFTIMES_PER_SEC			= 10000000;
 constexpr u32 REFTIMES_PER_MILLISEC		= 10000;
 
-constexpr u32 SYSTEM_AUDIO_BUFFER_SIZE_IN_MILLISECS			= 100;
-constexpr u32 SYSTEM_AUDIO_BUFFER_UPDATE_MAX_WAIT_MILLISECS = 1000; // wait for max one sec
+constexpr u32 SYSTEM_AUDIO_BUFFER_SIZE_IN_MILLISECS			= 1000;
+//constexpr u32 SYSTEM_AUDIO_BUFFER_UPDATE_MAX_WAIT_MILLISECS = 1000; // wait for max one sec
 
 struct Audio_Master_Buffer {
 	u64 playing_sample_index;
@@ -51,6 +51,19 @@ struct Audio_Master_Buffer {
 	r32 *buffer;
 	u32 buffer_size_in_sample_count;
 };
+
+typedef void * System_Audio_Handle;
+
+typedef u8 *(*System_Lock_Audio)(System_Audio_Handle audio, u32 *sample_count);
+typedef void(*System_Unlock_Audio)(System_Audio_Handle audio, u32 samples_written);
+
+struct System_Audio {
+	System_Audio_Handle		handle;
+	System_Lock_Audio		lock;
+	System_Unlock_Audio		unlock;
+};
+
+typedef void(*Audio_Callback)(const System_Audio &sys_audio, void *user_data);
 
 class Audio_Client : public IMMNotificationClient {
 public:
@@ -60,39 +73,46 @@ public:
 	IAudioClient		*client							= nullptr;
 	IAudioClock			*clock							= nullptr;
 	IAudioRenderClient	*renderer						= nullptr;
-	WAVEFORMATEX		*format							= nullptr;
+	WAVEFORMATEXTENSIBLE format							= {};
 	HANDLE				thread							= nullptr;
-	HANDLE				write_mutex						= nullptr;
+	//HANDLE				write_mutex						= nullptr;
 	HANDLE				write_event						= nullptr;
-	r32 *				buffer							= nullptr;
-	r32 *				buffer_ptr						= nullptr;
-	r32 *				buffer_one_past_end				= nullptr;
-	u32					buffer_size_in_sample_count		= 0;
+	//r32 *				buffer							= nullptr;
+	//r32 *				buffer_ptr						= nullptr;
+	//r32 *				buffer_one_past_end				= nullptr;
+	//u32					buffer_size_in_sample_count		= 0;
 	u32					total_samples					= 0;
-	u32					channel_count					= 0;
-	u32					samples_per_sec					= 0;
+	//u32					channel_count					= 0;
+	//u32					samples_per_sec					= 0;
 	u64					clock_frequency					= 0;
-	u64					previous_master_sample_index	= 0;
-	u64					master_sample_index				= 0;
+	u64					write_cursor					= 0;
+
+	Audio_Callback		on_update				= nullptr;
+	void				*on_update_user_data	= nullptr;
 
 	void Cleanup() {
 		if (enumerator)		enumerator->Release();
 		if (device)			device->Release();
 		if (client)			client->Release();
 		if (renderer)		renderer->Release();
-		if (format)			CoTaskMemFree(format);
+		//if (format)			CoTaskMemFree(format);
 
+#if 0
 		memory_free(buffer);
+#endif
 
 		enumerator					= nullptr;
 		device						= nullptr;
 		client						= nullptr;
 		renderer					= nullptr;
-		format						= nullptr;
+		//format						= nullptr;
+
+#if 0
 		buffer						= nullptr;
 		buffer_ptr					= nullptr;
 		buffer_one_past_end			= nullptr;
 		buffer_size_in_sample_count = 0;
+#endif
 		total_samples				= 0;
 	}
 
@@ -101,7 +121,7 @@ public:
 
 		if (thread)			CloseHandle(thread);
 		if (write_event)	CloseHandle(write_event);
-		if (write_mutex)	CloseHandle(write_mutex);
+		//if (write_mutex)	CloseHandle(write_mutex);
 	}
 
 	bool FindDevice() {
@@ -140,18 +160,24 @@ public:
 			return false;
 		}
 
-		channel_count	= format->nChannels;
-		samples_per_sec = format->nSamplesPerSec;
+		//channel_count	= format->nChannels;
+		//samples_per_sec = format->nSamplesPerSec;
 
 		return true;
 	}
 
+#if 0
 	inline u32 GetChannelCount() {
 		return channel_count;
 	}
 
 	inline u32 GetSamplesPerSec() {
 		return samples_per_sec;
+	}
+#endif
+
+	static void StubAudioCallback(const System_Audio &sys_audio, void *user_data) {
+		(void)user_data;
 	}
 
 	bool Initialize() {
@@ -180,7 +206,8 @@ public:
 				return false;
 			}
 
-			hr = client->GetMixFormat(&format);
+			WAVEFORMATEX *mix_format = nullptr;
+			hr = client->GetMixFormat(&mix_format);
 			if (FAILED(hr)) {
 				if (hr == AUDCLNT_E_DEVICE_INVALIDATED) {
 					system_display_critical_message("Audio Device disconnected!");
@@ -197,7 +224,7 @@ public:
 			}
 
 			REFERENCE_TIME requested_duration = 0;
-			hr = client->Initialize(AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_EVENTCALLBACK, requested_duration, 0, format, nullptr);
+			hr = client->Initialize(AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_EVENTCALLBACK, requested_duration, 0, mix_format, nullptr);
 			if (hr == AUDCLNT_E_BUFFER_SIZE_NOT_ALIGNED) {
 				hr = client->GetBufferSize(&total_samples);
 				if (FAILED(hr)) {
@@ -205,9 +232,9 @@ public:
 					win32_check_for_error();
 				}
 
-				requested_duration = (REFERENCE_TIME)((10000.0 * 1000 / format->nSamplesPerSec * total_samples) + 0.5);
+				requested_duration = (REFERENCE_TIME)((10000.0 * 1000 / mix_format->nSamplesPerSec * total_samples) + 0.5);
 				client->Release();
-				CoTaskMemFree(format);
+				CoTaskMemFree(mix_format);
 
 				hr = device->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&client);
 				if (FAILED(hr)) {
@@ -216,14 +243,14 @@ public:
 					return false;
 				}
 
-				hr = client->GetMixFormat(&format);
+				hr = client->GetMixFormat(&mix_format);
 				if (FAILED(hr)) {
 					// TODO: Logging
 					win32_check_for_error();
 					return false;
 				}
 
-				hr = client->Initialize(AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_EVENTCALLBACK, requested_duration, requested_duration, format, nullptr);
+				hr = client->Initialize(AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_EVENTCALLBACK, requested_duration, requested_duration, mix_format, nullptr);
 				if (FAILED(hr)) {
 					// TODO: Logging
 					win32_check_for_error();
@@ -236,6 +263,10 @@ public:
 				win32_check_for_error();
 				return false;
 			}
+
+			// TODO: Check and copy!!
+			memcpy(&format, mix_format, sizeof(WAVEFORMATEXTENSIBLE));
+			CoTaskMemFree(mix_format);
 
 			hr = client->GetService(IID_IAudioRenderClient, (void **)&renderer);
 			if (FAILED(hr)) {
@@ -251,20 +282,31 @@ public:
 				return false;
 			}
 
+			if (write_event == NULL) {
+				write_event = CreateEventW(nullptr, FALSE, FALSE, 0);
+				if (write_event == NULL) {
+					// TODO: Better logging
+					win32_check_for_error();
+					Destroy();
+					return false;
+				}
+			}
+
 			client->SetEventHandle(write_event);
 
 			if (!RetriveInformation()) {
 				return false;
 			}
 
-			ptrsize device_buffer_size	= sizeof(r32) * total_samples * format->nChannels;
-			ptrsize buffer_size			= (sizeof(r32) * format->nSamplesPerSec * SYSTEM_AUDIO_BUFFER_SIZE_IN_MILLISECS * format->nChannels) / 1000;
+			ptrsize device_buffer_size	= sizeof(r32) * total_samples * format.Format.nChannels;
+			ptrsize buffer_size			= (sizeof(r32) * format.Format.nSamplesPerSec * SYSTEM_AUDIO_BUFFER_SIZE_IN_MILLISECS * format.Format.nChannels) / 1000;
 
 			// TODO: Error or Log??
 			// If Audio device buffer can't be made smaller, and can't be overidden, then there'll be large audio lag
 			// What do we do in this case?
 			assert(device_buffer_size < buffer_size);
 
+#if 0
 			buffer							= (r32 *)memory_allocate(buffer_size);
 			buffer_ptr						= buffer;
 			buffer_one_past_end				= (r32 *)((u8 *)buffer + buffer_size);
@@ -272,11 +314,37 @@ public:
 			previous_master_sample_index	= 0;
 			master_sample_index				= 0;
 			memset(buffer, 0, buffer_size);
+#endif
 
 			return true;
 		}
 
 		return false;
+	}
+
+	static u8 *LockBuffer(System_Audio_Handle sys_audio, u32 *sample_count) {
+		Audio_Client *audio = (Audio_Client *)sys_audio;
+
+		// TODO: Error handling!!!
+		u32 samples_padding;
+		auto hr = audio->client->GetCurrentPadding(&samples_padding);
+		if (SUCCEEDED(hr)) {
+			*sample_count = audio->total_samples - samples_padding;
+
+			BYTE *data;
+			hr = audio->renderer->GetBuffer(*sample_count, &data);
+			if (SUCCEEDED(hr)) {
+				return data;
+			}
+		}
+
+		return nullptr;
+	}
+
+	static void UnlockBuffer(System_Audio_Handle sys_audio, u32 samples_written) {
+		Audio_Client *audio = (Audio_Client *)sys_audio;
+		audio->renderer->ReleaseBuffer(samples_written, 0);
+		audio->write_cursor += samples_written;
 	}
 
 	static DWORD WINAPI AudioThreadProcedure(LPVOID param) {
@@ -309,6 +377,8 @@ public:
 			return 0;
 		}
 
+		static const System_Audio sys_audio = { audio, LockBuffer, UnlockBuffer };
+
 		while (true) {
 			DWORD wait_res = WaitForSingleObject(audio->write_event, 2000);
 			if (wait_res != WAIT_OBJECT_0) {
@@ -316,6 +386,9 @@ public:
 				// TODO: Handle timed out
 			}
 
+			audio->on_update(sys_audio, audio->on_update_user_data);
+
+#if 0
 			hr = audio->client->GetCurrentPadding(&samples_padding);
 			if (SUCCEEDED(hr)) {
 				samples_available = audio->total_samples - samples_padding;
@@ -340,8 +413,7 @@ public:
 
 				hr = audio->renderer->GetBuffer(samples_available, &data);
 				if (SUCCEEDED(hr)) {
-					// NOTE: This code assumes that Audio_Client::buffer is larger than the maximum buffer size of audio device
-					u32 samples_to_write_in_channels = audio->channel_count * samples_available;
+
 					if (audio->buffer_ptr + samples_to_write_in_channels < audio->buffer_one_past_end) {
 						memcpy(data, audio->buffer_ptr, samples_to_write_in_channels * sizeof(r32));
 						audio->buffer_ptr += samples_to_write_in_channels;
@@ -363,29 +435,22 @@ public:
 						flags = AUDCLNT_BUFFERFLAGS_SILENT;
 					}
 
-					audio->renderer->ReleaseBuffer(samples_available, flags);
-					audio->master_sample_index += samples_available;
+					audio->renderer->ReleaseBuffer(samples_available, 0);
 				} else {
 					win32_check_for_error();
 				}
 			} else {
 				win32_check_for_error();
 			}
+#endif
 
 		}
 
 		return 0;
 	}
 
-	bool StartThread() {
-		write_event = CreateEventW(nullptr, FALSE, FALSE, 0);
-		if (write_event == NULL) {
-			// TODO: Better logging
-			win32_check_for_error();
-			Destroy();
-			return false;
-		}
-
+	bool StartThread(Audio_Callback callback, void *user_ptr) {
+#if 0
 		write_mutex = CreateMutexW(nullptr, FALSE, 0);
 		if (write_mutex == NULL) {
 			// TODO: Better logging
@@ -393,24 +458,31 @@ public:
 			Destroy();
 			return false;
 		}
+#endif
 
-		if (Initialize()) {
-			thread = CreateThread(nullptr, 0, AudioThreadProcedure, this, 0, nullptr);
-			if (thread == NULL) {
-				win32_check_for_error();
-				Destroy();
-				return false;
-			}
-			return true;
+		if (callback) {
+			on_update = callback;
+			on_update_user_data = user_ptr;
+		} else {
+			on_update = StubAudioCallback;
+			on_update_user_data = 0;
 		}
 
-		return false;
+		thread = CreateThread(nullptr, 0, AudioThreadProcedure, this, 0, nullptr);
+		if (thread == NULL) {
+			win32_check_for_error();
+			Destroy();
+			return false;
+		}
+
+		return true;
 	}
 
 	void StopThread() {
 		TerminateThread(thread, 0);
 	}
 
+#if 0
 	u64 GetNextSampleIndex() {
 		return master_sample_index;
 	}
@@ -448,6 +520,7 @@ public:
 		buffer_one_past_end = buffer + samples_written * channel_count;
 		ReleaseMutex(write_mutex);
 	}
+#endif
 
 	ULONG STDMETHODCALLTYPE AddRef() {
 		return InterlockedIncrement(&reference_count);
@@ -760,7 +833,7 @@ struct Wave_Data {
 
 #pragma pack(pop)
 
-struct Audio {
+struct Audio_Stream {
 	Riff_Header *header; // TODO: do we need this?
 	Wave_Fmt	*fmt;	 //	TODO: do we need this?
 	Wave_Data	*data;	 // TODO: do we need this?
@@ -768,7 +841,7 @@ struct Audio {
 	u32			sample_count;
 };
 
-Audio make_sine_audio() {
+Audio_Stream make_sine_audio() {
 	float t = 0;
 	int sample_index = 0;
 	for (int i = 0; i < SAMPLES_COUNT; ++i) {
@@ -779,29 +852,30 @@ Audio make_sine_audio() {
 		sample_index += 2;
 	}
 
-	Audio audio = {};
-	audio.samples = sine_wave;
-	audio.sample_count = SAMPLES_COUNT;
-	return audio;
+	Audio_Stream stream = {};
+	stream.samples = sine_wave;
+	stream.sample_count = SAMPLES_COUNT;
+	return stream;
 }
 
-Audio load_wave(String content) {
-	Istream stream			= istream(content);
-	Riff_Header *wav_header = istream_consume(&stream, Riff_Header);
-	Wave_Fmt	*wav_fmt	= istream_consume(&stream, Wave_Fmt);
-	Wave_Data	*wav_data	= istream_consume(&stream, Wave_Data);
-	s16			*data		= (s16 *)istream_consume_size(&stream, wav_data->size);
+Audio_Stream load_wave(String content) {
+	Istream in				= istream(content);
+	Riff_Header *wav_header = istream_consume(&in, Riff_Header);
+	Wave_Fmt	*wav_fmt	= istream_consume(&in, Wave_Fmt);
+	Wave_Data	*wav_data	= istream_consume(&in, Wave_Data);
+	s16			*data		= (s16 *)istream_consume_size(&in, wav_data->size);
 
-	Audio audio;
-	audio.header		= wav_header;
-	audio.fmt			= wav_fmt;
-	audio.data			= wav_data;
-	audio.samples		= data;
-	audio.sample_count	= wav_data->size / sizeof(s16) / wav_fmt->channels_count;
+	Audio_Stream stream;
+	stream.header		= wav_header;
+	stream.fmt			= wav_fmt;
+	stream.data			= wav_data;
+	stream.samples		= data;
+	stream.sample_count	= wav_data->size / sizeof(s16) / wav_fmt->channels_count;
 
-	return audio;
+	return stream;
 }
 
+#if 0
 struct Audio_List {
 	Audio		*audio; // TODO: Use somekind of reference!!
 	u64			stamp;
@@ -1010,6 +1084,191 @@ void mixer_update(Audio_Client &client, Master_Voice &master, Voice &voice, r32 
 		client.UnlockBuffer(master_buffer.buffer_size_in_sample_count);
 	}
 }
+#endif
+
+struct Audio {
+	Audio_Stream	*stream;	// TODO: Use somekind of reference
+	booli			playing;
+	booli			loop;
+	r32				pitch_factor;
+	r32				volume;		// TODO: Seperate channel volume?
+	r32				samples_played;
+	r32				buffered_pitch_factor;
+};
+
+struct Audio_Node {
+	Audio audio;
+
+	Audio_Node *next;
+};
+
+struct Audio_Mixer {
+	Handle				mutex;
+	Audio_Node			list; // NOTE: This is sentinel (first indicator), real node start from list.next
+	u32					buffer_size_in_sample_count;
+	u32					buffer_size_in_bytes;
+	u32					buffer_consumed_bytes;
+	r32					*buffer;
+
+	r32 volume;
+};
+
+Audio_Mixer audio_mixer(Audio_Client &client) {
+	Audio_Mixer mixer;
+	mixer.mutex = system_create_mutex();
+	mixer.list = {};
+	mixer.buffer_size_in_sample_count = (client.format.Format.nSamplesPerSec * SYSTEM_AUDIO_BUFFER_SIZE_IN_MILLISECS) / 1000;
+	mixer.buffer_size_in_bytes = sizeof(r32) * mixer.buffer_size_in_sample_count * client.format.Format.nChannels;
+	mixer.buffer = (r32 *)tallocate(mixer.buffer_size_in_bytes);
+	mixer.buffer_consumed_bytes = 0;
+	mixer.volume = 0.5f;
+	return mixer;
+}
+
+Audio *play_audio(Audio_Mixer *mixer, Audio_Stream *stream, bool loop) {
+	// TODO: Do allocations properly!!
+	Audio_Node *node = new Audio_Node;
+	node->audio.stream = stream;
+	node->audio.playing = true;
+	node->audio.loop = loop;
+	node->audio.pitch_factor = 1;
+	node->audio.volume = 1;
+	node->audio.samples_played = 0;
+	node->audio.buffered_pitch_factor = 1;
+
+	node->next = mixer->list.next;
+	mixer->list.next = node;
+
+	assert(node == (Audio_Node *)&node->audio); // This has to be same so as to remove audio from list easily
+
+	return &node->audio;
+}
+
+void system_update_audio(const System_Audio &sys_audio, void *user_data) {
+	Audio_Mixer *mixer = (Audio_Mixer *)user_data;
+	system_lock_mutex(mixer->mutex, WAIT_INFINITE);
+
+	// TODO: Don't hard-code this!, Query and use!!
+	u32 channel_count = 2;
+
+	u32 sample_count;
+	u8 *sys_buffer = sys_audio.lock(sys_audio.handle, &sample_count);
+	if (sys_buffer) {
+		u32 buffer_size = sizeof(r32) * channel_count * sample_count;
+		u8 *src_ptr = (u8 *)mixer->buffer + mixer->buffer_consumed_bytes;
+		u8 *one_past_end = (u8 *)mixer->buffer + mixer->buffer_size_in_bytes;
+		assert(one_past_end >= src_ptr);
+		u32 copy_size = min_value((u32)(one_past_end - src_ptr), buffer_size);
+		memcpy(sys_buffer, src_ptr, copy_size);
+		memset(sys_buffer + copy_size, 0, buffer_size - copy_size);
+		sys_audio.unlock(sys_audio.handle, sample_count);
+
+		mixer->buffer_consumed_bytes += copy_size;
+
+		for (Audio_Node *node = mixer->list.next ; node; node = node->next) {
+			Audio &audio = node->audio;
+			if (audio.playing) {
+				audio.samples_played += audio.buffered_pitch_factor * (r32)sample_count;
+				if ((u32)lroundf(audio.samples_played) >= audio.stream->sample_count) {
+					audio.samples_played = 0;
+					audio.playing = audio.loop;
+				}
+			}
+		}
+	}
+
+	system_unlock_mutex(mixer->mutex);
+}
+
+void audio_mixer_update(Audio_Mixer *mixer) {
+	constexpr r32 INVERSE_RANGE_S16 = 2.0f / (r32)((r32)MAX_INT16 - (r32)MIN_INT16);
+
+	system_lock_mutex(mixer->mutex, WAIT_INFINITE);
+
+	// TODO: Fix me!! Don't hardcode this!!!!!!
+	u32 channel_count = 2;
+	memset(mixer->buffer, 0, sizeof(r32) * channel_count * mixer->buffer_size_in_sample_count);
+	mixer->buffer_consumed_bytes = 0;
+
+	for (Audio_Node *node = mixer->list.next; node; node = node->next) {
+		assert(node->audio.stream->fmt->channels_count == 2);
+
+		if (node->audio.playing) {
+			Audio &audio = node->audio;
+			audio.buffered_pitch_factor	= audio.pitch_factor;
+			//r32 inverse_audio_pitch_factor = 1.0f / audio.pitch_factor;
+
+			r32 *write_ptr = mixer->buffer;
+			r32 read_cursor = audio.samples_played;
+
+			for (u32 sample_counter = 0; sample_counter < mixer->buffer_size_in_sample_count;) {
+				u32 more_samples_required	= (mixer->buffer_size_in_sample_count - sample_counter);
+				u32 samples_available		= (u32)lroundf(((r32)audio.stream->sample_count - read_cursor) / audio.pitch_factor);
+				u32 samples_to_mix			= min_value(samples_available, more_samples_required);
+
+				r32 effective_volume = audio.volume * mixer->volume;
+
+				for (u32 sample_mix_index = 0; sample_mix_index < samples_to_mix; ++sample_mix_index) {
+					// TODO: Here we expect both input audio and output buffer to be stero audio
+
+					#ifdef AUDIO_APPLY_PITCH_FILTERING
+
+					u32_sampler_cursor_0 = (u32)(sampler_cursor);
+					u32_sampler_cursor_1 = u32_sampler_cursor_0 + 1;
+
+					if (u32_sampler_cursor_1 == audio->audio->sample_count) {
+						u32_sampler_cursor_1 = u32_sampler_cursor_0;
+					}
+
+					assert(u32_sampler_cursor_0 < audio->audio->sample_count);
+					assert(u32_sampler_cursor_1 < audio->audio->sample_count);
+
+					Vec2 sample_values[2];
+					sample_values[0].x = audio->audio->samples[2 * u32_sampler_cursor_0 + 0] * imax;
+					sample_values[0].y = audio->audio->samples[2 * u32_sampler_cursor_0 + 1] * imax;
+					sample_values[1].x = audio->audio->samples[2 * u32_sampler_cursor_1 + 0] * imax;
+					sample_values[1].y = audio->audio->samples[2 * u32_sampler_cursor_1 + 1] * imax;
+					r32 second_sample_t = sampler_cursor - (r32)u32_sampler_cursor_0;
+
+					Vec2 result_sample_value = lerp(sample_values[0], sample_values[1], second_sample_t);
+
+					write_ptr[0] += result_sample_value.x * effective_voice_volume * audio->volume.m[0];
+					write_ptr[1] += result_sample_value.y * effective_voice_volume * audio->volume.m[1];
+					write_ptr += 2;
+					sampler_cursor += sample_rate_factor;
+					volume_time_in_samples += 1;
+
+					#else
+
+					u32 sample_index = lroundf(read_cursor + sample_mix_index * audio.pitch_factor);
+					assert(sample_index < audio.stream->sample_count);
+
+					r32 sampled_left  = INVERSE_RANGE_S16 * ((r32)audio.stream->samples[2 * sample_index + 0] - (r32)MIN_INT16) - 1.0f;
+					r32 sampled_right = INVERSE_RANGE_S16 * ((r32)audio.stream->samples[2 * sample_index + 1] - (r32)MIN_INT16) - 1.0f;
+
+					write_ptr[0] += sampled_left  * effective_volume;
+					write_ptr[1] += sampled_right * effective_volume;
+
+					write_ptr += channel_count;
+
+					#endif
+				}
+
+				sample_counter += samples_to_mix;
+				read_cursor += samples_to_mix * audio.pitch_factor;
+
+				if (!audio.loop) {
+					break;
+				} else if ((u32)lroundf(read_cursor) >= audio.stream->sample_count) {
+					read_cursor = 0;
+				}
+
+			}
+		}
+	}
+
+	system_unlock_mutex(mixer->mutex);
+}
 
 int system_main() {
 	r32    framebuffer_w = 1280;
@@ -1023,15 +1282,20 @@ int system_main() {
 	auto bounce_sound = load_wave(system_read_entire_file("../res/misc/Boing Cartoonish-SoundBible.com-277290791.wav"));
 
 	Audio_Client audio_client;
-	if (!audio_client.StartThread()) {
+	audio_client.Initialize();
+
+	Audio_Mixer mixer = audio_mixer(audio_client);
+	mixer.volume = 1;
+
+	if (!audio_client.StartThread(system_update_audio, &mixer)) {
 		system_display_critical_message("Failed to load audio!");
 	}
 
-	Master_Voice master_voice;
-	master_voice_set_volume(&master_voice, 0.0f);
-	master_voice_change_volume(&master_voice, 0.5f, 3, audio_client);
-
-	Voice voice = audio_voice(100);
+	//Master_Voice master_voice;
+	//master_voice_set_volume(&master_voice, 0.0f);
+	//master_voice_change_volume(&master_voice, 0.5f, 3, audio_client);
+	//
+	//Voice voice = audio_voice(100);
 
 	ImGui_Initialize();
 	karma_debug_service_initialize();
@@ -1065,7 +1329,9 @@ int system_main() {
 
 	Particle_Emitter emitter = particle_emitter_create(&circle, mm_rect(0, 0, 1, 1), 1000, 250);
 
-	play_audio(&voice, &audio, 1.0f, true);
+	//play_audio(&voice, &audio, 1.0f, true);
+	auto music = play_audio(&mixer, &audio, true);
+	music->pitch_factor = 0.7f;
 
 	//
 	//
@@ -1180,7 +1446,8 @@ int system_main() {
 
 				if ((event.type & Event_Type_KEY_DOWN) && event.key.symbol == Key_SPACE && !event.key.repeat && player.position.y <= 0) {
 					controller.jump = true;
-					play_audio(&voice, &bounce_sound);
+					//play_audio(&voice, &bounce_sound);
+					play_audio(&mixer, &bounce_sound, false);
 				}
 			}
 		}
@@ -1331,7 +1598,8 @@ int system_main() {
 		karma_timed_block_end(Simulation);
 
 		karma_timed_block_begin(AudioUpdate);
-		mixer_update(audio_client, master_voice, voice, factor.ratio);
+		audio_mixer_update(&mixer);
+		//mixer_update(audio_client, master_voice, voice, factor.ratio);
 		karma_timed_block_end(AudioUpdate);
 
 		karma_timed_block_begin(Rendering);
@@ -1448,7 +1716,7 @@ int system_main() {
 			ImGui::End();
 		}
 
-		r32 master_volume = master_voice_get_volume(master_voice);
+		//r32 master_volume = master_voice_get_volume(master_voice);
 
 		// ImGui Rendering here
 		ImGui::Begin("Edit");
@@ -1458,7 +1726,8 @@ int system_main() {
 		ImGui::Text("Speed N: %d", factor.numerator);
 		ImGui::Text("Speed D: %d", factor.demonimator);
 		ImGui::DragInt("Index", &index);
-		ImGui::DragFloat("Master Volume", &master_volume, 0.01f, 0.0f, 1.0f);
+		//ImGui::DragFloat("Master Volume", &master_volume, 0.01f, 0.0f, 1.0f);
+		ImGui::DragFloat("Master Volume", &mixer.volume, 0.01f, 0.0f, 1.0f);
 		ImGui::DragFloat3("Position", rb.position.m);
 		ImGui::DragFloat2("Velocity", rb.velocity.m);
 		ImGui::DragFloat2("Linear Velocity", rb.linear_velocity.m);
@@ -1470,7 +1739,7 @@ int system_main() {
 
 		ImGui::End();
 
-		master_voice_change_volume(&master_voice, master_volume, 3, audio_client);
+		//master_voice_change_volume(&master_voice, master_volume, 3, audio_client);
 
 		//ImGui::ShowDemoWindow();
 #endif
