@@ -1474,6 +1474,16 @@ static LRESULT CALLBACK win32_wnd_proc(HWND wnd, UINT msg, WPARAM wparam, LPARAM
 			event.window.dimension = vec2s(x, y);
 		} break;
 
+		case WM_ENTERSIZEMOVE: {
+			windows_audio_client.client->Stop();
+			result = DefWindowProcW(wnd, msg, wparam, lparam);
+		} break;
+
+		case WM_EXITSIZEMOVE: {
+			windows_audio_client.client->Start();
+			result = DefWindowProcW(wnd, msg, wparam, lparam);
+		} break;
+
 		case WM_DPICHANGED: {
 			RECT *const suggested_rect = (RECT *)lparam;
 			auto        left           = suggested_rect->left;

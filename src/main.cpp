@@ -571,7 +571,7 @@ int system_main() {
 	Audio_Mixer mixer = audio_mixer();
 	audio_mixer_animate_volume(&mixer, 0, 0.5f, 5);
 
-	if (!system_audio(system_update_audio, nullptr, &mixer)) {
+	if (!system_audio(system_update_audio, system_refresh_audio_device, &mixer)) {
 		system_display_critical_message("Failed to load audio!");
 	}
 
