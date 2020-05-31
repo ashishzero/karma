@@ -43,7 +43,6 @@ constexpr u32 REFTIMES_PER_SEC			= 10000000;
 constexpr u32 REFTIMES_PER_MILLISEC		= 10000;
 
 constexpr u32 SYSTEM_AUDIO_BUFFER_SIZE_IN_MILLISECS			= 1000;
-//constexpr u32 SYSTEM_AUDIO_BUFFER_UPDATE_MAX_WAIT_MILLISECS = 1000; // wait for max one sec
 
 struct Audio_Master_Buffer {
 	u64 playing_sample_index;
@@ -75,15 +74,8 @@ public:
 	IAudioRenderClient	*renderer						= nullptr;
 	WAVEFORMATEXTENSIBLE format							= {};
 	HANDLE				thread							= nullptr;
-	//HANDLE				write_mutex						= nullptr;
 	HANDLE				write_event						= nullptr;
-	//r32 *				buffer							= nullptr;
-	//r32 *				buffer_ptr						= nullptr;
-	//r32 *				buffer_one_past_end				= nullptr;
-	//u32					buffer_size_in_sample_count		= 0;
 	u32					total_samples					= 0;
-	//u32					channel_count					= 0;
-	//u32					samples_per_sec					= 0;
 	u64					clock_frequency					= 0;
 	u64					write_cursor					= 0;
 
@@ -95,24 +87,11 @@ public:
 		if (device)			device->Release();
 		if (client)			client->Release();
 		if (renderer)		renderer->Release();
-		//if (format)			CoTaskMemFree(format);
-
-#if 0
-		memory_free(buffer);
-#endif
 
 		enumerator					= nullptr;
 		device						= nullptr;
 		client						= nullptr;
 		renderer					= nullptr;
-		//format						= nullptr;
-
-#if 0
-		buffer						= nullptr;
-		buffer_ptr					= nullptr;
-		buffer_one_past_end			= nullptr;
-		buffer_size_in_sample_count = 0;
-#endif
 		total_samples				= 0;
 	}
 
@@ -121,7 +100,6 @@ public:
 
 		if (thread)			CloseHandle(thread);
 		if (write_event)	CloseHandle(write_event);
-		//if (write_mutex)	CloseHandle(write_mutex);
 	}
 
 	bool FindDevice() {
@@ -160,21 +138,8 @@ public:
 			return false;
 		}
 
-		//channel_count	= format->nChannels;
-		//samples_per_sec = format->nSamplesPerSec;
-
 		return true;
 	}
-
-#if 0
-	inline u32 GetChannelCount() {
-		return channel_count;
-	}
-
-	inline u32 GetSamplesPerSec() {
-		return samples_per_sec;
-	}
-#endif
 
 	static void StubAudioCallback(const System_Audio &sys_audio, void *user_data) {
 		(void)user_data;
@@ -306,16 +271,6 @@ public:
 			// What do we do in this case?
 			assert(device_buffer_size < buffer_size);
 
-#if 0
-			buffer							= (r32 *)memory_allocate(buffer_size);
-			buffer_ptr						= buffer;
-			buffer_one_past_end				= (r32 *)((u8 *)buffer + buffer_size);
-			buffer_size_in_sample_count		= (format->nSamplesPerSec * SYSTEM_AUDIO_BUFFER_SIZE_IN_MILLISECS) / 1000;
-			previous_master_sample_index	= 0;
-			master_sample_index				= 0;
-			memset(buffer, 0, buffer_size);
-#endif
-
 			return true;
 		}
 
@@ -387,79 +342,12 @@ public:
 			}
 
 			audio->on_update(sys_audio, audio->on_update_user_data);
-
-#if 0
-			hr = audio->client->GetCurrentPadding(&samples_padding);
-			if (SUCCEEDED(hr)) {
-				samples_available = audio->total_samples - samples_padding;
-
-				DWORD wait_result = WaitForSingleObject(audio->write_mutex, SYSTEM_AUDIO_BUFFER_UPDATE_MAX_WAIT_MILLISECS);
-				if (wait_result == WAIT_ABANDONED) {
-					// TODO: Handle error correctly
-					return 0;
-				} else if (wait_result == WAIT_TIMEOUT) {
-					// TODO: Correctly handle timedout
-					system_log(LOG_ERROR, "Audio", "Buffer timed-out");
-					return 0; // Do we just kill audio??
-				} else if (wait_result != WAIT_OBJECT_0) {
-					// TODO: Handle error properly
-					win32_check_for_error();
-					return 0;
-				}
-
-				defer {
-					ReleaseMutex(audio->write_mutex);
-				};
-
-				hr = audio->renderer->GetBuffer(samples_available, &data);
-				if (SUCCEEDED(hr)) {
-
-					if (audio->buffer_ptr + samples_to_write_in_channels < audio->buffer_one_past_end) {
-						memcpy(data, audio->buffer_ptr, samples_to_write_in_channels * sizeof(r32));
-						audio->buffer_ptr += samples_to_write_in_channels;
-
-						if (audio->buffer_ptr == audio->buffer_one_past_end)
-							audio->buffer_ptr = audio->buffer;
-						flags = 0;
-					} else if (audio->buffer_ptr < audio->buffer_one_past_end) {
-						// NOTE: If audio data if not enough, we start putting silence
-						u32 partial_data_size = (u32)((u8 *)audio->buffer_one_past_end - (u8 *)audio->buffer_ptr);
-						memcpy(data, audio->buffer_ptr, partial_data_size);
-						u32 remaining_size = samples_to_write_in_channels * sizeof(r32) - partial_data_size;
-						memset(data + partial_data_size, 0, remaining_size);
-
-						audio->buffer_ptr = audio->buffer_one_past_end;
-						flags = 0;
-					} else { // audio->buffer_ptr == audio->buffer_one_past_end
-						assert(audio->buffer_ptr == audio->buffer_one_past_end);
-						flags = AUDCLNT_BUFFERFLAGS_SILENT;
-					}
-
-					audio->renderer->ReleaseBuffer(samples_available, 0);
-				} else {
-					win32_check_for_error();
-				}
-			} else {
-				win32_check_for_error();
-			}
-#endif
-
 		}
 
 		return 0;
 	}
 
 	bool StartThread(Audio_Callback callback, void *user_ptr) {
-#if 0
-		write_mutex = CreateMutexW(nullptr, FALSE, 0);
-		if (write_mutex == NULL) {
-			// TODO: Better logging
-			win32_check_for_error();
-			Destroy();
-			return false;
-		}
-#endif
-
 		if (callback) {
 			on_update = callback;
 			on_update_user_data = user_ptr;
@@ -481,46 +369,6 @@ public:
 	void StopThread() {
 		TerminateThread(thread, 0);
 	}
-
-#if 0
-	u64 GetNextSampleIndex() {
-		return master_sample_index;
-	}
-
-	u32 GetSampleCount() {
-		return buffer_size_in_sample_count;
-	}
-
-	bool LockBuffer(Audio_Master_Buffer *out) {
-		clock->GetPosition(&out->playing_sample_index, nullptr);
-		out->playing_sample_index /= clock_frequency;
-
-		out->buffer_size_in_sample_count	= buffer_size_in_sample_count;
-		out->buffer							= buffer;
-
-		auto wait_result = WaitForSingleObject(write_mutex, SYSTEM_AUDIO_BUFFER_UPDATE_MAX_WAIT_MILLISECS);
-		if (wait_result == WAIT_ABANDONED) {
-			return false;
-		} else if (wait_result == WAIT_TIMEOUT) {
-			// TODO: Correctly handle timedout
-			system_log(LOG_ERROR, "Audio", "Buffer timed-out");
-			return false;
-		} else if (wait_result != WAIT_OBJECT_0) {
-			// TODO: Handle error properly
-			win32_check_for_error();
-			return false;
-		}
-		out->next_sample_index				= master_sample_index;
-
-		return true;
-	}
-	
-	void UnlockBuffer(u32 samples_written) {
-		buffer_ptr			= buffer;
-		buffer_one_past_end = buffer + samples_written * channel_count;
-		ReleaseMutex(write_mutex);
-	}
-#endif
 
 	ULONG STDMETHODCALLTYPE AddRef() {
 		return InterlockedIncrement(&reference_count);
@@ -875,217 +723,6 @@ Audio_Stream load_wave(String content) {
 	return stream;
 }
 
-#if 0
-struct Audio_List {
-	Audio		*audio; // TODO: Use somekind of reference!!
-	u64			stamp;
-	booli		playing;
-	booli		loop;
-	Vec2		volume;
-	Audio_List *next;
-};
-
-struct Voice {
-	r32 volume = 1;
-	Audio_List list			= {}; // NOTE: This is sentinel (first indicator), real node start from list.next
-	Audio_List *free_list	= 0;
-	Audio_List *buffer;
-	u32			buffer_index;
-	u32			buffer_count;
-};
-
-inline Voice audio_voice(u32 max_buffer_count) {
-	Voice voice;
-	voice.buffer_count	= max_buffer_count;
-	voice.buffer_index	= 0;
-	voice.buffer		= (Audio_List *)memory_allocate(sizeof(Audio_List) * voice.buffer_count);
-	return voice;
-}
-
-inline void play_audio(Voice *voice, Audio *audio, r32 left_volume, r32 right_volume, bool looping = false) {
-	Audio_List *list;
-
-	// First try to find slot in free list
-	if (voice->free_list) {
-		list				= voice->free_list;
-		voice->free_list	= voice->free_list->next;
-	} else { // If slot is not available in free list, use from buffer
-		assert(voice->buffer_index < voice->buffer_count);
-		list = voice->buffer + voice->buffer_index;
-		voice->buffer_index += 1;
-	}
-	
-	list->audio		= audio;
-	list->playing	= false;
-	list->loop		= looping;
-	list->volume	= vec2(left_volume, right_volume);
-
-	list->next			= voice->list.next;
-	voice->list.next	= list;
-}
-
-inline void play_audio(Voice *voice, Audio *audio, r32 volume = 1, bool looping = false) {
-	play_audio(voice, audio, volume, volume, looping);
-}
-
-struct Master_Voice {
-	booli	volume_changed			= true;
-	r32		volume_a				= 1;
-	r32		volume_b				= 1;
-	u32		volume_span_in_samples	= 1;
-	u64		volume_timestamp		= 0;
-};
-
-inline void master_voice_change_volume(Master_Voice *voice, r32 volume, r32 fade_time_in_secs, Audio_Client &client) {
-	if (fade_time_in_secs == 0) fade_time_in_secs = 0.000001f;
-	voice->volume_b					= volume;
-	voice->volume_span_in_samples	= (u32)(fade_time_in_secs * (r32)client.GetSamplesPerSec() + 0.5f);
-	voice->volume_changed			= true;
-}
-
-inline void master_voice_set_volume(Master_Voice *voice, r32 volume) {
-	voice->volume_a					= volume;
-	voice->volume_b					= volume;
-	voice->volume_changed			= true;
-}
-
-inline r32 master_voice_get_volume(Master_Voice &voice) {
-	return voice.volume_b;
-}
-
-void mixer_update(Audio_Client &client, Master_Voice &master, Voice &voice, r32 sample_rate_factor) {
-	auto sample_index = client.GetNextSampleIndex();
-	auto sample_count = (client.GetSamplesPerSec() * SYSTEM_AUDIO_BUFFER_SIZE_IN_MILLISECS * 4) / 1000;
-	auto buffer_size  = sample_count * client.GetChannelCount() * sizeof(r32);
-	r32 *buffer		  = (r32 *)tallocate(buffer_size);
-
-	if (master.volume_changed) {
-		r32 t					= (r32)(sample_index - master.volume_timestamp) / (r32)master.volume_span_in_samples;
-		t						= clamp01(t);
-		master.volume_a			= lerp(master.volume_a, master.volume_b, t);
-		master.volume_timestamp = sample_index;
-		master.volume_changed	= false;
-	}
-	r32 volume_time_in_samples = (r32)(sample_index - master.volume_timestamp);
-
-	assert(client.GetChannelCount() == 2);
-
-	constexpr r32 imax = 1.0f / (r32)MAX_INT16;
-
-	memset(buffer, 0, buffer_size);
-
-	Audio_List *prev_audio = &voice.list;
-	for (Audio_List *audio = voice.list.next; audio; ) {
-		assert(audio->audio->fmt->channels_count == 2);
-
-		auto next_audio = audio->next;
-
-		if (audio->playing == false) {
-			audio->stamp	= sample_index;
-			audio->playing	= true;
-		}
-
-		u32 write_sampler_index	= (u32)((sample_index - audio->stamp) * sample_rate_factor);
-		r32 sampler_cursor		= (r32)write_sampler_index;
-
-		// TODO: Fix glittering issuse when sample_rate is changed
-
-		if (write_sampler_index < audio->audio->sample_count || audio->loop) {
-			r32 *write_ptr = buffer;
-			for (u32 sample_counter = 0; sample_counter < sample_count; ) {
-				assert((u8 *)write_ptr < (u8 *)buffer + buffer_size);
-
-				if (audio->loop && (u32)(sampler_cursor + 0.5f) >= audio->audio->sample_count) {
-					audio->stamp		= sample_index;
-					sampler_cursor		= 0;
-				}
-
-				u32 samples_left_for_sampling		= sample_count - sample_counter;
-				u32 samples_available_for_sampling	= audio->audio->sample_count - (u32)(sampler_cursor + 0.5f);
-				u32 samples_required_for_sampling	= (u32)((samples_available_for_sampling / sample_rate_factor) + 0.5f);
-
-				u32 samples_to_mix = min_value(samples_available_for_sampling, samples_required_for_sampling);
-				if (samples_left_for_sampling < samples_to_mix) samples_to_mix = samples_left_for_sampling;
-
-				u32 u32_sampler_cursor_0;
-				//u32 u32_sampler_cursor_1;
-
-				for (u32 sample_mix_index = 0; sample_mix_index < samples_to_mix; ++sample_mix_index) {
-					// TODO: Here we expect both input audio and output buffer to be stero audio
-					r32 volume_t = volume_time_in_samples / (r32)master.volume_span_in_samples;
-					r32 master_volume = lerp(master.volume_a, master.volume_b, clamp01(volume_t));
-					r32 effective_voice_volume = master_volume * voice.volume;
-
-# if 0
-					u32_sampler_cursor_0 = (u32)(sampler_cursor);
-					u32_sampler_cursor_1 = u32_sampler_cursor_0 + 1;
-
-					if (u32_sampler_cursor_1 == audio->audio->sample_count) {
-						u32_sampler_cursor_1 = u32_sampler_cursor_0;
-					}
-
-					assert(u32_sampler_cursor_0 < audio->audio->sample_count);
-					assert(u32_sampler_cursor_1 < audio->audio->sample_count);
-
-					Vec2 sample_values[2];
-					sample_values[0].x = audio->audio->samples[2 * u32_sampler_cursor_0 + 0] * imax;
-					sample_values[0].y = audio->audio->samples[2 * u32_sampler_cursor_0 + 1] * imax;
-					sample_values[1].x = audio->audio->samples[2 * u32_sampler_cursor_1 + 0] * imax;
-					sample_values[1].y = audio->audio->samples[2 * u32_sampler_cursor_1 + 1] * imax;
-					r32 second_sample_t = sampler_cursor - (r32)u32_sampler_cursor_0;
-
-					Vec2 result_sample_value = lerp(sample_values[0], sample_values[1], second_sample_t);
-
-					write_ptr[0] += result_sample_value.x * effective_voice_volume * audio->volume.m[0];
-					write_ptr[1] += result_sample_value.y * effective_voice_volume * audio->volume.m[1];
-					write_ptr += 2;
-					sampler_cursor += sample_rate_factor;
-					volume_time_in_samples += 1;
-#else
-					u32_sampler_cursor_0 = (u32)(sampler_cursor + 0.5f);
-
-					assert(u32_sampler_cursor_0 < audio->audio->sample_count);
-
-					Vec2 result_sample_value;
-					result_sample_value.x = audio->audio->samples[2 * u32_sampler_cursor_0 + 0] * imax;
-					result_sample_value.y = audio->audio->samples[2 * u32_sampler_cursor_0 + 1] * imax;
-
-					write_ptr[0] += result_sample_value.x * effective_voice_volume * audio->volume.m[0];
-					write_ptr[1] += result_sample_value.y * effective_voice_volume * audio->volume.m[1];
-					write_ptr += 2;
-					sampler_cursor += sample_rate_factor;
-					volume_time_in_samples += 1;
-#endif
-				}
-
-				if (!audio->loop) {
-					break;
-				}
-
-				sample_counter += samples_to_mix;
-			}
-		} else {
-			prev_audio->next	= next_audio;
-			audio->next			= voice.free_list;
-			voice.free_list		= audio;
-			audio				= prev_audio;
-		}
-
-		prev_audio	= audio;
-		audio		= next_audio;
-	}
-
-	Audio_Master_Buffer master_buffer;
-	if (client.LockBuffer(&master_buffer)) {
-		u32 write_sample_index = (u32)(master_buffer.next_sample_index - sample_index);
-		auto send_start = buffer + client.GetChannelCount() * write_sample_index;
-		assert((u8 *)send_start < (u8 *)buffer + buffer_size); // HACK: We should never have such audio lag
-		memcpy(master_buffer.buffer, send_start, client.GetChannelCount() * master_buffer.buffer_size_in_sample_count * sizeof(r32));
-		client.UnlockBuffer(master_buffer.buffer_size_in_sample_count);
-	}
-}
-#endif
-
 struct Audio {
 	Audio_Stream	*stream;	// TODO: Use somekind of reference
 	booli			playing;
@@ -1215,7 +852,8 @@ void audio_mixer_update(Audio_Mixer *mixer) {
 				for (u32 sample_mix_index = 0; sample_mix_index < samples_to_mix; ++sample_mix_index) {
 					// TODO: Here we expect both input audio and output buffer to be stero audio
 
-#define AUDIO_APPLY_PITCH_FILTERING
+					#define AUDIO_APPLY_PITCH_FILTERING
+
 					#ifdef AUDIO_APPLY_PITCH_FILTERING
 
 					r32 real_sample_index = read_cursor + sample_mix_index * audio.buffered_pitch_factor;
@@ -1287,12 +925,6 @@ int system_main() {
 		system_display_critical_message("Failed to load audio!");
 	}
 
-	//Master_Voice master_voice;
-	//master_voice_set_volume(&master_voice, 0.0f);
-	//master_voice_change_volume(&master_voice, 0.5f, 3, audio_client);
-	//
-	//Voice voice = audio_voice(100);
-
 	ImGui_Initialize();
 	karma_debug_service_initialize();
 
@@ -1325,9 +957,7 @@ int system_main() {
 
 	Particle_Emitter emitter = particle_emitter_create(&circle, mm_rect(0, 0, 1, 1), 1000, 250);
 
-	//play_audio(&voice, &audio, 1.0f, true);
 	auto music = play_audio(&mixer, &audio, true);
-	music->pitch_factor = 1;
 
 	//
 	//
@@ -1441,7 +1071,6 @@ int system_main() {
 
 				if ((event.type & Event_Type_KEY_DOWN) && event.key.symbol == Key_SPACE && !event.key.repeat && player.position.y <= 0) {
 					controller.jump = true;
-					//play_audio(&voice, &bounce_sound);
 					play_audio(&mixer, &bounce_sound, false);
 				}
 			}
@@ -1596,7 +1225,6 @@ int system_main() {
 
 		mixer.pitch_factor = factor.ratio;
 		audio_mixer_update(&mixer);
-		//mixer_update(audio_client, master_voice, voice, factor.ratio);
 		karma_timed_block_end(AudioUpdate);
 
 		karma_timed_block_begin(Rendering);
