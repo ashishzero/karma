@@ -859,7 +859,7 @@ void audio_mixer_update(Audio_Mixer *mixer) {
 					r32 real_sample_index = read_cursor + sample_mix_index * audio.buffered_pitch_factor;
 					u32 sample_index_0 = (u32)(real_sample_index);
 					assert(sample_index_0 < audio.stream->sample_count);
-					u32 sample_index_1 = (sample_index_0 + 1) % audio.stream->sample_count;
+					u32 sample_index_1 = (sample_index_0 + 1 == audio.stream->sample_count) ? sample_index_0 : sample_index_0 + 1;
 
 					r32 sampled_left_0  = INVERSE_RANGE_S16 * ((r32)audio.stream->samples[2 * sample_index_0 + 0] - (r32)MIN_INT16) - 1.0f;
 					r32 sampled_right_0 = INVERSE_RANGE_S16 * ((r32)audio.stream->samples[2 * sample_index_0 + 1] - (r32)MIN_INT16) - 1.0f;
