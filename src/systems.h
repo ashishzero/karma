@@ -356,10 +356,29 @@ enum Wait_Result {
 //
 //
 //
+
+typedef void * System_Audio_Handle;
+
+typedef u8 *(*System_Lock_Audio)(System_Audio_Handle audio, u32 *sample_count);
+typedef void(*System_Unlock_Audio)(System_Audio_Handle audio, u32 samples_written);
+
+struct System_Audio {
+	System_Audio_Handle		handle;
+	System_Lock_Audio		lock;
+	System_Unlock_Audio		unlock;
+};
+
+typedef void(*Audio_Callback)(const System_Audio &sys_audio, void *user_data);
+
+//
+//
+//
 constexpr int SYSTEM_ENABLE  = 1;
 constexpr int SYSTEM_DISABLE = 0;
 constexpr int SYSTEM_TOGGLE  = 2;
 constexpr int SYSTEM_QUERY   = -1;
+
+constexpr u32 SYSTEM_AUDIO_BUFFER_SIZE_IN_MILLISECS = 1000;
 
 enum {
 	LOG_INFO,
