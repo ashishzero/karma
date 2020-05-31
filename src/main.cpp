@@ -847,10 +847,12 @@ void audio_mixer_update(Audio_Mixer *mixer) {
 				u32 samples_available		= (u32)lroundf(((r32)audio.stream->sample_count - read_cursor) / audio.buffered_pitch_factor);
 				u32 samples_to_mix			= min_value(samples_available, more_samples_required);
 
-				r32 effective_volume = audio.volume * mixer->volume;
+				r32 effective_volume;
 
 				for (u32 sample_mix_index = 0; sample_mix_index < samples_to_mix; ++sample_mix_index) {
 					// TODO: Here we expect both input audio and output buffer to be stero audio
+
+					effective_volume = audio.volume * mixer->volume;
 
 					#define AUDIO_APPLY_PITCH_FILTERING
 
@@ -884,6 +886,9 @@ void audio_mixer_update(Audio_Mixer *mixer) {
 					write_ptr[1] += sampled_right * effective_volume;
 
 					#endif
+
+					write_ptr[0] = clamp(-1.0f, 1.0f, write_ptr[0]);
+					write_ptr[1] = clamp(-1.0f, 1.0f, write_ptr[1]);
 
 					write_ptr += channel_count;
 				}
