@@ -7,6 +7,7 @@
 #include "debug_service.h"
 #include "particle_system.h"
 #include "stream.h"
+#include "audio.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -239,80 +240,6 @@ enum Time_State {
 	Time_State_RESUME,
 	Time_State_PAUSE,
 };
-
-const int FREQUENCY				= 128;
-const int SAMPLES_PER_SEC		= 48000;
-const int SAMPLES_COUNT			= SAMPLES_PER_SEC * FREQUENCY;
-
-static s16 sine_wave[2 * SAMPLES_COUNT * sizeof(r32)];
-
-#pragma pack(push, 1)
-
-struct Riff_Header {
-	u8	id[4];
-	u32 size;
-	u8	format[4];
-};
-
-struct Wave_Fmt {
-	u8	id[4];
-	u32 size;
-	u16 audio_format;
-	u16 channels_count;
-	u32 sample_rate;
-	u32 byte_rate;
-	u16 block_align;
-	u16 bits_per_sample;
-};
-
-struct Wave_Data {
-	u8 id[4];
-	u32 size;
-};
-
-#pragma pack(pop)
-
-struct Audio_Stream {
-	Riff_Header *header; // TODO: do we need this?
-	Wave_Fmt	*fmt;	 //	TODO: do we need this?
-	Wave_Data	*data;	 // TODO: do we need this?
-	s16			*samples;
-	u32			sample_count;
-};
-
-Audio_Stream make_sine_audio() {
-	float t = 0;
-	int sample_index = 0;
-	for (int i = 0; i < SAMPLES_COUNT; ++i) {
-		s16 sample_value = (s16)roundf(sinf(2 * MATH_PI * FREQUENCY * t) * MAX_INT16);
-		sine_wave[sample_index + 0] = sample_value;
-		sine_wave[sample_index + 1] = sample_value;
-		t += 1.0f / (r32)SAMPLES_PER_SEC;
-		sample_index += 2;
-	}
-
-	Audio_Stream stream = {};
-	stream.samples = sine_wave;
-	stream.sample_count = SAMPLES_COUNT;
-	return stream;
-}
-
-Audio_Stream load_wave(String content) {
-	Istream in				= istream(content);
-	Riff_Header *wav_header = istream_consume(&in, Riff_Header);
-	Wave_Fmt	*wav_fmt	= istream_consume(&in, Wave_Fmt);
-	Wave_Data	*wav_data	= istream_consume(&in, Wave_Data);
-	s16			*data		= (s16 *)istream_consume_size(&in, wav_data->size);
-
-	Audio_Stream stream;
-	stream.header		= wav_header;
-	stream.fmt			= wav_fmt;
-	stream.data			= wav_data;
-	stream.samples		= data;
-	stream.sample_count	= wav_data->size / sizeof(s16) / wav_fmt->channels_count;
-
-	return stream;
-}
 
 struct Audio {
 	Audio_Stream	*stream;	// TODO: Use somekind of reference
@@ -562,8 +489,6 @@ int system_main() {
 	r32    framebuffer_h = 720;
 	Handle platform      = system_create_window(u8"Karma", 1280, 720, System_Window_Show_NORMAL);
 	gfx_create_context(platform, Render_Backend_DIRECTX11, Vsync_ADAPTIVE, 2, (u32)framebuffer_w, (u32)framebuffer_h);
-
-	auto sine_audio = make_sine_audio();
 
 	auto audio = load_wave(system_read_entire_file("../res/misc/POL-course-of-nature-short.wav"));
 	auto bounce_sound = load_wave(system_read_entire_file("../res/misc/Boing Cartoonish-SoundBible.com-277290791.wav"));
