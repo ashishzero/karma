@@ -747,7 +747,10 @@ struct Audio_Mixer {
 	u32					buffer_consumed_bytes;
 	r32					*buffer;
 
-	r32 volume;
+	r32 volume_a;
+	r32 volume_b;
+	r32 volume_position; // in samples
+	r32 volume_span;	 // in samples
 	r32 pitch_factor;
 };
 
@@ -760,10 +763,31 @@ Audio_Mixer audio_mixer(Audio_Client &client) {
 	mixer.buffer = (r32 *)tallocate(mixer.buffer_size_in_bytes);
 	mixer.buffer_consumed_bytes = 0;
 
-	mixer.volume = 0.5f;
+	mixer.volume_a = 0.5f;
+	mixer.volume_b = 0.5f;
+	mixer.volume_position = 1;
+	mixer.volume_span = 1;
 	mixer.pitch_factor = 1;
 
 	return mixer;
+}
+
+void audio_mixer_set_volume(Audio_Mixer *mixer, r32 volume) {
+	mixer->volume_a = mixer->volume_b = volume;
+}
+
+void audio_mixer_animate_volume_to(Audio_Mixer *mixer, r32 volume, r32 secs, Audio_Client &client) {
+	mixer->volume_a = lerp(mixer->volume_a, mixer->volume_b, clamp01(mixer->volume_position / mixer->volume_span));
+	mixer->volume_b = volume;
+	mixer->volume_position = 0;
+	mixer->volume_span = client.format.Format.nSamplesPerSec * secs;
+}
+
+void audio_mixer_animate_volume(Audio_Mixer *mixer, r32 volume_a, r32 volume_b, r32 secs, Audio_Client &client) {
+	mixer->volume_a = volume_a;
+	mixer->volume_b = volume_b;
+	mixer->volume_position = 0;
+	mixer->volume_span = client.format.Format.nSamplesPerSec * secs;
 }
 
 Audio *play_audio(Audio_Mixer *mixer, Audio_Stream *stream, bool loop) {
@@ -805,6 +829,7 @@ void system_update_audio(const System_Audio &sys_audio, void *user_data) {
 		sys_audio.unlock(sys_audio.handle, sample_count);
 
 		mixer->buffer_consumed_bytes += copy_size;
+		mixer->volume_position += sample_count * mixer->pitch_factor;
 
 		for (Audio_Node *node = mixer->list.next ; node; node = node->next) {
 			Audio &audio = node->audio;
@@ -848,11 +873,12 @@ void audio_mixer_update(Audio_Mixer *mixer) {
 				u32 samples_to_mix			= min_value(samples_available, more_samples_required);
 
 				r32 effective_volume;
+				r32 volume_position = mixer->volume_position;
 
 				for (u32 sample_mix_index = 0; sample_mix_index < samples_to_mix; ++sample_mix_index) {
 					// TODO: Here we expect both input audio and output buffer to be stero audio
 
-					effective_volume = audio.volume * mixer->volume;
+					effective_volume = audio.volume * lerp(mixer->volume_a, mixer->volume_b, (volume_position + sample_mix_index * mixer->pitch_factor) / mixer->volume_span);
 
 					#define AUDIO_APPLY_PITCH_FILTERING
 
@@ -924,7 +950,7 @@ int system_main() {
 	audio_client.Initialize();
 
 	Audio_Mixer mixer = audio_mixer(audio_client);
-	mixer.volume = 1;
+	audio_mixer_animate_volume(&mixer, 0, 0.5f, 5, audio_client);
 
 	if (!audio_client.StartThread(system_update_audio, &mixer)) {
 		system_display_critical_message("Failed to load audio!");
@@ -1346,7 +1372,7 @@ int system_main() {
 			ImGui::End();
 		}
 
-		//r32 master_volume = master_voice_get_volume(master_voice);
+		r32 master_volume = mixer.volume_b;
 
 		// ImGui Rendering here
 		ImGui::Begin("Edit");
@@ -1357,7 +1383,7 @@ int system_main() {
 		ImGui::Text("Speed D: %d", factor.demonimator);
 		ImGui::DragInt("Index", &index);
 		//ImGui::DragFloat("Master Volume", &master_volume, 0.01f, 0.0f, 1.0f);
-		ImGui::DragFloat("Master Volume", &mixer.volume, 0.01f, 0.0f, 1.0f);
+		ImGui::DragFloat("Master Volume", &master_volume, 0.01f, 0.0f, 1.0f);
 		ImGui::DragFloat3("Position", rb.position.m);
 		ImGui::DragFloat2("Velocity", rb.velocity.m);
 		ImGui::DragFloat2("Linear Velocity", rb.linear_velocity.m);
@@ -1369,7 +1395,7 @@ int system_main() {
 
 		ImGui::End();
 
-		//master_voice_change_volume(&master_voice, master_volume, 3, audio_client);
+		audio_mixer_animate_volume_to(&mixer, master_volume, 5, audio_client);
 
 		//ImGui::ShowDemoWindow();
 #endif
