@@ -288,6 +288,15 @@ public:
 			AvSetMmThreadPriority(task, AVRT_PRIORITY_HIGH);
 		}
 
+		context.handle.hptr = audio->thread;
+		context.id			= GetCurrentThreadId();
+		context.allocator	= NULL_ALLOCATOR;
+		context.temp_memory = Temporary_Memory(0, 0);
+		context.proc		= (Thread_Proc)AudioThreadProcedure;
+		context.data		= 0;
+
+		SetThreadDescription(audio->thread, L"Platform Audio Thread");
+
 		u32 samples_padding		= 0;
 		u32 samples_available	= 0;
 		BYTE *data				= 0;
@@ -688,7 +697,7 @@ bool load_debug_font(Monospaced_Font *font) {
 	return false;
 }
 
-constexpr s32 MAX_SPEED_FACTOR = 6;
+constexpr s32 MAX_SPEED_FACTOR = 8;
 
 struct Time_Speed_Factor {
 	s32 numerator   = 1;
@@ -698,18 +707,18 @@ struct Time_Speed_Factor {
 
 void increase_game_speed(Time_Speed_Factor *factor) {
 	if (factor->demonimator == 1) {
-		factor->numerator = min_value(factor->numerator + 1, MAX_SPEED_FACTOR);
+		factor->numerator = min_value(factor->numerator * 2, MAX_SPEED_FACTOR);
 	} else {
-		factor->demonimator = max_value(factor->demonimator - 1, 1);
+		factor->demonimator = max_value(factor->demonimator / 2, 1);
 	}
 	factor->ratio = (r32)factor->numerator / (r32)factor->demonimator;
 }
 
 void decrease_game_speed(Time_Speed_Factor *factor) {
 	if (factor->numerator == 1) {
-		factor->demonimator = min_value(factor->demonimator + 1, MAX_SPEED_FACTOR);
+		factor->demonimator = min_value(factor->demonimator * 2, MAX_SPEED_FACTOR);
 	} else {
-		factor->numerator = max_value(factor->numerator - 1, 1);
+		factor->numerator = max_value(factor->numerator / 2, 1);
 	}
 	factor->ratio = (r32)factor->numerator / (r32)factor->demonimator;
 }
@@ -872,7 +881,7 @@ inline r32 master_voice_get_volume(Master_Voice &voice) {
 
 void mixer_update(Audio_Client &client, Master_Voice &master, Voice &voice, r32 sample_rate_factor) {
 	auto sample_index = client.GetNextSampleIndex();
-	auto sample_count = (client.GetSamplesPerSec() * SYSTEM_AUDIO_BUFFER_SIZE_IN_MILLISECS * 5) / 1000;
+	auto sample_count = (client.GetSamplesPerSec() * SYSTEM_AUDIO_BUFFER_SIZE_IN_MILLISECS * 4) / 1000;
 	auto buffer_size  = sample_count * client.GetChannelCount() * sizeof(r32);
 	r32 *buffer		  = (r32 *)tallocate(buffer_size);
 
@@ -902,7 +911,7 @@ void mixer_update(Audio_Client &client, Master_Voice &master, Voice &voice, r32 
 			audio->playing	= true;
 		}
 
-		u32 write_sampler_index	= (u32)(sample_index - audio->stamp);
+		u32 write_sampler_index	= (u32)((sample_index - audio->stamp) * sample_rate_factor);
 		r32 sampler_cursor		= (r32)write_sampler_index;
 
 		// TODO: Fix glittering issuse when sample_rate is changed
@@ -925,7 +934,7 @@ void mixer_update(Audio_Client &client, Master_Voice &master, Voice &voice, r32 
 				if (samples_left_for_sampling < samples_to_mix) samples_to_mix = samples_left_for_sampling;
 
 				u32 u32_sampler_cursor_0;
-				u32 u32_sampler_cursor_1;
+				//u32 u32_sampler_cursor_1;
 
 				for (u32 sample_mix_index = 0; sample_mix_index < samples_to_mix; ++sample_mix_index) {
 					// TODO: Here we expect both input audio and output buffer to be stero audio
@@ -933,6 +942,7 @@ void mixer_update(Audio_Client &client, Master_Voice &master, Voice &voice, r32 
 					r32 master_volume = lerp(master.volume_a, master.volume_b, clamp01(volume_t));
 					r32 effective_voice_volume = master_volume * voice.volume;
 
+# if 0
 					u32_sampler_cursor_0 = (u32)(sampler_cursor);
 					u32_sampler_cursor_1 = u32_sampler_cursor_0 + 1;
 
@@ -957,6 +967,21 @@ void mixer_update(Audio_Client &client, Master_Voice &master, Voice &voice, r32 
 					write_ptr += 2;
 					sampler_cursor += sample_rate_factor;
 					volume_time_in_samples += 1;
+#else
+					u32_sampler_cursor_0 = (u32)(sampler_cursor + 0.5f);
+
+					assert(u32_sampler_cursor_0 < audio->audio->sample_count);
+
+					Vec2 result_sample_value;
+					result_sample_value.x = audio->audio->samples[2 * u32_sampler_cursor_0 + 0] * imax;
+					result_sample_value.y = audio->audio->samples[2 * u32_sampler_cursor_0 + 1] * imax;
+
+					write_ptr[0] += result_sample_value.x * effective_voice_volume * audio->volume.m[0];
+					write_ptr[1] += result_sample_value.y * effective_voice_volume * audio->volume.m[1];
+					write_ptr += 2;
+					sampler_cursor += sample_rate_factor;
+					volume_time_in_samples += 1;
+#endif
 				}
 
 				if (!audio->loop) {
@@ -1051,6 +1076,7 @@ int system_main() {
 	const r32 aspect_ratio = framebuffer_w / framebuffer_h;
 
 	Time_Speed_Factor factor;
+	decrease_game_speed(&factor);
 
 	r32 const fixed_dt      = 1.0f / 30.0f;
 	r32       dt            = fixed_dt * factor.ratio;
