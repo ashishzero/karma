@@ -1211,32 +1211,24 @@ void audio_mixer_update(Audio_Mixer *mixer) {
 				for (u32 sample_mix_index = 0; sample_mix_index < samples_to_mix; ++sample_mix_index) {
 					// TODO: Here we expect both input audio and output buffer to be stero audio
 
+#define AUDIO_APPLY_PITCH_FILTERING
 					#ifdef AUDIO_APPLY_PITCH_FILTERING
 
-					u32_sampler_cursor_0 = (u32)(sampler_cursor);
-					u32_sampler_cursor_1 = u32_sampler_cursor_0 + 1;
+					r32 real_sample_index = read_cursor + sample_mix_index * audio.pitch_factor;
+					u32 sample_index_0 = (u32)(real_sample_index);
+					assert(sample_index_0 < audio.stream->sample_count);
+					u32 sample_index_1 = (sample_index_0 + 1) % audio.stream->sample_count;
 
-					if (u32_sampler_cursor_1 == audio->audio->sample_count) {
-						u32_sampler_cursor_1 = u32_sampler_cursor_0;
-					}
+					r32 sampled_left_0  = INVERSE_RANGE_S16 * ((r32)audio.stream->samples[2 * sample_index_0 + 0] - (r32)MIN_INT16) - 1.0f;
+					r32 sampled_right_0 = INVERSE_RANGE_S16 * ((r32)audio.stream->samples[2 * sample_index_0 + 1] - (r32)MIN_INT16) - 1.0f;
 
-					assert(u32_sampler_cursor_0 < audio->audio->sample_count);
-					assert(u32_sampler_cursor_1 < audio->audio->sample_count);
+					r32 sampled_left_1  = INVERSE_RANGE_S16 * ((r32)audio.stream->samples[2 * sample_index_1 + 0] - (r32)MIN_INT16) - 1.0f;
+					r32 sampled_right_1 = INVERSE_RANGE_S16 * ((r32)audio.stream->samples[2 * sample_index_1 + 1] - (r32)MIN_INT16) - 1.0f;
 
-					Vec2 sample_values[2];
-					sample_values[0].x = audio->audio->samples[2 * u32_sampler_cursor_0 + 0] * imax;
-					sample_values[0].y = audio->audio->samples[2 * u32_sampler_cursor_0 + 1] * imax;
-					sample_values[1].x = audio->audio->samples[2 * u32_sampler_cursor_1 + 0] * imax;
-					sample_values[1].y = audio->audio->samples[2 * u32_sampler_cursor_1 + 1] * imax;
-					r32 second_sample_t = sampler_cursor - (r32)u32_sampler_cursor_0;
+					r32 sample_t = real_sample_index - (r32)sample_index_0;
 
-					Vec2 result_sample_value = lerp(sample_values[0], sample_values[1], second_sample_t);
-
-					write_ptr[0] += result_sample_value.x * effective_voice_volume * audio->volume.m[0];
-					write_ptr[1] += result_sample_value.y * effective_voice_volume * audio->volume.m[1];
-					write_ptr += 2;
-					sampler_cursor += sample_rate_factor;
-					volume_time_in_samples += 1;
+					write_ptr[0] += lerp(sampled_left_0, sampled_left_1, sample_t) * effective_volume;
+					write_ptr[1] += lerp(sampled_right_0, sampled_right_1, sample_t) * effective_volume;
 
 					#else
 
@@ -1249,9 +1241,9 @@ void audio_mixer_update(Audio_Mixer *mixer) {
 					write_ptr[0] += sampled_left  * effective_volume;
 					write_ptr[1] += sampled_right * effective_volume;
 
-					write_ptr += channel_count;
-
 					#endif
+
+					write_ptr += channel_count;
 				}
 
 				sample_counter += samples_to_mix;
@@ -1331,7 +1323,7 @@ int system_main() {
 
 	//play_audio(&voice, &audio, 1.0f, true);
 	auto music = play_audio(&mixer, &audio, true);
-	music->pitch_factor = 0.7f;
+	music->pitch_factor = 0.2f;
 
 	//
 	//
