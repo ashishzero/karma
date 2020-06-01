@@ -4,8 +4,6 @@
 #include "../length_string.h"
 #include "../systems.h"
 
-#if 1
-
 static const GLint INT_FMT_KARMA_TO_OPENGL[] = {
 	GL_RGBA,
 	GL_RGBA32F,
@@ -1402,5 +1400,3 @@ bool Gfx_Platform_OpenGL::load_library(Vsync vsync) {
 }
 
 #	endif
-
-#endif

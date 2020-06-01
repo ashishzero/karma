@@ -2,10 +2,10 @@
 #include "systems.h"
 #include "intrinsics.h"
 #include "random.h"
+#include "utility.h"
 
 static constexpr u32 MAX_RECORDS_LOGS                    = 5000000; // around 190 MB
 static constexpr u32 RECORD_CIRCULAR_BUFFER_FRAMES_AHEAD = 2;
-static constexpr u32 MAX_COLLATION_THREADS               = 256;
 static constexpr u32 MAX_COLLATION_RECORDS               = MAX_RECORDS_LOGS / 2;
 
 static const Vec4    HEADER_FONT_COLOR                   = vec4(1.0f, 1.0f, 0.0f, 1.0f);
@@ -34,22 +34,17 @@ struct Record {
 	Record *child;
 };
 
-struct Thread_Record {
+struct Debug_Collation {
 	Record *root_record;
 	Record *leaf_record;
 	u32     thread_id;
 };
 
-struct Debug_Collation {
-	Thread_Record thread_records[MAX_COLLATION_THREADS];
-	u32           thread_count;
-};
-
-static Handle mutex_handle;
 static void * debug_memory;
 
 static Timed_Frame  timed_frames[RECORD_CIRCULAR_BUFFER_FRAMES_AHEAD];
-static Timed_Frame *timed_frame_writer;
+static Timed_Frame *timed_frame_writer_ptr;
+static Timed_Frame *timed_frame_reader_ptr;
 
 static Color3 presentation_colors[MAX_PRESENTATION_COLORS];
 
@@ -118,14 +113,15 @@ void debug_service_initialize() {
 	for (u32 i = 0; i < RECORD_CIRCULAR_BUFFER_FRAMES_AHEAD; ++i) {
 		timed_frames[i].records             = ((Timed_Record *)debug_memory) + i * MAX_RECORDS_LOGS;
 		timed_frames[i].records_count       = 0;
+		timed_frames[i].records_capacity	= MAX_RECORDS_LOGS;
 		timed_frames[i].begin_counter_value = 0;
 		timed_frames[i].end_counter_value   = 0;
 	}
 
 	record_collation_ptr = (Record *)((u8 *)debug_memory + RECORD_CIRCULAR_BUFFER_FRAMES_AHEAD * MAX_RECORDS_LOGS * sizeof(Timed_Record));
 
-	timed_frame_writer = timed_frames;
-	mutex_handle       = system_create_mutex();
+	timed_frame_writer_ptr = timed_frames + 0;
+	timed_frame_reader_ptr = timed_frames + 1;
 
 	for (int color_index = 0; color_index < MAX_PRESENTATION_COLORS; ++color_index) {
 		presentation_colors[color_index] = random_color3(0.9f, 0.3f);
@@ -133,43 +129,30 @@ void debug_service_initialize() {
 }
 
 void debug_service_shutdown() {
-	system_destory_mutex(mutex_handle);
 	system_virtual_free(debug_memory, 0, Virtual_Memory_RELEASE);
 }
 
 Timed_Frame *timed_frame_get() {
-	Timed_Frame *frame;
-	if (timed_frame_writer == timed_frames) {
-		frame = timed_frames + 1;
-	} else {
-		frame = timed_frames;
-	}
-	return frame;
+	return timed_frame_reader_ptr;
 }
 
 void timed_frame_begin() {
 	if (frame_recording) {
-		timed_frame_writer->begin_cycle_value   = intrin__rdtsc();
-		timed_frame_writer->begin_counter_value = system_get_counter();
+		timed_frame_writer_ptr->begin_cycle_value   = intrin__rdtsc();
+		timed_frame_writer_ptr->begin_counter_value = system_get_counter();
 	}
 }
 
 void timed_frame_end() {
 	if (frame_recording) {
-		timed_frame_writer->end_cycle_value   = intrin__rdtsc();
-		timed_frame_writer->end_counter_value = system_get_counter();
+		timed_frame_writer_ptr->end_cycle_value   = intrin__rdtsc();
+		timed_frame_writer_ptr->end_counter_value = system_get_counter();
 
-		system_lock_mutex(mutex_handle, WAIT_INFINITE);
-		if (timed_frame_writer == timed_frames) {
-			timed_frame_writer = timed_frames + 1;
-		} else {
-			timed_frame_writer = timed_frames;
-		}
-		system_unlock_mutex(mutex_handle);
-
-		timed_frame_writer->records_count       = 0;
-		timed_frame_writer->begin_counter_value = 0;
-		timed_frame_writer->end_counter_value   = 0;
+		swap(&timed_frame_writer_ptr, &timed_frame_reader_ptr);
+	
+		timed_frame_writer_ptr->records_count       = 0;
+		timed_frame_writer_ptr->begin_counter_value = 0;
+		timed_frame_writer_ptr->end_counter_value   = 0;
 	}
 
 	frame_recording = user_frame_recording_option;
@@ -177,9 +160,9 @@ void timed_frame_end() {
 
 Timed_Block_Match timed_block_begin(String id, String block_name) {
 	if (frame_recording) {
-		assert(timed_frame_writer->records_count < MAX_RECORDS_LOGS);
-		s64  index  = intrin_InterlockedIncrement64(&timed_frame_writer->records_count);
-		auto record = timed_frame_writer->records + index - 1;
+		assert(timed_frame_writer_ptr->records_count < MAX_RECORDS_LOGS);
+		auto record = timed_frame_writer_ptr->records + timed_frame_writer_ptr->records_count;
+		timed_frame_writer_ptr->records_count += 1;
 
 		record->id         = id;
 		record->block_name = block_name;
@@ -195,9 +178,9 @@ Timed_Block_Match timed_block_begin(String id, String block_name) {
 
 void timed_block_end(Timed_Block_Match value, String block_name) {
 	if (frame_recording) {
-		assert(timed_frame_writer->records_count < MAX_RECORDS_LOGS);
-		s64  index  = intrin_InterlockedIncrement64(&timed_frame_writer->records_count);
-		auto record = timed_frame_writer->records + index - 1;
+		assert(timed_frame_writer_ptr->records_count < MAX_RECORDS_LOGS);
+		auto record = timed_frame_writer_ptr->records + timed_frame_writer_ptr->records_count;
+		timed_frame_writer_ptr->records_count += 1;
 
 		record->id         = value;
 		record->block_name = block_name;
@@ -304,37 +287,34 @@ void write_timelines_info_recursive(Record *record, Vec2 position, r32 width, r3
 Vec2 draw_profiler(Vec2 position, r32 width, r32 height, r32 font_height, r32 inv_cycles, Vec2 cursor_p, Monospaced_Font &font, Record **hovered_record) {
 	position.y -= FRAME_TIME_PROFILER_Y_OFFSET;
 
-	for (u32 thread_index = 0; thread_index < debug_collation.thread_count; ++thread_index) {
-		auto thread_record = debug_collation.thread_records + thread_index;
-		auto record        = thread_record->root_record;
+	auto record = debug_collation.root_record;
 
-		r32        children = (r32)calculate_presetation_max_children(record);
-		const Vec2 bg_off   = vec2(3.0f);
+	r32        children = (r32)calculate_presetation_max_children(record);
+	const Vec2 bg_off = vec2(3.0f);
 
-		position.x += bg_off.x;
-		position.y -= bg_off.y;
+	position.x += bg_off.x;
+	position.y -= bg_off.y;
 
-		// Make baground for all the children records, using height and children count
-		const Vec2 bg_pos = position - vec2(0, children * height + height) - bg_off; // height for thread id
-		const Vec2 bg_dim = vec2(width, children * height + height) + 2 * (bg_off);
+	// Make baground for all the children records, using height and children count
+	const Vec2 bg_pos = position - vec2(0, children * height + height) - bg_off; // height for thread id
+	const Vec2 bg_dim = vec2(width, children * height + height) + 2 * (bg_off);
 
-		im_unbind_texture();
-		im_rect(bg_pos, bg_dim, vec4(0, 0, 0, 0.8f));
-		im_rect_outline2d(bg_pos, bg_dim, vec4(1), 0.5f);
+	im_unbind_texture();
+	im_rect(bg_pos, bg_dim, vec4(0, 0, 0, 0.8f));
+	im_rect_outline2d(bg_pos, bg_dim, vec4(1), 0.5f);
 
-		position.y -= 2 * height; // For displaying thread id and positioning for next font rendering
-		draw_timelines_recursive(record, position, width, height, 20, inv_cycles, cursor_p, hovered_record);
+	position.y -= 2 * height; // For displaying thread id and positioning for next font rendering
+	draw_timelines_recursive(record, position, width, height, 20, inv_cycles, cursor_p, hovered_record);
 
-		im_bind_texture(font.texture);
-		// we print thread id here to decrease texture rebinding
-		position.y += (height - font_height) * 0.5f; // align font to center vertically
-		im_text_region(position + vec2(0, height), vec2(width, font_height), font.info, tprintf("Thread: %u", thread_record->thread_id), vec4(1));
-		write_timelines_info_recursive(record, position, width, height, font_height, inv_cycles, font);
+	im_bind_texture(font.texture);
+	// we print thread id here to decrease texture rebinding
+	position.y += (height - font_height) * 0.5f; // align font to center vertically
+	im_text_region(position + vec2(0, height), vec2(width, font_height), font.info, tprintf("Thread: %u", debug_collation.thread_id), vec4(1));
+	write_timelines_info_recursive(record, position, width, height, font_height, inv_cycles, font);
 
-		// Adjust for next thread
-		position = bg_pos;
-		position.y -= height;
-	}
+	// Adjust for next draw position
+	position = bg_pos;
+	position.y -= height;
 
 	// return position to next draw
 	return position;
@@ -444,20 +424,7 @@ void timed_frame_presentation(Monospaced_Font &font, r32 frame_time, r32 framebu
 			for (s64 record_index = 0; record_index < frame->records_count; ++record_index) {
 				auto frame_record = frame->records + record_index;
 
-				Thread_Record *thread_record = NULL;
-				for (u32 thread_index = 0; thread_index < debug_collation.thread_count; ++thread_index) {
-					auto thread = debug_collation.thread_records + thread_index;
-					if (thread->thread_id == frame_record->thread_id) {
-						thread_record = thread;
-						break;
-					}
-				}
-
-				if (!thread_record) {
-					assert(debug_collation.thread_count < MAX_COLLATION_THREADS);
-					thread_record = debug_collation.thread_records + debug_collation.thread_count;
-					debug_collation.thread_count += 1;
-
+				if (debug_collation.leaf_record == nullptr) {
 					record              = push_collation_record();
 					record->child       = NULL;
 					record->parent      = NULL;
@@ -467,37 +434,37 @@ void timed_frame_presentation(Monospaced_Font &font, r32 frame_time, r32 framebu
 					record->ms          = -1; // we use negative to endicate that END has not been reached
 					record->begin_cycle = (u32)(frame_record->time_stamp - frame->begin_cycle_value);
 
-					thread_record->thread_id   = frame_record->thread_id;
-					thread_record->root_record = record;
-					thread_record->leaf_record = record;
+					debug_collation.thread_id   = frame_record->thread_id;
+					debug_collation.root_record = record;
+					debug_collation.leaf_record = record;
 				} else if (frame_record->type == Timed_Record_Type_BEGIN) {
-					if (thread_record->leaf_record->ms > 0) {
+					if (debug_collation.leaf_record->ms > 0) {
 						record              = push_collation_record();
 						record->child       = NULL;
-						record->parent      = thread_record->leaf_record->parent;
+						record->parent      = debug_collation.leaf_record->parent;
 						record->next        = NULL;
 						record->id          = frame_record->id;
 						record->name        = frame_record->block_name;
 						record->ms          = -1;
 						record->begin_cycle = (u32)(frame_record->time_stamp - frame->begin_cycle_value);
 
-						thread_record->leaf_record->next = record;
-						thread_record->leaf_record       = record;
+						debug_collation.leaf_record->next = record;
+						debug_collation.leaf_record       = record;
 					} else {
 						record              = push_collation_record();
 						record->child       = NULL;
-						record->parent      = thread_record->leaf_record;
+						record->parent      = debug_collation.leaf_record;
 						record->next        = NULL;
 						record->id          = frame_record->id;
 						record->name        = frame_record->block_name;
 						record->ms          = -1;
 						record->begin_cycle = (u32)(frame_record->time_stamp - frame->begin_cycle_value);
 
-						thread_record->leaf_record->child = record;
-						thread_record->leaf_record        = record;
+						debug_collation.leaf_record->child = record;
+						debug_collation.leaf_record        = record;
 					}
 				} else {
-					auto parent = thread_record->leaf_record;
+					auto parent = debug_collation.leaf_record;
 
 					while (parent) {
 						if (parent->id.data == frame_record->id.data && parent->name.data == frame_record->block_name.data) {
@@ -513,7 +480,7 @@ void timed_frame_presentation(Monospaced_Font &font, r32 frame_time, r32 framebu
 					r32 cycles        = (r32)(parent->end_cycle - parent->begin_cycle);
 					parent->ms        = 1000.0f * dt * cycles * inv_cycles_count;
 
-					thread_record->leaf_record = parent;
+					debug_collation.leaf_record = parent;
 				}
 			}
 		}

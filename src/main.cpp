@@ -500,6 +500,9 @@ int system_main() {
 		system_display_critical_message("Failed to load audio!");
 	}
 
+	// muted
+	audio_mixer_set_volume(&mixer, 0);
+
 	ImGui_Initialize();
 	karma_debug_service_initialize();
 

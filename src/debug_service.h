@@ -24,7 +24,8 @@ struct Timed_Record {
 
 struct Timed_Frame {
 	Timed_Record *records;
-	s64           records_count;
+	u32           records_count;
+	u32           records_capacity;
 	u64           begin_counter_value;
 	u64           end_counter_value;
 	u64           begin_cycle_value;
