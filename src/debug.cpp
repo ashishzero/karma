@@ -1,9 +1,10 @@
-#include "debug_service.h"
-#include "systems.h"
+#include "debug.h"
 #include "intrinsics.h"
 #include "random.h"
 #include "utility.h"
 #include "stream.h"
+#include "gfx_renderer.h"
+#include "systems.h"
 
 static constexpr r32 DEBUG_PRESENTATION_X_OFFSET		= 5.0f;
 static constexpr r32 DEBUG_PRESENTATION_Y_OFFSET		= 2.0f;
@@ -50,6 +51,28 @@ struct Debug_Io {
 	bool				menu_icons_value[Menu_Icon_COUNT];
 };
 
+enum Timed_Record_Type {
+	Timed_Record_Type_BEGIN,
+	Timed_Record_Type_END
+};
+
+struct Timed_Record {
+	String            id;
+	String            block_name;
+	s64               time_stamp;
+	Timed_Record_Type type;
+};
+
+struct Timed_Frame {
+	Timed_Record *records;
+	u32           records_count;
+	u32           records_capacity;
+	u64           begin_counter_value;
+	u64           end_counter_value;
+	u64           begin_cycle_value;
+	u64           end_cycle_value;
+};
+
 struct Record {
 	String name;
 	String id;
@@ -93,26 +116,7 @@ static Debug_Io				io;
 static Profiler				profiler;
 static Frame_Time_Recorder	frame_time_recorder;
 
-bool debug_presentation_get_display() {
-	return io.should_present;
-}
-
-void debug_presentation_set_display(bool state) {
-	io.should_present = state;
-}
-
-void reset_collation_record() {
-	profiler.record_collation_trav = profiler.record_collation_ptr;
-}
-
-Record *push_collation_record() {
-	assert(profiler.record_collation_trav < profiler.record_collation_ptr + PROFILER_MAX_COLLATION_RECORDS);
-	auto ptr = profiler.record_collation_trav;
-	profiler.record_collation_trav += 1;
-	return ptr;
-}
-
-void debug_service_initialize() {
+void debug_mode_enable() {
 	// NOTE: Allocated memory are not freed, because it doesn't matter, they will be freed by OS when app closes
 
 	auto memory = system_virtual_alloc(0, PROFILER_RECORD_CIRCULAR_BUFFER_FRAMES_AHEAD * PROFILER_MAX_TIMED_RECORDS_LOGS * sizeof(Timed_Record) + PROFILER_MAX_COLLATION_RECORDS * sizeof(Record), Virtual_Memory_COMMIT | Virtual_Memory_RESERVE);
@@ -200,97 +204,65 @@ void debug_service_initialize() {
 	}
 }
 
-Timed_Frame *timed_frame_get() {
-	return profiler.timed_frame_read_ptr;
-}
-
-void timed_frame_begin() {
-	if (profiler.recording) {
-		profiler.timed_frame_write_ptr->begin_cycle_value   = intrin__rdtsc();
-		profiler.timed_frame_write_ptr->begin_counter_value = system_get_counter();
-	}
-}
-
-void timed_frame_end(r32 frame_time) {
-	if (profiler.recording) {
-		profiler.timed_frame_write_ptr->end_cycle_value   = intrin__rdtsc();
-		profiler.timed_frame_write_ptr->end_counter_value = system_get_counter();
-
-		swap(&profiler.timed_frame_write_ptr, &profiler.timed_frame_read_ptr);
-	
-		profiler.timed_frame_write_ptr->records_count       = 0;
-		profiler.timed_frame_write_ptr->begin_counter_value = 0;
-		profiler.timed_frame_write_ptr->end_counter_value   = 0;
-	}
-
-	memmove(frame_time_recorder.history + 1, frame_time_recorder.history, sizeof(r32) * (FRAME_TIME_MAX_LOGS - 1));
-	frame_time_recorder.history[0] = frame_time;
-
-	profiler.recording = profiler.next_recording;
-}
-
-Timed_Block_Match timed_block_begin(String id, String block_name) {
-	if (profiler.recording) {
-		assert(profiler.timed_frame_write_ptr->records_count < PROFILER_MAX_TIMED_RECORDS_LOGS);
-		auto record = profiler.timed_frame_write_ptr->records + profiler.timed_frame_write_ptr->records_count;
-		profiler.timed_frame_write_ptr->records_count += 1;
-
-		record->id         = id;
-		record->block_name = block_name;
-		record->time_stamp = intrin__rdtsc();
-		record->type       = Timed_Record_Type_BEGIN;
-
-		return id;
-	}
-
-	return String("", 0);
-}
-
-void timed_block_end(Timed_Block_Match value, String block_name) {
-	if (profiler.recording) {
-		assert(profiler.timed_frame_write_ptr->records_count < PROFILER_MAX_TIMED_RECORDS_LOGS);
-		auto record = profiler.timed_frame_write_ptr->records + profiler.timed_frame_write_ptr->records_count;
-		profiler.timed_frame_write_ptr->records_count += 1;
-
-		record->id         = value;
-		record->block_name = block_name;
-		record->time_stamp = intrin__rdtsc();
-		record->type       = Timed_Record_Type_END;
-	}
-}
-
-bool debug_service_handle_event(Event &event) {
+bool debug_handle_event(Event &event) {
 	bool handled = false;
 
 	switch (event.type) {
-		case Event_Type_MOUSE_BUTTON_DOWN: {
-			if (event.mouse_button.symbol == Button_LEFT) {
-				if (point_inside_rect(io.mouse_cursor, mm_rect(profiler.resizer_position, profiler.resizer_position + vec2(PROFILER_BUTTON_SIZE)))) {
-					profiler.resizing = true;
-				}
+	case Event_Type_MOUSE_BUTTON_DOWN: {
+		if (event.mouse_button.symbol == Button_LEFT) {
+			if (point_inside_rect(io.mouse_cursor, mm_rect(profiler.resizer_position, profiler.resizer_position + vec2(PROFILER_BUTTON_SIZE)))) {
+				profiler.resizing = true;
 			}
-		} break;
+		}
+	} break;
 
-		case Event_Type_MOUSE_BUTTON_UP: {
-			if (event.mouse_button.symbol == Button_LEFT) {
-				profiler.resizing	= false;
-				io.left_button_pressed = true;
-			}
-		} break;
+	case Event_Type_MOUSE_BUTTON_UP: {
+		if (event.mouse_button.symbol == Button_LEFT) {
+			profiler.resizing	= false;
+			io.left_button_pressed = true;
+		}
+	} break;
 
-		case Event_Type_MOUSE_CURSOR: {
-			io.mouse_cursor.x = (r32)event.mouse_cursor.x;
-			io.mouse_cursor.y = (r32)event.mouse_cursor.y;
-			handled = (profiler.resizing || io.hovered);
+	case Event_Type_MOUSE_CURSOR: {
+		io.mouse_cursor.x = (r32)event.mouse_cursor.x;
+		io.mouse_cursor.y = (r32)event.mouse_cursor.y;
+		handled = (profiler.resizing || io.hovered);
 
-			if (profiler.resizing) {
-				profiler.width   = max_value(profiler.width + event.mouse_cursor.x_rel, PROFILER_MIN_WIDTH);
-				profiler.height  = max_value(profiler.height + event.mouse_cursor.y_rel, PROFILER_MIN_HEIGHT);
-			}
-		} break;
+		if (profiler.resizing) {
+			profiler.width   = max_value(profiler.width + event.mouse_cursor.x_rel, PROFILER_MIN_WIDTH);
+			profiler.height  = max_value(profiler.height + event.mouse_cursor.y_rel, PROFILER_MIN_HEIGHT);
+		}
+	} break;
 	}
 
 	return handled;
+}
+
+bool debug_get_presentation_state() {
+	return io.should_present;
+}
+
+void debug_set_presentation_state(bool state) {
+	io.should_present = state;
+}
+
+bool debug_presentation_is_hovered() {
+	return io.hovered || profiler.resizing;
+}
+
+inline void reset_collation_record() {
+	profiler.record_collation_trav = profiler.record_collation_ptr;
+}
+
+inline Record *push_collation_record() {
+	assert(profiler.record_collation_trav < profiler.record_collation_ptr + PROFILER_MAX_COLLATION_RECORDS);
+	auto ptr = profiler.record_collation_trav;
+	profiler.record_collation_trav += 1;
+	return ptr;
+}
+
+inline Timed_Frame *timed_frame_get() {
+	return profiler.timed_frame_read_ptr;
 }
 
 r32 draw_header_and_buttons(r32 render_height, r32 framebuffer_w, r32 framebuffer_h, Vec2 cursor, bool *set_on_hovered) {
@@ -674,7 +646,7 @@ r32 draw_profiler(r32 render_height, Vec2 cursor, bool *set_on_hovered, Record *
 	return draw_y;
 }
 
-void debug_service_presentation(r32 framebuffer_w, r32 framebuffer_h) {
+void debug_present(r32 framebuffer_w, r32 framebuffer_h) {
 	io.hovered = false;
 
 	if (io.should_present) {
@@ -730,11 +702,58 @@ void debug_service_presentation(r32 framebuffer_w, r32 framebuffer_h) {
 	io.left_button_pressed = false;
 }
 
-void timed_frame_presentation(Monospaced_Font &font, r32 framebuffer_w, r32 framebuffer_h) {
-	debug_service_presentation(framebuffer_w, framebuffer_h);
-	return;
+
+void debug_profiler_timed_frame_begin() {
+	if (profiler.recording) {
+		profiler.timed_frame_write_ptr->begin_cycle_value   = intrin__rdtsc();
+		profiler.timed_frame_write_ptr->begin_counter_value = system_get_counter();
+	}
 }
 
-bool debug_presentation_is_hovered() {
-	return io.hovered || profiler.resizing;
+void debug_profiler_timed_frame_end(r32 frame_time) {
+	if (profiler.recording) {
+		profiler.timed_frame_write_ptr->end_cycle_value   = intrin__rdtsc();
+		profiler.timed_frame_write_ptr->end_counter_value = system_get_counter();
+
+		swap(&profiler.timed_frame_write_ptr, &profiler.timed_frame_read_ptr);
+
+		profiler.timed_frame_write_ptr->records_count       = 0;
+		profiler.timed_frame_write_ptr->begin_counter_value = 0;
+		profiler.timed_frame_write_ptr->end_counter_value   = 0;
+	}
+
+	memmove(frame_time_recorder.history + 1, frame_time_recorder.history, sizeof(r32) * (FRAME_TIME_MAX_LOGS - 1));
+	frame_time_recorder.history[0] = frame_time;
+
+	profiler.recording = profiler.next_recording;
+}
+
+Timed_Block_Match debug_profiler_timed_block_begin(String id, String block_name) {
+	if (profiler.recording) {
+		assert(profiler.timed_frame_write_ptr->records_count < PROFILER_MAX_TIMED_RECORDS_LOGS);
+		auto record = profiler.timed_frame_write_ptr->records + profiler.timed_frame_write_ptr->records_count;
+		profiler.timed_frame_write_ptr->records_count += 1;
+
+		record->id         = id;
+		record->block_name = block_name;
+		record->time_stamp = intrin__rdtsc();
+		record->type       = Timed_Record_Type_BEGIN;
+
+		return id;
+	}
+
+	return String("", 0);
+}
+
+void debug_profiler_timed_block_end(Timed_Block_Match value, String block_name) {
+	if (profiler.recording) {
+		assert(profiler.timed_frame_write_ptr->records_count < PROFILER_MAX_TIMED_RECORDS_LOGS);
+		auto record = profiler.timed_frame_write_ptr->records + profiler.timed_frame_write_ptr->records_count;
+		profiler.timed_frame_write_ptr->records_count += 1;
+
+		record->id         = value;
+		record->block_name = block_name;
+		record->time_stamp = intrin__rdtsc();
+		record->type       = Timed_Record_Type_END;
+	}
 }

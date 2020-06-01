@@ -4,7 +4,7 @@
 #include "length_string.h"
 #include "lin_maths.h"
 #include "imgui/imgui.h"
-#include "debug_service.h"
+#include "debug.h"
 #include "particle_system.h"
 #include "stream.h"
 #include "audio.h"
@@ -175,39 +175,6 @@ void PrintRigidBodies() {
 		RigidBody *rigidBody = &rigidBodies[i];
 		im_rect(vec2(rigidBody->position.x, rigidBody->position.y), vec2(rigidBody->shape.width, rigidBody->shape.height), vec4(vec3(1.1f, 1.2f, 1.5f), 1.0f));
 	}
-}
-
-bool load_debug_font(Monospaced_Font *font) {
-	String content = system_read_entire_file("data/debug.font");
-	defer {
-		memory_free(content.data);
-	};
-
-	if (content.count) {
-		Istream in = istream(content);
-
-		u32 min_c   = *istream_consume(&in, u32);
-		u32 max_c   = *istream_consume(&in, u32);
-		r32 advance = *istream_consume(&in, r32);
-		u32 size    = *istream_consume(&in, u32);
-
-		font->info.range = (Monospaced_Font_Glyph_Range *)memory_allocate(size);
-		memcpy(font->info.range, istream_consume_size(&in, size), size);
-		font->info.first   = (s32)min_c;
-		font->info.count   = (s32)(max_c - min_c + 2);
-		font->info.advance = advance;
-
-		int w      = *istream_consume(&in, int);
-		int h      = *istream_consume(&in, int);
-		int n      = *istream_consume(&in, int);
-		u8 *pixels = (u8 *)istream_consume_size(&in, w * h * n);
-
-		font->texture = gfx_create_texture2d((u32)w, (u32)h, (u32)n, Data_Format_RGBA8_UNORM_SRGB, (const u8 **)&pixels, Buffer_Usage_IMMUTABLE, 1);
-
-		return true;
-	}
-
-	return false;
 }
 
 constexpr s32 MAX_SPEED_FACTOR = 8;
@@ -504,10 +471,7 @@ int system_main() {
 	audio_mixer_set_volume(&mixer, 0);
 
 	ImGui_Initialize();
-	karma_debug_service_initialize();
-
-	Monospaced_Font font;
-	load_debug_font(&font);
+	Debug_ModeEnable();
 
 	bool editor_on = false;
 
@@ -563,9 +527,9 @@ int system_main() {
 	u64 counter   = system_get_counter();
 
 	while (running) {
-		karma_timed_frame_begin();
+		Debug_TimedFrameBegin();
 
-		karma_timed_block_begin(EventHandling);
+		Debug_TimedBlockBegin(EventHandling);
 		auto events = system_poll_events();
 		for (s64 event_index = 0; event_index < events.count; ++event_index) {
 			Event &event = events[event_index];
@@ -575,7 +539,7 @@ int system_main() {
 				break;
 			}
 			
-			if (karma_debug_service_handle_event(event)) continue;
+			if (Debug_HandleEvent(event)) continue;
 			if (ImGui_HandleEvent(event)) continue;
 
 			//
@@ -602,7 +566,7 @@ int system_main() {
 						increase_game_speed(&factor);
 						break;
 					case Key_F4:
-						karma_debug_presentation_toggle_display();
+						Debug_TogglePresentationState();
 						break;
 				}
 			}
@@ -657,12 +621,12 @@ int system_main() {
 			}
 		}
 
-		karma_timed_block_end(EventHandling);
+		Debug_TimedBlockEnd(EventHandling);
 
-		karma_timed_block_begin(Simulation);
+		Debug_TimedBlockBegin(Simulation);
 
 		while (accumulator_t >= fixed_dt) {
-			karma_timed_scope(SimulationFrame);
+			Debug_TimedScope(SimulationFrame);
 
 			if (state == Time_State_RESUME) {
 				const r32 gravity = 10;
@@ -800,15 +764,15 @@ int system_main() {
 			accumulator_t -= fixed_dt;
 		}
 
-		karma_timed_block_end(Simulation);
+		Debug_TimedBlockEnd(Simulation);
 
-		karma_timed_block_begin(AudioUpdate);
+		Debug_TimedBlockBegin(AudioUpdate);
 
 		mixer.pitch_factor = factor.ratio;
 		audio_mixer_update(&mixer);
-		karma_timed_block_end(AudioUpdate);
+		Debug_TimedBlockEnd(AudioUpdate);
 
-		karma_timed_block_begin(Rendering);
+		Debug_TimedBlockBegin(Rendering);
 		camera.position.x = player.position.x;
 
 		r32 alpha = accumulator_t / fixed_dt; // TODO: Use this
@@ -953,8 +917,8 @@ int system_main() {
 		ImGui_RenderFrame();
 
 		{
-			karma_timed_scope(DebugCollation);
-			karma_timed_frame_presentation(font, window_w, window_h);
+			Debug_TimedScope(DebugPresent);
+			Debug_Present(window_w, window_h);
 		}
 
 #if 0
@@ -1003,13 +967,13 @@ int system_main() {
 
 		gfx_end_drawing();
 
-		karma_timed_block_begin(Present);
+		Debug_TimedBlockBegin(Present);
 
 		gfx_present();
 
-		karma_timed_block_end(Present);
+		Debug_TimedBlockEnd(Present);
 
-		karma_timed_block_end(Rendering);
+		Debug_TimedBlockEnd(Rendering);
 
 		reset_temporary_memory();
 
@@ -1030,7 +994,7 @@ int system_main() {
 		accumulator_t += real_dt;
 		accumulator_t = min_value(accumulator_t, 0.3f);
 
-		karma_timed_frame_end(real_dt);
+		Debug_TimedFrameEnd(real_dt);
 	}
 
 	ImGui_Shutdown();

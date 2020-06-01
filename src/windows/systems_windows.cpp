@@ -2,7 +2,6 @@
 #include "../length_string.h"
 #include "../systems.h"
 #include "../stb_sprintf.h"
-#include "../debug_service.h"
 #include "resource.h"
 #include <ShlObj_core.h>
 #include <Windows.h>
@@ -1886,7 +1885,6 @@ const Array_View<Event> system_poll_events(int poll_count) {
 	// That's why we clear windows_event_count during this funtion return
 
 	for (int poll_index = 0; poll_index < poll_count; ++poll_index) {
-		karma_timed_block_begin(WindowEvents);
 		while (PeekMessageW(&msg, 0, 0, 0, PM_REMOVE)) {
 			if (msg.message == WM_QUIT) {
 				event.type = Event_Type_EXIT;
@@ -1900,9 +1898,7 @@ const Array_View<Event> system_poll_events(int poll_count) {
 				DispatchMessageW(&msg);
 			}
 		}
-		karma_timed_block_end(WindowEvents);
 
-		karma_timed_block_begin(XInputEvents);
 		XINPUT_STATE state;
 		for (int user_index = 0; user_index < XUSER_MAX_COUNT; ++user_index) {
 			auto res = XInputGetState(user_index, &state);
@@ -1952,7 +1948,6 @@ const Array_View<Event> system_poll_events(int poll_count) {
 				memset(controller, 0, sizeof(*controllers));
 			}
 		}
-		karma_timed_block_end(XInputEvents);
 	}
 
 	s64 event_count = (s64)windows_event_count;
