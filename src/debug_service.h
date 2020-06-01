@@ -18,7 +18,6 @@ struct Timed_Record {
 	String            id;
 	String            block_name;
 	s64               time_stamp;
-	u32               thread_id;
 	Timed_Record_Type type;
 };
 
@@ -89,10 +88,13 @@ struct Timed_Procedure {
 #define karma_debug_service_handle_event debug_service_handle_event
 #define karma_timed_frame_presentation   timed_frame_presentation
 
-#define karma_frame_recording_get_state			frame_recording_get_state
-#define karma_frame_recording_set_state			frame_recording_set_state
-#define karma_debug_presentation_get_display	debug_presentation_get_display
-#define karma_debug_presentation_set_display	debug_presentation_set_display
+#define karma_frame_recording_get_state				frame_recording_get_state
+#define karma_frame_recording_set_state				frame_recording_set_state
+#define karma_frame_recording_toggle_state()		frame_recording_set_state(!frame_recording_get_state())
+#define karma_debug_presentation_get_display		debug_presentation_get_display
+#define karma_debug_presentation_set_display		debug_presentation_set_display
+#define karma_debug_presentation_toggle_display()	debug_presentation_set_display(!debug_presentation_get_display())
+
 #else
 
 #define karma_debug_service_initialize() 
@@ -108,7 +110,9 @@ struct Timed_Procedure {
 #define karma_timed_frame_presentation(...)   
 #define frame_recording_get_state()
 #define frame_recording_set_state(...)
+#define karma_frame_recording_toggle_state()
 #define debug_presentation_get_display()
 #define debug_presentation_set_display(...)
+#define karma_debug_presentation_toggle_display()
 
 #endif

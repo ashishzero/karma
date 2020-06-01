@@ -9,8 +9,11 @@ static constexpr u32 MAX_RECORDS_LOGS                    = 5000000; // around 19
 static constexpr u32 RECORD_CIRCULAR_BUFFER_FRAMES_AHEAD = 2;
 static constexpr u32 MAX_COLLATION_RECORDS               = MAX_RECORDS_LOGS / 2;
 
-static constexpr r32 DEBUG_PRESENTATION_X_OFFSET  = 5.0f;
-static constexpr r32 DEBUG_PRESENTATION_Y_OFFSET  = 5.0f;
+static constexpr r32 DEBUG_PRESENTATION_X_OFFSET		= 5.0f;
+static constexpr r32 DEBUG_PRESENTATION_Y_OFFSET		= 2.0f;
+static constexpr r32 DEBUG_PRESENTATION_BLOCK_Y_OFFSET  = 5.0f;
+
+static constexpr int FRAME_TIME_MAX_LOGS = 150;
 
 static constexpr r32 remove_me_PROFILER_PRESENTATION_RECORD_HEIGHT = 25.0f;
 static constexpr r32 remove_me_PROFILER_PRESENTATION_FONT_HEIGHT   = 20.0f;
@@ -18,8 +21,7 @@ static constexpr r32 remove_me_PROFILER_PRESENTATION_Y_OFFSET      = 0.0f;
 
 static constexpr r32 remove_me_PROFILER_RESIZER_SIZE               = 10.0f;
 static constexpr r32 remove_me_PROFILER_RESIZER_MIN_X              = 50.0f;
-static constexpr int remove_me_MAX_PRESENTATION_COLORS             = 100;
-static constexpr int remove_me_MAX_FRAME_TIME_LOGS                 = 150;
+static constexpr int remove_me_MAX_PRESENTATION_COLORS             = 50;
 
 static constexpr r32 remove_me_FRAME_TIME_GRAPH_HEIGHT             = 100.0f;
 static constexpr r32 remove_me_FRAME_TIME_GRAPH_PROGRESS           = 3.0f;
@@ -53,7 +55,6 @@ struct Record {
 struct Debug_Collation {
 	Record *root_record;
 	Record *leaf_record;
-	u32     thread_id;
 };
 
 static void * debug_memory;
@@ -65,10 +66,11 @@ static Timed_Frame *timed_frame_reader_ptr;
 static Color3 presentation_colors[remove_me_MAX_PRESENTATION_COLORS];
 
 static r32 stablilized_frame_time = 0.0f;
-static r32 frame_time_history[remove_me_MAX_FRAME_TIME_LOGS];
+static r32 frame_time_history[FRAME_TIME_MAX_LOGS];
 
-static r32  profiler_resizer_x         = remove_me_FRAME_TIME_GRAPH_PROGRESS * remove_me_MAX_FRAME_TIME_LOGS + 0.5F * remove_me_PROFILER_RESIZER_SIZE;
+static r32  profiler_resizer_x         = remove_me_FRAME_TIME_GRAPH_PROGRESS * FRAME_TIME_MAX_LOGS + 0.5F * remove_me_PROFILER_RESIZER_SIZE;
 static bool profiler_resize_with_mouse = false;
+
 static bool left_button_state		   = false;
 static bool left_button_pressed		   = false;
 
@@ -243,7 +245,7 @@ void timed_frame_end(r32 frame_time) {
 		timed_frame_writer_ptr->end_counter_value   = 0;
 	}
 
-	memmove(frame_time_history + 1, frame_time_history, sizeof(r32) * (remove_me_MAX_FRAME_TIME_LOGS - 1));
+	memmove(frame_time_history + 1, frame_time_history, sizeof(r32) * (FRAME_TIME_MAX_LOGS - 1));
 	frame_time_history[0] = frame_time;
 
 	frame_recording = user_frame_recording_option;
@@ -258,7 +260,6 @@ Timed_Block_Match timed_block_begin(String id, String block_name) {
 		record->id         = id;
 		record->block_name = block_name;
 		record->time_stamp = intrin__rdtsc();
-		record->thread_id  = (u32)context.id;
 		record->type       = Timed_Record_Type_BEGIN;
 
 		return id;
@@ -276,7 +277,6 @@ void timed_block_end(Timed_Block_Match value, String block_name) {
 		record->id         = value;
 		record->block_name = block_name;
 		record->time_stamp = intrin__rdtsc();
-		record->thread_id  = (u32)context.id;
 		record->type       = Timed_Record_Type_END;
 	}
 }
@@ -296,108 +296,6 @@ void debug_service_handle_event(Event &event) {
 			}
 		} break;
 	}
-}
-
-int calculate_presetation_max_children(Record *record) {
-	int children = 1;
-	while (record) {
-		if (record->child) {
-			children += calculate_presetation_max_children(record->child);
-		}
-		record = record->next;
-	}
-	return children;
-}
-
-void draw_timelines_recursive(Record *record, Vec2 position, r32 width, r32 height, int color_index, r32 inv_cycles, Vec2 cursor_p, Record **hover_record) {
-	Vec2 render_position;
-	render_position.y = position.y;
-	Vec2 dimension;
-	dimension.y = height;
-
-	while (record) {
-		Vec4 color = vec4(presentation_colors[color_index], 1);
-		color_index += 1;
-		if (color_index >= remove_me_MAX_PRESENTATION_COLORS) color_index = 0;
-
-		render_position.x = position.x + width * (r32)record->begin_cycle * inv_cycles;
-		dimension.x       = width * (r32)(record->end_cycle - record->begin_cycle) * inv_cycles;
-
-		im_rect(render_position, dimension, color);
-		im_rect_outline2d(render_position, dimension, vec4(1), 0.4f);
-
-		if (point_inside_rect(cursor_p, mm_rect(render_position, render_position + dimension))) {
-			*hover_record = record;
-		}
-
-		if (record->child) {
-			draw_timelines_recursive(record->child, position - vec2(0, height), width, height, color_index, inv_cycles, cursor_p, hover_record);
-		}
-
-		record = record->next;
-	}
-}
-
-void write_timelines_info_recursive(Record *record, Vec2 position, r32 width, r32 height, r32 font_height, r32 inv_cycles, Monospaced_Font &font) {
-	Vec2 render_position;
-	render_position.y = position.y;
-	Vec2 dimension;
-	dimension.y = height;
-
-	while (record) {
-		render_position.x = position.x + width * (r32)record->begin_cycle * inv_cycles;
-		dimension.x       = width * (r32)(record->end_cycle - record->begin_cycle) * inv_cycles;
-
-		Vec2 region = im_calculate_text_region(font_height, font.info, record->name);
-		if (dimension.x > region.x) {
-			// align font in center only if there is enough space for font to be displayed
-			render_position.x += (dimension.x - region.x) * 0.5f;
-		}
-
-		im_text_region(render_position, vec2(dimension.x, font_height), font.info, record->name, vec4(1));
-
-		if (record->child) {
-			write_timelines_info_recursive(record->child, position - vec2(0, height), width, height, font_height, inv_cycles, font);
-		}
-
-		record = record->next;
-	}
-}
-
-Vec2 draw_profiler(Vec2 position, r32 width, r32 height, r32 font_height, r32 inv_cycles, Vec2 cursor_p, Monospaced_Font &font, Record **hovered_record) {
-	position.y -= remove_me_FRAME_TIME_PROFILER_Y_OFFSET;
-
-	auto record = debug_collation.root_record;
-
-	r32        children = (r32)calculate_presetation_max_children(record);
-	const Vec2 bg_off = vec2(3.0f);
-
-	position.x += bg_off.x;
-	position.y -= bg_off.y;
-
-	// Make baground for all the children records, using height and children count
-	const Vec2 bg_pos = position - vec2(0, children * height + height) - bg_off; // height for thread id
-	const Vec2 bg_dim = vec2(width, children * height + height) + 2 * (bg_off);
-
-	im_unbind_texture();
-	im_rect(bg_pos, bg_dim, vec4(0, 0, 0, 0.8f));
-	im_rect_outline2d(bg_pos, bg_dim, vec4(1), 0.5f);
-
-	position.y -= 2 * height; // For displaying thread id and positioning for next font rendering
-	draw_timelines_recursive(record, position, width, height, 20, inv_cycles, cursor_p, hovered_record);
-
-	im_bind_texture(font.texture);
-	// we print thread id here to decrease texture rebinding
-	position.y += (height - font_height) * 0.5f; // align font to center vertically
-	im_text_region(position + vec2(0, height), vec2(width, font_height), font.info, tprintf("Thread: %u", debug_collation.thread_id), vec4(1));
-	write_timelines_info_recursive(record, position, width, height, font_height, inv_cycles, font);
-
-	// Adjust for next draw position
-	position = bg_pos;
-	position.y -= height;
-
-	// return position to next draw
-	return position;
 }
 
 r32 draw_header_and_buttons(r32 render_height, r32 framebuffer_w, r32 framebuffer_h, Vec2 cursor) {
@@ -469,12 +367,12 @@ r32 draw_header_and_buttons(r32 render_height, r32 framebuffer_w, r32 framebuffe
 r32 draw_frame_time_graph(r32 render_height) {
 	constexpr r32 FRAME_TIME_GRAPH_WIDTH			= 450.0f;
 	constexpr r32 FRAME_TIME_GRAPH_HEIGHT			= 100.0f;
-	constexpr r32 FRAME_TIME_GRAPH_OFFSET_Y			= 5.0f;
 	constexpr r32 FRAME_TIME_GRAPH_PROGRESS			= 3.0f;
 	constexpr r32 FRAME_TIME_MARK_FONT_HEIGHT		= 15.0f;
 	constexpr r32 FRAME_TIME_OUTLINE_THICKNESS		= 0.5f;
 	constexpr r32 FRAME_TIME_MAX_DT_HEIGHT_FACTOR	= 1.2f;
 	constexpr r32 FRAME_TIME_MARK_LINE_THICKNESS	= 0.6f;
+	constexpr r32 FRAME_TIME_GRAPH_LINE_THICKNESS	= 0.6f;
 	constexpr int FRAME_TIME_LOGS_COUNT				= (int)(FRAME_TIME_GRAPH_WIDTH / FRAME_TIME_GRAPH_PROGRESS);
 	constexpr r32 FRAME_TIME_MARK_CRITICAL_Y_OFFSET	= FRAME_TIME_GRAPH_HEIGHT * 0.2f;
 
@@ -485,8 +383,10 @@ r32 draw_frame_time_graph(r32 render_height) {
 
 	const Vec4 FRAME_TIME_MARK_COLOR = vec4(0, 1, 1);
 
+	static_assert(FRAME_TIME_LOGS_COUNT <= FRAME_TIME_MAX_LOGS, "The number of frame time to be drawn should be less than or equal to the snapshots recorded");
+
 	r32 draw_x = DEBUG_PRESENTATION_X_OFFSET;
-	r32 draw_y = render_height - FRAME_TIME_GRAPH_HEIGHT - FRAME_TIME_GRAPH_OFFSET_Y;
+	r32 draw_y = render_height - FRAME_TIME_GRAPH_HEIGHT - DEBUG_PRESENTATION_BLOCK_Y_OFFSET;
 	
 	// Find max frame time to display the graph in reference to the max frame time
 	r32 max_frame_time = frame_time_history[0];
@@ -507,7 +407,7 @@ r32 draw_frame_time_graph(r32 render_height) {
 	for (int frame_time_index = 1; frame_time_index < FRAME_TIME_LOGS_COUNT; ++frame_time_index) {
 		next_y = frame_time_history[frame_time_index] * inv_max_frame_time * FRAME_TIME_GRAPH_HEIGHT + draw_y;
 
-		im_line2d(vec2(x, prev_y), vec2(x + FRAME_TIME_GRAPH_PROGRESS, next_y), vec4(1), 0.6f);
+		im_line2d(vec2(x, prev_y), vec2(x + FRAME_TIME_GRAPH_PROGRESS, next_y), vec4(1), FRAME_TIME_GRAPH_LINE_THICKNESS);
 		x += FRAME_TIME_GRAPH_PROGRESS;
 		prev_y = next_y;
 	}
@@ -539,6 +439,189 @@ r32 draw_frame_time_graph(r32 render_height) {
 	return draw_y;
 }
 
+int calculate_max_children_count_in_profiler_records(Record *root_record) {
+	int max_children = 1;
+
+	while (root_record) {
+		int children = 1;
+		auto record = root_record;
+
+		while (record->child) {
+			children += 1;
+			record = record->child;
+		}
+		max_children = max_value(max_children, children);
+
+		root_record = root_record->next;
+	}
+
+	return max_children;
+}
+
+void draw_profiler_timelines_rects(Record *record, Vec2 top_position, r32 profiler_width, r32 child_height, int color_index, r32 inv_cycles, Vec2 cursor, Record **hovered_record) {
+	Vec2 render_position;
+	render_position.y = top_position.y - child_height;
+	Vec2 dimension;
+	dimension.y = child_height;
+
+	while (record) {
+		Vec4 color = vec4(presentation_colors[color_index], 1);
+		color_index += 1;
+		if (color_index >= remove_me_MAX_PRESENTATION_COLORS) color_index = 0;
+
+		render_position.x = top_position.x + profiler_width * (r32)record->begin_cycle * inv_cycles;
+		dimension.x       = profiler_width * (r32)(record->end_cycle - record->begin_cycle) * inv_cycles;
+
+		im_rect(render_position, dimension, color);
+		im_rect_outline2d(render_position, dimension, vec4(1), 0.4f);
+
+		if (point_inside_rect(cursor, mm_rect(render_position, render_position + dimension))) {
+			*hovered_record = record;
+		}
+
+		if (record->child) {
+			draw_profiler_timelines_rects(record->child, top_position - vec2(0, child_height), profiler_width, child_height, color_index, inv_cycles, cursor, hovered_record);
+		}
+
+		record = record->next;
+	}
+}
+
+void draw_profiler_timelines_texts(Record *record, Vec2 top_position, r32 profiler_width, r32 child_height, r32 font_height, r32 inv_cycles) {
+	Vec2 render_position;
+	render_position.y = top_position.y - child_height;
+	Vec2 dimension;
+	dimension.y = child_height;
+
+	while (record) {
+		render_position.x = top_position.x + profiler_width * (r32)record->begin_cycle * inv_cycles;
+		dimension.x       = profiler_width * (r32)(record->end_cycle - record->begin_cycle) * inv_cycles;
+
+		Vec2 region = im_calculate_text_region(font_height, debug_font.info, record->name);
+		if (dimension.x > region.x) {
+			// align font in center only if there is enough space for font to be displayed
+			render_position.x += (dimension.x - region.x) * 0.5f;
+		}
+
+		im_text_region(render_position, vec2(dimension.x, font_height), debug_font.info, record->name, vec4(1));
+
+		if (record->child) {
+			draw_profiler_timelines_texts(record->child, top_position- vec2(0, child_height), profiler_width, child_height, font_height, inv_cycles);
+		}
+
+		record = record->next;
+	}
+}
+
+r32 draw_profiler(r32 render_height, Vec2 cursor) {
+	auto frame				= timed_frame_get();
+	auto counts				= frame->end_counter_value - frame->begin_counter_value;
+	r32 inv_cycles_count	= 1.0f / ((r32)(frame->end_cycle_value - frame->begin_cycle_value));
+	r32  dt					= ((1000000.0f * (r32)counts) / (r32)system_get_frequency()) / 1000000.0f;
+	
+	// Prepare render data
+	{
+		reset_collation_record();
+
+		Record *record = NULL;
+		for (s64 record_index = 0; record_index < frame->records_count; ++record_index) {
+			auto frame_record = frame->records + record_index;
+
+			if (debug_collation.leaf_record == nullptr) {
+				record              = push_collation_record();
+				record->child       = NULL;
+				record->parent      = NULL;
+				record->next        = NULL;
+				record->id          = frame_record->id;
+				record->name        = frame_record->block_name;
+				record->ms          = -1; // we use negative to endicate that END has not been reached
+				record->begin_cycle = (u32)(frame_record->time_stamp - frame->begin_cycle_value);
+
+				debug_collation.root_record = record;
+				debug_collation.leaf_record = record;
+			} else if (frame_record->type == Timed_Record_Type_BEGIN) {
+				if (debug_collation.leaf_record->ms > 0) {
+					record              = push_collation_record();
+					record->child       = NULL;
+					record->parent      = debug_collation.leaf_record->parent;
+					record->next        = NULL;
+					record->id          = frame_record->id;
+					record->name        = frame_record->block_name;
+					record->ms          = -1;
+					record->begin_cycle = (u32)(frame_record->time_stamp - frame->begin_cycle_value);
+
+					debug_collation.leaf_record->next = record;
+					debug_collation.leaf_record       = record;
+				} else {
+					record              = push_collation_record();
+					record->child       = NULL;
+					record->parent      = debug_collation.leaf_record;
+					record->next        = NULL;
+					record->id          = frame_record->id;
+					record->name        = frame_record->block_name;
+					record->ms          = -1;
+					record->begin_cycle = (u32)(frame_record->time_stamp - frame->begin_cycle_value);
+
+					debug_collation.leaf_record->child = record;
+					debug_collation.leaf_record        = record;
+				}
+			} else {
+				auto parent = debug_collation.leaf_record;
+
+				while (parent) {
+					if (parent->id.data == frame_record->id.data && parent->name.data == frame_record->block_name.data) {
+						break;
+					}
+					parent = parent->parent;
+				}
+
+				assert(parent);         // block begin/end mismatch
+				assert(parent->ms < 0); // block begin/end mismatch
+
+				parent->end_cycle = (u32)(frame_record->time_stamp - frame->begin_cycle_value);
+				r32 cycles        = (r32)(parent->end_cycle - parent->begin_cycle);
+				parent->ms        = 1000.0f * dt * cycles * inv_cycles_count;
+
+				debug_collation.leaf_record = parent;
+			}
+		}
+	}
+
+	constexpr r32 PROFILER_MAX_CHILD_HEIGHT  = 25.0f;
+	constexpr r32 PROFILER_OUTLINE_THICKNESS = 0.5f;
+
+	// Draw the profile data
+	Record *hovered_record = NULL;
+
+	static r32 profiler_height	= 100.0f;
+	static r32 profiler_width	= 450.0f;
+
+	r32 draw_x = DEBUG_PRESENTATION_X_OFFSET;
+	r32 draw_y = render_height - DEBUG_PRESENTATION_BLOCK_Y_OFFSET - profiler_height;
+
+	auto root_record	= debug_collation.root_record;
+	r32  children		= (r32)calculate_max_children_count_in_profiler_records(root_record);
+	r32  child_height	= min_value(profiler_height / children, PROFILER_MAX_CHILD_HEIGHT);
+	r32  font_height	= child_height * 0.8f;
+
+	Vec2 draw_region_position	= vec2(draw_x, draw_y);
+	Vec2 draw_region_dimension	= vec2(profiler_width, profiler_height);
+	Vec2 top_position			= vec2(draw_x, render_height - DEBUG_PRESENTATION_BLOCK_Y_OFFSET);
+
+	im_unbind_texture();
+	im_rect(draw_region_position, draw_region_dimension, vec4(0, 0, 0, 0.8f));
+
+	draw_profiler_timelines_rects(root_record, top_position, profiler_width, child_height, 0, inv_cycles_count, cursor, &hovered_record);
+
+	im_bind_texture(debug_font.texture);
+	draw_profiler_timelines_texts(root_record, top_position, profiler_width, child_height, font_height, inv_cycles_count);
+
+	im_unbind_texture();
+	im_rect_outline2d(draw_region_position, draw_region_dimension, vec4(1), PROFILER_OUTLINE_THICKNESS);
+
+	return draw_y;
+}
+
 void debug_service_presentation(r32 framebuffer_w, r32 framebuffer_h) {
 	if (debug_service_present) {
 		Vec2 cursor = system_get_cursor_position();
@@ -550,6 +633,10 @@ void debug_service_presentation(r32 framebuffer_w, r32 framebuffer_h) {
 
 		if (debug_menu_icons_value[Menu_Icon_FRAME_TIME]) {
 			render_height = draw_frame_time_graph(render_height);
+		}
+
+		if (debug_menu_icons_value[Menu_Icon_PROFILER]) {
+			render_height = draw_profiler(render_height, cursor);
 		}
 		
 		im_end();
@@ -594,12 +681,12 @@ void timed_frame_presentation(Monospaced_Font &font, r32 framebuffer_w, r32 fram
 		r32 x = DEBUG_PRESENTATION_X_OFFSET;
 		r32 y = framebuffer_h - prev_used_height_space - remove_me_FRAME_TIME_GRAPH_HEIGHT;
 
-		Vec2 region_dim = vec2(remove_me_MAX_FRAME_TIME_LOGS * remove_me_FRAME_TIME_GRAPH_PROGRESS, remove_me_FRAME_TIME_GRAPH_HEIGHT);
+		Vec2 region_dim = vec2(FRAME_TIME_MAX_LOGS * remove_me_FRAME_TIME_GRAPH_PROGRESS, remove_me_FRAME_TIME_GRAPH_HEIGHT);
 		im_rect(vec2(x, y), region_dim, vec4(0, 0, 0, 0.8f));
 		im_rect_outline2d(vec2(x, y), region_dim, vec4(1), 0.5f);
 
 		r32 max_frame_time = frame_time_history[0];
-		for (int frame_time_index = 1; frame_time_index < remove_me_MAX_FRAME_TIME_LOGS; ++frame_time_index) {
+		for (int frame_time_index = 1; frame_time_index < FRAME_TIME_MAX_LOGS; ++frame_time_index) {
 			if (frame_time_history[frame_time_index] > max_frame_time)
 				max_frame_time = frame_time_history[frame_time_index];
 		}
@@ -618,7 +705,7 @@ void timed_frame_presentation(Monospaced_Font &font, r32 framebuffer_w, r32 fram
 
 		r32 prev_y = frame_time_history[0] * inv_max_frame_time * remove_me_FRAME_TIME_GRAPH_HEIGHT + y;
 		r32 next_y;
-		for (int frame_time_index = 1; frame_time_index < remove_me_MAX_FRAME_TIME_LOGS; ++frame_time_index) {
+		for (int frame_time_index = 1; frame_time_index < FRAME_TIME_MAX_LOGS; ++frame_time_index) {
 			next_y = frame_time_history[frame_time_index] * inv_max_frame_time * remove_me_FRAME_TIME_GRAPH_HEIGHT + y;
 			im_line2d(vec2(x, prev_y), vec2(x + remove_me_FRAME_TIME_GRAPH_PROGRESS, next_y), vec4(1), 0.6f);
 			x += remove_me_FRAME_TIME_GRAPH_PROGRESS;
@@ -660,7 +747,6 @@ void timed_frame_presentation(Monospaced_Font &font, r32 framebuffer_w, r32 fram
 					record->ms          = -1; // we use negative to endicate that END has not been reached
 					record->begin_cycle = (u32)(frame_record->time_stamp - frame->begin_cycle_value);
 
-					debug_collation.thread_id   = frame_record->thread_id;
 					debug_collation.root_record = record;
 					debug_collation.leaf_record = record;
 				} else if (frame_record->type == Timed_Record_Type_BEGIN) {
@@ -719,7 +805,7 @@ void timed_frame_presentation(Monospaced_Font &font, r32 framebuffer_w, r32 fram
 		auto cursor_p          = system_get_cursor_position();
 
 		Record *hovered_record = NULL;
-		Vec2    next_pos       = draw_profiler(vec2(x_pos, y_pos), profiler_presentation_width, remove_me_PROFILER_PRESENTATION_RECORD_HEIGHT, remove_me_PROFILER_PRESENTATION_FONT_HEIGHT, inv_cycles_count, cursor_p, font, &hovered_record);
+		//Vec2    next_pos       = draw_profiler(vec2(x_pos, y_pos), profiler_presentation_width, remove_me_PROFILER_PRESENTATION_RECORD_HEIGHT, remove_me_PROFILER_PRESENTATION_FONT_HEIGHT, inv_cycles_count, cursor_p, font, &hovered_record);
 
 		Vec2 resize_dim   = vec2(remove_me_PROFILER_RESIZER_SIZE);
 		Vec4 resize_color = vec4(1);
@@ -730,7 +816,8 @@ void timed_frame_presentation(Monospaced_Font &font, r32 framebuffer_w, r32 fram
 			resize_color       = vec4(1, 1, 0);
 			resize_dim.x       = resize_dim.x * 1.5f;
 		}
-
+		
+		Vec2 next_pos;
 		next_pos.x = profiler_resizer_x;
 		next_pos.y += remove_me_PROFILER_PRESENTATION_RECORD_HEIGHT;
 
