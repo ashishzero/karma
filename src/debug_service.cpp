@@ -68,6 +68,7 @@ static r32 frame_time_history[MAX_FRAME_TIME_LOGS];
 static r32  profiler_resizer_x         = FRAME_TIME_GRAPH_PROGRESS * MAX_FRAME_TIME_LOGS + 0.5F * PROFILER_RESIZER_SIZE;
 static bool profiler_resize_with_mouse = false;
 static bool left_button_state		   = false;
+static bool left_button_pressed		   = false;
 
 static Debug_Collation debug_collation;
 static Record *        record_collation_ptr;
@@ -80,6 +81,8 @@ static bool user_frame_recording_option = true;
 static Monospaced_Font		debug_font;
 static Texture2d_Handle		debug_menu_icons;
 static Mm_Rect				debug_menu_icons_rect[Menu_Icon_COUNT];
+static Color4				debug_menu_icons_color[Menu_Icon_COUNT];
+static bool					debug_menu_icons_value[Menu_Icon_COUNT];
 
 enum Frame_Present_Flag_Bit : u32 {
 	Frame_Present_NONE             = bit(0),
@@ -202,6 +205,8 @@ void debug_service_initialize() {
 					debug_menu_icons_rect[index].max.y = (r32)y_index / (r32)y_icon_count;
 					debug_menu_icons_rect[index].max.x = (r32)(x_index + 1) / (r32)x_icon_count;
 					debug_menu_icons_rect[index].min.y = (r32)(y_index + 1) / (r32)y_icon_count;
+
+					debug_menu_icons_color[index] = vec4(1);
 				}
 			}
 		}
@@ -284,7 +289,8 @@ void debug_service_handle_event(Event &event) {
 
 		case Event_Type_MOUSE_BUTTON_UP: {
 			if (event.mouse_button.symbol == Button_LEFT) {
-				left_button_state = false;
+				left_button_state	= false;
+				left_button_pressed = true;
 			}
 		} break;
 	}
@@ -392,7 +398,11 @@ Vec2 draw_profiler(Vec2 position, r32 width, r32 height, r32 font_height, r32 in
 	return position;
 }
 
-r32 draw_header_and_buttons(r32 render_height, r32 framebuffer_w, r32 framebuffer_h) {
+r32 draw_header_and_buttons(r32 render_height, r32 framebuffer_w, r32 framebuffer_h, Vec2 cursor) {
+	//
+	// Frame Time and Version print
+	//
+
 	stablilized_frame_time        = stablilized_frame_time * 0.8f + 0.2f * frame_time_history[0];
 	String frame_time_string      = tprintf("FrameTime: %.3fms", stablilized_frame_time * 1000.0f);
 	String version_string         = "v" KARMA_VERSION_STRING;
@@ -406,31 +416,64 @@ r32 draw_header_and_buttons(r32 render_height, r32 framebuffer_w, r32 framebuffe
 	auto v_size = im_calculate_text_region(HEADER_FONT_HEIGHT, debug_font.info, version_string);
 	im_text(vec2(framebuffer_w - v_size.x - 8.0f, draw_y), HEADER_FONT_HEIGHT, debug_font.info, version_string, HEADER_FONT_COLOR);
 
+	//
+	// Menu Icons update and render
+	//
+
+	Vec2 icon_positions[Menu_Icon_COUNT];
+	Vec2 icon_dimensions[Menu_Icon_COUNT];
+
 	const r32  FRAME_TIME_AND_MENU_GAP	= 20.0f;
 	const r32  MENU_ICON_X_OFFSET		= 5.0f;
 	const auto MENU_ICON_WIDTH			= HEADER_FONT_HEIGHT;
 	const auto MENU_ICON_X_POSITION		= MENU_ICON_WIDTH + MENU_ICON_X_OFFSET;
 
-	im_bind_texture(debug_menu_icons);
-
 	r32 icon_draw_start_x = ft_size.x + FRAME_TIME_AND_MENU_GAP;
 	for (int icon_index = 0; icon_index < Menu_Icon_COUNT; ++icon_index) {
-		im_rect(vec2(icon_draw_start_x + MENU_ICON_X_POSITION * icon_index, draw_y), vec2(HEADER_FONT_HEIGHT), debug_menu_icons_rect[icon_index], vec4(1));
+		Vec2 pos = vec2(icon_draw_start_x + MENU_ICON_X_POSITION * icon_index, draw_y);
+		Vec2 dim = vec2(HEADER_FONT_HEIGHT);
+
+		icon_positions[icon_index]  = pos;
+		icon_dimensions[icon_index] = dim;
+
+		bool hovering = point_inside_rect(cursor, mm_rect(pos, pos + dim));
+
+		if (hovering && left_button_pressed) {
+			debug_menu_icons_value[icon_index] = !debug_menu_icons_value[icon_index];
+		}
+
+		if (debug_menu_icons_value[icon_index]) {
+			debug_menu_icons_color[icon_index] = vec4(0.8f, 0.8f, 0, 1);
+		} else if (hovering) {
+			debug_menu_icons_color[icon_index] = vec4(1);
+		} else {
+			debug_menu_icons_color[icon_index] = vec4(0.2f, 0.2f, 0.2f);
+		}
+
+	}
+
+	im_bind_texture(debug_menu_icons);
+
+	for (int icon_index = 0; icon_index < Menu_Icon_COUNT; ++icon_index) {
+		im_rect(icon_positions[icon_index], icon_dimensions[icon_index], debug_menu_icons_rect[icon_index], debug_menu_icons_color[icon_index]);
 	}
 
 	return render_height - HEADER_FONT_HEIGHT;
 }
 
 void debug_service_presentation(r32 framebuffer_w, r32 framebuffer_h) {
-	if (!debug_service_present) return;
+	if (debug_service_present) {
+		Vec2 cursor = system_get_cursor_position();
+		r32 render_height = framebuffer_h;
 
-	r32 render_height = framebuffer_h;
+		im_debug_begin(0, framebuffer_w, framebuffer_h, 0);
+		
+		render_height = draw_header_and_buttons(render_height, framebuffer_w, framebuffer_h, cursor);
+		
+		im_end();
+	}
 
-	im_debug_begin(0, framebuffer_w, framebuffer_h, 0);
-	
-	render_height = draw_header_and_buttons(render_height, framebuffer_w, framebuffer_h);
-	
-	im_end();
+	left_button_pressed = false;
 }
 
 void timed_frame_presentation(Monospaced_Font &font, r32 framebuffer_w, r32 framebuffer_h) {
