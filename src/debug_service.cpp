@@ -375,9 +375,11 @@ void debug_service_presentation(r32 framebuffer_w, r32 framebuffer_h) {
 	bool debug_service_present = true;
 	if (!debug_service_present) return;
 
+	r32 render_height = framebuffer_h;
+
 	im_debug_begin(0, framebuffer_w, framebuffer_h, 0);
 	
-	draw_header_and_buttons(framebuffer_h, debug_font, framebuffer_w, framebuffer_h);
+	render_height = draw_header_and_buttons(render_height, debug_font, framebuffer_w, framebuffer_h);
 	
 	im_end();
 }

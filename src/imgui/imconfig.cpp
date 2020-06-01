@@ -49,11 +49,11 @@ void ImGui::Initialize() {
 	}
 
 	ImFontConfig config;
-	config.SizePixels  = 16;
-	config.OversampleH = 4;
-	config.OversampleV = 4;
+	config.SizePixels  = 14;
+	config.OversampleH = 2;
+	config.OversampleV = 2;
 	config.PixelSnapH  = true;
-	io.Fonts->AddFontFromFileTTF("dev/Roboto/RobotoMono-Medium.ttf", 16, &config);
+	io.Fonts->AddFontFromFileTTF("dev/GeneraleStation-Regular.otf", 14, &config);
 
 	auto &style             = ImGui::GetStyle();
 	style.ChildRounding     = 0;
