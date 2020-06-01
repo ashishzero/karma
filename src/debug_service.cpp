@@ -15,17 +15,7 @@ static constexpr r32 DEBUG_PRESENTATION_BLOCK_Y_OFFSET  = 5.0f;
 
 static constexpr int FRAME_TIME_MAX_LOGS = 150;
 
-static constexpr r32 remove_me_PROFILER_PRESENTATION_RECORD_HEIGHT = 25.0f;
-static constexpr r32 remove_me_PROFILER_PRESENTATION_FONT_HEIGHT   = 20.0f;
-static constexpr r32 remove_me_PROFILER_PRESENTATION_Y_OFFSET      = 0.0f;
-
-static constexpr r32 remove_me_PROFILER_RESIZER_SIZE               = 10.0f;
-static constexpr r32 remove_me_PROFILER_RESIZER_MIN_X              = 50.0f;
-static constexpr int remove_me_MAX_PRESENTATION_COLORS             = 50;
-
-static constexpr r32 remove_me_FRAME_TIME_GRAPH_HEIGHT             = 100.0f;
-static constexpr r32 remove_me_FRAME_TIME_GRAPH_PROGRESS           = 3.0f;
-static constexpr r32 remove_me_FRAME_TIME_PROFILER_Y_OFFSET        = 3.0f;
+static constexpr int PROFILER_MAX_PRESENTATION_COLORS = 50;
 
 enum Menu_Icon {
 	Menu_Icon_FRAME_TIME,
@@ -58,13 +48,10 @@ static Timed_Frame  timed_frames[RECORD_CIRCULAR_BUFFER_FRAMES_AHEAD];
 static Timed_Frame *timed_frame_writer_ptr;
 static Timed_Frame *timed_frame_reader_ptr;
 
-static Color3 presentation_colors[remove_me_MAX_PRESENTATION_COLORS];
+static Color3 presentation_colors[PROFILER_MAX_PRESENTATION_COLORS];
 
 static r32 stablilized_frame_time = 0.0f;
 static r32 frame_time_history[FRAME_TIME_MAX_LOGS];
-
-static r32  profiler_resizer_x         = remove_me_FRAME_TIME_GRAPH_PROGRESS * FRAME_TIME_MAX_LOGS + 0.5F * remove_me_PROFILER_RESIZER_SIZE;
-static bool profiler_resize_with_mouse = false;
 
 constexpr r32 PROFILER_RESIZER_SIZE      = 10.0f;
 constexpr r32 PROFILER_MIN_WIDTH		 = 450.0f;
@@ -134,7 +121,7 @@ void debug_service_initialize() {
 	timed_frame_writer_ptr = timed_frames + 0;
 	timed_frame_reader_ptr = timed_frames + 1;
 
-	for (int color_index = 0; color_index < remove_me_MAX_PRESENTATION_COLORS; ++color_index) {
+	for (int color_index = 0; color_index < PROFILER_MAX_PRESENTATION_COLORS; ++color_index) {
 		presentation_colors[color_index] = random_color3(0.9f, 0.3f);
 	}
 
@@ -486,7 +473,7 @@ void draw_profiler_timelines_rects(Record *record, Vec2 top_position, r32 profil
 	while (record) {
 		Vec4 color = vec4(presentation_colors[color_index], 1);
 		color_index += 1;
-		if (color_index >= remove_me_MAX_PRESENTATION_COLORS) color_index = 0;
+		if (color_index >= PROFILER_MAX_PRESENTATION_COLORS) color_index = 0;
 
 		render_position.x = top_position.x + profiler_width * (r32)record->begin_cycle * inv_cycles;
 		dimension.x       = profiler_width * (r32)(record->end_cycle - record->begin_cycle) * inv_cycles;
