@@ -23,6 +23,19 @@ static constexpr r32 FRAME_TIME_GRAPH_HEIGHT             = 100.0f;
 static constexpr r32 FRAME_TIME_GRAPH_PROGRESS           = 3.0f;
 static constexpr r32 FRAME_TIME_PROFILER_Y_OFFSET        = 3.0f;
 
+enum Menu_Icon {
+	Menu_Icon_FRAME_TIME,
+	Menu_Icon_PROFILER,
+	Menu_Icon_AUDIO,
+	Menu_Icon_UNUSED0,
+	Menu_Icon_UNUSED1,
+	Menu_Icon_UNUSED2,
+	Menu_Icon_UNUSED3,
+	Menu_Icon_UNUSED4,
+
+	Menu_Icon_COUNT,
+};
+
 struct Record {
 	String name;
 	String id;
@@ -60,10 +73,13 @@ static Debug_Collation debug_collation;
 static Record *        record_collation_ptr;
 static Record *        record_collation_trav;
 
+static bool debug_service_present		= true;
 static bool frame_recording             = true;
 static bool user_frame_recording_option = true;
 
-static Monospaced_Font debug_font;
+static Monospaced_Font		debug_font;
+static Texture2d_Handle		debug_menu_icons;
+static Mm_Rect				debug_menu_icons_rect[Menu_Icon_COUNT];
 
 enum Frame_Present_Flag_Bit : u32 {
 	Frame_Present_NONE             = bit(0),
@@ -83,20 +99,20 @@ static Frame_Present_Flags debug_frame_present_flags[] = {
 };
 static int debug_frame_present_flag_index = 1;
 
-bool frame_recording_is_on() {
+bool frame_recording_get_state() {
 	return user_frame_recording_option;
 }
 
-void frame_recording_turn_on() {
-	user_frame_recording_option = true;
+void frame_recording_set_state(bool state) {
+	user_frame_recording_option = state;
 }
 
-void frame_recording_turn_off() {
-	user_frame_recording_option = false;
+bool debug_presentation_get_display() {
+	return debug_service_present;
 }
 
-void frame_recording_toggle() {
-	user_frame_recording_option = !user_frame_recording_option;
+void debug_presentation_set_display(bool state) {
+	debug_service_present = state;
 }
 
 void reset_collation_record() {
@@ -134,29 +150,61 @@ void debug_service_initialize() {
 	//
 	//
 
-	String content = system_read_entire_file("dev/debug.font");
-	defer { memory_free(content.data); };
+	{
+		String content = system_read_entire_file("dev/debug.font");
+		defer{ memory_free(content.data); };
 
-	if (content.count) {
-		Istream in = istream(content);
+		if (content.count) {
+			Istream in = istream(content);
 
-		u32 min_c   = *istream_consume(&in, u32);
-		u32 max_c   = *istream_consume(&in, u32);
-		r32 advance = *istream_consume(&in, r32);
-		u32 size    = *istream_consume(&in, u32);
+			u32 min_c = *istream_consume(&in, u32);
+			u32 max_c = *istream_consume(&in, u32);
+			r32 advance = *istream_consume(&in, r32);
+			u32 size = *istream_consume(&in, u32);
 
-		debug_font.info.range = (Monospaced_Font_Glyph_Range *)memory_allocate(size);
-		memcpy(debug_font.info.range, istream_consume_size(&in, size), size);
-		debug_font.info.first   = (s32)min_c;
-		debug_font.info.count   = (s32)(max_c - min_c + 2);
-		debug_font.info.advance = advance;
+			debug_font.info.range = (Monospaced_Font_Glyph_Range *)memory_allocate(size);
+			memcpy(debug_font.info.range, istream_consume_size(&in, size), size);
+			debug_font.info.first = (s32)min_c;
+			debug_font.info.count = (s32)(max_c - min_c + 2);
+			debug_font.info.advance = advance;
 
-		int w      = *istream_consume(&in, int);
-		int h      = *istream_consume(&in, int);
-		int n      = *istream_consume(&in, int);
-		u8 *pixels = (u8 *)istream_consume_size(&in, w * h * n);
+			int w = *istream_consume(&in, int);
+			int h = *istream_consume(&in, int);
+			int n = *istream_consume(&in, int);
+			u8 *pixels = (u8 *)istream_consume_size(&in, w * h * n);
 
-		debug_font.texture = gfx_create_texture2d((u32)w, (u32)h, (u32)n, Data_Format_RGBA8_UNORM_SRGB, (const u8 **)&pixels, Buffer_Usage_IMMUTABLE, 1);
+			debug_font.texture = gfx_create_texture2d((u32)w, (u32)h, (u32)n, Data_Format_RGBA8_UNORM_SRGB, (const u8 **)&pixels, Buffer_Usage_IMMUTABLE, 1);
+		}
+	}
+
+	{
+		String content = system_read_entire_file("dev/icons.img");
+		defer{ memory_free(content.data); };
+
+		if (content.count) {
+			Istream in = istream(content);
+
+			u32 w				= *istream_consume(&in, u32);
+			u32 h				= *istream_consume(&in, u32);
+			u32 x_icon_count	= *istream_consume(&in, u32);
+			u32 y_icon_count	= *istream_consume(&in, u32);
+			u32 sz				= *istream_consume(&in, u32);
+			u8 *pixels			= (u8 *)istream_consume_size(&in, sz);
+
+			assert(x_icon_count * y_icon_count == Menu_Icon_COUNT);
+
+			debug_menu_icons = gfx_create_texture2d(w, h, 4, Data_Format_RGBA8_UNORM_SRGB, (const u8 **)&pixels, Buffer_Usage_IMMUTABLE, 1);
+
+			for (u32 y_index = 0; y_index < y_icon_count; ++y_index) {
+				for (u32 x_index = 0; x_index < x_icon_count; ++x_index) {
+					u32 index = x_index + y_index * x_icon_count;
+					debug_menu_icons_rect[index].min.x = (r32)x_index / (r32)x_icon_count;
+					debug_menu_icons_rect[index].max.y = (r32)y_index / (r32)y_icon_count;
+					debug_menu_icons_rect[index].max.x = (r32)(x_index + 1) / (r32)x_icon_count;
+					debug_menu_icons_rect[index].min.y = (r32)(y_index + 1) / (r32)y_icon_count;
+				}
+			}
+		}
 	}
 }
 
@@ -228,18 +276,6 @@ void timed_block_end(Timed_Block_Match value, String block_name) {
 
 void debug_service_handle_event(Event &event) {
 	switch (event.type) {
-		case Event_Type_KEY_UP: {
-			if (event.key.symbol == Key_F4) {
-				debug_frame_present_flag_index += 1;
-				if (debug_frame_present_flag_index >= static_count(debug_frame_present_flags)) {
-					debug_frame_present_flag_index = 0;
-				}
-			}
-			else if (event.key.symbol == Key_F5) {
-				karma_frame_recording_toggle();
-			}
-		} break;
-
 		case Event_Type_MOUSE_BUTTON_DOWN: {
 			if (event.mouse_button.symbol == Button_LEFT) {
 				left_button_state = true;
@@ -356,30 +392,43 @@ Vec2 draw_profiler(Vec2 position, r32 width, r32 height, r32 font_height, r32 in
 	return position;
 }
 
-r32 draw_header_and_buttons(r32 render_height, Monospaced_Font &font, r32 framebuffer_w, r32 framebuffer_h) {
-	r32 frame_rate_and_version_height = HEADER_FONT_HEIGHT;
+r32 draw_header_and_buttons(r32 render_height, r32 framebuffer_w, r32 framebuffer_h) {
 	stablilized_frame_time        = stablilized_frame_time * 0.8f + 0.2f * frame_time_history[0];
 	String frame_time_string      = tprintf("FrameTime: %.3fms", stablilized_frame_time * 1000.0f);
 	String version_string         = "v" KARMA_VERSION_STRING;
 
-	im_bind_texture(font.texture);
-	im_text(vec2(PROFILER_PRESENTATION_X_OFFSET, render_height - frame_rate_and_version_height), frame_rate_and_version_height, font.info, frame_time_string, HEADER_FONT_COLOR);
+	r32 draw_y = render_height - HEADER_FONT_HEIGHT;
 
-	auto size = im_calculate_text_region(frame_rate_and_version_height, font.info, version_string);
-	im_text(vec2(framebuffer_w - size.x - 8.0f, render_height - frame_rate_and_version_height), frame_rate_and_version_height, font.info, version_string, HEADER_FONT_COLOR);
+	im_bind_texture(debug_font.texture);
+	auto ft_size = im_calculate_text_region(HEADER_FONT_HEIGHT, debug_font.info, frame_time_string);
+	im_text(vec2(PROFILER_PRESENTATION_X_OFFSET, draw_y), HEADER_FONT_HEIGHT, debug_font.info, frame_time_string, HEADER_FONT_COLOR);
 
-	return render_height - frame_rate_and_version_height;
+	auto v_size = im_calculate_text_region(HEADER_FONT_HEIGHT, debug_font.info, version_string);
+	im_text(vec2(framebuffer_w - v_size.x - 8.0f, draw_y), HEADER_FONT_HEIGHT, debug_font.info, version_string, HEADER_FONT_COLOR);
+
+	const r32  FRAME_TIME_AND_MENU_GAP	= 20.0f;
+	const r32  MENU_ICON_X_OFFSET		= 5.0f;
+	const auto MENU_ICON_WIDTH			= HEADER_FONT_HEIGHT;
+	const auto MENU_ICON_X_POSITION		= MENU_ICON_WIDTH + MENU_ICON_X_OFFSET;
+
+	im_bind_texture(debug_menu_icons);
+
+	r32 icon_draw_start_x = ft_size.x + FRAME_TIME_AND_MENU_GAP;
+	for (int icon_index = 0; icon_index < Menu_Icon_COUNT; ++icon_index) {
+		im_rect(vec2(icon_draw_start_x + MENU_ICON_X_POSITION * icon_index, draw_y), vec2(HEADER_FONT_HEIGHT), debug_menu_icons_rect[icon_index], vec4(1));
+	}
+
+	return render_height - HEADER_FONT_HEIGHT;
 }
 
 void debug_service_presentation(r32 framebuffer_w, r32 framebuffer_h) {
-	bool debug_service_present = true;
 	if (!debug_service_present) return;
 
 	r32 render_height = framebuffer_h;
 
 	im_debug_begin(0, framebuffer_w, framebuffer_h, 0);
 	
-	render_height = draw_header_and_buttons(render_height, debug_font, framebuffer_w, framebuffer_h);
+	render_height = draw_header_and_buttons(render_height, framebuffer_w, framebuffer_h);
 	
 	im_end();
 }

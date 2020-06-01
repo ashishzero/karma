@@ -32,10 +32,11 @@ struct Timed_Frame {
 	u64           end_cycle_value;
 };
 
-bool frame_recording_is_on();
-void frame_recording_turn_on();
-void frame_recording_turn_off();
-void frame_recording_toggle();
+bool frame_recording_get_state();
+void frame_recording_set_state(bool state);
+
+bool debug_presentation_get_display();
+void debug_presentation_set_display(bool state);
 
 void debug_service_initialize();
 void debug_service_shutdown();
@@ -88,11 +89,10 @@ struct Timed_Procedure {
 #define karma_debug_service_handle_event debug_service_handle_event
 #define karma_timed_frame_presentation   timed_frame_presentation
 
-#define karma_frame_recording_is_on    frame_recording_is_on
-#define karma_frame_recording_turn_on  frame_recording_turn_on
-#define karma_frame_recording_turn_off frame_recording_turn_off
-#define karma_frame_recording_toggle   frame_recording_toggle
-
+#define karma_frame_recording_get_state			frame_recording_get_state
+#define karma_frame_recording_set_state			frame_recording_set_state
+#define karma_debug_presentation_get_display	debug_presentation_get_display
+#define karma_debug_presentation_set_display	debug_presentation_set_display
 #else
 
 #define karma_debug_service_initialize() 
@@ -106,9 +106,9 @@ struct Timed_Procedure {
 #define karma_timed_scope(name) 
 #define karma_debug_service_handle_event(...) 
 #define karma_timed_frame_presentation(...)   
-#define karma_frame_recording_is_on(...)    
-#define karma_frame_recording_turn_on(...)  
-#define karma_frame_recording_turn_off(...) 
-#define karma_frame_recording_toggle(...)   
+#define frame_recording_get_state()
+#define frame_recording_set_state(...)
+#define debug_presentation_get_display()
+#define debug_presentation_set_display(...)
 
 #endif

@@ -601,6 +601,12 @@ int system_main() {
 					case Key_F3:
 						increase_game_speed(&factor);
 						break;
+					case Key_F4:
+						karma_debug_presentation_set_display(!karma_debug_presentation_get_display());
+						break;
+					case Key_F5:
+						karma_frame_recording_set_state(!karma_timed_frame_get());
+						break;
 				}
 			}
 #endif
