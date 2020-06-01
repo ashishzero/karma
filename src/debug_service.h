@@ -43,12 +43,12 @@ void debug_service_shutdown();
 Timed_Frame *timed_frame_get();
 
 void              timed_frame_begin();
-void              timed_frame_end();
+void              timed_frame_end(r32 frame_time);
 Timed_Block_Match timed_block_begin(String id, String block_name);
 void              timed_block_end(Timed_Block_Match match, String block_name);
 
 void debug_service_handle_event(Event &event);
-void timed_frame_presentation(Monospaced_Font &font, r32 frame_time, r32 framebuffer_w, r32 framebuffer_h);
+void timed_frame_presentation(Monospaced_Font &font, r32 framebuffer_w, r32 framebuffer_h);
 
 //
 //
@@ -74,7 +74,7 @@ struct Timed_Procedure {
 #define karma_timed_frame_get() timed_frame_get()
 
 #define karma_timed_frame_begin() timed_frame_begin()
-#define karma_timed_frame_end()   timed_frame_end()
+#define karma_timed_frame_end(frame_time)   timed_frame_end(frame_time)
 
 #define karma_timed_block_begin(name) auto name = timed_block_begin(CURRENT_FILE "(" MACRO_NUMBER_TO_STRING(CURRENT_LINE) ")", #name)
 #define karma_timed_block_end(name)   timed_block_end(name, #name)
@@ -99,7 +99,7 @@ struct Timed_Procedure {
 #define karma_debug_service_shutdown()   
 #define karma_timed_frame_get() (nullptr)
 #define karma_timed_frame_begin() 
-#define karma_timed_frame_end()   
+#define karma_timed_frame_end(frame_time)   
 #define karma_timed_block_begin(name) 
 #define karma_timed_block_end(name)   
 #define karma_timed_procedure() 

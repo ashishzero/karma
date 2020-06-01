@@ -951,7 +951,7 @@ int system_main() {
 
 		{
 			karma_timed_scope(DebugCollation);
-			karma_timed_frame_presentation(font, real_dt, window_w, window_h);
+			karma_timed_frame_presentation(font, window_w, window_h);
 		}
 
 #if 0
@@ -1027,7 +1027,7 @@ int system_main() {
 		accumulator_t += real_dt;
 		accumulator_t = min_value(accumulator_t, 0.3f);
 
-		karma_timed_frame_end();
+		karma_timed_frame_end(real_dt);
 	}
 
 	karma_debug_service_shutdown();

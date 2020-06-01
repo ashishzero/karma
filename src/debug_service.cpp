@@ -143,7 +143,7 @@ void timed_frame_begin() {
 	}
 }
 
-void timed_frame_end() {
+void timed_frame_end(r32 frame_time) {
 	if (frame_recording) {
 		timed_frame_writer_ptr->end_cycle_value   = intrin__rdtsc();
 		timed_frame_writer_ptr->end_counter_value = system_get_counter();
@@ -154,6 +154,9 @@ void timed_frame_end() {
 		timed_frame_writer_ptr->begin_counter_value = 0;
 		timed_frame_writer_ptr->end_counter_value   = 0;
 	}
+
+	memmove(frame_time_history + 1, frame_time_history, sizeof(r32) * (MAX_FRAME_TIME_LOGS - 1));
+	frame_time_history[0] = frame_time;
 
 	frame_recording = user_frame_recording_option;
 }
@@ -320,11 +323,37 @@ Vec2 draw_profiler(Vec2 position, r32 width, r32 height, r32 font_height, r32 in
 	return position;
 }
 
-void timed_frame_presentation(Monospaced_Font &font, r32 frame_time, r32 framebuffer_w, r32 framebuffer_h) {
-	Frame_Present_Flags flags = debug_frame_present_flags[debug_frame_present_flag_index];
+r32 draw_header_and_buttons(r32 render_height, Monospaced_Font &font, r32 framebuffer_w, r32 framebuffer_h) {
+	r32 frame_rate_and_version_height = HEADER_FONT_HEIGHT;
+	stablilized_frame_time        = stablilized_frame_time * 0.8f + 0.2f * frame_time_history[0];
+	String frame_time_string      = tprintf("FrameTime: %.3fms", stablilized_frame_time * 1000.0f);
+	String version_string         = "v" KARMA_VERSION_STRING;
 
-	memmove(frame_time_history + 1, frame_time_history, sizeof(r32) * (MAX_FRAME_TIME_LOGS - 1));
-	frame_time_history[0] = frame_time;
+	im_bind_texture(font.texture);
+	im_text(vec2(PROFILER_PRESENTATION_X_OFFSET, render_height - frame_rate_and_version_height), frame_rate_and_version_height, font.info, frame_time_string, HEADER_FONT_COLOR);
+
+	auto size = im_calculate_text_region(frame_rate_and_version_height, font.info, version_string);
+	im_text(vec2(framebuffer_w - size.x - 8.0f, render_height - frame_rate_and_version_height), frame_rate_and_version_height, font.info, version_string, HEADER_FONT_COLOR);
+
+	return render_height - frame_rate_and_version_height;
+}
+
+void debug_service_presentation(Monospaced_Font &font, r32 framebuffer_w, r32 framebuffer_h) {
+	bool debug_service_present = true;
+	if (!debug_service_present) return;
+
+	im_debug_begin(0, framebuffer_w, framebuffer_h, 0);
+	
+	draw_header_and_buttons(framebuffer_h, font, framebuffer_w, framebuffer_h);
+	
+	im_end();
+}
+
+void timed_frame_presentation(Monospaced_Font &font, r32 framebuffer_w, r32 framebuffer_h) {
+	debug_service_presentation(font, framebuffer_w, framebuffer_h);
+	return;
+
+	Frame_Present_Flags flags = debug_frame_present_flags[debug_frame_present_flag_index];
 
 	if (flags == Frame_Present_NONE) return;
 
@@ -341,7 +370,7 @@ void timed_frame_presentation(Monospaced_Font &font, r32 frame_time, r32 framebu
 
 	if (flags & Frame_Present_HEADER) {
 		frame_rate_and_version_height = HEADER_FONT_HEIGHT;
-		stablilized_frame_time        = stablilized_frame_time * 0.8f + 0.2f * frame_time;
+		stablilized_frame_time        = stablilized_frame_time * 0.8f + 0.2f * frame_time_history[0];
 		String frame_time_string      = tprintf("FrameTime: %.3fms", stablilized_frame_time * 1000.0f);
 		String version_string         = "v" KARMA_VERSION_STRING;
 
