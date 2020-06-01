@@ -3,6 +3,7 @@
 #include "intrinsics.h"
 #include "random.h"
 #include "utility.h"
+#include "stream.h"
 
 static constexpr u32 MAX_RECORDS_LOGS                    = 5000000; // around 190 MB
 static constexpr u32 RECORD_CIRCULAR_BUFFER_FRAMES_AHEAD = 2;
@@ -61,6 +62,8 @@ static Record *        record_collation_trav;
 
 static bool frame_recording             = true;
 static bool user_frame_recording_option = true;
+
+static Monospaced_Font debug_font;
 
 enum Frame_Present_Flag_Bit : u32 {
 	Frame_Present_NONE             = bit(0),
@@ -126,10 +129,40 @@ void debug_service_initialize() {
 	for (int color_index = 0; color_index < MAX_PRESENTATION_COLORS; ++color_index) {
 		presentation_colors[color_index] = random_color3(0.9f, 0.3f);
 	}
+
+	//
+	//
+	//
+
+	String content = system_read_entire_file("dev/debug.font");
+	defer { memory_free(content.data); };
+
+	if (content.count) {
+		Istream in = istream(content);
+
+		u32 min_c   = *istream_consume(&in, u32);
+		u32 max_c   = *istream_consume(&in, u32);
+		r32 advance = *istream_consume(&in, r32);
+		u32 size    = *istream_consume(&in, u32);
+
+		debug_font.info.range = (Monospaced_Font_Glyph_Range *)memory_allocate(size);
+		memcpy(debug_font.info.range, istream_consume_size(&in, size), size);
+		debug_font.info.first   = (s32)min_c;
+		debug_font.info.count   = (s32)(max_c - min_c + 2);
+		debug_font.info.advance = advance;
+
+		int w      = *istream_consume(&in, int);
+		int h      = *istream_consume(&in, int);
+		int n      = *istream_consume(&in, int);
+		u8 *pixels = (u8 *)istream_consume_size(&in, w * h * n);
+
+		debug_font.texture = gfx_create_texture2d((u32)w, (u32)h, (u32)n, Data_Format_RGBA8_UNORM_SRGB, (const u8 **)&pixels, Buffer_Usage_IMMUTABLE, 1);
+	}
 }
 
 void debug_service_shutdown() {
 	system_virtual_free(debug_memory, 0, Virtual_Memory_RELEASE);
+	memory_free(debug_font.info.range);
 }
 
 Timed_Frame *timed_frame_get() {
@@ -338,19 +371,19 @@ r32 draw_header_and_buttons(r32 render_height, Monospaced_Font &font, r32 frameb
 	return render_height - frame_rate_and_version_height;
 }
 
-void debug_service_presentation(Monospaced_Font &font, r32 framebuffer_w, r32 framebuffer_h) {
+void debug_service_presentation(r32 framebuffer_w, r32 framebuffer_h) {
 	bool debug_service_present = true;
 	if (!debug_service_present) return;
 
 	im_debug_begin(0, framebuffer_w, framebuffer_h, 0);
 	
-	draw_header_and_buttons(framebuffer_h, font, framebuffer_w, framebuffer_h);
+	draw_header_and_buttons(framebuffer_h, debug_font, framebuffer_w, framebuffer_h);
 	
 	im_end();
 }
 
 void timed_frame_presentation(Monospaced_Font &font, r32 framebuffer_w, r32 framebuffer_h) {
-	debug_service_presentation(font, framebuffer_w, framebuffer_h);
+	debug_service_presentation(framebuffer_w, framebuffer_h);
 	return;
 
 	Frame_Present_Flags flags = debug_frame_present_flags[debug_frame_present_flag_index];

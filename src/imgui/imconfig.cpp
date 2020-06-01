@@ -37,7 +37,7 @@ void ImGui::Initialize() {
 	io.IniFilename         = 0;
 
 	auto   user_name   = system_get_user_name();
-	String ini_content = system_read_entire_file(tprintf("imgui/%s_config.ini", tto_cstring(user_name)));
+	String ini_content = system_read_entire_file(tprintf("dev/%s_config.ini", tto_cstring(user_name)));
 
 	defer {
 		memory_free(user_name.data);
@@ -53,7 +53,7 @@ void ImGui::Initialize() {
 	config.OversampleH = 4;
 	config.OversampleV = 4;
 	config.PixelSnapH  = true;
-	io.Fonts->AddFontFromFileTTF("imgui/Roboto/RobotoMono-Medium.ttf", 16, &config);
+	io.Fonts->AddFontFromFileTTF("dev/Roboto/RobotoMono-Medium.ttf", 16, &config);
 
 	auto &style             = ImGui::GetStyle();
 	style.ChildRounding     = 0;
@@ -193,7 +193,7 @@ void ImGui::Shutdown() {
 	ini_content.count = (s64)size;
 
 	auto user_name = system_get_user_name();
-	system_write_entire_file(tprintf("imgui/%s_config.ini", tto_cstring(user_name)), ini_content);
+	system_write_entire_file(tprintf("dev/%s_config.ini", tto_cstring(user_name)), ini_content);
 
 	memory_free(user_name.data);
 
