@@ -31,11 +31,6 @@ enum Menu_Icon {
 	Menu_Icon_FRAME_TIME,
 	Menu_Icon_PROFILER,
 	Menu_Icon_AUDIO,
-	Menu_Icon_UNUSED0,
-	Menu_Icon_UNUSED1,
-	Menu_Icon_UNUSED2,
-	Menu_Icon_UNUSED3,
-	Menu_Icon_UNUSED4,
 
 	Menu_Icon_COUNT,
 };
@@ -71,8 +66,16 @@ static r32 frame_time_history[FRAME_TIME_MAX_LOGS];
 static r32  profiler_resizer_x         = remove_me_FRAME_TIME_GRAPH_PROGRESS * FRAME_TIME_MAX_LOGS + 0.5F * remove_me_PROFILER_RESIZER_SIZE;
 static bool profiler_resize_with_mouse = false;
 
-static bool left_button_state		   = false;
+constexpr r32 PROFILER_RESIZER_SIZE      = 10.0f;
+constexpr r32 PROFILER_MIN_WIDTH		 = 450.0f;
+constexpr r32 PROFILER_MIN_HEIGHT		 = 100.0f;
+static r32 profiler_width	= 450.0f;
+static r32 profiler_height	= 100.0f;
+static Vec2 profiler_resizer_position;
+static bool profiler_resizing		   = false;
 static bool left_button_pressed		   = false;
+static bool debug_presentation_hovered = false;
+static Vec2 mouse_cursor;
 
 static Debug_Collation debug_collation;
 static Record *        record_collation_ptr;
@@ -87,24 +90,6 @@ static Texture2d_Handle		debug_menu_icons;
 static Mm_Rect				debug_menu_icons_rect[Menu_Icon_COUNT];
 static Color4				debug_menu_icons_color[Menu_Icon_COUNT];
 static bool					debug_menu_icons_value[Menu_Icon_COUNT];
-
-enum Frame_Present_Flag_Bit : u32 {
-	Frame_Present_NONE             = bit(0),
-	Frame_Present_HEADER           = bit(1),
-	Frame_Present_FRAME_TIME_GRAPH = bit(2),
-	Frame_Present_PROFILER         = bit(3),
-	Frame_Present_ALL              = Frame_Present_HEADER | Frame_Present_FRAME_TIME_GRAPH | Frame_Present_PROFILER,
-};
-typedef u32 Frame_Present_Flags;
-
-static Frame_Present_Flags debug_frame_present_flags[] = {
-	Frame_Present_NONE,
-	Frame_Present_HEADER,
-	Frame_Present_FRAME_TIME_GRAPH | Frame_Present_HEADER,
-	Frame_Present_PROFILER | Frame_Present_HEADER,
-	Frame_Present_ALL,
-};
-static int debug_frame_present_flag_index = 1;
 
 bool frame_recording_get_state() {
 	return user_frame_recording_option;
@@ -198,7 +183,7 @@ void debug_service_initialize() {
 			u32 sz				= *istream_consume(&in, u32);
 			u8 *pixels			= (u8 *)istream_consume_size(&in, sz);
 
-			assert(x_icon_count * y_icon_count == Menu_Icon_COUNT);
+			assert(x_icon_count * y_icon_count >= Menu_Icon_COUNT);
 
 			debug_menu_icons = gfx_create_texture2d(w, h, 4, Data_Format_RGBA8_UNORM_SRGB, (const u8 **)&pixels, Buffer_Usage_IMMUTABLE, 1);
 
@@ -281,26 +266,44 @@ void timed_block_end(Timed_Block_Match value, String block_name) {
 	}
 }
 
-void debug_service_handle_event(Event &event) {
+bool debug_service_handle_event(Event &event) {
+	bool handled = false;
+
 	switch (event.type) {
 		case Event_Type_MOUSE_BUTTON_DOWN: {
 			if (event.mouse_button.symbol == Button_LEFT) {
-				left_button_state = true;
+				if (point_inside_rect(mouse_cursor, mm_rect(profiler_resizer_position, profiler_resizer_position + vec2(PROFILER_RESIZER_SIZE)))) {
+					profiler_resizing = true;
+				}
 			}
 		} break;
 
 		case Event_Type_MOUSE_BUTTON_UP: {
 			if (event.mouse_button.symbol == Button_LEFT) {
-				left_button_state	= false;
+				profiler_resizing	= false;
 				left_button_pressed = true;
 			}
 		} break;
+
+		case Event_Type_MOUSE_CURSOR: {
+			mouse_cursor.x = (r32)event.mouse_cursor.x;
+			mouse_cursor.y = (r32)event.mouse_cursor.y;
+			handled = (profiler_resizing || debug_presentation_hovered);
+
+			if (profiler_resizing) {
+				profiler_width   = max_value(profiler_width + event.mouse_cursor.x_rel, PROFILER_MIN_WIDTH);
+				profiler_height  = max_value(profiler_height + event.mouse_cursor.y_rel, PROFILER_MIN_HEIGHT);
+			}
+		} break;
 	}
+
+	return handled;
 }
 
-r32 draw_header_and_buttons(r32 render_height, r32 framebuffer_w, r32 framebuffer_h, Vec2 cursor) {
+r32 draw_header_and_buttons(r32 render_height, r32 framebuffer_w, r32 framebuffer_h, Vec2 cursor, bool *set_on_hovered) {
 	const Vec4    HEADER_FONT_COLOR  = vec4(1.0f, 1.0f, 0.0f, 1.0f);
 	constexpr r32 HEADER_FONT_HEIGHT = 24.0f;
+	constexpr r32 VERSION_X_OFFSET   = 8.0f;
 
 	//
 	// Frame Time and Version print
@@ -313,8 +316,13 @@ r32 draw_header_and_buttons(r32 render_height, r32 framebuffer_w, r32 framebuffe
 	r32 draw_y = render_height - HEADER_FONT_HEIGHT;
 
 	im_bind_texture(debug_font.texture);
+	Vec2 frame_time_draw_pos = vec2(DEBUG_PRESENTATION_X_OFFSET, draw_y);
 	auto ft_size = im_calculate_text_region(HEADER_FONT_HEIGHT, debug_font.info, frame_time_string);
-	im_text(vec2(DEBUG_PRESENTATION_X_OFFSET, draw_y), HEADER_FONT_HEIGHT, debug_font.info, frame_time_string, HEADER_FONT_COLOR);
+	im_text(frame_time_draw_pos, HEADER_FONT_HEIGHT, debug_font.info, frame_time_string, HEADER_FONT_COLOR);
+
+	if (point_inside_rect(cursor, mm_rect(frame_time_draw_pos, frame_time_draw_pos + ft_size))) {
+		*set_on_hovered = true;
+	}
 
 	auto v_size = im_calculate_text_region(HEADER_FONT_HEIGHT, debug_font.info, version_string);
 	im_text(vec2(framebuffer_w - v_size.x - 8.0f, draw_y), HEADER_FONT_HEIGHT, debug_font.info, version_string, HEADER_FONT_COLOR);
@@ -355,6 +363,12 @@ r32 draw_header_and_buttons(r32 render_height, r32 framebuffer_w, r32 framebuffe
 
 	}
 
+	Vec2 min_icons_region = vec2(icon_draw_start_x, draw_y);
+	Vec2 max_icons_region = vec2(icon_draw_start_x + MENU_ICON_X_POSITION * Menu_Icon_COUNT, draw_y + HEADER_FONT_HEIGHT);
+	if (point_inside_rect(cursor, mm_rect(min_icons_region, max_icons_region))) {
+		*set_on_hovered = true;
+	}
+
 	im_bind_texture(debug_menu_icons);
 
 	for (int icon_index = 0; icon_index < Menu_Icon_COUNT; ++icon_index) {
@@ -364,7 +378,7 @@ r32 draw_header_and_buttons(r32 render_height, r32 framebuffer_w, r32 framebuffe
 	return render_height - HEADER_FONT_HEIGHT;
 }
 
-r32 draw_frame_time_graph(r32 render_height) {
+r32 draw_frame_time_graph(r32 render_height, Vec2 cursor, bool *set_on_hovered) {
 	constexpr r32 FRAME_TIME_GRAPH_WIDTH			= 450.0f;
 	constexpr r32 FRAME_TIME_GRAPH_HEIGHT			= 100.0f;
 	constexpr r32 FRAME_TIME_GRAPH_PROGRESS			= 3.0f;
@@ -397,8 +411,13 @@ r32 draw_frame_time_graph(r32 render_height) {
 	max_frame_time *= FRAME_TIME_MAX_DT_HEIGHT_FACTOR;
 	r32 inv_max_frame_time = 1.0f / max_frame_time;
 
+	Vec2 bg_draw_pos = vec2(draw_x, draw_y);
+	if (point_inside_rect(cursor, mm_rect(bg_draw_pos, bg_draw_pos + vec2(FRAME_TIME_GRAPH_WIDTH, FRAME_TIME_GRAPH_HEIGHT)))) {
+		*set_on_hovered = true;
+	}
+
 	im_unbind_texture();
-	im_rect(vec2(draw_x, draw_y), vec2(FRAME_TIME_GRAPH_WIDTH, FRAME_TIME_GRAPH_HEIGHT), vec4(0, 0, 0, 0.8f));
+	im_rect(bg_draw_pos, vec2(FRAME_TIME_GRAPH_WIDTH, FRAME_TIME_GRAPH_HEIGHT), vec4(0, 0, 0, 0.8f));
 
 	// Draw the actual graph
 	r32 next_y;
@@ -426,7 +445,7 @@ r32 draw_frame_time_graph(r32 render_height) {
 	}
 
 	// Draw the outline over the region
-	im_rect_outline2d(vec2(draw_x, draw_y), vec2(FRAME_TIME_GRAPH_WIDTH, FRAME_TIME_GRAPH_HEIGHT), vec4(1), FRAME_TIME_OUTLINE_THICKNESS);
+	im_rect_outline2d(bg_draw_pos, vec2(FRAME_TIME_GRAPH_WIDTH, FRAME_TIME_GRAPH_HEIGHT), vec4(1), FRAME_TIME_OUTLINE_THICKNESS);
 
 	im_bind_texture(debug_font.texture);
 	for (int mark_index = 0; mark_index < static_count(FRAME_TIME_MARK_DT); ++mark_index) {
@@ -513,7 +532,7 @@ void draw_profiler_timelines_texts(Record *record, Vec2 top_position, r32 profil
 	}
 }
 
-r32 draw_profiler(r32 render_height, Vec2 cursor, Record **out_hovered_record = nullptr) {
+r32 draw_profiler(r32 render_height, Vec2 cursor, bool *set_on_hovered, Record **out_hovered_record = nullptr) {
 	auto frame				= timed_frame_get();
 	auto counts				= frame->end_counter_value - frame->begin_counter_value;
 	r32 inv_cycles_count	= 1.0f / ((r32)(frame->end_cycle_value - frame->begin_cycle_value));
@@ -589,14 +608,9 @@ r32 draw_profiler(r32 render_height, Vec2 cursor, Record **out_hovered_record = 
 
 	constexpr r32 PROFILER_MAX_CHILD_HEIGHT  = 25.0f;
 	constexpr r32 PROFILER_OUTLINE_THICKNESS = 0.5f;
-	constexpr r32 PROFILER_RESIZER_SIZE      = 10.0f;
 
 	// Draw the profile data
 	Record *hovered_record = NULL;
-
-	static r32 profiler_height	= 100.0f;
-	static r32 profiler_width	= 450.0f;
-	static Vec2 profiler_resizer_position;
 
 	r32 draw_x = DEBUG_PRESENTATION_X_OFFSET;
 	r32 draw_y = render_height - DEBUG_PRESENTATION_BLOCK_Y_OFFSET - profiler_height;
@@ -612,6 +626,10 @@ r32 draw_profiler(r32 render_height, Vec2 cursor, Record **out_hovered_record = 
 
 	profiler_resizer_position.x = draw_region_position.x + draw_region_dimension.x - PROFILER_RESIZER_SIZE;
 	profiler_resizer_position.y = draw_region_position.y;
+
+	if (point_inside_rect(cursor, mm_rect(draw_region_position, draw_region_position + draw_region_dimension))) {
+		*set_on_hovered = true;
+	}
 
 	Vec4 resizer_color;
 	if (point_inside_rect(cursor, mm_rect(profiler_resizer_position, profiler_resizer_position + vec2(PROFILER_RESIZER_SIZE)))) {
@@ -640,27 +658,31 @@ r32 draw_profiler(r32 render_height, Vec2 cursor, Record **out_hovered_record = 
 }
 
 void debug_service_presentation(r32 framebuffer_w, r32 framebuffer_h) {
+	debug_presentation_hovered = false;
+
 	if (debug_service_present) {
 		Vec2 cursor = system_get_cursor_position();
 		r32 render_height = framebuffer_h - DEBUG_PRESENTATION_Y_OFFSET;
 
 		im_debug_begin(0, framebuffer_w, framebuffer_h, 0);
 		
-		render_height = draw_header_and_buttons(render_height, framebuffer_w, framebuffer_h, cursor);
+		render_height = draw_header_and_buttons(render_height, framebuffer_w, framebuffer_h, cursor, &debug_presentation_hovered);
 
 		if (debug_menu_icons_value[Menu_Icon_FRAME_TIME]) {
-			render_height = draw_frame_time_graph(render_height);
+			render_height = draw_frame_time_graph(render_height, cursor, &debug_presentation_hovered);
 		}
 
 		Record *hovered_record = nullptr; // overlay
 		if (debug_menu_icons_value[Menu_Icon_PROFILER]) {
-			render_height = draw_profiler(render_height, cursor, &hovered_record);
+			render_height = draw_profiler(render_height, cursor, &debug_presentation_hovered, &hovered_record);
 		}
 
 		// Rendering Overlays at last
 		if (hovered_record) {
 			constexpr r32 PROFILER_PRESENTATION_FONT_HEIGHT = 16.0f;
 			const Vec2 PROFILER_HOVERED_RECORD_OFFSET = vec2(10.0f, -10.0f);
+
+			debug_presentation_hovered = true;
 
 			r32    cycles = (r32)(hovered_record->end_cycle - hovered_record->begin_cycle) / 1000.0f;
 			String name   = hovered_record->name;
@@ -694,215 +716,8 @@ void debug_service_presentation(r32 framebuffer_w, r32 framebuffer_h) {
 void timed_frame_presentation(Monospaced_Font &font, r32 framebuffer_w, r32 framebuffer_h) {
 	debug_service_presentation(framebuffer_w, framebuffer_h);
 	return;
+}
 
-	Frame_Present_Flags flags = debug_frame_present_flags[debug_frame_present_flag_index];
-
-	if (flags == Frame_Present_NONE) return;
-
-	auto frame  = timed_frame_get();
-	auto counts = frame->end_counter_value - frame->begin_counter_value;
-	r32  dt     = ((1000000.0f * (r32)counts) / (r32)system_get_frequency()) / 1000000.0f;
-
-	im_debug_begin(0, framebuffer_w, framebuffer_h, 0);
-	defer {
-		im_end();
-	};
-
-	r32 frame_rate_and_version_height = 0;
-
-	r32 prev_used_height_space = frame_rate_and_version_height;
-
-	im_unbind_texture();
-
-	if (flags & Frame_Present_FRAME_TIME_GRAPH) {
-		const Vec4 mark_color       = vec4(0, 1, 1);
-		const r32  mark_font_height = 15.0f;
-		const r32  mark_critical_y  = remove_me_FRAME_TIME_GRAPH_HEIGHT * 0.2f;
-		const r32  mark_times[]     = {
-            1.0f / 30.0f,
-            1.0f / 60.0f
-		};
-		r32 marked_times_y[static_count(mark_times)] = {};
-
-		r32 x = DEBUG_PRESENTATION_X_OFFSET;
-		r32 y = framebuffer_h - prev_used_height_space - remove_me_FRAME_TIME_GRAPH_HEIGHT;
-
-		Vec2 region_dim = vec2(FRAME_TIME_MAX_LOGS * remove_me_FRAME_TIME_GRAPH_PROGRESS, remove_me_FRAME_TIME_GRAPH_HEIGHT);
-		im_rect(vec2(x, y), region_dim, vec4(0, 0, 0, 0.8f));
-		im_rect_outline2d(vec2(x, y), region_dim, vec4(1), 0.5f);
-
-		r32 max_frame_time = frame_time_history[0];
-		for (int frame_time_index = 1; frame_time_index < FRAME_TIME_MAX_LOGS; ++frame_time_index) {
-			if (frame_time_history[frame_time_index] > max_frame_time)
-				max_frame_time = frame_time_history[frame_time_index];
-		}
-		max_frame_time *= 1.2f;
-		r32 inv_max_frame_time = 1.0f / max_frame_time;
-
-		r32 t;
-		for (int mark_index = 0; mark_index < static_count(mark_times); ++mark_index) {
-			t = mark_times[mark_index] * inv_max_frame_time;
-			if (t <= 1) {
-				marked_times_y[mark_index] = t * remove_me_FRAME_TIME_GRAPH_HEIGHT;
-				r32 mark_y                 = marked_times_y[mark_index] + y;
-				im_line2d(vec2(DEBUG_PRESENTATION_X_OFFSET, mark_y), vec2(region_dim.x, mark_y), mark_color, 0.6f);
-			}
-		}
-
-		r32 prev_y = frame_time_history[0] * inv_max_frame_time * remove_me_FRAME_TIME_GRAPH_HEIGHT + y;
-		r32 next_y;
-		for (int frame_time_index = 1; frame_time_index < FRAME_TIME_MAX_LOGS; ++frame_time_index) {
-			next_y = frame_time_history[frame_time_index] * inv_max_frame_time * remove_me_FRAME_TIME_GRAPH_HEIGHT + y;
-			im_line2d(vec2(x, prev_y), vec2(x + remove_me_FRAME_TIME_GRAPH_PROGRESS, next_y), vec4(1), 0.6f);
-			x += remove_me_FRAME_TIME_GRAPH_PROGRESS;
-			prev_y = next_y;
-		}
-
-		im_bind_texture(font.texture);
-		for (int mark_index = 0; mark_index < static_count(mark_times); ++mark_index) {
-			if (marked_times_y[mark_index] > mark_critical_y) {
-				String mark_string = tprintf("%.2fms", 1000.0f * mark_times[mark_index]);
-				im_text(vec2(DEBUG_PRESENTATION_X_OFFSET, y + marked_times_y[mark_index] - mark_font_height), mark_font_height, font.info, mark_string, mark_color);
-			}
-		}
-
-		prev_used_height_space += remove_me_FRAME_TIME_GRAPH_HEIGHT;
-	}
-
-	if (frame->records_count == 0) {
-		return;
-	}
-
-	if (flags & Frame_Present_PROFILER) {
-		r32 inv_cycles_count = 1.0f / ((r32)(frame->end_cycle_value - frame->begin_cycle_value));
-		{
-			reset_collation_record();
-
-			Record *record = NULL;
-
-			for (s64 record_index = 0; record_index < frame->records_count; ++record_index) {
-				auto frame_record = frame->records + record_index;
-
-				if (debug_collation.leaf_record == nullptr) {
-					record              = push_collation_record();
-					record->child       = NULL;
-					record->parent      = NULL;
-					record->next        = NULL;
-					record->id          = frame_record->id;
-					record->name        = frame_record->block_name;
-					record->ms          = -1; // we use negative to endicate that END has not been reached
-					record->begin_cycle = (u32)(frame_record->time_stamp - frame->begin_cycle_value);
-
-					debug_collation.root_record = record;
-					debug_collation.leaf_record = record;
-				} else if (frame_record->type == Timed_Record_Type_BEGIN) {
-					if (debug_collation.leaf_record->ms > 0) {
-						record              = push_collation_record();
-						record->child       = NULL;
-						record->parent      = debug_collation.leaf_record->parent;
-						record->next        = NULL;
-						record->id          = frame_record->id;
-						record->name        = frame_record->block_name;
-						record->ms          = -1;
-						record->begin_cycle = (u32)(frame_record->time_stamp - frame->begin_cycle_value);
-
-						debug_collation.leaf_record->next = record;
-						debug_collation.leaf_record       = record;
-					} else {
-						record              = push_collation_record();
-						record->child       = NULL;
-						record->parent      = debug_collation.leaf_record;
-						record->next        = NULL;
-						record->id          = frame_record->id;
-						record->name        = frame_record->block_name;
-						record->ms          = -1;
-						record->begin_cycle = (u32)(frame_record->time_stamp - frame->begin_cycle_value);
-
-						debug_collation.leaf_record->child = record;
-						debug_collation.leaf_record        = record;
-					}
-				} else {
-					auto parent = debug_collation.leaf_record;
-
-					while (parent) {
-						if (parent->id.data == frame_record->id.data && parent->name.data == frame_record->block_name.data) {
-							break;
-						}
-						parent = parent->parent;
-					}
-
-					assert(parent);         // block begin/end mismatch
-					assert(parent->ms < 0); // block begin/end mismatch
-
-					parent->end_cycle = (u32)(frame_record->time_stamp - frame->begin_cycle_value);
-					r32 cycles        = (r32)(parent->end_cycle - parent->begin_cycle);
-					parent->ms        = 1000.0f * dt * cycles * inv_cycles_count;
-
-					debug_collation.leaf_record = parent;
-				}
-			}
-		}
-
-		r32 x_pos = DEBUG_PRESENTATION_X_OFFSET;
-		r32 y_pos = framebuffer_h - prev_used_height_space - DEBUG_PRESENTATION_Y_OFFSET;
-
-		r32 profiler_presentation_width = profiler_resizer_x - remove_me_PROFILER_RESIZER_SIZE;
-
-		auto cursor_p          = system_get_cursor_position();
-
-		Record *hovered_record = NULL;
-		//Vec2    next_pos       = draw_profiler(vec2(x_pos, y_pos), profiler_presentation_width, remove_me_PROFILER_PRESENTATION_RECORD_HEIGHT, remove_me_PROFILER_PRESENTATION_FONT_HEIGHT, inv_cycles_count, cursor_p, font, &hovered_record);
-
-		Vec2 resize_dim   = vec2(remove_me_PROFILER_RESIZER_SIZE);
-		Vec4 resize_color = vec4(1);
-
-		if (profiler_resize_with_mouse) {
-			profiler_resizer_x = cursor_p.x - 0.5f * remove_me_PROFILER_RESIZER_SIZE;
-			profiler_resizer_x = max_value(remove_me_PROFILER_RESIZER_MIN_X, profiler_resizer_x);
-			resize_color       = vec4(1, 1, 0);
-			resize_dim.x       = resize_dim.x * 1.5f;
-		}
-		
-		Vec2 next_pos;
-		next_pos.x = profiler_resizer_x;
-		next_pos.y += remove_me_PROFILER_PRESENTATION_RECORD_HEIGHT;
-
-		if (point_inside_rect(cursor_p, mm_rect(next_pos, next_pos + resize_dim))) {
-			if (left_button_state) {
-				profiler_resize_with_mouse = true;
-			}
-			resize_color = vec4(1, 1, 0);
-			resize_dim.x = resize_dim.x * 1.5f;
-		}
-
-		if (!left_button_state) {
-			profiler_resize_with_mouse = false;
-		}
-
-		im_unbind_texture();
-		im_rect(next_pos, resize_dim, resize_color);
-
-		if (hovered_record) {
-			r32    cycles = (r32)(hovered_record->end_cycle - hovered_record->begin_cycle) / 1000.0f;
-			String name   = hovered_record->name;
-			String desc   = hovered_record->id;
-			String time   = tprintf("%.3fms (%.3fkclocks)", hovered_record->ms, cycles);
-
-			r32 max_w, max_h;
-			max_w = im_calculate_text_region(remove_me_PROFILER_PRESENTATION_FONT_HEIGHT, font.info, name).x;
-			max_w = max_value(max_w, im_calculate_text_region(remove_me_PROFILER_PRESENTATION_FONT_HEIGHT, font.info, desc).x);
-			max_w = max_value(max_w, im_calculate_text_region(remove_me_PROFILER_PRESENTATION_FONT_HEIGHT, font.info, time).x);
-			max_h = remove_me_PROFILER_PRESENTATION_FONT_HEIGHT * 3;
-
-			const Vec2 overlay_offset = vec2(10.0f, -10.0f - max_h);
-			Vec2       pos            = cursor_p + overlay_offset;
-
-			im_rect(pos, vec2(max_w, max_h), vec4(0.02f, 0.02f, 0.02f));
-
-			im_bind_texture(font.texture);
-			im_text(pos + vec2(0, 2 * remove_me_PROFILER_PRESENTATION_FONT_HEIGHT), remove_me_PROFILER_PRESENTATION_FONT_HEIGHT, font.info, name, vec4(1));
-			im_text(pos + vec2(0, remove_me_PROFILER_PRESENTATION_FONT_HEIGHT), remove_me_PROFILER_PRESENTATION_FONT_HEIGHT, font.info, desc, vec4(1));
-			im_text(pos, remove_me_PROFILER_PRESENTATION_FONT_HEIGHT, font.info, time, vec4(1));
-		}
-	}
+bool debug_presentation_is_hovered() {
+	return debug_presentation_hovered || profiler_resizing;
 }

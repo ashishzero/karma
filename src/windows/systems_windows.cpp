@@ -1588,7 +1588,7 @@ static LRESULT CALLBACK win32_wnd_proc(HWND wnd, UINT msg, WPARAM wparam, LPARAM
 			}
 
 			int x_rel = x - previous_cursor.x;
-			int y_rel = y - previous_cursor.y;
+			int y_rel = previous_cursor.y - y;
 
 			previous_cursor.x = x;
 			previous_cursor.y = y;

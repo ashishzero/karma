@@ -47,8 +47,9 @@ void              timed_frame_end(r32 frame_time);
 Timed_Block_Match timed_block_begin(String id, String block_name);
 void              timed_block_end(Timed_Block_Match match, String block_name);
 
-void debug_service_handle_event(Event &event);
+bool debug_service_handle_event(Event &event);
 void timed_frame_presentation(Monospaced_Font &font, r32 framebuffer_w, r32 framebuffer_h);
+bool debug_presentation_is_hovered();
 
 //
 //

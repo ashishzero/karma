@@ -575,7 +575,7 @@ int system_main() {
 				break;
 			}
 			
-			karma_debug_service_handle_event(event);
+			if (karma_debug_service_handle_event(event)) continue;
 			if (ImGui_HandleEvent(event)) continue;
 
 			//
