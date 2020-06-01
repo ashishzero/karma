@@ -177,6 +177,7 @@ struct Mouse_Wheel_Event {
 
 struct Mouse_Cursor_Event {
 	s32 x, y;
+	s32 x_rel, y_rel;
 };
 
 struct Mouse_Axis_Event {
@@ -436,6 +437,8 @@ const Array_View<Event> system_poll_events(int poll_count = 1);
 
 State    system_button(Button button);
 Key_Mods system_get_key_mods();
+Vec2s	 system_get_cursor_position_vec2s();
+Vec2s	 system_get_cursor_position_y_inverted_vec2s();
 Vec2     system_get_cursor_position();
 Vec2     system_get_cursor_position_y_inverted();
 

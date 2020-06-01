@@ -707,8 +707,9 @@ static constexpr int WINDOWS_MAX_EVENTS = 128000; // This number should be enoug
 static Event         windows_event_buffer[WINDOWS_MAX_EVENTS];
 static u32			 windows_event_count;
 
-static int window_width;
-static int window_height;
+static int		window_width;
+static int		window_height;
+static Vec2s	previous_cursor;
 
 static Audio_Client		windows_audio_client;
 
@@ -1568,7 +1569,8 @@ static LRESULT CALLBACK win32_wnd_proc(HWND wnd, UINT msg, WPARAM wparam, LPARAM
 
 			CURSORINFO info;
 			info.cbSize = sizeof(info);
-			if (GetCursorInfo(&info) && (info.flags == 0)) {
+			if (GetCursorInfo(&info) && (info.flags == 0)) { 
+				// Cursor is hidden, place cursor always at center
 				POINT pt  = { rc.left, rc.top };
 				POINT pt2 = { rc.right, rc.bottom };
 				ClientToScreen(window_handle, &pt);
@@ -1578,7 +1580,21 @@ static LRESULT CALLBACK win32_wnd_proc(HWND wnd, UINT msg, WPARAM wparam, LPARAM
 				int c_x = rc.left + (rc.right - rc.left) / 2;
 				int c_y = rc.top + (rc.bottom - rc.top) / 2;
 				SetCursorPos(c_x, c_y);
+				event.mouse_cursor.x = c_x;
+				event.mouse_cursor.y = c_y;
+			} else {
+				event.mouse_cursor.x = x;
+				event.mouse_cursor.y = y;
 			}
+
+			int x_rel = x - previous_cursor.x;
+			int y_rel = y - previous_cursor.y;
+
+			previous_cursor.x = x;
+			previous_cursor.y = y;
+
+			event.mouse_cursor.x_rel = x_rel;
+			event.mouse_cursor.y_rel = y_rel;
 		} break;
 
 		case WM_MOUSEWHEEL: {
@@ -1754,6 +1770,11 @@ Handle system_create_window(const char *title, s32 width, s32 height, System_Win
 	window_handle = CreateWindowExW(0, L"Karma", wtitle, wnd_styles,
 									CW_USEDEFAULT, CW_USEDEFAULT,
 									width, height, 0, 0, instance, 0);
+
+	auto window_size = system_get_client_size();
+	window_width = window_size.x;
+	window_width = window_size.y;
+	previous_cursor = system_get_cursor_position_vec2s();
 
 	if (!window_handle) {
 		win32_check_for_error();
@@ -1968,24 +1989,34 @@ Key_Mods system_get_key_mods() {
 	return mods;
 }
 
-Vec2 system_get_cursor_position() {
-	Vec2  position;
+Vec2s system_get_cursor_position_vec2s() {
+	Vec2s  position;
 	POINT point;
 	GetCursorPos(&point);
 	ScreenToClient(window_handle, &point);
-	position.x = (r32)point.x;
-	position.y = (r32)(window_height - point.y);
+	position.x = point.x;
+	position.y = (window_height - point.y);
 	return position;
 }
 
-Vec2 system_get_cursor_position_y_inverted() {
-	Vec2  position;
+Vec2s system_get_cursor_position_y_inverted_vec2s() {
+	Vec2s  position;
 	POINT point;
 	GetCursorPos(&point);
 	ScreenToClient(window_handle, &point);
-	position.x = (r32)point.x;
-	position.y = (r32)point.y;
+	position.x = point.x;
+	position.y = point.y;
 	return position;
+}
+
+Vec2 system_get_cursor_position() {
+	auto pos = system_get_cursor_position_vec2s();
+	return vec2((r32)pos.x, (r32)pos.y);
+}
+
+Vec2 system_get_cursor_position_y_inverted() {
+	auto pos = system_get_cursor_position_y_inverted_vec2s();
+	return vec2((r32)pos.x, (r32)pos.y);
 }
 
 u32 system_max_controllers() {

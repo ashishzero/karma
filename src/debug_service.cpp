@@ -589,12 +589,14 @@ r32 draw_profiler(r32 render_height, Vec2 cursor, Record **out_hovered_record = 
 
 	constexpr r32 PROFILER_MAX_CHILD_HEIGHT  = 25.0f;
 	constexpr r32 PROFILER_OUTLINE_THICKNESS = 0.5f;
+	constexpr r32 PROFILER_RESIZER_SIZE      = 10.0f;
 
 	// Draw the profile data
 	Record *hovered_record = NULL;
 
 	static r32 profiler_height	= 100.0f;
 	static r32 profiler_width	= 450.0f;
+	static Vec2 profiler_resizer_position;
 
 	r32 draw_x = DEBUG_PRESENTATION_X_OFFSET;
 	r32 draw_y = render_height - DEBUG_PRESENTATION_BLOCK_Y_OFFSET - profiler_height;
@@ -608,6 +610,16 @@ r32 draw_profiler(r32 render_height, Vec2 cursor, Record **out_hovered_record = 
 	Vec2 draw_region_dimension	= vec2(profiler_width, profiler_height);
 	Vec2 top_position			= vec2(draw_x, render_height - DEBUG_PRESENTATION_BLOCK_Y_OFFSET);
 
+	profiler_resizer_position.x = draw_region_position.x + draw_region_dimension.x - PROFILER_RESIZER_SIZE;
+	profiler_resizer_position.y = draw_region_position.y;
+
+	Vec4 resizer_color;
+	if (point_inside_rect(cursor, mm_rect(profiler_resizer_position, profiler_resizer_position + vec2(PROFILER_RESIZER_SIZE)))) {
+		resizer_color = vec4(1, 1, 0);
+	} else {
+		resizer_color = vec4(1);
+	}
+
 	im_unbind_texture();
 	im_rect(draw_region_position, draw_region_dimension, vec4(0, 0, 0, 0.8f));
 
@@ -617,6 +629,7 @@ r32 draw_profiler(r32 render_height, Vec2 cursor, Record **out_hovered_record = 
 	draw_profiler_timelines_texts(root_record, top_position, profiler_width, child_height, font_height, inv_cycles_count);
 
 	im_unbind_texture();
+	im_rect(profiler_resizer_position, vec2(PROFILER_RESIZER_SIZE), resizer_color);
 	im_rect_outline2d(draw_region_position, draw_region_dimension, vec4(1), PROFILER_OUTLINE_THICKNESS);
 
 	if (out_hovered_record) {
