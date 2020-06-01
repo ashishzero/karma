@@ -604,9 +604,6 @@ int system_main() {
 					case Key_F4:
 						karma_debug_presentation_toggle_display();
 						break;
-					case Key_F5:
-						karma_frame_recording_toggle_state();
-						break;
 				}
 			}
 #endif
@@ -1035,8 +1032,6 @@ int system_main() {
 
 		karma_timed_frame_end(real_dt);
 	}
-
-	karma_debug_service_shutdown();
 
 	ImGui_Shutdown();
 	gfx_destroy_context();

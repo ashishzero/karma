@@ -31,16 +31,10 @@ struct Timed_Frame {
 	u64           end_cycle_value;
 };
 
-bool frame_recording_get_state();
-void frame_recording_set_state(bool state);
-
 bool debug_presentation_get_display();
 void debug_presentation_set_display(bool state);
 
 void debug_service_initialize();
-void debug_service_shutdown();
-
-Timed_Frame *timed_frame_get();
 
 void              timed_frame_begin();
 void              timed_frame_end(r32 frame_time);
@@ -70,7 +64,6 @@ struct Timed_Procedure {
 #if defined(BUILD_DEBUG_SERVICE)
 
 #define karma_debug_service_initialize() debug_service_initialize()
-#define karma_debug_service_shutdown()   debug_service_shutdown()
 
 #define karma_timed_frame_get() timed_frame_get()
 
@@ -89,31 +82,10 @@ struct Timed_Procedure {
 #define karma_debug_service_handle_event debug_service_handle_event
 #define karma_timed_frame_presentation   timed_frame_presentation
 
-#define karma_frame_recording_get_state				frame_recording_get_state
-#define karma_frame_recording_set_state				frame_recording_set_state
-#define karma_frame_recording_toggle_state()		frame_recording_set_state(!frame_recording_get_state())
 #define karma_debug_presentation_get_display		debug_presentation_get_display
 #define karma_debug_presentation_set_display		debug_presentation_set_display
 #define karma_debug_presentation_toggle_display()	debug_presentation_set_display(!debug_presentation_get_display())
 
 #else
-
-#define karma_debug_service_initialize() 
-#define karma_debug_service_shutdown()   
-#define karma_timed_frame_get() (nullptr)
-#define karma_timed_frame_begin() 
-#define karma_timed_frame_end(frame_time)   
-#define karma_timed_block_begin(name) 
-#define karma_timed_block_end(name)   
-#define karma_timed_procedure() 
-#define karma_timed_scope(name) 
-#define karma_debug_service_handle_event(...) 
-#define karma_timed_frame_presentation(...)   
-#define frame_recording_get_state()
-#define frame_recording_set_state(...)
-#define karma_frame_recording_toggle_state()
-#define debug_presentation_get_display()
-#define debug_presentation_set_display(...)
-#define karma_debug_presentation_toggle_display()
 
 #endif
