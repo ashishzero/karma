@@ -513,7 +513,7 @@ void draw_profiler_timelines_texts(Record *record, Vec2 top_position, r32 profil
 	}
 }
 
-r32 draw_profiler(r32 render_height, Vec2 cursor) {
+r32 draw_profiler(r32 render_height, Vec2 cursor, Record **out_hovered_record = nullptr) {
 	auto frame				= timed_frame_get();
 	auto counts				= frame->end_counter_value - frame->begin_counter_value;
 	r32 inv_cycles_count	= 1.0f / ((r32)(frame->end_cycle_value - frame->begin_cycle_value));
@@ -619,6 +619,10 @@ r32 draw_profiler(r32 render_height, Vec2 cursor) {
 	im_unbind_texture();
 	im_rect_outline2d(draw_region_position, draw_region_dimension, vec4(1), PROFILER_OUTLINE_THICKNESS);
 
+	if (out_hovered_record) {
+		*out_hovered_record = hovered_record;
+	}
+
 	return draw_y;
 }
 
@@ -635,8 +639,37 @@ void debug_service_presentation(r32 framebuffer_w, r32 framebuffer_h) {
 			render_height = draw_frame_time_graph(render_height);
 		}
 
+		Record *hovered_record = nullptr; // overlay
 		if (debug_menu_icons_value[Menu_Icon_PROFILER]) {
-			render_height = draw_profiler(render_height, cursor);
+			render_height = draw_profiler(render_height, cursor, &hovered_record);
+		}
+
+		// Rendering Overlays at last
+		if (hovered_record) {
+			constexpr r32 PROFILER_PRESENTATION_FONT_HEIGHT = 16.0f;
+			const Vec2 PROFILER_HOVERED_RECORD_OFFSET = vec2(10.0f, -10.0f);
+
+			r32    cycles = (r32)(hovered_record->end_cycle - hovered_record->begin_cycle) / 1000.0f;
+			String name   = hovered_record->name;
+			String desc   = hovered_record->id;
+			String time   = tprintf("%.3fms (%.3fkclocks)", hovered_record->ms, cycles);
+
+			r32 max_w, max_h;
+			max_w = im_calculate_text_region(PROFILER_PRESENTATION_FONT_HEIGHT, debug_font.info, name).x;
+			max_w = max_value(max_w, im_calculate_text_region(PROFILER_PRESENTATION_FONT_HEIGHT, debug_font.info, desc).x);
+			max_w = max_value(max_w, im_calculate_text_region(PROFILER_PRESENTATION_FONT_HEIGHT, debug_font.info, time).x);
+			max_h = PROFILER_PRESENTATION_FONT_HEIGHT * 3;
+
+			Vec2 pos = cursor + PROFILER_HOVERED_RECORD_OFFSET;
+			pos.y -= max_h;
+
+			im_unbind_texture();
+			im_rect(pos, vec2(max_w, max_h), vec4(0.02f, 0.02f, 0.02f, 0.8f));
+
+			im_bind_texture(debug_font.texture);
+			im_text(pos + vec2(0, 2 * PROFILER_PRESENTATION_FONT_HEIGHT), PROFILER_PRESENTATION_FONT_HEIGHT, debug_font.info, name, vec4(1));
+			im_text(pos + vec2(0, PROFILER_PRESENTATION_FONT_HEIGHT), PROFILER_PRESENTATION_FONT_HEIGHT, debug_font.info, desc, vec4(1));
+			im_text(pos, PROFILER_PRESENTATION_FONT_HEIGHT, debug_font.info, time, vec4(1));
 		}
 		
 		im_end();
