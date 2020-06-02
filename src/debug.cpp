@@ -126,10 +126,36 @@ struct Audio_Visualizer {
 	int	write_cursor;
 };
 
+static constexpr int NOTIFICATION_MAX_COUNT			= 5;
+static constexpr r32 NOTIFICATION_FADE_STAY_TIME	= 10;
+
+const Color3 NOTIFICATION_FONT_COLORS_IN[]= {
+	vec3(1.0f, 1.0f, 1.0f),
+	vec3(0.2f, 0.9f, 0.3f),
+	vec3(1.0f, 1.0f, 0.1f),
+	vec3(0.9f, 0.1f, 0.3f),
+};
+static_assert(static_count(NOTIFICATION_FONT_COLORS_IN) == Notification_Level_COUNT, "Notification color not specified for all notification levels");
+
+struct Notification {
+	char				msg[NOTIFICATION_MAX_LENGTH];
+	int					msg_length;
+	Notification_Level  level;
+	r32					t;
+};
+
+struct Notification_Handler {
+	Notification	notifications[NOTIFICATION_MAX_COUNT];
+	int				write_index;
+	int				read_index;
+};
+
 static Debug_Io				io;
 static Profiler				profiler;
 static Frame_Time_Recorder	frame_time_recorder;
 static Audio_Visualizer		audio_visualizer;
+
+static Notification_Handler notification_handler;
 
 void debug_mode_enable() {
 	// NOTE: Allocated memory are not freed, because it doesn't matter, they will be freed by OS when app closes
@@ -289,15 +315,32 @@ void debug_audio_feedback(r32 *samples, u32 size_in_bytes, u32 channel_count, u3
 	}
 }
 
+void debug_notify_level(Notification_Level level, ANALYSE_PRINTF_FORMAT_STRING(const char *fmt), ...) {
+	Notification *notification = notification_handler.notifications + notification_handler.write_index;
+	notification_handler.write_index = (notification_handler.write_index + 1) % NOTIFICATION_MAX_COUNT;
+	if (notification_handler.write_index == notification_handler.read_index)
+		notification_handler.read_index = (notification_handler.read_index + 1) % NOTIFICATION_MAX_COUNT;
+	
+	va_list ap;
+	va_start(ap, fmt);
+	notification->msg_length = stbsp_vsnprintf(notification->msg, NOTIFICATION_MAX_LENGTH, fmt, ap);
+	va_end(ap);
+
+	notification->level = level;
+	notification->t = NOTIFICATION_FADE_STAY_TIME;
+}
+
 bool debug_get_presentation_state() {
 	return io.should_present;
 }
 
-void debug_set_presentation_state(bool state) {
+bool debug_set_presentation_state(bool state) {
 	io.should_present = state;
+	return state;
 }
 
 bool debug_presentation_is_hovered() {
+	return io.hovered || profiler.resizing;
 	return io.hovered || profiler.resizing;
 }
 
@@ -757,6 +800,60 @@ r32 draw_audio_visualizer(r32 render_height, Vec2 cursor, bool *set_on_hovered) 
 	return draw_y;
 }
 
+void draw_notifications(r32 framebuffer_w, r32 framebuffer_h) {
+	constexpr r32	NOTIFICATION_FONT_SIZE				= 32;
+	constexpr r32	NOTIFICATION_FADE_OUT_RATE			= 0.9f;
+	constexpr r32	NOTIFICATION_DISPLAY_HEIGHT_FACTOR	= 0.85f;
+	constexpr r32	NOTIFICATION_MAX_Y_MOVEMENT			= NOTIFICATION_FONT_SIZE * 1.5f;
+	const Color3	NOTIFICATION_FONT_COLOR_OUT			= vec3(1, 1, 1);
+	const Color3	NOTIFICATION_FONT_SHADOW_COLOR		= vec3(0.5f, 0, 0);
+	const Vec2		NOTIFICATION_SHADOW_OFFSET			= vec2(1.5f, -1.5f);
+
+	im_bind_texture(io.font.texture);
+
+	int done_count = 0;
+	r32 prev_y_off = 0;
+	int notification_counter = 0;
+	for (int notification_index = notification_handler.read_index; 
+		notification_index != notification_handler.write_index; 
+		notification_index = (notification_index  + 1) % NOTIFICATION_MAX_COUNT, ++notification_counter) {
+
+		auto &notification = notification_handler.notifications[notification_index];
+
+		r32 alpha_in  = 1.0f - map01(1, NOTIFICATION_FADE_STAY_TIME, clamp(1, NOTIFICATION_FADE_STAY_TIME, notification.t));
+		r32 alpha_out = clamp01(notification.t);
+		r32 alpha	  = alpha_in * alpha_out;
+
+		Vec4 notification_color;
+		notification_color.xyz	= lerp(NOTIFICATION_FONT_COLORS_IN[notification.level], NOTIFICATION_FONT_COLOR_OUT, 1.0f - alpha_out);
+		notification_color.w	= alpha;
+
+		Vec2 size = im_calculate_text_region(NOTIFICATION_FONT_SIZE, io.font.info, String(notification.msg, notification.msg_length));
+
+		r32 y_offset = (1.0f - alpha_out) * NOTIFICATION_MAX_Y_MOVEMENT;
+
+		Vec2 draw_pos;
+		draw_pos.x = framebuffer_w * 0.5f - size.x * 0.5f;
+		draw_pos.y = framebuffer_h * NOTIFICATION_DISPLAY_HEIGHT_FACTOR + y_offset - NOTIFICATION_FONT_SIZE * notification_counter + prev_y_off;
+		prev_y_off = y_offset;
+
+		im_text(draw_pos + NOTIFICATION_SHADOW_OFFSET, NOTIFICATION_FONT_SIZE, io.font.info, String(notification.msg, notification.msg_length), vec4(NOTIFICATION_FONT_SHADOW_COLOR, alpha));
+		im_text(draw_pos, NOTIFICATION_FONT_SIZE, io.font.info, String(notification.msg, notification.msg_length), notification_color);
+
+		notification.t = lerp(notification.t, -1.0f, 1.0f - powf(1.0f - NOTIFICATION_FADE_OUT_RATE, io.frame_time));
+
+		draw_pos.y -= NOTIFICATION_FONT_SIZE;
+
+		if (notification.t <= 0.0f) {
+			done_count += 1;
+		}
+	}
+
+	if (done_count) {
+		notification_handler.read_index = (notification_handler.read_index + done_count) % NOTIFICATION_MAX_COUNT;
+	}
+}
+
 void debug_present(r32 framebuffer_w, r32 framebuffer_h) {
 	io.hovered = false;
 
@@ -814,125 +911,7 @@ void debug_present(r32 framebuffer_w, r32 framebuffer_h) {
 		
 	}
 
-	constexpr int	NOTIFICATION_MAX_COUNT				= 5;
-	constexpr int	NOTIFICATION_MAX_LENGTH				= 64;
-	constexpr r32	NOTIFICATION_FONT_SIZE				= 32;
-	constexpr r32	NOTIFICATION_FADE_STAY_TIME			= 20;
-	constexpr r32	NOTIFICATION_FADE_OUT_RATE			= 0.9f;
-	constexpr r32	NOTIFICATION_DISPLAY_HEIGHT_FACTOR	= 0.85f;
-	constexpr r32	NOTIFICATION_MAX_Y_MOVEMENT			= NOTIFICATION_FONT_SIZE * 1.5f;
-	const Color3	NOTIFICATION_FONT_COLOR_OUT			= vec3(1, 1, 1);
-	const Color3	NOTIFICATION_FONT_SHADOW_COLOR		= vec3(0.5f, 0, 0);
-	const Vec2		NOTIFICATION_SHADOW_OFFSET			= vec2(1.5f, -1.5f);
-
-	enum Notification_Level {
-		Notification_Level_OK,
-		Notification_Level_SUCCESS,
-		Notification_Level_WARN,
-		Notification_Level_ERROR,
-
-		Notification_Level_COUNT,
-	};
-
-	const Color3 NOTIFICATION_FONT_COLORS_IN[]= {
-		vec3(1.0f, 1.0f, 1.0f),
-		vec3(0.2f, 0.9f, 0.3f),
-		vec3(1.0f, 1.0f, 0.1f),
-		vec3(0.9f, 0.1f, 0.3f),
-	};
-	static_assert(static_count(NOTIFICATION_FONT_COLORS_IN) == Notification_Level_COUNT, "Notification color not specified for all notification levels");
-
-	struct Notification {
-		String				msg; 
-		Notification_Level  level;
-		r32					t;
-	};
-
-	struct Notification_Handler {
-		u8			 buffer[NOTIFICATION_MAX_COUNT][NOTIFICATION_MAX_LENGTH];
-		Notification notifications[NOTIFICATION_MAX_COUNT];
-		int			 count;
-	};
-
-	static Notification_Handler notification_handler;
-
-	static const String notification_msgs[] = {
-		"Notification Test",
-		"Another Longer Notification",
-		"Speed x2",
-		"Saved",
-		"Reloaded",
-		"Failed",
-		"This is some test",
-		"A quick brown box",
-		"The cake is a lie",
-		"Hello sailor",
-		"There are 1000 leaves in pile",
-	};
-	static int notification_msg_count = static_count(notification_msgs);
-
-	if (io.left_button_pressed) {
-		if (notification_handler.count < NOTIFICATION_MAX_COUNT) {
-			auto notification = notification_handler.notifications + notification_handler.count;
-			notification->msg = notification_msgs[random_get_bound(notification_msg_count)];
-			notification->level = (Notification_Level)random_get_bound(Notification_Level_COUNT);
-			notification->t = NOTIFICATION_FADE_STAY_TIME;
-			notification_handler.count += 1;
-		} else {
-			memmove(notification_handler.notifications, notification_handler.notifications + 1, sizeof(Notification) * (notification_handler.count - 1));
-			auto notification = notification_handler.notifications + notification_handler.count - 1;
-			notification->msg = notification_msgs[random_get_bound(notification_msg_count)];
-			notification->level = (Notification_Level)random_get_bound(Notification_Level_COUNT);
-			notification->t = NOTIFICATION_FADE_STAY_TIME;
-		}
-	}
-
-	im_bind_texture(io.font.texture);
-
-	r32 prev_y_off = 0;
-	for (int notification_index = 0; notification_index < notification_handler.count; ++notification_index) {
-		auto &notification = notification_handler.notifications[notification_index];
-
-		r32 alpha_in  = 1.0f - map01(1, NOTIFICATION_FADE_STAY_TIME, clamp(1, NOTIFICATION_FADE_STAY_TIME, notification.t));
-		r32 alpha_out = clamp01(notification.t);
-		r32 alpha	  = alpha_in * alpha_out;
-
-		Vec4 notification_color;
-		notification_color.xyz	= lerp(NOTIFICATION_FONT_COLORS_IN[notification.level], NOTIFICATION_FONT_COLOR_OUT, 1.0f - alpha_out);
-		notification_color.w	= alpha;
-
-		Vec2 size = im_calculate_text_region(NOTIFICATION_FONT_SIZE, io.font.info, notification.msg);
-
-		r32 y_offset = (1.0f - alpha_out) * NOTIFICATION_MAX_Y_MOVEMENT;
-
-		Vec2 draw_pos;
-		draw_pos.x = framebuffer_w * 0.5f - size.x * 0.5f;
-		draw_pos.y = framebuffer_h * NOTIFICATION_DISPLAY_HEIGHT_FACTOR + y_offset - NOTIFICATION_FONT_SIZE * notification_index + prev_y_off;
-		prev_y_off = y_offset;
-
-		im_text(draw_pos + NOTIFICATION_SHADOW_OFFSET, NOTIFICATION_FONT_SIZE, io.font.info, notification.msg, vec4(NOTIFICATION_FONT_SHADOW_COLOR, alpha));
-		im_text(draw_pos, NOTIFICATION_FONT_SIZE, io.font.info, notification.msg, notification_color);
-
-		notification.t = lerp(notification.t, -1.0f, 1.0f - powf(1.0f - NOTIFICATION_FADE_OUT_RATE, io.frame_time));
-
-		draw_pos.y -= NOTIFICATION_FONT_SIZE;
-	}
-
-	int done_count = 0;
-	for (int notification_index = 0; notification_index < notification_handler.count; ++notification_index) {
-		auto &notification = notification_handler.notifications[notification_index];
-
-		if (notification.t <= 0.0f) {
-			done_count += 1;
-		} else {
-			break;
-		}
-	}
-
-	if (done_count) {
-		memmove(notification_handler.notifications, notification_handler.notifications + done_count, sizeof(Notification) * (notification_handler.count - done_count));
-		notification_handler.count -= done_count;
-	}
+	draw_notifications(framebuffer_w, framebuffer_h);
 
 	im_end();
 

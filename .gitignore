@@ -19,7 +19,6 @@ run_tree/imgui/*.ini
 
 # execuables
 /run_tree/karma_x64_Debug.exe
-/run_tree/karma_x64_Developer.exe
 /tools/reflection/reflection_Debug_x64.exe
 /tools/ucd/ucd_Debug_x64.exe
 /tools/shader/shader_Debug_x64.exe

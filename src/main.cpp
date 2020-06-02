@@ -472,7 +472,7 @@ int system_main() {
 		system_display_critical_message("Failed to load audio!");
 	}
 
-	audio_mixer_set_volume(&mixer, 0.0f);
+	audio_mixer_set_volume(&mixer, 0.6f);
 
 	ImGui_Initialize();
 	Debug_ModeEnable();
@@ -557,20 +557,28 @@ int system_main() {
 						if (state == Time_State_RESUME) {
 							state = Time_State_PAUSE;
 							system_audio_pause();
+							Debug_Notify("Paused", factor.ratio);
 						} else {
 							state   = Time_State_RESUME;
 							game_dt = fixed_dt;
 							system_audio_resume();
+							Debug_Notify("Resumed", factor.ratio);
 						}
 						break;
 					case Key_F2:
 						decrease_game_speed(&factor);
+						Debug_Notify("Speed x%.3f", factor.ratio);
 						break;
 					case Key_F3:
 						increase_game_speed(&factor);
+						Debug_Notify("Speed x%.3f", factor.ratio);
 						break;
 					case Key_F4:
-						Debug_TogglePresentationState();
+						if (Debug_TogglePresentationState()) {
+							Debug_Notify("Debug View: On", factor.ratio);
+						} else {
+							Debug_Notify("Debug View: Off", factor.ratio);
+						}
 						break;
 				}
 			}

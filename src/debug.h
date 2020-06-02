@@ -6,14 +6,27 @@
 #define BUILD_DEBUG_SERVICE
 #endif
 
+enum Notification_Level {
+	Notification_Level_DEFAULT,
+	Notification_Level_SUCCESS,
+	Notification_Level_WARN,
+	Notification_Level_ERROR,
+
+	Notification_Level_COUNT,
+};
+
+constexpr int NOTIFICATION_MAX_LENGTH		= 128;
+
 typedef String Timed_Block_Match;
 
 void debug_mode_enable();
 bool debug_handle_event(Event &event);
 void debug_audio_feedback(r32 *samples, u32 size_in_bytes, u32 channel_count, u32 zeroed_size);
 
+void debug_notify_level(Notification_Level level, ANALYSE_PRINTF_FORMAT_STRING(const char *fmt), ...) ANALYSE_PRINTF_FORMAT(2, 3);
+
 bool debug_get_presentation_state();
-void debug_set_presentation_state(bool state);
+bool debug_set_presentation_state(bool state);
 bool debug_presentation_is_hovered();
 
 void debug_present(r32 framebuffer_w, r32 framebuffer_h);
@@ -48,6 +61,11 @@ struct Timed_Procedure {
 #define Debug_ModeEnable				debug_mode_enable
 #define Debug_HandleEvent				debug_handle_event
 #define Debug_AudioFeedback				debug_audio_feedback
+#define Debug_NotifyLevel(level, ...)	debug_notify_level(level, ##__VA_ARGS__)
+#define Debug_Notify(...)				debug_notify_level(Notification_Level_DEFAULT, ##__VA_ARGS__)
+#define Debug_NotifySuccess(...)		debug_notify_level(Notification_Level_SUCCESS, ##__VA_ARGS__)
+#define Debug_NotifyWarn(...)			debug_notify_level(Notification_Level_WARN, ##__VA_ARGS__)
+#define Debug_NotifyError(...)			debug_notify_level(Notification_Level_ERROR, ##__VA_ARGS__)
 #define Debug_GetPresentationState		debug_get_presentation_state
 #define Debug_SetPresentationState		debug_set_presentation_state
 #define Debug_TogglePresentationState()	debug_set_presentation_state(!debug_get_presentation_state())
@@ -67,8 +85,13 @@ struct Timed_Procedure {
 #define Debug_ModeEnable()			
 #define Debug_HandleEvent(event)				(false)
 #define Debug_AudioFeedback(samples, size_in_bytes, channel_count, zeroed_size)
+#define Debug_NotifyDefault(level, ...)		
+#define Debug_Notify(...)				
+#define Debug_NotifySuccess(...)		
+#define Debug_NotifyWarn(...)			
+#define Debug_NotifyError(...)			
 #define Debug_GetPresentationState()			(false)
-#define Debug_SetPresentationState(state)	
+#define Debug_SetPresentationState(state)		(false)
 #define Debug_TogglePresentationState()	
 #define Debug_PresentationIsHovered()			(false)
 #define Debug_Present(w, h)				
