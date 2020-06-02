@@ -28,11 +28,11 @@ static const String AUDIO_VISUALIZER_CHANNEL_NAMES[] = {
 static_assert(static_count(AUDIO_VISUALIZER_CHANNEL_NAMES) == Audio_Channel_COUNT, "Names for channel array not enough");
 
 enum Menu_Icon {
-	Menu_Icon_FRAME_TIME,
-	Menu_Icon_PROFILER,
-	Menu_Icon_AUDIO,
+	Menu_FRAME_TIME,
+	Menu_PROFILER,
+	Menu_AUDIO,
 
-	Menu_Icon_COUNT,
+	Menu_COUNT,
 };
 
 static const Color4 MENU_ITEM_COLOR_HOVERED		= vec4(1);
@@ -43,7 +43,7 @@ static const Color4 MENU_ITEMS_COLORS[] = {
 	vec4(0.3f, 0.2f, 0.8f),
 	vec4(0.7f, 0.2f, 0.7f),
 };
-static_assert(static_count(MENU_ITEMS_COLORS) == Menu_Icon_COUNT, "Specify Color for Menu Icon");
+static_assert(static_count(MENU_ITEMS_COLORS) == Menu_COUNT, "Specify Color for Menu Icon");
 
 struct Debug_Io {
 	Vec2 mouse_cursor;
@@ -53,9 +53,9 @@ struct Debug_Io {
 
 	Monospaced_Font		font;
 	Texture2d_Handle	menu_icons;
-	Mm_Rect				menu_icons_rect[Menu_Icon_COUNT];
-	Color4				menu_icons_color[Menu_Icon_COUNT];
-	bool				menu_icons_value[Menu_Icon_COUNT];
+	Mm_Rect				menu_icons_rect[Menu_COUNT];
+	Color4				menu_icons_color[Menu_COUNT];
+	bool				menu_icons_value[Menu_COUNT];
 };
 
 enum Timed_Record_Type {
@@ -196,14 +196,14 @@ void debug_mode_enable() {
 			u32 sz				= *istream_consume(&in, u32);
 			u8 *pixels			= (u8 *)istream_consume_size(&in, sz);
 
-			assert(x_icon_count * y_icon_count >= Menu_Icon_COUNT);
+			assert(x_icon_count * y_icon_count >= Menu_COUNT);
 
 			io.menu_icons = gfx_create_texture2d(w, h, 4, Data_Format_RGBA8_UNORM_SRGB, (const u8 **)&pixels, Buffer_Usage_IMMUTABLE, 1);
 
 			for (u32 y_index = 0; y_index < y_icon_count; ++y_index) {
 				for (u32 x_index = 0; x_index < x_icon_count; ++x_index) {
 					u32 index = x_index + y_index * x_icon_count;
-					if (index >= Menu_Icon_COUNT) break;
+					if (index >= Menu_COUNT) break;
 
 					io.menu_icons_rect[index].min.x = (r32)x_index / (r32)x_icon_count;
 					io.menu_icons_rect[index].max.y = (r32)y_index / (r32)y_icon_count;
@@ -340,8 +340,8 @@ r32 draw_header_and_buttons(r32 render_height, r32 framebuffer_w, r32 framebuffe
 	// Menu Icons update and render
 	//
 
-	Vec2 icon_positions[Menu_Icon_COUNT];
-	Vec2 icon_dimensions[Menu_Icon_COUNT];
+	Vec2 icon_positions[Menu_COUNT];
+	Vec2 icon_dimensions[Menu_COUNT];
 
 	const r32  FRAME_TIME_AND_MENU_GAP	= 20.0f;
 	const r32  MENU_ICON_X_OFFSET		= 5.0f;
@@ -349,7 +349,7 @@ r32 draw_header_and_buttons(r32 render_height, r32 framebuffer_w, r32 framebuffe
 	const auto MENU_ICON_X_POSITION		= MENU_ICON_WIDTH + MENU_ICON_X_OFFSET;
 
 	r32 icon_draw_start_x = ft_size.x + FRAME_TIME_AND_MENU_GAP;
-	for (int icon_index = 0; icon_index < Menu_Icon_COUNT; ++icon_index) {
+	for (int icon_index = 0; icon_index < Menu_COUNT; ++icon_index) {
 		Vec2 pos = vec2(icon_draw_start_x + MENU_ICON_X_POSITION * icon_index, draw_y);
 		Vec2 dim = vec2(HEADER_FONT_HEIGHT);
 
@@ -373,14 +373,14 @@ r32 draw_header_and_buttons(r32 render_height, r32 framebuffer_w, r32 framebuffe
 	}
 
 	Vec2 min_icons_region = vec2(icon_draw_start_x, draw_y);
-	Vec2 max_icons_region = vec2(icon_draw_start_x + MENU_ICON_X_POSITION * Menu_Icon_COUNT, draw_y + HEADER_FONT_HEIGHT);
+	Vec2 max_icons_region = vec2(icon_draw_start_x + MENU_ICON_X_POSITION * Menu_COUNT, draw_y + HEADER_FONT_HEIGHT);
 	if (point_inside_rect(cursor, mm_rect(min_icons_region, max_icons_region))) {
 		*set_on_hovered = true;
 	}
 
 	im_bind_texture(io.menu_icons);
 
-	for (int icon_index = 0; icon_index < Menu_Icon_COUNT; ++icon_index) {
+	for (int icon_index = 0; icon_index < Menu_COUNT; ++icon_index) {
 		im_rect(icon_positions[icon_index], icon_dimensions[icon_index], io.menu_icons_rect[icon_index], io.menu_icons_color[icon_index]);
 	}
 
@@ -454,7 +454,7 @@ r32 draw_frame_time_graph(r32 render_height, Vec2 cursor, bool *set_on_hovered) 
 	}
 
 	// Draw the outline over the region
-	im_rect_outline2d(bg_draw_pos, vec2(FRAME_TIME_GRAPH_WIDTH, FRAME_TIME_GRAPH_HEIGHT), io.menu_icons_color[Menu_Icon_FRAME_TIME], FRAME_TIME_OUTLINE_THICKNESS);
+	im_rect_outline2d(bg_draw_pos, vec2(FRAME_TIME_GRAPH_WIDTH, FRAME_TIME_GRAPH_HEIGHT), io.menu_icons_color[Menu_FRAME_TIME], FRAME_TIME_OUTLINE_THICKNESS);
 
 	im_bind_texture(io.font.texture);
 	for (int mark_index = 0; mark_index < static_count(FRAME_TIME_MARK_DT); ++mark_index) {
@@ -681,7 +681,7 @@ r32 draw_profiler(r32 render_height, Vec2 cursor, bool *set_on_hovered, Record *
 	im_unbind_texture();
 	im_rect(profiler.resizer_position, vec2(PROFILER_BUTTON_SIZE), resizer_color);
 	im_rect(recording_state_position, vec2(PROFILER_BUTTON_SIZE), recording_state_color);
-	im_rect_outline2d(draw_region_position, draw_region_dimension, io.menu_icons_color[Menu_Icon_PROFILER], PROFILER_OUTLINE_THICKNESS);
+	im_rect_outline2d(draw_region_position, draw_region_dimension, io.menu_icons_color[Menu_PROFILER], PROFILER_OUTLINE_THICKNESS);
 
 	if (out_hovered_record) {
 		*out_hovered_record = hovered_record;
@@ -697,7 +697,7 @@ r32 draw_audio_visualizer(r32 render_height, Vec2 cursor, bool *set_on_hovered) 
 	constexpr r32 AUDIO_VISUALIZER_SAMPLE_WIDTH			= AUDIO_VISUALIZER_CHANNEL_WIDTH / (r32)AUDIO_VISUALIZER_RENDER_SAMPLE_COUNT;
 
 	constexpr	r32		AUDIO_VISUALIZER_CHANNEL_SEPERATOR_THICKNESS	= 0.6f;
-	const		Vec4	AUDIO_VISUALIZER_CHANNEL_COLOR					= MENU_ITEMS_COLORS[Menu_Icon_AUDIO];
+	const		Vec4	AUDIO_VISUALIZER_CHANNEL_COLOR					= MENU_ITEMS_COLORS[Menu_AUDIO];
 	constexpr	r32		AUDIO_VISUALIZER_CHANNEL_FONT_SIZE				= 14.0f;
 	constexpr	r32		AUDIO_VISUALIZER_CHANNEL_FONT_OFFSET_X			= 5.0f;
 	constexpr	r32		AUDIO_VISUALIZER_CHANNEL_FONT_OFFSET_Y			= 5.0f;
@@ -739,7 +739,7 @@ r32 draw_audio_visualizer(r32 render_height, Vec2 cursor, bool *set_on_hovered) 
 		im_line2d(vec2(draw_x, channel_seperator_y), vec2(draw_x + AUDIO_VISUALIZER_CHANNEL_WIDTH, channel_seperator_y), vec4(1), AUDIO_VISUALIZER_CHANNEL_SEPERATOR_THICKNESS);
 	}
 
-	im_rect_outline2d(draw_corner, region_dim, io.menu_icons_color[Menu_Icon_AUDIO]);
+	im_rect_outline2d(draw_corner, region_dim, io.menu_icons_color[Menu_AUDIO]);
 
 	im_bind_texture(io.font.texture);
 	for (int channel_index = Audio_Channel_COUNT - 1; channel_index >= 0; --channel_index) {
@@ -761,16 +761,16 @@ void debug_present(r32 framebuffer_w, r32 framebuffer_h) {
 		
 		render_height = draw_header_and_buttons(render_height, framebuffer_w, framebuffer_h, cursor, &io.hovered);
 
-		if (io.menu_icons_value[Menu_Icon_FRAME_TIME]) {
+		if (io.menu_icons_value[Menu_FRAME_TIME]) {
 			render_height = draw_frame_time_graph(render_height, cursor, &io.hovered);
 		}
 
 		Record *hovered_record = nullptr; // overlay
-		if (io.menu_icons_value[Menu_Icon_PROFILER]) {
+		if (io.menu_icons_value[Menu_PROFILER]) {
 			render_height = draw_profiler(render_height, cursor, &io.hovered, &hovered_record);
 		}
 
-		if (io.menu_icons_value[Menu_Icon_AUDIO]) {
+		if (io.menu_icons_value[Menu_AUDIO]) {
 			render_height = draw_audio_visualizer(render_height, cursor, &io.hovered);
 		}
 
