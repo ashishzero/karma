@@ -225,6 +225,7 @@ bool gfx_create_context(Handle platform, Render_Backend backend, Vsync vsync, u3
 		debug_shader.vertex              = igfx_find_shader(debug_shader_content, SHADER_TYPE_VERTEX, "debug.kfx.vertex");
 		debug_shader.pixel               = igfx_find_shader(debug_shader_content, SHADER_TYPE_PIXEL, "debug.kfx.pixel");
 		debug_shader.stride              = sizeof(Im_Vertex);
+		rasterizer.cull_mode			 = Cull_Mode_NONE;
 		depth                            = depth_info_create(false, Depth_Write_Mask_ZERO, Comparison_Function_NEVER);
 		debug_pipeline                   = gfx->create_render_pipeline(debug_shader, rasterizer, blend, depth, "Debug_Pipeline");
 		memory_free(debug_shader_content.data);

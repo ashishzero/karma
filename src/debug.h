@@ -10,6 +10,7 @@ typedef String Timed_Block_Match;
 
 void debug_mode_enable();
 bool debug_handle_event(Event &event);
+void debug_audio_feedback(r32 *samples, u32 size_in_bytes, u32 channel_count, u32 zeroed_size);
 
 bool debug_get_presentation_state();
 void debug_set_presentation_state(bool state);
@@ -46,6 +47,7 @@ struct Timed_Procedure {
 
 #define Debug_ModeEnable				debug_mode_enable
 #define Debug_HandleEvent				debug_handle_event
+#define Debug_AudioFeedback				debug_audio_feedback
 #define Debug_GetPresentationState		debug_get_presentation_state
 #define Debug_SetPresentationState		debug_set_presentation_state
 #define Debug_TogglePresentationState()	debug_set_presentation_state(!debug_get_presentation_state())
@@ -64,6 +66,7 @@ struct Timed_Procedure {
 
 #define Debug_ModeEnable()			
 #define Debug_HandleEvent(event)				(false)
+#define Debug_AudioFeedback(samples, size_in_bytes, channel_count, zeroed_size)
 #define Debug_GetPresentationState()			(false)
 #define Debug_SetPresentationState(state)	
 #define Debug_TogglePresentationState()	

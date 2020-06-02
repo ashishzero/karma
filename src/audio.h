@@ -31,6 +31,18 @@ struct Wave_Data {
 //
 //
 
+enum Audio_Channel {
+	Audio_Channel_LEFT,
+	Audio_Channel_RIGHT,
+
+	Audio_Channel_COUNT
+};
+
+
+//
+//
+//
+
 struct Audio_Stream {
 	Riff_Header *header; // TODO: do we need this?
 	Wave_Fmt	*fmt;	 //	TODO: do we need this?
@@ -40,3 +52,7 @@ struct Audio_Stream {
 };
 
 Audio_Stream load_wave(String content);
+
+//
+//
+//

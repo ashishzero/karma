@@ -5,6 +5,7 @@
 #include "stream.h"
 #include "gfx_renderer.h"
 #include "systems.h"
+#include "audio.h"
 
 static constexpr r32 DEBUG_PRESENTATION_X_OFFSET		= 5.0f;
 static constexpr r32 DEBUG_PRESENTATION_Y_OFFSET		= 2.0f;
@@ -19,6 +20,12 @@ static constexpr r32 PROFILER_MIN_WIDTH								= 450.0f;
 static constexpr r32 PROFILER_MIN_HEIGHT							= 100.0f;
 
 static constexpr int FRAME_TIME_MAX_LOGS = 150;
+
+static constexpr int AUDIO_VISUALIZER_MAX_SAMPLES = 48000;
+static const String AUDIO_VISUALIZER_CHANNEL_NAMES[] = {
+	"Left", "Right"
+};
+static_assert(static_count(AUDIO_VISUALIZER_CHANNEL_NAMES) == Audio_Channel_COUNT, "Names for channel array not enough");
 
 enum Menu_Icon {
 	Menu_Icon_FRAME_TIME,
@@ -112,9 +119,15 @@ struct Frame_Time_Recorder {
 	r32 history[FRAME_TIME_MAX_LOGS];
 };
 
+struct Audio_Visualizer {
+	r32	history[Audio_Channel_COUNT][AUDIO_VISUALIZER_MAX_SAMPLES];
+	int	write_cursor;
+};
+
 static Debug_Io				io;
 static Profiler				profiler;
 static Frame_Time_Recorder	frame_time_recorder;
+static Audio_Visualizer		audio_visualizer;
 
 void debug_mode_enable() {
 	// NOTE: Allocated memory are not freed, because it doesn't matter, they will be freed by OS when app closes
@@ -236,6 +249,37 @@ bool debug_handle_event(Event &event) {
 	}
 
 	return handled;
+}
+
+void debug_audio_feedback(r32 *samples, u32 size_in_bytes, u32 channel_count, u32 zeroed_size) {
+	r32 *left  = audio_visualizer.history[Audio_Channel_LEFT];
+	r32 *right = audio_visualizer.history[Audio_Channel_RIGHT];
+
+	u32 sample_count			= size_in_bytes / (sizeof(r32) * channel_count);
+	u32 zeroed_size_in_sample	= zeroed_size / (sizeof(r32) * channel_count);
+
+	for (u32 index = 0; index < sample_count; ++index) {
+		left[audio_visualizer.write_cursor]  = samples[0];
+		right[audio_visualizer.write_cursor] = samples[1];
+		samples += channel_count;
+		audio_visualizer.write_cursor = (audio_visualizer.write_cursor + 1) % AUDIO_VISUALIZER_MAX_SAMPLES;
+	}
+
+	if (zeroed_size_in_sample) {
+		system_log(LOG_WARNING, "Audio", "Probably audio buffer size small, missed frame");
+
+		if ((audio_visualizer.write_cursor + zeroed_size_in_sample) < AUDIO_VISUALIZER_MAX_SAMPLES) {
+			memset(left + audio_visualizer.write_cursor, 0, zeroed_size_in_sample * sizeof(r32));
+			memset(right + audio_visualizer.write_cursor, 0, zeroed_size_in_sample * sizeof(r32));
+			audio_visualizer.write_cursor += zeroed_size_in_sample;
+		} else {
+			memset(left + audio_visualizer.write_cursor, 0, (AUDIO_VISUALIZER_MAX_SAMPLES - audio_visualizer.write_cursor) * sizeof(r32));
+			memset(right + audio_visualizer.write_cursor, 0, (AUDIO_VISUALIZER_MAX_SAMPLES - audio_visualizer.write_cursor) * sizeof(r32));
+			audio_visualizer.write_cursor = zeroed_size_in_sample - (AUDIO_VISUALIZER_MAX_SAMPLES - audio_visualizer.write_cursor);
+			memset(left, 0, audio_visualizer.write_cursor * sizeof(r32));
+			memset(right, 0, audio_visualizer.write_cursor * sizeof(r32));
+		}
+	}
 }
 
 bool debug_get_presentation_state() {
@@ -646,6 +690,66 @@ r32 draw_profiler(r32 render_height, Vec2 cursor, bool *set_on_hovered, Record *
 	return draw_y;
 }
 
+r32 draw_audio_visualizer(r32 render_height, Vec2 cursor, bool *set_on_hovered) {
+	constexpr r32 AUDIO_VISUALIZER_CHANNEL_WIDTH		= 450.0f;
+	constexpr r32 AUDIO_VISUALIZER_CHANNEL_HEIGHT		= 100.0f;
+	constexpr int AUDIO_VISUALIZER_RENDER_SAMPLE_COUNT	= 1000;
+	constexpr r32 AUDIO_VISUALIZER_SAMPLE_WIDTH			= AUDIO_VISUALIZER_CHANNEL_WIDTH / (r32)AUDIO_VISUALIZER_RENDER_SAMPLE_COUNT;
+
+	constexpr	r32		AUDIO_VISUALIZER_CHANNEL_SEPERATOR_THICKNESS	= 0.6f;
+	const		Vec4	AUDIO_VISUALIZER_CHANNEL_COLOR					= MENU_ITEMS_COLORS[Menu_Icon_AUDIO];
+	constexpr	r32		AUDIO_VISUALIZER_CHANNEL_FONT_SIZE				= 14.0f;
+	constexpr	r32		AUDIO_VISUALIZER_CHANNEL_FONT_OFFSET_X			= 5.0f;
+	constexpr	r32		AUDIO_VISUALIZER_CHANNEL_FONT_OFFSET_Y			= 5.0f;
+
+	static_assert(AUDIO_VISUALIZER_RENDER_SAMPLE_COUNT <= AUDIO_VISUALIZER_MAX_SAMPLES, "Can't display more samples than recorded");
+
+	r32 draw_x = DEBUG_PRESENTATION_X_OFFSET;
+	r32 draw_y = render_height - DEBUG_PRESENTATION_BLOCK_Y_OFFSET - Audio_Channel_COUNT * AUDIO_VISUALIZER_CHANNEL_HEIGHT;
+
+	Vec2 draw_corner = vec2(draw_x, draw_y);
+	Vec2 region_dim  = vec2(AUDIO_VISUALIZER_CHANNEL_WIDTH, Audio_Channel_COUNT * AUDIO_VISUALIZER_CHANNEL_HEIGHT);
+
+	if (point_inside_rect(cursor, mm_rect(draw_corner, region_dim))) {
+		*set_on_hovered = true;
+	}
+
+	im_unbind_texture();
+	im_rect(draw_corner, region_dim, vec4(0, 0, 0, 0.8f));
+
+	int audio_samples_read = audio_visualizer.write_cursor - AUDIO_VISUALIZER_RENDER_SAMPLE_COUNT;
+	while (audio_samples_read < 0) audio_samples_read += AUDIO_VISUALIZER_RENDER_SAMPLE_COUNT;
+
+	for (int channel_index = Audio_Channel_COUNT - 1; channel_index >= 0; --channel_index) {
+		r32 *samples = audio_visualizer.history[(Audio_Channel_COUNT - channel_index - 1)];
+		r32 sample_height, sample_draw_y;
+		Vec2 sample_dim;
+		auto read_index = audio_samples_read;
+		for (int sample_index = 0; sample_index < AUDIO_VISUALIZER_RENDER_SAMPLE_COUNT; ++sample_index) {
+			sample_height = samples[read_index] * AUDIO_VISUALIZER_CHANNEL_HEIGHT;
+			sample_dim = vec2(AUDIO_VISUALIZER_SAMPLE_WIDTH, sample_height);
+			sample_draw_y = draw_y + (Audio_Channel_COUNT - channel_index - 1) * AUDIO_VISUALIZER_CHANNEL_HEIGHT + AUDIO_VISUALIZER_CHANNEL_HEIGHT * 0.5f;
+			im_rect(vec2(draw_x + sample_index * AUDIO_VISUALIZER_SAMPLE_WIDTH, sample_draw_y), sample_dim, AUDIO_VISUALIZER_CHANNEL_COLOR);
+			read_index = (read_index + 1) % AUDIO_VISUALIZER_MAX_SAMPLES;
+		}
+	}
+
+	for (int channel_index = Audio_Channel_COUNT - 1; channel_index > 0; --channel_index) {
+		r32 channel_seperator_y = draw_y + channel_index * AUDIO_VISUALIZER_CHANNEL_HEIGHT;
+		im_line2d(vec2(draw_x, channel_seperator_y), vec2(draw_x + AUDIO_VISUALIZER_CHANNEL_WIDTH, channel_seperator_y), vec4(1), AUDIO_VISUALIZER_CHANNEL_SEPERATOR_THICKNESS);
+	}
+
+	im_rect_outline2d(draw_corner, region_dim, io.menu_icons_color[Menu_Icon_AUDIO]);
+
+	im_bind_texture(io.font.texture);
+	for (int channel_index = Audio_Channel_COUNT - 1; channel_index >= 0; --channel_index) {
+		r32 channel_font_y = draw_y + (Audio_Channel_COUNT - channel_index) * AUDIO_VISUALIZER_CHANNEL_HEIGHT - AUDIO_VISUALIZER_CHANNEL_FONT_OFFSET_Y - AUDIO_VISUALIZER_CHANNEL_FONT_SIZE;
+		im_text(vec2(draw_x + AUDIO_VISUALIZER_CHANNEL_FONT_OFFSET_X, channel_font_y), AUDIO_VISUALIZER_CHANNEL_FONT_SIZE, io.font.info, AUDIO_VISUALIZER_CHANNEL_NAMES[channel_index], vec4(1));
+	}
+
+	return draw_y;
+}
+
 void debug_present(r32 framebuffer_w, r32 framebuffer_h) {
 	io.hovered = false;
 
@@ -664,6 +768,10 @@ void debug_present(r32 framebuffer_w, r32 framebuffer_h) {
 		Record *hovered_record = nullptr; // overlay
 		if (io.menu_icons_value[Menu_Icon_PROFILER]) {
 			render_height = draw_profiler(render_height, cursor, &io.hovered, &hovered_record);
+		}
+
+		if (io.menu_icons_value[Menu_Icon_AUDIO]) {
+			render_height = draw_audio_visualizer(render_height, cursor, &io.hovered);
 		}
 
 		// Rendering Overlays at last

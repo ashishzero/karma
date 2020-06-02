@@ -344,6 +344,8 @@ void system_update_audio(const System_Audio &sys_audio, void *user_data) {
 		memset(sys_buffer + copy_size, 0, buffer_size - copy_size);
 		sys_audio.unlock(sys_audio.handle, sample_count);
 
+		Debug_AudioFeedback((r32 *)src_ptr, copy_size, channel_count, buffer_size - copy_size);
+
 		mixer->buffer_consumed_bytes += copy_size;
 		mixer->volume_position += sample_count * mixer->pitch_factor;
 
@@ -351,8 +353,8 @@ void system_update_audio(const System_Audio &sys_audio, void *user_data) {
 			Audio &audio = node->audio;
 			if (audio.playing) {
 				audio.samples_played += audio.buffered_pitch_factor * (r32)sample_count;
-				if ((u32)lroundf(audio.samples_played) >= audio.stream->sample_count) {
-					audio.samples_played = 0;
+				while ((u32)lroundf(audio.samples_played) >= audio.stream->sample_count) {
+					audio.samples_played -= audio.stream->sample_count;
 					audio.playing = audio.loop;
 				}
 			}
@@ -378,10 +380,10 @@ void audio_mixer_update(Audio_Mixer *mixer) {
 		if (node->audio.playing) {
 			Audio &audio = node->audio;
 			audio.buffered_pitch_factor	= audio.pitch_factor * mixer->pitch_factor;
-			//r32 inverse_audio_pitch_factor = 1.0f / audio.pitch_factor;
 
 			r32 *write_ptr = mixer->buffer;
 			r32 read_cursor = audio.samples_played;
+			r32 volume_position = mixer->volume_position;
 
 			for (u32 sample_counter = 0; sample_counter < mixer->buffer_size_in_sample_count;) {
 				u32 more_samples_required	= (mixer->buffer_size_in_sample_count - sample_counter);
@@ -389,12 +391,11 @@ void audio_mixer_update(Audio_Mixer *mixer) {
 				u32 samples_to_mix			= min_value(samples_available, more_samples_required);
 
 				r32 effective_volume;
-				r32 volume_position = mixer->volume_position;
 
 				for (u32 sample_mix_index = 0; sample_mix_index < samples_to_mix; ++sample_mix_index) {
 					// TODO: Here we expect both input audio and output buffer to be stero audio
 
-					effective_volume = audio.volume * lerp(mixer->volume_a, mixer->volume_b, (volume_position + sample_mix_index * mixer->pitch_factor) / mixer->volume_span);
+					effective_volume = audio.volume * lerp(mixer->volume_a, mixer->volume_b, clamp01((volume_position + sample_mix_index * mixer->pitch_factor) / mixer->volume_span));
 
 					#define AUDIO_APPLY_PITCH_FILTERING
 
@@ -435,13 +436,18 @@ void audio_mixer_update(Audio_Mixer *mixer) {
 					write_ptr += channel_count;
 				}
 
+				r32 samples_progressed = samples_to_mix * audio.buffered_pitch_factor;
+
 				sample_counter += samples_to_mix;
-				read_cursor += samples_to_mix * audio.buffered_pitch_factor;
+				read_cursor += samples_progressed;
+				volume_position += samples_progressed;
 
 				if (!audio.loop) {
 					break;
-				} else if ((u32)lroundf(read_cursor) >= audio.stream->sample_count) {
-					read_cursor = 0;
+				} else {
+					while ((u32)lroundf(read_cursor) >= audio.stream->sample_count) {
+						read_cursor -= audio.stream->sample_count;
+					}
 				}
 
 			}
@@ -461,14 +467,12 @@ int system_main() {
 	auto bounce_sound = load_wave(system_read_entire_file("../res/misc/Boing Cartoonish-SoundBible.com-277290791.wav"));
 
 	Audio_Mixer mixer = audio_mixer();
-	audio_mixer_animate_volume(&mixer, 0, 0.5f, 5);
 
 	if (!system_audio(system_update_audio, system_refresh_audio_device, &mixer)) {
 		system_display_critical_message("Failed to load audio!");
 	}
 
-	// muted
-	audio_mixer_set_volume(&mixer, 0);
+	audio_mixer_set_volume(&mixer, 0.5f);
 
 	ImGui_Initialize();
 	Debug_ModeEnable();
@@ -909,7 +913,7 @@ int system_main() {
 
 		ImGui::End();
 
-		audio_mixer_animate_volume_to(&mixer, master_volume, 5);
+		audio_mixer_animate_volume_to(&mixer, master_volume, 1);
 
 		//ImGui::ShowDemoWindow();
 #endif
@@ -924,43 +928,30 @@ int system_main() {
 #if 0
 		im_debug_begin(0, window_w, window_h, 0);
 
-		float audio_display_height = 80.0f;
+		float audio_display_width = 450.0f;
+		float audio_display_height = 100.0f;
+		int audio_display_sample_count = 4800;
+		float audio_display_sample_width = audio_display_width / audio_display_sample_count;
+		
+		assert(audio_display_sample_count < AUDIO_DISPLAY_MAX_SAMPLES);
+
 		float audio_display_x = 100;
 		float audio_display_y = 50;
+		float audio_display_axis = audio_display_y + 0.5f * audio_display_height;
 
-		im_rect(vec2(audio_display_x, audio_display_y), vec2(500, audio_display_height), vec4(0, 0, 0, 0.6f));
-		for (int i = 0; i < 500; ++i) {
-			r32 height_factor = record_right_channel_audio[i + playing_cursor];
-			if (height_factor < 0) {
-				height_factor *= -1;
-				im_rect(vec2(audio_display_x + i, audio_display_y + 0.5f * audio_display_height * (1.0f - height_factor)), vec2(1, height_factor * audio_display_height * 0.5f), vec4(0.1f, 0.1f, 0.6f));
-			} else {
-				im_rect(vec2(audio_display_x + i, audio_display_y + audio_display_height * 0.5f), vec2(1, height_factor * audio_display_height * 0.5f), vec4(0.1f, 0.1f, 0.6f));
-			}
+		im_rect(vec2(audio_display_x, audio_display_y), vec2(audio_display_width, audio_display_height), vec4(0, 0, 0, 0.8f));
+
+		int audio_samples_read = audio_display_write_cursor - audio_display_sample_count;
+		while (audio_samples_read < 0) audio_samples_read += AUDIO_DISPLAY_MAX_SAMPLES;
+
+		r32 *left_samples = audio_display_samples_history[Audio_Channel_LEFT];
+		auto read_index = audio_samples_read;
+		for (int sample_index = 0; sample_index < audio_display_sample_count; ++sample_index) {
+			r32 sample_height = map01(-1.0f, 1.0f, left_samples[read_index]) * audio_display_height;
+			Vec2 sample_dim = vec2(audio_display_sample_width, sample_height);
+			im_rect(vec2(audio_display_x + sample_index * audio_display_sample_width, audio_display_y + (audio_display_height - sample_height) * 0.5f), sample_dim, vec4(0.1f, 0.1f, 0.6f));
+			read_index = (read_index + 1) % AUDIO_DISPLAY_MAX_SAMPLES;
 		}
-
-		audio_display_y += audio_display_height + 20;
-
-		im_rect(vec2(audio_display_x, audio_display_y), vec2(500, audio_display_height), vec4(0, 0, 0, 0.6f));
-
-		for (int i = 0; i < 500; ++i) {
-			r32 height_factor = record_left_channel_audio[i + playing_cursor];
-			if (height_factor < 0) {
-				height_factor *= -1;
-				im_rect(vec2(audio_display_x + i, audio_display_y + 0.5f * audio_display_height * (1.0f - height_factor)), vec2(1, height_factor * audio_display_height * 0.5f), vec4(0.1f, 0.1f, 0.6f));
-			} else {
-				im_rect(vec2(audio_display_x + i, audio_display_y + audio_display_height * 0.5f), vec2(1, height_factor * audio_display_height * 0.5f), vec4(0.1f, 0.1f, 0.6f));
-			}
-		}
-
-		playing_cursor += (u32)(real_dt * wave_fmt->nSamplesPerSec);
-
-		im_bind_texture(font.texture);
-
-		audio_display_y -= 20;
-		im_text(vec2(audio_display_x, audio_display_y), 14.0f, font.info, "Right Channel", vec4(1));
-		audio_display_y += audio_display_height + 20;
-		im_text(vec2(audio_display_x, audio_display_y), 14.0f, font.info, "Left Channel", vec4(1));
 
 		im_end();
 #endif

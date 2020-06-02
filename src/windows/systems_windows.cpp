@@ -540,6 +540,12 @@ public:
 		if (SUCCEEDED(hr)) {
 			*sample_count = audio->total_samples - samples_padding;
 
+#if defined(BUILD_DEBUG) || defined(BUILD_DEVELOPER)
+			if (*sample_count == audio->total_samples) {
+				system_log(LOG_WARNING, "Audio", "Missed frame");
+			}
+#endif
+
 			BYTE *data;
 			hr = audio->renderer->GetBuffer(*sample_count, &data);
 			if (SUCCEEDED(hr)) {
