@@ -739,7 +739,7 @@ r32 draw_audio_visualizer(r32 render_height, Vec2 cursor, bool *set_on_hovered) 
 		audio_samples_read = (audio_samples_read + 1) % AUDIO_VISUALIZER_MAX_SAMPLES;
 	}
 
-	for (int channel_index = Audio_Channel_COUNT - 1; channel_index > 0; --channel_index) {
+	for (int channel_index = 1; channel_index < Audio_Channel_COUNT; ++channel_index) {
 		r32 channel_seperator_y = draw_y + channel_index * AUDIO_VISUALIZER_CHANNEL_HEIGHT;
 		im_line2d(vec2(draw_x, channel_seperator_y), vec2(draw_x + AUDIO_VISUALIZER_CHANNEL_WIDTH, channel_seperator_y), vec4(1), AUDIO_VISUALIZER_CHANNEL_SEPERATOR_THICKNESS);
 	}
@@ -747,7 +747,7 @@ r32 draw_audio_visualizer(r32 render_height, Vec2 cursor, bool *set_on_hovered) 
 	im_rect_outline2d(draw_corner, region_dim, io.menu_icons_color[Menu_AUDIO]);
 
 	im_bind_texture(io.font.texture);
-	for (int channel_index = Audio_Channel_COUNT - 1; channel_index >= 0; --channel_index) {
+	for (int channel_index = 0; channel_index < Audio_Channel_COUNT; ++channel_index) {
 		r32 channel_font_y = draw_y + (Audio_Channel_COUNT - channel_index) * AUDIO_VISUALIZER_CHANNEL_HEIGHT - AUDIO_VISUALIZER_CHANNEL_FONT_OFFSET_Y - AUDIO_VISUALIZER_CHANNEL_FONT_SIZE;
 		im_text(vec2(draw_x + AUDIO_VISUALIZER_CHANNEL_FONT_OFFSET_X, channel_font_y), AUDIO_VISUALIZER_CHANNEL_FONT_SIZE, io.font.info, AUDIO_VISUALIZER_CHANNEL_NAMES[channel_index], vec4(1));
 	}
