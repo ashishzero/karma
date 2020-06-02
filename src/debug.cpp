@@ -120,7 +120,7 @@ struct Frame_Time_Recorder {
 };
 
 struct Audio_Visualizer {
-	r32	history[Audio_Channel_COUNT][AUDIO_VISUALIZER_MAX_SAMPLES];
+	r32	history[AUDIO_VISUALIZER_MAX_SAMPLES * Audio_Channel_COUNT];
 	int	write_cursor;
 };
 
@@ -252,16 +252,22 @@ bool debug_handle_event(Event &event) {
 }
 
 void debug_audio_feedback(r32 *samples, u32 size_in_bytes, u32 channel_count, u32 zeroed_size) {
-	r32 *left  = audio_visualizer.history[Audio_Channel_LEFT];
-	r32 *right = audio_visualizer.history[Audio_Channel_RIGHT];
-
 	u32 sample_count			= size_in_bytes / (sizeof(r32) * channel_count);
 	u32 zeroed_size_in_sample	= zeroed_size / (sizeof(r32) * channel_count);
 
+	assert(channel_count <= Audio_Channel_COUNT);
+
+	r32 *write_ptr;
 	for (u32 index = 0; index < sample_count; ++index) {
-		left[audio_visualizer.write_cursor]  = samples[0];
-		right[audio_visualizer.write_cursor] = samples[1];
-		samples += channel_count;
+		write_ptr = audio_visualizer.history + audio_visualizer.write_cursor * Audio_Channel_COUNT;
+
+		for (u32 channel_index = 0; channel_index < channel_count; ++channel_index, ++write_ptr, ++samples) {
+			*write_ptr = *samples;
+		}
+		if (Audio_Channel_COUNT - channel_count) {
+			memset(write_ptr, 0, (Audio_Channel_COUNT - channel_count) * sizeof(r32));
+		}
+
 		audio_visualizer.write_cursor = (audio_visualizer.write_cursor + 1) % AUDIO_VISUALIZER_MAX_SAMPLES;
 	}
 
@@ -269,15 +275,14 @@ void debug_audio_feedback(r32 *samples, u32 size_in_bytes, u32 channel_count, u3
 		system_log(LOG_WARNING, "Audio", "Probably audio buffer size small, missed frame");
 
 		if ((audio_visualizer.write_cursor + zeroed_size_in_sample) < AUDIO_VISUALIZER_MAX_SAMPLES) {
-			memset(left + audio_visualizer.write_cursor, 0, zeroed_size_in_sample * sizeof(r32));
-			memset(right + audio_visualizer.write_cursor, 0, zeroed_size_in_sample * sizeof(r32));
+			memset(audio_visualizer.history + audio_visualizer.write_cursor * Audio_Channel_COUNT, 0, 
+				zeroed_size_in_sample * sizeof(r32) * Audio_Channel_COUNT);
 			audio_visualizer.write_cursor += zeroed_size_in_sample;
 		} else {
-			memset(left + audio_visualizer.write_cursor, 0, (AUDIO_VISUALIZER_MAX_SAMPLES - audio_visualizer.write_cursor) * sizeof(r32));
-			memset(right + audio_visualizer.write_cursor, 0, (AUDIO_VISUALIZER_MAX_SAMPLES - audio_visualizer.write_cursor) * sizeof(r32));
+			memset(audio_visualizer.history + audio_visualizer.write_cursor * Audio_Channel_COUNT, 0, 
+				(AUDIO_VISUALIZER_MAX_SAMPLES - audio_visualizer.write_cursor) * sizeof(r32) * Audio_Channel_COUNT);
 			audio_visualizer.write_cursor = zeroed_size_in_sample - (AUDIO_VISUALIZER_MAX_SAMPLES - audio_visualizer.write_cursor);
-			memset(left, 0, audio_visualizer.write_cursor * sizeof(r32));
-			memset(right, 0, audio_visualizer.write_cursor * sizeof(r32));
+			memset(audio_visualizer.history, 0, audio_visualizer.write_cursor * sizeof(r32) * Audio_Channel_COUNT);
 		}
 	}
 }
@@ -720,18 +725,18 @@ r32 draw_audio_visualizer(r32 render_height, Vec2 cursor, bool *set_on_hovered) 
 	int audio_samples_read = audio_visualizer.write_cursor - AUDIO_VISUALIZER_RENDER_SAMPLE_COUNT;
 	while (audio_samples_read < 0) audio_samples_read += AUDIO_VISUALIZER_RENDER_SAMPLE_COUNT;
 
-	for (int channel_index = Audio_Channel_COUNT - 1; channel_index >= 0; --channel_index) {
-		r32 *samples = audio_visualizer.history[(Audio_Channel_COUNT - channel_index - 1)];
-		r32 sample_height, sample_draw_y;
-		Vec2 sample_dim;
-		auto read_index = audio_samples_read;
-		for (int sample_index = 0; sample_index < AUDIO_VISUALIZER_RENDER_SAMPLE_COUNT; ++sample_index) {
-			sample_height = 0.5f * samples[read_index] * AUDIO_VISUALIZER_CHANNEL_HEIGHT;
+	r32 *samples;
+	Vec2 sample_dim;
+	r32 sample_height, sample_draw_y;
+	for (int sample_index = 0; sample_index < AUDIO_VISUALIZER_RENDER_SAMPLE_COUNT; ++sample_index) {
+		samples = audio_visualizer.history + audio_samples_read * Audio_Channel_COUNT;
+		for (int channel_index = 0; channel_index < Audio_Channel_COUNT; ++channel_index) {
+			sample_height = 0.5f * samples[channel_index] * AUDIO_VISUALIZER_CHANNEL_HEIGHT;
 			sample_dim = vec2(AUDIO_VISUALIZER_SAMPLE_WIDTH, sample_height);
 			sample_draw_y = draw_y + (Audio_Channel_COUNT - channel_index - 1) * AUDIO_VISUALIZER_CHANNEL_HEIGHT + AUDIO_VISUALIZER_CHANNEL_HEIGHT * 0.5f;
 			im_rect(vec2(draw_x + sample_index * AUDIO_VISUALIZER_SAMPLE_WIDTH, sample_draw_y), sample_dim, AUDIO_VISUALIZER_CHANNEL_COLOR);
-			read_index = (read_index + 1) % AUDIO_VISUALIZER_MAX_SAMPLES;
 		}
+		audio_samples_read = (audio_samples_read + 1) % AUDIO_VISUALIZER_MAX_SAMPLES;
 	}
 
 	for (int channel_index = Audio_Channel_COUNT - 1; channel_index > 0; --channel_index) {
