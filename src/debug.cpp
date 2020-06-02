@@ -726,7 +726,7 @@ r32 draw_audio_visualizer(r32 render_height, Vec2 cursor, bool *set_on_hovered) 
 		Vec2 sample_dim;
 		auto read_index = audio_samples_read;
 		for (int sample_index = 0; sample_index < AUDIO_VISUALIZER_RENDER_SAMPLE_COUNT; ++sample_index) {
-			sample_height = samples[read_index] * AUDIO_VISUALIZER_CHANNEL_HEIGHT;
+			sample_height = 0.5f * samples[read_index] * AUDIO_VISUALIZER_CHANNEL_HEIGHT;
 			sample_dim = vec2(AUDIO_VISUALIZER_SAMPLE_WIDTH, sample_height);
 			sample_draw_y = draw_y + (Audio_Channel_COUNT - channel_index - 1) * AUDIO_VISUALIZER_CHANNEL_HEIGHT + AUDIO_VISUALIZER_CHANNEL_HEIGHT * 0.5f;
 			im_rect(vec2(draw_x + sample_index * AUDIO_VISUALIZER_SAMPLE_WIDTH, sample_draw_y), sample_dim, AUDIO_VISUALIZER_CHANNEL_COLOR);
