@@ -557,12 +557,12 @@ int system_main() {
 						if (state == Time_State_RESUME) {
 							state = Time_State_PAUSE;
 							system_audio_pause();
-							Debug_Notify("Paused", factor.ratio);
+							Debug_Notify("Paused");
 						} else {
 							state   = Time_State_RESUME;
 							game_dt = fixed_dt;
 							system_audio_resume();
-							Debug_Notify("Resumed", factor.ratio);
+							Debug_Notify("Resumed");
 						}
 						break;
 					case Key_F2:
@@ -575,9 +575,9 @@ int system_main() {
 						break;
 					case Key_F4:
 						if (Debug_TogglePresentationState()) {
-							Debug_Notify("Debug View: On", factor.ratio);
+							Debug_Notify("Debug View: On");
 						} else {
-							Debug_Notify("Debug View: Off", factor.ratio);
+							Debug_Notify("Debug View: Off");
 						}
 						break;
 				}
