@@ -3,6 +3,7 @@
 #include "random.h"
 #include "utility.h"
 #include "stream.h"
+#include "stb_sprintf.h"
 #include "gfx_renderer.h"
 #include "systems.h"
 #include "audio.h"
@@ -46,6 +47,7 @@ static const Color4 MENU_ITEMS_COLORS[] = {
 static_assert(static_count(MENU_ITEMS_COLORS) == Menu_COUNT, "Specify Color for Menu Icon");
 
 struct Debug_Io {
+	r32 frame_time;
 	Vec2 mouse_cursor;
 	bool left_button_pressed	= false;
 	bool hovered				= false;
@@ -758,11 +760,12 @@ r32 draw_audio_visualizer(r32 render_height, Vec2 cursor, bool *set_on_hovered) 
 void debug_present(r32 framebuffer_w, r32 framebuffer_h) {
 	io.hovered = false;
 
+	im_debug_begin(0, framebuffer_w, framebuffer_h, 0);
+
 	if (io.should_present) {
 		Vec2 cursor = system_get_cursor_position();
 		r32 render_height = framebuffer_h - DEBUG_PRESENTATION_Y_OFFSET;
 
-		im_debug_begin(0, framebuffer_w, framebuffer_h, 0);
 		
 		render_height = draw_header_and_buttons(render_height, framebuffer_w, framebuffer_h, cursor, &io.hovered);
 
@@ -809,8 +812,129 @@ void debug_present(r32 framebuffer_w, r32 framebuffer_h) {
 			im_text(pos, PROFILER_PRESENTATION_FONT_HEIGHT, io.font.info, time, vec4(1));
 		}
 		
-		im_end();
 	}
+
+	constexpr int	NOTIFICATION_MAX_COUNT				= 5;
+	constexpr int	NOTIFICATION_MAX_LENGTH				= 64;
+	constexpr r32	NOTIFICATION_FONT_SIZE				= 32;
+	constexpr r32	NOTIFICATION_FADE_STAY_TIME			= 20;
+	constexpr r32	NOTIFICATION_FADE_OUT_RATE			= 0.9f;
+	constexpr r32	NOTIFICATION_DISPLAY_HEIGHT_FACTOR	= 0.85f;
+	constexpr r32	NOTIFICATION_MAX_Y_MOVEMENT			= NOTIFICATION_FONT_SIZE * 1.5f;
+	const Color3	NOTIFICATION_FONT_COLOR_OUT			= vec3(1, 1, 1);
+	const Color3	NOTIFICATION_FONT_SHADOW_COLOR		= vec3(0.5f, 0, 0);
+	const Vec2		NOTIFICATION_SHADOW_OFFSET			= vec2(1.5f, -1.5f);
+
+	enum Notification_Level {
+		Notification_Level_OK,
+		Notification_Level_SUCCESS,
+		Notification_Level_WARN,
+		Notification_Level_ERROR,
+
+		Notification_Level_COUNT,
+	};
+
+	const Color3 NOTIFICATION_FONT_COLORS_IN[]= {
+		vec3(1.0f, 1.0f, 1.0f),
+		vec3(0.2f, 0.9f, 0.3f),
+		vec3(1.0f, 1.0f, 0.1f),
+		vec3(0.9f, 0.1f, 0.3f),
+	};
+	static_assert(static_count(NOTIFICATION_FONT_COLORS_IN) == Notification_Level_COUNT, "Notification color not specified for all notification levels");
+
+	struct Notification {
+		String				msg; 
+		Notification_Level  level;
+		r32					t;
+	};
+
+	struct Notification_Handler {
+		u8			 buffer[NOTIFICATION_MAX_COUNT][NOTIFICATION_MAX_LENGTH];
+		Notification notifications[NOTIFICATION_MAX_COUNT];
+		int			 count;
+	};
+
+	static Notification_Handler notification_handler;
+
+	static const String notification_msgs[] = {
+		"Notification Test",
+		"Another Longer Notification",
+		"Speed x2",
+		"Saved",
+		"Reloaded",
+		"Failed",
+		"This is some test",
+		"A quick brown box",
+		"The cake is a lie",
+		"Hello sailor",
+		"There are 1000 leaves in pile",
+	};
+	static int notification_msg_count = static_count(notification_msgs);
+
+	if (io.left_button_pressed) {
+		if (notification_handler.count < NOTIFICATION_MAX_COUNT) {
+			auto notification = notification_handler.notifications + notification_handler.count;
+			notification->msg = notification_msgs[random_get_bound(notification_msg_count)];
+			notification->level = (Notification_Level)random_get_bound(Notification_Level_COUNT);
+			notification->t = NOTIFICATION_FADE_STAY_TIME;
+			notification_handler.count += 1;
+		} else {
+			memmove(notification_handler.notifications, notification_handler.notifications + 1, sizeof(Notification) * (notification_handler.count - 1));
+			auto notification = notification_handler.notifications + notification_handler.count - 1;
+			notification->msg = notification_msgs[random_get_bound(notification_msg_count)];
+			notification->level = (Notification_Level)random_get_bound(Notification_Level_COUNT);
+			notification->t = NOTIFICATION_FADE_STAY_TIME;
+		}
+	}
+
+	im_bind_texture(io.font.texture);
+
+	r32 prev_y_off = 0;
+	for (int notification_index = 0; notification_index < notification_handler.count; ++notification_index) {
+		auto &notification = notification_handler.notifications[notification_index];
+
+		r32 alpha_in  = 1.0f - map01(1, NOTIFICATION_FADE_STAY_TIME, clamp(1, NOTIFICATION_FADE_STAY_TIME, notification.t));
+		r32 alpha_out = clamp01(notification.t);
+		r32 alpha	  = alpha_in * alpha_out;
+
+		Vec4 notification_color;
+		notification_color.xyz	= lerp(NOTIFICATION_FONT_COLORS_IN[notification.level], NOTIFICATION_FONT_COLOR_OUT, 1.0f - alpha_out);
+		notification_color.w	= alpha;
+
+		Vec2 size = im_calculate_text_region(NOTIFICATION_FONT_SIZE, io.font.info, notification.msg);
+
+		r32 y_offset = (1.0f - alpha_out) * NOTIFICATION_MAX_Y_MOVEMENT;
+
+		Vec2 draw_pos;
+		draw_pos.x = framebuffer_w * 0.5f - size.x * 0.5f;
+		draw_pos.y = framebuffer_h * NOTIFICATION_DISPLAY_HEIGHT_FACTOR + y_offset - NOTIFICATION_FONT_SIZE * notification_index + prev_y_off;
+		prev_y_off = y_offset;
+
+		im_text(draw_pos + NOTIFICATION_SHADOW_OFFSET, NOTIFICATION_FONT_SIZE, io.font.info, notification.msg, vec4(NOTIFICATION_FONT_SHADOW_COLOR, alpha));
+		im_text(draw_pos, NOTIFICATION_FONT_SIZE, io.font.info, notification.msg, notification_color);
+
+		notification.t = lerp(notification.t, -1.0f, 1.0f - powf(1.0f - NOTIFICATION_FADE_OUT_RATE, io.frame_time));
+
+		draw_pos.y -= NOTIFICATION_FONT_SIZE;
+	}
+
+	int done_count = 0;
+	for (int notification_index = 0; notification_index < notification_handler.count; ++notification_index) {
+		auto &notification = notification_handler.notifications[notification_index];
+
+		if (notification.t <= 0.0f) {
+			done_count += 1;
+		} else {
+			break;
+		}
+	}
+
+	if (done_count) {
+		memmove(notification_handler.notifications, notification_handler.notifications + done_count, sizeof(Notification) * (notification_handler.count - done_count));
+		notification_handler.count -= done_count;
+	}
+
+	im_end();
 
 	io.left_button_pressed = false;
 }
@@ -837,6 +961,8 @@ void debug_profiler_timed_frame_end(r32 frame_time) {
 
 	memmove(frame_time_recorder.history + 1, frame_time_recorder.history, sizeof(r32) * (FRAME_TIME_MAX_LOGS - 1));
 	frame_time_recorder.history[0] = frame_time;
+
+	io.frame_time = frame_time;
 
 	profiler.recording = profiler.next_recording;
 }

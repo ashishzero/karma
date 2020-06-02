@@ -32,11 +32,11 @@ inline r32 random_get_zero_to_one(Random_Series *rng = &pcg32_global) {
 	return (float)ldexpf((float)pcg32_random_r(rng), -32);
 }
 
-inline r32 random_get_bound(float bound, Random_Series *rng = &pcg32_global) {
+inline r32 random_get_bound_r32(float bound, Random_Series *rng = &pcg32_global) {
 	return random_get_zero_to_one(rng) * bound;
 }
 
-inline r32 random_r32_range(float min, float max, Random_Series *rng = &pcg32_global) {
+inline r32 random_r32_range_r32(float min, float max, Random_Series *rng = &pcg32_global) {
 	return min + random_get_zero_to_one(rng) * (max - min);
 }
 

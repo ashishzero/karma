@@ -472,7 +472,7 @@ int system_main() {
 		system_display_critical_message("Failed to load audio!");
 	}
 
-	audio_mixer_set_volume(&mixer, 0.5f);
+	audio_mixer_set_volume(&mixer, 0.0f);
 
 	ImGui_Initialize();
 	Debug_ModeEnable();
