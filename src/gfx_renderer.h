@@ -104,6 +104,24 @@ void im_rect_rotated(Vec2 pos, Vec2 dim, r32 angle, Color4 color);
 void im_rect_rotated(Vec3 pos, Vec2 dim, r32 angle, Mm_Rect rect, Color4 color);
 void im_rect_rotated(Vec2 pos, Vec2 dim, r32 angle, Mm_Rect rect, Color4 color);
 
+void im_rect_centered(Vec3 pos, Vec2 dim, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Vec2 uv_d, Color4 color);
+void im_rect_centered(Vec2 pos, Vec2 dim, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Vec2 uv_d, Color4 color);
+
+void im_rect_centered(Vec3 pos, Vec2 dim, Color4 color);
+void im_rect_centered(Vec2 pos, Vec2 dim, Color4 color);
+
+void im_rect_centered(Vec3 pos, Vec2 dim, Mm_Rect rect, Color4 color);
+void im_rect_centered(Vec2 pos, Vec2 dim, Mm_Rect rect, Color4 color);
+
+void im_rect_centered_rotated(Vec3 pos, Vec2 dim, r32 angle, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Vec2 uv_d, Color4 color);
+void im_rect_centered_rotated(Vec2 pos, Vec2 dim, r32 angle, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Vec2 uv_d, Color4 color);
+
+void im_rect_centered_rotated(Vec3 pos, Vec2 dim, r32 angle, Color4 color);
+void im_rect_centered_rotated(Vec2 pos, Vec2 dim, r32 angle, Color4 color);
+
+void im_rect_centered_rotated(Vec3 pos, Vec2 dim, r32 angle, Mm_Rect rect, Color4 color);
+void im_rect_centered_rotated(Vec2 pos, Vec2 dim, r32 angle, Mm_Rect rect, Color4 color);
+
 void im_ellipse(Vec3 pos, r32 radius_a, r32 radius_b, Color4 color, int segments = IM_DEFAULT_CIRCLE_SEGMENTS);
 void im_ellipse(Vec2 pos, r32 radius_a, r32 radius_b, Color4 color, int segments = IM_DEFAULT_CIRCLE_SEGMENTS);
 

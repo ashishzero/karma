@@ -821,6 +821,106 @@ void im_rect_rotated(Vec2 pos, Vec2 dim, r32 angle, Mm_Rect rect, Color4 color) 
 	im_rect_rotated(vec3(pos, 1), dim, angle, rect, color);
 }
 
+void im_rect_centered(Vec3 pos, Vec2 dim, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Vec2 uv_d, Color4 color) {
+	Vec2 half_dim = 0.5f * dim;
+
+	Vec3 a, b, c, d;
+	a.xy = pos.xy - half_dim;
+	b.xy = vec2(pos.x - half_dim.x, pos.y + half_dim.y);
+	c.xy = pos.xy + half_dim;
+	d.xy = vec2(pos.x + half_dim.x, pos.y - half_dim.y);
+
+	a.z = pos.z;
+	b.z = pos.z;
+	c.z = pos.z;
+	d.z = pos.z;
+
+	im_quad(a, b, c, d, uv_a, uv_b, uv_c, uv_d, color);
+}
+
+void im_rect_centered(Vec2 pos, Vec2 dim, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Vec2 uv_d, Color4 color) {
+	im_rect_centered(vec3(pos, 1), dim, uv_a, uv_b, uv_c, uv_d, color);
+}
+
+void im_rect_centered(Vec3 pos, Vec2 dim, Color4 color) {
+	im_rect_centered(pos, dim, vec2(0, 0), vec2(0, 1), vec2(1, 1), vec2(1, 0), color);
+}
+
+void im_rect_centered(Vec2 pos, Vec2 dim, Color4 color) {
+	im_rect_centered(vec3(pos, 1), dim, vec2(0, 0), vec2(0, 1), vec2(1, 1), vec2(1, 0), color);
+}
+
+void im_rect_centered(Vec3 pos, Vec2 dim, Mm_Rect rect, Color4 color) {
+	auto uv_a = rect.min;
+	auto uv_b = vec2(rect.min.x, rect.max.y);
+	auto uv_c = rect.max;
+	auto uv_d = vec2(rect.max.x, rect.min.y);
+	im_rect_centered(pos, dim, uv_a, uv_b, uv_c, uv_d, color);
+}
+
+void im_rect_centered(Vec2 pos, Vec2 dim, Mm_Rect rect, Color4 color) {
+	im_rect_centered(vec3(pos, 1), dim, rect, color);
+}
+
+void im_rect_centered_rotated(Vec3 pos, Vec2 dim, r32 angle, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Vec2 uv_d, Color4 color) {
+	Vec2 center = pos.xy;
+
+	Vec2 half_dim = 0.5f * dim;
+	Vec2 a, b, c, d;
+	a = pos.xy - half_dim;
+	b = vec2(pos.x - half_dim.x, pos.y + half_dim.y);
+	c = pos.xy + half_dim;
+	d = vec2(pos.x + half_dim.x, pos.y - half_dim.y);
+
+	auto r0 = a - center;
+	auto r1 = b - center;
+	auto r2 = c - center;
+	auto r3 = d - center;
+
+	r32 cv = cosf(angle);
+	r32 sv = sinf(angle);
+
+	a.x = r0.x * cv - r0.y * sv;
+	a.y = r0.x * sv + r0.y * cv;
+	b.x = r1.x * cv - r1.y * sv;
+	b.y = r1.x * sv + r1.y * cv;
+	c.x = r2.x * cv - r2.y * sv;
+	c.y = r2.x * sv + r2.y * cv;
+	d.x = r3.x * cv - r3.y * sv;
+	d.y = r3.x * sv + r3.y * cv;
+
+	a += center;
+	b += center;
+	c += center;
+	d += center;
+
+	im_quad(vec3(a, pos.z), vec3(b, pos.z), vec3(c, pos.z), vec3(d, pos.z), uv_a, uv_b, uv_c, uv_d, color);
+}
+
+void im_rect_centered_rotated(Vec2 pos, Vec2 dim, r32 angle, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Vec2 uv_d, Color4 color) {
+	im_rect_centered_rotated(vec3(pos, 1), dim, angle, uv_a, uv_b, uv_c, uv_d, color);
+}
+
+void im_rect_centered_rotated(Vec3 pos, Vec2 dim, r32 angle, Color4 color) {
+	im_rect_centered_rotated(pos, dim, angle, vec2(0, 0), vec2(0, 1), vec2(1, 1), vec2(1, 0), color);
+}
+
+void im_rect_centered_rotated(Vec2 pos, Vec2 dim, r32 angle, Color4 color) {
+	im_rect_centered_rotated(vec3(pos, 1), dim, angle, vec2(0, 0), vec2(0, 1), vec2(1, 1), vec2(1, 0), color);
+}
+
+void im_rect_centered_rotated(Vec3 pos, Vec2 dim, r32 angle, Mm_Rect rect, Color4 color) {
+	auto uv_a = rect.min;
+	auto uv_b = vec2(rect.min.x, rect.max.y);
+	auto uv_c = rect.max;
+	auto uv_d = vec2(rect.max.x, rect.min.y);
+	im_rect_centered_rotated(pos, dim, angle, uv_a, uv_b, uv_c, uv_d, color);
+}
+
+void im_rect_centered_rotated(Vec2 pos, Vec2 dim, r32 angle, Mm_Rect rect, Color4 color) {
+	im_rect_centered_rotated(vec3(pos, 1), dim, angle, rect, color);
+}
+
 void im_ellipse(Vec3 pos, r32 radius_a, r32 radius_b, Color4 color, int segments) {
 	segments = clamp(IM_MIN_CIRCLE_SEGMENTS, IM_MAX_CIRCLE_SEGMENTS - 1, segments);
 

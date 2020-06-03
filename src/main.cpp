@@ -9,6 +9,11 @@
 #include "stream.h"
 #include "audio.h"
 
+constexpr r32 TOTAL_GRID_HORIZONTAL = 32;
+constexpr r32 TOTAL_GRID_VERTICAL	= 16;
+constexpr r32 HALF_GRID_HORIZONTAL	= TOTAL_GRID_HORIZONTAL / 2;
+constexpr r32 HALF_GRID_VERTICAL	= TOTAL_GRID_VERTICAL / 2;
+
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
@@ -116,59 +121,6 @@ void update_min_max(RigidBody *rigidBody) {
 		rigidBody->min_max_points.min = vec2(rigidBody->position.x, rigidBody->position.y);
 		rigidBody->min_max_points.max = vec2(rigidBody->position.x + rigidBody->shape.width, rigidBody->position.y + rigidBody->shape.height);
 	}
-}
-
-Mat4 make_transform(Vec3 p, Vec3 s, Quat q) {
-	Mat4 m0 = mat4_scalar(s);
-	Mat4 m1 = quat_get_mat4(q);
-	Mat4 m2 = mat4_translation(p);
-	return m2 * m1 * m0;
-}
-
-Mat4 make_camera_transform(Vec3 p, Vec3 s, Quat q) {
-	s.x = 1.0f / s.x;
-	s.y = 1.0f / s.y;
-	s.z = 1.0f / s.z;
-	q   = quat_conjugate(q);
-	p   = -p;
-	return make_transform(p, s, q);
-}
-
-struct Camera {
-	Vec3 position;
-	Vec3 scale;
-	Quat rotation;
-
-	Camera_View view;
-};
-
-void ImGui_ItemDisplay(Camera *camera) {
-	ImGui::DragFloat3("Position", camera->position.m, 0.1f);
-	//	ImGui::DragFloat("Scale", camera->scale.m, 0.1f);
-	ImGui::DragFloat4("Rotation", camera->rotation.m, 0.1f);
-	camera->scale.y = camera->scale.z = camera->scale.x;
-}
-
-struct Entity_Controller {
-	r32 horizontal;
-	r32 jump;
-};
-
-struct Entity {
-	Vec3 position;
-	Vec2 scale;
-
-	r32  mass;
-	Vec2 force;
-	Vec2 velocity;
-};
-
-void ImGui_ItemDisplay(Entity *entity) {
-	ImGui::DragFloat3("Position", entity->position.m, 0.1f);
-	ImGui::DragFloat2("Scale", entity->scale.m, 0.1f);
-	ImGui::DragFloat("Mass", &entity->mass, 0.1f);
-	ImGui::DragFloat2("Force", entity->force.m, 0.1f);
-	ImGui::DragFloat2("Velocity", entity->velocity.m, 0.1f);
 }
 
 void PrintRigidBodies() {
@@ -479,8 +431,10 @@ int system_main() {
 	ImGui_Initialize();
 	Debug_ModeEnable();
 
+	Debug_SetPresentationState(false);
+
 #if defined(BUILD_IMGUI)
-	bool imgui_view = true;
+	bool imgui_view = false;
 #endif
 
 #if 0
@@ -733,22 +687,36 @@ int system_main() {
 
 		ImGui_UpdateFrame(real_dt);
 
-		auto view = orthographic_view(0, framebuffer_w, framebuffer_h, 0);
+		auto view = orthographic_view(-HALF_GRID_HORIZONTAL, HALF_GRID_HORIZONTAL, HALF_GRID_VERTICAL, -HALF_GRID_VERTICAL);
+		Mat4 transform = mat4_translation(vec3(0.5f, 0.5f, 0));
 
 		gfx_begin_drawing(Framebuffer_Type_HDR, Clear_COLOR | Clear_DEPTH, vec4(0.02f, 0.02f, 0.02f));
 		gfx_viewport(0, 0, framebuffer_w, framebuffer_h);
 
-		im_begin(view);
+		im_begin(view, transform);
 
-		static r32 angle = 0.0f;
-
-		if (state == Time_State_RESUME) {
-			angle += game_dt;
-		}
-
-		im_rect_rotated(vec2(0), vec2(1), angle, vec4(0.6f, 0.2f, 0.3f));
+		im_rect_centered(vec2(0), vec2(1), vec4(0.6f, 0.2f, 0.3f));
 
 		im_end();
+
+		//
+		// Drawing grids
+		//
+		{
+			im_begin(view);
+
+			r32 horizontal_line_thickness = 0.5f * TOTAL_GRID_HORIZONTAL / framebuffer_w;
+			for (r32 line_x = -HALF_GRID_HORIZONTAL + 1; line_x < HALF_GRID_HORIZONTAL; line_x += 1) {
+				im_line2d(vec3(line_x, -HALF_GRID_VERTICAL, 0), vec3(line_x, HALF_GRID_VERTICAL, 0), vec4(1), horizontal_line_thickness);
+			}
+			r32 vertical_line_thickness = 0.5f * TOTAL_GRID_VERTICAL / framebuffer_h;
+			for (r32 line_y = -HALF_GRID_VERTICAL + 1; line_y < HALF_GRID_VERTICAL; line_y += 1) {
+				im_line2d(vec3(-HALF_GRID_HORIZONTAL, line_y, 0), vec3(HALF_GRID_HORIZONTAL, line_y, 0), vec4(1), vertical_line_thickness);
+			}
+
+			im_end();
+		}
+
 		gfx_end_drawing();
 
 #if 0
