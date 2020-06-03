@@ -29,7 +29,7 @@ bool debug_get_presentation_state();
 bool debug_set_presentation_state(bool state);
 bool debug_presentation_is_hovered();
 
-void debug_present(r32 framebuffer_w, r32 framebuffer_h);
+void debug_render_frame(r32 framebuffer_w, r32 framebuffer_h);
 
 //
 //
@@ -70,7 +70,7 @@ struct Timed_Procedure {
 #define Debug_SetPresentationState		debug_set_presentation_state
 #define Debug_TogglePresentationState()	debug_set_presentation_state(!debug_get_presentation_state())
 #define Debug_PresentationIsHovered		debug_presentation_is_hovered
-#define Debug_Present					debug_present
+#define Debug_RenderFrame				debug_render_frame
 
 #define Debug_TimedFrameBegin		debug_profiler_timed_frame_begin
 #define Debug_TimedFrameEnd			debug_profiler_timed_frame_end
@@ -94,7 +94,7 @@ struct Timed_Procedure {
 #define Debug_SetPresentationState(state)		(false)
 #define Debug_TogglePresentationState()	
 #define Debug_PresentationIsHovered()			(false)
-#define Debug_Present(w, h)				
+#define Debug_RenderFrame(w, h)				
 
 #define Debug_TimedFrameBegin()
 #define Debug_TimedFrameEnd(frame_time)

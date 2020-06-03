@@ -12,6 +12,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
+#if 0
 #include <time.h>
 #include <stdlib.h>
 #define NUM_RIGID_BODIES 20
@@ -176,6 +177,7 @@ void PrintRigidBodies() {
 		im_rect(vec2(rigidBody->position.x, rigidBody->position.y), vec2(rigidBody->shape.width, rigidBody->shape.height), vec4(vec3(1.1f, 1.2f, 1.5f), 1.0f));
 	}
 }
+#endif
 
 constexpr s32 MAX_SPEED_FACTOR = 8;
 
@@ -477,31 +479,13 @@ int system_main() {
 	ImGui_Initialize();
 	Debug_ModeEnable();
 
-	bool editor_on = false;
+#if defined(BUILD_IMGUI)
+	bool imgui_view = true;
+#endif
 
-	Camera camera;
-	camera.position = vec3(0);
-	camera.scale    = vec3(1);
-	camera.rotation = quat_identity();
-
-	Entity_Controller controller;
-	controller.horizontal = 0;
-	controller.jump       = 0;
-
-	Entity player;
-	player.position = vec3(0, 0, 1);
-	player.scale    = vec2(1);
-	player.mass     = 1;
-	player.force    = vec2(0);
-	player.velocity = vec2(0);
-
+#if 0
 	InitializeRigidBodies();
-
-	int  w, h, n;
-	auto pixels = stbi_load("../res/misc/circle.png", &w, &h, &n, 4);
-	auto circle = gfx_create_texture2d(w, h, 4, Data_Format_RGBA8_UNORM_SRGB, (const u8 **)&pixels, Buffer_Usage_IMMUTABLE, 1);
-
-	Particle_Emitter emitter = particle_emitter_create(&circle, mm_rect(0, 0, 1, 1), 1000, 250);
+#endif
 
 	auto music = play_audio(&mixer, &audio, true);
 
@@ -580,6 +564,14 @@ int system_main() {
 							Debug_Notify("Debug View: Off");
 						}
 						break;
+					case Key_F5:
+						imgui_view = !imgui_view;
+						if (imgui_view) {
+							Debug_Notify("Interface: On");
+						} else {
+							Debug_Notify("Interface: Off");
+						}
+						break;
 				}
 			}
 #endif
@@ -607,30 +599,6 @@ int system_main() {
 				system_fullscreen_state(SYSTEM_TOGGLE);
 				continue;
 			}
-
-			if ((event.type & Event_Type_KEY_UP) && event.key.symbol == Key_TAB) {
-				editor_on = !editor_on;
-				continue;
-			}
-			
-			if (event.type & Event_Type_KEYBOARD) {
-				float value = (float)(event.key.state == State_DOWN);
-				switch (event.key.symbol) {
-					case Key_A:
-					case Key_LEFT:
-						controller.horizontal = -value;
-						break;
-					case Key_D:
-					case Key_RIGHT:
-						controller.horizontal = value;
-						break;
-				}
-
-				if ((event.type & Event_Type_KEY_DOWN) && event.key.symbol == Key_SPACE && !event.key.repeat && player.position.y <= 0) {
-					controller.jump = true;
-					play_audio(&mixer, &bounce_sound, false);
-				}
-			}
 		}
 
 		Debug_TimedBlockEnd(EventHandling);
@@ -641,28 +609,7 @@ int system_main() {
 			Debug_TimedScope(SimulationFrame);
 
 			if (state == Time_State_RESUME) {
-				const r32 gravity = 10;
-				const r32 drag = 5;
-
-				player.force = vec2(0);
-
-				player.force.x += 600 * controller.horizontal * dt;
-
-				Vec2 acceleration = (player.force / player.mass);
-				acceleration.y -= gravity; // TODO: Make jump framerate independent!!!
-				player.velocity += dt * acceleration;
-				player.velocity.y += 10 * controller.jump;
-				player.velocity *= powf(0.5f, drag * dt);
-				player.position.xy += dt * player.velocity;
-
-				if (player.position.y <= 0) {
-					player.position.y = 0;
-					player.velocity.y = 0;
-				}
-
-				controller.jump = false;
-
-#if 1
+#if 0
 
 				for (int i = 0; i < NUM_RIGID_BODIES; i++) {
 					RigidBody *rigidBody = &rigidBodies[i];
@@ -767,10 +714,6 @@ int system_main() {
 				}
 
 #endif
-
-#if 1
-				particle_emitter_update_particles(&emitter, dt);
-#endif
 			}
 
 			accumulator_t -= fixed_dt;
@@ -785,26 +728,17 @@ int system_main() {
 		Debug_TimedBlockEnd(AudioUpdate);
 
 		Debug_TimedBlockBegin(Rendering);
-		camera.position.x = player.position.x;
 
 		r32 alpha = accumulator_t / fixed_dt; // TODO: Use this
 
 		ImGui_UpdateFrame(real_dt);
 
-		r32 world_height_half = 4.5f;
-		r32 world_width_half  = aspect_ratio * world_height_half;
-
-		auto transform = mat4_inverse(mat4_scalar(vec3(4.5f, 4.5f, 1)));
-		camera.view    = perspective_view(to_radians(90), aspect_ratio, 0.1f, 2);
-
 		auto view = orthographic_view(0, framebuffer_w, framebuffer_h, 0);
-		//auto view              = orthographic_view(-world_width_half, world_width_half, world_height_half, -world_height_half, -2.0f, 2.0f);
 
-#if 1
 		gfx_begin_drawing(Framebuffer_Type_HDR, Clear_COLOR | Clear_DEPTH, vec4(0.02f, 0.02f, 0.02f));
 		gfx_viewport(0, 0, framebuffer_w, framebuffer_h);
 
-		im_begin(camera.view, transform);
+		im_begin(view);
 
 		static r32 angle = 0.0f;
 
@@ -813,59 +747,35 @@ int system_main() {
 		}
 
 		im_rect_rotated(vec2(0), vec2(1), angle, vec4(0.6f, 0.2f, 0.3f));
-		im_rect(player.position, player.scale, vec4(1));
 
 		im_end();
+		gfx_end_drawing();
 
-		//im_begin(orthographic_view(-world_width_half, world_width_half, world_height_half, -world_height_half));
-		{
-			im_begin(view);
+#if 0
+		if (emitter.texture)
+			im_bind_texture(*emitter.texture);
 
-			if (emitter.texture)
-				im_bind_texture(*emitter.texture);
+		for (int i = emitter.emit_count; i >= 0; --i) {
+			Particle *particle = emitter.particles + i;
+			if (particle->life <= particle->life_span) {
+				r32 t = particle->life / particle->life_span;
 
-			for (int i = emitter.emit_count; i >= 0; --i) {
-				Particle *particle = emitter.particles + i;
-				if (particle->life <= particle->life_span) {
-					r32 t = particle->life / particle->life_span;
-
-					r32 fade_t = 1;
-					if (particle->life < emitter.properties.fade_in) {
-						fade_t *= particle->life / emitter.properties.fade_in;
-					} else if (particle->life_span - particle->life < emitter.properties.fade_out) {
-						fade_t *= (particle->life_span - particle->life) / emitter.properties.fade_out;
-					}
-
-					auto particle_color = hsv_to_rgb(lerp(particle->color_a, particle->color_b, t));
-					particle_color.xyz *= emitter.properties.intensity;
-					particle_color.w *= (fade_t * emitter.properties.opacity);
-					im_rect_rotated(particle->position, vec2(lerp(particle->scale_a, particle->scale_b, t)), particle->rotation, particle_color);
+				r32 fade_t = 1;
+				if (particle->life < emitter.properties.fade_in) {
+					fade_t *= particle->life / emitter.properties.fade_in;
 				}
+				else if (particle->life_span - particle->life < emitter.properties.fade_out) {
+					fade_t *= (particle->life_span - particle->life) / emitter.properties.fade_out;
+				}
+
+				auto particle_color = hsv_to_rgb(lerp(particle->color_a, particle->color_b, t));
+				particle_color.xyz *= emitter.properties.intensity;
+				particle_color.w *= (fade_t * emitter.properties.opacity);
+				im_rect_rotated(particle->position, vec2(lerp(particle->scale_a, particle->scale_b, t)), particle->rotation, particle_color);
 			}
+
 			im_unbind_texture();
 			PrintRigidBodies();
-			im_end();
-
-			view = orthographic_view(-world_width_half, world_width_half, world_height_half, -world_height_half);
-
-#	if 1
-			{
-				im_begin(view);
-				const Vec4  line_color       = vec4(0.2f, 0.2f, 0.2f, 1.0f);
-				const float x_line_thickness = world_width_half / framebuffer_w;
-				const float y_line_thickness = world_height_half / framebuffer_h;
-				for (float x = -world_width_half; x <= world_width_half; x += 1) {
-					im_line2d(vec2(x, -world_height_half), vec2(x, world_height_half), line_color, x_line_thickness);
-				}
-				for (float y = -world_height_half; y <= world_height_half; y += 1) {
-					im_line2d(vec2(-world_width_half, y), vec2(world_width_half, y), line_color, y_line_thickness);
-				}
-				im_end();
-			}
-#	endif
-		}
-
-		gfx_end_drawing();
 #endif
 
 		gfx_apply_bloom(2);
@@ -885,62 +795,30 @@ int system_main() {
 		gfx_blit_hdr(render_x, render_y, render_w, render_h);
 		gfx_viewport(0, 0, window_w, window_h);
 
-
 #if defined(BUILD_IMGUI)
-		if (editor_on) {
-			ImGui::Begin("Primary");
-			ImGui::Text("Camera");
-			ImGui_ItemDisplay(&camera);
-			ImGui::End();
+		{
+			Debug_TimedScope(ImGuiRender);
+			if (imgui_view) {
+				ImGui::ShowDemoWindow();
+			}
 
-			ImGui::Begin("Player");
-			ImGui_ItemDisplay(&player);
-			ImGui::End();
+			ImGui_RenderFrame();
 		}
-
-		r32 master_volume = mixer.volume_b;
-
-		// ImGui Rendering here
-		ImGui::Begin("Edit");
-		static int index = 0;
-		RigidBody &rb    = rigidBodies[index];
-		ImGui::Text("Speed: %f", factor.ratio);
-		ImGui::Text("Speed N: %d", factor.numerator);
-		ImGui::Text("Speed D: %d", factor.demonimator);
-		ImGui::DragInt("Index", &index);
-		//ImGui::DragFloat("Master Volume", &master_volume, 0.01f, 0.0f, 1.0f);
-		ImGui::DragFloat("Master Volume", &master_volume, 0.01f, 0.0f, 1.0f);
-		ImGui::DragFloat3("Position", rb.position.m);
-		ImGui::DragFloat2("Velocity", rb.velocity.m);
-		ImGui::DragFloat2("Linear Velocity", rb.linear_velocity.m);
-		ImGui::DragFloat2("Linear Acceleration", rb.linear_acceleration.m);
-		ImGui::DragFloat("Angular Velocity", &rb.angular_velocity);
-		ImGui::DragFloat("Angle", &rb.angle);
-		ImGui::DragFloat2("Force", rb.force.m);
-		ImGui::DragFloat("Torque", &rb.torque);
-
-		ImGui::End();
-
-		audio_mixer_set_volume(&mixer, master_volume);
-
-		//ImGui::ShowDemoWindow();
 #endif
 
-		ImGui_RenderFrame();
 
+#if defined(BUILD_DEBUG_SERVICE)
 		{
-			Debug_TimedScope(DebugPresent);
-			Debug_Present(window_w, window_h);
+			Debug_TimedScope(DebugRender);
+			Debug_RenderFrame(window_w, window_h);
 		}
+#endif
 
 		gfx_end_drawing();
 
 		Debug_TimedBlockBegin(Present);
-
 		gfx_present();
-
 		Debug_TimedBlockEnd(Present);
-
 		Debug_TimedBlockEnd(Rendering);
 
 		reset_temporary_memory();

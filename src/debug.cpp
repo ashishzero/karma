@@ -849,7 +849,7 @@ void draw_notifications(r32 framebuffer_w, r32 framebuffer_h) {
 	}
 }
 
-void debug_present(r32 framebuffer_w, r32 framebuffer_h) {
+void debug_render_frame(r32 framebuffer_w, r32 framebuffer_h) {
 	io.hovered = false;
 
 	im_debug_begin(0, framebuffer_w, framebuffer_h, 0);
