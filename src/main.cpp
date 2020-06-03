@@ -413,22 +413,9 @@ void audio_mixer_update(Audio_Mixer *mixer) {
 
 struct Editor {
 	bool display = false;
-	bool draw_grid = false;
 };
 
 static Editor editor;
-
-void editor_update(Audio_Mixer *mixer) {
-	if (!editor.display) return;
-
-	ImGui::Begin("Editor");
-	ImGui::Checkbox("Grid", &editor.draw_grid);
-	r32 volume = mixer->volume_b;
-	ImGui::DragFloat("Volume", &volume, 0.01f, 0.0f, 1.0f);
-	ImGui::End();
-
-	audio_mixer_set_volume(mixer, volume);
-}
 
 Texture2d_Handle debug_load_texture(const char * filepath) {
 	int w, h, n;
@@ -438,21 +425,47 @@ Texture2d_Handle debug_load_texture(const char * filepath) {
 	return texture;
 }
 
-enum Face_Direction {
-	Face_Direction_EAST,
-	Face_Direction_WEST,
-	Face_Direction_NORTH,
-	Face_Direction_SOUTH,
+struct Player {
+	Vec3 position = vec3(0, 0, 1);
+	Vec3 direction = vec3(0, -1, 0);
 
-	Face_Direction_COUNT,
+	r32 movement_force = 500;
+
+	r32 mass = 50;
+	r32 drag = 3;
+	r32 friction_coefficient = 0.5f;
+	Vec3 velocity = vec3(0);
+	Vec3 force = vec3(0);
 };
 
-static const Mm_Rect player_face_sprite_rect[] = {
-	mm_rect(0.5f, 0.5f, 1.0f, 1.0f),
-	mm_rect(0.5f, 0.0f, 1.0f, 0.5f),
-	mm_rect(0.0f, 0.0f, 0.5f, 0.5f),
-	mm_rect(0.0f, 0.5f, 0.5f, 1.0f),
+struct Player_Controller {
+	r32 x;
+	r32 y;
 };
+
+void editor_update(Audio_Mixer *mixer, Player *player) {
+	if (!editor.display) return;
+
+	ImGui::Begin("Editor");
+
+	r32 volume = mixer->volume_b;
+	ImGui::DragFloat("Volume", &volume, 0.01f, 0.0f, 1.0f);
+
+	ImGui::Text("Player");
+	ImGui::DragFloat3("Position: (%.3f, %.3f, %.3f)", player->position.m);
+	ImGui::Text("Direction: (%.3f, %.3f, %.3f)", player->direction.x, player->direction.y, player->direction.z);
+	ImGui::DragFloat("Mass: %.3f", &player->mass, 0.1f);
+	ImGui::DragFloat("Friction: %.3f", &player->friction_coefficient, 0.01f, 0.0f, 1.0f);
+	ImGui::DragFloat("Drag: %.3f", &player->drag, 0.01f);
+	ImGui::DragFloat("Movement Force: %.3f", &player->movement_force, 0.1f);
+	ImGui::Text("Velocity: (%.3f, %.3f, %.3f)", player->velocity.x, player->velocity.y, player->velocity.z);
+	ImGui::Text("Force: (%.3f, %.3f, %.3f)", player->force.x, player->force.y, player->force.z);
+
+	ImGui::End();
+
+	audio_mixer_set_volume(mixer, volume);
+}
+
 
 int system_main() {
 	r32    framebuffer_w = 1280;
@@ -488,12 +501,12 @@ int system_main() {
 	//
 	//
 
-	Vec3 position = vec3(0, 0, 1);
-	Face_Direction player_direction = Face_Direction_NORTH;
+	Player player;
+	Player_Controller controller = {};
 
 	r32 camera_distance = 0.5f;
 	r32 camera_distance_target = 1.3f;
-	Vec3 camera_position = position;
+	Vec3 camera_position = player.position;
 
 	bool  running = true;
 
@@ -546,7 +559,7 @@ int system_main() {
 							Debug_Notify("Paused");
 						} else {
 							state   = Time_State_RESUME;
-							game_dt = fixed_dt;
+							game_dt = fixed_dt * factor.ratio;
 							system_audio_resume();
 							Debug_Notify("Resumed");
 						}
@@ -577,10 +590,10 @@ int system_main() {
 					case Key_F6:
 						// TODO: properly reset level!!
 						Debug_NotifySuccess("Level Reset");
-						camera_distance = 0;
-						camera_distance_target = 1;
-						camera_position = vec3(0);
-						position = vec3(0, 0, 1);
+						camera_distance = 0.5f;
+						camera_distance_target = 1.3f;
+						player = Player{};
+						camera_position = player.position;
 				}
 			}
 #endif
@@ -609,35 +622,26 @@ int system_main() {
 				continue;
 			}
 
-			if (event.type & Event_Type_KEY_DOWN) {
-				if (event.key.symbol == Key_UP) {
-					if (player_direction == Face_Direction_NORTH) {
-						position.y += 1;
-					} else {
-						player_direction = Face_Direction_NORTH;
-					}
-				} else if (event.key.symbol == Key_DOWN) {
-					if (player_direction == Face_Direction_SOUTH) {
-						position.y -= 1;
-					} else {
-						player_direction = Face_Direction_SOUTH;
-					}
-				} else if (event.key.symbol == Key_RIGHT) {
-					if (player_direction == Face_Direction_EAST) {
-						position.x += 1;
-					} else {
-						player_direction = Face_Direction_EAST;
-					}
-				} else if (event.key.symbol == Key_LEFT) {
-					if (player_direction == Face_Direction_WEST) {
-						position.x -= 1;
-					} else {
-						player_direction = Face_Direction_WEST;
-					}
-				} else if (event.key.symbol == Key_PLUS) {
-					camera_distance += 1;
-				} else if (event.key.symbol == Key_MINUS) {
-					camera_distance -= 1;
+			if (event.type & Event_Type_KEYBOARD) {
+				float value = (float)(event.key.state == State_DOWN);
+				switch (event.key.symbol) {
+				case Key_D:
+				case Key_RIGHT:
+					controller.x = value;
+					break;
+				case Key_A:
+				case Key_LEFT:
+					controller.x = -value;
+					break;
+
+				case Key_W:
+				case Key_UP:
+					controller.y = value;
+					break;
+				case Key_S:
+				case Key_DOWN:
+					controller.y = -value;
+					break;
 				}
 			}
 
@@ -645,12 +649,54 @@ int system_main() {
 
 		Debug_TimedBlockEnd(EventHandling);
 
+		const Controller &input = system_get_controller_state(0);
+		controller.x = input.left_thumb.x;
+		controller.y = input.left_thumb.y;
+
 		Debug_TimedBlockBegin(Simulation);
+
+		player.force = vec3(0);
+
+		Vec2 movement_direction = vec2_normalize_check(vec2(controller.x, controller.y));
+		r32 movement_magnitude = vec2_length(movement_direction);
+		if (movement_magnitude) {
+			r32 angle = vec3_signed_angle_between(player.direction, vec3(movement_direction, 0), vec3(0, 0, 1));
+			player.direction = vec3_normalize(quat_rotate(quat_angle_axis(vec3(0, 0, 1), angle), player.direction));
+		}
+
+		const float gravity = 10.f;
+		const float ground_friction_coefficient = 1;
 
 		while (accumulator_t >= fixed_dt) {
 			Debug_TimedScope(SimulationFrame);
 
 			if (state == Time_State_RESUME) {
+
+				float effective_friction_coeff = ground_friction_coefficient * player.friction_coefficient;
+				player.force.xy += (player.movement_force * movement_magnitude) * player.direction.xy;
+
+				r32 frictional_force_mag = effective_friction_coeff * gravity * player.mass;
+				r32 force_mag = vec3_length(player.force);
+				if (frictional_force_mag > force_mag) frictional_force_mag = force_mag;
+
+				Vec3 friction_force_dir;
+				if (force_mag) {
+					friction_force_dir = player.force / force_mag;
+				} else {
+					friction_force_dir = {};
+				}
+
+				player.force -= friction_force_dir * frictional_force_mag;
+
+				//
+				//
+				//
+
+				Vec3 acceleration = (player.force / player.mass);
+				player.velocity += dt * acceleration;
+				player.velocity *= powf(0.5f, player.drag * dt);
+				player.position += dt * player.velocity;
+
 #if 0
 
 				for (int i = 0; i < NUM_RIGID_BODIES; i++) {
@@ -775,7 +821,8 @@ int system_main() {
 
 		ImGui_UpdateFrame(real_dt);
 
-		camera_position.xy = lerp(camera_position.xy, position.xy, 0.6f);
+		Vec2 camera_player_offset = vec2(-1.0f);
+		camera_position.xy = lerp(camera_position.xy - camera_player_offset, player.position.xy, 0.5f);
 		camera_distance = lerp(camera_distance, camera_distance_target, 1.0f - powf(1.0f - 0.9f, game_dt));
 
 		r32 camera_zoom = 1.0f / powf(2.0f, camera_distance);
@@ -798,32 +845,12 @@ int system_main() {
 		}
 
 		im_bind_texture(player_sprite);
-		im_rect_centered(position, vec2(1), player_face_sprite_rect[player_direction], vec4(1));
+		im_rect_centered_rotated(player.position, vec2(1), vec3_signed_angle_between(vec3(0, 1, 0), player.direction, vec3(0, 0, 1)), vec4(1));
 
 		im_unbind_texture();
-		im_rect_centered_outline2d(position, vec2(1), vec4(1, 1, 0), thickness);
+		im_rect_centered_outline2d(player.position, vec2(1), vec4(1, 1, 0), thickness);
 
 		im_end();
-
-#if defined(BUILD_IMGUI)
-		if (editor.draw_grid) {
-			im_begin(view);
-
-			r32 step = 1.0f / camera_zoom;
-
-			r32 x_offset = -fmodf(camera_position.x, 2.0f) * step;
-			for (r32 line_x = -HALF_GRID_HORIZONTAL + x_offset - step; line_x < HALF_GRID_HORIZONTAL; line_x += step) {
-				im_line2d(vec3(line_x, -HALF_GRID_VERTICAL, 0), vec3(line_x, HALF_GRID_VERTICAL, 0), vec4(1), thickness);
-			}
-
-			r32 y_offset = -fmodf(camera_position.y, 2.0f) * step;
-			for (r32 line_y = -HALF_GRID_VERTICAL + y_offset - step; line_y < HALF_GRID_VERTICAL; line_y += step) {
-				im_line2d(vec3(-HALF_GRID_HORIZONTAL, line_y, 0), vec3(HALF_GRID_HORIZONTAL, line_y, 0), vec4(1), thickness);
-			}
-
-			im_end();
-		}
-#endif
 
 		gfx_end_drawing();
 
@@ -851,7 +878,9 @@ int system_main() {
 			}
 
 			im_unbind_texture();
-			PrintRigidBodies();
+		}
+
+		PrintRigidBodies();
 #endif
 
 		gfx_apply_bloom(2);
@@ -874,7 +903,7 @@ int system_main() {
 #if defined(BUILD_IMGUI)
 		{
 			Debug_TimedScope(ImGuiRender);
-			editor_update(&mixer);
+			editor_update(&mixer, &player);
 			ImGui_RenderFrame();
 		}
 #endif

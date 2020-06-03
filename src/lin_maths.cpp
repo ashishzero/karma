@@ -248,8 +248,7 @@ Vec4 vec4_normalize(Vec4 v) {
 //
 
 r32 vec2_angle_between(Vec2 a, Vec2 b) {
-	r32 dot = vec2_dot(a, b);
-	dot     = clamp(-1.0f, 1.0f, dot);
+	r32 dot = clamp(-1.0f, 1.0f, vec2_dot(a, b));
 	return acosf(dot);
 }
 r32 vec2_angle_between_normalize(Vec2 a, Vec2 b) {
@@ -258,8 +257,7 @@ r32 vec2_angle_between_normalize(Vec2 a, Vec2 b) {
 	return vec2_angle_between(a, b);
 }
 r32 vec3_angle_between(Vec3 a, Vec3 b) {
-	r32 dot = vec3_dot(a, b);
-	dot     = clamp(-1.0f, 1.0f, dot);
+	r32 dot = clamp(-1.0f, 1.0f, vec3_dot(a, b));
 	return acosf(dot);
 }
 r32 vec3_angle_between_normalize(Vec3 a, Vec3 b) {
@@ -267,15 +265,35 @@ r32 vec3_angle_between_normalize(Vec3 a, Vec3 b) {
 	b = vec3_normalize(b);
 	return vec3_angle_between(a, b);
 }
-r32 vec4_angle_between(Vec4 a, Vec4 b) {
-	r32 dot = vec4_dot(a, b);
-	dot     = clamp(-1.0f, 1.0f, dot);
-	return acosf(dot);
+
+r32 vec2_signed_angle_between(Vec2 a, Vec2 b) {
+	r32 dot = clamp(-1.0f, 1.0f, vec2_dot(a, b));
+	r32 angle = acosf(dot);
+	r32 cross = a.x * b.y - a.y * b.x;
+	if (cross < 0) {
+		angle = -angle;
+	}
+	return angle;
 }
-r32 vec4_angle_between_normalize(Vec4 a, Vec4 b) {
-	a = vec4_normalize(a);
-	b = vec4_normalize(b);
-	return vec4_angle_between(a, b);
+r32 vec2_signed_angle_between_normalize(Vec2 a, Vec2 b) {
+	a = vec2_normalize(a);
+	b = vec2_normalize(b);
+	return vec2_signed_angle_between(a, b);
+}
+r32 vec3_signed_angle_between(Vec3 a, Vec3 b, Vec3 n) {
+	r32 dot = clamp(-1.0f, 1.0f, vec3_dot(a, b));
+	r32 angle = acosf(dot);
+	Vec3 cross = vec3_cross(a, b);
+	if (vec3_dot(n, cross) < 0) {
+		angle = -angle;
+	}
+	return angle;
+}
+r32 vec3_signed_angle_between_normalize(Vec3 a, Vec3 b, Vec3 n) {
+	a = vec3_normalize(a);
+	b = vec3_normalize(b);
+	n = vec3_normalize(n);
+	return vec3_signed_angle_between(a, b, n);
 }
 
 //
@@ -1260,10 +1278,6 @@ Vec2 slerp(Vec2 from, Vec2 to, r32 t) {
 
 Vec3 slerp(Vec3 from, Vec3 to, r32 t) {
 	return slerp(from, to, vec3_angle_between(from, to), t);
-}
-
-Vec4 slerp(Vec4 from, Vec4 to, r32 t) {
-	return slerp(from, to, vec4_angle_between(from, to), t);
 }
 
 Quat slerp(Quat from, Quat to, r32 t) {

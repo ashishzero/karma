@@ -1853,7 +1853,7 @@ void system_audio_pause() {
 }
 
 static inline Vec2 xinput_axis_deadzone_correction(SHORT x, SHORT y, SHORT deadzone) {
-	r32 mag      = sqrtf((r32)(x * x + y * y));
+	r32 mag      = sqrtf(((r32)x * (r32)x + (r32)y * (r32)y));
 	r32 norm_x   = mag ? (r32)x / mag : 0;
 	r32 norm_y   = mag ? (r32)y / mag : 0;
 	r32 norm_mag = 0.0f;
@@ -1864,7 +1864,10 @@ static inline Vec2 xinput_axis_deadzone_correction(SHORT x, SHORT y, SHORT deadz
 		norm_mag = mag / (r32)(XINPUT_GAMEPAD_THUMB_MAX - deadzone);
 	}
 
-	return vec2(norm_x * norm_mag, norm_y * norm_mag);
+	norm_x *= norm_mag;
+	norm_y *= norm_mag;
+
+	return vec2(norm_x, norm_y);
 }
 
 static inline r32 xinput_trigger_deadzone_correction(SHORT value, SHORT deadzone) {

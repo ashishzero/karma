@@ -21,6 +21,30 @@ inline r32 map01(r32 x1, r32 x2, r32 x) {
 	return map(x1, x2, 0, 1, x);
 }
 
+inline Vec2 vec2_min(Vec2 a, Vec2 b) {
+	Vec2 r;
+	r.x = min_value(a.x, b.x);
+	r.y = min_value(a.y, b.y);
+	return r;
+}
+
+inline Vec3 vec3_min(Vec3 a, Vec3 b) {
+	Vec3 r;
+	r.x = min_value(a.x, b.x);
+	r.y = min_value(a.y, b.y);
+	r.z = min_value(a.z, b.z);
+	return r;
+}
+
+inline Vec4 vec4_min(Vec4 a, Vec4 b) {
+	Vec4 r;
+	r.x = min_value(a.x, b.x);
+	r.y = min_value(a.y, b.y);
+	r.z = min_value(a.z, b.z);
+	r.w = min_value(a.w, b.w);
+	return r;
+}
+
 const Vec3 WORLD_UP      = vec3(0, 0, 1);
 const Vec3 WORLD_RIGHT   = vec3(1, 0, 0);
 const Vec3 WORLD_FORWARD = vec3(0, 1, 0);
@@ -384,8 +408,11 @@ r32 vec2_angle_between(Vec2 a, Vec2 b);
 r32 vec2_angle_between_normalize(Vec2 a, Vec2 b);
 r32 vec3_angle_between(Vec3 a, Vec3 b);
 r32 vec3_angle_between_normalize(Vec3 a, Vec3 b);
-r32 vec4_angle_between(Vec4 a, Vec4 b);
-r32 vec4_angle_between_normalize(Vec4 a, Vec4 b);
+
+r32 vec2_signed_angle_between(Vec2 a, Vec2 b);
+r32 vec2_signed_angle_between_normalize(Vec2 a, Vec2 b);
+r32 vec3_signed_angle_between(Vec3 a, Vec3 b, Vec3 n);
+r32 vec3_signed_angle_between_normalize(Vec3 a, Vec3 b, Vec3 n);
 
 //
 //
