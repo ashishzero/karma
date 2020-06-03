@@ -443,6 +443,23 @@ struct Player_Controller {
 	r32 y;
 };
 
+struct Camera {
+	Vec3 position;
+	r32 distance;
+	r32 distance_target;
+
+	Camera_View view;
+};
+
+Camera camera_create(Vec3 position, r32 distance = 0.5f, r32 target_distance = 1.3f) {
+	Camera camera;
+	camera.position = position;
+	camera.distance = distance;
+	camera.distance_target = target_distance;
+	camera.view = orthographic_view(-HALF_GRID_HORIZONTAL, HALF_GRID_HORIZONTAL, HALF_GRID_VERTICAL, -HALF_GRID_VERTICAL);
+	return camera;
+}
+
 void editor_update(Audio_Mixer *mixer, Player *player) {
 	if (!editor.display) return;
 
@@ -503,10 +520,7 @@ int system_main() {
 
 	Player player;
 	Player_Controller controller = {};
-
-	r32 camera_distance = 0.5f;
-	r32 camera_distance_target = 1.3f;
-	Vec3 camera_position = player.position;
+	Camera camera = camera_create(player.position);
 
 	bool  running = true;
 
@@ -590,10 +604,8 @@ int system_main() {
 					case Key_F6:
 						// TODO: properly reset level!!
 						Debug_NotifySuccess("Level Reset");
-						camera_distance = 0.5f;
-						camera_distance_target = 1.3f;
 						player = Player{};
-						camera_position = player.position;
+						camera = camera_create(player.position);
 				}
 			}
 #endif
@@ -822,20 +834,19 @@ int system_main() {
 		ImGui_UpdateFrame(real_dt);
 
 		Vec2 camera_player_offset = vec2(-1.0f);
-		camera_position.xy = lerp(camera_position.xy - camera_player_offset, player.position.xy, 0.5f);
-		camera_distance = lerp(camera_distance, camera_distance_target, 1.0f - powf(1.0f - 0.9f, game_dt));
+		camera.position.xy = lerp(camera.position.xy - camera_player_offset, player.position.xy, 0.5f);
+		camera.distance = lerp(camera.distance, camera.distance_target, 1.0f - powf(1.0f - 0.9f, game_dt));
 
-		r32 camera_zoom = 1.0f / powf(2.0f, camera_distance);
+		r32 camera_zoom = 1.0f / powf(2.0f, camera.distance);
 
 		r32 thickness = 8.0f / (TOTAL_GRID_HORIZONTAL * TOTAL_GRID_VERTICAL);
 
-		auto view = orthographic_view(-HALF_GRID_HORIZONTAL, HALF_GRID_HORIZONTAL, HALF_GRID_VERTICAL, -HALF_GRID_VERTICAL);
-		Mat4 transform = mat4_inverse(mat4_translation(camera_position) * mat4_scalar(camera_zoom, camera_zoom, 1)) * mat4_translation(vec3(0.5f, 0.5f, 0));
+		Mat4 transform = mat4_inverse(mat4_translation(camera.position) * mat4_scalar(camera_zoom, camera_zoom, 1)) * mat4_translation(vec3(0.5f, 0.5f, 0));
 
 		gfx_begin_drawing(Framebuffer_Type_HDR, Clear_COLOR | Clear_DEPTH, vec4(0.02f, 0.02f, 0.02f));
 		gfx_viewport(0, 0, framebuffer_w, framebuffer_h);
 
-		im_begin(view, transform);
+		im_begin(camera.view, transform);
 		im_unbind_texture();
 		for (r32 x = -5; x < 5; ++x) {
 			for (r32 y = -5; y < 5; ++y) {
