@@ -428,6 +428,7 @@ Texture2d_Handle debug_load_texture(const char * filepath) {
 struct Player {
 	Vec3 position = vec3(0, 0, 1);
 	Vec3 direction = vec3(0, -1, 0);
+	Vec3 direction_target = direction;
 
 	r32 movement_force = 500;
 
@@ -672,8 +673,9 @@ int system_main() {
 		Vec2 movement_direction = vec2_normalize_check(vec2(controller.x, controller.y));
 		r32 movement_magnitude = vec2_length(movement_direction);
 		if (movement_magnitude) {
-			r32 angle = vec3_signed_angle_between(player.direction, vec3(movement_direction, 0), vec3(0, 0, 1));
-			player.direction = vec3_normalize(quat_rotate(quat_angle_axis(vec3(0, 0, 1), angle), player.direction));
+			player.direction_target = vec3(movement_direction, 0);
+			//r32 angle = vec3_signed_angle_between(player.direction, vec3(movement_direction, 0), vec3(0, 0, 1));
+			//player.target_direction = vec3_normalize(quat_rotate(quat_angle_axis(vec3(0, 0, 1), angle), player.direction));
 		}
 
 		const float gravity = 10.f;
@@ -683,6 +685,9 @@ int system_main() {
 			Debug_TimedScope(SimulationFrame);
 
 			if (state == Time_State_RESUME) {
+
+				r32 angle = vec3_signed_angle_between(player.direction, player.direction_target, vec3(0, 0, 1));
+				player.direction = vec3_normalize(quat_rotate(quat_angle_axis(vec3(0, 0, 1), angle), player.direction));
 
 				float effective_friction_coeff = ground_friction_coefficient * player.friction_coefficient;
 				player.force.xy += (player.movement_force * movement_magnitude) * player.direction.xy;
@@ -833,8 +838,8 @@ int system_main() {
 
 		ImGui_UpdateFrame(real_dt);
 
-		Vec2 camera_player_offset = vec2(-1.0f);
-		camera.position.xy = lerp(camera.position.xy - camera_player_offset, player.position.xy, 0.5f);
+		Vec2 camera_player_offset = vec2(-0.5f);
+		camera.position.xy = lerp(camera.position.xy, player.position.xy - camera_player_offset, 1.0f - powf(1.0f - 0.9f, game_dt));
 		camera.distance = lerp(camera.distance, camera.distance_target, 1.0f - powf(1.0f - 0.9f, game_dt));
 
 		r32 camera_zoom = 1.0f / powf(2.0f, camera.distance);
