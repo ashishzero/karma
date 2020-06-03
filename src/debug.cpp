@@ -804,7 +804,6 @@ void draw_notifications(r32 framebuffer_w, r32 framebuffer_h) {
 	constexpr r32	NOTIFICATION_FONT_SIZE				= 32;
 	constexpr r32	NOTIFICATION_FADE_OUT_RATE			= 0.9f;
 	constexpr r32	NOTIFICATION_DISPLAY_HEIGHT_FACTOR	= 0.85f;
-	constexpr r32	NOTIFICATION_MAX_Y_MOVEMENT			= NOTIFICATION_FONT_SIZE * 1.5f;
 	const Color3	NOTIFICATION_FONT_COLOR_OUT			= vec3(1, 1, 1);
 	const Color3	NOTIFICATION_FONT_SHADOW_COLOR		= vec3(0.5f, 0, 0);
 	const Vec2		NOTIFICATION_SHADOW_OFFSET			= vec2(1.5f, -1.5f);
@@ -812,7 +811,6 @@ void draw_notifications(r32 framebuffer_w, r32 framebuffer_h) {
 	im_bind_texture(io.font.texture);
 
 	int done_count = 0;
-	r32 prev_y_off = 0;
 	int notification_counter = 0;
 	for (int notification_index = notification_handler.read_index; 
 		notification_index != notification_handler.write_index; 
@@ -830,12 +828,9 @@ void draw_notifications(r32 framebuffer_w, r32 framebuffer_h) {
 
 		Vec2 size = im_calculate_text_region(NOTIFICATION_FONT_SIZE, io.font.info, String(notification.msg, notification.msg_length));
 
-		r32 y_offset = (1.0f - alpha_out) * NOTIFICATION_MAX_Y_MOVEMENT;
-
 		Vec2 draw_pos;
 		draw_pos.x = framebuffer_w * 0.5f - size.x * 0.5f;
-		draw_pos.y = framebuffer_h * NOTIFICATION_DISPLAY_HEIGHT_FACTOR + y_offset - NOTIFICATION_FONT_SIZE * notification_counter + prev_y_off;
-		prev_y_off = y_offset;
+		draw_pos.y = framebuffer_h * NOTIFICATION_DISPLAY_HEIGHT_FACTOR - NOTIFICATION_FONT_SIZE * notification_counter;
 
 		im_text(draw_pos + NOTIFICATION_SHADOW_OFFSET, NOTIFICATION_FONT_SIZE, io.font.info, String(notification.msg, notification.msg_length), vec4(NOTIFICATION_FONT_SHADOW_COLOR, alpha));
 		im_text(draw_pos, NOTIFICATION_FONT_SIZE, io.font.info, String(notification.msg, notification.msg_length), notification_color);

@@ -472,7 +472,7 @@ int system_main() {
 		system_display_critical_message("Failed to load audio!");
 	}
 
-	audio_mixer_set_volume(&mixer, 0.6f);
+	audio_mixer_set_volume(&mixer, 0.0f);
 
 	ImGui_Initialize();
 	Debug_ModeEnable();
@@ -921,7 +921,7 @@ int system_main() {
 
 		ImGui::End();
 
-		audio_mixer_animate_volume_to(&mixer, master_volume, 1);
+		audio_mixer_set_volume(&mixer, master_volume);
 
 		//ImGui::ShowDemoWindow();
 #endif
@@ -932,37 +932,6 @@ int system_main() {
 			Debug_TimedScope(DebugPresent);
 			Debug_Present(window_w, window_h);
 		}
-
-#if 0
-		im_debug_begin(0, window_w, window_h, 0);
-
-		float audio_display_width = 450.0f;
-		float audio_display_height = 100.0f;
-		int audio_display_sample_count = 4800;
-		float audio_display_sample_width = audio_display_width / audio_display_sample_count;
-		
-		assert(audio_display_sample_count < AUDIO_DISPLAY_MAX_SAMPLES);
-
-		float audio_display_x = 100;
-		float audio_display_y = 50;
-		float audio_display_axis = audio_display_y + 0.5f * audio_display_height;
-
-		im_rect(vec2(audio_display_x, audio_display_y), vec2(audio_display_width, audio_display_height), vec4(0, 0, 0, 0.8f));
-
-		int audio_samples_read = audio_display_write_cursor - audio_display_sample_count;
-		while (audio_samples_read < 0) audio_samples_read += AUDIO_DISPLAY_MAX_SAMPLES;
-
-		r32 *left_samples = audio_display_samples_history[Audio_Channel_LEFT];
-		auto read_index = audio_samples_read;
-		for (int sample_index = 0; sample_index < audio_display_sample_count; ++sample_index) {
-			r32 sample_height = map01(-1.0f, 1.0f, left_samples[read_index]) * audio_display_height;
-			Vec2 sample_dim = vec2(audio_display_sample_width, sample_height);
-			im_rect(vec2(audio_display_x + sample_index * audio_display_sample_width, audio_display_y + (audio_display_height - sample_height) * 0.5f), sample_dim, vec4(0.1f, 0.1f, 0.6f));
-			read_index = (read_index + 1) % AUDIO_DISPLAY_MAX_SAMPLES;
-		}
-
-		im_end();
-#endif
 
 		gfx_end_drawing();
 
