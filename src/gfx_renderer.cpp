@@ -213,7 +213,7 @@ bool gfx_create_context(Handle platform, Render_Backend backend, Vsync vsync, u3
 		rasterizer.cull_mode       = Cull_Mode_BACK;
 
 		Blend_Info blend = blend_info_create(Blend_SRC_ALPHA, Blend_INV_SRC_ALPHA, Blend_Operation_ADD, Blend_SRC_ALPHA, Blend_INV_SRC_ALPHA, Blend_Operation_ADD);
-		Depth_Info depth = depth_info_create(true, Depth_Write_Mask_ALL, Comparison_Function_LESS);
+		Depth_Info depth = depth_info_create(false, Depth_Write_Mask_ALL, Comparison_Function_LESS);
 
 		im_context.pipeline = gfx->create_render_pipeline(shader, rasterizer, blend, depth, "Im_Pipeline");
 		memory_free(quad_shader_content.data);

@@ -418,13 +418,41 @@ struct Editor {
 
 static Editor editor;
 
-void editor_update() {
+void editor_update(Audio_Mixer *mixer) {
 	if (!editor.display) return;
 
 	ImGui::Begin("Editor");
 	ImGui::Checkbox("Grid", &editor.draw_grid);
+	r32 volume = mixer->volume_b;
+	ImGui::DragFloat("Volume", &volume, 0.01f, 0.0f, 1.0f);
 	ImGui::End();
+
+	audio_mixer_set_volume(mixer, volume);
 }
+
+Texture2d_Handle debug_load_texture(const char * filepath) {
+	int w, h, n;
+	unsigned char *pixels = stbi_load(filepath, &w, &h, &n, 4);
+	auto texture = gfx_create_texture2d(u32(w), u32(h), u32(n), Data_Format_RGBA8_UNORM_SRGB, (const u8 **)&pixels, Buffer_Usage_IMMUTABLE, 1);
+	stbi_image_free(pixels);
+	return texture;
+}
+
+enum Face_Direction {
+	Face_Direction_EAST,
+	Face_Direction_WEST,
+	Face_Direction_NORTH,
+	Face_Direction_SOUTH,
+
+	Face_Direction_COUNT,
+};
+
+static const Mm_Rect player_face_sprite_rect[] = {
+	mm_rect(0.5f, 0.5f, 1.0f, 1.0f),
+	mm_rect(0.5f, 0.0f, 1.0f, 0.5f),
+	mm_rect(0.0f, 0.0f, 0.5f, 0.5f),
+	mm_rect(0.0f, 0.5f, 0.5f, 1.0f),
+};
 
 int system_main() {
 	r32    framebuffer_w = 1280;
@@ -454,13 +482,17 @@ int system_main() {
 
 	auto music = play_audio(&mixer, &audio, true);
 
+	auto player_sprite = debug_load_texture("../res/misc/player.png");
+
 	//
 	//
 	//
 
 	Vec3 position = vec3(0, 0, 1);
+	Face_Direction player_direction = Face_Direction_NORTH;
+
 	r32 camera_distance = 0.5f;
-	r32 camera_distance_target = 1;
+	r32 camera_distance_target = 1.3f;
 	Vec3 camera_position = position;
 
 	bool  running = true;
@@ -579,13 +611,29 @@ int system_main() {
 
 			if (event.type & Event_Type_KEY_DOWN) {
 				if (event.key.symbol == Key_UP) {
-					position.y += 1;
+					if (player_direction == Face_Direction_NORTH) {
+						position.y += 1;
+					} else {
+						player_direction = Face_Direction_NORTH;
+					}
 				} else if (event.key.symbol == Key_DOWN) {
-					position.y -= 1;
+					if (player_direction == Face_Direction_SOUTH) {
+						position.y -= 1;
+					} else {
+						player_direction = Face_Direction_SOUTH;
+					}
 				} else if (event.key.symbol == Key_RIGHT) {
-					position.x += 1;
+					if (player_direction == Face_Direction_EAST) {
+						position.x += 1;
+					} else {
+						player_direction = Face_Direction_EAST;
+					}
 				} else if (event.key.symbol == Key_LEFT) {
-					position.x -= 1;
+					if (player_direction == Face_Direction_WEST) {
+						position.x -= 1;
+					} else {
+						player_direction = Face_Direction_WEST;
+					}
 				} else if (event.key.symbol == Key_PLUS) {
 					camera_distance += 1;
 				} else if (event.key.symbol == Key_MINUS) {
@@ -741,15 +789,19 @@ int system_main() {
 		gfx_viewport(0, 0, framebuffer_w, framebuffer_h);
 
 		im_begin(view, transform);
-
-		im_rect_centered(position, vec2(1), vec4(0.6f, 0.2f, 0.3f));
-
+		im_unbind_texture();
 		for (r32 x = -5; x < 5; ++x) {
 			for (r32 y = -5; y < 5; ++y) {
 				im_rect_centered_outline2d(vec3(x, y, 1), vec2(1), vec4(0, 0.3f, 0), 1.5f * thickness);
 				im_rect_centered(vec3(x, y, 1), vec2(1), vec4(0.1f, 0.9f, 0.2f));
 			}
 		}
+
+		im_bind_texture(player_sprite);
+		im_rect_centered(position, vec2(1), player_face_sprite_rect[player_direction], vec4(1));
+
+		im_unbind_texture();
+		im_rect_centered_outline2d(position, vec2(1), vec4(1, 1, 0), thickness);
 
 		im_end();
 
@@ -822,7 +874,7 @@ int system_main() {
 #if defined(BUILD_IMGUI)
 		{
 			Debug_TimedScope(ImGuiRender);
-			editor_update();
+			editor_update(&mixer);
 			ImGui_RenderFrame();
 		}
 #endif
