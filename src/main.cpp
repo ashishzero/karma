@@ -411,6 +411,21 @@ void audio_mixer_update(Audio_Mixer *mixer) {
 	system_unlock_mutex(mixer->mutex);
 }
 
+struct Editor {
+	bool display = false;
+	bool draw_grid = false;
+};
+
+static Editor editor;
+
+void editor_update() {
+	if (!editor.display) return;
+
+	ImGui::Begin("Editor");
+	ImGui::Checkbox("Grid", &editor.draw_grid);
+	ImGui::End();
+}
+
 int system_main() {
 	r32    framebuffer_w = 1280;
 	r32    framebuffer_h = 720;
@@ -433,10 +448,6 @@ int system_main() {
 
 	Debug_SetPresentationState(false);
 
-#if defined(BUILD_IMGUI)
-	bool imgui_view = false;
-#endif
-
 #if 0
 	InitializeRigidBodies();
 #endif
@@ -446,6 +457,11 @@ int system_main() {
 	//
 	//
 	//
+
+	Vec3 position = vec3(0, 0, 1);
+	r32 camera_distance = 0.5f;
+	r32 camera_distance_target = 1;
+	Vec3 camera_position = position;
 
 	bool  running = true;
 
@@ -519,13 +535,20 @@ int system_main() {
 						}
 						break;
 					case Key_F5:
-						imgui_view = !imgui_view;
-						if (imgui_view) {
+						editor.display = !editor.display;
+						if (editor.display) {
 							Debug_Notify("Interface: On");
 						} else {
 							Debug_Notify("Interface: Off");
 						}
 						break;
+					case Key_F6:
+						// TODO: properly reset level!!
+						Debug_NotifySuccess("Level Reset");
+						camera_distance = 0;
+						camera_distance_target = 1;
+						camera_position = vec3(0);
+						position = vec3(0, 0, 1);
 				}
 			}
 #endif
@@ -553,6 +576,23 @@ int system_main() {
 				system_fullscreen_state(SYSTEM_TOGGLE);
 				continue;
 			}
+
+			if (event.type & Event_Type_KEY_DOWN) {
+				if (event.key.symbol == Key_UP) {
+					position.y += 1;
+				} else if (event.key.symbol == Key_DOWN) {
+					position.y -= 1;
+				} else if (event.key.symbol == Key_RIGHT) {
+					position.x += 1;
+				} else if (event.key.symbol == Key_LEFT) {
+					position.x -= 1;
+				} else if (event.key.symbol == Key_PLUS) {
+					camera_distance += 1;
+				} else if (event.key.symbol == Key_MINUS) {
+					camera_distance -= 1;
+				}
+			}
+
 		}
 
 		Debug_TimedBlockEnd(EventHandling);
@@ -687,35 +727,51 @@ int system_main() {
 
 		ImGui_UpdateFrame(real_dt);
 
+		camera_position.xy = lerp(camera_position.xy, position.xy, 0.6f);
+		camera_distance = lerp(camera_distance, camera_distance_target, 1.0f - powf(1.0f - 0.9f, game_dt));
+
+		r32 camera_zoom = 1.0f / powf(2.0f, camera_distance);
+
+		r32 thickness = 8.0f / (TOTAL_GRID_HORIZONTAL * TOTAL_GRID_VERTICAL);
+
 		auto view = orthographic_view(-HALF_GRID_HORIZONTAL, HALF_GRID_HORIZONTAL, HALF_GRID_VERTICAL, -HALF_GRID_VERTICAL);
-		Mat4 transform = mat4_translation(vec3(0.5f, 0.5f, 0));
+		Mat4 transform = mat4_inverse(mat4_translation(camera_position) * mat4_scalar(camera_zoom, camera_zoom, 1)) * mat4_translation(vec3(0.5f, 0.5f, 0));
 
 		gfx_begin_drawing(Framebuffer_Type_HDR, Clear_COLOR | Clear_DEPTH, vec4(0.02f, 0.02f, 0.02f));
 		gfx_viewport(0, 0, framebuffer_w, framebuffer_h);
 
 		im_begin(view, transform);
 
-		im_rect_centered(vec2(0), vec2(1), vec4(0.6f, 0.2f, 0.3f));
+		im_rect_centered(position, vec2(1), vec4(0.6f, 0.2f, 0.3f));
+
+		for (r32 x = -5; x < 5; ++x) {
+			for (r32 y = -5; y < 5; ++y) {
+				im_rect_centered_outline2d(vec3(x, y, 1), vec2(1), vec4(0, 0.3f, 0), 1.5f * thickness);
+				im_rect_centered(vec3(x, y, 1), vec2(1), vec4(0.1f, 0.9f, 0.2f));
+			}
+		}
 
 		im_end();
 
-		//
-		// Drawing grids
-		//
-		{
+#if defined(BUILD_IMGUI)
+		if (editor.draw_grid) {
 			im_begin(view);
 
-			r32 horizontal_line_thickness = 0.5f * TOTAL_GRID_HORIZONTAL / framebuffer_w;
-			for (r32 line_x = -HALF_GRID_HORIZONTAL + 1; line_x < HALF_GRID_HORIZONTAL; line_x += 1) {
-				im_line2d(vec3(line_x, -HALF_GRID_VERTICAL, 0), vec3(line_x, HALF_GRID_VERTICAL, 0), vec4(1), horizontal_line_thickness);
+			r32 step = 1.0f / camera_zoom;
+
+			r32 x_offset = -fmodf(camera_position.x, 2.0f) * step;
+			for (r32 line_x = -HALF_GRID_HORIZONTAL + x_offset - step; line_x < HALF_GRID_HORIZONTAL; line_x += step) {
+				im_line2d(vec3(line_x, -HALF_GRID_VERTICAL, 0), vec3(line_x, HALF_GRID_VERTICAL, 0), vec4(1), thickness);
 			}
-			r32 vertical_line_thickness = 0.5f * TOTAL_GRID_VERTICAL / framebuffer_h;
-			for (r32 line_y = -HALF_GRID_VERTICAL + 1; line_y < HALF_GRID_VERTICAL; line_y += 1) {
-				im_line2d(vec3(-HALF_GRID_HORIZONTAL, line_y, 0), vec3(HALF_GRID_HORIZONTAL, line_y, 0), vec4(1), vertical_line_thickness);
+
+			r32 y_offset = -fmodf(camera_position.y, 2.0f) * step;
+			for (r32 line_y = -HALF_GRID_VERTICAL + y_offset - step; line_y < HALF_GRID_VERTICAL; line_y += step) {
+				im_line2d(vec3(-HALF_GRID_HORIZONTAL, line_y, 0), vec3(HALF_GRID_HORIZONTAL, line_y, 0), vec4(1), thickness);
 			}
 
 			im_end();
 		}
+#endif
 
 		gfx_end_drawing();
 
@@ -766,10 +822,7 @@ int system_main() {
 #if defined(BUILD_IMGUI)
 		{
 			Debug_TimedScope(ImGuiRender);
-			if (imgui_view) {
-				ImGui::ShowDemoWindow();
-			}
-
+			editor_update();
 			ImGui_RenderFrame();
 		}
 #endif

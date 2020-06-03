@@ -1111,6 +1111,26 @@ void im_rect_outline2d(Vec2 pos, Vec2 dim, Color4 color, r32 thickness) {
 	im_rect_outline2d(vec3(pos, 1), dim, color, thickness);
 }
 
+void im_rect_centered_outline2d(Vec3 pos, Vec2 dim, Color4 color, r32 thickness) {
+	Vec2 half_dim  = 0.5f * dim;
+
+	Vec3 a, b, c, d;
+	a.xy = pos.xy - half_dim;
+	b.xy = vec2(pos.x - half_dim.x, pos.y + half_dim.y);
+	c.xy = pos.xy + half_dim;
+	d.xy = vec2(pos.x + half_dim.x, pos.y - half_dim.y);
+
+	a.z = pos.z;
+	b.z = pos.z;
+	c.z = pos.z;
+	d.z = pos.z;
+	im_quad_outline2d(a, b, c, d, color, thickness);
+}
+
+void im_rect_centered_outline2d(Vec2 pos, Vec2 dim, Color4 color, r32 thickness) {
+	im_rect_centered_outline2d(vec3(pos, 1), dim, color, thickness);
+}
+
 void im_ellipse_outline(Vec3 position, r32 radius_a, r32 radius_b, Color4 color, r32 thickness, int segments) {
 	segments = clamp(IM_MIN_CIRCLE_SEGMENTS, IM_MAX_CIRCLE_SEGMENTS - 1, segments);
 
