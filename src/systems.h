@@ -143,12 +143,12 @@ enum Controller_Button : u8 {
 };
 
 enum Controller_Axis : u8 {
-	Controller_Axis_THUMB_LEFT_X,
-	Controller_Axis_THUMB_LEFT_Y,
-	Controller_Axis_THUMB_RIGHT_X,
-	Controller_Axis_THUMB_RIGHT_Y,
-	Controller_Axis_TRIGGER_LEFT,
-	Controller_Axis_TRIGGER_RIGHT,
+	Controller_Axis_LTHUMB_X,
+	Controller_Axis_LTHUMB_Y,
+	Controller_Axis_RTHUMB_X,
+	Controller_Axis_RTHUMB_Y,
+	Controller_Axis_LTRIGGER,
+	Controller_Axis_RTRIGGER,
 
 	Controller_Axis_COUNT
 };
@@ -237,7 +237,7 @@ struct Controller_Button_Event {
 };
 
 struct Controller_Axis_Event {
-	Vec2			axis;
+	r32				value;
 	Controller_Axis	symbol;
 	Controller_Id	id;
 };

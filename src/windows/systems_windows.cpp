@@ -234,8 +234,8 @@ static DWORD xinput_get_keystroke_stub(DWORD, DWORD, PXINPUT_KEYSTROKE) {
 }
 
 struct Win32_Controller {
-	DWORD packet_number;
-	bool  connected;
+	XINPUT_STATE	state;
+	bool			connected;
 };
 
 //
@@ -1899,58 +1899,110 @@ const Array_View<Event> system_poll_events(int poll_count) {
 			}
 		}
 
-		XINPUT_STATE state;
+		XINPUT_STATE new_state;
 		for (Controller_Id user_index = 0; user_index < XUSER_MAX_COUNT; ++user_index) {
-			auto res = XInputGetState(user_index, &state);
+			auto res = XInputGetState(user_index, &new_state);
+			auto old_state = windows_controllers_state + user_index;
 
 			if (res == ERROR_SUCCESS) {
-				if (windows_controllers_state[user_index].packet_number != state.dwPacketNumber) {
-					if (!windows_controllers_state[user_index].connected) {
+				if (old_state->state.dwPacketNumber != new_state.dwPacketNumber) {
+					if (!old_state->connected) {
 						Event cevent;
 						cevent.type = Event_Type_CONTROLLER_JOIN;
 						cevent.controller_device.id = user_index;
 						win32_add_event(cevent);
-						windows_controllers_state[user_index].connected = true;
+						old_state->connected = true;
 					}
 
+					Event controller_event;
+
 					Controller *controller = controllers + user_index;
-					memset(controller->buttons, State_UP, sizeof(controllers->buttons));
 
-					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_UP) controller->buttons[Controller_Button_DPAD_UP] = State_DOWN;
-					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_DOWN) controller->buttons[Controller_Button_DPAD_DOWN] = State_DOWN;
-					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_LEFT) controller->buttons[Controller_Button_DPAD_LEFT] = State_DOWN;
-					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_RIGHT) controller->buttons[Controller_Button_DPAD_RIGHT] = State_DOWN;
-					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_START) controller->buttons[Controller_Button_START] = State_DOWN;
-					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_BACK) controller->buttons[Controller_Button_BACK] = State_DOWN;
-					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_LEFT_THUMB) controller->buttons[Controller_Button_LTHUMB] = State_DOWN;
-					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_RIGHT_THUMB) controller->buttons[Controller_Button_RTHUMB] = State_DOWN;
-					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_LEFT_SHOULDER) controller->buttons[Controller_Button_LSHOULDER] = State_DOWN;
-					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_RIGHT_SHOULDER) controller->buttons[Controller_Button_RSHOULDER] = State_DOWN;
-					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_A) controller->buttons[Controller_Button_A] = State_DOWN;
-					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_B) controller->buttons[Controller_Button_B] = State_DOWN;
-					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_X) controller->buttons[Controller_Button_X] = State_DOWN;
-					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_Y) controller->buttons[Controller_Button_Y] = State_DOWN;
+					#define win32_update_controller_button(xbutton, button)													\
+						if ((new_state.Gamepad.wButtons & xbutton) != ((old_state->state.Gamepad.wButtons & xbutton))) {	\
+							State button_state = (State)((new_state.Gamepad.wButtons & xbutton) == xbutton);						\
+							controller_event.type = Event_Type_CONTROLLER_BUTTON;											\
+							controller_event.controller_button.symbol = button;												\
+							controller_event.controller_button.state = button_state;										\
+							controller_event.controller_button.id = user_index;												\
+							controller->buttons[button] = button_state;														\
+							win32_add_event(controller_event);																\
+						}
 
-					controller->axis[Controller_Axis_TRIGGER_LEFT]  = xinput_trigger_deadzone_correction(state.Gamepad.bLeftTrigger, XINPUT_GAMEPAD_TRIGGER_THRESHOLD);
-					controller->axis[Controller_Axis_TRIGGER_RIGHT] = xinput_trigger_deadzone_correction(state.Gamepad.bRightTrigger, XINPUT_GAMEPAD_TRIGGER_THRESHOLD);
+					if (new_state.Gamepad.wButtons != old_state->state.Gamepad.wButtons) {
+						win32_update_controller_button(XINPUT_GAMEPAD_DPAD_UP, Controller_Button_DPAD_UP);
+						win32_update_controller_button(XINPUT_GAMEPAD_DPAD_DOWN, Controller_Button_DPAD_DOWN);
+						win32_update_controller_button(XINPUT_GAMEPAD_DPAD_LEFT, Controller_Button_DPAD_LEFT);
+						win32_update_controller_button(XINPUT_GAMEPAD_DPAD_RIGHT, Controller_Button_DPAD_RIGHT);
+						win32_update_controller_button(XINPUT_GAMEPAD_START, Controller_Button_START);
+						win32_update_controller_button(XINPUT_GAMEPAD_BACK, Controller_Button_BACK);
+						win32_update_controller_button(XINPUT_GAMEPAD_LEFT_THUMB, Controller_Button_LTHUMB);
+						win32_update_controller_button(XINPUT_GAMEPAD_RIGHT_THUMB, Controller_Button_RTHUMB);
+						win32_update_controller_button(XINPUT_GAMEPAD_LEFT_SHOULDER, Controller_Button_LSHOULDER);
+						win32_update_controller_button(XINPUT_GAMEPAD_RIGHT_SHOULDER, Controller_Button_RSHOULDER);
+						win32_update_controller_button(XINPUT_GAMEPAD_A, Controller_Button_A);
+						win32_update_controller_button(XINPUT_GAMEPAD_B, Controller_Button_B);
+						win32_update_controller_button(XINPUT_GAMEPAD_X, Controller_Button_X);
+						win32_update_controller_button(XINPUT_GAMEPAD_Y, Controller_Button_Y);
+					}
 
-					Vec2 left_thumb  = xinput_axis_deadzone_correction(state.Gamepad.sThumbLX, state.Gamepad.sThumbLY, XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
-					Vec2 right_thumb = xinput_axis_deadzone_correction(state.Gamepad.sThumbRX, state.Gamepad.sThumbRY, XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE);
-					controller->axis[Controller_Axis_THUMB_LEFT_X]	= left_thumb.x;
-					controller->axis[Controller_Axis_THUMB_LEFT_Y]	= left_thumb.y;
-					controller->axis[Controller_Axis_THUMB_RIGHT_X] = right_thumb.x;
-					controller->axis[Controller_Axis_THUMB_RIGHT_Y] = right_thumb.y;
+					#undef win32_update_controller_button
+
+					#define	win32_add_controller_axis_event(in_value, in_axis)				\
+								controller_event.type = Event_Type_CONTROLLER_AXIS;			\
+								controller_event.controller_axis.value = in_value;			\
+								controller_event.controller_axis.symbol = in_axis;			\
+								controller_event.controller_axis.id = user_index;			\
+								win32_add_event(controller_event)
+
+					if (old_state->state.Gamepad.bLeftTrigger != new_state.Gamepad.bLeftTrigger) {
+						r32 value = xinput_trigger_deadzone_correction(new_state.Gamepad.bLeftTrigger, XINPUT_GAMEPAD_TRIGGER_THRESHOLD);
+						win32_add_controller_axis_event(value, Controller_Axis_LTRIGGER);
+						controller->axis[Controller_Axis_LTRIGGER]  = value;
+					}
+
+					if (old_state->state.Gamepad.bRightTrigger != new_state.Gamepad.bRightTrigger) {
+						r32 value = xinput_trigger_deadzone_correction(new_state.Gamepad.bRightTrigger, XINPUT_GAMEPAD_TRIGGER_THRESHOLD);
+						win32_add_controller_axis_event(value, Controller_Axis_RTRIGGER);
+						controller->axis[Controller_Axis_RTRIGGER] = value;
+					}
+
+					Vec2 left_thumb  = xinput_axis_deadzone_correction(new_state.Gamepad.sThumbLX, new_state.Gamepad.sThumbLY, XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
+					Vec2 right_thumb = xinput_axis_deadzone_correction(new_state.Gamepad.sThumbRX, new_state.Gamepad.sThumbRY, XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE);
+
+					controller->axis[Controller_Axis_LTHUMB_X]	= left_thumb.x;
+					controller->axis[Controller_Axis_LTHUMB_Y]	= left_thumb.y;
+					controller->axis[Controller_Axis_RTHUMB_X] = right_thumb.x;
+					controller->axis[Controller_Axis_RTHUMB_Y] = right_thumb.y;
+
+					if (old_state->state.Gamepad.sThumbLX != new_state.Gamepad.sThumbLX) {
+						win32_add_controller_axis_event(left_thumb.x, Controller_Axis_LTHUMB_X);
+					}
+					if (old_state->state.Gamepad.sThumbLY != new_state.Gamepad.sThumbLY) {
+						win32_add_controller_axis_event(left_thumb.y, Controller_Axis_LTHUMB_Y);
+					}
+
+					if (old_state->state.Gamepad.sThumbRX != new_state.Gamepad.sThumbRX) {
+						win32_add_controller_axis_event(right_thumb.x, Controller_Axis_RTHUMB_X);
+					}
+					if (old_state->state.Gamepad.sThumbRY != new_state.Gamepad.sThumbRY) {
+						win32_add_controller_axis_event(right_thumb.y, Controller_Axis_RTHUMB_Y);
+					}
+
+					#undef win32_add_controller_axis_event
+
+					old_state->state = new_state;
 				}
 			}
-			else if (windows_controllers_state[user_index].connected) {
+			else if (old_state->connected) {
 				Event cevent;
 				cevent.type = Event_Type_CONTROLLER_LEAVE;
 				cevent.controller_device.id = user_index;
 				win32_add_event(cevent);
-				windows_controllers_state[user_index].connected = false;
 
 				Controller *controller = controllers + user_index;
 				memset(controller, 0, sizeof(*controllers));
+				memset(old_state, 0, sizeof(*old_state));
 			}
 		}
 	}
@@ -2056,16 +2108,16 @@ r32 system_controller_axis(Controller_Id id, Controller_Axis axis) {
 Vec2 system_controller_left_thumb(Controller_Id id) {
 	assert(id < XUSER_MAX_COUNT);
 	Vec2 result;
-	result.x = controllers[id].axis[Controller_Axis_THUMB_LEFT_X];
-	result.y = controllers[id].axis[Controller_Axis_THUMB_LEFT_Y];
+	result.x = controllers[id].axis[Controller_Axis_LTHUMB_X];
+	result.y = controllers[id].axis[Controller_Axis_LTHUMB_Y];
 	return result;
 }
 
 Vec2 system_controller_right_thumb(Controller_Id id) {
 	assert(id < XUSER_MAX_COUNT);
 	Vec2 result;
-	result.x = controllers[id].axis[Controller_Axis_THUMB_RIGHT_X];
-	result.y = controllers[id].axis[Controller_Axis_THUMB_RIGHT_Y];
+	result.x = controllers[id].axis[Controller_Axis_RTHUMB_X];
+	result.y = controllers[id].axis[Controller_Axis_RTHUMB_Y];
 	return result;
 }
 
