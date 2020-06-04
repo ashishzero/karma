@@ -662,13 +662,21 @@ int system_main() {
 				}
 			}
 
+			if (event.type == Event_Type_CONTROLLER_AXIS) {
+				switch (event.controller_axis.symbol) {
+				case Controller_Axis_LTHUMB_X:
+					controller.x = event.controller_axis.value;
+					break;
+
+				case Controller_Axis_LTHUMB_Y:
+					controller.y = event.controller_axis.value;
+					break;
+				}
+			}
+
 		}
 
 		Debug_TimedBlockEnd(EventHandling);
-
-		Vec2 left_thumb = system_controller_left_thumb(0);
-		controller.x = left_thumb.x;
-		controller.y = left_thumb.y;
 
 		Debug_TimedBlockBegin(Simulation);
 

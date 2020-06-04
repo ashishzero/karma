@@ -45,9 +45,9 @@ inline Vec4 vec4_min(Vec4 a, Vec4 b) {
 	return r;
 }
 
-const Vec3 WORLD_UP      = vec3(0, 0, 1);
+const Vec3 WORLD_UP      = vec3(0, 1, 0);
 const Vec3 WORLD_RIGHT   = vec3(1, 0, 0);
-const Vec3 WORLD_FORWARD = vec3(0, 1, 0);
+const Vec3 WORLD_FORWARD = vec3(0, 0, 1);
 
 Vec2  vec2_add(Vec2 a, Vec2 b);
 Vec3  vec3_add(Vec3 a, Vec3 b);

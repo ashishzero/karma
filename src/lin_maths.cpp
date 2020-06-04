@@ -224,21 +224,21 @@ Vec4 vec4_normalize_check(Vec4 v) {
 Vec2 vec2_normalize(Vec2 v) {
 	Vec2 res = {};
 	r32  len = vec2_length(v);
-	assert(len > EPSILON_FLOAT);
+	assert(len != 0);
 	res = v / len;
 	return res;
 }
 Vec3 vec3_normalize(Vec3 v) {
 	Vec3 res = {};
 	r32  len = vec3_length(v);
-	assert(len > EPSILON_FLOAT);
+	assert(len != 0);
 	res = v / len;
 	return res;
 }
 Vec4 vec4_normalize(Vec4 v) {
 	Vec4 res = {};
 	r32  len = vec4_length(v);
-	assert(len > EPSILON_FLOAT);
+	assert(len != 0);
 	res = v * (1.0f / len);
 	return res;
 }
@@ -821,7 +821,7 @@ r32 quat_length(Quat q) {
 
 Quat quat_normalize(Quat q) {
 	r32 len = quat_length(q);
-	assert(len > EPSILON_FLOAT);
+	assert(len != 0);
 	return q * (1.0f / len);
 }
 
@@ -870,7 +870,7 @@ Quat quat_angle_axis_normalize(Vec3 axis, r32 angle) {
 
 void quat_get_angle_axis(Quat q, r32 *angle, Vec3 *axis) {
 	r32 len = sqrtf(q.i * q.i + q.j * q.j + q.k * q.k);
-	if (len > EPSILON_FLOAT) {
+	if (len) {
 		*angle  = 2.0f * atan2f(len, q.real);
 		len     = 1.0f / len;
 		axis->x = q.i * len;

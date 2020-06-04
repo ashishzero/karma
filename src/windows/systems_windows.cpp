@@ -1955,14 +1955,16 @@ const Array_View<Event> system_poll_events(int poll_count) {
 								controller_event.controller_axis.id = user_index;			\
 								win32_add_event(controller_event)
 
-					if (old_state->state.Gamepad.bLeftTrigger != new_state.Gamepad.bLeftTrigger) {
-						r32 value = xinput_trigger_deadzone_correction(new_state.Gamepad.bLeftTrigger, XINPUT_GAMEPAD_TRIGGER_THRESHOLD);
+					r32 value;
+
+					value = xinput_trigger_deadzone_correction(new_state.Gamepad.bLeftTrigger, XINPUT_GAMEPAD_TRIGGER_THRESHOLD);
+					if (value != controller->axis[Controller_Axis_LTRIGGER]) {
 						win32_add_controller_axis_event(value, Controller_Axis_LTRIGGER);
 						controller->axis[Controller_Axis_LTRIGGER]  = value;
 					}
 
-					if (old_state->state.Gamepad.bRightTrigger != new_state.Gamepad.bRightTrigger) {
-						r32 value = xinput_trigger_deadzone_correction(new_state.Gamepad.bRightTrigger, XINPUT_GAMEPAD_TRIGGER_THRESHOLD);
+					value = xinput_trigger_deadzone_correction(new_state.Gamepad.bRightTrigger, XINPUT_GAMEPAD_TRIGGER_THRESHOLD);
+					if (value != controller->axis[Controller_Axis_RTRIGGER]) {
 						win32_add_controller_axis_event(value, Controller_Axis_RTRIGGER);
 						controller->axis[Controller_Axis_RTRIGGER] = value;
 					}
@@ -1970,23 +1972,22 @@ const Array_View<Event> system_poll_events(int poll_count) {
 					Vec2 left_thumb  = xinput_axis_deadzone_correction(new_state.Gamepad.sThumbLX, new_state.Gamepad.sThumbLY, XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
 					Vec2 right_thumb = xinput_axis_deadzone_correction(new_state.Gamepad.sThumbRX, new_state.Gamepad.sThumbRY, XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE);
 
-					controller->axis[Controller_Axis_LTHUMB_X]	= left_thumb.x;
-					controller->axis[Controller_Axis_LTHUMB_Y]	= left_thumb.y;
-					controller->axis[Controller_Axis_RTHUMB_X] = right_thumb.x;
-					controller->axis[Controller_Axis_RTHUMB_Y] = right_thumb.y;
-
-					if (old_state->state.Gamepad.sThumbLX != new_state.Gamepad.sThumbLX) {
+					if (left_thumb.x != controller->axis[Controller_Axis_LTHUMB_X]) {
 						win32_add_controller_axis_event(left_thumb.x, Controller_Axis_LTHUMB_X);
+						controller->axis[Controller_Axis_LTHUMB_X]	= left_thumb.x;
 					}
-					if (old_state->state.Gamepad.sThumbLY != new_state.Gamepad.sThumbLY) {
+					if (left_thumb.y != controller->axis[Controller_Axis_LTHUMB_Y]) {
 						win32_add_controller_axis_event(left_thumb.y, Controller_Axis_LTHUMB_Y);
+						controller->axis[Controller_Axis_LTHUMB_Y]	= left_thumb.y;
 					}
 
-					if (old_state->state.Gamepad.sThumbRX != new_state.Gamepad.sThumbRX) {
+					if (right_thumb.x != controller->axis[Controller_Axis_RTHUMB_X]) {
 						win32_add_controller_axis_event(right_thumb.x, Controller_Axis_RTHUMB_X);
+						controller->axis[Controller_Axis_RTHUMB_X] = right_thumb.x;
 					}
-					if (old_state->state.Gamepad.sThumbRY != new_state.Gamepad.sThumbRY) {
+					if (right_thumb.y != controller->axis[Controller_Axis_RTHUMB_Y]) {
 						win32_add_controller_axis_event(right_thumb.y, Controller_Axis_RTHUMB_Y);
+						controller->axis[Controller_Axis_RTHUMB_Y] = right_thumb.y;
 					}
 
 					#undef win32_add_controller_axis_event
