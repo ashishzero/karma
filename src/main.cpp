@@ -418,6 +418,8 @@ struct Editor {
 static Editor editor;
 
 Texture2d_Handle debug_load_texture(const char * filepath) {
+	stbi_set_flip_vertically_on_load(1);
+
 	int w, h, n;
 	unsigned char *pixels = stbi_load(filepath, &w, &h, &n, 4);
 	auto texture = gfx_create_texture2d(u32(w), u32(h), u32(n), Data_Format_RGBA8_UNORM_SRGB, (const u8 **)&pixels, Buffer_Usage_IMMUTABLE, 1);
@@ -427,14 +429,15 @@ Texture2d_Handle debug_load_texture(const char * filepath) {
 
 struct Player {
 	Vec3 position = vec3(0, 0, 1);
-	Vec3 direction = vec3(0, -1, 0);
-	Vec3 direction_target = direction;
+	Quat face_direction = quat_identity();
+	Quat face_direction_target = face_direction;
 
 	r32 movement_force = 500;
 
 	r32 mass = 50;
 	r32 drag = 3;
 	r32 friction_coefficient = 0.5f;
+	r32 turn_velocity = 2.5f;
 	Vec3 velocity = vec3(0);
 	Vec3 force = vec3(0);
 };
@@ -471,11 +474,12 @@ void editor_update(Audio_Mixer *mixer, Player *player) {
 
 	ImGui::Text("Player");
 	ImGui::DragFloat3("Position: (%.3f, %.3f, %.3f)", player->position.m);
-	ImGui::Text("Direction: (%.3f, %.3f, %.3f)", player->direction.x, player->direction.y, player->direction.z);
+	ImGui::Text("Face Direction: (%.3f, %.3f, %.3f)", player->face_direction.x, player->face_direction.y, player->face_direction.z);
 	ImGui::DragFloat("Mass: %.3f", &player->mass, 0.1f);
 	ImGui::DragFloat("Friction: %.3f", &player->friction_coefficient, 0.01f, 0.0f, 1.0f);
 	ImGui::DragFloat("Drag: %.3f", &player->drag, 0.01f);
 	ImGui::DragFloat("Movement Force: %.3f", &player->movement_force, 0.1f);
+	ImGui::DragFloat("Turn Speed: %.3f", &player->turn_velocity, 0.01f);
 	ImGui::Text("Velocity: (%.3f, %.3f, %.3f)", player->velocity.x, player->velocity.y, player->velocity.z);
 	ImGui::Text("Force: (%.3f, %.3f, %.3f)", player->force.x, player->force.y, player->force.z);
 
@@ -673,9 +677,7 @@ int system_main() {
 		Vec2 movement_direction = vec2_normalize_check(vec2(controller.x, controller.y));
 		r32 movement_magnitude = vec2_length(movement_direction);
 		if (movement_magnitude) {
-			player.direction_target = vec3(movement_direction, 0);
-			//r32 angle = vec3_signed_angle_between(player.direction, vec3(movement_direction, 0), vec3(0, 0, 1));
-			//player.target_direction = vec3_normalize(quat_rotate(quat_angle_axis(vec3(0, 0, 1), angle), player.direction));
+			player.face_direction_target = quat_between(vec3(0, 1, 0), vec3(movement_direction, 0));
 		}
 
 		const float gravity = 10.f;
@@ -686,11 +688,10 @@ int system_main() {
 
 			if (state == Time_State_RESUME) {
 
-				r32 angle = vec3_signed_angle_between(player.direction, player.direction_target, vec3(0, 0, 1));
-				player.direction = vec3_normalize(quat_rotate(quat_angle_axis(vec3(0, 0, 1), angle), player.direction));
+				player.face_direction = rotate_toward(player.face_direction, player.face_direction_target, player.turn_velocity * dt);
 
 				float effective_friction_coeff = ground_friction_coefficient * player.friction_coefficient;
-				player.force.xy += (player.movement_force * movement_magnitude) * player.direction.xy;
+				player.force += (player.movement_force * movement_magnitude) * vec3(movement_direction, 0);
 
 				r32 frictional_force_mag = effective_friction_coeff * gravity * player.mass;
 				r32 force_mag = vec3_length(player.force);
@@ -713,6 +714,10 @@ int system_main() {
 				player.velocity += dt * acceleration;
 				player.velocity *= powf(0.5f, player.drag * dt);
 				player.position += dt * player.velocity;
+
+				Vec2 camera_player_offset = vec2(-0.5f);
+				camera.position.xy = lerp(camera.position.xy, player.position.xy - camera_player_offset, 1.0f - powf(1.0f - 0.9f, dt));
+				camera.distance = lerp(camera.distance, camera.distance_target, 1.0f - powf(1.0f - 0.9f, dt));
 
 #if 0
 
@@ -838,10 +843,6 @@ int system_main() {
 
 		ImGui_UpdateFrame(real_dt);
 
-		Vec2 camera_player_offset = vec2(-0.5f);
-		camera.position.xy = lerp(camera.position.xy, player.position.xy - camera_player_offset, 1.0f - powf(1.0f - 0.9f, game_dt));
-		camera.distance = lerp(camera.distance, camera.distance_target, 1.0f - powf(1.0f - 0.9f, game_dt));
-
 		r32 camera_zoom = 1.0f / powf(2.0f, camera.distance);
 
 		r32 thickness = 8.0f / (TOTAL_GRID_HORIZONTAL * TOTAL_GRID_VERTICAL);
@@ -855,16 +856,19 @@ int system_main() {
 		im_unbind_texture();
 		for (r32 x = -5; x < 5; ++x) {
 			for (r32 y = -5; y < 5; ++y) {
-				im_rect_centered_outline2d(vec3(x, y, 1), vec2(1), vec4(0, 0.3f, 0), 1.5f * thickness);
+				im_rect_centered(vec3(x, y, 1), vec2(1.1f), vec4(0, 0.3f, 0));
 				im_rect_centered(vec3(x, y, 1), vec2(1), vec4(0.1f, 0.9f, 0.2f));
 			}
 		}
 
-		im_bind_texture(player_sprite);
-		im_rect_centered_rotated(player.position, vec2(1), vec3_signed_angle_between(vec3(0, 1, 0), player.direction, vec3(0, 0, 1)), vec4(1));
-
-		im_unbind_texture();
 		im_rect_centered_outline2d(player.position, vec2(1), vec4(1, 1, 0), thickness);
+
+		r32 angle;
+		Vec3 axis;
+		quat_get_angle_axis(player.face_direction, &angle, &axis);
+
+		im_bind_texture(player_sprite);
+		im_rect_centered_rotated(player.position, vec2(1), axis.z * angle, vec4(1));
 
 		im_end();
 

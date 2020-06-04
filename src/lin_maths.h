@@ -639,7 +639,6 @@ Type slerp(Type from, Type to, r32 angle, r32 t) {
 Mat4 lerp(Mat4 &from, Mat4 &to, r32 t);
 Vec2 slerp(Vec2 from, Vec2 to, r32 t);
 Vec3 slerp(Vec3 from, Vec3 to, r32 t);
-Vec4 slerp(Vec4 from, Vec4 to, r32 t);
 Quat slerp(Quat from, Quat to, r32 t);
 
 r32  step(r32 edge, r32 val);
@@ -663,13 +662,13 @@ r32  move_toward(r32 from, r32 to, r32 factor);
 Vec2 move_toward(Vec2 from, Vec2 to, r32 factor);
 Vec3 move_toward(Vec3 from, Vec3 to, r32 factor);
 Vec4 move_toward(Vec4 from, Vec4 to, r32 factor);
-Quat move_toward(Quat from, Quat to, r32 factor);
 
 //
 //
 //
 
 Vec2 rotate_around(Vec2 point, Vec2 center, r32 angle);
+Quat rotate_toward(Quat from, Quat to, r32 max_angle);
 
 //
 //

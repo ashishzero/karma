@@ -1050,7 +1050,12 @@ Vec3 quat_get_euler_angles(Quat q) {
 Quat quat_between(Vec3 from, Vec3 to) {
 	Quat q;
 	q.v4.w   = 1.0f + vec3_dot(from, to);
-	q.v4.xyz = vec3_cross(from, to);
+
+	if (q.real) {
+		q.v4.xyz = vec3_cross(from, to);
+	} else {
+		q.v4.xyz = fabsf(from.x) > fabsf(from.z) ? vec3(-from.y, from.x, 0.f) : vec3(0.f, -from.z, from.y);
+	}
 
 	return quat_normalize(q);
 }
@@ -1281,7 +1286,7 @@ Vec3 slerp(Vec3 from, Vec3 to, r32 t) {
 }
 
 Quat slerp(Quat from, Quat to, r32 t) {
-	r32 dot = quat_dot(from, to);
+	r32 dot = clamp(-1.0f, 1.0f, quat_dot(from, to));
 
 	// use shorter path
 	if (dot < 0.0f) {
@@ -1389,12 +1394,6 @@ Vec4 move_toward(Vec4 from, Vec4 to, r32 factor) {
 	return vec4_clamp(from, to, from + factor * dir);
 }
 
-Quat move_toward(Quat from, Quat to, r32 factor) {
-	Quat res;
-	res.v4 = move_toward(from.v4, to.v4, factor);
-	return res;
-}
-
 //
 //
 //
@@ -1408,6 +1407,38 @@ Vec2 rotate_around(Vec2 point, Vec2 center, r32 angle) {
 	res.y  = p.x * s + p.y * c;
 	res += center;
 	return res;
+}
+
+Quat rotate_toward(Quat from, Quat to, r32 max_angle) {
+	if (max_angle) {
+		r32 dot = clamp(-1.0f, 1.0f, quat_dot(from, to));
+
+		// use shorter path
+		if (dot < 0.0f) {
+			to  = -to;
+			dot = -dot;
+		}
+
+		r32 theta_0 = acosf(dot);
+
+		if (theta_0 < max_angle) {
+			return to;
+		}
+
+		r32 t = max_angle / theta_0;
+
+		theta_0			= max_angle;
+		r32 theta       = theta_0 * t;
+		r32 sin_theta   = sinf(theta);
+		r32 sin_theta_0 = sinf(theta_0);
+
+		r32 s0 = cosf(theta) - dot * sin_theta / sin_theta_0;
+		r32 s1 = sin_theta / sin_theta_0;
+
+		return (s0 * from) + (s1 * to);
+	} else {
+		return from;
+	}
 }
 
 //
