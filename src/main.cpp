@@ -666,9 +666,9 @@ int system_main() {
 
 		Debug_TimedBlockEnd(EventHandling);
 
-		const Controller &input = system_get_controller_state(0);
-		controller.x = input.left_thumb.x;
-		controller.y = input.left_thumb.y;
+		Vec2 left_thumb = system_controller_left_thumb(0);
+		controller.x = left_thumb.x;
+		controller.y = left_thumb.y;
 
 		Debug_TimedBlockBegin(Simulation);
 

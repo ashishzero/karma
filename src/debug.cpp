@@ -246,8 +246,6 @@ void debug_mode_enable() {
 }
 
 bool debug_handle_event(Event &event) {
-	bool handled = false;
-
 	switch (event.type) {
 	case Event_Type_MOUSE_BUTTON_DOWN: {
 		if (event.mouse_button.symbol == Button_LEFT) {
@@ -267,16 +265,17 @@ bool debug_handle_event(Event &event) {
 	case Event_Type_MOUSE_CURSOR: {
 		io.mouse_cursor.x = (r32)event.mouse_cursor.x;
 		io.mouse_cursor.y = (r32)event.mouse_cursor.y;
-		handled = (profiler.resizing || io.hovered);
+	} break;
 
+	case Event_Type_MOUSE_AXIS: {
 		if (profiler.resizing) {
-			profiler.width   = max_value(profiler.width + event.mouse_cursor.x_rel, PROFILER_MIN_WIDTH);
-			profiler.height  = max_value(profiler.height + event.mouse_cursor.y_rel, PROFILER_MIN_HEIGHT);
+			profiler.width   = max_value(profiler.width + event.mouse_axis.dx, PROFILER_MIN_WIDTH);
+			profiler.height  = max_value(profiler.height + event.mouse_axis.dy, PROFILER_MIN_HEIGHT);
 		}
 	} break;
 	}
 
-	return handled;
+	return (profiler.resizing || io.hovered);
 }
 
 void debug_audio_feedback(r32 *samples, u32 size_in_bytes, u32 channel_count, u32 zeroed_size) {

@@ -7,7 +7,7 @@
 //
 //
 
-enum Key : u32 {
+enum Key : u8 {
 	Key_UNKNOWN = 0,
 	Key_A,
 	Key_B,
@@ -95,7 +95,7 @@ enum Key : u32 {
 	Key_COUNT
 };
 
-enum Key_Mod : u32 {
+enum Key_Mod : u8 {
 	Key_Mod_NONE        = bit(0),
 	Key_Mod_LEFT_SHIFT  = bit(1),
 	Key_Mod_RIGHT_SHIFT = bit(2),
@@ -108,9 +108,9 @@ enum Key_Mod : u32 {
 	Key_Mod_ALT   = Key_Mod_LEFT_ALT | Key_Mod_RIGHT_ALT,
 	Key_Mod_SHIFT = Key_Mod_LEFT_SHIFT | Key_Mod_RIGHT_SHIFT,
 };
-typedef u32 Key_Mods;
+typedef u8 Key_Mods;
 
-enum Button : u32 {
+enum Button : u8 {
 	Button_UNKNOWN,
 	Button_LEFT,
 	Button_MIDDLE,
@@ -119,6 +119,38 @@ enum Button : u32 {
 	Button_X2,
 
 	Button_COUNT
+};
+
+typedef u8 Controller_Id;
+
+enum Controller_Button : u8 {
+	Controller_Button_DPAD_UP,
+	Controller_Button_DPAD_DOWN,
+	Controller_Button_DPAD_LEFT,
+	Controller_Button_DPAD_RIGHT,
+	Controller_Button_START,
+	Controller_Button_BACK,
+	Controller_Button_LTHUMB,
+	Controller_Button_RTHUMB,
+	Controller_Button_LSHOULDER,
+	Controller_Button_RSHOULDER,
+	Controller_Button_A,
+	Controller_Button_B,
+	Controller_Button_X,
+	Controller_Button_Y,
+
+	Controller_Button_COUNT,
+};
+
+enum Controller_Axis : u8 {
+	Controller_Axis_THUMB_LEFT_X,
+	Controller_Axis_THUMB_LEFT_Y,
+	Controller_Axis_THUMB_RIGHT_X,
+	Controller_Axis_THUMB_RIGHT_Y,
+	Controller_Axis_TRIGGER_LEFT,
+	Controller_Axis_TRIGGER_RIGHT,
+
+	Controller_Axis_COUNT
 };
 
 //
@@ -148,13 +180,15 @@ enum Event_Type : u32 {
 
 	Event_Type_TEXT_INPUT = bit(12),
 
-	Event_Type_CONTROLLER_JOIN  = bit(13),
-	Event_Type_CONTROLLER_LEAVE = bit(14),
-	Event_Type_CONTROLLER       = Event_Type_CONTROLLER_JOIN | Event_Type_CONTROLLER_LEAVE,
+	Event_Type_CONTROLLER_JOIN		= bit(13),
+	Event_Type_CONTROLLER_LEAVE		= bit(14),
+	Event_Type_CONTROLLER_BUTTON	= bit(15),
+	Event_Type_CONTROLLER_AXIS		= bit(16),
+	Event_Type_CONTROLLER       = Event_Type_CONTROLLER_JOIN | Event_Type_CONTROLLER_LEAVE | Event_Type_CONTROLLER_BUTTON | Event_Type_CONTROLLER_AXIS,
 };
 typedef u32 Event_Types;
 
-enum State {
+enum State : u8 {
 	State_UP   = 0,
 	State_DOWN = 1
 };
@@ -162,7 +196,7 @@ enum State {
 struct Key_Event {
 	Key   symbol;
 	State state;
-	u32   repeat;
+	u8    repeat;
 };
 
 struct Mouse_Button_Event {
@@ -177,11 +211,11 @@ struct Mouse_Wheel_Event {
 
 struct Mouse_Cursor_Event {
 	s32 x, y;
-	s32 x_rel, y_rel;
 };
 
 struct Mouse_Axis_Event {
 	r32 x, y;
+	s32 dx, dy;
 };
 
 struct Window_Resize_Event {
@@ -192,22 +226,36 @@ struct Text_Event {
 	Utf32_Codepoint codepoint;
 };
 
-struct Controller_Event {
-	u32 index;
+struct Controller_Device_Event {
+	Controller_Id id;
+};
+
+struct Controller_Button_Event {
+	Controller_Button	symbol;
+	State				state;
+	Controller_Id		id;
+};
+
+struct Controller_Axis_Event {
+	Vec2			axis;
+	Controller_Axis	symbol;
+	Controller_Id	id;
 };
 
 struct Event {
 	Event_Types type;
 
 	union {
-		Key_Event           key;
-		Mouse_Button_Event  mouse_button;
-		Mouse_Wheel_Event   mouse_wheel;
-		Mouse_Cursor_Event  mouse_cursor;
-		Mouse_Axis_Event    mouse_axis;
-		Window_Resize_Event window;
-		Text_Event          text;
-		Controller_Event    controller;
+		Key_Event					key;
+		Mouse_Button_Event			mouse_button;
+		Mouse_Wheel_Event			mouse_wheel;
+		Mouse_Cursor_Event			mouse_cursor;
+		Mouse_Axis_Event			mouse_axis;
+		Window_Resize_Event			window;
+		Text_Event					text;
+		Controller_Device_Event		controller_device;
+		Controller_Button_Event		controller_button;
+		Controller_Axis_Event		controller_axis;
 	};
 
 	inline Event() {
@@ -215,31 +263,9 @@ struct Event {
 	}
 };
 
-enum Gamepad {
-	Gamepad_DPAD_UP,
-	Gamepad_DPAD_DOWN,
-	Gamepad_DPAD_LEFT,
-	Gamepad_DPAD_RIGHT,
-	Gamepad_START,
-	Gamepad_BACK,
-	Gamepad_LTHUMB,
-	Gamepad_RTHUMB,
-	Gamepad_LSHOULDER,
-	Gamepad_RSHOULDER,
-	Gamepad_A,
-	Gamepad_B,
-	Gamepad_X,
-	Gamepad_Y,
-
-	Gamepad_COUNT,
-};
-
 struct Controller {
-	State buttons[Gamepad_COUNT];
-	r32   left_trigger;
-	r32   right_trigger;
-	Vec2  left_thumb;
-	Vec2  right_thumb;
+	State	buttons[Controller_Button_COUNT];
+	r32		axis[Controller_Axis_COUNT];
 };
 
 //
@@ -443,14 +469,13 @@ Vec2     system_get_cursor_position();
 Vec2     system_get_cursor_position_y_inverted();
 
 u32               system_max_controllers();
-bool              system_controller_is_available(u32 index);
-void              system_controller_vibrate(u32 index, r32 left_motor, r32 right_motor);
-const Controller &system_get_controller_state(u32 index);
-State             system_controller_button(u32 index, Gamepad button);
-r32               system_controller_left_trigger(u32 index);
-r32               system_controller_right_trigger(u32 index);
-Vec2              system_controller_left_thumb(u32 index);
-Vec2              system_controller_right_thumb(u32 index);
+bool              system_controller_is_available(Controller_Id id);
+void              system_controller_vibrate(Controller_Id id, r32 left_motor, r32 right_motor);
+const Controller &system_get_controller_state(Controller_Id id);
+State             system_controller_button(Controller_Id id, Controller_Button button);
+r32				  system_controller_axis(Controller_Id id, Controller_Axis axis);
+Vec2              system_controller_left_thumb(Controller_Id id);
+Vec2              system_controller_right_thumb(Controller_Id id);
 
 u64 system_get_counter();
 u64 system_get_frequency();

@@ -714,7 +714,6 @@ static u32			 windows_event_count;
 
 static int		window_width;
 static int		window_height;
-static Vec2s	previous_cursor;
 
 static Audio_Client		windows_audio_client;
 
@@ -1591,15 +1590,6 @@ static LRESULT CALLBACK win32_wnd_proc(HWND wnd, UINT msg, WPARAM wparam, LPARAM
 				event.mouse_cursor.x = x;
 				event.mouse_cursor.y = y;
 			}
-
-			int x_rel = x - previous_cursor.x;
-			int y_rel = previous_cursor.y - y;
-
-			previous_cursor.x = x;
-			previous_cursor.y = y;
-
-			event.mouse_cursor.x_rel = x_rel;
-			event.mouse_cursor.y_rel = y_rel;
 		} break;
 
 		case WM_MOUSEWHEEL: {
@@ -1630,11 +1620,13 @@ static LRESULT CALLBACK win32_wnd_proc(HWND wnd, UINT msg, WPARAM wparam, LPARAM
 						LONG monitor_h = monitor_info.rcMonitor.bottom - monitor_info.rcMonitor.top;
 
 						LONG xrel = input->data.mouse.lLastX;
-						LONG yrel = -input->data.mouse.lLastY;
+						LONG yrel = input->data.mouse.lLastY;
 
 						event.type         = Event_Type_MOUSE_AXIS;
 						event.mouse_axis.x = (float)xrel / (float)monitor_w;
 						event.mouse_axis.y = (float)yrel / (float)monitor_h;
+						event.mouse_axis.dx = xrel;
+						event.mouse_axis.dy = yrel;
 					}
 				}
 			}
@@ -1779,7 +1771,6 @@ Handle system_create_window(const char *title, s32 width, s32 height, System_Win
 	auto window_size = system_get_client_size();
 	window_width = window_size.x;
 	window_width = window_size.y;
-	previous_cursor = system_get_cursor_position_vec2s();
 
 	if (!window_handle) {
 		win32_check_for_error();
@@ -1909,7 +1900,7 @@ const Array_View<Event> system_poll_events(int poll_count) {
 		}
 
 		XINPUT_STATE state;
-		for (int user_index = 0; user_index < XUSER_MAX_COUNT; ++user_index) {
+		for (Controller_Id user_index = 0; user_index < XUSER_MAX_COUNT; ++user_index) {
 			auto res = XInputGetState(user_index, &state);
 
 			if (res == ERROR_SUCCESS) {
@@ -1917,7 +1908,7 @@ const Array_View<Event> system_poll_events(int poll_count) {
 					if (!windows_controllers_state[user_index].connected) {
 						Event cevent;
 						cevent.type = Event_Type_CONTROLLER_JOIN;
-						cevent.controller.index = user_index;
+						cevent.controller_device.id = user_index;
 						win32_add_event(cevent);
 						windows_controllers_state[user_index].connected = true;
 					}
@@ -1925,31 +1916,36 @@ const Array_View<Event> system_poll_events(int poll_count) {
 					Controller *controller = controllers + user_index;
 					memset(controller->buttons, State_UP, sizeof(controllers->buttons));
 
-					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_UP) controller->buttons[Gamepad_DPAD_UP] = State_DOWN;
-					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_DOWN) controller->buttons[Gamepad_DPAD_DOWN] = State_DOWN;
-					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_LEFT) controller->buttons[Gamepad_DPAD_LEFT] = State_DOWN;
-					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_RIGHT) controller->buttons[Gamepad_DPAD_RIGHT] = State_DOWN;
-					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_START) controller->buttons[Gamepad_START] = State_DOWN;
-					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_BACK) controller->buttons[Gamepad_BACK] = State_DOWN;
-					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_LEFT_THUMB) controller->buttons[Gamepad_LTHUMB] = State_DOWN;
-					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_RIGHT_THUMB) controller->buttons[Gamepad_RTHUMB] = State_DOWN;
-					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_LEFT_SHOULDER) controller->buttons[Gamepad_LSHOULDER] = State_DOWN;
-					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_RIGHT_SHOULDER) controller->buttons[Gamepad_RSHOULDER] = State_DOWN;
-					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_A) controller->buttons[Gamepad_A] = State_DOWN;
-					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_B) controller->buttons[Gamepad_B] = State_DOWN;
-					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_X) controller->buttons[Gamepad_X] = State_DOWN;
-					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_Y) controller->buttons[Gamepad_Y] = State_DOWN;
+					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_UP) controller->buttons[Controller_Button_DPAD_UP] = State_DOWN;
+					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_DOWN) controller->buttons[Controller_Button_DPAD_DOWN] = State_DOWN;
+					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_LEFT) controller->buttons[Controller_Button_DPAD_LEFT] = State_DOWN;
+					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_RIGHT) controller->buttons[Controller_Button_DPAD_RIGHT] = State_DOWN;
+					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_START) controller->buttons[Controller_Button_START] = State_DOWN;
+					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_BACK) controller->buttons[Controller_Button_BACK] = State_DOWN;
+					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_LEFT_THUMB) controller->buttons[Controller_Button_LTHUMB] = State_DOWN;
+					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_RIGHT_THUMB) controller->buttons[Controller_Button_RTHUMB] = State_DOWN;
+					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_LEFT_SHOULDER) controller->buttons[Controller_Button_LSHOULDER] = State_DOWN;
+					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_RIGHT_SHOULDER) controller->buttons[Controller_Button_RSHOULDER] = State_DOWN;
+					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_A) controller->buttons[Controller_Button_A] = State_DOWN;
+					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_B) controller->buttons[Controller_Button_B] = State_DOWN;
+					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_X) controller->buttons[Controller_Button_X] = State_DOWN;
+					if (state.Gamepad.wButtons & XINPUT_GAMEPAD_Y) controller->buttons[Controller_Button_Y] = State_DOWN;
 
-					controller->left_trigger = xinput_trigger_deadzone_correction(state.Gamepad.bLeftTrigger, XINPUT_GAMEPAD_TRIGGER_THRESHOLD);
-					controller->right_trigger = xinput_trigger_deadzone_correction(state.Gamepad.bRightTrigger, XINPUT_GAMEPAD_TRIGGER_THRESHOLD);
-					controller->left_thumb = xinput_axis_deadzone_correction(state.Gamepad.sThumbLX, state.Gamepad.sThumbLY, XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
-					controller->right_thumb = xinput_axis_deadzone_correction(state.Gamepad.sThumbRX, state.Gamepad.sThumbRY, XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE);
+					controller->axis[Controller_Axis_TRIGGER_LEFT]  = xinput_trigger_deadzone_correction(state.Gamepad.bLeftTrigger, XINPUT_GAMEPAD_TRIGGER_THRESHOLD);
+					controller->axis[Controller_Axis_TRIGGER_RIGHT] = xinput_trigger_deadzone_correction(state.Gamepad.bRightTrigger, XINPUT_GAMEPAD_TRIGGER_THRESHOLD);
+
+					Vec2 left_thumb  = xinput_axis_deadzone_correction(state.Gamepad.sThumbLX, state.Gamepad.sThumbLY, XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
+					Vec2 right_thumb = xinput_axis_deadzone_correction(state.Gamepad.sThumbRX, state.Gamepad.sThumbRY, XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE);
+					controller->axis[Controller_Axis_THUMB_LEFT_X]	= left_thumb.x;
+					controller->axis[Controller_Axis_THUMB_LEFT_Y]	= left_thumb.y;
+					controller->axis[Controller_Axis_THUMB_RIGHT_X] = right_thumb.x;
+					controller->axis[Controller_Axis_THUMB_RIGHT_Y] = right_thumb.y;
 				}
 			}
 			else if (windows_controllers_state[user_index].connected) {
 				Event cevent;
 				cevent.type = Event_Type_CONTROLLER_LEAVE;
-				cevent.controller.index = user_index;
+				cevent.controller_device.id = user_index;
 				win32_add_event(cevent);
 				windows_controllers_state[user_index].connected = false;
 
@@ -2027,49 +2023,50 @@ u32 system_max_controllers() {
 	return XUSER_MAX_COUNT;
 }
 
-bool system_controller_is_available(u32 index) {
-	assert(index < XUSER_MAX_COUNT);
-	return windows_controllers_state[index].connected;
+bool system_controller_is_available(Controller_Id id) {
+	assert(id < XUSER_MAX_COUNT);
+	return windows_controllers_state[id].connected;
 }
 
-void system_controller_vibrate(u32 index, r32 left_motor, r32 right_motor) {
-	assert(index < XUSER_MAX_COUNT);
+void system_controller_vibrate(Controller_Id id, r32 left_motor, r32 right_motor) {
+	assert(id < XUSER_MAX_COUNT);
 
 	XINPUT_VIBRATION in_vibration;
 	in_vibration.wLeftMotorSpeed  = (WORD)(left_motor * XINPUT_GAMEPAD_VIBRATION_MAX);
 	in_vibration.wRightMotorSpeed = (WORD)(right_motor * XINPUT_GAMEPAD_VIBRATION_MAX);
 
-	XInputSetState(index, &in_vibration);
+	XInputSetState(id, &in_vibration);
 }
 
-const Controller &system_get_controller_state(u32 index) {
-	assert(index < XUSER_MAX_COUNT);
-	return controllers[index];
+const Controller &system_get_controller_state(Controller_Id id) {
+	assert(id < XUSER_MAX_COUNT);
+	return controllers[id];
 }
 
-State system_controller_button(u32 index, Gamepad button) {
-	assert(index < XUSER_MAX_COUNT);
-	return controllers[index].buttons[button];
+State system_controller_button(Controller_Id id, Controller_Button button) {
+	assert(id < XUSER_MAX_COUNT);
+	return controllers[id].buttons[button];
 }
 
-r32 system_controller_left_trigger(u32 index) {
-	assert(index < XUSER_MAX_COUNT);
-	return controllers[index].left_trigger;
+r32 system_controller_axis(Controller_Id id, Controller_Axis axis) {
+	assert(id < XUSER_MAX_COUNT);
+	return controllers[id].axis[axis];
 }
 
-r32 system_controller_right_trigger(u32 index) {
-	assert(index < XUSER_MAX_COUNT);
-	return controllers[index].right_trigger;
+Vec2 system_controller_left_thumb(Controller_Id id) {
+	assert(id < XUSER_MAX_COUNT);
+	Vec2 result;
+	result.x = controllers[id].axis[Controller_Axis_THUMB_LEFT_X];
+	result.y = controllers[id].axis[Controller_Axis_THUMB_LEFT_Y];
+	return result;
 }
 
-Vec2 system_controller_left_thumb(u32 index) {
-	assert(index < XUSER_MAX_COUNT);
-	return controllers[index].left_thumb;
-}
-
-Vec2 system_controller_right_thumb(u32 index) {
-	assert(index < XUSER_MAX_COUNT);
-	return controllers[index].right_thumb;
+Vec2 system_controller_right_thumb(Controller_Id id) {
+	assert(id < XUSER_MAX_COUNT);
+	Vec2 result;
+	result.x = controllers[id].axis[Controller_Axis_THUMB_RIGHT_X];
+	result.y = controllers[id].axis[Controller_Axis_THUMB_RIGHT_Y];
+	return result;
 }
 
 u64 system_get_counter() {
