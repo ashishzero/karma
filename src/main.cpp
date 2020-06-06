@@ -427,6 +427,7 @@ Texture2d_Handle debug_load_texture(const char * filepath) {
 
 struct Player {
 	Vec3 position = vec3(0, 0, 1);
+	Vec3 position_target = position;
 	Quat face_direction = quat_identity();
 	Quat face_direction_target = face_direction;
 
@@ -474,7 +475,7 @@ void editor_update(Audio_Mixer *mixer, Player *player) {
 	ImGui::DragFloat("Volume", &volume, 0.01f, 0.0f, 1.0f);
 
 	ImGui::Text("Player");
-	ImGui::DragFloat3("Position: (%.3f, %.3f, %.3f)", player->position.m);
+	ImGui::DragFloat3("Target Position: (%.3f, %.3f, %.3f)", player->position_target.m);
 	ImGui::Text("Face Direction: (%.3f, %.3f, %.3f)", player->face_direction.x, player->face_direction.y, player->face_direction.z);
 	ImGui::DragFloat("Mass: %.3f", &player->mass, 0.1f);
 	ImGui::DragFloat("Friction: %.3f", &player->friction_coefficient, 0.01f, 0.0f, 1.0f);
@@ -526,7 +527,7 @@ int system_main() {
 
 	Player player;
 	Player_Controller controller = {};
-	Camera camera = camera_create(player.position);
+	Camera camera = camera_create(player.position_target);
 
 	bool  running = true;
 
@@ -611,7 +612,7 @@ int system_main() {
 						// TODO: properly reset level!!
 						Debug_NotifySuccess("Level Reset");
 						player = Player{};
-						camera = camera_create(player.position);
+						camera = camera_create(player.position_target);
 				}
 			}
 #endif
@@ -683,10 +684,14 @@ int system_main() {
 
 		player.force = vec3(0);
 
-		Vec2 movement_direction = vec2_normalize_check(vec2(controller.x, controller.y));
-		r32 movement_magnitude = vec2_length(movement_direction);
-		if (movement_magnitude) {
-			player.face_direction_target = quat_between(vec3(0, 1, 0), vec3(movement_direction, 0));
+		Vec2 player_movement;
+		Vec2 control_absolute = vec2(fabsf(controller.x), fabsf(controller.y));
+		if (control_absolute.x > control_absolute.y) {
+			player_movement = vec2(sgn(controller.x), 0);
+		} else if (control_absolute.y > control_absolute.x) {
+			player_movement = vec2(0, sgn(controller.y));
+		} else {
+			player_movement = vec2(0);
 		}
 
 		const float gravity = 10.f;
@@ -700,7 +705,7 @@ int system_main() {
 				player.face_direction = rotate_toward(player.face_direction, player.face_direction_target, player.turn_velocity * dt);
 
 				float effective_friction_coeff = ground_friction_coefficient * player.friction_coefficient;
-				player.force += (player.movement_force * movement_magnitude) * vec3(movement_direction, 0);
+				player.force += player.movement_force * vec3(player_movement, 0);
 
 				r32 frictional_force_mag = effective_friction_coeff * gravity * player.mass;
 				r32 force_mag = vec3_length(player.force);
@@ -722,7 +727,8 @@ int system_main() {
 				Vec3 acceleration = (player.force / player.mass);
 				player.velocity += dt * acceleration;
 				player.velocity *= powf(0.5f, player.drag * dt);
-				player.position += dt * player.velocity;
+				player.position_target += dt * player.velocity;
+				player.position = vec3(roundf(player.position_target.x), roundf(player.position_target.y), roundf(player.position_target.z));
 
 				camera.position_target.xy = player.position.xy; // + vec2(0.5f, 0.5f);
 				camera.position = lerp(camera.position, camera.position_target, 1.0f - powf(1.0f - 0.9f, dt));
@@ -870,7 +876,6 @@ int system_main() {
 			}
 		}
 
-		im_circle_outline(player.position, 0.5f, vec4(1, 1, 0), thickness);
 
 		r32 angle;
 		Vec3 axis;
@@ -878,6 +883,10 @@ int system_main() {
 
 		im_bind_texture(player_sprite);
 		im_rect_centered_rotated(player.position, vec2(1), axis.z * angle, vec4(1));
+
+		im_unbind_texture();
+		im_circle_outline(player.position, 0.5f, vec4(1, 1, 0), thickness);
+		im_circle(player.position_target, 0.08f, vec4(1, 0, 0));
 
 		im_end();
 
