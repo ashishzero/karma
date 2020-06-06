@@ -9,10 +9,8 @@
 #include "stream.h"
 #include "audio.h"
 
-constexpr r32 TOTAL_GRID_HORIZONTAL = 32;
-constexpr r32 TOTAL_GRID_VERTICAL	= 16;
-constexpr r32 HALF_GRID_HORIZONTAL	= TOTAL_GRID_HORIZONTAL / 2;
-constexpr r32 HALF_GRID_VERTICAL	= TOTAL_GRID_VERTICAL / 2;
+constexpr r32 TOTAL_GRID_X = 25;
+constexpr r32 TOTAL_GRID_Y = 15;
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -432,12 +430,12 @@ struct Player {
 	Quat face_direction = quat_identity();
 	Quat face_direction_target = face_direction;
 
-	r32 movement_force = 500;
+	r32 movement_force = 1000;
 
 	r32 mass = 50;
-	r32 drag = 3;
+	r32 drag = 6;
 	r32 friction_coefficient = 0.5f;
-	r32 turn_velocity = 2.5f;
+	r32 turn_velocity = 5;
 	Vec3 velocity = vec3(0);
 	Vec3 force = vec3(0);
 };
@@ -449,18 +447,21 @@ struct Player_Controller {
 
 struct Camera {
 	Vec3 position;
-	r32 distance;
-	r32 distance_target;
+	Vec3 position_target;
 
 	Camera_View view;
 };
 
-Camera camera_create(Vec3 position, r32 distance = 0.5f, r32 target_distance = 1.3f) {
+Camera camera_create(Vec3 position, r32 distance = 0.5f, r32 target_distance = 1, r32 aspect_ratio = 1280.0f / 720.0f) {
+	r32 half_height = 0.5f * TOTAL_GRID_Y;
+	r32 half_width = half_height * aspect_ratio;
+
 	Camera camera;
 	camera.position = position;
-	camera.distance = distance;
-	camera.distance_target = target_distance;
-	camera.view = orthographic_view(-HALF_GRID_HORIZONTAL, HALF_GRID_HORIZONTAL, HALF_GRID_VERTICAL, -HALF_GRID_VERTICAL);
+	camera.position_target = camera.position;
+	camera.position.z = distance;
+	camera.position_target.z = target_distance;
+	camera.view = orthographic_view(-half_width, half_width, half_height, -half_height);
 	return camera;
 }
 
@@ -723,9 +724,8 @@ int system_main() {
 				player.velocity *= powf(0.5f, player.drag * dt);
 				player.position += dt * player.velocity;
 
-				Vec2 camera_player_offset = vec2(-0.5f);
-				camera.position.xy = lerp(camera.position.xy, player.position.xy - camera_player_offset, 1.0f - powf(1.0f - 0.9f, dt));
-				camera.distance = lerp(camera.distance, camera.distance_target, 1.0f - powf(1.0f - 0.9f, dt));
+				camera.position_target.xy = player.position.xy; // + vec2(0.5f, 0.5f);
+				camera.position = lerp(camera.position, camera.position_target, 1.0f - powf(1.0f - 0.9f, dt));
 
 #if 0
 
@@ -851,25 +851,26 @@ int system_main() {
 
 		ImGui_UpdateFrame(real_dt);
 
-		r32 camera_zoom = 1.0f / powf(2.0f, camera.distance);
+		r32 camera_zoom = 1.0f / powf(2.0f, camera.position.z);
 
-		r32 thickness = 8.0f / (TOTAL_GRID_HORIZONTAL * TOTAL_GRID_VERTICAL);
+		r32 thickness = 8.0f / (TOTAL_GRID_X * TOTAL_GRID_Y);
 
-		Mat4 transform = mat4_inverse(mat4_translation(camera.position) * mat4_scalar(camera_zoom, camera_zoom, 1)) * mat4_translation(vec3(0.5f, 0.5f, 0));
+		Mat4 transform = mat4_inverse(mat4_translation(camera.position) * mat4_scalar(camera_zoom, camera_zoom, 1));
 
 		gfx_begin_drawing(Framebuffer_Type_HDR, Clear_COLOR | Clear_DEPTH, vec4(0.02f, 0.02f, 0.02f));
 		gfx_viewport(0, 0, framebuffer_w, framebuffer_h);
 
 		im_begin(camera.view, transform);
 		im_unbind_texture();
-		for (r32 x = -5; x < 5; ++x) {
-			for (r32 y = -5; y < 5; ++y) {
-				im_rect_centered(vec3(x, y, 1), vec2(1.1f), vec4(0, 0.3f, 0));
-				im_rect_centered(vec3(x, y, 1), vec2(1), vec4(0.1f, 0.9f, 0.2f));
+		for (r32 x = -2; x < 3; ++x) {
+			for (r32 y = -2; y < 3; ++y) {
+				im_rect_centered(vec3(x, y, 1), vec2(1), vec4(0, 0.3f, 0));
+				im_rect_centered(vec3(x, y, 1), vec2(0.95f), vec4(0.1f, 0.9f, 0.2f));
+				im_rect_centered(vec3(x, y, 1), vec2(0.09f), vec4(1, 1, 1));
 			}
 		}
 
-		im_rect_centered_outline2d(player.position, vec2(1), vec4(1, 1, 0), thickness);
+		im_circle_outline(player.position, 0.5f, vec4(1, 1, 0), thickness);
 
 		r32 angle;
 		Vec3 axis;

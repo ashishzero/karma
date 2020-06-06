@@ -1373,25 +1373,55 @@ r32 inverse_smoothstep(r32 x) {
 	return 0.5f - sinf(asinf(1.0f - 2.0f * x) / 3.0f);
 }
 
-r32 move_toward(r32 from, r32 to, r32 factor) {
-	r32 distance  = to - from;
-	r32 direction = sgn(distance);
-	return clamp(from, to, from + factor * direction);
-}
-
 Vec2 move_toward(Vec2 from, Vec2 to, r32 factor) {
-	Vec2 dir = vec2_normalize_check(to - from);
-	return vec2_clamp(from, to, from + factor * dir);
+	if (factor) {
+		Vec2 direction = to - from;
+		r32 distance = vec2_length(direction);
+
+		if (distance < factor) {
+			return to;
+		}
+
+		r32 t = factor / distance;
+
+		return lerp(to, from, t);
+	}
+
+	return from;
 }
 
 Vec3 move_toward(Vec3 from, Vec3 to, r32 factor) {
-	Vec3 dir = vec3_normalize_check(to - from);
-	return vec3_clamp(from, to, from + factor * dir);
+	if (factor) {
+		Vec3 direction = to - from;
+		r32 distance = vec3_length(direction);
+
+		if (distance < factor) {
+			return to;
+		}
+
+		r32 t = factor / distance;
+
+		return lerp(to, from, t);
+	}
+
+	return from;
 }
 
 Vec4 move_toward(Vec4 from, Vec4 to, r32 factor) {
-	Vec4 dir = vec4_normalize_check(to - from);
-	return vec4_clamp(from, to, from + factor * dir);
+	if (factor) {
+		Vec4 direction = to - from;
+		r32 distance = vec4_length(direction);
+
+		if (distance < factor) {
+			return to;
+		}
+
+		r32 t = factor / distance;
+
+		return lerp(to, from, t);
+	}
+
+	return from;
 }
 
 //

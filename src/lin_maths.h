@@ -658,7 +658,6 @@ r32 inverse_smoothstep(r32 x);
 //
 //
 
-r32  move_toward(r32 from, r32 to, r32 factor);
 Vec2 move_toward(Vec2 from, Vec2 to, r32 factor);
 Vec3 move_toward(Vec3 from, Vec3 to, r32 factor);
 Vec4 move_toward(Vec4 from, Vec4 to, r32 factor);
