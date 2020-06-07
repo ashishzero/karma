@@ -188,21 +188,21 @@ enum Event_Type : u32 {
 };
 typedef u32 Event_Types;
 
-enum State : u8 {
-	State_UP   = 0,
-	State_DOWN = 1
+enum Key_State : u8 {
+	Key_State_UP   = 0,
+	Key_State_DOWN = 1
 };
 
 struct Key_Event {
-	Key   symbol;
-	State state;
-	u8    repeat;
+	Key			symbol;
+	Key_State	state;
+	u8			repeat;
 };
 
 struct Mouse_Button_Event {
-	Vec2s  position;
-	Button symbol;
-	State  state;
+	Vec2s		position;
+	Button		symbol;
+	Key_State	state;
 };
 
 struct Mouse_Wheel_Event {
@@ -232,7 +232,7 @@ struct Controller_Device_Event {
 
 struct Controller_Button_Event {
 	Controller_Button	symbol;
-	State				state;
+	Key_State			state;
 	Controller_Id		id;
 };
 
@@ -264,8 +264,8 @@ struct Event {
 };
 
 struct Controller {
-	State	buttons[Controller_Button_COUNT];
-	r32		axis[Controller_Axis_COUNT];
+	Key_State	buttons[Controller_Button_COUNT];
+	r32			axis[Controller_Axis_COUNT];
 };
 
 //
@@ -461,18 +461,18 @@ void system_audio_pause();
 
 const Array_View<Event> system_poll_events(int poll_count = 1);
 
-State    system_button(Button button);
-Key_Mods system_get_key_mods();
-Vec2s	 system_get_cursor_position_vec2s();
-Vec2s	 system_get_cursor_position_y_inverted_vec2s();
-Vec2     system_get_cursor_position();
-Vec2     system_get_cursor_position_y_inverted();
+Key_State system_button(Button button);
+Key_Mods  system_get_key_mods();
+Vec2s	  system_get_cursor_position_vec2s();
+Vec2s	  system_get_cursor_position_y_inverted_vec2s();
+Vec2      system_get_cursor_position();
+Vec2      system_get_cursor_position_y_inverted();
 
 u32               system_max_controllers();
 bool              system_controller_is_available(Controller_Id id);
 void              system_controller_vibrate(Controller_Id id, r32 left_motor, r32 right_motor);
 const Controller &system_get_controller_state(Controller_Id id);
-State             system_controller_button(Controller_Id id, Controller_Button button);
+Key_State         system_controller_button(Controller_Id id, Controller_Button button);
 r32				  system_controller_axis(Controller_Id id, Controller_Axis axis);
 Vec2              system_controller_left_thumb(Controller_Id id);
 Vec2              system_controller_right_thumb(Controller_Id id);

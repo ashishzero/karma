@@ -13,9 +13,9 @@
 #include "stb_image.h"
 
 #if 0
-#include <time.h>
-#include <stdlib.h>
-#define NUM_RIGID_BODIES 20
+#	include <time.h>
+#	include <stdlib.h>
+#	define NUM_RIGID_BODIES 20
 
 int initial = 0;
 int xy      = 2000;
@@ -158,13 +158,13 @@ enum Time_State {
 };
 
 struct Audio {
-	Audio_Stream	*stream;	// TODO: Use somekind of reference
-	booli			playing;
-	booli			loop;
-	r32				pitch_factor;
-	r32				volume;		// TODO: Seperate channel volume?
-	r32				samples_played;
-	r32				buffered_pitch_factor;
+	Audio_Stream *stream; // TODO: Use somekind of reference
+	booli         playing;
+	booli         loop;
+	r32           pitch_factor;
+	r32           volume; // TODO: Seperate channel volume?
+	r32           samples_played;
+	r32           buffered_pitch_factor;
 };
 
 struct Audio_Node {
@@ -177,42 +177,42 @@ struct Audio_Mixer {
 	u32 samples_rate;
 	u32 channel_count;
 
-	Handle				mutex;
-	Audio_Node			list; // NOTE: This is sentinel (first indicator), real node start from list.next
-	u32					buffer_size_in_sample_count;
-	u32					buffer_size_in_bytes;
-	u32					buffer_consumed_bytes;
-	r32					*buffer;
+	Handle     mutex;
+	Audio_Node list; // NOTE: This is sentinel (first indicator), real node start from list.next
+	u32        buffer_size_in_sample_count;
+	u32        buffer_size_in_bytes;
+	u32        buffer_consumed_bytes;
+	r32 *      buffer;
 
 	r32 volume_a;
 	r32 volume_b;
 	r32 volume_position; // in samples
-	r32 volume_span;	 // in samples
+	r32 volume_span;     // in samples
 	r32 pitch_factor;
 };
 
 Audio_Mixer audio_mixer() {
 	Audio_Mixer mixer;
 
-	mixer.samples_rate = system_audio_sample_rate();
+	mixer.samples_rate  = system_audio_sample_rate();
 	mixer.channel_count = system_audio_channel_count();
 
 	// TODO: We only support these currently
 	assert(mixer.samples_rate == 48000);
 	assert(mixer.channel_count == 2);
 
-	mixer.mutex = system_create_mutex();
-	mixer.list = {};
+	mixer.mutex                       = system_create_mutex();
+	mixer.list                        = {};
 	mixer.buffer_size_in_sample_count = (mixer.samples_rate * SYSTEM_AUDIO_BUFFER_SIZE_IN_MILLISECS) / 1000;
-	mixer.buffer_size_in_bytes = sizeof(r32) * mixer.buffer_size_in_sample_count * mixer.channel_count;
-	mixer.buffer = (r32 *)tallocate(mixer.buffer_size_in_bytes);
-	mixer.buffer_consumed_bytes = 0;
+	mixer.buffer_size_in_bytes        = sizeof(r32) * mixer.buffer_size_in_sample_count * mixer.channel_count;
+	mixer.buffer                      = (r32 *)tallocate(mixer.buffer_size_in_bytes);
+	mixer.buffer_consumed_bytes       = 0;
 
-	mixer.volume_a = 0.5f;
-	mixer.volume_b = 0.5f;
+	mixer.volume_a        = 0.5f;
+	mixer.volume_b        = 0.5f;
 	mixer.volume_position = 1;
-	mixer.volume_span = 1;
-	mixer.pitch_factor = 1;
+	mixer.volume_span     = 1;
+	mixer.pitch_factor    = 1;
 
 	return mixer;
 }
@@ -222,31 +222,31 @@ void audio_mixer_set_volume(Audio_Mixer *mixer, r32 volume) {
 }
 
 void audio_mixer_animate_volume_to(Audio_Mixer *mixer, r32 volume, r32 secs) {
-	mixer->volume_a = lerp(mixer->volume_a, mixer->volume_b, clamp01(mixer->volume_position / mixer->volume_span));
-	mixer->volume_b = volume;
+	mixer->volume_a        = lerp(mixer->volume_a, mixer->volume_b, clamp01(mixer->volume_position / mixer->volume_span));
+	mixer->volume_b        = volume;
 	mixer->volume_position = 0;
-	mixer->volume_span = mixer->samples_rate * secs;
+	mixer->volume_span     = mixer->samples_rate * secs;
 }
 
 void audio_mixer_animate_volume(Audio_Mixer *mixer, r32 volume_a, r32 volume_b, r32 secs) {
-	mixer->volume_a = volume_a;
-	mixer->volume_b = volume_b;
+	mixer->volume_a        = volume_a;
+	mixer->volume_b        = volume_b;
 	mixer->volume_position = 0;
-	mixer->volume_span = mixer->samples_rate * secs;
+	mixer->volume_span     = mixer->samples_rate * secs;
 }
 
 Audio *play_audio(Audio_Mixer *mixer, Audio_Stream *stream, bool loop) {
 	// TODO: Do allocations properly!!
-	Audio_Node *node = new Audio_Node;
-	node->audio.stream = stream;
-	node->audio.playing = true;
-	node->audio.loop = loop;
-	node->audio.pitch_factor = 1;
-	node->audio.volume = 1;
-	node->audio.samples_played = 0;
+	Audio_Node *node                  = new Audio_Node;
+	node->audio.stream                = stream;
+	node->audio.playing               = true;
+	node->audio.loop                  = loop;
+	node->audio.pitch_factor          = 1;
+	node->audio.volume                = 1;
+	node->audio.samples_played        = 0;
 	node->audio.buffered_pitch_factor = 1;
 
-	node->next = mixer->list.next;
+	node->next       = mixer->list.next;
 	mixer->list.next = node;
 
 	assert(node == (Audio_Node *)&node->audio); // This has to be same so as to remove audio from list easily
@@ -259,7 +259,7 @@ void system_refresh_audio_device(u32 sample_rate, u32 channel_count, void *user_
 
 	system_lock_mutex(mixer->mutex, WAIT_INFINITE);
 
-	mixer->samples_rate = sample_rate;
+	mixer->samples_rate  = sample_rate;
 	mixer->channel_count = channel_count;
 
 	// TODO: We only support these currently
@@ -267,9 +267,9 @@ void system_refresh_audio_device(u32 sample_rate, u32 channel_count, void *user_
 	assert(mixer->channel_count == 2);
 
 	mixer->buffer_size_in_sample_count = (mixer->samples_rate * SYSTEM_AUDIO_BUFFER_SIZE_IN_MILLISECS) / 1000;
-	mixer->buffer_size_in_bytes = sizeof(r32) * mixer->buffer_size_in_sample_count * mixer->channel_count;
-	mixer->buffer = (r32 *)tallocate(mixer->buffer_size_in_bytes);
-	mixer->buffer_consumed_bytes = 0;
+	mixer->buffer_size_in_bytes        = sizeof(r32) * mixer->buffer_size_in_sample_count * mixer->channel_count;
+	mixer->buffer                      = (r32 *)tallocate(mixer->buffer_size_in_bytes);
+	mixer->buffer_consumed_bytes       = 0;
 
 	system_unlock_mutex(mixer->mutex);
 }
@@ -284,8 +284,8 @@ void system_update_audio(const System_Audio &sys_audio, void *user_data) {
 	u32 sample_count;
 	u8 *sys_buffer = sys_audio.lock(sys_audio.handle, &sample_count);
 	if (sys_buffer) {
-		u32 buffer_size = sizeof(r32) * channel_count * sample_count;
-		u8 *src_ptr = (u8 *)mixer->buffer + mixer->buffer_consumed_bytes;
+		u32 buffer_size  = sizeof(r32) * channel_count * sample_count;
+		u8 *src_ptr      = (u8 *)mixer->buffer + mixer->buffer_consumed_bytes;
 		u8 *one_past_end = (u8 *)mixer->buffer + mixer->buffer_size_in_bytes;
 		assert(one_past_end >= src_ptr);
 		u32 copy_size = min_value((u32)(one_past_end - src_ptr), buffer_size);
@@ -298,7 +298,7 @@ void system_update_audio(const System_Audio &sys_audio, void *user_data) {
 		mixer->buffer_consumed_bytes += copy_size;
 		mixer->volume_position += sample_count * mixer->pitch_factor;
 
-		for (Audio_Node *node = mixer->list.next ; node; node = node->next) {
+		for (Audio_Node *node = mixer->list.next; node; node = node->next) {
 			Audio &audio = node->audio;
 			if (audio.playing) {
 				audio.samples_played += audio.buffered_pitch_factor * (r32)sample_count;
@@ -327,17 +327,17 @@ void audio_mixer_update(Audio_Mixer *mixer) {
 		assert(node->audio.stream->fmt->channels_count == 2);
 
 		if (node->audio.playing) {
-			Audio &audio = node->audio;
-			audio.buffered_pitch_factor	= audio.pitch_factor * mixer->pitch_factor;
+			Audio &audio                = node->audio;
+			audio.buffered_pitch_factor = audio.pitch_factor * mixer->pitch_factor;
 
-			r32 *write_ptr = mixer->buffer;
-			r32 read_cursor = audio.samples_played;
-			r32 volume_position = mixer->volume_position;
+			r32 *write_ptr       = mixer->buffer;
+			r32  read_cursor     = audio.samples_played;
+			r32  volume_position = mixer->volume_position;
 
 			for (u32 sample_counter = 0; sample_counter < mixer->buffer_size_in_sample_count;) {
-				u32 more_samples_required	= (mixer->buffer_size_in_sample_count - sample_counter);
-				u32 samples_available		= (u32)lroundf(((r32)audio.stream->sample_count - read_cursor) / audio.buffered_pitch_factor);
-				u32 samples_to_mix			= min_value(samples_available, more_samples_required);
+				u32 more_samples_required = (mixer->buffer_size_in_sample_count - sample_counter);
+				u32 samples_available     = (u32)lroundf(((r32)audio.stream->sample_count - read_cursor) / audio.buffered_pitch_factor);
+				u32 samples_to_mix        = min_value(samples_available, more_samples_required);
 
 				r32 effective_volume;
 
@@ -346,12 +346,12 @@ void audio_mixer_update(Audio_Mixer *mixer) {
 
 					effective_volume = audio.volume * lerp(mixer->volume_a, mixer->volume_b, clamp01((volume_position + sample_mix_index * mixer->pitch_factor) / mixer->volume_span));
 
-					#define AUDIO_APPLY_PITCH_FILTERING
+#define AUDIO_APPLY_PITCH_FILTERING
 
-					#ifdef AUDIO_APPLY_PITCH_FILTERING
+#ifdef AUDIO_APPLY_PITCH_FILTERING
 
 					r32 real_sample_index = read_cursor + sample_mix_index * audio.buffered_pitch_factor;
-					u32 sample_index_0 = (u32)(real_sample_index);
+					u32 sample_index_0    = (u32)(real_sample_index);
 					assert(sample_index_0 < audio.stream->sample_count);
 					u32 sample_index_1 = (sample_index_0 + 1 == audio.stream->sample_count) ? sample_index_0 : sample_index_0 + 1;
 
@@ -366,7 +366,7 @@ void audio_mixer_update(Audio_Mixer *mixer) {
 					write_ptr[0] += lerp(sampled_left_0, sampled_left_1, sample_t) * effective_volume;
 					write_ptr[1] += lerp(sampled_right_0, sampled_right_1, sample_t) * effective_volume;
 
-					#else
+#else
 
 					u32 sample_index = lroundf(read_cursor + sample_mix_index * audio.buffered_pitch_factor);
 					assert(sample_index < audio.stream->sample_count);
@@ -374,10 +374,10 @@ void audio_mixer_update(Audio_Mixer *mixer) {
 					r32 sampled_left  = INVERSE_RANGE_S16 * ((r32)audio.stream->samples[2 * sample_index + 0] - (r32)MIN_INT16) - 1.0f;
 					r32 sampled_right = INVERSE_RANGE_S16 * ((r32)audio.stream->samples[2 * sample_index + 1] - (r32)MIN_INT16) - 1.0f;
 
-					write_ptr[0] += sampled_left  * effective_volume;
+					write_ptr[0] += sampled_left * effective_volume;
 					write_ptr[1] += sampled_right * effective_volume;
 
-					#endif
+#endif
 
 					write_ptr[0] = clamp(-1.0f, 1.0f, write_ptr[0]);
 					write_ptr[1] = clamp(-1.0f, 1.0f, write_ptr[1]);
@@ -398,7 +398,6 @@ void audio_mixer_update(Audio_Mixer *mixer) {
 						read_cursor -= audio.stream->sample_count;
 					}
 				}
-
 			}
 		}
 	}
@@ -408,17 +407,17 @@ void audio_mixer_update(Audio_Mixer *mixer) {
 
 struct Editor {
 	bool display = false;
-	bool guide = true;
+	bool guide   = true;
 };
 
 static Editor editor;
 
-Texture2d_Handle debug_load_texture(const char * filepath) {
+Texture2d_Handle debug_load_texture(const char *filepath) {
 	stbi_set_flip_vertically_on_load(1);
 
-	int w, h, n;
-	unsigned char *pixels = stbi_load(filepath, &w, &h, &n, 4);
-	auto texture = gfx_create_texture2d(u32(w), u32(h), u32(n), Data_Format_RGBA8_UNORM_SRGB, (const u8 **)&pixels, Buffer_Usage_IMMUTABLE, 1);
+	int            w, h, n;
+	unsigned char *pixels  = stbi_load(filepath, &w, &h, &n, 4);
+	auto           texture = gfx_create_texture2d(u32(w), u32(h), u32(n), Data_Format_RGBA8_UNORM_SRGB, (const u8 **)&pixels, Buffer_Usage_IMMUTABLE, 1);
 	stbi_image_free(pixels);
 	return texture;
 }
@@ -427,7 +426,7 @@ constexpr int TOTAL_GRID_X = 25;
 constexpr int TOTAL_GRID_Y = 15;
 
 enum {
-	Cell_Type_PLACE = 0,
+	Cell_Type_PLACE  = 0,
 	Cell_Type_VACUUM = 1,
 };
 
@@ -451,20 +450,44 @@ static Cell map_cells[TOTAL_GRID_Y][TOTAL_GRID_X] = {
 	{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
 };
 
+enum Face {
+	Face_EAST,
+	Face_WEST,
+	Face_NORTH,
+	Face_SOUTH,
+};
+
+Quat face_quaternion(Face f) {
+	static const Quat quats[] = {
+		quat_angle_axis(vec3(0, 0, 1), MATH_TAU),
+		quat_angle_axis(vec3(0, 0, 1), -MATH_TAU),
+		quat_angle_axis(vec3(0, 0, 1), 0),
+		quat_angle_axis(vec3(0, 0, 1), MATH_PI),
+	};
+	return quats[f];
+}
+
 struct Player {
-	Vec3 position = vec3(0, 0, 1);
-	Vec3 position_target = position;
-	Quat face_direction = quat_identity();
-	Quat face_direction_target = face_direction;
+	enum State {
+		IDEL,
+		WALKING
+	};
 
-	r32 movement_force = 1400;
+	Vec3 position              = vec3(0, 0, 1);
+	Vec3 render_position       = position;
 
-	r32 mass = 50;
-	r32 drag = 7;
-	r32 friction_coefficient = 0.5f;
-	r32 turn_velocity = 7;
-	Vec3 velocity = vec3(0);
-	Vec3 force = vec3(0);
+	Face face				   = Face_NORTH;
+	Quat face_direction        = quat_identity();
+
+	State state = IDEL;
+
+	r32 movement_force = 1200;
+
+	r32  mass                 = 50;
+	r32  drag                 = 7;
+
+	r32  turn_velocity      = 7;
+	r32  dp					= 0;
 };
 
 struct Player_Controller {
@@ -493,32 +516,33 @@ Camera_Bounds camera_get_bounds(Camera &camera) {
 	r32 half_width  = half_height * camera.aspect_ratio;
 
 	Camera_Bounds bounds;
-	bounds.left = -half_width;
-	bounds.right = half_width;
-	bounds.top = half_height;
+	bounds.left   = -half_width;
+	bounds.right  = half_width;
+	bounds.top    = half_height;
 	bounds.bottom = -half_height;
 
 	return bounds;
 }
 
 Camera camera_create(Vec3 position, r32 distance = 0.5f, r32 target_distance = 1, r32 aspect_ratio = 1280.0f / 720.0f) {
-	r32 height = TOTAL_GRID_Y;
-	r32 width  = height * aspect_ratio;
+	r32 height      = TOTAL_GRID_Y;
+	r32 width       = height * aspect_ratio;
 	r32 half_height = 0.5f * height;
 	r32 half_width  = 0.5f * width;
 
 	Camera camera;
-	camera.position = position;
-	camera.position_target = camera.position;
-	camera.position.z = distance;
+	camera.position          = position;
+	camera.position_target   = camera.position;
+	camera.position.z        = distance;
 	camera.position_target.z = target_distance;
-	camera.aspect_ratio = aspect_ratio;
-	camera.view = orthographic_view(-half_width, half_width, half_height, -half_height);
+	camera.aspect_ratio      = aspect_ratio;
+	camera.view              = orthographic_view(-half_width, half_width, half_height, -half_height);
 	return camera;
 }
 
 void editor_update(Audio_Mixer *mixer, Player *player) {
-	if (!editor.display) return;
+	if (!editor.display)
+		return;
 
 	ImGui::Begin("Editor");
 
@@ -530,18 +554,14 @@ void editor_update(Audio_Mixer *mixer, Player *player) {
 	ImGui::DragFloat3("Target Position: (%.3f, %.3f, %.3f)", player->position.m);
 	ImGui::Text("Face Direction: (%.3f, %.3f, %.3f)", player->face_direction.x, player->face_direction.y, player->face_direction.z);
 	ImGui::DragFloat("Mass: %.3f", &player->mass, 0.1f);
-	ImGui::DragFloat("Friction: %.3f", &player->friction_coefficient, 0.01f, 0.0f, 1.0f);
 	ImGui::DragFloat("Drag: %.3f", &player->drag, 0.01f);
 	ImGui::DragFloat("Movement Force: %.3f", &player->movement_force, 0.1f);
 	ImGui::DragFloat("Turn Speed: %.3f", &player->turn_velocity, 0.01f);
-	ImGui::Text("Velocity: (%.3f, %.3f, %.3f)", player->velocity.x, player->velocity.y, player->velocity.z);
-	ImGui::Text("Force: (%.3f, %.3f, %.3f)", player->force.x, player->force.y, player->force.z);
 
 	ImGui::End();
 
 	audio_mixer_set_volume(mixer, volume);
 }
-
 
 int system_main() {
 	r32    framebuffer_w = 1280;
@@ -549,7 +569,7 @@ int system_main() {
 	Handle platform      = system_create_window(u8"Karma", 1280, 720, System_Window_Show_NORMAL);
 	gfx_create_context(platform, Render_Backend_DIRECTX11, Vsync_ADAPTIVE, 2, (u32)framebuffer_w, (u32)framebuffer_h);
 
-	auto audio = load_wave(system_read_entire_file("../res/misc/POL-course-of-nature-short.wav"));
+	auto audio        = load_wave(system_read_entire_file("../res/misc/POL-course-of-nature-short.wav"));
 	auto bounce_sound = load_wave(system_read_entire_file("../res/misc/Boing Cartoonish-SoundBible.com-277290791.wav"));
 
 	Audio_Mixer mixer = audio_mixer();
@@ -577,11 +597,11 @@ int system_main() {
 	//
 	//
 
-	Player player;
+	Player            player;
 	Player_Controller controller = {};
-	Camera camera = camera_create(player.position);
+	Camera            camera     = camera_create(player.position);
 
-	bool  running = true;
+	bool running = true;
 
 	const r32 aspect_ratio = framebuffer_w / framebuffer_h;
 
@@ -614,13 +634,15 @@ int system_main() {
 				running = false;
 				break;
 			}
-			
-			if (Debug_HandleEvent(event)) continue;
-			if (ImGui_HandleEvent(event)) continue;
 
-			//
-			// Developer Commands
-			//
+			if (Debug_HandleEvent(event))
+				continue;
+			if (ImGui_HandleEvent(event))
+				continue;
+
+				//
+				// Developer Commands
+				//
 
 #if defined(BUILD_DEBUG) || defined(BUILD_DEBUG_FAST) || defined(BUILD_DEVELOPER)
 			if (event.type == Event_Type_KEY_UP) {
@@ -694,129 +716,123 @@ int system_main() {
 			}
 
 			if (event.type & Event_Type_KEYBOARD) {
-				float value = (float)(event.key.state == State_DOWN);
+				float value = (float)(event.key.state == Key_State_DOWN);
 				switch (event.key.symbol) {
-				case Key_D:
-				case Key_RIGHT:
-					controller.x = value;
-					break;
-				case Key_A:
-				case Key_LEFT:
-					controller.x = -value;
-					break;
+					case Key_D:
+					case Key_RIGHT:
+						controller.x = value;
+						break;
+					case Key_A:
+					case Key_LEFT:
+						controller.x = -value;
+						break;
 
-				case Key_W:
-				case Key_UP:
-					controller.y = value;
-					break;
-				case Key_S:
-				case Key_DOWN:
-					controller.y = -value;
-					break;
+					case Key_W:
+					case Key_UP:
+						controller.y = value;
+						break;
+					case Key_S:
+					case Key_DOWN:
+						controller.y = -value;
+						break;
 				}
 			}
 
 			if (event.type == Event_Type_CONTROLLER_AXIS) {
 				switch (event.controller_axis.symbol) {
-				case Controller_Axis_LTHUMB_X:
-					controller.x = event.controller_axis.value;
-					break;
+					case Controller_Axis_LTHUMB_X:
+						controller.x = event.controller_axis.value;
+						break;
 
-				case Controller_Axis_LTHUMB_Y:
-					controller.y = event.controller_axis.value;
-					break;
+					case Controller_Axis_LTHUMB_Y:
+						controller.y = event.controller_axis.value;
+						break;
 				}
 			}
-
 		}
 
 		Debug_TimedBlockEnd(EventHandling);
 
 		Debug_TimedBlockBegin(Simulation);
 
-		player.force = vec3(0);
-
-		player.force = vec3(0);
-
 		Vec2 movement_direction = vec2_normalize_check(vec2(controller.x, controller.y));
-		r32 movement_magnitude = vec2_length(movement_direction);
-		if (movement_magnitude) {
-			player.face_direction_target = quat_between(vec3(0, 1, 0), vec3(movement_direction, 0));
+		r32 x_move_abs = fabsf(movement_direction.x);
+		r32 y_move_abs = fabsf(movement_direction.y);
+		if (y_move_abs > x_move_abs) {
+			movement_direction = vec2(0, (r32)sgn(movement_direction.y));
+		} else if (x_move_abs > y_move_abs) {
+			movement_direction = vec2((r32)sgn(movement_direction.x), 0);
+		} else {
+			movement_direction = vec2(0);
 		}
-
-		const float gravity = 10.f;
-		const float ground_friction_coefficient = 1;
 
 		while (accumulator_t >= fixed_dt) {
 			Debug_TimedScope(SimulationFrame);
 
 			if (state == Time_State_RESUME) {
+				player.face_direction = rotate_toward(player.face_direction, face_quaternion(player.face), player.turn_velocity * dt);
 
-				player.face_direction = rotate_toward(player.face_direction, player.face_direction_target, player.turn_velocity * dt);
+				bool accept_input = false;
+				if (player.state == Player::IDEL) {
+					accept_input = true;
+				} else if (player.state == Player::WALKING) {
+					Vec2 direction = player.render_position.xy - player.position.xy;
+					r32 length = vec2_length(direction);
 
-				float effective_friction_coeff = ground_friction_coefficient * player.friction_coefficient;
-				player.force += (player.movement_force * movement_magnitude) * vec3(movement_direction, 0);
+					if (length) {
+						r32 acceleration = (player.movement_force / player.mass);
+						player.dp += dt * acceleration;
+						player.dp *= powf(0.5f, player.drag * dt);
+						player.render_position = move_toward(player.render_position, player.position, dt * player.dp);
+					} else {
+						player.state = Player::IDEL;
+					}
 
-				r32 frictional_force_mag = effective_friction_coeff * gravity * player.mass;
-				r32 force_mag = vec3_length(player.force);
-				if (frictional_force_mag > force_mag) frictional_force_mag = force_mag;
-
-				Vec3 friction_force_dir;
-				if (force_mag) {
-					friction_force_dir = player.force / force_mag;
-				} else {
-					friction_force_dir = {};
+					if (length < 0.25f)
+						accept_input = true;
 				}
 
-				player.force -= friction_force_dir * frictional_force_mag;
+				if (accept_input) {
+					Vec2 player_new_position = player.position.xy + movement_direction;
+					int cell_pos_x = (int)(player_new_position.x + 0.5f * TOTAL_GRID_X + 1.0f);
+					int cell_pos_y = (int)(player_new_position.y + 0.5f * TOTAL_GRID_Y + 1.0f);
 
-				//
-				//
-				//
+					if (map_cells[cell_pos_y][cell_pos_x] == Cell_Type_PLACE) {
+						if (player.position.x != player_new_position.x || player.position.y != player_new_position.y) {
+							player.state = Player::WALKING;
 
-				Vec3 acceleration = (player.force / player.mass);
-				player.velocity += dt * acceleration;
-				player.velocity *= powf(0.5f, player.drag * dt);
 
-				Vec3 player_new_position = player.position + dt * player.velocity;
-				
-				int cell_x_0 = (int)(player_new_position.x + 0.5f * TOTAL_GRID_X + 1.0f);
-				int cell_x_1 = (int)(player_new_position.x + 0.5f * TOTAL_GRID_X + 1.0f - 0.5f);
-				int cell_x_2 = (int)(player_new_position.x + 0.5f * TOTAL_GRID_X + 1.0f + 0.5f);
+							Vec2 position_direction = player_new_position - player.position.xy;
 
-				int cell_y_0 = (int)(player_new_position.y + 0.5f * TOTAL_GRID_Y + 1.0f);
-				int cell_y_1 = (int)(player_new_position.y + 0.5f * TOTAL_GRID_Y + 1.0f - 0.5f);
-				int cell_y_2 = (int)(player_new_position.y + 0.5f * TOTAL_GRID_Y + 1.0f + 0.5f);				
+							player.position.xy = player_new_position;
+						} else {
+							player.dp = 0;
+						}
+						
+					}
 
-				if (map_cells[cell_y_0][cell_x_1] == Cell_Type_VACUUM || map_cells[cell_y_0][cell_x_2] == Cell_Type_VACUUM) {
-					player_new_position.x = player.position.x;
-					player.velocity.x = 0;
+
+					if (movement_direction.y > 0) {
+						player.face = Face_NORTH;
+					}
+					else if (movement_direction.y < 0) {
+						player.face = Face_SOUTH;
+					}
+					else if (movement_direction.x > 0) {
+						player.face = Face_WEST;
+					}
+					else if (movement_direction.x < 0) {
+						player.face = Face_EAST;
+					}
 				}
 
-				if (map_cells[cell_y_1][cell_x_0] == Cell_Type_VACUUM || map_cells[cell_y_2][cell_x_0] == Cell_Type_VACUUM) {
-					player_new_position.y = player.position.y;
-					player.velocity.y = 0;
-				}
-				
-				/*
-				if (map_cells[cell_y_1][cell_x_1] == Cell_Type_VACUUM || map_cells[cell_y_2][cell_x_2] == Cell_Type_VACUUM) {
-					player_new_position.xy = player.position.xy;
-					player.velocity.xy = vec2(0);
-				}
-				*/
-
-				player.position = player_new_position;
-
-
 				//
 				//
 				//
-				
-				//player.position = lerp(player.position, player.position_target, 1.0f - powf(1.0f - 0.9999999f, dt));
 
-				Vec2 camera_target_new = player.position.xy; // + vec2(0.5f, 0.5f);
+				Vec2 camera_target_new = player.render_position.xy; // + vec2(0.5f, 0.5f);
 
-				auto cam_bounds = camera_get_bounds(camera);
+				auto    cam_bounds = camera_get_bounds(camera);
 				Mm_Rect camera_min_max;
 				camera_min_max.min = camera_target_new + vec2(cam_bounds.left, cam_bounds.bottom);
 				camera_min_max.max = camera_target_new + vec2(cam_bounds.right, cam_bounds.top);
@@ -834,7 +850,7 @@ int system_main() {
 				}
 
 				camera.position_target.xy = camera_target_new;
-				
+
 				camera.position = lerp(camera.position, camera.position_target, 1.0f - powf(1.0f - 0.99f, dt));
 			}
 
@@ -874,7 +890,7 @@ int system_main() {
 
 				if (map_cells[y][x] == Cell_Type_PLACE) {
 					im_rect_centered(vec3(draw_x, draw_y, 1), vec2(1), vec4(0, 0.3f, 0));
-					//im_rect_centered(vec3(draw_x, draw_y, 1), vec2(0.95f), vec4(0.1f, 0.9f, 0.2f));
+					im_rect_centered(vec3(draw_x, draw_y, 1), vec2(0.95f), vec4(0.1f, 0.9f, 0.2f));
 				} else {
 					im_rect_centered(vec3(draw_x, draw_y, 1), vec2(1), vec4(0.7f, 0.3f, 0));
 					im_rect_centered(vec3(draw_x, draw_y, 1), vec2(0.95f), vec4(0.7f, 0.4f, 0.2f));
@@ -883,18 +899,17 @@ int system_main() {
 		}
 
 		auto cam_bounds = camera_get_bounds(camera);
-		Vec2 draw_dim = vec2(cam_bounds.right - cam_bounds.left, cam_bounds.top - cam_bounds.bottom);
+		Vec2 draw_dim   = vec2(cam_bounds.right - cam_bounds.left, cam_bounds.top - cam_bounds.bottom);
 
-		im_circle_outline(player.position, 0.5f, vec4(1, 1, 0), thickness);
+		im_circle_outline(player.render_position, 0.5f, vec4(1, 1, 0), thickness);
 		im_rect_centered_outline2d(camera.position.xy, draw_dim, vec4(1, 0, 1), thickness);
 
-		r32 angle;
+		r32  angle;
 		Vec3 axis;
 		quat_get_angle_axis(player.face_direction, &angle, &axis);
 
 		im_bind_texture(player_sprite);
-		im_rect_centered_rotated(player.position, vec2(1), axis.z * angle, vec4(1));
-
+		im_rect_centered_rotated(player.render_position, vec2(1), axis.z * angle, vec4(1));
 
 		im_end();
 
@@ -953,7 +968,6 @@ int system_main() {
 			ImGui_RenderFrame();
 		}
 #endif
-
 
 #if defined(BUILD_DEBUG_SERVICE)
 		{

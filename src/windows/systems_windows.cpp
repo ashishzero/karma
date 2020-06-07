@@ -1508,56 +1508,56 @@ static LRESULT CALLBACK win32_wnd_proc(HWND wnd, UINT msg, WPARAM wparam, LPARAM
 		case WM_LBUTTONDOWN: {
 			event.type                = Event_Type_MOUSE_BUTTON_DOWN;
 			event.mouse_button.symbol = Button_LEFT;
-			event.mouse_button.state  = State_DOWN;
+			event.mouse_button.state  = Key_State_DOWN;
 			win32_mouse_button_event(&event.mouse_button, wparam, lparam);
 		} break;
 
 		case WM_LBUTTONUP: {
 			event.type                = Event_Type_MOUSE_BUTTON_UP;
 			event.mouse_button.symbol = Button_LEFT;
-			event.mouse_button.state  = State_UP;
+			event.mouse_button.state  = Key_State_UP;
 			win32_mouse_button_event(&event.mouse_button, wparam, lparam);
 		} break;
 
 		case WM_MBUTTONDOWN: {
 			event.type                = Event_Type_MOUSE_BUTTON_DOWN;
 			event.mouse_button.symbol = Button_MIDDLE;
-			event.mouse_button.state  = State_DOWN;
+			event.mouse_button.state  = Key_State_DOWN;
 			win32_mouse_button_event(&event.mouse_button, wparam, lparam);
 		} break;
 
 		case WM_MBUTTONUP: {
 			event.type                = Event_Type_MOUSE_BUTTON_UP;
 			event.mouse_button.symbol = Button_MIDDLE;
-			event.mouse_button.state  = State_UP;
+			event.mouse_button.state  = Key_State_UP;
 			win32_mouse_button_event(&event.mouse_button, wparam, lparam);
 		} break;
 
 		case WM_RBUTTONDOWN: {
 			event.type                = Event_Type_MOUSE_BUTTON_DOWN;
 			event.mouse_button.symbol = Button_RIGHT;
-			event.mouse_button.state  = State_DOWN;
+			event.mouse_button.state  = Key_State_DOWN;
 			win32_mouse_button_event(&event.mouse_button, wparam, lparam);
 		} break;
 
 		case WM_RBUTTONUP: {
 			event.type                = Event_Type_MOUSE_BUTTON_UP;
 			event.mouse_button.symbol = Button_RIGHT;
-			event.mouse_button.state  = State_UP;
+			event.mouse_button.state  = Key_State_UP;
 			win32_mouse_button_event(&event.mouse_button, wparam, lparam);
 		} break;
 
 		case WM_XBUTTONDOWN: {
 			event.type                = Event_Type_MOUSE_BUTTON_DOWN;
 			event.mouse_button.symbol = ((wparam & MK_XBUTTON1) == MK_XBUTTON1) ? Button_X1 : Button_X2;
-			event.mouse_button.state  = State_DOWN;
+			event.mouse_button.state  = Key_State_DOWN;
 			win32_mouse_button_event(&event.mouse_button, wparam, lparam);
 		} break;
 
 		case WM_XBUTTONUP: {
 			event.type                = Event_Type_MOUSE_BUTTON_UP;
 			event.mouse_button.symbol = ((wparam & MK_XBUTTON1) == MK_XBUTTON1) ? Button_X1 : Button_X2;
-			event.mouse_button.state  = State_UP;
+			event.mouse_button.state  = Key_State_UP;
 			win32_mouse_button_event(&event.mouse_button, wparam, lparam);
 		} break;
 
@@ -1637,7 +1637,7 @@ static LRESULT CALLBACK win32_wnd_proc(HWND wnd, UINT msg, WPARAM wparam, LPARAM
 			if (wparam == VK_F10) {
 				event.type       = Event_Type_KEY_DOWN;
 				event.key.symbol = Key_F10;
-				event.key.state  = State_DOWN;
+				event.key.state  = Key_State_DOWN;
 				event.key.repeat = ((lparam & bit(30)) == bit(30));
 			}
 		} break;
@@ -1646,7 +1646,7 @@ static LRESULT CALLBACK win32_wnd_proc(HWND wnd, UINT msg, WPARAM wparam, LPARAM
 			if (wparam == VK_F10) {
 				event.type       = Event_Type_KEY_UP;
 				event.key.symbol = Key_F10;
-				event.key.state  = State_UP;
+				event.key.state  = Key_State_UP;
 				event.key.repeat = ((lparam & bit(30)) == bit(30));
 			}
 		} break;
@@ -1656,7 +1656,7 @@ static LRESULT CALLBACK win32_wnd_proc(HWND wnd, UINT msg, WPARAM wparam, LPARAM
 			if (key != Key_UNKNOWN) {
 				event.type       = Event_Type_KEY_DOWN;
 				event.key.symbol = key;
-				event.key.state  = State_DOWN;
+				event.key.state  = Key_State_DOWN;
 				event.key.repeat = ((lparam & bit(30)) == bit(30));
 			}
 		} break;
@@ -1666,7 +1666,7 @@ static LRESULT CALLBACK win32_wnd_proc(HWND wnd, UINT msg, WPARAM wparam, LPARAM
 			if (key != Key_UNKNOWN) {
 				event.type       = Event_Type_KEY_UP;
 				event.key.symbol = key;
-				event.key.state  = State_UP;
+				event.key.state  = Key_State_UP;
 				event.key.repeat = ((lparam & bit(30)) == bit(30));
 			}
 		} break;
@@ -1920,7 +1920,7 @@ const Array_View<Event> system_poll_events(int poll_count) {
 
 					#define win32_update_controller_button(xbutton, button)													\
 						if ((new_state.Gamepad.wButtons & xbutton) != ((old_state->state.Gamepad.wButtons & xbutton))) {	\
-							State button_state = (State)((new_state.Gamepad.wButtons & xbutton) == xbutton);						\
+							Key_State button_state = (Key_State)((new_state.Gamepad.wButtons & xbutton) == xbutton);						\
 							controller_event.type = Event_Type_CONTROLLER_BUTTON;											\
 							controller_event.controller_button.symbol = button;												\
 							controller_event.controller_button.state = button_state;										\
@@ -2013,22 +2013,22 @@ const Array_View<Event> system_poll_events(int poll_count) {
 	return Array_View<Event>(windows_event_buffer, (s64)event_count);
 }
 
-State system_button(Button button) {
+Key_State system_button(Button button) {
 	switch (button) {
 		case Button_LEFT:
-			return (GetAsyncKeyState(VK_LBUTTON) & 0x8000) ? State_DOWN : State_UP;
+			return (GetAsyncKeyState(VK_LBUTTON) & 0x8000) ? Key_State_DOWN : Key_State_UP;
 		case Button_MIDDLE:
-			return (GetAsyncKeyState(VK_MBUTTON) & 0x8000) ? State_DOWN : State_UP;
+			return (GetAsyncKeyState(VK_MBUTTON) & 0x8000) ? Key_State_DOWN : Key_State_UP;
 		case Button_RIGHT:
-			return (GetAsyncKeyState(VK_RBUTTON) & 0x8000) ? State_DOWN : State_UP;
+			return (GetAsyncKeyState(VK_RBUTTON) & 0x8000) ? Key_State_DOWN : Key_State_UP;
 		case Button_X1:
-			return (GetAsyncKeyState(VK_XBUTTON1) & 0x8000) ? State_DOWN : State_UP;
+			return (GetAsyncKeyState(VK_XBUTTON1) & 0x8000) ? Key_State_DOWN : Key_State_UP;
 		case Button_X2:
-			return (GetAsyncKeyState(VK_XBUTTON2) & 0x8000) ? State_DOWN : State_UP;
+			return (GetAsyncKeyState(VK_XBUTTON2) & 0x8000) ? Key_State_DOWN : Key_State_UP;
 
 			invalid_default_case();
 	}
-	return State_UP;
+	return Key_State_UP;
 }
 
 Key_Mods system_get_key_mods() {
@@ -2096,7 +2096,7 @@ const Controller &system_get_controller_state(Controller_Id id) {
 	return controllers[id];
 }
 
-State system_controller_button(Controller_Id id, Controller_Button button) {
+Key_State system_controller_button(Controller_Id id, Controller_Button button) {
 	assert(id < XUSER_MAX_COUNT);
 	return controllers[id].buttons[button];
 }

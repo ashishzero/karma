@@ -1405,7 +1405,7 @@ Vec3 move_toward(Vec3 from, Vec3 to, r32 factor) {
 
 		r32 t = factor / distance;
 
-		return lerp(to, from, t);
+		return lerp(from, to, t);
 	}
 
 	return from;
