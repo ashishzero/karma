@@ -1355,8 +1355,12 @@ r32 smoothstep(Vec2 a, Vec2 b, Vec2 v) {
 }
 
 r32 smoothstep(Vec3 a, Vec3 b, Vec3 v) {
-	auto x = clamp(0.0f, 1.0f, vec3_distance(a, v) / vec3_distance(a, b));
-	return x * x * (3 - 2 * x);
+	r32 div_distance = vec3_distance(a, b);
+	if (div_distance) {
+		auto x = clamp(0.0f, 1.0f, vec3_distance(a, v) / div_distance);
+		return x * x * (3 - 2 * x);
+	}
+	return 1;
 }
 
 r32 smoothstep(Vec4 a, Vec4 b, Vec4 v) {

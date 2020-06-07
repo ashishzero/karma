@@ -9,9 +9,6 @@
 #include "stream.h"
 #include "audio.h"
 
-constexpr r32 TOTAL_GRID_X = 25;
-constexpr r32 TOTAL_GRID_Y = 15;
-
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
@@ -411,6 +408,7 @@ void audio_mixer_update(Audio_Mixer *mixer) {
 
 struct Editor {
 	bool display = false;
+	bool guide = true;
 };
 
 static Editor editor;
@@ -425,18 +423,46 @@ Texture2d_Handle debug_load_texture(const char * filepath) {
 	return texture;
 }
 
+constexpr int TOTAL_GRID_X = 25;
+constexpr int TOTAL_GRID_Y = 15;
+
+enum {
+	Cell_Type_PLACE = 0,
+	Cell_Type_VACUUM = 1,
+};
+
+typedef int Cell;
+
+static Cell map_cells[TOTAL_GRID_Y][TOTAL_GRID_X] = {
+	{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+	{ 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1 },
+	{ 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1 },
+	{ 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1 },
+	{ 1, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1 },
+	{ 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1 },
+	{ 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1 },
+	{ 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+	{ 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1 },
+	{ 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1 },
+	{ 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 0, 1 },
+	{ 1, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
+	{ 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
+	{ 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
+	{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+};
+
 struct Player {
 	Vec3 position = vec3(0, 0, 1);
 	Vec3 position_target = position;
 	Quat face_direction = quat_identity();
 	Quat face_direction_target = face_direction;
 
-	r32 movement_force = 1000;
+	r32 movement_force = 1400;
 
 	r32 mass = 50;
-	r32 drag = 6;
+	r32 drag = 7;
 	r32 friction_coefficient = 0.5f;
-	r32 turn_velocity = 5;
+	r32 turn_velocity = 7;
 	Vec3 velocity = vec3(0);
 	Vec3 force = vec3(0);
 };
@@ -446,22 +472,47 @@ struct Player_Controller {
 	r32 y;
 };
 
+struct Camera_Bounds {
+	r32 left, right;
+	r32 top, bottom;
+};
+
 struct Camera {
 	Vec3 position;
 	Vec3 position_target;
 
+	r32 aspect_ratio;
+
 	Camera_View view;
 };
 
+Camera_Bounds camera_get_bounds(Camera &camera) {
+	r32 camera_zoom = 1.0f / powf(2.0f, camera.position.z);
+
+	r32 half_height = 0.5f * TOTAL_GRID_Y * camera_zoom;
+	r32 half_width  = half_height * camera.aspect_ratio;
+
+	Camera_Bounds bounds;
+	bounds.left = -half_width;
+	bounds.right = half_width;
+	bounds.top = half_height;
+	bounds.bottom = -half_height;
+
+	return bounds;
+}
+
 Camera camera_create(Vec3 position, r32 distance = 0.5f, r32 target_distance = 1, r32 aspect_ratio = 1280.0f / 720.0f) {
-	r32 half_height = 0.5f * TOTAL_GRID_Y;
-	r32 half_width = half_height * aspect_ratio;
+	r32 height = TOTAL_GRID_Y;
+	r32 width  = height * aspect_ratio;
+	r32 half_height = 0.5f * height;
+	r32 half_width  = 0.5f * width;
 
 	Camera camera;
 	camera.position = position;
 	camera.position_target = camera.position;
 	camera.position.z = distance;
 	camera.position_target.z = target_distance;
+	camera.aspect_ratio = aspect_ratio;
 	camera.view = orthographic_view(-half_width, half_width, half_height, -half_height);
 	return camera;
 }
@@ -473,9 +524,10 @@ void editor_update(Audio_Mixer *mixer, Player *player) {
 
 	r32 volume = mixer->volume_b;
 	ImGui::DragFloat("Volume", &volume, 0.01f, 0.0f, 1.0f);
+	ImGui::Checkbox("Guide", &editor.guide);
 
 	ImGui::Text("Player");
-	ImGui::DragFloat3("Target Position: (%.3f, %.3f, %.3f)", player->position_target.m);
+	ImGui::DragFloat3("Target Position: (%.3f, %.3f, %.3f)", player->position.m);
 	ImGui::Text("Face Direction: (%.3f, %.3f, %.3f)", player->face_direction.x, player->face_direction.y, player->face_direction.z);
 	ImGui::DragFloat("Mass: %.3f", &player->mass, 0.1f);
 	ImGui::DragFloat("Friction: %.3f", &player->friction_coefficient, 0.01f, 0.0f, 1.0f);
@@ -527,7 +579,7 @@ int system_main() {
 
 	Player player;
 	Player_Controller controller = {};
-	Camera camera = camera_create(player.position_target);
+	Camera camera = camera_create(player.position);
 
 	bool  running = true;
 
@@ -612,7 +664,7 @@ int system_main() {
 						// TODO: properly reset level!!
 						Debug_NotifySuccess("Level Reset");
 						player = Player{};
-						camera = camera_create(player.position_target);
+						camera = camera_create(player.position);
 				}
 			}
 #endif
@@ -684,14 +736,12 @@ int system_main() {
 
 		player.force = vec3(0);
 
-		Vec2 player_movement;
-		Vec2 control_absolute = vec2(fabsf(controller.x), fabsf(controller.y));
-		if (control_absolute.x > control_absolute.y) {
-			player_movement = vec2(sgn(controller.x), 0);
-		} else if (control_absolute.y > control_absolute.x) {
-			player_movement = vec2(0, sgn(controller.y));
-		} else {
-			player_movement = vec2(0);
+		player.force = vec3(0);
+
+		Vec2 movement_direction = vec2_normalize_check(vec2(controller.x, controller.y));
+		r32 movement_magnitude = vec2_length(movement_direction);
+		if (movement_magnitude) {
+			player.face_direction_target = quat_between(vec3(0, 1, 0), vec3(movement_direction, 0));
 		}
 
 		const float gravity = 10.f;
@@ -705,7 +755,7 @@ int system_main() {
 				player.face_direction = rotate_toward(player.face_direction, player.face_direction_target, player.turn_velocity * dt);
 
 				float effective_friction_coeff = ground_friction_coefficient * player.friction_coefficient;
-				player.force += player.movement_force * vec3(player_movement, 0);
+				player.force += (player.movement_force * movement_magnitude) * vec3(movement_direction, 0);
 
 				r32 frictional_force_mag = effective_friction_coeff * gravity * player.mass;
 				r32 force_mag = vec3_length(player.force);
@@ -727,117 +777,65 @@ int system_main() {
 				Vec3 acceleration = (player.force / player.mass);
 				player.velocity += dt * acceleration;
 				player.velocity *= powf(0.5f, player.drag * dt);
-				player.position_target += dt * player.velocity;
-				player.position = vec3(roundf(player.position_target.x), roundf(player.position_target.y), roundf(player.position_target.z));
 
-				camera.position_target.xy = player.position.xy; // + vec2(0.5f, 0.5f);
-				camera.position = lerp(camera.position, camera.position_target, 1.0f - powf(1.0f - 0.9f, dt));
+				Vec3 player_new_position = player.position + dt * player.velocity;
+				
+				int cell_x_0 = (int)(player_new_position.x + 0.5f * TOTAL_GRID_X + 1.0f);
+				int cell_x_1 = (int)(player_new_position.x + 0.5f * TOTAL_GRID_X + 1.0f - 0.5f);
+				int cell_x_2 = (int)(player_new_position.x + 0.5f * TOTAL_GRID_X + 1.0f + 0.5f);
 
-#if 0
+				int cell_y_0 = (int)(player_new_position.y + 0.5f * TOTAL_GRID_Y + 1.0f);
+				int cell_y_1 = (int)(player_new_position.y + 0.5f * TOTAL_GRID_Y + 1.0f - 0.5f);
+				int cell_y_2 = (int)(player_new_position.y + 0.5f * TOTAL_GRID_Y + 1.0f + 0.5f);				
 
-				for (int i = 0; i < NUM_RIGID_BODIES; i++) {
-					RigidBody *rigidBody = &rigidBodies[i];
-
-					if (rigidBody->collided == false) {
-						rigidBody->linear_velocity.x += rigidBody->linear_acceleration.x * dt;
-						rigidBody->linear_velocity.y += rigidBody->linear_acceleration.y * dt;
-					}
-
-					for (int j = i + 1; j < NUM_RIGID_BODIES; j++) {
-						RigidBody *rigidBody2 = &rigidBodies[j];
-						if (aabb_collision(rigidBody->min_max_points, rigidBody2->min_max_points)) {
-							Vec2 prev_velocity_rigidBody  = rigidBody->linear_velocity;
-							Vec2 prev_velocity_rigidBody2 = rigidBody2->linear_velocity;
-
-							rigidBody2->linear_velocity.x = ((2 * rigidBody->shape.mass * prev_velocity_rigidBody.x) / (rigidBody->shape.mass + rigidBody2->shape.mass) + ((rigidBody2->shape.mass - rigidBody->shape.mass) / (rigidBody2->shape.mass + rigidBody->shape.mass)) * prev_velocity_rigidBody2.x);
-							rigidBody2->linear_velocity.y = ((2 * rigidBody->shape.mass * prev_velocity_rigidBody.y) / (rigidBody->shape.mass + rigidBody2->shape.mass) + ((rigidBody2->shape.mass - rigidBody->shape.mass) / (rigidBody2->shape.mass + rigidBody->shape.mass)) * prev_velocity_rigidBody2.y);
-
-							rigidBody->linear_velocity.x = (((rigidBody->shape.mass - rigidBody2->shape.mass) / (rigidBody->shape.mass + rigidBody2->shape.mass)) * prev_velocity_rigidBody.x + (2 * rigidBody2->shape.mass * prev_velocity_rigidBody2.x) / (rigidBody->shape.mass + rigidBody2->shape.mass));
-							rigidBody->linear_velocity.y = (((rigidBody->shape.mass - rigidBody2->shape.mass) / (rigidBody->shape.mass + rigidBody2->shape.mass)) * prev_velocity_rigidBody.y + (2 * rigidBody2->shape.mass * prev_velocity_rigidBody2.y) / (rigidBody->shape.mass + rigidBody2->shape.mass));
-
-							if (rigidBody->linear_velocity.x > 80.0f)
-								rigidBody->linear_velocity.x = 80.0f;
-							if (rigidBody->linear_velocity.x < -80.0f)
-								rigidBody->linear_velocity.x = -80.0f;
-							if (rigidBody->linear_velocity.y > 80.0f)
-								rigidBody->linear_velocity.y = 80.0f;
-							if (rigidBody->linear_velocity.y < -80.0f)
-								rigidBody->linear_velocity.y = -80.0f;
-
-							if (rigidBody2->linear_velocity.x > 80.0f)
-								rigidBody2->linear_velocity.x = 80.0f;
-							if (rigidBody2->linear_velocity.x < -80.0f)
-								rigidBody2->linear_velocity.x = -80.0f;
-							if (rigidBody2->linear_velocity.y > 80.0f)
-								rigidBody2->linear_velocity.y = 80.0f;
-							if (rigidBody2->linear_velocity.y < -80.0f)
-								rigidBody2->linear_velocity.y = -80.0f;
-
-							rigidBody->linear_acceleration.x = rigidBody->linear_velocity.x / dt;
-							rigidBody->linear_acceleration.y = rigidBody->linear_velocity.y / dt;
-
-							rigidBody->force.x = rigidBody->linear_acceleration.x * rigidBody->shape.mass;
-							rigidBody->force.y = rigidBody->linear_acceleration.y * rigidBody->shape.mass;
-
-							rigidBody2->linear_acceleration.x = rigidBody2->linear_velocity.x / dt;
-							rigidBody2->linear_acceleration.y = rigidBody2->linear_velocity.y / dt;
-
-							rigidBody2->force.x = rigidBody2->linear_acceleration.x * rigidBody2->shape.mass;
-							rigidBody2->force.y = rigidBody2->linear_acceleration.y * rigidBody2->shape.mass;
-
-							rigidBody2->position.x += rigidBody2->linear_velocity.x * dt;
-							rigidBody2->position.y += rigidBody2->linear_velocity.y * dt;
-							update_min_max(rigidBody2);
-
-							rigidBody2->collided = true;
-						}
-					}
-
-					//if (rigidBody->collided == false) {
-					rigidBody->position.x += rigidBody->linear_velocity.x * dt;
-					rigidBody->position.y += rigidBody->linear_velocity.y * dt;
-					//}
-					float angularAcceleration = rigidBody->torque / rigidBody->shape.momentofInertia;
-					rigidBody->angular_velocity += angularAcceleration * dt;
-					rigidBody->angle += rigidBody->angular_velocity * dt;
-					if (rigidBody->linear_velocity.x > 80.0f)
-						rigidBody->linear_velocity.x = 80.0f;
-					if (rigidBody->linear_velocity.x < -80.0f)
-						rigidBody->linear_velocity.x = -80.0f;
-					if (rigidBody->linear_velocity.y > 80.0f)
-						rigidBody->linear_velocity.y = 80.0f;
-					if (rigidBody->linear_velocity.y < -80.0f)
-						rigidBody->linear_velocity.y = -80.0f;
-
-					if (rigidBody->position.x <= 0) {
-						rigidBody->force.x *= -1;
-						rigidBody->linear_acceleration.x *= -1;
-						rigidBody->linear_velocity.x *= -1;
-					}
-					if (rigidBody->position.x >= window_w) {
-						rigidBody->force.x *= -1;
-						rigidBody->linear_acceleration.x *= -1;
-						rigidBody->linear_velocity.x *= -1;
-					}
-					if (rigidBody->position.y <= 0) {
-						rigidBody->force.y *= -1;
-						rigidBody->linear_acceleration.y *= -1;
-						rigidBody->linear_velocity.y *= -1;
-					}
-					if (rigidBody->position.y >= window_h) {
-						rigidBody->force.y *= -1;
-						rigidBody->linear_acceleration.y *= -1;
-						rigidBody->linear_velocity.y *= -1;
-					}
-					update_min_max(rigidBody);
+				if (map_cells[cell_y_0][cell_x_1] == Cell_Type_VACUUM || map_cells[cell_y_0][cell_x_2] == Cell_Type_VACUUM) {
+					player_new_position.x = player.position.x;
+					player.velocity.x = 0;
 				}
 
-				for (int i = 0; i < NUM_RIGID_BODIES; i++) {
-					RigidBody *rigidBody = &rigidBodies[i];
-					rigidBody->collided  = false;
+				if (map_cells[cell_y_1][cell_x_0] == Cell_Type_VACUUM || map_cells[cell_y_2][cell_x_0] == Cell_Type_VACUUM) {
+					player_new_position.y = player.position.y;
+					player.velocity.y = 0;
+				}
+				
+				/*
+				if (map_cells[cell_y_1][cell_x_1] == Cell_Type_VACUUM || map_cells[cell_y_2][cell_x_2] == Cell_Type_VACUUM) {
+					player_new_position.xy = player.position.xy;
+					player.velocity.xy = vec2(0);
+				}
+				*/
+
+				player.position = player_new_position;
+
+
+				//
+				//
+				//
+				
+				//player.position = lerp(player.position, player.position_target, 1.0f - powf(1.0f - 0.9999999f, dt));
+
+				Vec2 camera_target_new = player.position.xy; // + vec2(0.5f, 0.5f);
+
+				auto cam_bounds = camera_get_bounds(camera);
+				Mm_Rect camera_min_max;
+				camera_min_max.min = camera_target_new + vec2(cam_bounds.left, cam_bounds.bottom);
+				camera_min_max.max = camera_target_new + vec2(cam_bounds.right, cam_bounds.top);
+
+				camera_min_max.min.x = (r32)((int)(camera_min_max.min.x + 0.5f * TOTAL_GRID_X + 0.5f));
+				camera_min_max.min.y = (r32)((int)(camera_min_max.min.y + 0.5f * TOTAL_GRID_Y + 0.5f));
+				camera_min_max.max.x = (r32)((int)(camera_min_max.max.x + 0.5f * TOTAL_GRID_X + 0.5f));
+				camera_min_max.max.y = (r32)((int)(camera_min_max.max.y + 0.5f * TOTAL_GRID_Y + 0.5f));
+
+				if (camera_min_max.min.x < 0 || camera_min_max.max.x >= TOTAL_GRID_X) {
+					camera_target_new.x = camera.position_target.x;
+				}
+				if (camera_min_max.min.y < 0 || camera_min_max.max.y >= TOTAL_GRID_Y) {
+					camera_target_new.y = camera.position_target.y;
 				}
 
-#endif
+				camera.position_target.xy = camera_target_new;
+				
+				camera.position = lerp(camera.position, camera.position_target, 1.0f - powf(1.0f - 0.99f, dt));
 			}
 
 			accumulator_t -= fixed_dt;
@@ -868,14 +866,27 @@ int system_main() {
 
 		im_begin(camera.view, transform);
 		im_unbind_texture();
-		for (r32 x = -2; x < 3; ++x) {
-			for (r32 y = -2; y < 3; ++y) {
-				im_rect_centered(vec3(x, y, 1), vec2(1), vec4(0, 0.3f, 0));
-				im_rect_centered(vec3(x, y, 1), vec2(0.95f), vec4(0.1f, 0.9f, 0.2f));
-				im_rect_centered(vec3(x, y, 1), vec2(0.09f), vec4(1, 1, 1));
+
+		for (int y = 0; y < TOTAL_GRID_Y; ++y) {
+			for (int x = 0; x < TOTAL_GRID_X; ++x) {
+				r32 draw_x = (r32)x - 0.5f * (r32)TOTAL_GRID_X - 0.5f;
+				r32 draw_y = (r32)y - 0.5f * (r32)TOTAL_GRID_Y - 0.5f;
+
+				if (map_cells[y][x] == Cell_Type_PLACE) {
+					im_rect_centered(vec3(draw_x, draw_y, 1), vec2(1), vec4(0, 0.3f, 0));
+					//im_rect_centered(vec3(draw_x, draw_y, 1), vec2(0.95f), vec4(0.1f, 0.9f, 0.2f));
+				} else {
+					im_rect_centered(vec3(draw_x, draw_y, 1), vec2(1), vec4(0.7f, 0.3f, 0));
+					im_rect_centered(vec3(draw_x, draw_y, 1), vec2(0.95f), vec4(0.7f, 0.4f, 0.2f));
+				}
 			}
 		}
 
+		auto cam_bounds = camera_get_bounds(camera);
+		Vec2 draw_dim = vec2(cam_bounds.right - cam_bounds.left, cam_bounds.top - cam_bounds.bottom);
+
+		im_circle_outline(player.position, 0.5f, vec4(1, 1, 0), thickness);
+		im_rect_centered_outline2d(camera.position.xy, draw_dim, vec4(1, 0, 1), thickness);
 
 		r32 angle;
 		Vec3 axis;
@@ -884,9 +895,6 @@ int system_main() {
 		im_bind_texture(player_sprite);
 		im_rect_centered_rotated(player.position, vec2(1), axis.z * angle, vec4(1));
 
-		im_unbind_texture();
-		im_circle_outline(player.position, 0.5f, vec4(1, 1, 0), thickness);
-		im_circle(player.position_target, 0.08f, vec4(1, 0, 0));
 
 		im_end();
 
