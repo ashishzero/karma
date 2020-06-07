@@ -422,25 +422,29 @@ Texture2d_Handle debug_load_texture(const char *filepath) {
 	return texture;
 }
 
-constexpr int TOTAL_GRID_X = 25;
-constexpr int TOTAL_GRID_Y = 15;
-
 enum {
 	Cell_Type_PLACE  = 0,
 	Cell_Type_VACUUM = 1,
 };
 
-typedef int Cell;
+struct World_Region_Cell {
+	int id;
+};
 
-static Cell map_cells[TOTAL_GRID_Y][TOTAL_GRID_X] = {
+constexpr int  MAP_REGION_X_CELL_COUNT			= 25;
+constexpr int  MAP_REGION_Y_CELL_COUNT			= 15;
+constexpr int  MAP_REGION_HALF_X_CELL_COUNT		= MAP_REGION_X_CELL_COUNT / 2;
+constexpr int  MAP_REGION_HALF_Y_CELL_COUNT		= MAP_REGION_Y_CELL_COUNT / 2;
+
+static World_Region_Cell map_cells0[MAP_REGION_Y_CELL_COUNT][MAP_REGION_X_CELL_COUNT] = {
 	{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
 	{ 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1 },
 	{ 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1 },
 	{ 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1 },
 	{ 1, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1 },
-	{ 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1 },
-	{ 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1 },
-	{ 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+	{ 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0 },
+	{ 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0 },
+	{ 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
 	{ 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1 },
 	{ 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1 },
 	{ 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 0, 1 },
@@ -449,6 +453,179 @@ static Cell map_cells[TOTAL_GRID_Y][TOTAL_GRID_X] = {
 	{ 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1 },
 	{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
 };
+
+static World_Region_Cell map_cells1[MAP_REGION_Y_CELL_COUNT][MAP_REGION_X_CELL_COUNT] = {
+	{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+	{ 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+	{ 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+	{ 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+	{ 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+	{ 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+	{ 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+	{ 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+	{ 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+	{ 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+	{ 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+	{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+};
+
+struct World_Position {
+	Vec3s region;
+	Vec2  tile;
+};
+
+Vec2s world_map_tile_to_cell(Vec2 tile) {
+	Vec2s cell_index;
+	cell_index.x = (int)(tile.x + MAP_REGION_HALF_X_CELL_COUNT);
+	cell_index.y = (int)(tile.y + MAP_REGION_HALF_Y_CELL_COUNT);
+	return cell_index;
+}
+
+Vec2 world_map_cell_to_tile(int cell_index_x, int cell_index_y) {
+	Vec2 tile;
+	tile.x = (r32)(cell_index_x - MAP_REGION_HALF_X_CELL_COUNT);
+	tile.y = (r32)(cell_index_y - MAP_REGION_HALF_Y_CELL_COUNT);
+	return tile;
+}
+
+Vec2 world_map_cell_to_tile(Vec2s cell_index) {
+	return world_map_cell_to_tile(cell_index.x, cell_index.y);
+}
+
+r32 world_map_cell_to_tile_horizontal(int cell_index) {
+	return (r32)(cell_index - MAP_REGION_HALF_X_CELL_COUNT);
+}
+
+r32 world_map_cell_to_tile_vertical(int cell_index) {
+	return (r32)(cell_index - MAP_REGION_HALF_Y_CELL_COUNT);
+}
+
+Vec3 world_position_unpack(World_Position &position, World_Position &center) {
+	Vec3 result;
+	result.x = (position.region.x - center.region.x) * MAP_REGION_HALF_X_CELL_COUNT + (position.tile.x - center.tile.x);
+	result.y = (position.region.y - center.region.y) * MAP_REGION_HALF_Y_CELL_COUNT + (position.tile.y - center.tile.y);
+	result.z = (r32)(position.region.z - center.region.z);
+	return result;
+}
+
+void world_position_normalize(World_Position *position) {
+	Vec2s cell_index = world_map_tile_to_cell(position->tile);
+
+	if (cell_index.x >= MAP_REGION_X_CELL_COUNT) {
+		position->region.x += cell_index.x / MAP_REGION_X_CELL_COUNT;
+		position->tile.x = world_map_cell_to_tile_horizontal(cell_index.x % MAP_REGION_X_CELL_COUNT);
+	}
+
+	if (cell_index.x < 0) {
+		int dec = abs(cell_index.x + 1) / MAP_REGION_X_CELL_COUNT + 1;
+		position->region.x -= dec;
+		position->tile.x = world_map_cell_to_tile_horizontal(MAP_REGION_X_CELL_COUNT * dec + cell_index.x);
+	}
+
+	if (cell_index.y >= MAP_REGION_Y_CELL_COUNT) {
+		position->region.y += cell_index.y / MAP_REGION_Y_CELL_COUNT;
+		position->tile.y = world_map_cell_to_tile_vertical(cell_index.y % MAP_REGION_Y_CELL_COUNT);
+	}
+
+	if (cell_index.y < 0) {
+		int dec = abs(cell_index.y + 1) / MAP_REGION_Y_CELL_COUNT + 1;
+		position->region.y -= dec;
+		position->tile.y = world_map_cell_to_tile_vertical(MAP_REGION_Y_CELL_COUNT * dec + cell_index.y);
+	}
+}
+
+bool world_position_are_same(World_Position &a, World_Position &b) {
+	return  (a.tile.x == b.tile.x) && (a.tile.y == b.tile.y) &&
+		(a.region.z == b.region.z) && (a.region.x == b.region.x) && (a.region.y == b.region.y);
+}
+
+bool world_position_are_in_same_region(World_Position& a, World_Position& b) {
+	return (a.region.z == b.region.z) && (a.region.x == b.region.x) && (a.region.y == b.region.y);
+}
+
+struct World_Map_Region {
+	World_Region_Cell (*cells)[MAP_REGION_X_CELL_COUNT];
+};
+
+World_Region_Cell* world_map_region_get_cell(World_Map_Region* map_region, int cell_x, int cell_y) {
+	assert(cell_x >= 0 && cell_x < MAP_REGION_X_CELL_COUNT);
+	assert(cell_y >= 0 && cell_y < MAP_REGION_Y_CELL_COUNT);
+	return &map_region->cells[cell_y][cell_x];
+}
+
+World_Region_Cell* world_map_region_get_cell(World_Map_Region* map_region, Vec2s cell_index) {
+	return world_map_region_get_cell(map_region, cell_index.x, cell_index.y);
+}
+
+struct World_Map {
+	World_Map_Region **regions;
+	int x_count;
+	int y_count;
+	int z_count;
+
+	int x_index_offset;
+	int y_index_offset;
+	int z_index_offset;
+};
+
+World_Map_Region* world_map_get_region(World_Map *world_map, int region_x, int region_y, int region_z) {
+	region_x += world_map->x_index_offset;
+	region_y += world_map->y_index_offset;
+	region_z += world_map->z_index_offset;
+
+	World_Map_Region* map_region = nullptr;
+
+	if ((region_x >= 0 && region_x < world_map->x_count) && 
+		(region_y >= 0 && region_y < world_map->y_count) && 
+		(region_z >= 0 && region_z < world_map->z_count)) {
+		return  *(world_map->regions + region_x +
+				region_y * world_map->x_count +
+				region_z * world_map->y_count * world_map->x_count);
+	}
+
+	return map_region;
+}
+
+bool world_map_is_position_available(World_Map *world_map, World_Position &position) {
+	World_Map_Region* map_region = world_map_get_region(world_map, position.region.x, position.region.y, position.region.z);
+
+	if (map_region) {
+		Vec2s cell_index = world_map_tile_to_cell(position.tile);
+		World_Region_Cell* region_cell = world_map_region_get_cell(map_region, cell_index.x, cell_index.y);
+		return region_cell->id != Cell_Type_VACUUM;
+	}
+
+	return false;
+}
+
+World_Map create_test_world() {
+	static World_Map_Region test_map_regions[2];
+	test_map_regions[0].cells = map_cells0;
+	test_map_regions[1].cells = map_cells1;
+
+	World_Map map;
+	map.x_count = 2;
+	map.y_count = 1;
+	map.z_count = 1;
+
+	map.x_index_offset = map.x_count / 2;
+	map.y_index_offset = map.y_count / 2;
+	map.z_index_offset = map.z_count / 2;
+
+	if (map.x_count % 2 == 0) map.x_index_offset -= 1;
+	if (map.y_count % 2 == 0) map.y_index_offset -= 1;
+	if (map.z_count % 2 == 0) map.z_index_offset -= 1;
+
+	map.regions = (World_Map_Region **)memory_allocate(sizeof(World_Map_Region *) * map.x_count * map.y_count * map.z_count);
+
+	map.regions[0] = &test_map_regions[0];
+	map.regions[1] = &test_map_regions[1];
+
+	return map;
+}
 
 enum Face {
 	Face_EAST,
@@ -464,6 +641,7 @@ Quat face_quaternion(Face f) {
 		quat_angle_axis(vec3(0, 0, 1), 0),
 		quat_angle_axis(vec3(0, 0, 1), MATH_PI),
 	};
+
 	return quats[f];
 }
 
@@ -473,15 +651,15 @@ struct Player {
 		WALKING
 	};
 
-	Vec3 position              = vec3(0, 0, 1);
-	Vec3 render_position       = position;
+	World_Position position = {};
+	World_Position render_position    = position;
 
 	Face face				   = Face_NORTH;
 	Quat face_direction        = quat_identity();
 
 	State state = IDEL;
 
-	r32 movement_force = 1200;
+	r32 movement_force = 1;
 
 	r32  mass                 = 50;
 	r32  drag                 = 7;
@@ -501,8 +679,11 @@ struct Camera_Bounds {
 };
 
 struct Camera {
-	Vec3 position;
-	Vec3 position_target;
+	World_Position position;
+	World_Position position_target;
+
+	r32 distance;
+	r32 distance_target;
 
 	r32 aspect_ratio;
 
@@ -510,9 +691,10 @@ struct Camera {
 };
 
 Camera_Bounds camera_get_bounds(Camera &camera) {
-	r32 camera_zoom = 1.0f / powf(2.0f, camera.position.z);
+	r32 camera_zoom = 1.0f / powf(2.0f, camera.distance);
 
-	r32 half_height = 0.5f * TOTAL_GRID_Y * camera_zoom;
+	r32 height = (r32)MAP_REGION_Y_CELL_COUNT;
+	r32 half_height = 0.5f * height * camera_zoom;
 	r32 half_width  = half_height * camera.aspect_ratio;
 
 	Camera_Bounds bounds;
@@ -524,19 +706,24 @@ Camera_Bounds camera_get_bounds(Camera &camera) {
 	return bounds;
 }
 
-Camera camera_create(Vec3 position, r32 distance = 0.5f, r32 target_distance = 1, r32 aspect_ratio = 1280.0f / 720.0f) {
-	r32 height      = TOTAL_GRID_Y;
-	r32 width       = height * aspect_ratio;
-	r32 half_height = 0.5f * height;
-	r32 half_width  = 0.5f * width;
+Camera camera_create(World_Position position, r32 distance = 0.5f, r32 target_distance = 1.0f, r32 aspect_ratio = 1280.0f / 720.0f) {
+	r32 top = MAP_REGION_HALF_Y_CELL_COUNT + 0.5f;
+	r32 bottom = -MAP_REGION_HALF_Y_CELL_COUNT - 0.5f;
+
+	r32 height = top - bottom;
+	r32 width = height * aspect_ratio;
+
+	r32 right = 0.5f * width;
+	r32 left = -0.5f * width;
 
 	Camera camera;
-	camera.position          = position;
+	camera.position			 = position;
 	camera.position_target   = camera.position;
-	camera.position.z        = distance;
-	camera.position_target.z = target_distance;
+	camera.distance			 = distance;
+	camera.distance_target	 = target_distance;
 	camera.aspect_ratio      = aspect_ratio;
-	camera.view              = orthographic_view(-half_width, half_width, half_height, -half_height);
+	camera.view              = orthographic_view(left, right, top, bottom);
+
 	return camera;
 }
 
@@ -550,6 +737,7 @@ void editor_update(Audio_Mixer *mixer, Player *player) {
 	ImGui::DragFloat("Volume", &volume, 0.01f, 0.0f, 1.0f);
 	ImGui::Checkbox("Guide", &editor.guide);
 
+#if 0
 	ImGui::Text("Player");
 	ImGui::DragFloat3("Target Position: (%.3f, %.3f, %.3f)", player->position.m);
 	ImGui::Text("Face Direction: (%.3f, %.3f, %.3f)", player->face_direction.x, player->face_direction.y, player->face_direction.z);
@@ -557,6 +745,7 @@ void editor_update(Audio_Mixer *mixer, Player *player) {
 	ImGui::DragFloat("Drag: %.3f", &player->drag, 0.01f);
 	ImGui::DragFloat("Movement Force: %.3f", &player->movement_force, 0.1f);
 	ImGui::DragFloat("Turn Speed: %.3f", &player->turn_velocity, 0.01f);
+#endif
 
 	ImGui::End();
 
@@ -588,6 +777,8 @@ int system_main() {
 #if 0
 	InitializeRigidBodies();
 #endif
+
+	World_Map world = create_test_world();
 
 	auto music = play_audio(&mixer, &audio, true);
 
@@ -776,14 +967,17 @@ int system_main() {
 				if (player.state == Player::IDEL) {
 					accept_input = true;
 				} else if (player.state == Player::WALKING) {
-					Vec2 direction = player.render_position.xy - player.position.xy;
+					Vec2 direction = player.position.tile - player.render_position.tile;
 					r32 length = vec2_length(direction);
 
 					if (length) {
 						r32 acceleration = (player.movement_force / player.mass);
 						player.dp += dt * acceleration;
 						player.dp *= powf(0.5f, player.drag * dt);
-						player.render_position = move_toward(player.render_position, player.position, dt * player.dp);
+						player.render_position.tile = move_toward(player.render_position.tile, player.position.tile, dt * player.dp);
+						world_position_normalize(&player.render_position);
+
+						player.render_position = player.position;
 					} else {
 						player.state = Player::IDEL;
 					}
@@ -793,9 +987,10 @@ int system_main() {
 				}
 
 				if (accept_input) {
-					Vec2 player_new_position = player.position.xy + movement_direction;
-					int cell_pos_x = (int)(player_new_position.x + 0.5f * TOTAL_GRID_X + 1.0f);
-					int cell_pos_y = (int)(player_new_position.y + 0.5f * TOTAL_GRID_Y + 1.0f);
+					World_Position new_position = player.position;
+					new_position.tile += movement_direction;
+					world_position_normalize(&new_position);
+
 
 					Face new_face_direction;
 					if (movement_direction.y > 0) {
@@ -814,10 +1009,10 @@ int system_main() {
 						new_face_direction = player.face;
 					}
 
-					if (map_cells[cell_pos_y][cell_pos_x] == Cell_Type_PLACE) {
-						if ((player.position.x != player_new_position.x || player.position.y != player_new_position.y)) {
+					if (world_map_is_position_available(&world, new_position)) {
+						if (!world_position_are_same(player.position, new_position)) {
 							player.state = Player::WALKING;
-							player.position.xy = player_new_position;
+							player.position = new_position;
 						} else {
 							player.dp = 0;
 						}
@@ -831,28 +1026,48 @@ int system_main() {
 				//
 				//
 
-				Vec2 camera_target_new = player.render_position.xy;
+				World_Position camera_target_new = player.render_position;
 
-				auto    cam_bounds = camera_get_bounds(camera);
-				Mm_Rect camera_min_max;
-				camera_min_max.min = camera_target_new + vec2(cam_bounds.left, cam_bounds.bottom);
-				camera_min_max.max = camera_target_new + vec2(cam_bounds.right, cam_bounds.top);
+#if 0
+				if (world_position_are_in_same_region(camera.position, camera_target_new)) {
+					auto    cam_bounds = camera_get_bounds(camera);
 
-				camera_min_max.min.x = (r32)((int)(camera_min_max.min.x + 0.5f * TOTAL_GRID_X + 0.5f));
-				camera_min_max.min.y = (r32)((int)(camera_min_max.min.y + 0.5f * TOTAL_GRID_Y + 0.5f));
-				camera_min_max.max.x = (r32)((int)(camera_min_max.max.x + 0.5f * TOTAL_GRID_X + 0.5f));
-				camera_min_max.max.y = (r32)((int)(camera_min_max.max.y + 0.5f * TOTAL_GRID_Y + 0.5f));
+					Mm_Rect camera_rect;
+					camera_rect.min = camera_target_new.tile + vec2(cam_bounds.left, cam_bounds.bottom);
+					camera_rect.max = camera_target_new.tile + vec2(cam_bounds.right, cam_bounds.top);
 
-				if (camera_min_max.min.x < 0 || camera_min_max.max.x >= TOTAL_GRID_X) {
-					camera_target_new.x = camera.position_target.x;
+					camera_rect.min.x = camera_rect.min.x + MAP_REGION_HALF_X_CELL_COUNT;
+					camera_rect.min.y = camera_rect.min.y + MAP_REGION_HALF_Y_CELL_COUNT;
+					camera_rect.max.x = camera_rect.max.x + MAP_REGION_HALF_X_CELL_COUNT;
+					camera_rect.max.y = camera_rect.max.y + MAP_REGION_HALF_Y_CELL_COUNT;
+
+					if (camera_rect.min.x < 0) {
+						camera_target_new.tile.x += camera_rect.min.x;
+					} else if (camera_rect.max.x >= MAP_REGION_X_CELL_COUNT) {
+						camera_target_new.tile.x += (MAP_REGION_X_CELL_COUNT - camera_rect.max.x);
+					}
+
+					if (camera_rect.min.y < 0) {
+						camera_target_new.tile.y += camera_rect.min.y;
+					} else if (camera_rect.max.y >= MAP_REGION_Y_CELL_COUNT) {
+						camera_target_new.tile.y += (MAP_REGION_Y_CELL_COUNT - camera_rect.max.y);
+					}
 				}
-				if (camera_min_max.min.y < 0 || camera_min_max.max.y >= TOTAL_GRID_Y) {
-					camera_target_new.y = camera.position_target.y;
-				}
+#endif
 
-				camera.position_target.xy = camera_target_new;
+				camera.position_target = camera_target_new;
 
-				camera.position = lerp(camera.position, camera.position_target, 1.0f - powf(1.0f - 0.99f, dt));
+				Vec2 camera_position_target;
+				camera_position_target.x = (r32)(MAP_REGION_X_CELL_COUNT * (camera.position_target.region.x - camera.position.region.x));
+				camera_position_target.x += camera.position_target.tile.x - camera.position.tile.x;
+
+				camera_position_target.y = (r32)(MAP_REGION_Y_CELL_COUNT * (camera.position_target.region.y - camera.position.region.y));
+				camera_position_target.y += camera.position_target.tile.y - camera.position.tile.y;
+
+				camera.position.tile += lerp(vec2(0), camera_position_target, 1.0f - powf(1.0f - 0.99f, dt));
+				world_position_normalize(&camera.position);
+
+				camera.distance = lerp(camera.distance, camera.distance_target, 1.0f - powf(1.0f - 0.8f, dt));
 			}
 
 			accumulator_t -= fixed_dt;
@@ -872,29 +1087,55 @@ int system_main() {
 
 		ImGui_UpdateFrame(real_dt);
 
-		r32 camera_zoom = 1.0f / powf(2.0f, camera.position.z);
+		r32 camera_zoom = 1.0f / powf(2.0f, camera.distance);
 
-		r32 thickness = 8.0f / (TOTAL_GRID_X * TOTAL_GRID_Y);
+		r32 thickness = 15.0f / framebuffer_h;
 
-		Mat4 transform = mat4_inverse(mat4_translation(camera.position) * mat4_scalar(camera_zoom, camera_zoom, 1));
+		Mat4 transform = mat4_inverse(mat4_translation(vec3(camera.position.tile, 0)) * mat4_scalar(camera_zoom, camera_zoom, 1));
 
-		gfx_begin_drawing(Framebuffer_Type_HDR, Clear_COLOR | Clear_DEPTH, vec4(0, 0, 0, 0));
+		gfx_begin_drawing(Framebuffer_Type_HDR, Clear_COLOR | Clear_DEPTH, vec4(0));
 		gfx_viewport(0, 0, framebuffer_w, framebuffer_h);
 
 		im_begin(camera.view, transform);
 		im_unbind_texture();
 
-		for (int y = 0; y < TOTAL_GRID_Y; ++y) {
-			for (int x = 0; x < TOTAL_GRID_X; ++x) {
-				r32 draw_x = (r32)x - 0.5f * (r32)TOTAL_GRID_X - 0.5f;
-				r32 draw_y = (r32)y - 0.5f * (r32)TOTAL_GRID_Y - 0.5f;
+		constexpr int MAP_MAX_RENDER_REGION_X = 1;
+		constexpr int MAP_MAX_RENDER_REGION_Y = 1;
+		constexpr int MAP_MAX_RENDER_REGION_Z = 0;
 
-				if (map_cells[y][x] == Cell_Type_PLACE) {
-					im_rect_centered(vec3(draw_x, draw_y, 1), vec2(1), vec4(0, 0.3f, 0));
-					im_rect_centered(vec3(draw_x, draw_y, 1), vec2(0.95f), vec4(0.1f, 0.9f, 0.2f));
-				} else {
-					im_rect_centered(vec3(draw_x, draw_y, 1), vec2(1), vec4(0.7f, 0.3f, 0));
-					im_rect_centered(vec3(draw_x, draw_y, 1), vec2(0.95f), vec4(0.7f, 0.4f, 0.2f));
+		int map_region_start_index_z = camera.position.region.z - MAP_MAX_RENDER_REGION_Z;
+		int map_region_start_index_y = camera.position.region.y - MAP_MAX_RENDER_REGION_Y;
+		int map_region_start_index_x = camera.position.region.x - MAP_MAX_RENDER_REGION_X;
+
+		for (int region_index_z = map_region_start_index_z; region_index_z < MAP_MAX_RENDER_REGION_Z + 1; ++region_index_z) {
+			for (int region_index_y = map_region_start_index_y; region_index_y < MAP_MAX_RENDER_REGION_Y + 1; ++region_index_y) {
+				for (int region_index_x = map_region_start_index_x; region_index_x < MAP_MAX_RENDER_REGION_X + 1; ++region_index_x) {
+					World_Map_Region *map_region = world_map_get_region(&world, region_index_x, region_index_y, region_index_z);
+
+					if (map_region) {
+						for (int cell_index_y = 0; cell_index_y < MAP_REGION_Y_CELL_COUNT; ++cell_index_y) {
+							for (int cell_index_x = 0; cell_index_x < MAP_REGION_X_CELL_COUNT; ++cell_index_x) {
+								World_Region_Cell* region_cell = world_map_region_get_cell(map_region, cell_index_x, cell_index_y);
+
+								Vec2 draw_pos;
+
+								draw_pos.y = (r32)((region_index_y - camera.position.region.y) * MAP_REGION_Y_CELL_COUNT);
+								draw_pos.x = (r32)((region_index_x - camera.position.region.x) * MAP_REGION_X_CELL_COUNT);
+
+								draw_pos += world_map_cell_to_tile(cell_index_x, cell_index_y);
+
+								if (region_cell->id == Cell_Type_PLACE) {
+									im_rect_centered(vec3(draw_pos, 1), vec2(1), vec4(0, 0.3f, 0));
+									im_rect_centered(vec3(draw_pos, 1), vec2(0.95f), vec4(0.1f, 0.7f, 0.3f));
+								}
+								else {
+									im_rect_centered(vec3(draw_pos, 1), vec2(1), vec4(0.7f, 0.3f, 0));
+									im_rect_centered(vec3(draw_pos, 1), vec2(0.95f), vec4(0.7f, 0.4f, 0.2f));
+								}
+							}
+						}
+					}
+
 				}
 			}
 		}
@@ -902,15 +1143,20 @@ int system_main() {
 		auto cam_bounds = camera_get_bounds(camera);
 		Vec2 draw_dim   = vec2(cam_bounds.right - cam_bounds.left, cam_bounds.top - cam_bounds.bottom);
 
-		im_circle_outline(player.render_position, 0.5f, vec4(1, 1, 0), thickness);
-		im_rect_centered_outline2d(camera.position.xy, draw_dim, vec4(1, 0, 1), thickness);
+		Vec2 player_draw_pos;
+		player_draw_pos.y = (r32)((player.render_position.region.y - camera.position.region.y) * MAP_REGION_Y_CELL_COUNT);
+		player_draw_pos.x = (r32)((player.render_position.region.x - camera.position.region.x) * MAP_REGION_X_CELL_COUNT);
+		player_draw_pos += player.render_position.tile;
+
+		im_circle_outline(player_draw_pos, 0.5f, vec4(1, 1, 0), thickness);
+		im_rect_centered_outline2d(player_draw_pos, draw_dim, vec4(1, 0, 1), thickness);
 
 		r32  angle;
 		Vec3 axis;
 		quat_get_angle_axis(player.face_direction, &angle, &axis);
 
 		im_bind_texture(player_sprite);
-		im_rect_centered_rotated(player.render_position, vec2(1), axis.z * angle, vec4(1));
+		im_rect_centered_rotated(player_draw_pos, vec2(1), axis.z * angle, vec4(1));
 
 		im_end();
 
