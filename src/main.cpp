@@ -797,13 +797,26 @@ int system_main() {
 					int cell_pos_x = (int)(player_new_position.x + 0.5f * TOTAL_GRID_X + 1.0f);
 					int cell_pos_y = (int)(player_new_position.y + 0.5f * TOTAL_GRID_Y + 1.0f);
 
+					Face new_face_direction;
+					if (movement_direction.y > 0) {
+						new_face_direction = Face_NORTH;
+					}
+					else if (movement_direction.y < 0) {
+						new_face_direction = Face_SOUTH;
+					}
+					else if (movement_direction.x > 0) {
+						new_face_direction = Face_WEST;
+					}
+					else if (movement_direction.x < 0) {
+						new_face_direction = Face_EAST;
+					}
+					else {
+						new_face_direction = player.face;
+					}
+
 					if (map_cells[cell_pos_y][cell_pos_x] == Cell_Type_PLACE) {
-						if (player.position.x != player_new_position.x || player.position.y != player_new_position.y) {
+						if ((player.position.x != player_new_position.x || player.position.y != player_new_position.y)) {
 							player.state = Player::WALKING;
-
-
-							Vec2 position_direction = player_new_position - player.position.xy;
-
 							player.position.xy = player_new_position;
 						} else {
 							player.dp = 0;
@@ -811,26 +824,14 @@ int system_main() {
 						
 					}
 
-
-					if (movement_direction.y > 0) {
-						player.face = Face_NORTH;
-					}
-					else if (movement_direction.y < 0) {
-						player.face = Face_SOUTH;
-					}
-					else if (movement_direction.x > 0) {
-						player.face = Face_WEST;
-					}
-					else if (movement_direction.x < 0) {
-						player.face = Face_EAST;
-					}
+					player.face = new_face_direction;
 				}
 
 				//
 				//
 				//
 
-				Vec2 camera_target_new = player.render_position.xy; // + vec2(0.5f, 0.5f);
+				Vec2 camera_target_new = player.render_position.xy;
 
 				auto    cam_bounds = camera_get_bounds(camera);
 				Mm_Rect camera_min_max;
@@ -877,7 +878,7 @@ int system_main() {
 
 		Mat4 transform = mat4_inverse(mat4_translation(camera.position) * mat4_scalar(camera_zoom, camera_zoom, 1));
 
-		gfx_begin_drawing(Framebuffer_Type_HDR, Clear_COLOR | Clear_DEPTH, vec4(0.02f, 0.02f, 0.02f));
+		gfx_begin_drawing(Framebuffer_Type_HDR, Clear_COLOR | Clear_DEPTH, vec4(0, 0, 0, 0));
 		gfx_viewport(0, 0, framebuffer_w, framebuffer_h);
 
 		im_begin(camera.view, transform);
