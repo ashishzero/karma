@@ -1123,8 +1123,8 @@ int system_main() {
 		gfx_begin_drawing(Framebuffer_Type_HDR, Clear_COLOR | Clear_DEPTH, vec4(0));
 		gfx_viewport(0, 0, framebuffer_w, framebuffer_h);
 
-		im2d_begin(camera.view, transform);
-		im2d_unbind_texture();
+		im3d_begin(camera.view, transform);
+		im3d_unbind_texture();
 
 		constexpr int MAP_MAX_RENDER_REGION_X = 1;
 		constexpr int MAP_MAX_RENDER_REGION_Y = 1;
@@ -1152,14 +1152,14 @@ int system_main() {
 								draw_pos += world_map_cell_to_tile(cell_index_x, cell_index_y);
 
 								if (region_cell->id == Cell_Type_PLACE) {
-									//im2d_cube(vec3(draw_pos, 2), quat_identity(), vec3(1), vec4(0, 0.3f, 0));
-									im2d_rect_centered(vec3(draw_pos, 0), vec2(1), vec4(0, 0.3f, 0));
-									//im2d_rect_centered(vec3(draw_pos, 1), vec2(0.95f), vec4(0.1f, 0.7f, 0.3f));
+									//im3d_cube(vec3(draw_pos, 2), quat_identity(), vec3(1), vec4(0, 0.3f, 0));
+									//im3d_rect_centered(vec3(draw_pos, 0), vec2(1), vec4(0, 0.3f, 0));
+									//im3d_rect_centered(vec3(draw_pos, 1), vec2(0.95f), vec4(0.1f, 0.7f, 0.3f));
 								}
 								else {
-									im2d_cube(vec3(draw_pos, 0), quat_identity(), vec3(1), vec4(0.7f, 0.4f, 0.2f));
-									//im2d_rect_centered(vec3(draw_pos, 1), vec2(0.95f), vec4(0.7f, 0.4f, 0.2f));
-									//im2d_rect_centered(vec3(draw_pos, 1), vec2(1), vec4(0.7f, 0.3f, 0));
+									im3d_cube(vec3(draw_pos, 0), quat_identity(), vec3(1), vec4(0.7f, 0.4f, 0.2f));
+									//im3d_rect_centered(vec3(draw_pos, 1), vec2(0.95f), vec4(0.7f, 0.4f, 0.2f));
+									//im3d_rect_centered(vec3(draw_pos, 1), vec2(1), vec4(0.7f, 0.3f, 0));
 								}
 							}
 						}
@@ -1178,23 +1178,24 @@ int system_main() {
 		player_draw_pos.xy += player.render_position.tile;
 		player_draw_pos.z = -0.1f;
 
-		im2d_circle_outline(player_draw_pos, 0.5f, vec4(1, 1, 0), thickness);
-		im2d_rect_centered_outline(vec3(camera.position.tile, -0.1f), draw_dim, vec4(1, 0, 1), thickness);
+		//im3d_circle_outline(player_draw_pos, 0.5f, vec4(1, 1, 0), thickness);
+		//im3d_rect_centered_outline(vec3(camera.position.tile, -0.1f), draw_dim, vec4(1, 0, 1), thickness);
 
 		r32  angle;
 		Vec3 axis;
 		quat_get_angle_axis(player.face_direction, &angle, &axis);
 
-		im2d_bind_texture(player_sprite);
-		im2d_rect_centered_rotated(player_draw_pos, vec2(1), axis.z * angle, vec4(1));
+		im3d_cube(player_draw_pos, quat_identity(), vec3(1), vec4(1));
+		//im3d_bind_texture(player_sprite);
+		//im3d_rect_centered_rotated(player_draw_pos, vec2(1), axis.z * angle, vec4(1));
 
-		im2d_end();
+		im3d_end();
 
 		gfx_end_drawing();
 
 #if 0
 		if (emitter.texture)
-			im2d_bind_texture(*emitter.texture);
+			im3d_bind_texture(*emitter.texture);
 
 		for (int i = emitter.emit_count; i >= 0; --i) {
 			Particle *particle = emitter.particles + i;
@@ -1212,10 +1213,10 @@ int system_main() {
 				auto particle_color = hsv_to_rgb(lerp(particle->color_a, particle->color_b, t));
 				particle_color.xyz *= emitter.properties.intensity;
 				particle_color.w *= (fade_t * emitter.properties.opacity);
-				im2d_rect_rotated(particle->position, vec2(lerp(particle->scale_a, particle->scale_b, t)), particle->rotation, particle_color);
+				im3d_rect_rotated(particle->position, vec2(lerp(particle->scale_a, particle->scale_b, t)), particle->rotation, particle_color);
 			}
 
-			im2d_unbind_texture();
+			im3d_unbind_texture();
 		}
 
 		PrintRigidBodies();
