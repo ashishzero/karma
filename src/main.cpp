@@ -121,7 +121,7 @@ void update_min_max(RigidBody *rigidBody) {
 void PrintRigidBodies() {
 	for (int i = 0; i < NUM_RIGID_BODIES; i++) {
 		RigidBody *rigidBody = &rigidBodies[i];
-		im_rect(vec2(rigidBody->position.x, rigidBody->position.y), vec2(rigidBody->shape.width, rigidBody->shape.height), vec4(vec3(1.1f, 1.2f, 1.5f), 1.0f));
+		im2d_rect(vec2(rigidBody->position.x, rigidBody->position.y), vec2(rigidBody->shape.width, rigidBody->shape.height), vec4(vec3(1.1f, 1.2f, 1.5f), 1.0f));
 	}
 }
 #endif
@@ -1123,8 +1123,8 @@ int system_main() {
 		gfx_begin_drawing(Framebuffer_Type_HDR, Clear_COLOR | Clear_DEPTH, vec4(0));
 		gfx_viewport(0, 0, framebuffer_w, framebuffer_h);
 
-		im_begin(camera.view, transform);
-		im_unbind_texture();
+		im2d_begin(camera.view, transform);
+		im2d_unbind_texture();
 
 		constexpr int MAP_MAX_RENDER_REGION_X = 1;
 		constexpr int MAP_MAX_RENDER_REGION_Y = 1;
@@ -1152,14 +1152,14 @@ int system_main() {
 								draw_pos += world_map_cell_to_tile(cell_index_x, cell_index_y);
 
 								if (region_cell->id == Cell_Type_PLACE) {
-									//im_cube(vec3(draw_pos, 2), quat_identity(), vec3(1), vec4(0, 0.3f, 0));
-									im_rect_centered(vec3(draw_pos, 0), vec2(1), vec4(0, 0.3f, 0));
-									//im_rect_centered(vec3(draw_pos, 1), vec2(0.95f), vec4(0.1f, 0.7f, 0.3f));
+									//im2d_cube(vec3(draw_pos, 2), quat_identity(), vec3(1), vec4(0, 0.3f, 0));
+									im2d_rect_centered(vec3(draw_pos, 0), vec2(1), vec4(0, 0.3f, 0));
+									//im2d_rect_centered(vec3(draw_pos, 1), vec2(0.95f), vec4(0.1f, 0.7f, 0.3f));
 								}
 								else {
-									im_cube(vec3(draw_pos, 0), quat_identity(), vec3(1), vec4(0.7f, 0.4f, 0.2f));
-									//im_rect_centered(vec3(draw_pos, 1), vec2(0.95f), vec4(0.7f, 0.4f, 0.2f));
-									//im_rect_centered(vec3(draw_pos, 1), vec2(1), vec4(0.7f, 0.3f, 0));
+									im2d_cube(vec3(draw_pos, 0), quat_identity(), vec3(1), vec4(0.7f, 0.4f, 0.2f));
+									//im2d_rect_centered(vec3(draw_pos, 1), vec2(0.95f), vec4(0.7f, 0.4f, 0.2f));
+									//im2d_rect_centered(vec3(draw_pos, 1), vec2(1), vec4(0.7f, 0.3f, 0));
 								}
 							}
 						}
@@ -1178,23 +1178,23 @@ int system_main() {
 		player_draw_pos.xy += player.render_position.tile;
 		player_draw_pos.z = -0.1f;
 
-		im_circle_outline(player_draw_pos, 0.5f, vec4(1, 1, 0), thickness);
-		im_rect_centered_outline2d(vec3(camera.position.tile, -0.1f), draw_dim, vec4(1, 0, 1), thickness);
+		im2d_circle_outline(player_draw_pos, 0.5f, vec4(1, 1, 0), thickness);
+		im2d_rect_centered_outline2d(vec3(camera.position.tile, -0.1f), draw_dim, vec4(1, 0, 1), thickness);
 
 		r32  angle;
 		Vec3 axis;
 		quat_get_angle_axis(player.face_direction, &angle, &axis);
 
-		im_bind_texture(player_sprite);
-		im_rect_centered_rotated(player_draw_pos, vec2(1), axis.z * angle, vec4(1));
+		im2d_bind_texture(player_sprite);
+		im2d_rect_centered_rotated(player_draw_pos, vec2(1), axis.z * angle, vec4(1));
 
-		im_end();
+		im2d_end();
 
 		gfx_end_drawing();
 
 #if 0
 		if (emitter.texture)
-			im_bind_texture(*emitter.texture);
+			im2d_bind_texture(*emitter.texture);
 
 		for (int i = emitter.emit_count; i >= 0; --i) {
 			Particle *particle = emitter.particles + i;
@@ -1212,10 +1212,10 @@ int system_main() {
 				auto particle_color = hsv_to_rgb(lerp(particle->color_a, particle->color_b, t));
 				particle_color.xyz *= emitter.properties.intensity;
 				particle_color.w *= (fade_t * emitter.properties.opacity);
-				im_rect_rotated(particle->position, vec2(lerp(particle->scale_a, particle->scale_b, t)), particle->rotation, particle_color);
+				im2d_rect_rotated(particle->position, vec2(lerp(particle->scale_a, particle->scale_b, t)), particle->rotation, particle_color);
 			}
 
-			im_unbind_texture();
+			im2d_unbind_texture();
 		}
 
 		PrintRigidBodies();
