@@ -505,8 +505,8 @@ r32 world_map_cell_to_tile_vertical(int cell_index) {
 
 Vec3 world_position_unpack(World_Position &position, World_Position &center) {
 	Vec3 result;
-	result.x = (position.region.x - center.region.x) * MAP_REGION_HALF_X_CELL_COUNT + (position.tile.x - center.tile.x);
-	result.y = (position.region.y - center.region.y) * MAP_REGION_HALF_Y_CELL_COUNT + (position.tile.y - center.tile.y);
+	result.x = (position.region.x - center.region.x) * MAP_REGION_X_CELL_COUNT + (position.tile.x - center.tile.x);
+	result.y = (position.region.y - center.region.y) * MAP_REGION_Y_CELL_COUNT + (position.tile.y - center.tile.y);
 	result.z = (r32)(position.region.z - center.region.z);
 	return result;
 }
@@ -659,7 +659,7 @@ struct Player {
 
 	State state = IDEL;
 
-	r32 movement_force = 1;
+	r32 movement_force = 1400;
 
 	r32  mass                 = 50;
 	r32  drag                 = 7;
@@ -737,14 +737,15 @@ void editor_update(Audio_Mixer *mixer, Player *player) {
 	ImGui::DragFloat("Volume", &volume, 0.01f, 0.0f, 1.0f);
 	ImGui::Checkbox("Guide", &editor.guide);
 
-#if 0
+#if 1
 	ImGui::Text("Player");
-	ImGui::DragFloat3("Target Position: (%.3f, %.3f, %.3f)", player->position.m);
+	ImGui::DragInt3("Region Position", player->position.region.m);
+	ImGui::DragFloat3("Tile Position", player->position.tile.m);
 	ImGui::Text("Face Direction: (%.3f, %.3f, %.3f)", player->face_direction.x, player->face_direction.y, player->face_direction.z);
-	ImGui::DragFloat("Mass: %.3f", &player->mass, 0.1f);
-	ImGui::DragFloat("Drag: %.3f", &player->drag, 0.01f);
-	ImGui::DragFloat("Movement Force: %.3f", &player->movement_force, 0.1f);
-	ImGui::DragFloat("Turn Speed: %.3f", &player->turn_velocity, 0.01f);
+	ImGui::DragFloat("Mass", &player->mass, 0.1f);
+	ImGui::DragFloat("Drag", &player->drag, 0.01f);
+	ImGui::DragFloat("Movement Force", &player->movement_force, 0.1f);
+	ImGui::DragFloat("Turn Speed", &player->turn_velocity, 0.01f);
 #endif
 
 	ImGui::End();
@@ -967,22 +968,28 @@ int system_main() {
 				if (player.state == Player::IDEL) {
 					accept_input = true;
 				} else if (player.state == Player::WALKING) {
-					Vec2 direction = player.position.tile - player.render_position.tile;
-					r32 length = vec2_length(direction);
+					Vec2 direction = world_position_unpack(player.position, player.render_position).xy;
+					r32 distance = vec2_length(direction);
 
-					if (length) {
+					if (distance) {
 						r32 acceleration = (player.movement_force / player.mass);
 						player.dp += dt * acceleration;
 						player.dp *= powf(0.5f, player.drag * dt);
-						player.render_position.tile = move_toward(player.render_position.tile, player.position.tile, dt * player.dp);
-						world_position_normalize(&player.render_position);
+						r32 change_in_position = dt * player.dp;
 
-						player.render_position = player.position;
+						if (change_in_position < distance) {
+							direction /= distance;
+							player.render_position.tile += direction * change_in_position;
+							world_position_normalize(&player.render_position);
+						} else {
+							player.render_position = player.position;
+						}
+
 					} else {
 						player.state = Player::IDEL;
 					}
 
-					if (length < 0.25f)
+					if (distance < 0.25f)
 						accept_input = true;
 				}
 

@@ -392,7 +392,6 @@ popd
     <ClInclude Include="src\utility.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include=".clang-format" />
     <None Include=".gitattributes" />
     <None Include=".gitignore" />
     <None Include="readme.md" />

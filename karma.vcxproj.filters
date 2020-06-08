@@ -205,7 +205,6 @@
     <None Include=".gitattributes" />
     <None Include=".gitignore" />
     <None Include="readme.md" />
-    <None Include=".clang-format" />
     <None Include="src\prebuild.bat">
       <Filter>Source Files</Filter>
     </None>
