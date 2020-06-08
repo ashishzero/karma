@@ -75,6 +75,9 @@ struct Im_Context3d {
 	Im_Index		last_index;
 	u32				index;
 	Im_Index		counter;
+
+	Mat4 transformations[IM_CONTEXT_MAX_TRANSFORMATIONS];
+	u32  transformation;
 };
 
 struct Hdr_Data {
@@ -299,6 +302,9 @@ bool gfx_create_context(Handle platform, Render_Backend backend, Vsync vsync, u3
 
 	im_context3d.sampler = gfx->create_sampler(filter_create(Filter_Type_MIN_MAG_MIP_POINT), texture_address_create(), level_of_detail_create());
 
+	im_context3d.transformations[0] = mat4_identity();
+	im_context3d.transformation     = 1;
+
 	for (int i = 0; i < IM_MAX_CIRCLE_SEGMENTS; ++i) {
 		r32 theta             = ((r32)i / (r32)IM_MAX_CIRCLE_SEGMENTS) * MATH_PI * 2;
 		im_unit_circle_cos[i] = cosf(theta);
@@ -443,6 +449,13 @@ inline Im_Vertex2d *iim2d_push_vertex_count(int count) {
 
 inline void im2d_push_vertices(Im_Vertex2d *vertices, int count) {
 	auto dst = iim2d_push_vertex_count(count);
+
+	if (im_context2d.transformation > 1) {
+		for (int i = 0; i < count; ++i) {
+			vertices[i].position = (im_context2d.transformations[im_context2d.transformation - 1] * vec4(vertices[i].position, 0)).xyz;
+		}
+	}
+
 	memcpy(dst, vertices, sizeof(Im_Vertex2d) * count);
 }
 
@@ -1094,7 +1107,7 @@ void im2d_cube(Vec3 position, Quat rotation, Vec3 scale, Color4 color) {
 	im2d_cube(position, rotation, scale, mm_rect(0, 0, 1, 1), color);
 }
 
-void im2d_line2d(Vec3 a, Vec3 b, Color4 color, r32 thickness) {
+void im2d_line(Vec3 a, Vec3 b, Color4 color, r32 thickness) {
 	if (vec3_equals(a, b, 0)) return;
 
 	r32 dx   = b.x - a.x;
@@ -1107,77 +1120,77 @@ void im2d_line2d(Vec3 a, Vec3 b, Color4 color, r32 thickness) {
 			vec3(b.x + dy, b.y - dx, b.z), vec3(a.x + dy, a.y - dx, a.z), color);
 }
 
-void im2d_line2d(Vec2 a, Vec2 b, Color4 color, r32 thickness) {
-	im2d_line2d(vec3(a, 1), vec3(b, 1), color, thickness);
+void im2d_line(Vec2 a, Vec2 b, Color4 color, r32 thickness) {
+	im2d_line(vec3(a, 1), vec3(b, 1), color, thickness);
 }
 
-void im2d_bezier_quadratic2d(Vec3 a, Vec3 b, Vec3 c, Color4 color, r32 thickness, int segments) {
+void im2d_bezier_quadratic(Vec3 a, Vec3 b, Vec3 c, Color4 color, r32 thickness, int segments) {
 	Vec3 p = a, np;
 	for (int seg_index = 0; seg_index <= segments; ++seg_index) {
 		r32 t = (r32)seg_index / (r32)segments;
 		np    = bezier_quadratic(a, b, c, t);
-		im2d_line2d(p, np, color, thickness);
+		im2d_line(p, np, color, thickness);
 		p = np;
 	}
 }
 
-void im2d_bezier_quadratic2d(Vec2 a, Vec2 b, Vec2 c, Color4 color, r32 thickness, int segments) {
-	im2d_bezier_quadratic2d(vec3(a, 1), vec3(b, 1), vec3(c, 1), color, thickness, segments);
+void im2d_bezier_quadratic(Vec2 a, Vec2 b, Vec2 c, Color4 color, r32 thickness, int segments) {
+	im2d_bezier_quadratic(vec3(a, 1), vec3(b, 1), vec3(c, 1), color, thickness, segments);
 }
 
-void im2d_bezier_cubic2d(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Color4 color, r32 thickness, int segments) {
+void im2d_bezier_cubic(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Color4 color, r32 thickness, int segments) {
 	Vec3 p = a, np;
 	for (int seg_index = 0; seg_index <= segments; ++seg_index) {
 		r32 t = (r32)seg_index / (r32)segments;
 		np    = bezeir_cubic(a, b, c, d, t);
-		im2d_line2d(p, np, color, thickness);
+		im2d_line(p, np, color, thickness);
 		p = np;
 	}
 }
 
-void im2d_bezier_cubic2d(Vec2 a, Vec2 b, Vec2 c, Vec2 d, Color4 color, r32 thickness, int segments) {
-	im2d_bezier_cubic2d(vec3(a, 1), vec3(b, 1), vec3(c, 1), vec3(d, 1), color, thickness, segments);
+void im2d_bezier_cubic(Vec2 a, Vec2 b, Vec2 c, Vec2 d, Color4 color, r32 thickness, int segments) {
+	im2d_bezier_cubic(vec3(a, 1), vec3(b, 1), vec3(c, 1), vec3(d, 1), color, thickness, segments);
 }
 
-void im2d_triangle_outline2d(Vec3 a, Vec3 b, Vec3 c, Color4 color, r32 thickness) {
-	im2d_line2d(a, b, color, thickness);
-	im2d_line2d(b, c, color, thickness);
-	im2d_line2d(c, a, color, thickness);
+void im2d_triangle_outline(Vec3 a, Vec3 b, Vec3 c, Color4 color, r32 thickness) {
+	im2d_line(a, b, color, thickness);
+	im2d_line(b, c, color, thickness);
+	im2d_line(c, a, color, thickness);
 }
 
-void im2d_triangle_outline2d(Vec2 a, Vec2 b, Vec2 c, Color4 color, r32 thickness) {
-	im2d_line2d(a, b, color, thickness);
-	im2d_line2d(b, c, color, thickness);
-	im2d_line2d(c, a, color, thickness);
+void im2d_triangle_outline(Vec2 a, Vec2 b, Vec2 c, Color4 color, r32 thickness) {
+	im2d_line(a, b, color, thickness);
+	im2d_line(b, c, color, thickness);
+	im2d_line(c, a, color, thickness);
 }
 
-void im2d_quad_outline2d(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Color4 color, r32 thickness) {
-	im2d_line2d(a, b, color, thickness);
-	im2d_line2d(b, c, color, thickness);
-	im2d_line2d(c, d, color, thickness);
-	im2d_line2d(a, d, color, thickness);
+void im2d_quad_outline(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Color4 color, r32 thickness) {
+	im2d_line(a, b, color, thickness);
+	im2d_line(b, c, color, thickness);
+	im2d_line(c, d, color, thickness);
+	im2d_line(a, d, color, thickness);
 }
 
-void im2d_quad_outline2d(Vec2 a, Vec2 b, Vec2 c, Vec2 d, Color4 color, r32 thickness) {
-	im2d_line2d(a, b, color, thickness);
-	im2d_line2d(b, c, color, thickness);
-	im2d_line2d(c, d, color, thickness);
-	im2d_line2d(a, d, color, thickness);
+void im2d_quad_outline(Vec2 a, Vec2 b, Vec2 c, Vec2 d, Color4 color, r32 thickness) {
+	im2d_line(a, b, color, thickness);
+	im2d_line(b, c, color, thickness);
+	im2d_line(c, d, color, thickness);
+	im2d_line(a, d, color, thickness);
 }
 
-void im2d_rect_outline2d(Vec3 pos, Vec2 dim, Color4 color, r32 thickness) {
+void im2d_rect_outline(Vec3 pos, Vec2 dim, Color4 color, r32 thickness) {
 	Vec3 a = pos;
 	Vec3 b = pos + vec3(0, dim.y, 0);
 	Vec3 c = pos + vec3(dim, 0);
 	Vec3 d = pos + vec3(dim.x, 0, 0);
-	im2d_quad_outline2d(a, b, c, d, color, thickness);
+	im2d_quad_outline(a, b, c, d, color, thickness);
 }
 
-void im2d_rect_outline2d(Vec2 pos, Vec2 dim, Color4 color, r32 thickness) {
-	im2d_rect_outline2d(vec3(pos, 1), dim, color, thickness);
+void im2d_rect_outline(Vec2 pos, Vec2 dim, Color4 color, r32 thickness) {
+	im2d_rect_outline(vec3(pos, 1), dim, color, thickness);
 }
 
-void im2d_rect_centered_outline2d(Vec3 pos, Vec2 dim, Color4 color, r32 thickness) {
+void im2d_rect_centered_outline(Vec3 pos, Vec2 dim, Color4 color, r32 thickness) {
 	Vec2 half_dim  = 0.5f * dim;
 
 	Vec3 a, b, c, d;
@@ -1190,11 +1203,11 @@ void im2d_rect_centered_outline2d(Vec3 pos, Vec2 dim, Color4 color, r32 thicknes
 	b.z = pos.z;
 	c.z = pos.z;
 	d.z = pos.z;
-	im2d_quad_outline2d(a, b, c, d, color, thickness);
+	im2d_quad_outline(a, b, c, d, color, thickness);
 }
 
-void im2d_rect_centered_outline2d(Vec2 pos, Vec2 dim, Color4 color, r32 thickness) {
-	im2d_rect_centered_outline2d(vec3(pos, 1), dim, color, thickness);
+void im2d_rect_centered_outline(Vec2 pos, Vec2 dim, Color4 color, r32 thickness) {
+	im2d_rect_centered_outline(vec3(pos, 1), dim, color, thickness);
 }
 
 void im2d_ellipse_outline(Vec3 position, r32 radius_a, r32 radius_b, Color4 color, r32 thickness, int segments) {
@@ -1210,7 +1223,7 @@ void im2d_ellipse_outline(Vec3 position, r32 radius_a, r32 radius_b, Color4 colo
 		npx = im_unit_circle_cos[lookup] * radius_a;
 		npy = im_unit_circle_sin[lookup] * radius_b;
 
-		im2d_line2d(position + vec3(px, py, 0), position + vec3(npx, npy, 0), color, thickness);
+		im2d_line(position + vec3(px, py, 0), position + vec3(npx, npy, 0), color, thickness);
 
 		px = npx;
 		py = npy;
@@ -1242,7 +1255,7 @@ void im2d_arc_outline(Vec3 position, r32 radius_a, r32 radius_b, r32 theta_a, r3
 	r32 py = im_unit_circle_sin[first_index] * radius_b;
 
 	if (closed) {
-		im2d_line2d(position, position + vec3(px, py, 0), color, thickness);
+		im2d_line(position, position + vec3(px, py, 0), color, thickness);
 	}
 
 	r32 npx, npy;
@@ -1252,14 +1265,14 @@ void im2d_arc_outline(Vec3 position, r32 radius_a, r32 radius_b, r32 theta_a, r3
 		npx = im_unit_circle_cos[lookup] * radius_a;
 		npy = im_unit_circle_sin[lookup] * radius_b;
 
-		im2d_line2d(position + vec3(px, py, 0), position + vec3(npx, npy, 0), color, thickness);
+		im2d_line(position + vec3(px, py, 0), position + vec3(npx, npy, 0), color, thickness);
 
 		px = npx;
 		py = npy;
 	}
 
 	if (closed) {
-		im2d_line2d(position, position + vec3(px, py, 0), color, thickness);
+		im2d_line(position, position + vec3(px, py, 0), color, thickness);
 	}
 }
 
@@ -1332,4 +1345,361 @@ Vec2 im2d_calculate_text_region(r32 scale, Monospaced_Font_Info &font, const Str
 	r32 y = scale;
 	r32 x = font.advance * string.count * scale;
 	return vec2(x, y);
+}
+
+//
+//
+//
+
+inline void im3d_start_cmd_record(Texture_View texture) {
+	auto draw_cmd     = im_context3d.draw_cmds + im_context3d.draw_cmd;
+	draw_cmd->index   = im_context3d.index;
+	draw_cmd->vertex  = im_context3d.vertex;
+	draw_cmd->texture = texture;
+	draw_cmd->count   = 0;
+}
+
+inline Im_Vertex3d *iim3d_push_vertex_count(int count) {
+	assert(im_context3d.vertex + count <= IM_CONTEXT_MAX_VERTICES);
+
+	auto vertex = im_context3d.vertex_ptr;
+	im_context3d.vertex_ptr += count;
+	im_context3d.vertex += count;
+	return vertex;
+}
+
+inline void im3d_push_vertices(Im_Vertex3d *vertices, int count) {
+	auto dst = iim3d_push_vertex_count(count);
+
+	if (im_context3d.transformation > 1) {
+		for (int i = 0; i < count; ++i) {
+			vertices[i].position = (im_context3d.transformations[im_context3d.transformation - 1] * vec4(vertices[i].position, 0)).xyz;
+		}
+	}
+
+	memcpy(dst, vertices, sizeof(Im_Vertex3d) * count);
+}
+
+inline void im3d_push_vertex(Vec3 position, Vec2 texture_coord, Vec3 normal, Color4 color) {
+	Im_Vertex3d src = { position, texture_coord, normal, color };
+	im3d_push_vertices(&src, 1);
+}
+
+inline Im_Index *iim3d_push_index_count(int count) {
+	assert(im_context3d.index + count <= IM_CONTEXT_MAX_INDICES);
+	auto index = im_context3d.index_ptr;
+	im_context3d.index_ptr += count;
+	im_context3d.index += count;
+	im_context3d.counter += count;
+	return index;
+}
+
+#define im3d_get_last_index() (im_context3d.counter ? im_context3d.last_index + 1 : im_context3d.last_index)
+#define im3d_get_draw_cmd()   (im_context3d.draw_cmds + im_context3d.draw_cmd)
+
+inline void im3d_push_indices(Im_Index *indices, int count) {
+	assert(im_context3d.index + count <= IM_CONTEXT_MAX_INDICES);
+	auto prev_counter = im_context3d.counter;
+
+	auto dst = iim3d_push_index_count(count);
+
+	if (prev_counter) {
+		auto next_index = im_context3d.last_index + 1;
+		for (int i = 0; i < count; ++i) {
+			indices[i] += next_index;
+		}
+	}
+
+	im_context3d.last_index = indices[count - 1];
+	memcpy(dst, indices, count * sizeof(Im_Vertex3d));
+}
+
+inline void im3d_push_draw_cmd() {
+	auto last_cmd   = im_context3d.draw_cmds + im_context3d.draw_cmd;
+	last_cmd->count = im_context3d.counter;
+	im_context3d.draw_cmd += 1;
+	im_context3d.counter = 0;
+}
+
+void iim3d_flush(bool restart = true);
+
+inline void im3d_ensure_size(int vertex_count, int index_count) {
+	if (im_context3d.index + index_count - 1 >= IM_CONTEXT_MAX_INDICES ||
+		im_context3d.vertex + vertex_count - 1 >= IM_CONTEXT_MAX_VERTICES) {
+		im3d_push_draw_cmd();
+		iim3d_flush();
+	}
+}
+
+void im3d_begin(const Mat4 &transform) {
+	im_context3d.draw_cmd       = 0;
+	im_context3d.vertex         = 0;
+	im_context3d.index          = 0;
+	im_context3d.counter        = 0;
+	im_context3d.transformation = 1;
+
+	im_context3d.vertex_ptr = (Im_Vertex3d *)gfx->map(im_context3d.vertex_buffer, Map_Type_WRITE_DISCARD);
+	im_context3d.index_ptr  = (Im_Index *)gfx->map(im_context3d.index_buffer, Map_Type_WRITE_DISCARD);
+
+	im3d_start_cmd_record(white_texture.view);
+
+	Im_Uniform uniform;
+	uniform.transform = transform;
+
+	void *ptr = gfx->map(im_context3d.uniform_buffer, Map_Type_WRITE_DISCARD);
+	memcpy(ptr, &uniform, sizeof(uniform));
+	gfx->unmap(im_context3d.uniform_buffer);
+
+	gfx->cmd_bind_pipeline(im_context3d.pipeline);
+	gfx->cmd_bind_samplers(0, 1, &im_context3d.sampler);
+	gfx->cmd_bind_vs_uniform_buffers(0, 1, &im_context3d.uniform_buffer);
+}
+
+void im3d_begin(Camera_View &view, const Mat4 &transform) {
+	Mat4 projection;
+	switch (gfx->backend) {
+	case Render_Backend_OPENGL: {
+		if (view.kind == ORTHOGRAPHIC)
+			projection = mat4_ortho_gl(view.orthographic.left,
+				view.orthographic.right,
+				view.orthographic.top,
+				view.orthographic.bottom,
+				view.orthographic.near,
+				view.orthographic.far);
+		else
+			projection = mat4_perspective_gl(view.perspective.field_of_view,
+				view.perspective.aspect_ratio,
+				view.perspective.near_plane,
+				view.perspective.far_plane);
+	} break;
+
+	case Render_Backend_DIRECTX11: {
+		if (view.kind == ORTHOGRAPHIC)
+			projection = mat4_ortho_dx(view.orthographic.left,
+				view.orthographic.right,
+				view.orthographic.top,
+				view.orthographic.bottom,
+				view.orthographic.near,
+				view.orthographic.far);
+		else
+			projection = mat4_perspective_dx(view.perspective.field_of_view,
+				view.perspective.aspect_ratio,
+				view.perspective.near_plane,
+				view.perspective.far_plane);
+	} break;
+
+		invalid_default_case();
+	}
+
+	im3d_begin(projection * transform);
+}
+
+void iim3d_flush(bool restart) {
+	gfx->unmap(im_context3d.vertex_buffer);
+	gfx->unmap(im_context3d.index_buffer);
+
+	if (im_context3d.draw_cmd) {
+		gfx->cmd_bind_vertex_buffer(im_context3d.vertex_buffer, sizeof(Im_Vertex3d));
+		gfx->cmd_bind_index_buffer(im_context3d.index_buffer, Index_Type_U16);
+
+		for (u32 draw_cmd_index = 0; draw_cmd_index < im_context3d.draw_cmd; ++draw_cmd_index) {
+			Im_Draw_Cmd *cmd = im_context3d.draw_cmds + draw_cmd_index;
+
+			gfx->cmd_bind_textures(0, 1, &cmd->texture);
+			gfx->cmd_draw_indexed(cmd->count, cmd->index, cmd->vertex);
+		}
+
+		auto bound_texture = im_context3d.draw_cmds[im_context3d.draw_cmd - 1].texture;
+
+		im_context3d.draw_cmd = 0;
+		im_context3d.vertex   = 0;
+		im_context3d.index    = 0;
+		im_context3d.counter  = 0;
+
+		im3d_start_cmd_record(bound_texture);
+	}
+
+	if (restart) {
+		im_context3d.vertex_ptr = (Im_Vertex3d *)gfx->map(im_context3d.vertex_buffer, Map_Type_WRITE_DISCARD);
+		im_context3d.index_ptr  = (Im_Index *)gfx->map(im_context3d.index_buffer, Map_Type_WRITE_DISCARD);
+	}
+}
+
+void im3d_end() {
+	if (im_context3d.counter) {
+		im3d_push_draw_cmd();
+	}
+	iim3d_flush(false);
+}
+
+void im3d_bind_texture(Texture2d_Handle handle) {
+	if (im_context3d.draw_cmds[im_context3d.draw_cmd].texture.id == handle.view.id)
+		return;
+
+	if (im_context3d.counter) {
+		im3d_push_draw_cmd();
+		im3d_start_cmd_record(handle.view);
+	} else {
+		auto draw_cmd     = im3d_get_draw_cmd();
+		draw_cmd->texture = handle.view;
+	}
+}
+
+void im3d_unbind_texture() {
+	im3d_bind_texture(white_texture);
+}
+
+void im3d_push_matrix(const Mat4 &matrix) {
+	assert(im_context3d.transformation < IM_CONTEXT_MAX_TRANSFORMATIONS);
+	im_context3d.transformations[im_context3d.transformation] = im_context3d.transformations[im_context3d.transformation - 1] * matrix;
+	im_context3d.transformation += 1;
+}
+
+void im3d_pop_matrix() {
+	assert(im_context3d.transformation > 1);
+	im_context3d.transformation -= 1;
+}
+
+void im3d_flush_transformations() {
+	im_context3d.transformation = 1;
+}
+
+void im3d_triangle(Vec3 a, Vec3 b, Vec3 c, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Vec3 na, Vec3 nb, Vec3 nc, Color4 color) {
+	im3d_ensure_size(3, 3);
+
+	Im_Index  indices[]  = { 0, 1, 2 };
+	Im_Vertex3d vertices[] = {
+		{ a, uv_a, na, color },
+		{ b, uv_b, nb, color },
+		{ c, uv_c, nc, color },
+	};
+
+	im3d_push_indices(indices, static_count(indices));
+	im3d_push_vertices(vertices, static_count(vertices));
+}
+
+void im3d_triangle(Vec3 a, Vec3 b, Vec3 c, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Color4 color) {
+	Vec3 dir_a = a - b;
+	Vec3 dir_b = c - b;
+	Vec3 n = vec3_cross(dir_a, dir_b);
+	im3d_triangle(a, b, c, uv_a, uv_b, uv_c, n, n, n, color);
+}
+
+void im3d_triangle(Vec3 a, Vec3 b, Vec3 c, Vec3 na, Vec3 nb, Vec3 nc, Color4 color) {
+	im3d_triangle(a, b, c, vec2(0), vec2(0), vec2(0), na, nb, nc, color);
+}
+
+void im3d_triangle(Vec3 a, Vec3 b, Vec3 c, Color4 color) {
+	im3d_triangle(a, b, c, vec2(0), vec2(0), vec2(0), color);
+}
+
+void im3d_quad(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Vec2 uv_d, Vec3 na, Vec3 nb, Vec3 nc, Vec3 nd, Color4 color) {
+	im3d_triangle(a, b, c, uv_a, uv_b, uv_c, na, nb, nc, color);
+	im3d_triangle(a, c, d, uv_a, uv_c, uv_d, na, nc, nd, color);
+}
+
+void im3d_quad(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Vec2 uv_d, Color4 color) {
+	im3d_triangle(a, b, c, uv_a, uv_b, uv_c, color);
+	im3d_triangle(a, c, d, uv_a, uv_c, uv_d, color);
+}
+
+void im3d_quad(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Vec3 na, Vec3 nb, Vec3 nc, Vec3 nd, Color4 color) {
+	im3d_quad(a, b, c, d, vec2(0, 0), vec2(0, 1), vec2(1, 1), vec2(1, 0), na, nb, nc, nd, color);
+}
+
+void im3d_quad(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Color4 color) {
+	im3d_quad(a, b, c, d, vec2(0, 0), vec2(0, 1), vec2(1, 1), vec2(1, 0), color);
+}
+
+void im3d_quad(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Mm_Rect rect, Vec3 na, Vec3 nb, Vec3 nc, Vec3 nd, Color4 color) {
+	auto uv_a = rect.min;
+	auto uv_b = vec2(rect.min.x, rect.max.y);
+	auto uv_c = rect.max;
+	auto uv_d = vec2(rect.max.x, rect.min.y);
+	im3d_quad(a, b, c, d, uv_a, uv_b, uv_c, uv_d, na, nb, nc, nd, color);
+}
+
+void im3d_quad(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Mm_Rect rect, Color4 color) {
+	auto uv_a = rect.min;
+	auto uv_b = vec2(rect.min.x, rect.max.y);
+	auto uv_c = rect.max;
+	auto uv_d = vec2(rect.max.x, rect.min.y);
+	im3d_quad(a, b, c, d, uv_a, uv_b, uv_c, uv_d, color);
+}
+
+void im3d_rect(Vec3 pos, Vec2 dim, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Vec2 uv_d, Color4 color) {
+	Vec2 half_dim = 0.5f * dim;
+
+	Vec3 a, b, c, d;
+	a.xy = pos.xy - half_dim;
+	b.xy = vec2(pos.x - half_dim.x, pos.y + half_dim.y);
+	c.xy = pos.xy + half_dim;
+	d.xy = vec2(pos.x + half_dim.x, pos.y - half_dim.y);
+
+	a.z = pos.z;
+	b.z = pos.z;
+	c.z = pos.z;
+	d.z = pos.z;
+
+	Vec3 n = vec3(0, 0, -1);
+
+	im3d_quad(a, b, c, d, uv_a, uv_b, uv_c, uv_d, n, n, n, n, color);
+}
+
+void im3d_rect(Vec3 pos, Vec2 dim, Color4 color) {
+	im3d_rect(pos, dim, vec2(0, 0), vec2(0, 1), vec2(1, 1), vec2(1, 0), color);
+}
+
+void im3d_rect(Vec3 pos, Vec2 dim, Mm_Rect rect, Color4 color) {
+	auto uv_a = rect.min;
+	auto uv_b = vec2(rect.min.x, rect.max.y);
+	auto uv_c = rect.max;
+	auto uv_d = vec2(rect.max.x, rect.min.y);
+	im3d_rect(pos, dim, uv_a, uv_b, uv_c, uv_d, color);
+}
+
+void im3d_cube(Vec3 position, Quat rotation, Vec3 scale,
+	Mm_Rect rect0, Mm_Rect rect1, Mm_Rect rect2,
+	Mm_Rect rect3, Mm_Rect rect4, Mm_Rect rect5, Color4 color) {
+	Vec3 vertices[] = {
+		vec3(-0.5f, -0.5f, -0.5f),
+		vec3(-0.5f, +0.5f, -0.5f),
+		vec3(+0.5f, +0.5f, -0.5f),
+		vec3(+0.5f, -0.5f, -0.5f),
+
+		vec3(+0.5f, -0.5f, +0.5f),
+		vec3(+0.5f, +0.5f, +0.5f),
+		vec3(-0.5f, +0.5f, +0.5f),
+		vec3(-0.5f, -0.5f, +0.5f),
+	};
+
+	Vec3 normals[] = {
+		vec3( 0,  0, -1),
+		vec3( 1,  0,  0),
+		vec3( 0,  1,  0),
+		vec3(-1,  0,  0),
+		vec3( 0,  1,  0),
+		vec3( 0, -1,  0),
+	};
+
+	for (int i = 0; i < static_count(vertices); ++i) {
+		vertices[i] = vec3_hadamard(vertices[i], scale);
+		vertices[i] = quat_rotate(rotation, vertices[i]);
+		vertices[i] += position;
+	}
+
+	im3d_quad(vertices[0], vertices[1], vertices[2], vertices[3], rect0, normals[0], normals[0], normals[0], normals[0], color);
+	im3d_quad(vertices[3], vertices[2], vertices[5], vertices[4], rect1, normals[1], normals[1], normals[1], normals[1], color);
+	im3d_quad(vertices[4], vertices[5], vertices[6], vertices[7], rect2, normals[2], normals[2], normals[2], normals[2], color);
+	im3d_quad(vertices[7], vertices[6], vertices[1], vertices[0], rect3, normals[3], normals[3], normals[3], normals[3], color);
+	im3d_quad(vertices[1], vertices[6], vertices[5], vertices[2], rect4, normals[4], normals[4], normals[4], normals[4], color);
+	im3d_quad(vertices[7], vertices[0], vertices[3], vertices[4], rect5, normals[5], normals[5], normals[5], normals[5], color);
+}
+
+void im3d_cube(Vec3 position, Quat rotation, Vec3 scale, Mm_Rect rect, Color4 color) {
+	im3d_cube(position, rotation, scale, rect, rect, rect, rect, rect, rect, color);
+}
+
+void im3d_cube(Vec3 position, Quat rotation, Vec3 scale, Color4 color) {
+	im3d_cube(position, rotation, scale, mm_rect(0, 0, 1, 1), color);
 }

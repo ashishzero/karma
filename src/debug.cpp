@@ -484,7 +484,7 @@ r32 draw_frame_time_graph(r32 render_height, Vec2 cursor, bool *set_on_hovered) 
 	for (int frame_time_index = 1; frame_time_index < FRAME_TIME_LOGS_COUNT; ++frame_time_index) {
 		next_y = frame_time_recorder.history[frame_time_index] * inv_max_frame_time * FRAME_TIME_GRAPH_HEIGHT + draw_y;
 
-		im2d_line2d(vec2(x, prev_y), vec2(x + FRAME_TIME_GRAPH_PROGRESS, next_y), vec4(1), FRAME_TIME_GRAPH_LINE_THICKNESS);
+		im2d_line(vec2(x, prev_y), vec2(x + FRAME_TIME_GRAPH_PROGRESS, next_y), vec4(1), FRAME_TIME_GRAPH_LINE_THICKNESS);
 		x += FRAME_TIME_GRAPH_PROGRESS;
 		prev_y = next_y;
 	}
@@ -498,12 +498,12 @@ r32 draw_frame_time_graph(r32 render_height, Vec2 cursor, bool *set_on_hovered) 
 
 		if (t > 0 && t <= 1) {
 			r32 mark_y = draw_y + marked_dt_y_offset[mark_index];
-			im2d_line2d(vec2(draw_x, mark_y), vec2(FRAME_TIME_GRAPH_WIDTH, mark_y), FRAME_TIME_MARK_COLOR, FRAME_TIME_MARK_LINE_THICKNESS);
+			im2d_line(vec2(draw_x, mark_y), vec2(FRAME_TIME_GRAPH_WIDTH, mark_y), FRAME_TIME_MARK_COLOR, FRAME_TIME_MARK_LINE_THICKNESS);
 		}
 	}
 
 	// Draw the outline over the region
-	im2d_rect_outline2d(bg_draw_pos, vec2(FRAME_TIME_GRAPH_WIDTH, FRAME_TIME_GRAPH_HEIGHT), io.menu_icons_color[Menu_FRAME_TIME], FRAME_TIME_OUTLINE_THICKNESS);
+	im2d_rect_outline(bg_draw_pos, vec2(FRAME_TIME_GRAPH_WIDTH, FRAME_TIME_GRAPH_HEIGHT), io.menu_icons_color[Menu_FRAME_TIME], FRAME_TIME_OUTLINE_THICKNESS);
 
 	im2d_bind_texture(io.font.texture);
 	for (int mark_index = 0; mark_index < static_count(FRAME_TIME_MARK_DT); ++mark_index) {
@@ -550,7 +550,7 @@ void draw_profiler_timelines_rects(Record *record, Vec2 top_position, r32 profil
 		dimension.x       = profiler_width * (r32)(record->end_cycle - record->begin_cycle) * inv_cycles;
 
 		im2d_rect(render_position, dimension, color);
-		im2d_rect_outline2d(render_position, dimension, vec4(1), 0.4f);
+		im2d_rect_outline(render_position, dimension, vec4(1), 0.4f);
 
 		if (point_inside_rect(cursor, mm_rect(render_position, render_position + dimension))) {
 			*hovered_record = record;
@@ -730,7 +730,7 @@ r32 draw_profiler(r32 render_height, Vec2 cursor, bool *set_on_hovered, Record *
 	im2d_unbind_texture();
 	im2d_rect(profiler.resizer_position, vec2(PROFILER_BUTTON_SIZE), resizer_color);
 	im2d_rect(recording_state_position, vec2(PROFILER_BUTTON_SIZE), recording_state_color);
-	im2d_rect_outline2d(draw_region_position, draw_region_dimension, io.menu_icons_color[Menu_PROFILER], PROFILER_OUTLINE_THICKNESS);
+	im2d_rect_outline(draw_region_position, draw_region_dimension, io.menu_icons_color[Menu_PROFILER], PROFILER_OUTLINE_THICKNESS);
 
 	if (out_hovered_record) {
 		*out_hovered_record = hovered_record;
@@ -785,10 +785,10 @@ r32 draw_audio_visualizer(r32 render_height, Vec2 cursor, bool *set_on_hovered) 
 
 	for (int channel_index = 1; channel_index < Audio_Channel_COUNT; ++channel_index) {
 		r32 channel_seperator_y = draw_y + channel_index * AUDIO_VISUALIZER_CHANNEL_HEIGHT;
-		im2d_line2d(vec2(draw_x, channel_seperator_y), vec2(draw_x + AUDIO_VISUALIZER_CHANNEL_WIDTH, channel_seperator_y), vec4(1), AUDIO_VISUALIZER_CHANNEL_SEPERATOR_THICKNESS);
+		im2d_line(vec2(draw_x, channel_seperator_y), vec2(draw_x + AUDIO_VISUALIZER_CHANNEL_WIDTH, channel_seperator_y), vec4(1), AUDIO_VISUALIZER_CHANNEL_SEPERATOR_THICKNESS);
 	}
 
-	im2d_rect_outline2d(draw_corner, region_dim, io.menu_icons_color[Menu_AUDIO]);
+	im2d_rect_outline(draw_corner, region_dim, io.menu_icons_color[Menu_AUDIO]);
 
 	im2d_bind_texture(io.font.texture);
 	for (int channel_index = 0; channel_index < Audio_Channel_COUNT; ++channel_index) {

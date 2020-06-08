@@ -1179,7 +1179,7 @@ int system_main() {
 		player_draw_pos.z = -0.1f;
 
 		im2d_circle_outline(player_draw_pos, 0.5f, vec4(1, 1, 0), thickness);
-		im2d_rect_centered_outline2d(vec3(camera.position.tile, -0.1f), draw_dim, vec4(1, 0, 1), thickness);
+		im2d_rect_centered_outline(vec3(camera.position.tile, -0.1f), draw_dim, vec4(1, 0, 1), thickness);
 
 		r32  angle;
 		Vec3 axis;

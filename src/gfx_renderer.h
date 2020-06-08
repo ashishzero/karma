@@ -139,24 +139,24 @@ void im2d_cube(Vec3 position, Quat rotation, Vec3 scale,
 void im2d_cube(Vec3 position, Quat rotation, Vec3 scale, Mm_Rect rect, Color4 color);
 void im2d_cube(Vec3 position, Quat rotation, Vec3 scale, Color4 color);
 
-void im2d_line2d(Vec3 a, Vec3 b, Color4 color, r32 thickness = 1);
-void im2d_line2d(Vec2 a, Vec2 b, Color4 color, r32 thickness = 1);
+void im2d_line(Vec3 a, Vec3 b, Color4 color, r32 thickness = 1);
+void im2d_line(Vec2 a, Vec2 b, Color4 color, r32 thickness = 1);
 
-void im2d_bezier_quadratic2d(Vec3 a, Vec3 b, Vec3 c, Color4 color, r32 thickness = 1, int segments = IM_DEFAULT_BEZIER_SEGMENTS);
-void im2d_bezier_quadratic2d(Vec2 a, Vec2 b, Vec2 c, Color4 color, r32 thickness = 1, int segments = IM_DEFAULT_BEZIER_SEGMENTS);
+void im2d_bezier_quadratic(Vec3 a, Vec3 b, Vec3 c, Color4 color, r32 thickness = 1, int segments = IM_DEFAULT_BEZIER_SEGMENTS);
+void im2d_bezier_quadratic(Vec2 a, Vec2 b, Vec2 c, Color4 color, r32 thickness = 1, int segments = IM_DEFAULT_BEZIER_SEGMENTS);
 
-void im2d_bezier_cubic2d(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Color4 color, r32 thickness = 1, int segments = IM_DEFAULT_BEZIER_SEGMENTS);
-void im2d_bezier_cubic2d(Vec2 a, Vec2 b, Vec2 c, Vec2 d, Color4 color, r32 thickness = 1, int segments = IM_DEFAULT_BEZIER_SEGMENTS);
+void im2d_bezier_cubic(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Color4 color, r32 thickness = 1, int segments = IM_DEFAULT_BEZIER_SEGMENTS);
+void im2d_bezier_cubic(Vec2 a, Vec2 b, Vec2 c, Vec2 d, Color4 color, r32 thickness = 1, int segments = IM_DEFAULT_BEZIER_SEGMENTS);
 
-void im2d_triangle_outline2d(Vec3 a, Vec3 b, Vec3 c, Color4 color, r32 thickness = 1);
-void im2d_triangle_outline2d(Vec2 a, Vec2 b, Vec2 c, Color4 color, r32 thickness = 1);
+void im2d_triangle_outline(Vec3 a, Vec3 b, Vec3 c, Color4 color, r32 thickness = 1);
+void im2d_triangle_outline(Vec2 a, Vec2 b, Vec2 c, Color4 color, r32 thickness = 1);
 
-void im2d_quad_outline2d(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Color4 color, r32 thickness = 1);
-void im2d_quad_outline2d(Vec2 a, Vec2 b, Vec2 c, Vec2 d, Color4 color, r32 thickness = 1);
-void im2d_rect_outline2d(Vec3 pos, Vec2 dim, Color4 color, r32 thickness = 1);
-void im2d_rect_outline2d(Vec2 pos, Vec2 dim, Color4 color, r32 thickness = 1);
-void im2d_rect_centered_outline2d(Vec3 pos, Vec2 dim, Color4 color, r32 thickness = 1);
-void im2d_rect_centered_outline2d(Vec2 pos, Vec2 dim, Color4 color, r32 thickness = 1);
+void im2d_quad_outline(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Color4 color, r32 thickness = 1);
+void im2d_quad_outline(Vec2 a, Vec2 b, Vec2 c, Vec2 d, Color4 color, r32 thickness = 1);
+void im2d_rect_outline(Vec3 pos, Vec2 dim, Color4 color, r32 thickness = 1);
+void im2d_rect_outline(Vec2 pos, Vec2 dim, Color4 color, r32 thickness = 1);
+void im2d_rect_centered_outline(Vec3 pos, Vec2 dim, Color4 color, r32 thickness = 1);
+void im2d_rect_centered_outline(Vec2 pos, Vec2 dim, Color4 color, r32 thickness = 1);
 
 void im2d_ellipse_outline(Vec3 position, r32 radius_a, r32 radius_b, Color4 color, r32 thickness = 1, int segments = IM_DEFAULT_CIRCLE_SEGMENTS);
 void im2d_ellipse_outline(Vec2 position, r32 radius_a, r32 radius_b, Color4 color, r32 thickness = 1, int segments = IM_DEFAULT_CIRCLE_SEGMENTS);
@@ -174,3 +174,37 @@ void im2d_text(Vec2 position, r32 scale, Monospaced_Font_Info &font, const Strin
 void im2d_text_region(Vec3 position, Vec2 region, Monospaced_Font_Info &font, const String string, Color4 color);
 void im2d_text_region(Vec2 position, Vec2 region, Monospaced_Font_Info &font, const String string, Color4 color);
 Vec2 im2d_calculate_text_region(r32 scale, Monospaced_Font_Info &font, const String string);
+
+//
+//
+//
+
+void im3d_begin(const Mat4 &transform);
+void im3d_begin(Camera_View &view, const Mat4 &transform);
+void im3d_end();
+
+void im3d_bind_texture(Texture2d_Handle handle);
+void im3d_unbind_texture();
+
+void im3d_push_matrix(const Mat4 &matrix);
+void im3d_pop_matrix();
+void im3d_flush_transformations();
+
+void im3d_triangle(Vec3 a, Vec3 b, Vec3 c, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Vec3 na, Vec3 nb, Vec3 nc, Color4 color);
+void im3d_triangle(Vec3 a, Vec3 b, Vec3 c, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Color4 color);
+void im3d_triangle(Vec3 a, Vec3 b, Vec3 c, Vec3 na, Vec3 nb, Vec3 nc, Color4 color);
+void im3d_triangle(Vec3 a, Vec3 b, Vec3 c, Color4 color);
+void im3d_quad(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Vec2 uv_d, Vec3 na, Vec3 nb, Vec3 nc, Vec3 nd, Color4 color);
+void im3d_quad(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Vec2 uv_d, Color4 color);
+void im3d_quad(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Vec3 na, Vec3 nb, Vec3 nc, Vec3 nd, Color4 color);
+void im3d_quad(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Color4 color);
+void im3d_quad(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Mm_Rect rect, Vec3 na, Vec3 nb, Vec3 nc, Vec3 nd, Color4 color);
+void im3d_quad(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Mm_Rect rect, Color4 color);
+void im3d_rect(Vec3 pos, Vec2 dim, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Vec2 uv_d, Color4 color);
+void im3d_rect(Vec3 pos, Vec2 dim, Color4 color);
+void im3d_rect(Vec3 pos, Vec2 dim, Mm_Rect rect, Color4 color);
+void im3d_cube(Vec3 position, Quat rotation, Vec3 scale,
+				Mm_Rect rect0, Mm_Rect rect1, Mm_Rect rect2,
+				Mm_Rect rect3, Mm_Rect rect4, Mm_Rect rect5, Color4 color);
+void im3d_cube(Vec3 position, Quat rotation, Vec3 scale, Mm_Rect rect, Color4 color);
+void im3d_cube(Vec3 position, Quat rotation, Vec3 scale, Color4 color);
