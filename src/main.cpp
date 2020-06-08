@@ -717,16 +717,13 @@ struct Camera {
 };
 
 Camera_Bounds camera_get_bounds(Camera &camera) {
-	r32 camera_zoom = 1.0f / powf(2.0f, camera.distance);
-
-	r32 height = (r32)MAP_REGION_Y_CELL_COUNT;
-	r32 half_height = 0.5f * height * camera_zoom;
-	r32 half_width  = half_height * camera.aspect_ratio;
+	r32 half_width  = camera.distance;
+	r32 half_height = camera.distance / camera.aspect_ratio;
 
 	Camera_Bounds bounds;
-	bounds.left   = -half_width;
-	bounds.right  = half_width;
-	bounds.top    = half_height;
+	bounds.left = -half_width;
+	bounds.right = half_width;
+	bounds.top = half_height;
 	bounds.bottom = -half_height;
 
 	return bounds;
@@ -737,14 +734,6 @@ Mat4 camera_get_transform(Camera &camera) {
 }
 
 Camera camera_create(World_Position position, r32 distance = 1.0f, r32 target_distance = 5.0f, r32 aspect_ratio = 1280.0f / 720.0f) {
-	r32 top = MAP_REGION_HALF_Y_CELL_COUNT + 0.5f;
-	r32 bottom = -MAP_REGION_HALF_Y_CELL_COUNT - 0.5f;
-
-	r32 height = top - bottom;
-	r32 width = height * aspect_ratio;
-
-	r32 right = 0.5f * width;
-	r32 left = -0.5f * width;
 
 	Camera camera;
 	camera.position			 = position;
@@ -752,8 +741,7 @@ Camera camera_create(World_Position position, r32 distance = 1.0f, r32 target_di
 	camera.distance			 = distance;
 	camera.distance_target	 = target_distance;
 	camera.aspect_ratio      = aspect_ratio;
-
-	camera.view = perspective_view(to_radians(60), camera.aspect_ratio, 0.1f, 50.0f);
+	camera.view				 = perspective_view(to_radians(60), camera.aspect_ratio, 0.1f, 50.0f);
 
 	return camera;
 }
@@ -1191,7 +1179,7 @@ int system_main() {
 		player_draw_pos.z = -0.1f;
 
 		im_circle_outline(player_draw_pos, 0.5f, vec4(1, 1, 0), thickness);
-		im_rect_centered_outline2d(player_draw_pos, draw_dim, vec4(1, 0, 1), thickness);
+		im_rect_centered_outline2d(vec3(camera.position.tile, -0.1f), draw_dim, vec4(1, 0, 1), thickness);
 
 		r32  angle;
 		Vec3 axis;
