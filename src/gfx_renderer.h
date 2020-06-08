@@ -26,6 +26,25 @@ struct Monospaced_Font {
 	Monospaced_Font_Info info;
 };
 
+struct Im_Mesh {
+	struct Index {
+		u32 v;
+		u32 t;
+		u32 n;
+	};
+
+	void *ptr;
+	Index	*indices;
+	Vec3	*vertices;
+	Vec2	*texture_coords;
+	Vec3	*normals;
+
+	u32 index_count;
+	u32 vertex_count;
+	u32 texture_coord_count;
+	u32 normal_count;
+};
+
 bool gfx_create_context(Handle platform, Render_Backend backend, Vsync vsync, u32 multisamples, u32 framebuffer_w = 1280, u32 framebuffer_h = 720);
 void gfx_destroy_context();
 
@@ -208,3 +227,4 @@ void im3d_cube(Vec3 position, Quat rotation, Vec3 scale,
 				Mm_Rect rect3, Mm_Rect rect4, Mm_Rect rect5, Color4 color);
 void im3d_cube(Vec3 position, Quat rotation, Vec3 scale, Mm_Rect rect, Color4 color);
 void im3d_cube(Vec3 position, Quat rotation, Vec3 scale, Color4 color);
+void im3d_mesh(Im_Mesh &mesh, Vec3 position, Quat rotation, Vec3 scale, Color4 color);

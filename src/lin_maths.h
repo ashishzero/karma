@@ -110,22 +110,22 @@ Vec4s vec4s_hadamard(Vec4s l, Vec4s r);
 //
 //
 
-inline Vec2 operator-(Vec2 &v) {
+inline Vec2 operator-(const Vec2 &v) {
 	return vec2(-v.x, -v.y);
 }
-inline Vec3 operator-(Vec3 &v) {
+inline Vec3 operator-(const Vec3 &v) {
 	return vec3(-v.x, -v.y, -v.z);
 }
-inline Vec4 operator-(Vec4 &v) {
+inline Vec4 operator-(const Vec4 &v) {
 	return vec4(-v.x, -v.y, -v.z, -v.w);
 }
-inline Vec2s operator-(Vec2s &v) {
+inline Vec2s operator-(const Vec2s &v) {
 	return vec2s(-v.x, -v.y);
 }
-inline Vec3s operator-(Vec3s &v) {
+inline Vec3s operator-(const Vec3s &v) {
 	return vec3s(-v.x, -v.y, -v.z);
 }
-inline Vec4s operator-(Vec4s &v) {
+inline Vec4s operator-(const Vec4s &v) {
 	return vec4s(-v.x, -v.y, -v.z, -v.w);
 }
 

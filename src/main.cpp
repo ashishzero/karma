@@ -708,6 +708,9 @@ struct Camera {
 	World_Position position;
 	World_Position position_target;
 
+	Quat orientation = quat_identity();
+	Quat orientation_target = orientation;
+
 	r32 distance;
 	r32 distance_target;
 
@@ -730,7 +733,7 @@ Camera_Bounds camera_get_bounds(Camera &camera) {
 }
 
 Mat4 camera_get_transform(Camera &camera) {
-	return mat4_translation(-vec3(camera.position.tile, -camera.distance));
+	return quat_get_mat4(camera.orientation) * mat4_translation(-vec3(camera.position.tile, -camera.distance));
 }
 
 Camera camera_create(World_Position position, r32 distance = 1.0f, r32 target_distance = 5.0f, r32 aspect_ratio = 1280.0f / 720.0f) {
@@ -774,6 +777,41 @@ void editor_update(Audio_Mixer *mixer, Player *player, Camera *camera) {
 	audio_mixer_set_volume(mixer, volume);
 }
 
+bool debug_load_mesh(String file, Im_Mesh *mesh) {
+	String content = system_read_entire_file(file);
+
+	if (content.count) {
+		Istream in = istream(content);
+
+		mesh->vertex_count = *istream_consume(&in, u32);
+		mesh->texture_coord_count = *istream_consume(&in, u32);
+		mesh->normal_count = *istream_consume(&in, u32);
+		mesh->index_count = *istream_consume(&in, u32);
+
+		ptrsize vertex_size = sizeof(Vec3) * mesh->vertex_count;
+		ptrsize tex_coord_size = sizeof(Vec2) * mesh->texture_coord_count;
+		ptrsize normal_size = sizeof(Vec3) * mesh->normal_count;
+		ptrsize index_size = sizeof(Im_Mesh::Index) * mesh->index_count;
+
+		ptrsize mesh_size = 0;
+		mesh_size += vertex_size;
+		mesh_size += tex_coord_size;
+		mesh_size += normal_size;
+		mesh_size += index_size;
+
+		mesh->ptr = content.data;
+
+		mesh->vertices = (Vec3 *)istream_consume_size(&in, vertex_size);
+		mesh->texture_coords = (Vec2 *)istream_consume_size(&in, tex_coord_size);
+		mesh->normals = (Vec3 *)istream_consume_size(&in, normal_size);
+		mesh->indices = (Im_Mesh::Index *)istream_consume_size(&in, index_size);
+
+		return true;
+	}
+
+	return false;
+}
+
 int system_main() {
 	r32    framebuffer_w = 1280;
 	r32    framebuffer_h = 720;
@@ -799,6 +837,9 @@ int system_main() {
 #if 0
 	InitializeRigidBodies();
 #endif
+
+	Im_Mesh player_mesh;
+	debug_load_mesh("dev/base.model", &player_mesh);
 
 	World_Map world = create_test_world();
 
@@ -1056,7 +1097,6 @@ int system_main() {
 
 				World_Position camera_target_new = player.render_position;
 
-#if 1
 				auto    cam_bounds = camera_get_bounds(camera);
 
 				Vec2 camera_min = camera_target_new.tile + vec2(cam_bounds.left, cam_bounds.bottom);
@@ -1082,7 +1122,6 @@ int system_main() {
 					!world_map_has_region(&world, camera_target_new.region.x, camera_target_new.region.y + 1, camera_target_new.region.z)) {
 					camera_target_new.tile.y += (MAP_REGION_Y_CELL_COUNT - max_cell.y);
 				}
-#endif
 					
 				camera.position_target = camera_target_new;
 
@@ -1152,14 +1191,10 @@ int system_main() {
 								draw_pos += world_map_cell_to_tile(cell_index_x, cell_index_y);
 
 								if (region_cell->id == Cell_Type_PLACE) {
-									im3d_cube(vec3(draw_pos, 0), quat_identity(), vec3(1, 1, 0.1f), vec4(0, 0.3f, 0));
-									//im3d_rect_centered(vec3(draw_pos, 0), vec2(1), vec4(0, 0.3f, 0));
-									//im3d_rect_centered(vec3(draw_pos, 1), vec2(0.95f), vec4(0.1f, 0.7f, 0.3f));
+									im3d_cube(vec3(draw_pos, 0.5f), quat_identity(), vec3(1, 1, 0.1f), vec4(0, 0.3f, 0));
 								}
 								else {
 									im3d_cube(vec3(draw_pos, 0), quat_identity(), vec3(1), vec4(0.7f, 0.4f, 0.2f));
-									//im3d_rect_centered(vec3(draw_pos, 1), vec2(0.95f), vec4(0.7f, 0.4f, 0.2f));
-									//im3d_rect_centered(vec3(draw_pos, 1), vec2(1), vec4(0.7f, 0.3f, 0));
 								}
 							}
 						}
@@ -1176,19 +1211,10 @@ int system_main() {
 		player_draw_pos.y = (r32)((player.render_position.region.y - camera.position.region.y) * MAP_REGION_Y_CELL_COUNT);
 		player_draw_pos.x = (r32)((player.render_position.region.x - camera.position.region.x) * MAP_REGION_X_CELL_COUNT);
 		player_draw_pos.xy += player.render_position.tile;
-		player_draw_pos.z = -0.1f;
+		player_draw_pos.z = -0.25f;
 
-		//im3d_circle_outline(player_draw_pos, 0.5f, vec4(1, 1, 0), thickness);
-		//im3d_rect_centered_outline(vec3(camera.position.tile, -0.1f), draw_dim, vec4(1, 0, 1), thickness);
-
-		r32  angle;
-		Vec3 axis;
-		quat_get_angle_axis(player.face_direction, &angle, &axis);
-
-		im3d_cube(player_draw_pos, player.face_direction, vec3(0.7f), vec4(0.1f, 0.7f, 0.8f));
-		//im3d_bind_texture(player_sprite);
-		//im3d_rect_centered_rotated(player_draw_pos, vec2(1), axis.z * angle, vec4(1));
-
+		im3d_mesh(player_mesh, player_draw_pos, player.face_direction, vec3(0.75f), vec4(0.1f, 0.7f, 0.8f));
+		
 		im3d_end();
 
 		gfx_end_drawing();

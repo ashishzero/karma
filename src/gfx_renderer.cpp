@@ -287,7 +287,7 @@ bool gfx_create_context(Handle platform, Render_Backend backend, Vsync vsync, u3
 		shader.stride              = sizeof(Im_Vertex3d);
 
 		Rasterizer_Info rasterizer = rasterizer_info_create();
-		rasterizer.cull_mode       = Cull_Mode_BACK;
+		rasterizer.cull_mode = Cull_Mode_NONE;
 
 		Blend_Info blend = blend_info_create(Blend_SRC_ALPHA, Blend_INV_SRC_ALPHA, Blend_Operation_ADD, Blend_SRC_ALPHA, Blend_INV_SRC_ALPHA, Blend_Operation_ADD);
 		Depth_Info depth = depth_info_create(true, Depth_Write_Mask_ALL, Comparison_Function_LESS);
@@ -451,8 +451,9 @@ inline void im2d_push_vertices(Im_Vertex2d *vertices, int count) {
 	auto dst = iim2d_push_vertex_count(count);
 
 	if (im_context2d.transformation > 1) {
+		auto &trans = im_context2d.transformations[im_context2d.transformation - 1];
 		for (int i = 0; i < count; ++i) {
-			vertices[i].position = (im_context2d.transformations[im_context2d.transformation - 1] * vec4(vertices[i].position, 0)).xyz;
+			vertices[i].position = (trans * vec4(vertices[i].position, 1)).xyz;
 		}
 	}
 
@@ -1372,8 +1373,9 @@ inline void im3d_push_vertices(Im_Vertex3d *vertices, int count) {
 	auto dst = iim3d_push_vertex_count(count);
 
 	if (im_context3d.transformation > 1) {
+		auto &trans = im_context3d.transformations[im_context3d.transformation - 1];
 		for (int i = 0; i < count; ++i) {
-			vertices[i].position = (im_context3d.transformations[im_context3d.transformation - 1] * vec4(vertices[i].position, 0)).xyz;
+			vertices[i].position = (trans * vec4(vertices[i].position, 1)).xyz;
 		}
 	}
 
@@ -1702,4 +1704,33 @@ void im3d_cube(Vec3 position, Quat rotation, Vec3 scale, Mm_Rect rect, Color4 co
 
 void im3d_cube(Vec3 position, Quat rotation, Vec3 scale, Color4 color) {
 	im3d_cube(position, rotation, scale, mm_rect(0, 0, 1, 1), color);
+}
+
+void im3d_mesh(Im_Mesh &mesh, Vec3 position, Quat rotation, Vec3 scale, Color4 color) {
+	Vec3 *v = mesh.vertices;
+	Vec2 *t = mesh.texture_coords;
+	Vec3 *n = mesh.normals;
+
+	for (u32 face_index = 0; face_index < mesh.index_count; face_index += 3) {
+		auto &i0 = mesh.indices[face_index + 0];
+		auto &i1 = mesh.indices[face_index + 1];
+		auto &i2 = mesh.indices[face_index + 2];
+
+		Vec3 va = v[i0.v];
+		va = vec3_hadamard(va, scale);
+		va = quat_rotate(rotation, va);
+		va += position;
+
+		Vec3 vb = v[i1.v];
+		vb = vec3_hadamard(vb, scale);
+		vb = quat_rotate(rotation, vb);
+		vb += position;		
+		
+		Vec3 vc = v[i2.v];
+		vc = vec3_hadamard(vc, scale);
+		vc = quat_rotate(rotation, vc);
+		vc += position;
+
+		im3d_triangle(va, vb, vc, t[i0.t], t[i1.t], t[i2.t], n[i0.n], n[i1.n], n[i2.n], color);
+	}
 }
