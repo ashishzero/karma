@@ -472,6 +472,24 @@ static World_Region_Cell map_cells1[MAP_REGION_Y_CELL_COUNT][MAP_REGION_X_CELL_C
 	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
 };
 
+static World_Region_Cell map_cells2[MAP_REGION_Y_CELL_COUNT][MAP_REGION_X_CELL_COUNT] = {
+	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+	{ 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 },
+	{ 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 },
+	{ 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1 },
+	{ 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1 },
+	{ 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 0, 1 },
+	{ 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1 },
+	{ 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1 },
+	{ 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1 },
+	{ 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1 },
+	{ 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1 },
+	{ 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 },
+	{ 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 },
+	{ 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 },
+	{ 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 },
+};
+
 struct World_Position {
 	Vec3s region;
 	Vec2  tile;
@@ -606,13 +624,14 @@ bool world_map_is_position_available(World_Map *world_map, World_Position &posit
 }
 
 World_Map create_test_world() {
-	static World_Map_Region test_map_regions[2];
+	static World_Map_Region test_map_regions[3];
 	test_map_regions[0].cells = map_cells0;
 	test_map_regions[1].cells = map_cells1;
+	test_map_regions[2].cells = map_cells2;
 
 	World_Map map;
 	map.x_count = 2;
-	map.y_count = 1;
+	map.y_count = 2;
 	map.z_count = 1;
 
 	map.x_index_offset = map.x_count / 2;
@@ -623,10 +642,13 @@ World_Map create_test_world() {
 	if (map.y_count % 2 == 0) map.y_index_offset -= 1;
 	if (map.z_count % 2 == 0) map.z_index_offset -= 1;
 
-	map.regions = (World_Map_Region **)memory_allocate(sizeof(World_Map_Region *) * map.x_count * map.y_count * map.z_count);
+	ptrsize total_size = sizeof(World_Map_Region *) * map.x_count * map.y_count * map.z_count;
+	map.regions = (World_Map_Region **)memory_allocate(total_size);
+	memset(map.regions, 0, total_size);
 
-	map.regions[0] = &test_map_regions[0];
-	map.regions[1] = &test_map_regions[1];
+	map.regions[1] = &test_map_regions[2];
+	map.regions[2] = &test_map_regions[0];
+	map.regions[3] = &test_map_regions[1];
 
 	return map;
 }
@@ -655,7 +677,7 @@ struct Player {
 		WALKING
 	};
 
-	World_Position position = {};
+	World_Position position = { vec3s(0, 1, 0) };
 	World_Position render_position    = position;
 
 	Face face				   = Face_NORTH;
@@ -731,7 +753,7 @@ Camera camera_create(World_Position position, r32 distance = 0.5f, r32 target_di
 	return camera;
 }
 
-void editor_update(Audio_Mixer *mixer, Player *player) {
+void editor_update(Audio_Mixer *mixer, Player *player, Camera *camera) {
 	if (!editor.display)
 		return;
 
@@ -750,6 +772,8 @@ void editor_update(Audio_Mixer *mixer, Player *player) {
 	ImGui::DragFloat("Drag", &player->drag, 0.01f);
 	ImGui::DragFloat("Movement Force", &player->movement_force, 0.1f);
 	ImGui::DragFloat("Turn Speed", &player->turn_velocity, 0.01f);
+
+	ImGui::DragFloat("Camera Distance", &camera->distance_target, 0.01f);
 #endif
 
 	ImGui::End();
@@ -1221,7 +1245,7 @@ int system_main() {
 #if defined(BUILD_IMGUI)
 		{
 			Debug_TimedScope(ImGuiRender);
-			editor_update(&mixer, &player);
+			editor_update(&mixer, &player, &camera);
 			ImGui_RenderFrame();
 		}
 #endif
