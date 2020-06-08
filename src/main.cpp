@@ -589,6 +589,10 @@ World_Map_Region* world_map_get_region(World_Map *world_map, int region_x, int r
 	return map_region;
 }
 
+bool world_map_has_region(World_Map *world_map, int region_x, int region_y, int region_z) {
+	return world_map_get_region(world_map, region_x, region_y, region_z) != nullptr;
+}
+
 bool world_map_is_position_available(World_Map *world_map, World_Position &position) {
 	World_Map_Region* map_region = world_map_get_region(world_map, position.region.x, position.region.y, position.region.z);
 
@@ -1035,33 +1039,32 @@ int system_main() {
 
 				World_Position camera_target_new = player.render_position;
 
-#if 0
-				if (world_position_are_in_same_region(camera.position, camera_target_new)) {
-					auto    cam_bounds = camera_get_bounds(camera);
+				auto    cam_bounds = camera_get_bounds(camera);
 
-					Mm_Rect camera_rect;
-					camera_rect.min = camera_target_new.tile + vec2(cam_bounds.left, cam_bounds.bottom);
-					camera_rect.max = camera_target_new.tile + vec2(cam_bounds.right, cam_bounds.top);
+				Vec2 camera_min = camera_target_new.tile + vec2(cam_bounds.left, cam_bounds.bottom);
+				Vec2 camera_max = camera_target_new.tile + vec2(cam_bounds.right, cam_bounds.top);
 
-					camera_rect.min.x = camera_rect.min.x + MAP_REGION_HALF_X_CELL_COUNT;
-					camera_rect.min.y = camera_rect.min.y + MAP_REGION_HALF_Y_CELL_COUNT;
-					camera_rect.max.x = camera_rect.max.x + MAP_REGION_HALF_X_CELL_COUNT;
-					camera_rect.max.y = camera_rect.max.y + MAP_REGION_HALF_Y_CELL_COUNT;
+				Vec2 min_cell = camera_min + vec2(MAP_REGION_HALF_X_CELL_COUNT, MAP_REGION_HALF_Y_CELL_COUNT);
+				Vec2 max_cell = camera_max + vec2(MAP_REGION_HALF_X_CELL_COUNT, MAP_REGION_HALF_Y_CELL_COUNT);
 
-					if (camera_rect.min.x < 0) {
-						camera_target_new.tile.x += camera_rect.min.x;
-					} else if (camera_rect.max.x >= MAP_REGION_X_CELL_COUNT) {
-						camera_target_new.tile.x += (MAP_REGION_X_CELL_COUNT - camera_rect.max.x);
-					}
-
-					if (camera_rect.min.y < 0) {
-						camera_target_new.tile.y += camera_rect.min.y;
-					} else if (camera_rect.max.y >= MAP_REGION_Y_CELL_COUNT) {
-						camera_target_new.tile.y += (MAP_REGION_Y_CELL_COUNT - camera_rect.max.y);
-					}
+				if (min_cell.x < 0 && 
+					!world_map_has_region(&world, camera_target_new.region.x - 1, camera_target_new.region.y, camera_target_new.region.z)) {
+					camera_target_new.tile.x -= min_cell.x + 1;
 				}
-#endif
+				else if (max_cell.x >= MAP_REGION_X_CELL_COUNT &&
+					!world_map_has_region(&world, camera_target_new.region.x + 1, camera_target_new.region.y, camera_target_new.region.z)) {
+					camera_target_new.tile.x += (MAP_REGION_X_CELL_COUNT - max_cell.x);
+				}
 
+				if (min_cell.y < 0 &&
+					!world_map_has_region(&world, camera_target_new.region.x, camera_target_new.region.y - 1, camera_target_new.region.z)) {
+					camera_target_new.tile.y -= min_cell.y + 1;
+				}
+				else if (max_cell.y >= MAP_REGION_Y_CELL_COUNT &&
+					!world_map_has_region(&world, camera_target_new.region.x, camera_target_new.region.y + 1, camera_target_new.region.z)) {
+					camera_target_new.tile.y += (MAP_REGION_Y_CELL_COUNT - max_cell.y);
+				}
+					
 				camera.position_target = camera_target_new;
 
 				Vec2 camera_position_target;
