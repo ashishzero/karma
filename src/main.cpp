@@ -732,7 +732,11 @@ Camera_Bounds camera_get_bounds(Camera &camera) {
 	return bounds;
 }
 
-Camera camera_create(World_Position position, r32 distance = 0.5f, r32 target_distance = 1.0f, r32 aspect_ratio = 1280.0f / 720.0f) {
+Mat4 camera_get_transform(Camera &camera) {
+	return mat4_translation(-vec3(camera.position.tile, -camera.distance));
+}
+
+Camera camera_create(World_Position position, r32 distance = 1.0f, r32 target_distance = 5.0f, r32 aspect_ratio = 1280.0f / 720.0f) {
 	r32 top = MAP_REGION_HALF_Y_CELL_COUNT + 0.5f;
 	r32 bottom = -MAP_REGION_HALF_Y_CELL_COUNT - 0.5f;
 
@@ -748,7 +752,8 @@ Camera camera_create(World_Position position, r32 distance = 0.5f, r32 target_di
 	camera.distance			 = distance;
 	camera.distance_target	 = target_distance;
 	camera.aspect_ratio      = aspect_ratio;
-	camera.view              = orthographic_view(left, right, top, bottom);
+
+	camera.view = perspective_view(to_radians(60), camera.aspect_ratio, 0.1f, 50.0f);
 
 	return camera;
 }
@@ -1063,6 +1068,7 @@ int system_main() {
 
 				World_Position camera_target_new = player.render_position;
 
+#if 1
 				auto    cam_bounds = camera_get_bounds(camera);
 
 				Vec2 camera_min = camera_target_new.tile + vec2(cam_bounds.left, cam_bounds.bottom);
@@ -1088,6 +1094,7 @@ int system_main() {
 					!world_map_has_region(&world, camera_target_new.region.x, camera_target_new.region.y + 1, camera_target_new.region.z)) {
 					camera_target_new.tile.y += (MAP_REGION_Y_CELL_COUNT - max_cell.y);
 				}
+#endif
 					
 				camera.position_target = camera_target_new;
 
@@ -1121,11 +1128,9 @@ int system_main() {
 
 		ImGui_UpdateFrame(real_dt);
 
-		r32 camera_zoom = 1.0f / powf(2.0f, camera.distance);
-
 		r32 thickness = 15.0f / framebuffer_h;
 
-		Mat4 transform = mat4_inverse(mat4_translation(vec3(camera.position.tile, 0)) * mat4_scalar(camera_zoom, camera_zoom, 1));
+		Mat4 transform = camera_get_transform(camera);
 
 		gfx_begin_drawing(Framebuffer_Type_HDR, Clear_COLOR | Clear_DEPTH, vec4(0));
 		gfx_viewport(0, 0, framebuffer_w, framebuffer_h);
@@ -1159,12 +1164,14 @@ int system_main() {
 								draw_pos += world_map_cell_to_tile(cell_index_x, cell_index_y);
 
 								if (region_cell->id == Cell_Type_PLACE) {
-									im_rect_centered(vec3(draw_pos, 1), vec2(1), vec4(0, 0.3f, 0));
+									//im_cube(vec3(draw_pos, 2), quat_identity(), vec3(1), vec4(0, 0.3f, 0));
+									im_rect_centered(vec3(draw_pos, 0), vec2(1), vec4(0, 0.3f, 0));
 									//im_rect_centered(vec3(draw_pos, 1), vec2(0.95f), vec4(0.1f, 0.7f, 0.3f));
 								}
 								else {
-									im_rect_centered(vec3(draw_pos, 1), vec2(1), vec4(0.7f, 0.3f, 0));
-									im_rect_centered(vec3(draw_pos, 1), vec2(0.95f), vec4(0.7f, 0.4f, 0.2f));
+									im_cube(vec3(draw_pos, 0), quat_identity(), vec3(1), vec4(0.7f, 0.4f, 0.2f));
+									//im_rect_centered(vec3(draw_pos, 1), vec2(0.95f), vec4(0.7f, 0.4f, 0.2f));
+									//im_rect_centered(vec3(draw_pos, 1), vec2(1), vec4(0.7f, 0.3f, 0));
 								}
 							}
 						}
@@ -1177,10 +1184,11 @@ int system_main() {
 		auto cam_bounds = camera_get_bounds(camera);
 		Vec2 draw_dim   = vec2(cam_bounds.right - cam_bounds.left, cam_bounds.top - cam_bounds.bottom);
 
-		Vec2 player_draw_pos;
+		Vec3 player_draw_pos;
 		player_draw_pos.y = (r32)((player.render_position.region.y - camera.position.region.y) * MAP_REGION_Y_CELL_COUNT);
 		player_draw_pos.x = (r32)((player.render_position.region.x - camera.position.region.x) * MAP_REGION_X_CELL_COUNT);
-		player_draw_pos += player.render_position.tile;
+		player_draw_pos.xy += player.render_position.tile;
+		player_draw_pos.z = -0.1f;
 
 		im_circle_outline(player_draw_pos, 0.5f, vec4(1, 1, 0), thickness);
 		im_rect_centered_outline2d(player_draw_pos, draw_dim, vec4(1, 0, 1), thickness);
