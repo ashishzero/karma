@@ -1152,7 +1152,7 @@ int system_main() {
 								draw_pos += world_map_cell_to_tile(cell_index_x, cell_index_y);
 
 								if (region_cell->id == Cell_Type_PLACE) {
-									//im3d_cube(vec3(draw_pos, 2), quat_identity(), vec3(1), vec4(0, 0.3f, 0));
+									im3d_cube(vec3(draw_pos, 0), quat_identity(), vec3(1, 1, 0.1f), vec4(0, 0.3f, 0));
 									//im3d_rect_centered(vec3(draw_pos, 0), vec2(1), vec4(0, 0.3f, 0));
 									//im3d_rect_centered(vec3(draw_pos, 1), vec2(0.95f), vec4(0.1f, 0.7f, 0.3f));
 								}
@@ -1185,7 +1185,7 @@ int system_main() {
 		Vec3 axis;
 		quat_get_angle_axis(player.face_direction, &angle, &axis);
 
-		im3d_cube(player_draw_pos, player.face_direction, vec3(0.5f), vec4(0.1f, 0.7f, 0.8f));
+		im3d_cube(player_draw_pos, player.face_direction, vec3(0.7f), vec4(0.1f, 0.7f, 0.8f));
 		//im3d_bind_texture(player_sprite);
 		//im3d_rect_centered_rotated(player_draw_pos, vec2(1), axis.z * angle, vec4(1));
 
