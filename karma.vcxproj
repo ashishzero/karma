@@ -398,6 +398,7 @@ popd
     <None Include="src\shaders\blur.glsl" />
     <None Include="src\shaders\debug.glsl" />
     <None Include="src\shaders\hdr.glsl" />
+    <None Include="src\shaders\im3d.glsl" />
     <None Include="src\shaders\quad.glsl" />
     <None Include="src\prebuild.bat" />
   </ItemGroup>
@@ -423,6 +424,12 @@ popd
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug-Fast|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Developer|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="src\shaders\im3d.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Developer|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug-Fast|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </FxCompile>
     <FxCompile Include="src\shaders\quad.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>

@@ -90,7 +90,7 @@ struct Hdr_Data {
 };
 
 static Im_Context2d     im_context2d;
-//static Im_Context3d     im_context3d;
+static Im_Context3d     im_context3d;
 Render_Pipeline         debug_pipeline;
 static Hdr_Data         hdr_data;
 static Render_Pipeline  blur_pipelines[2];
@@ -266,7 +266,6 @@ bool gfx_create_context(Handle platform, Render_Backend backend, Vsync vsync, u3
 	im_context2d.transformations[0] = mat4_identity();
 	im_context2d.transformation     = 1;
 
-#if 0
 	{
 		Input_Element_Layout layouts[] = {
 		{ "POSITION", Data_Format_RGB32_FLOAT, offsetof(Im_Vertex3d, position), Input_Type_PER_VERTEX_DATA, 0 },
@@ -299,7 +298,6 @@ bool gfx_create_context(Handle platform, Render_Backend backend, Vsync vsync, u3
 	im_context3d.index_buffer   = gfx->create_index_buffer(Buffer_Usage_DYNAMIC, Cpu_Access_WRITE, sizeof(Im_Index) * IM_CONTEXT_MAX_INDICES, 0);
 
 	im_context3d.sampler = gfx->create_sampler(filter_create(Filter_Type_MIN_MAG_MIP_POINT), texture_address_create(), level_of_detail_create());
-#endif
 
 	for (int i = 0; i < IM_MAX_CIRCLE_SEGMENTS; ++i) {
 		r32 theta             = ((r32)i / (r32)IM_MAX_CIRCLE_SEGMENTS) * MATH_PI * 2;
@@ -362,13 +360,11 @@ void gfx_destroy_context() {
 	gfx->destory_render_pipeline(im_context2d.pipeline);
 	gfx->destory_sampler(im_context2d.sampler);
 
-#if 0
 	gfx->destroy_vertex_buffer(im_context3d.vertex_buffer);
 	gfx->destroy_index_buffer(im_context3d.index_buffer);
 	gfx->destroy_uniform_buffer(im_context3d.uniform_buffer);
 	gfx->destory_render_pipeline(im_context3d.pipeline);
 	gfx->destory_sampler(im_context3d.sampler);
-#endif
 
 	gfx->destroy_texture_view(white_texture.view);
 	gfx->destroy_texture2d(white_texture.buffer);
