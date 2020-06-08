@@ -37,12 +37,28 @@ float luminance(float3 color) {
 	return dot(color, float3(0.2126, 0.7152, 0.0722));
 }
 
+static const float  AMBIENT_STRENGTH = 0.1;
+static const float  TOON_SHADE_LEVEL = 4;
+static const float3 LIGHT_DIRECTION = { -0.5, 0, -1 };
+static const float  LIGHT_BRIGHTNESS = 1;
+
 Ps_Out ps_main(Vs_Out input) {
 	float2 tex_coord = input.tex_coord;
 
 	Ps_Out output;
 
 	output.pixel = u_texture.Sample(u_sampler, tex_coord) * input.color;
+
+	float3 light_direction = normalize(LIGHT_DIRECTION);
+
+	float3 normal = normalize(input.normal);
+	float diffuse_strength = max(clamp(dot(normal, light_direction), 0, 1), 0);
+	float color_strength = diffuse_strength + AMBIENT_STRENGTH;
+
+	float toon_level = ceil(color_strength * TOON_SHADE_LEVEL);
+	color_strength = toon_level / (TOON_SHADE_LEVEL + 1);
+
+	output.pixel.rgb *= color_strength;
 
 	float brightness = luminance(output.pixel.rgb);
 
