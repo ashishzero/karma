@@ -722,9 +722,9 @@ void camera_set_view(Camera *camera, Camera_View_Kind kind) {
 	if (kind == Camera_View_Kind::ORTHOGRAPHIC) {
 		r32 half_height = MAP_REGION_HALF_Y_CELL_COUNT;
 		r32 half_width  = half_height * camera->aspect_ratio;
-		camera->view = orthographic_view(-half_width, half_width, half_height, -half_height, 0.1f, -50.0f);
+		camera->view = orthographic_view(-half_width, half_width, half_height, -half_height, -1.0f, 100.0f);
 	} else {
-		camera->view = perspective_view(to_radians(60), camera->aspect_ratio, 0.1f, 50.0f);
+		camera->view = perspective_view(to_radians(60), camera->aspect_ratio, 0.1f, 100.0f);
 	}
 }
 
