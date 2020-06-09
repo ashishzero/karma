@@ -1178,6 +1178,10 @@ int system_main() {
 				for (int region_index_x = map_region_start_index_x; region_index_x < MAP_MAX_RENDER_REGION_X + 1; ++region_index_x) {
 					World_Map_Region *map_region = world_map_get_region(&world, region_index_x, region_index_y, region_index_z);
 
+					r32 region_y = (r32)((region_index_y - camera.position.region.y) * MAP_REGION_Y_CELL_COUNT);
+					r32 region_x = (r32)((region_index_x - camera.position.region.x) * MAP_REGION_X_CELL_COUNT);
+					im3d_cube(vec3(region_x, region_y, 0.5f), quat_identity(), vec3(MAP_REGION_X_CELL_COUNT, MAP_REGION_Y_CELL_COUNT, 0.1f), vec4(0, 0.3f, 0));
+
 					if (map_region) {
 						for (int cell_index_y = 0; cell_index_y < MAP_REGION_Y_CELL_COUNT; ++cell_index_y) {
 							for (int cell_index_x = 0; cell_index_x < MAP_REGION_X_CELL_COUNT; ++cell_index_x) {
@@ -1185,15 +1189,12 @@ int system_main() {
 
 								Vec2 draw_pos;
 
-								draw_pos.y = (r32)((region_index_y - camera.position.region.y) * MAP_REGION_Y_CELL_COUNT);
-								draw_pos.x = (r32)((region_index_x - camera.position.region.x) * MAP_REGION_X_CELL_COUNT);
+								draw_pos.y = region_y;
+								draw_pos.x = region_x;
 
 								draw_pos += world_map_cell_to_tile(cell_index_x, cell_index_y);
 
-								if (region_cell->id == Cell_Type_PLACE) {
-									im3d_cube(vec3(draw_pos, 0.5f), quat_identity(), vec3(1, 1, 0.1f), vec4(0, 0.3f, 0));
-								}
-								else {
+								if (region_cell->id == Cell_Type_VACUUM) {
 									im3d_cube(vec3(draw_pos, 0), quat_identity(), vec3(1), vec4(0.7f, 0.4f, 0.2f));
 								}
 							}
