@@ -438,56 +438,20 @@ constexpr int  MAP_REGION_HALF_Y_CELL_COUNT		= MAP_REGION_Y_CELL_COUNT / 2;
 
 static World_Region_Cell map_cells0[MAP_REGION_Y_CELL_COUNT][MAP_REGION_X_CELL_COUNT] = {
 	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-	{ 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0 },
-	{ 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0 },
-	{ 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0 },
-	{ 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0 },
-	{ 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1 },
-	{ 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1 },
-	{ 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
-	{ 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0 },
-	{ 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 1, 1, 0 },
-	{ 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0 },
-	{ 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0 },
-	{ 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0 },
-	{ 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0 },
+	{ 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 },
+	{ 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 },
+	{ 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 },
+	{ 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 },
+	{ 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 },
+	{ 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 },
+	{ 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 },
+	{ 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 },
+	{ 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 },
+	{ 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 },
+	{ 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 },
+	{ 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 },
+	{ 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 },
 	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-};
-
-static World_Region_Cell map_cells1[MAP_REGION_Y_CELL_COUNT][MAP_REGION_X_CELL_COUNT] = {
-	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-	{ 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 },
-	{ 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 },
-	{ 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 },
-	{ 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-	{ 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 },
-	{ 1, 1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 },
-	{ 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0 },
-	{ 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 0 },
-	{ 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0 },
-	{ 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0 },
-	{ 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0 },
-	{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0 },
-	{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 },
-	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-};
-
-static World_Region_Cell map_cells2[MAP_REGION_Y_CELL_COUNT][MAP_REGION_X_CELL_COUNT] = {
-	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-	{ 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 },
-	{ 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 },
-	{ 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1 },
-	{ 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1 },
-	{ 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 0, 1 },
-	{ 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1 },
-	{ 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1 },
-	{ 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1 },
-	{ 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1 },
-	{ 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1 },
-	{ 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 },
-	{ 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 },
-	{ 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 },
-	{ 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 },
 };
 
 struct World_Position {
@@ -624,14 +588,12 @@ bool world_map_is_position_available(World_Map *world_map, World_Position &posit
 }
 
 World_Map create_test_world() {
-	static World_Map_Region test_map_regions[3];
+	static World_Map_Region test_map_regions[1];
 	test_map_regions[0].cells = map_cells0;
-	test_map_regions[1].cells = map_cells1;
-	test_map_regions[2].cells = map_cells2;
 
 	World_Map map;
-	map.x_count = 2;
-	map.y_count = 2;
+	map.x_count = 1;
+	map.y_count = 1;
 	map.z_count = 1;
 
 	map.x_index_offset = map.x_count / 2;
@@ -646,9 +608,7 @@ World_Map create_test_world() {
 	map.regions = (World_Map_Region **)memory_allocate(total_size);
 	memset(map.regions, 0, total_size);
 
-	map.regions[1] = &test_map_regions[2];
-	map.regions[2] = &test_map_regions[0];
-	map.regions[3] = &test_map_regions[1];
+	map.regions[0] = &test_map_regions[0];
 
 	return map;
 }
@@ -677,7 +637,7 @@ struct Player {
 		WALKING
 	};
 
-	World_Position position = { vec3s(0, 1, 0) };
+	World_Position position = { vec3s(0, 0, 0) };
 	World_Position render_position    = position;
 
 	Face face				   = Face_NORTH;
@@ -720,14 +680,28 @@ struct Camera {
 };
 
 Camera_Bounds camera_get_bounds(Camera &camera) {
-	r32 half_width  = camera.distance;
-	r32 half_height = camera.distance / camera.aspect_ratio;
-
 	Camera_Bounds bounds;
-	bounds.left = -half_width;
-	bounds.right = half_width;
-	bounds.top = half_height;
-	bounds.bottom = -half_height;
+
+	if (camera.view.kind == Camera_View_Kind::ORTHOGRAPHIC) {
+		r32 camera_zoom = 1.0f / powf(2.0f, camera.distance);
+
+		r32 height = (r32)MAP_REGION_Y_CELL_COUNT;
+		r32 half_height = 0.5f * height * camera_zoom;
+		r32 half_width  = half_height * camera.aspect_ratio;
+
+		bounds.left   = -half_width;
+		bounds.right  = half_width;
+		bounds.top    = half_height;
+		bounds.bottom = -half_height;
+	} else {
+		r32 half_width  = camera.distance;
+		r32 half_height = camera.distance / camera.aspect_ratio;
+
+		bounds.left = -half_width;
+		bounds.right = half_width;
+		bounds.top = half_height;
+		bounds.bottom = -half_height;
+	}
 
 	return bounds;
 }
@@ -736,16 +710,25 @@ Mat4 camera_get_transform(Camera &camera) {
 	return quat_get_mat4(camera.orientation) * mat4_translation(-vec3(camera.position.tile, -camera.distance));
 }
 
-Camera camera_create(World_Position position, r32 distance = 1.0f, r32 target_distance = 5.0f, r32 aspect_ratio = 1280.0f / 720.0f) {
+void camera_set_view(Camera *camera, Camera_View_Kind kind) {
+	if (kind == Camera_View_Kind::ORTHOGRAPHIC) {
+		r32 half_height = MAP_REGION_HALF_Y_CELL_COUNT;
+		r32 half_width  = half_height * camera->aspect_ratio;
+		camera->view = orthographic_view(-half_width, half_width, half_height, -half_height, 0.1f, -50.0f);
+	} else {
+		camera->view = perspective_view(to_radians(60), camera->aspect_ratio, 0.1f, 50.0f);
+	}
+}
 
+Camera camera_create(World_Position position, r32 distance = 1.0f, r32 target_distance = 8.0f, r32 aspect_ratio = 1280.0f / 720.0f, Camera_View_Kind kind = Camera_View_Kind::ORTHOGRAPHIC) {
 	Camera camera;
 	camera.position			 = position;
 	camera.position_target   = camera.position;
 	camera.distance			 = distance;
 	camera.distance_target	 = target_distance;
 	camera.aspect_ratio      = aspect_ratio;
-	camera.view				 = perspective_view(to_radians(60), camera.aspect_ratio, 0.1f, 50.0f);
 
+	camera_set_view(&camera, kind);
 	return camera;
 }
 
@@ -941,6 +924,16 @@ int system_main() {
 						Debug_NotifySuccess("Level Reset");
 						player = Player{};
 						camera = camera_create(player.position);
+						break;
+					case Key_F7:
+						if (camera.view.kind == Camera_View_Kind::ORTHOGRAPHIC) {
+							Debug_NotifySuccess("Perspective View");
+							camera_set_view(&camera, Camera_View_Kind::PERSPECTIVE);
+						} else {
+							Debug_NotifySuccess("Orthographic View");
+							camera_set_view(&camera, Camera_View_Kind::ORTHOGRAPHIC);
+						}
+						break;
 				}
 			}
 #endif
@@ -1097,6 +1090,7 @@ int system_main() {
 
 				World_Position camera_target_new = player.render_position;
 
+#if 0
 				auto    cam_bounds = camera_get_bounds(camera);
 
 				Vec2 camera_min = camera_target_new.tile + vec2(cam_bounds.left, cam_bounds.bottom);
@@ -1122,6 +1116,7 @@ int system_main() {
 					!world_map_has_region(&world, camera_target_new.region.x, camera_target_new.region.y + 1, camera_target_new.region.z)) {
 					camera_target_new.tile.y += (MAP_REGION_Y_CELL_COUNT - max_cell.y);
 				}
+#endif
 					
 				camera.position_target = camera_target_new;
 
@@ -1178,11 +1173,11 @@ int system_main() {
 				for (int region_index_x = map_region_start_index_x; region_index_x < MAP_MAX_RENDER_REGION_X + 1; ++region_index_x) {
 					World_Map_Region *map_region = world_map_get_region(&world, region_index_x, region_index_y, region_index_z);
 
-					r32 region_y = (r32)((region_index_y - camera.position.region.y) * MAP_REGION_Y_CELL_COUNT);
-					r32 region_x = (r32)((region_index_x - camera.position.region.x) * MAP_REGION_X_CELL_COUNT);
-					im3d_cube(vec3(region_x, region_y, 0.5f), quat_identity(), vec3(MAP_REGION_X_CELL_COUNT, MAP_REGION_Y_CELL_COUNT, 0.1f), vec4(0, 0.3f, 0));
-
 					if (map_region) {
+						r32 region_y = (r32)((region_index_y - camera.position.region.y) * MAP_REGION_Y_CELL_COUNT);
+						r32 region_x = (r32)((region_index_x - camera.position.region.x) * MAP_REGION_X_CELL_COUNT);
+						im3d_cube(vec3(region_x, region_y, 0.5f), quat_identity(), vec3(MAP_REGION_X_CELL_COUNT, MAP_REGION_Y_CELL_COUNT, 0.1f), vec4(0, 0.3f, 0));
+
 						for (int cell_index_y = 0; cell_index_y < MAP_REGION_Y_CELL_COUNT; ++cell_index_y) {
 							for (int cell_index_x = 0; cell_index_x < MAP_REGION_X_CELL_COUNT; ++cell_index_x) {
 								World_Region_Cell* region_cell = world_map_region_get_cell(map_region, cell_index_x, cell_index_y);
