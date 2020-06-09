@@ -422,13 +422,15 @@ Texture2d_Handle debug_load_texture(const char *filepath) {
 	return texture;
 }
 
-enum {
-	Cell_Type_VACUUM = 0,
-	Cell_Type_PLACE  = 1,
+enum Cell_Flag_Bit : u32{
+	Cell_NULL	= 0,
+	Cell_INERT	= bit(0),
+	Cell_ACTIVE = bit(1)
 };
+typedef u32 Cell_Flags;
 
 struct World_Region_Cell {
-	int id;
+	Cell_Flags flags;
 };
 
 constexpr int  MAP_REGION_X_CELL_COUNT			= 25;
@@ -581,7 +583,7 @@ bool world_map_is_position_available(World_Map *world_map, World_Position &posit
 	if (map_region) {
 		Vec2s cell_index = world_map_tile_to_cell(position.tile.xy);
 		World_Region_Cell* region_cell = world_map_region_get_cell(map_region, cell_index.x, cell_index.y);
-		return region_cell->id != Cell_Type_VACUUM;
+		return region_cell->flags != Cell_NULL;
 	}
 
 	return false;
@@ -726,7 +728,7 @@ void camera_set_view(Camera *camera, Camera_View_Kind kind) {
 	}
 }
 
-Camera camera_create(World_Position position, r32 distance = -5.0f, r32 target_distance = -10.0f, r32 aspect_ratio = 1280.0f / 720.0f, Camera_View_Kind kind = Camera_View_Kind::PERSPECTIVE) {
+Camera camera_create(World_Position position, r32 distance = 5.0f, r32 target_distance = 15.0f, r32 aspect_ratio = 1280.0f / 720.0f, Camera_View_Kind kind = Camera_View_Kind::PERSPECTIVE) {
 	Camera camera;
 	camera.position					 = position;
 	camera.position_target			 = camera.position;
@@ -1174,19 +1176,19 @@ int system_main() {
 					world_position_normalize(&camera.position);
 					camera.orientation = slerp(camera.orientation, camera.orientation_target, 1.0f - powf(1.0f - 0.99f, dt));
 				} else {
-					const r32 CAMERA_MOVE_SPEED = 1;
-					const r32 CAMERA_TURN_SPEED = 1.5f;
+					const r32 CAMERA_MOVE_SPEED = 0.5f;
+					const r32 CAMERA_TURN_SPEED = 2;
 
 					if (camera_controller.is_valid) {
 						camera.orientation = 
 							quat_angle_axis(vec3(0, 0, -1), camera_controller.x) *
-							quat_angle_axis(quat_right(camera.orientation), camera_controller.y) *
+							quat_angle_axis(quat_right(camera.orientation), -camera_controller.y) *
 							camera.orientation;
 					}
 
 					Vec2 cam_move = vec2_normalize_check(vec2(controller.x, controller.y));
 					camera.position.tile += cam_move.x * CAMERA_MOVE_SPEED * quat_right(camera.orientation);
-					camera.position.tile += cam_move.y * CAMERA_MOVE_SPEED * quat_up(camera.orientation);
+					camera.position.tile -= cam_move.y * CAMERA_MOVE_SPEED * quat_up(camera.orientation);
 					world_position_normalize(&camera.position);
 				}
 			}
@@ -1248,8 +1250,8 @@ int system_main() {
 
 								draw_pos += world_map_cell_to_tile(cell_index_x, cell_index_y);
 
-								if (region_cell->id == Cell_Type_VACUUM) {
-									im3d_cube(vec3(draw_pos, 0), quat_identity(), vec3(1), vec4(0.7f, 0.4f, 0.2f));
+								if (region_cell->flags == Cell_NULL) {
+									im3d_cube(vec3(draw_pos, 1), quat_identity(), vec3(1), vec4(0.7f, 0.4f, 0.2f));
 								}
 							}
 						}
@@ -1266,9 +1268,9 @@ int system_main() {
 		player_draw_pos.y = (r32)((player.render_position.region.y - camera.position.region.y) * MAP_REGION_Y_CELL_COUNT);
 		player_draw_pos.x = (r32)((player.render_position.region.x - camera.position.region.x) * MAP_REGION_X_CELL_COUNT);
 		player_draw_pos.xy += player.render_position.tile.xy;
-		player_draw_pos.z = -0.25f;
+		player_draw_pos.z = 1.5f;
 
-		im3d_mesh(player_mesh, player_draw_pos, player.face_direction, vec3(0.75f), vec4(0.1f, 0.7f, 0.8f));
+		im3d_mesh(player_mesh, player_draw_pos, player.face_direction, vec3(0.5f), vec4(0.1f, 0.7f, 0.8f));
 		
 		im3d_end();
 

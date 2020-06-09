@@ -724,8 +724,8 @@ Mat4 mat4_perspective_gl(r32 fov, r32 aspect_ratio, r32 n, r32 f) {
 	Mat4 m;
 	m.rows[0] = vec4(cot / aspect_ratio, 0.0f, 0.0f, 0.0f);
 	m.rows[1] = vec4(0.0f, cot, 0.0f, 0.0f);
-	m.rows[2] = vec4(0.0f, 0.0f, fpn / fmn, -2.0f * f * n / fmn);
-	m.rows[3] = vec4(0.0f, 0.0f, 1.0f, 0.0f);
+	m.rows[2] = vec4(0.0f, 0.0f, -fpn / fmn, -2.0f * f * n / fmn);
+	m.rows[3] = vec4(0.0f, 0.0f, -1.0f, 0.0f);
 	return m;
 }
 
@@ -744,8 +744,8 @@ Mat4 mat4_perspective_dx(r32 fov, r32 aspect_ratio, r32 n, r32 f) {
 	Mat4 m;
 	m.rows[0] = vec4(cot / aspect_ratio, 0.0f, 0.0f, 0.0f);
 	m.rows[1] = vec4(0.0f, cot, 0.0f, 0.0f);
-	m.rows[2] = vec4(0.0f, 0.0f, f / fmn, -f * n / fmn);
-	m.rows[3] = vec4(0.0f, 0.0f, 1.0f, 0.0f);
+	m.rows[2] = vec4(0.0f, 0.0f, -f / fmn, -f * n / fmn);
+	m.rows[3] = vec4(0.0f, 0.0f, -1.0f, 0.0f);
 	return m;
 }
 

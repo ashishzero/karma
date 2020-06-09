@@ -52,7 +52,7 @@ Ps_Out ps_main(Vs_Out input) {
 	float3 light_direction = normalize(LIGHT_DIRECTION);
 
 	float3 normal = normalize(input.normal);
-	float diffuse_strength = max(clamp(dot(normal, light_direction), 0, 1), 0);
+	float diffuse_strength = max(clamp(dot(normal, -light_direction), 0, 1), 0);
 	float color_strength = diffuse_strength + AMBIENT_STRENGTH;
 
 	float toon_level = ceil(color_strength * TOON_SHADE_LEVEL);

@@ -1374,8 +1374,15 @@ inline void im3d_push_vertices(Im_Vertex3d *vertices, int count) {
 
 	if (im_context3d.transformation > 1) {
 		auto &trans = im_context3d.transformations[im_context3d.transformation - 1];
+		auto nmt = mat4_transpose(mat4_inverse(trans));
+		nmt.rows[0].w = 0;
+		nmt.rows[1].w = 0;
+		nmt.rows[2].w = 0;
+		nmt.rows[3] = vec4(0, 0, 0, 1);
+
 		for (int i = 0; i < count; ++i) {
 			vertices[i].position = (trans * vec4(vertices[i].position, 1)).xyz;
+			vertices[i].normal = (nmt * vec4(vertices[i].normal, 0)).xyz;
 		}
 	}
 
@@ -1583,7 +1590,7 @@ void im3d_triangle(Vec3 a, Vec3 b, Vec3 c, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Vec3
 void im3d_triangle(Vec3 a, Vec3 b, Vec3 c, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Color4 color) {
 	Vec3 dir_a = a - b;
 	Vec3 dir_b = c - b;
-	Vec3 n = vec3_cross(dir_a, dir_b);
+	Vec3 n = vec3_cross(dir_b, dir_a);
 	im3d_triangle(a, b, c, uv_a, uv_b, uv_c, n, n, n, color);
 }
 
@@ -1678,7 +1685,7 @@ void im3d_cube(Vec3 position, Quat rotation, Vec3 scale,
 	Vec3 normals[] = {
 		vec3( 0,  0, -1),
 		vec3( 1,  0,  0),
-		vec3( 0,  1,  0),
+		vec3( 0,  0,  1),
 		vec3(-1,  0,  0),
 		vec3( 0,  1,  0),
 		vec3( 0, -1,  0),
