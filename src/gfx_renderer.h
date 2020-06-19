@@ -57,6 +57,8 @@ void *         gfx_render_context();
 void gfx_on_client_resize(u32 w, u32 h);
 void gfx_get_render_view_size(u32 *w, u32 *h);
 
+Mat4 gfx_view_transform(Camera_View &view);
+
 void  gfx_set_sync_interval(Vsync vsync);
 Vsync gfx_get_sync_interval();
 

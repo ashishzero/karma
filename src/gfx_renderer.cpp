@@ -242,7 +242,7 @@ bool gfx_create_context(Handle platform, Render_Backend backend, Vsync vsync, u3
 		rasterizer.cull_mode       = Cull_Mode_BACK;
 
 		Blend_Info blend = blend_info_create(Blend_SRC_ALPHA, Blend_INV_SRC_ALPHA, Blend_Operation_ADD, Blend_SRC_ALPHA, Blend_INV_SRC_ALPHA, Blend_Operation_ADD);
-		Depth_Info depth = depth_info_create(true, Depth_Write_Mask_ALL, Comparison_Function_LESS);
+		Depth_Info depth = depth_info_create(false, Depth_Write_Mask_ZERO, Comparison_Function_NEVER);
 
 		im_context2d.pipeline = gfx->create_render_pipeline(shader, rasterizer, blend, depth, "Im2d_Pipeline");
 		memory_free(quad_shader_content.data);
@@ -396,6 +396,35 @@ void gfx_on_client_resize(u32 w, u32 h) {
 
 void gfx_get_render_view_size(u32 *w, u32 *h) {
 	gfx->get_render_view_size(w, h);
+}
+
+Mat4 gfx_view_transform(Camera_View &view) {
+	auto backend = gfx_render_backend();
+	if (view.kind == ORTHOGRAPHIC) {
+		switch (backend) {
+		case Render_Backend_OPENGL: return mat4_ortho_gl(view.orthographic.left, view.orthographic.right, 
+			view.orthographic.top, view.orthographic.bottom, 
+			view.orthographic.near, view.orthographic.far);
+		case Render_Backend_DIRECTX11: return mat4_ortho_dx(view.orthographic.left, view.orthographic.right,
+			view.orthographic.top, view.orthographic.bottom,
+			view.orthographic.near, view.orthographic.far);
+			invalid_default_case();
+		}
+	} else {
+		switch (backend) {
+		case Render_Backend_OPENGL: return mat4_perspective_gl(view.perspective.field_of_view,
+			view.perspective.aspect_ratio, 
+			view.perspective.near_plane, 
+			view.perspective.far_plane);
+		case Render_Backend_DIRECTX11: return mat4_perspective_dx(view.perspective.field_of_view,
+			view.perspective.aspect_ratio, 
+			view.perspective.near_plane, 
+			view.perspective.far_plane);
+			invalid_default_case();
+		}
+	}
+
+	return mat4_identity();
 }
 
 void gfx_set_sync_interval(Vsync vsync) {
@@ -639,41 +668,7 @@ void im2d_begin(const Mat4 &transform) {
 }
 
 void im2d_begin(Camera_View &view, const Mat4 &transform) {
-	Mat4 projection;
-	switch (gfx->backend) {
-		case Render_Backend_OPENGL: {
-			if (view.kind == ORTHOGRAPHIC)
-				projection = mat4_ortho_gl(view.orthographic.left,
-										   view.orthographic.right,
-										   view.orthographic.top,
-										   view.orthographic.bottom,
-										   view.orthographic.near,
-										   view.orthographic.far);
-			else
-				projection = mat4_perspective_gl(view.perspective.field_of_view,
-												 view.perspective.aspect_ratio,
-												 view.perspective.near_plane,
-												 view.perspective.far_plane);
-		} break;
-
-		case Render_Backend_DIRECTX11: {
-			if (view.kind == ORTHOGRAPHIC)
-				projection = mat4_ortho_dx(view.orthographic.left,
-										   view.orthographic.right,
-										   view.orthographic.top,
-										   view.orthographic.bottom,
-										   view.orthographic.near,
-										   view.orthographic.far);
-			else
-				projection = mat4_perspective_dx(view.perspective.field_of_view,
-												 view.perspective.aspect_ratio,
-												 view.perspective.near_plane,
-												 view.perspective.far_plane);
-		} break;
-
-			invalid_default_case();
-	}
-
+	Mat4 projection = gfx_view_transform(view);
 	im2d_begin(projection * transform);
 }
 
@@ -1465,41 +1460,7 @@ void im3d_begin(const Mat4 &transform) {
 }
 
 void im3d_begin(Camera_View &view, const Mat4 &transform) {
-	Mat4 projection;
-	switch (gfx->backend) {
-	case Render_Backend_OPENGL: {
-		if (view.kind == ORTHOGRAPHIC)
-			projection = mat4_ortho_gl(view.orthographic.left,
-				view.orthographic.right,
-				view.orthographic.top,
-				view.orthographic.bottom,
-				view.orthographic.near,
-				view.orthographic.far);
-		else
-			projection = mat4_perspective_gl(view.perspective.field_of_view,
-				view.perspective.aspect_ratio,
-				view.perspective.near_plane,
-				view.perspective.far_plane);
-	} break;
-
-	case Render_Backend_DIRECTX11: {
-		if (view.kind == ORTHOGRAPHIC)
-			projection = mat4_ortho_dx(view.orthographic.left,
-				view.orthographic.right,
-				view.orthographic.top,
-				view.orthographic.bottom,
-				view.orthographic.near,
-				view.orthographic.far);
-		else
-			projection = mat4_perspective_dx(view.perspective.field_of_view,
-				view.perspective.aspect_ratio,
-				view.perspective.near_plane,
-				view.perspective.far_plane);
-	} break;
-
-		invalid_default_case();
-	}
-
+	Mat4 projection = gfx_view_transform(view);
 	im3d_begin(projection * transform);
 }
 

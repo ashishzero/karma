@@ -1,6 +1,6 @@
-#include "karma.h"        // shared
-#include "systems.h"      // windows
-#include "gfx_renderer.h" // rendering
+#include "karma.h"       
+#include "systems.h"     
+#include "gfx_renderer.h"
 #include "length_string.h"
 #include "lin_maths.h"
 #include "imgui/imgui.h"
@@ -11,120 +11,6 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
-
-#if 0
-#	include <time.h>
-#	include <stdlib.h>
-#	define NUM_RIGID_BODIES 20
-
-int initial = 0;
-int xy      = 2000;
-
-typedef struct {
-	float width;
-	float height;
-	float mass;
-	float momentofInertia;
-} BoxShape;
-
-//=========two dimensional rigid body=========#
-
-typedef struct {
-	Vec2     position;
-	Vec2     velocity;
-	Vec2     linear_velocity;
-	Vec2     linear_acceleration;
-	float    angular_velocity;
-	float    angle;
-	Vec2     force;
-	float    torque;
-	BoxShape shape;
-	Mm_Rect  min_max_points;
-	bool     collided;
-} RigidBody;
-
-RigidBody rigidBodies[NUM_RIGID_BODIES];
-
-int random_number_generator(int n) {
-	//srand(int(time(NULL)));
-	return (rand() % n + 1);
-}
-
-int neg_random_number_generator(int n) {
-	//srand(int(time(NULL)));
-	return (rand() % n - n + 1);
-}
-
-void CalculateBoxInertia(BoxShape *boxShape) {
-	float m                   = boxShape->mass;
-	float h                   = boxShape->height;
-	float w                   = boxShape->width;
-	boxShape->momentofInertia = m * (w * w + h * h) / 2;
-}
-
-void ComputeForceandTorque(RigidBody *rigidBody) {
-	Vec2 f;
-	//f = { r32(2000), r32(2000) };
-	f = vec2(r32(neg_random_number_generator(2 + xy)), r32(neg_random_number_generator(1 + xy)));
-	//if(initial==1)
-	//	 f = { r32(1500), r32(2000) };
-	//else
-	//	 f = { r32(1500), r32(-2000) };
-
-	rigidBody->force  = f;
-	Vec2 r            = vec2(rigidBody->shape.width / 2, rigidBody->shape.height / 2);
-	rigidBody->torque = r.x * f.y - r.y * f.x;
-	xy += 1;
-	initial += 1;
-}
-
-void InitializeRigidBodies() {
-	int x = 0;
-	for (int i = 0; i < NUM_RIGID_BODIES; i++) {
-		RigidBody *rigidBody = &rigidBodies[i];
-		ComputeForceandTorque(rigidBody);
-		rigidBody->position = vec2(r32(random_number_generator(350 + x)), r32(random_number_generator(650 + x)));
-		//if (i == 0)
-		//	rigidBody->position = { 500,100 };
-		//if (i==1)
-		//	rigidBody->position = { 500,500 };
-		rigidBody->angle            = float(random_number_generator(360) / 360.0f * MATH_PI * 2);
-		rigidBody->linear_velocity  = vec2(0);
-		rigidBody->angular_velocity = 0;
-		rigidBody->collided         = false;
-
-		BoxShape shape;
-		shape.mass = float(random_number_generator(5000));
-
-		shape.width  = 20 * float(random_number_generator(2));
-		shape.height = 20 * float(random_number_generator(4));
-		CalculateBoxInertia(&shape);
-		rigidBody->shape = shape;
-
-		//rigidBody->linear_acceleration = { rigidBody->force.x / rigidBody->shape.mass, rigidBody->force.y / rigidBody->shape.mass };
-		rigidBody->linear_acceleration.x = rigidBody->force.x / rigidBody->shape.mass;
-		rigidBody->linear_acceleration.y = rigidBody->force.y / rigidBody->shape.mass;
-
-		rigidBody->min_max_points.min = vec2(rigidBody->position.x, rigidBody->position.y);
-		rigidBody->min_max_points.max = vec2(rigidBody->position.x + rigidBody->shape.width, rigidBody->position.y + rigidBody->shape.height);
-	}
-}
-
-void update_min_max(RigidBody *rigidBody) {
-	for (int i = 0; i < NUM_RIGID_BODIES; i++) {
-		RigidBody *rigidBody          = &rigidBodies[i];
-		rigidBody->min_max_points.min = vec2(rigidBody->position.x, rigidBody->position.y);
-		rigidBody->min_max_points.max = vec2(rigidBody->position.x + rigidBody->shape.width, rigidBody->position.y + rigidBody->shape.height);
-	}
-}
-
-void PrintRigidBodies() {
-	for (int i = 0; i < NUM_RIGID_BODIES; i++) {
-		RigidBody *rigidBody = &rigidBodies[i];
-		im2d_rect(vec2(rigidBody->position.x, rigidBody->position.y), vec2(rigidBody->shape.width, rigidBody->shape.height), vec4(vec3(1.1f, 1.2f, 1.5f), 1.0f));
-	}
-}
-#endif
 
 constexpr s32 MAX_SPEED_FACTOR = 8;
 
@@ -422,15 +308,56 @@ Texture2d_Handle debug_load_texture(const char *filepath) {
 	return texture;
 }
 
-enum Cell_Flag_Bit : u32{
-	Cell_NULL	= 0,
-	Cell_INERT	= bit(0),
-	Cell_ACTIVE = bit(1)
+Monospaced_Font debug_load_font(const String filepath) {
+	Monospaced_Font font = {};
+
+	String content = system_read_entire_file(filepath);
+	defer{ memory_free(content.data); };
+
+	if (content.count) {
+		Istream in = istream(content);
+
+		u32 min_c = *istream_consume(&in, u32);
+		u32 max_c = *istream_consume(&in, u32);
+		r32 advance = *istream_consume(&in, r32);
+		u32 size = *istream_consume(&in, u32);
+
+		font.info.range = (Monospaced_Font_Glyph_Range *)memory_allocate(size);
+		memcpy(font.info.range, istream_consume_size(&in, size), size);
+		font.info.first = (s32)min_c;
+		font.info.count = (s32)(max_c - min_c + 2);
+		font.info.advance = advance;
+
+		int w = *istream_consume(&in, int);
+		int h = *istream_consume(&in, int);
+		int n = *istream_consume(&in, int);
+		u8 *pixels = (u8 *)istream_consume_size(&in, w * h * n);
+
+		font.texture = gfx_create_texture2d((u32)w, (u32)h, (u32)n, Data_Format_RGBA8_UNORM_SRGB, (const u8 **)&pixels, Buffer_Usage_IMMUTABLE, 1);
+	}
+
+	return font;
+}
+
+enum Cell_Type : u32 {
+	Cell_Type_NULL,
+	Cell_Type_PATH,
 };
-typedef u32 Cell_Flags;
+
+enum Cell_Visibility {
+	Cell_Visibility_DISABLED,
+	Cell_Visibility_VISITED,
+	Cell_Visibility_VISIBLE,
+	Cell_Visibility_LIGHT,
+};
 
 struct World_Region_Cell {
-	Cell_Flags flags;
+	Cell_Type type;
+	Cell_Visibility visibility = Cell_Visibility_DISABLED;
+
+	World_Region_Cell(u32 t) {
+		type = (Cell_Type)t;
+	}
 };
 
 constexpr int  MAP_REGION_X_CELL_COUNT			= 25;
@@ -540,6 +467,13 @@ World_Region_Cell* world_map_region_get_cell(World_Map_Region* map_region, int c
 	return &map_region->cells[cell_y][cell_x];
 }
 
+World_Region_Cell* world_map_region_get_cell_ranged(World_Map_Region* map_region, int cell_x, int cell_y) {
+	if (cell_x >= 0 && cell_x < MAP_REGION_X_CELL_COUNT && cell_y >= 0 && cell_y < MAP_REGION_Y_CELL_COUNT) {
+		return &map_region->cells[cell_y][cell_x];
+	}
+	return nullptr;
+}
+
 World_Region_Cell* world_map_region_get_cell(World_Map_Region* map_region, Vec2s cell_index) {
 	return world_map_region_get_cell(map_region, cell_index.x, cell_index.y);
 }
@@ -575,18 +509,6 @@ World_Map_Region* world_map_get_region(World_Map *world_map, int region_x, int r
 
 bool world_map_has_region(World_Map *world_map, int region_x, int region_y, int region_z) {
 	return world_map_get_region(world_map, region_x, region_y, region_z) != nullptr;
-}
-
-bool world_map_is_position_available(World_Map *world_map, World_Position &position) {
-	World_Map_Region* map_region = world_map_get_region(world_map, position.region.x, position.region.y, position.region.z);
-
-	if (map_region) {
-		Vec2s cell_index = world_map_tile_to_cell(position.tile.xy);
-		World_Region_Cell* region_cell = world_map_region_get_cell(map_region, cell_index.x, cell_index.y);
-		return region_cell->flags != Cell_NULL;
-	}
-
-	return false;
 }
 
 World_Map create_test_world() {
@@ -660,11 +582,23 @@ struct Player {
 
 	r32  turn_velocity      = 7;
 	r32  dp					= 0;
+
+	struct Block *grabbed = nullptr;
+};
+
+struct Block {
+	World_Position position;
+};
+
+struct Light {
+	World_Position position;
+	int radius;
 };
 
 struct Game_Controller {
 	r32 x;
 	r32 y;
+	bool grab;
 };
 
 struct Camera_Controller {
@@ -728,7 +662,7 @@ void camera_set_view(Camera *camera, Camera_View_Kind kind) {
 	}
 }
 
-Camera camera_create(World_Position position, r32 distance = 5.0f, r32 target_distance = 15.0f, r32 aspect_ratio = 1280.0f / 720.0f, Camera_View_Kind kind = Camera_View_Kind::PERSPECTIVE) {
+Camera camera_create(World_Position position, r32 distance = 5.0f, r32 target_distance = 15.0f, r32 aspect_ratio = 1280.0f / 720.0f, Camera_View_Kind kind = Camera_View_Kind::ORTHOGRAPHIC) {
 	Camera camera;
 	camera.position					 = position;
 	camera.position_target			 = camera.position;
@@ -803,6 +737,184 @@ bool debug_load_mesh(String file, Im_Mesh *mesh) {
 	return false;
 }
 
+bool world_map_is_position_available(World_Map *world_map, Light *lights, int light_count, Block *blocks, int block_count, Face move_dir, World_Position &position, void *entity_ptr) {
+	World_Map_Region* map_region = world_map_get_region(world_map, position.region.x, position.region.y, position.region.z);
+
+	if (map_region) {
+		Vec2s cell_index = world_map_tile_to_cell(position.tile.xy);
+		World_Region_Cell* region_cell = world_map_region_get_cell(map_region, cell_index.x, cell_index.y);
+
+		if (region_cell->type == Cell_Type_PATH) {
+			for (int index = 0; index < light_count; ++index) {
+				Light &light = lights[index];
+				if (position.region.x == light.position.region.x && 
+					position.region.y == light.position.region.y && 
+					position.region.z == light.position.region.z) {
+					Vec2s light_cell = world_map_tile_to_cell(light.position.tile.xy);
+					if (light_cell.x == cell_index.x && light_cell.y == cell_index.y) {
+						return false;
+					}
+				}
+			}
+
+			for (int index = 0; index < block_count; ++index) {
+				void *ptr = blocks + index;
+				if (ptr == entity_ptr) continue;
+
+				Block &block = blocks[index];
+				if (position.region.x == block.position.region.x && 
+					position.region.y == block.position.region.y && 
+					position.region.z == block.position.region.z) {
+					Vec2s block_cell = world_map_tile_to_cell(block.position.tile.xy);
+					if (block_cell.x == cell_index.x && block_cell.y == cell_index.y) {
+						World_Position block_new_position = block.position;
+						switch (move_dir) {
+						case Face_EAST:  block_new_position.tile.x -= 1; break;
+						case Face_WEST:	 block_new_position.tile.x += 1; break;
+						case Face_NORTH: block_new_position.tile.y += 1; break;
+						case Face_SOUTH: block_new_position.tile.y -= 1; break;
+						}
+						world_position_normalize(&block_new_position);
+
+						if (world_map_is_position_available(world_map, lights, light_count, blocks, block_count, move_dir, block_new_position, ptr)) {
+							block.position = block_new_position;
+							return true;
+						} else {
+							return false;
+						}
+					}
+				}
+			}
+
+			return true;
+		} else {
+			return region_cell->type != Cell_Type_NULL;
+		}
+
+	}
+
+	return false;
+}
+
+void map_region_light_area(World_Map_Region *region, Vec3s region_index, Light &light) {
+	if (region_index.x == light.position.region.x && 
+		region_index.y == light.position.region.y && 
+		region_index.z == light.position.region.z) {
+		Vec2s index = world_map_tile_to_cell(light.position.tile.xy);
+
+		int x_index = index.x - light.radius + 1;
+		int y_index = index.y - light.radius + 1;
+		int x_count = index.x + light.radius;
+		int y_count = index.y + light.radius;
+
+		for (int y = y_index; y < y_count; ++y) {
+			for (int x = x_index; x < x_count; ++x) {
+				World_Region_Cell *cell = world_map_region_get_cell_ranged(region, x, y);
+				if (cell) {
+					cell->visibility = Cell_Visibility_LIGHT;
+				}
+			}
+		}
+	}
+}
+
+void map_region_update(World_Map *world, World_Map_Region *region, Vec3s region_index, Player *player, Light *lights, int light_count) {
+	for (int cell_index_y = 0; cell_index_y < MAP_REGION_Y_CELL_COUNT; ++cell_index_y) {
+		for (int cell_index_x = 0; cell_index_x < MAP_REGION_X_CELL_COUNT; ++cell_index_x) {
+			World_Region_Cell &cell = region->cells[cell_index_y][cell_index_x];
+			if (cell.visibility == Cell_Visibility_VISIBLE) {
+				cell.visibility = Cell_Visibility_VISITED;
+			}
+		}
+	}
+
+	if (region_index.x == player->position.region.x && 
+		region_index.y == player->position.region.y && 
+		region_index.z == player->position.region.z) {
+		Vec2s index = world_map_tile_to_cell(player->position.tile.xy);
+
+		enum {
+			CENTER, LEFT, RIGHT, 
+			FORWARD_CENTER, FORWARD_LEFT, FORWARD_RIGHT,
+			FORWARD_CENTER2, FORWARD_LEFT2, FORWARD_RIGHT2,
+			TOTAL_DIR_COUNT
+		};
+
+		World_Region_Cell *cells[TOTAL_DIR_COUNT];
+
+		cells[CENTER] = &region->cells[index.y][index.x];
+
+		switch (player->face) {
+		case Face_EAST: {
+			cells[LEFT]   = world_map_region_get_cell_ranged(region, index.x, index.y - 1);
+			cells[RIGHT]  = world_map_region_get_cell_ranged(region, index.x, index.y + 1);
+			cells[FORWARD_CENTER]  = world_map_region_get_cell_ranged(region, index.x - 1, index.y);
+			cells[FORWARD_LEFT]  = world_map_region_get_cell_ranged(region, index.x - 1, index.y - 1);
+			cells[FORWARD_RIGHT]  = world_map_region_get_cell_ranged(region, index.x - 1, index.y + 1);
+			cells[FORWARD_CENTER2]  = world_map_region_get_cell_ranged(region, index.x - 2, index.y);
+			cells[FORWARD_LEFT2]  = world_map_region_get_cell_ranged(region, index.x - 2, index.y - 1);
+			cells[FORWARD_RIGHT2]  = world_map_region_get_cell_ranged(region, index.x - 2, index.y + 1);
+		} break;
+
+		case Face_WEST: {
+			cells[LEFT]   = world_map_region_get_cell_ranged(region, index.x, index.y + 1);
+			cells[RIGHT]  = world_map_region_get_cell_ranged(region, index.x, index.y - 1);
+			cells[FORWARD_CENTER]  = world_map_region_get_cell_ranged(region, index.x + 1, index.y);
+			cells[FORWARD_LEFT]  = world_map_region_get_cell_ranged(region, index.x + 1, index.y + 1);
+			cells[FORWARD_RIGHT]  = world_map_region_get_cell_ranged(region, index.x + 1, index.y - 1);
+			cells[FORWARD_CENTER2]  = world_map_region_get_cell_ranged(region, index.x + 2, index.y);
+			cells[FORWARD_LEFT2]  = world_map_region_get_cell_ranged(region, index.x + 2, index.y + 1);
+			cells[FORWARD_RIGHT2]  = world_map_region_get_cell_ranged(region, index.x + 2, index.y - 1);
+		} break;
+
+		case Face_NORTH: {
+			cells[LEFT]   = world_map_region_get_cell_ranged(region, index.x - 1, index.y);
+			cells[RIGHT]  = world_map_region_get_cell_ranged(region, index.x + 1, index.y);
+			cells[FORWARD_CENTER]  = world_map_region_get_cell_ranged(region, index.x, index.y + 1);
+			cells[FORWARD_LEFT]  = world_map_region_get_cell_ranged(region, index.x - 1, index.y + 1);
+			cells[FORWARD_RIGHT]  = world_map_region_get_cell_ranged(region, index.x + 1, index.y + 1);
+			cells[FORWARD_CENTER2]  = world_map_region_get_cell_ranged(region, index.x, index.y + 2);
+			cells[FORWARD_LEFT2]  = world_map_region_get_cell_ranged(region, index.x - 1, index.y + 2);
+			cells[FORWARD_RIGHT2]  = world_map_region_get_cell_ranged(region, index.x + 1, index.y + 2);
+		} break;
+
+		case Face_SOUTH: {
+			cells[LEFT]   = world_map_region_get_cell_ranged(region, index.x + 1, index.y);
+			cells[RIGHT]  = world_map_region_get_cell_ranged(region, index.x - 1, index.y);
+			cells[FORWARD_CENTER]  = world_map_region_get_cell_ranged(region, index.x, index.y - 1);
+			cells[FORWARD_LEFT]  = world_map_region_get_cell_ranged(region, index.x + 1, index.y - 1);
+			cells[FORWARD_RIGHT]  = world_map_region_get_cell_ranged(region, index.x - 1, index.y - 1);
+			cells[FORWARD_CENTER2]  = world_map_region_get_cell_ranged(region, index.x, index.y - 2);
+			cells[FORWARD_LEFT2]  = world_map_region_get_cell_ranged(region, index.x + 1, index.y - 2);
+			cells[FORWARD_RIGHT2]  = world_map_region_get_cell_ranged(region, index.x - 1, index.y - 2);
+		} break;
+		}
+
+		cells[CENTER]->visibility = Cell_Visibility_VISIBLE;
+		cells[LEFT]->visibility = Cell_Visibility_VISIBLE;
+		cells[RIGHT]->visibility = Cell_Visibility_VISIBLE;
+		cells[FORWARD_CENTER]->visibility = Cell_Visibility_VISIBLE;
+
+		if (cells[FORWARD_CENTER]->type == Cell_Type_PATH || cells[LEFT]->type == Cell_Type_PATH ) {
+			cells[FORWARD_LEFT]->visibility = Cell_Visibility_VISIBLE;
+		}
+
+		if (cells[FORWARD_CENTER]->type == Cell_Type_PATH || cells[RIGHT]->type == Cell_Type_PATH ) {
+			cells[FORWARD_RIGHT]->visibility = Cell_Visibility_VISIBLE;
+		}
+
+		if (cells[FORWARD_CENTER]->type == Cell_Type_PATH) {
+			cells[FORWARD_CENTER2]->visibility = Cell_Visibility_VISIBLE;
+			cells[FORWARD_LEFT2]->visibility = Cell_Visibility_VISIBLE;
+			cells[FORWARD_RIGHT2]->visibility = Cell_Visibility_VISIBLE;
+		}
+	}
+
+	for (int index = 0; index < light_count; ++index) {
+		map_region_light_area(region, region_index, lights[index]);
+	}
+}
+
 int system_main() {
 	r32    framebuffer_w = 1280;
 	r32    framebuffer_h = 720;
@@ -810,7 +922,6 @@ int system_main() {
 	gfx_create_context(platform, Render_Backend_DIRECTX11, Vsync_ADAPTIVE, 2, (u32)framebuffer_w, (u32)framebuffer_h);
 
 	auto audio        = load_wave(system_read_entire_file("../res/misc/POL-course-of-nature-short.wav"));
-	auto bounce_sound = load_wave(system_read_entire_file("../res/misc/Boing Cartoonish-SoundBible.com-277290791.wav"));
 
 	Audio_Mixer mixer = audio_mixer();
 
@@ -827,10 +938,6 @@ int system_main() {
 
 	Debug_SetPresentationState(false);
 
-#if 0
-	InitializeRigidBodies();
-#endif
-
 	Im_Mesh player_mesh;
 	debug_load_mesh("dev/base.model", &player_mesh);
 
@@ -839,6 +946,8 @@ int system_main() {
 	auto music = play_audio(&mixer, &audio, true);
 
 	auto player_sprite = debug_load_texture("../res/misc/player.png");
+	auto square_texture = debug_load_texture("../res/misc/square.png");
+	auto debug_font = debug_load_font("dev/debug.font");
 
 	//
 	//
@@ -848,6 +957,18 @@ int system_main() {
 	Game_Controller controller			= {};
 	Camera            camera			= camera_create(player.position);
 	Camera_Controller camera_controller = {};
+
+	Light light;
+	light.position.region = player.position.region;
+	light.position.tile = vec3(5, 5, 0);
+	light.radius = 2;
+
+	Block blocks[2];
+	blocks[0].position.region = player.position.region;
+	blocks[0].position.tile = vec3(-5, -2, 0);
+
+	blocks[1].position.region = player.position.region;
+	blocks[1].position.tile = vec3(2, -2, 0);
 
 	bool running = true;
 
@@ -1017,6 +1138,11 @@ int system_main() {
 					case Key_DOWN:
 						controller.y = -value;
 						break;
+
+					case Key_Q:
+					case Key_PAD_0:
+						controller.grab = (event.key.state == Key_State_DOWN);
+						break;
 				}
 			}
 
@@ -1032,6 +1158,16 @@ int system_main() {
 				}
 			}
 		}
+
+		r32 render_w = window_w;
+		r32 render_h = floorf(window_w / aspect_ratio);
+		if (render_h > window_h) {
+			render_h = window_h;
+			render_w = floorf(window_h * aspect_ratio);
+		}
+
+		r32 render_x = floorf((window_w - render_w) * 0.5f);
+		r32 render_y = floorf((window_h - render_h) * 0.5f);
 
 		Debug_TimedBlockEnd(EventHandling);
 
@@ -1058,6 +1194,25 @@ int system_main() {
 
 			if (state == Time_State_RESUME) {
 				player.face_direction = rotate_toward(player.face_direction, face_quaternion(player.face), player.turn_velocity * dt);
+
+				if (controller.grab) {
+					for (int i = 0; i < static_count(blocks); ++i) {
+						auto *block = blocks + i;
+						if (block->position.region.x == player.position.region.x &&
+							block->position.region.y == player.position.region.y &&
+							block->position.region.z == player.position.region.z) {
+							if (fabsf(block->position.tile.x - player.position.tile.x) <= 1.0f &&
+								fabsf(block->position.tile.y - player.position.tile.y) <= 1.0f &&
+								fabsf(block->position.tile.z - player.position.tile.z) <= 1.0f) {
+								player.grabbed = block;
+								break;
+							}
+						}
+					}
+
+				} else {
+					player.grabbed = nullptr;
+				}
 
 				bool accept_input = false;
 				if (player.state == Player::IDEL) {
@@ -1089,38 +1244,37 @@ int system_main() {
 				}
 
 				if (accept_input) {
-					World_Position new_position = player.position;
-					new_position.tile.xy += player.movement_direction;
-					world_position_normalize(&new_position);
+					if (player.movement_direction.y > 0 && player.face != Face_NORTH) {
+						player.face = Face_NORTH;
+					} else if (player.movement_direction.y < 0 && player.face != Face_SOUTH) {
+						player.face = Face_SOUTH;
+					} else if (player.movement_direction.x > 0 && player.face != Face_WEST) {
+						player.face = Face_WEST;
+					} else if (player.movement_direction.x < 0 && player.face != Face_EAST) {
+						player.face = Face_EAST;
+					} else {
+						World_Position new_position = player.position;
+						new_position.tile.xy += player.movement_direction;
+						world_position_normalize(&new_position);
+						if (world_map_is_position_available(&world, &light, 1, blocks, static_count(blocks), player.face, new_position, &player)) {
+							if (!world_position_are_same(player.position, new_position)) {
+								player.state = Player::WALKING;
+								player.position = new_position;
 
-
-					Face new_face_direction;
-					if (player.movement_direction.y > 0) {
-						new_face_direction = Face_NORTH;
-					}
-					else if (player.movement_direction.y < 0) {
-						new_face_direction = Face_SOUTH;
-					}
-					else if (player.movement_direction.x > 0) {
-						new_face_direction = Face_WEST;
-					}
-					else if (player.movement_direction.x < 0) {
-						new_face_direction = Face_EAST;
-					}
-					else {
-						new_face_direction = player.face;
-					}
-
-					if (world_map_is_position_available(&world, new_position)) {
-						if (!world_position_are_same(player.position, new_position)) {
-							player.state = Player::WALKING;
-							player.position = new_position;
-						} else {
-							player.dp = 0;
+								if (player.grabbed) {
+									new_position = player.grabbed->position;
+									new_position.tile.xy += player.movement_direction;
+									world_position_normalize(&new_position);
+									if (world_map_is_position_available(&world, &light, 1, blocks, static_count(blocks), player.face, new_position, player.grabbed)) {
+										player.grabbed->position = new_position;
+									}
+								}
+							} else {
+								player.dp = 0;
+							}
 						}
 					}
 
-					player.face = new_face_direction;
 				}
 
 				//
@@ -1132,7 +1286,7 @@ int system_main() {
 					camera_target_new.region = player.render_position.region;
 					camera_target_new.tile.xy = player.render_position.tile.xy;
 
-					bool fix_camera_to_regions_end = false;
+					bool fix_camera_to_regions_end = true;
 
 					if (fix_camera_to_regions_end) {
 						auto    cam_bounds = camera_get_bounds(camera);
@@ -1217,8 +1371,47 @@ int system_main() {
 		gfx_begin_drawing(Framebuffer_Type_HDR, Clear_COLOR | Clear_DEPTH, vec4(0));
 		gfx_viewport(0, 0, framebuffer_w, framebuffer_h);
 
-		im3d_begin(camera.view, transform);
-		im3d_unbind_texture();
+		Vec2 cursorp = system_get_cursor_position();
+		if (cursorp.x < render_x) cursorp.x = render_x;
+		if (cursorp.y < render_y) cursorp.y = render_y;
+		if (cursorp.x > render_x + render_w) cursorp.x = render_x + render_w;
+		if (cursorp.y > render_y + render_h) cursorp.y = render_y + render_h;
+		cursorp.x -= render_x;
+		cursorp.y -= render_y;
+		cursorp.x /= render_w;
+		cursorp.y /= render_h;
+		cursorp.x *= 2;
+		cursorp.y *= 2;
+		cursorp.x -= 1;
+		cursorp.y -= 1;
+
+		Mat4 view_inv = mat4_inverse(gfx_view_transform(camera.view));
+		cursorp = (view_inv * vec4(cursorp, 0, 0)).xy;
+
+		World_Position cursor = camera.position;
+		cursor.tile.xy += cursorp;
+		cursor.tile.x = roundf(cursor.tile.x);
+		cursor.tile.y = roundf(cursor.tile.y);
+
+		if (system_key(Key_B) == Key_State_DOWN) {
+			auto cell_index = world_map_tile_to_cell(cursor.tile.xy);
+			auto region = world_map_get_region(&world, camera.position.region.x, camera.position.region.y, camera.position.region.z);
+			auto cell = world_map_region_get_cell_ranged(region, cell_index.x, cell_index.y);
+			if (cell) {
+				cell->type = Cell_Type_PATH;
+			}
+		}
+		if (system_key(Key_V) == Key_State_DOWN) {
+			auto cell_index = world_map_tile_to_cell(cursor.tile.xy);
+			auto region = world_map_get_region(&world, camera.position.region.x, camera.position.region.y, camera.position.region.z);
+			auto cell = world_map_region_get_cell_ranged(region, cell_index.x, cell_index.y);
+			if (cell) {
+				cell->type = Cell_Type_NULL;
+			}
+		}
+
+		im2d_begin(camera.view, transform);
+		im2d_bind_texture(square_texture);
 
 		constexpr int MAP_MAX_RENDER_REGION_X = 1;
 		constexpr int MAP_MAX_RENDER_REGION_Y = 1;
@@ -1234,10 +1427,12 @@ int system_main() {
 					World_Map_Region *map_region = world_map_get_region(&world, region_index_x, region_index_y, region_index_z);
 
 					if (map_region) {
+						map_region_update(&world, map_region, vec3s(region_index_x, region_index_y, region_index_z), &player, &light, 1);
+
 						r32 region_y = (r32)((region_index_y - camera.position.region.y) * MAP_REGION_Y_CELL_COUNT);
 						r32 region_x = (r32)((region_index_x - camera.position.region.x) * MAP_REGION_X_CELL_COUNT);
-						im3d_cube(vec3(region_x, region_y, 0.5f), quat_identity(), vec3(MAP_REGION_X_CELL_COUNT, MAP_REGION_Y_CELL_COUNT, 0.1f), 
-							vec4(0.7f, 0.7f, 0.7f));
+						//im3d_cube(vec3(region_x, region_y, 0.5f), quat_identity(), vec3(MAP_REGION_X_CELL_COUNT, MAP_REGION_Y_CELL_COUNT, 0.1f), 
+						//	vec4(0.7f, 0.7f, 0.7f));
 
 						for (int cell_index_y = 0; cell_index_y < MAP_REGION_Y_CELL_COUNT; ++cell_index_y) {
 							for (int cell_index_x = 0; cell_index_x < MAP_REGION_X_CELL_COUNT; ++cell_index_x) {
@@ -1250,8 +1445,21 @@ int system_main() {
 
 								draw_pos += world_map_cell_to_tile(cell_index_x, cell_index_y);
 
-								if (region_cell->flags == Cell_NULL) {
-									im3d_cube(vec3(draw_pos, 1), quat_identity(), vec3(1), vec4(0.7f, 0.4f, 0.2f));
+								r32 factor;
+								if (region_cell->visibility == Cell_Visibility_DISABLED) {
+									factor = 0.2f;
+								} else if (region_cell->visibility == Cell_Visibility_VISITED) {
+									factor = 0.5f;
+								} else {
+									factor = 1;
+								}
+
+								if (region_cell->type == Cell_Type_NULL) {
+									Vec4 color = vec4(factor * vec3(0.7f, 0.4f, 0.2f));
+									im2d_rect_centered(draw_pos, vec2(1), color);
+									//im3d_cube(vec3(draw_pos, 1), quat_identity(), vec3(1), vec4(0.7f, 0.4f, 0.2f));
+								} else {
+									im2d_rect_centered(draw_pos, vec2(1), vec4(factor * vec3(0.3f, 0.7f, 0.2f)));
 								}
 							}
 						}
@@ -1261,6 +1469,17 @@ int system_main() {
 			}
 		}
 
+		for (int i = 0; i < static_count(blocks); ++i) {
+			auto &block = blocks[i];
+			Vec3 block_draw_pos;
+			block_draw_pos.y = (r32)((block.position.region.y - camera.position.region.y) * MAP_REGION_Y_CELL_COUNT);
+			block_draw_pos.x = (r32)((block.position.region.x - camera.position.region.x) * MAP_REGION_X_CELL_COUNT);
+			block_draw_pos.xy += block.position.tile.xy;
+			block_draw_pos.z = 0;
+
+			im2d_rect_centered(block_draw_pos, vec2(1), vec4(0.9f, 0.6f, 0.5f));
+		}
+
 		auto cam_bounds = camera_get_bounds(camera);
 		Vec2 draw_dim   = vec2(cam_bounds.right - cam_bounds.left, cam_bounds.top - cam_bounds.bottom);
 
@@ -1268,11 +1487,40 @@ int system_main() {
 		player_draw_pos.y = (r32)((player.render_position.region.y - camera.position.region.y) * MAP_REGION_Y_CELL_COUNT);
 		player_draw_pos.x = (r32)((player.render_position.region.x - camera.position.region.x) * MAP_REGION_X_CELL_COUNT);
 		player_draw_pos.xy += player.render_position.tile.xy;
-		player_draw_pos.z = 1.5f;
+		player_draw_pos.z = 0;
+		//player_draw_pos.z = 1.5f;
 
-		im3d_mesh(player_mesh, player_draw_pos, player.face_direction, vec3(0.5f), vec4(0.1f, 0.7f, 0.8f));
-		
-		im3d_end();
+		r32  angle;
+		Vec3 axis;
+		quat_get_angle_axis(player.face_direction, &angle, &axis);
+
+		im2d_bind_texture(player_sprite);
+		im2d_rect_centered_rotated(player_draw_pos, vec2(1), axis.z * angle, vec4(1));
+		//im3d_mesh(player_mesh, player_draw_pos, player.face_direction, vec3(0.5f), vec4(0.1f, 0.7f, 0.8f));
+
+		im2d_unbind_texture();
+
+		{
+			Vec3 overlay_draw_pos;
+			overlay_draw_pos.y = (r32)((cursor.region.y - camera.position.region.y) * MAP_REGION_Y_CELL_COUNT);
+			overlay_draw_pos.x = (r32)((cursor.region.x - camera.position.region.x) * MAP_REGION_X_CELL_COUNT);
+			overlay_draw_pos.xy += cursor.tile.xy;
+			overlay_draw_pos.z = 0;
+
+			im2d_rect_centered(overlay_draw_pos, vec2(1), vec4(0.8f, 0.8f, 0.2f, 0.7f));
+		}
+
+		{
+			Vec3 light_draw_pos;
+			light_draw_pos.y = (r32)((light.position.region.y - camera.position.region.y) * MAP_REGION_Y_CELL_COUNT);
+			light_draw_pos.x = (r32)((light.position.region.x - camera.position.region.x) * MAP_REGION_X_CELL_COUNT);
+			light_draw_pos.xy += light.position.tile.xy;
+			light_draw_pos.z = 0;
+
+			im2d_circle(light_draw_pos, 0.4f, vec4(0.3f, 0.8f, 0.7f, 1));
+		}
+
+		im2d_end();
 
 		gfx_end_drawing();
 
@@ -1306,16 +1554,6 @@ int system_main() {
 #endif
 
 		gfx_apply_bloom(2);
-
-		r32 render_w = window_w;
-		r32 render_h = floorf(window_w / aspect_ratio);
-		if (render_h > window_h) {
-			render_h = window_h;
-			render_w = floorf(window_h * aspect_ratio);
-		}
-
-		r32 render_x = floorf((window_w - render_w) * 0.5f);
-		r32 render_y = floorf((window_h - render_h) * 0.5f);
 
 		gfx_begin_drawing(Framebuffer_Type_DEFAULT, Clear_COLOR, vec4(0, 0, 0));
 

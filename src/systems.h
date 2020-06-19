@@ -462,6 +462,7 @@ void system_audio_pause();
 const Array_View<Event> system_poll_events(int poll_count = 1);
 
 Key_State system_button(Button button);
+Key_State system_key(Key key);
 Key_Mods  system_get_key_mods();
 Vec2s	  system_get_cursor_position_vec2s();
 Vec2s	  system_get_cursor_position_y_inverted_vec2s();

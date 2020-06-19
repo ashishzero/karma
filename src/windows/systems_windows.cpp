@@ -707,6 +707,7 @@ static WINDOWPLACEMENT windowed_placement;
 
 static constexpr int WINDOWS_MAX_KEYS = 256;
 static Key           windows_key_map[WINDOWS_MAX_KEYS]; // This number should be enough
+static WPARAM		 windows_vk_key_map[WINDOWS_MAX_KEYS]; // This number should be enough
 
 static constexpr int WINDOWS_MAX_EVENTS = 128000; // This number should be enough
 static Event         windows_event_buffer[WINDOWS_MAX_EVENTS];
@@ -1409,11 +1410,103 @@ void win32_map_keys() {
 	windows_key_map[VK_NUMPAD7] = Key_PAD_7;
 	windows_key_map[VK_NUMPAD8] = Key_PAD_8;
 	windows_key_map[VK_NUMPAD9] = Key_PAD_9;
+
+	windows_vk_key_map[Key_A] = (u32)'A';
+	windows_vk_key_map[Key_B] = (u32)'B';
+	windows_vk_key_map[Key_C] = (u32)'C';
+	windows_vk_key_map[Key_D] = (u32)'D';
+	windows_vk_key_map[Key_E] = (u32)'E';
+	windows_vk_key_map[Key_F] = (u32)'F';
+	windows_vk_key_map[Key_G] = (u32)'G';
+	windows_vk_key_map[Key_H] = (u32)'H';
+	windows_vk_key_map[Key_I] = (u32)'I';
+	windows_vk_key_map[Key_J] = (u32)'J';
+	windows_vk_key_map[Key_K] = (u32)'K';
+	windows_vk_key_map[Key_L] = (u32)'L';
+	windows_vk_key_map[Key_M] = (u32)'M';
+	windows_vk_key_map[Key_N] = (u32)'N';
+	windows_vk_key_map[Key_O] = (u32)'O';
+	windows_vk_key_map[Key_P] = (u32)'P';
+	windows_vk_key_map[Key_Q] = (u32)'Q';
+	windows_vk_key_map[Key_R] = (u32)'R';
+	windows_vk_key_map[Key_S] = (u32)'S';
+	windows_vk_key_map[Key_T] = (u32)'T';
+	windows_vk_key_map[Key_U] = (u32)'U';
+	windows_vk_key_map[Key_V] = (u32)'V';
+	windows_vk_key_map[Key_W] = (u32)'W';
+	windows_vk_key_map[Key_X] = (u32)'X';
+	windows_vk_key_map[Key_Y] = (u32)'Y';
+	windows_vk_key_map[Key_Z] = (u32)'Z';
+
+	windows_vk_key_map[Key_0] = (u32)'0';
+	windows_vk_key_map[Key_1] = (u32)'1';
+	windows_vk_key_map[Key_2] = (u32)'2';
+	windows_vk_key_map[Key_3] = (u32)'3';
+	windows_vk_key_map[Key_4] = (u32)'4';
+	windows_vk_key_map[Key_5] = (u32)'5';
+	windows_vk_key_map[Key_6] = (u32)'6';
+	windows_vk_key_map[Key_7] = (u32)'7';
+	windows_vk_key_map[Key_8] = (u32)'8';
+	windows_vk_key_map[Key_9] = (u32)'9';
+
+	windows_vk_key_map[Key_RETURN]		= VK_RETURN;
+	windows_vk_key_map[Key_ESCAPE]		= VK_ESCAPE;
+	windows_vk_key_map[Key_BACKSPACE]	= VK_BACK;
+	windows_vk_key_map[Key_TAB]			= VK_TAB;
+	windows_vk_key_map[Key_SPACE]		= VK_SPACE;
+	windows_vk_key_map[Key_SHIFT]		= VK_SHIFT;
+	windows_vk_key_map[Key_CTRL]		= VK_CONTROL;
+
+	windows_vk_key_map[Key_F1] = VK_F1;
+	windows_vk_key_map[Key_F2] = VK_F2;
+	windows_vk_key_map[Key_F3] = VK_F3;
+	windows_vk_key_map[Key_F4] = VK_F4;
+	windows_vk_key_map[Key_F5] = VK_F5;
+	windows_vk_key_map[Key_F6] = VK_F6;
+	windows_vk_key_map[Key_F7] = VK_F7;
+	windows_vk_key_map[Key_F8] = VK_F8;
+	windows_vk_key_map[Key_F9] = VK_F9;
+	windows_vk_key_map[Key_F10] = VK_F10;
+	windows_vk_key_map[Key_F11] = VK_F11;
+	windows_vk_key_map[Key_F12] = VK_F12;
+
+	windows_vk_key_map[Key_PRINT_SCREEN]	 = VK_SNAPSHOT;
+	windows_vk_key_map[Key_INSERT]			 = VK_INSERT;  
+	windows_vk_key_map[Key_HOME]			 = VK_HOME;    
+	windows_vk_key_map[Key_PAGE_UP]			 = VK_PRIOR;   
+	windows_vk_key_map[Key_PAGE_DOWN]		 = VK_NEXT;    
+	windows_vk_key_map[Key_DELETE]			 = VK_DELETE;  
+	windows_vk_key_map[Key_END]				 = VK_END;     
+	windows_vk_key_map[Key_RIGHT]			 = VK_RIGHT;   
+	windows_vk_key_map[Key_LEFT]			 = VK_LEFT;    
+	windows_vk_key_map[Key_DOWN]			 = VK_DOWN;    
+	windows_vk_key_map[Key_UP]				 = VK_UP;      
+	windows_vk_key_map[Key_DIVIDE]			 = VK_DIVIDE;  
+	windows_vk_key_map[Key_MULTIPLY]		 = VK_MULTIPLY;
+	windows_vk_key_map[Key_PLUS]			 = VK_ADD;     
+	windows_vk_key_map[Key_MINUS]			 = VK_SUBTRACT;
+	windows_vk_key_map[Key_PERIOD]			 = VK_DECIMAL; 
+	windows_vk_key_map[Key_BACK_TICK]		 = VK_OEM_3;   
+
+	windows_vk_key_map[Key_PAD_0] = VK_NUMPAD0;
+	windows_vk_key_map[Key_PAD_1] = VK_NUMPAD1;
+	windows_vk_key_map[Key_PAD_2] = VK_NUMPAD2;
+	windows_vk_key_map[Key_PAD_3] = VK_NUMPAD3;
+	windows_vk_key_map[Key_PAD_4] = VK_NUMPAD4;
+	windows_vk_key_map[Key_PAD_5] = VK_NUMPAD5;
+	windows_vk_key_map[Key_PAD_6] = VK_NUMPAD6;
+	windows_vk_key_map[Key_PAD_7] = VK_NUMPAD7;
+	windows_vk_key_map[Key_PAD_8] = VK_NUMPAD8;
+	windows_vk_key_map[Key_PAD_9] = VK_NUMPAD9;
 }
 
 Key win32_get_mapped_key(WPARAM wparam) {
 	if (wparam >= WINDOWS_MAX_KEYS) return Key_UNKNOWN;
 	return windows_key_map[wparam];
+}
+
+WPARAM win32_get_mapped_vk_key(Key key) {
+	return windows_vk_key_map[key];
 }
 
 void win32_mouse_button_event(Mouse_Button_Event *event, WPARAM wparam, LPARAM lparam) {
@@ -2029,6 +2122,14 @@ Key_State system_button(Button button) {
 			invalid_default_case();
 	}
 	return Key_State_UP;
+}
+
+Key_State system_key(Key key) {
+	if (GetKeyState((int)win32_get_mapped_vk_key(key)) & 0x8000) {
+		return Key_State_DOWN;
+	} else {
+		return Key_State_UP;
+	}
 }
 
 Key_Mods system_get_key_mods() {
