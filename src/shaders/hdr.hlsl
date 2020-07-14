@@ -60,8 +60,8 @@ float3 aces_fitted(float3 color) {
 float4 ps_main(Vs_Out input) : SV_TARGET {
 	float2 tex_coord   = input.tex_coord;
 	float4 sampled     = u_texture.Sample(u_texture_sampler, tex_coord);
-	float3 bloom_color = u_bloom.Sample(u_bloom_sampler, tex_coord).xyz;
-	sampled.xyz += bloom_color;
+	float4 bloom_color = u_bloom.Sample(u_bloom_sampler, tex_coord);
+	sampled += bloom_color;
 	sampled.xyz = aces_fitted(sampled.xyz);
 	return sampled;
 }

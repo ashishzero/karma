@@ -45,6 +45,60 @@ inline Vec4 vec4_min(Vec4 a, Vec4 b) {
 	return r;
 }
 
+inline bool operator ==(Vec2 a, Vec2 b) {
+	return a.x == b.x && a.y == b.y;
+}
+inline bool operator !=(Vec2 a, Vec2 b) {
+	return !(a == b);
+}
+
+inline bool operator ==(Vec3 a, Vec3 b) {
+	return a.x == b.x && a.y == b.y && a.z == b.z;
+}
+inline bool operator !=(Vec3 a, Vec3 b) {
+	return !(a == b);
+}
+
+inline bool operator ==(Vec4 a, Vec4 b) {
+	return a.x == b.x && a.y == b.y && a.z == b.z && a.w == b.w;
+}
+inline bool operator !=(Vec4 a, Vec4 b) {
+	return !(a == b);
+}
+
+inline bool operator ==(Vec2s a, Vec2s b) {
+	return a.x == b.x && a.y == b.y;
+}
+inline bool operator !=(Vec2s a, Vec2s b) {
+	return !(a == b);
+}
+
+inline bool operator ==(Vec3s a, Vec3s b) {
+	return a.x == b.x && a.y == b.y && a.z == b.z;
+}
+inline bool operator !=(Vec3s a, Vec3s b) {
+	return !(a == b);
+}
+
+inline bool operator ==(Vec4s a, Vec4s b) {
+	return a.x == b.x && a.y == b.y && a.z == b.z && a.w == b.w;
+}
+inline bool operator !=(Vec4s a, Vec4s b) {
+	return !(a == b);
+}
+
+inline Vec2 to_vec2(Vec2s v) {
+	return vec2((r32)v.x, (r32)v.y);
+}
+
+inline Vec3 to_vec3(Vec3s v) {
+	return vec3((r32)v.x, (r32)v.y, (r32)v.z);
+}
+
+inline Vec4 to_vec4(Vec4s v) {
+	return vec4((r32)v.x, (r32)v.y, (r32)v.z, (r32)v.w);
+}
+
 const Vec3 WORLD_UP      = vec3(0, 1, 0);
 const Vec3 WORLD_RIGHT   = vec3(1, 0, 0);
 const Vec3 WORLD_FORWARD = vec3(0, 0, 1);
@@ -696,5 +750,12 @@ inline T integrate_rk4(const T &x, r32 t, r32 h, Function f) {
 //
 //
 
+struct Ray_Hit {
+	Vec2 point;
+	Vec2 normal;
+	r32 t;
+};
+
 bool point_inside_rect(Vec2 point, Mm_Rect rect);
-bool aabb_collision(const Mm_Rect &a, const Mm_Rect &b);
+bool aabb_vs_aabb(const Mm_Rect &a, const Mm_Rect &b);
+bool ray_vs_aabb(Vec2 origin, Vec2 direction, const Mm_Rect &rect, Ray_Hit *hit);

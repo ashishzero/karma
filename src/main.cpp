@@ -12,7 +12,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-constexpr s32 MAX_SPEED_FACTOR = 8;
+constexpr s32 MAX_SPEED_FACTOR = 64;
 
 struct Time_Speed_Factor {
 	s32 numerator   = 1;
@@ -339,369 +339,6 @@ Monospaced_Font debug_load_font(const String filepath) {
 	return font;
 }
 
-enum Cell_Type : u32 {
-	Cell_Type_NULL,
-	Cell_Type_PATH,
-};
-
-enum Cell_Visibility {
-	Cell_Visibility_DISABLED,
-	Cell_Visibility_VISITED,
-	Cell_Visibility_VISIBLE,
-	Cell_Visibility_LIGHT,
-};
-
-struct World_Region_Cell {
-	Cell_Type type;
-	Cell_Visibility visibility = Cell_Visibility_DISABLED;
-
-	World_Region_Cell(u32 t) {
-		type = (Cell_Type)t;
-	}
-};
-
-constexpr int  MAP_REGION_X_CELL_COUNT			= 25;
-constexpr int  MAP_REGION_Y_CELL_COUNT			= 15;
-constexpr int  MAP_REGION_HALF_X_CELL_COUNT		= MAP_REGION_X_CELL_COUNT / 2;
-constexpr int  MAP_REGION_HALF_Y_CELL_COUNT		= MAP_REGION_Y_CELL_COUNT / 2;
-
-static World_Region_Cell map_cells0[MAP_REGION_Y_CELL_COUNT][MAP_REGION_X_CELL_COUNT] = {
-	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-	{ 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 },
-	{ 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 },
-	{ 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 },
-	{ 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 },
-	{ 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 },
-	{ 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 },
-	{ 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 },
-	{ 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 },
-	{ 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 },
-	{ 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 },
-	{ 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 },
-	{ 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 },
-	{ 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0 },
-	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-};
-
-struct World_Position {
-	Vec3s region;
-	Vec3  tile;
-};
-
-Vec2s world_map_tile_to_cell(Vec2 tile) {
-	Vec2s cell_index;
-	cell_index.x = (int)(tile.x + MAP_REGION_HALF_X_CELL_COUNT);
-	cell_index.y = (int)(tile.y + MAP_REGION_HALF_Y_CELL_COUNT);
-	return cell_index;
-}
-
-Vec2 world_map_cell_to_tile(int cell_index_x, int cell_index_y) {
-	Vec2 tile;
-	tile.x = (r32)(cell_index_x - MAP_REGION_HALF_X_CELL_COUNT);
-	tile.y = (r32)(cell_index_y - MAP_REGION_HALF_Y_CELL_COUNT);
-	return tile;
-}
-
-Vec2 world_map_cell_to_tile(Vec2s cell_index) {
-	return world_map_cell_to_tile(cell_index.x, cell_index.y);
-}
-
-r32 world_map_cell_to_tile_horizontal(int cell_index) {
-	return (r32)(cell_index - MAP_REGION_HALF_X_CELL_COUNT);
-}
-
-r32 world_map_cell_to_tile_vertical(int cell_index) {
-	return (r32)(cell_index - MAP_REGION_HALF_Y_CELL_COUNT);
-}
-
-Vec3 world_position_unpack(World_Position &position, World_Position &center) {
-	Vec3 result;
-	result.x = (position.region.x - center.region.x) * MAP_REGION_X_CELL_COUNT + (position.tile.x - center.tile.x);
-	result.y = (position.region.y - center.region.y) * MAP_REGION_Y_CELL_COUNT + (position.tile.y - center.tile.y);
-	result.z = (r32)(position.region.z - center.region.z);
-	return result;
-}
-
-void world_position_normalize(World_Position *position) {
-	Vec2s cell_index = world_map_tile_to_cell(position->tile.xy);
-
-	if (cell_index.x >= MAP_REGION_X_CELL_COUNT) {
-		position->region.x += cell_index.x / MAP_REGION_X_CELL_COUNT;
-		position->tile.x = world_map_cell_to_tile_horizontal(cell_index.x % MAP_REGION_X_CELL_COUNT);
-	}
-
-	if (cell_index.x < 0) {
-		int dec = abs(cell_index.x + 1) / MAP_REGION_X_CELL_COUNT + 1;
-		position->region.x -= dec;
-		position->tile.x = world_map_cell_to_tile_horizontal(MAP_REGION_X_CELL_COUNT * dec + cell_index.x);
-	}
-
-	if (cell_index.y >= MAP_REGION_Y_CELL_COUNT) {
-		position->region.y += cell_index.y / MAP_REGION_Y_CELL_COUNT;
-		position->tile.y = world_map_cell_to_tile_vertical(cell_index.y % MAP_REGION_Y_CELL_COUNT);
-	}
-
-	if (cell_index.y < 0) {
-		int dec = abs(cell_index.y + 1) / MAP_REGION_Y_CELL_COUNT + 1;
-		position->region.y -= dec;
-		position->tile.y = world_map_cell_to_tile_vertical(MAP_REGION_Y_CELL_COUNT * dec + cell_index.y);
-	}
-}
-
-bool world_position_are_same(World_Position &a, World_Position &b) {
-	return  (a.tile.x == b.tile.x) && (a.tile.y == b.tile.y) &&
-		(a.region.z == b.region.z) && (a.region.x == b.region.x) && (a.region.y == b.region.y);
-}
-
-bool world_position_are_in_same_region(World_Position& a, World_Position& b) {
-	return (a.region.z == b.region.z) && (a.region.x == b.region.x) && (a.region.y == b.region.y);
-}
-
-struct World_Map_Region {
-	World_Region_Cell (*cells)[MAP_REGION_X_CELL_COUNT];
-};
-
-World_Region_Cell* world_map_region_get_cell(World_Map_Region* map_region, int cell_x, int cell_y) {
-	assert(cell_x >= 0 && cell_x < MAP_REGION_X_CELL_COUNT);
-	assert(cell_y >= 0 && cell_y < MAP_REGION_Y_CELL_COUNT);
-	return &map_region->cells[cell_y][cell_x];
-}
-
-World_Region_Cell* world_map_region_get_cell_ranged(World_Map_Region* map_region, int cell_x, int cell_y) {
-	if (cell_x >= 0 && cell_x < MAP_REGION_X_CELL_COUNT && cell_y >= 0 && cell_y < MAP_REGION_Y_CELL_COUNT) {
-		return &map_region->cells[cell_y][cell_x];
-	}
-	return nullptr;
-}
-
-World_Region_Cell* world_map_region_get_cell(World_Map_Region* map_region, Vec2s cell_index) {
-	return world_map_region_get_cell(map_region, cell_index.x, cell_index.y);
-}
-
-struct World_Map {
-	World_Map_Region **regions;
-	int x_count;
-	int y_count;
-	int z_count;
-
-	int x_index_offset;
-	int y_index_offset;
-	int z_index_offset;
-};
-
-World_Map_Region* world_map_get_region(World_Map *world_map, int region_x, int region_y, int region_z) {
-	region_x += world_map->x_index_offset;
-	region_y += world_map->y_index_offset;
-	region_z += world_map->z_index_offset;
-
-	World_Map_Region* map_region = nullptr;
-
-	if ((region_x >= 0 && region_x < world_map->x_count) && 
-		(region_y >= 0 && region_y < world_map->y_count) && 
-		(region_z >= 0 && region_z < world_map->z_count)) {
-		return  *(world_map->regions + region_x +
-				region_y * world_map->x_count +
-				region_z * world_map->y_count * world_map->x_count);
-	}
-
-	return map_region;
-}
-
-bool world_map_has_region(World_Map *world_map, int region_x, int region_y, int region_z) {
-	return world_map_get_region(world_map, region_x, region_y, region_z) != nullptr;
-}
-
-World_Map create_test_world() {
-	static World_Map_Region test_map_regions[1];
-	test_map_regions[0].cells = map_cells0;
-
-	World_Map map;
-	map.x_count = 1;
-	map.y_count = 1;
-	map.z_count = 1;
-
-	map.x_index_offset = map.x_count / 2;
-	map.y_index_offset = map.y_count / 2;
-	map.z_index_offset = map.z_count / 2;
-
-	if (map.x_count % 2 == 0) map.x_index_offset -= 1;
-	if (map.y_count % 2 == 0) map.y_index_offset -= 1;
-	if (map.z_count % 2 == 0) map.z_index_offset -= 1;
-
-	ptrsize total_size = sizeof(World_Map_Region *) * map.x_count * map.y_count * map.z_count;
-	map.regions = (World_Map_Region **)memory_allocate(total_size);
-	memset(map.regions, 0, total_size);
-
-	map.regions[0] = &test_map_regions[0];
-
-	return map;
-}
-
-enum Face {
-	Face_EAST,
-	Face_WEST,
-	Face_NORTH,
-	Face_SOUTH,
-};
-
-Quat face_quaternion(Face f) {
-	static const Quat quats[] = {
-		quat_angle_axis(vec3(0, 0, 1), MATH_TAU),
-		quat_angle_axis(vec3(0, 0, 1), -MATH_TAU),
-		quat_angle_axis(vec3(0, 0, 1), 0),
-		quat_angle_axis(vec3(0, 0, 1), MATH_PI),
-	};
-
-	return quats[f];
-}
-
-enum Camera_Control {
-	Camera_Control_GAME,
-	Camera_Control_FREE
-};
-
-struct Player {
-	enum State {
-		IDEL,
-		WALKING
-	};
-
-	World_Position position			  = { vec3s(0, 0, 0) };
-	World_Position render_position    = position;
-
-	Face face				   = Face_NORTH;
-	Quat face_direction        = quat_identity();
-
-	State state = IDEL;
-
-	Vec2 movement_direction = vec2(0);
-	r32  movement_force		= 1400;
-
-	r32  mass                 = 50;
-	r32  drag                 = 7;
-
-	r32  turn_velocity      = 7;
-	r32  dp					= 0;
-
-	struct Block *grabbed = nullptr;
-};
-
-struct Block {
-	World_Position position;
-};
-
-struct Light {
-	World_Position position;
-	int radius;
-};
-
-struct Game_Controller {
-	r32 x;
-	r32 y;
-	bool grab;
-};
-
-struct Camera_Controller {
-	r32 x;
-	r32 y;
-	bool is_valid;
-};
-
-struct Camera_Bounds {
-	r32 left, right;
-	r32 top, bottom;
-};
-
-struct Camera {
-	World_Position position;
-	World_Position position_target;
-
-	Quat orientation = quat_identity();
-	Quat orientation_target = orientation;
-
-	r32 aspect_ratio;
-
-	Camera_View view;
-};
-
-Camera_Bounds camera_get_bounds(Camera &camera) {
-	Camera_Bounds bounds;
-
-	if (camera.view.kind == Camera_View_Kind::ORTHOGRAPHIC) {
-		r32 half_height = MAP_REGION_HALF_Y_CELL_COUNT;
-		r32 half_width  = half_height * camera.aspect_ratio;
-
-		bounds.left   = -half_width;
-		bounds.right  = half_width;
-		bounds.top    = half_height;
-		bounds.bottom = -half_height;
-	} else {
-		r32 half_width  = camera.position.tile.z;
-		r32 half_height = camera.position.tile.z / camera.aspect_ratio;
-
-		bounds.left = -half_width;
-		bounds.right = half_width;
-		bounds.top = half_height;
-		bounds.bottom = -half_height;
-	}
-
-	return bounds;
-}
-
-Mat4 camera_get_transform(Camera &camera) {
-	return quat_get_mat4(quat_conjugate(camera.orientation)) * mat4_translation(-camera.position.tile);
-}
-
-void camera_set_view(Camera *camera, Camera_View_Kind kind) {
-	if (kind == Camera_View_Kind::ORTHOGRAPHIC) {
-		r32 half_height = MAP_REGION_HALF_Y_CELL_COUNT;
-		r32 half_width  = half_height * camera->aspect_ratio;
-		camera->view = orthographic_view(-half_width, half_width, half_height, -half_height, -1.0f, 100.0f);
-	} else {
-		camera->view = perspective_view(to_radians(60), camera->aspect_ratio, 0.1f, 100.0f);
-	}
-}
-
-Camera camera_create(World_Position position, r32 distance = 5.0f, r32 target_distance = 15.0f, r32 aspect_ratio = 1280.0f / 720.0f, Camera_View_Kind kind = Camera_View_Kind::ORTHOGRAPHIC) {
-	Camera camera;
-	camera.position					 = position;
-	camera.position_target			 = camera.position;
-	camera.position.tile.z			 = distance;
-	camera.position_target.tile.z	 = target_distance;
-	camera.aspect_ratio				 = aspect_ratio;
-
-	camera_set_view(&camera, kind);
-	return camera;
-}
-
-void editor_update(Audio_Mixer *mixer, Player *player, Camera *camera) {
-	if (!editor.display)
-		return;
-
-	ImGui::Begin("Editor");
-
-	r32 volume = mixer->volume_b;
-	ImGui::DragFloat("Volume", &volume, 0.01f, 0.0f, 1.0f);
-	ImGui::Checkbox("Guide", &editor.guide);
-
-#if 1
-	ImGui::Text("Player");
-	ImGui::DragInt3("Region Position", player->position.region.m);
-	ImGui::DragFloat3("Tile Position", player->position.tile.m);
-	ImGui::Text("Face Direction: (%.3f, %.3f, %.3f)", player->face_direction.x, player->face_direction.y, player->face_direction.z);
-	ImGui::DragFloat("Mass", &player->mass, 0.1f);
-	ImGui::DragFloat("Drag", &player->drag, 0.01f);
-	ImGui::DragFloat("Movement Force", &player->movement_force, 0.1f);
-	ImGui::DragFloat("Turn Speed", &player->turn_velocity, 0.01f);
-
-	ImGui::DragFloat("Camera Distance", &camera->position_target.tile.z, 0.01f);
-#endif
-
-	ImGui::End();
-
-	audio_mixer_set_volume(mixer, volume);
-}
-
 bool debug_load_mesh(String file, Im_Mesh *mesh) {
 	String content = system_read_entire_file(file);
 
@@ -737,182 +374,921 @@ bool debug_load_mesh(String file, Im_Mesh *mesh) {
 	return false;
 }
 
-bool world_map_is_position_available(World_Map *world_map, Light *lights, int light_count, Block *blocks, int block_count, Face move_dir, World_Position &position, void *entity_ptr) {
-	World_Map_Region* map_region = world_map_get_region(world_map, position.region.x, position.region.y, position.region.z);
 
-	if (map_region) {
-		Vec2s cell_index = world_map_tile_to_cell(position.tile.xy);
-		World_Region_Cell* region_cell = world_map_region_get_cell(map_region, cell_index.x, cell_index.y);
 
-		if (region_cell->type == Cell_Type_PATH) {
-			for (int index = 0; index < light_count; ++index) {
-				Light &light = lights[index];
-				if (position.region.x == light.position.region.x && 
-					position.region.y == light.position.region.y && 
-					position.region.z == light.position.region.z) {
-					Vec2s light_cell = world_map_tile_to_cell(light.position.tile.xy);
-					if (light_cell.x == cell_index.x && light_cell.y == cell_index.y) {
-						return false;
-					}
-				}
-			}
+constexpr int  LEVEL_REGION_X_CELL_COUNT			= 25;
+constexpr int  LEVEL_REGION_Y_CELL_COUNT			= 15;
+constexpr int  LEVEL_REGION_HALF_X_CELL_COUNT		= LEVEL_REGION_X_CELL_COUNT / 2;
+constexpr int  LEVEL_REGION_HALF_Y_CELL_COUNT		= LEVEL_REGION_Y_CELL_COUNT / 2;
 
-			for (int index = 0; index < block_count; ++index) {
-				void *ptr = blocks + index;
-				if (ptr == entity_ptr) continue;
+struct Level_Position {
+	Vec2s region;
+	Vec2 tile;
+};
 
-				Block &block = blocks[index];
-				if (position.region.x == block.position.region.x && 
-					position.region.y == block.position.region.y && 
-					position.region.z == block.position.region.z) {
-					Vec2s block_cell = world_map_tile_to_cell(block.position.tile.xy);
-					if (block_cell.x == cell_index.x && block_cell.y == cell_index.y) {
-						World_Position block_new_position = block.position;
-						switch (move_dir) {
-						case Face_EAST:  block_new_position.tile.x -= 1; break;
-						case Face_WEST:	 block_new_position.tile.x += 1; break;
-						case Face_NORTH: block_new_position.tile.y += 1; break;
-						case Face_SOUTH: block_new_position.tile.y -= 1; break;
-						}
-						world_position_normalize(&block_new_position);
-
-						if (world_map_is_position_available(world_map, lights, light_count, blocks, block_count, move_dir, block_new_position, ptr)) {
-							block.position = block_new_position;
-							return true;
-						} else {
-							return false;
-						}
-					}
-				}
-			}
-
-			return true;
-		} else {
-			return region_cell->type != Cell_Type_NULL;
-		}
-
-	}
-
-	return false;
-}
-
-void map_region_light_area(World_Map_Region *region, Vec3s region_index, Light &light) {
-	if (region_index.x == light.position.region.x && 
-		region_index.y == light.position.region.y && 
-		region_index.z == light.position.region.z) {
-		Vec2s index = world_map_tile_to_cell(light.position.tile.xy);
-
-		int x_index = index.x - light.radius + 1;
-		int y_index = index.y - light.radius + 1;
-		int x_count = index.x + light.radius;
-		int y_count = index.y + light.radius;
-
-		for (int y = y_index; y < y_count; ++y) {
-			for (int x = x_index; x < x_count; ++x) {
-				World_Region_Cell *cell = world_map_region_get_cell_ranged(region, x, y);
-				if (cell) {
-					cell->visibility = Cell_Visibility_LIGHT;
-				}
-			}
-		}
-	}
-}
-
-void map_region_update(World_Map *world, World_Map_Region *region, Vec3s region_index, Player *player, Light *lights, int light_count) {
-	for (int cell_index_y = 0; cell_index_y < MAP_REGION_Y_CELL_COUNT; ++cell_index_y) {
-		for (int cell_index_x = 0; cell_index_x < MAP_REGION_X_CELL_COUNT; ++cell_index_x) {
-			World_Region_Cell &cell = region->cells[cell_index_y][cell_index_x];
-			if (cell.visibility == Cell_Visibility_VISIBLE) {
-				cell.visibility = Cell_Visibility_VISITED;
-			}
-		}
-	}
-
-	if (region_index.x == player->position.region.x && 
-		region_index.y == player->position.region.y && 
-		region_index.z == player->position.region.z) {
-		Vec2s index = world_map_tile_to_cell(player->position.tile.xy);
-
-		enum {
-			CENTER, LEFT, RIGHT, 
-			FORWARD_CENTER, FORWARD_LEFT, FORWARD_RIGHT,
-			FORWARD_CENTER2, FORWARD_LEFT2, FORWARD_RIGHT2,
-			TOTAL_DIR_COUNT
+struct Level_Map {
+	struct Cell {
+		enum Type {
+			EMPTY, WALKABLE
 		};
 
-		World_Region_Cell *cells[TOTAL_DIR_COUNT];
+		struct Entity *entity;
+		booli beam;
 
-		cells[CENTER] = &region->cells[index.y][index.x];
+		Type type;
+	};
 
-		switch (player->face) {
-		case Face_EAST: {
-			cells[LEFT]   = world_map_region_get_cell_ranged(region, index.x, index.y - 1);
-			cells[RIGHT]  = world_map_region_get_cell_ranged(region, index.x, index.y + 1);
-			cells[FORWARD_CENTER]  = world_map_region_get_cell_ranged(region, index.x - 1, index.y);
-			cells[FORWARD_LEFT]  = world_map_region_get_cell_ranged(region, index.x - 1, index.y - 1);
-			cells[FORWARD_RIGHT]  = world_map_region_get_cell_ranged(region, index.x - 1, index.y + 1);
-			cells[FORWARD_CENTER2]  = world_map_region_get_cell_ranged(region, index.x - 2, index.y);
-			cells[FORWARD_LEFT2]  = world_map_region_get_cell_ranged(region, index.x - 2, index.y - 1);
-			cells[FORWARD_RIGHT2]  = world_map_region_get_cell_ranged(region, index.x - 2, index.y + 1);
-		} break;
+	struct Region {
+		Cell cells[LEVEL_REGION_X_CELL_COUNT * LEVEL_REGION_Y_CELL_COUNT];
+	};
 
-		case Face_WEST: {
-			cells[LEFT]   = world_map_region_get_cell_ranged(region, index.x, index.y + 1);
-			cells[RIGHT]  = world_map_region_get_cell_ranged(region, index.x, index.y - 1);
-			cells[FORWARD_CENTER]  = world_map_region_get_cell_ranged(region, index.x + 1, index.y);
-			cells[FORWARD_LEFT]  = world_map_region_get_cell_ranged(region, index.x + 1, index.y + 1);
-			cells[FORWARD_RIGHT]  = world_map_region_get_cell_ranged(region, index.x + 1, index.y - 1);
-			cells[FORWARD_CENTER2]  = world_map_region_get_cell_ranged(region, index.x + 2, index.y);
-			cells[FORWARD_LEFT2]  = world_map_region_get_cell_ranged(region, index.x + 2, index.y + 1);
-			cells[FORWARD_RIGHT2]  = world_map_region_get_cell_ranged(region, index.x + 2, index.y - 1);
-		} break;
+	Region **regions;
+	int x_count, y_count;
+};
 
-		case Face_NORTH: {
-			cells[LEFT]   = world_map_region_get_cell_ranged(region, index.x - 1, index.y);
-			cells[RIGHT]  = world_map_region_get_cell_ranged(region, index.x + 1, index.y);
-			cells[FORWARD_CENTER]  = world_map_region_get_cell_ranged(region, index.x, index.y + 1);
-			cells[FORWARD_LEFT]  = world_map_region_get_cell_ranged(region, index.x - 1, index.y + 1);
-			cells[FORWARD_RIGHT]  = world_map_region_get_cell_ranged(region, index.x + 1, index.y + 1);
-			cells[FORWARD_CENTER2]  = world_map_region_get_cell_ranged(region, index.x, index.y + 2);
-			cells[FORWARD_LEFT2]  = world_map_region_get_cell_ranged(region, index.x - 1, index.y + 2);
-			cells[FORWARD_RIGHT2]  = world_map_region_get_cell_ranged(region, index.x + 1, index.y + 2);
-		} break;
+inline Vec2 level_map_tile_to_cell_r32(Vec2 tile) {
+	return tile + vec2((r32)LEVEL_REGION_HALF_X_CELL_COUNT, (r32)LEVEL_REGION_HALF_Y_CELL_COUNT);
+}
 
-		case Face_SOUTH: {
-			cells[LEFT]   = world_map_region_get_cell_ranged(region, index.x + 1, index.y);
-			cells[RIGHT]  = world_map_region_get_cell_ranged(region, index.x - 1, index.y);
-			cells[FORWARD_CENTER]  = world_map_region_get_cell_ranged(region, index.x, index.y - 1);
-			cells[FORWARD_LEFT]  = world_map_region_get_cell_ranged(region, index.x + 1, index.y - 1);
-			cells[FORWARD_RIGHT]  = world_map_region_get_cell_ranged(region, index.x - 1, index.y - 1);
-			cells[FORWARD_CENTER2]  = world_map_region_get_cell_ranged(region, index.x, index.y - 2);
-			cells[FORWARD_LEFT2]  = world_map_region_get_cell_ranged(region, index.x + 1, index.y - 2);
-			cells[FORWARD_RIGHT2]  = world_map_region_get_cell_ranged(region, index.x - 1, index.y - 2);
-		} break;
+inline Vec2 level_map_cell_to_tile_r32(Vec2 tile) {
+	return tile - vec2((r32)LEVEL_REGION_HALF_X_CELL_COUNT, (r32)LEVEL_REGION_HALF_Y_CELL_COUNT);
+}
+
+inline Vec2s level_map_tile_to_cell(r32 tile_x, r32 tile_y) {
+	Vec2s cell_index;
+	cell_index.x = (int)(tile_x + LEVEL_REGION_HALF_X_CELL_COUNT);
+	cell_index.y = (int)(tile_y + LEVEL_REGION_HALF_Y_CELL_COUNT);
+	return cell_index;
+}
+
+inline Vec2s level_map_tile_to_cell(Vec2 tile) {
+	return level_map_tile_to_cell(tile.x, tile.y);
+}
+
+inline Vec2 level_map_cell_to_tile(int cell_index_x, int cell_index_y) {
+	Vec2 tile;
+	tile.x = (r32)(cell_index_x - LEVEL_REGION_HALF_X_CELL_COUNT);
+	tile.y = (r32)(cell_index_y - LEVEL_REGION_HALF_Y_CELL_COUNT);
+	return tile;
+}
+
+inline Vec2 level_map_cell_to_tile(Vec2s cell_index) {
+	return level_map_cell_to_tile(cell_index.x, cell_index.y);
+}
+
+inline r32 level_map_cell_to_tile_horizontal(int cell_index) {
+	return (r32)(cell_index - LEVEL_REGION_HALF_X_CELL_COUNT);
+}
+
+inline r32 level_map_cell_to_tile_vertical(int cell_index) {
+	return (r32)(cell_index - LEVEL_REGION_HALF_Y_CELL_COUNT);
+}
+
+Vec2 level_position_unpack(Level_Position &position, Level_Position &center) {
+	Vec2 result;
+	result.x = (position.region.x - center.region.x) * LEVEL_REGION_X_CELL_COUNT + (position.tile.x - center.tile.x);
+	result.y = (position.region.y - center.region.y) * LEVEL_REGION_Y_CELL_COUNT + (position.tile.y - center.tile.y);
+	return result;
+}
+
+void level_position_normalize(Level_Position *position) {
+	Vec2s cell_index = level_map_tile_to_cell(position->tile);
+
+	if (cell_index.x >= LEVEL_REGION_X_CELL_COUNT) {
+		position->region.x += cell_index.x / LEVEL_REGION_X_CELL_COUNT;
+		position->tile.x = level_map_cell_to_tile_horizontal(cell_index.x % LEVEL_REGION_X_CELL_COUNT);
+	}
+
+	if (cell_index.x < 0) {
+		int dec = abs(cell_index.x + 1) / LEVEL_REGION_X_CELL_COUNT + 1;
+		position->region.x -= dec;
+		position->tile.x = level_map_cell_to_tile_horizontal(LEVEL_REGION_X_CELL_COUNT * dec + cell_index.x);
+	}
+
+	if (cell_index.y >= LEVEL_REGION_Y_CELL_COUNT) {
+		position->region.y += cell_index.y / LEVEL_REGION_Y_CELL_COUNT;
+		position->tile.y = level_map_cell_to_tile_vertical(cell_index.y % LEVEL_REGION_Y_CELL_COUNT);
+	}
+
+	if (cell_index.y < 0) {
+		int dec = abs(cell_index.y + 1) / LEVEL_REGION_Y_CELL_COUNT + 1;
+		position->region.y -= dec;
+		position->tile.y = level_map_cell_to_tile_vertical(LEVEL_REGION_Y_CELL_COUNT * dec + cell_index.y);
+	}
+}
+
+inline bool level_position_are_same(Level_Position &a, Level_Position &b) {
+	return  ((a.region.x == b.region.x) && (a.region.y == b.region.y)) && ((a.tile.x == b.tile.x) && (a.tile.y == b.tile.y));
+}
+
+inline bool level_position_are_same_region(Level_Position& a, Level_Position& b) {
+	return (a.region.x == b.region.x) && (a.region.y == b.region.y);
+}
+
+inline Level_Map::Cell *level_map_region_get_cell(Level_Map::Region *region, int cell_x, int cell_y) {
+	assert(cell_x >= 0 && cell_x < LEVEL_REGION_X_CELL_COUNT && cell_y >= 0 && cell_y < LEVEL_REGION_Y_CELL_COUNT);
+	return region->cells + cell_x + cell_y * LEVEL_REGION_X_CELL_COUNT;
+}
+inline Level_Map::Cell *level_map_region_get_cell(Level_Map::Region *region, Vec2s cell) {
+	return level_map_region_get_cell(region, cell.x, cell.y);
+}
+
+inline Level_Map::Cell *level_map_region_get_cell_bounded(Level_Map::Region *region, int cell_x, int cell_y) {
+	if (cell_x >= 0 && cell_x < LEVEL_REGION_X_CELL_COUNT && cell_y >= 0 && cell_y < LEVEL_REGION_Y_CELL_COUNT) {
+		return region->cells + cell_x + cell_y * LEVEL_REGION_X_CELL_COUNT;
+	}
+	return nullptr;
+}
+inline Level_Map::Cell *level_map_region_get_cell_bounded(Level_Map::Region *region, Vec2s cell) {
+	return level_map_region_get_cell_bounded(region, cell.x, cell.y);
+}
+
+inline Level_Map::Region *level_map_get_region(Level_Map *level_map, int region_x, int region_y) {
+	return *(level_map->regions + region_x + region_y * level_map->x_count);
+}
+inline Level_Map::Region *level_map_get_region(Level_Map *level_map, Vec2s region) {
+	return level_map_get_region(level_map, region.x, region.y);
+}
+
+inline Level_Map::Region *level_map_get_region_bounded(Level_Map *level_map, int region_x, int region_y) {
+	Level_Map::Region *region = nullptr;
+
+	if ((region_x >= 0 && region_x < level_map->x_count) && 
+		(region_y >= 0 && region_y < level_map->y_count)) {
+		region = *(level_map->regions + region_x + region_y * level_map->x_count);
+	}
+
+	return region;
+}
+inline Level_Map::Region *level_map_get_region_bounded(Level_Map *level_map, Vec2s region) {
+	return level_map_get_region_bounded(level_map, region.x, region.y);
+}
+
+bool level_map_region_is_present(Level_Map *level_map, int region_x, int region_y) {
+	return level_map_get_region_bounded(level_map, region_x, region_y) != nullptr;
+}
+bool level_map_region_is_present(Level_Map *level_map, Vec2s region) {
+	return level_map_region_is_present(level_map, region.x, region.y);
+}
+
+struct Camera_Bounds {
+	r32 left, right;
+	r32 top, bottom;
+};
+
+struct Camera {
+	Level_Position position;
+	Level_Position position_target;
+
+	r32 distance;
+	r32 distance_target;
+
+	Quat orientation		= quat_identity();
+	Quat orientation_target = orientation;
+
+	r32			aspect_ratio;
+	Camera_View view;
+
+	r32 move_speed;
+	r32 reach_speed;
+	r32 turn_speed;
+
+	// NOTE: Valid only after camera_update is called
+	Vec2			render_position;
+	Camera_Bounds	bounds;
+};
+
+void camera_update(Camera *camera, r32 dt, Level_Position target_position, Level_Map *level_map = nullptr) {
+	Level_Position targetp	= camera->position_target;
+	targetp.region			= target_position.region;
+	targetp.tile			= target_position.tile;
+
+	if (camera->view.kind == Camera_View_Kind::ORTHOGRAPHIC) {
+		r32 icamera_zoom = powf(2.0f, camera->distance) / 512.0f;
+		r32 half_height = LEVEL_REGION_HALF_Y_CELL_COUNT * icamera_zoom;
+		r32 half_width  = half_height * camera->aspect_ratio;
+
+		camera->bounds.left   = -half_width;
+		camera->bounds.right  = half_width;
+		camera->bounds.top    = half_height;
+		camera->bounds.bottom = -half_height;
+	} else {
+		r32 half_width  = camera->distance;
+		r32 half_height = camera->distance / camera->aspect_ratio;
+
+		camera->bounds.left		= -half_width;
+		camera->bounds.right	= half_width;
+		camera->bounds.top		= half_height;
+		camera->bounds.bottom	= -half_height;
+	}
+
+	if (level_map) {
+		Vec2 camera_min = targetp.tile + vec2(camera->bounds.left,  camera->bounds.bottom);
+		Vec2 camera_max = targetp.tile + vec2(camera->bounds.right, camera->bounds.top);
+
+		Vec2 min_cell = level_map_tile_to_cell_r32(camera_min);
+		Vec2 max_cell = level_map_tile_to_cell_r32(camera_max);
+
+		if (min_cell.x < 0 && !level_map_region_is_present(level_map, targetp.region.x - 1, targetp.region.y)) {
+			targetp.tile.x -= min_cell.x + 1;
+		} else if (max_cell.x >= LEVEL_REGION_X_CELL_COUNT && !level_map_region_is_present(level_map, targetp.region.x + 1, targetp.region.y)) {
+			targetp.tile.x += (LEVEL_REGION_X_CELL_COUNT - max_cell.x);
 		}
 
-		cells[CENTER]->visibility = Cell_Visibility_VISIBLE;
-		cells[LEFT]->visibility = Cell_Visibility_VISIBLE;
-		cells[RIGHT]->visibility = Cell_Visibility_VISIBLE;
-		cells[FORWARD_CENTER]->visibility = Cell_Visibility_VISIBLE;
-
-		if (cells[FORWARD_CENTER]->type == Cell_Type_PATH || cells[LEFT]->type == Cell_Type_PATH ) {
-			cells[FORWARD_LEFT]->visibility = Cell_Visibility_VISIBLE;
-		}
-
-		if (cells[FORWARD_CENTER]->type == Cell_Type_PATH || cells[RIGHT]->type == Cell_Type_PATH ) {
-			cells[FORWARD_RIGHT]->visibility = Cell_Visibility_VISIBLE;
-		}
-
-		if (cells[FORWARD_CENTER]->type == Cell_Type_PATH) {
-			cells[FORWARD_CENTER2]->visibility = Cell_Visibility_VISIBLE;
-			cells[FORWARD_LEFT2]->visibility = Cell_Visibility_VISIBLE;
-			cells[FORWARD_RIGHT2]->visibility = Cell_Visibility_VISIBLE;
+		if (min_cell.y < 0 && !level_map_region_is_present(level_map, targetp.region.x, targetp.region.y - 1)) {
+			targetp.tile.y -= min_cell.y + 1;
+		} else if (max_cell.y >= LEVEL_REGION_Y_CELL_COUNT && !level_map_region_is_present(level_map, targetp.region.x, targetp.region.y + 1)) {
+			targetp.tile.y += (LEVEL_REGION_Y_CELL_COUNT - max_cell.y);
 		}
 	}
 
-	for (int index = 0; index < light_count; ++index) {
-		map_region_light_area(region, region_index, lights[index]);
+	camera->position_target = targetp;
+
+	Vec2 target;
+	target.x = (r32)(LEVEL_REGION_X_CELL_COUNT * (camera->position_target.region.x - camera->position.region.x));
+	target.x += camera->position_target.tile.x - camera->position.tile.x;
+	target.y = (r32)(LEVEL_REGION_Y_CELL_COUNT * (camera->position_target.region.y - camera->position.region.y));
+	target.y += camera->position_target.tile.y - camera->position.tile.y;
+
+	camera->position.tile += lerp(vec2(0), target, 1.0f - powf(1.0f - camera->move_speed, dt));
+	level_position_normalize(&camera->position);
+
+	camera->distance = lerp(camera->distance, camera->distance_target, 1.0f - powf(1.0f - camera->reach_speed, dt));
+
+	camera->orientation = slerp(camera->orientation, camera->orientation_target, 1.0f - powf(1.0f - camera->turn_speed, dt));
+}
+
+Mat4 camera_get_transform(Camera &camera) {
+	if (camera.view.kind == Camera_View_Kind::ORTHOGRAPHIC) {
+		r32 camera_zoom = 512.0f / powf(2.0f, camera.distance);
+		return quat_get_mat4(quat_conjugate(camera.orientation)) * 
+			mat4_scalar(camera_zoom, camera_zoom, 1) *
+			mat4_translation((r32)-camera.position.tile.x, (r32)-camera.position.tile.y, 0.0f);
+	} else {
+		return quat_get_mat4(quat_conjugate(camera.orientation)) * 
+			mat4_translation((r32)-camera.position.tile.x, (r32)-camera.position.tile.y, -camera.distance);
 	}
+}
+
+void camera_set_view(Camera *camera, r32 distance, r32 aspect_ratio, Camera_View_Kind kind) {
+	camera->distance		 = distance;
+	camera->distance_target	 = distance;
+	camera->aspect_ratio	 = aspect_ratio;
+
+	if (kind == Camera_View_Kind::ORTHOGRAPHIC) {
+		r32 half_height = LEVEL_REGION_HALF_Y_CELL_COUNT;
+		r32 half_width  = half_height * camera->aspect_ratio;
+		camera->view = orthographic_view(-half_width, half_width, half_height, -half_height, -1.0f, 10.0f);
+	} else {
+		camera->view = perspective_view(to_radians(60), camera->aspect_ratio, 0.1f, 100.0f);
+	}
+}
+
+Camera camera_create(Level_Position position, r32 distance = 9.0f, r32 aspect_ratio = 1280.0f / 720.0f, Camera_View_Kind kind = Camera_View_Kind::ORTHOGRAPHIC) {
+	Camera camera;
+	camera.position					 = position;
+	camera.position_target			 = camera.position;
+	camera.move_speed				 = 0.99f;
+	camera.reach_speed				 = 0.8f;
+	camera.turn_speed				 = 0.99f;
+	camera_set_view(&camera, distance, aspect_ratio, kind);
+	return camera;
+}
+
+void camera_set_target_distance(Camera *camera, r32 distance) {
+	camera->distance_target = distance;
+}
+
+static constexpr r32 MOVE_FORCE = 50.0f;
+static constexpr r32 DRAG = 7.0f;
+static constexpr r32 TURN_VELOCITY = 7.0f;
+
+struct Entity {
+	enum Type {
+		PLAYER, BEAM_EMITTER, BEAM_REFLECTOR, BEAM_RECEIVER, DOOR
+	};
+
+	enum Flag {
+		MOVABLE = bit(0),
+		CONTROLLABLE = bit(1),
+		WALKABLE = bit(2)
+	};
+
+	enum Face {
+		EAST, WEST, NORTH, SOUTH
+	};
+	
+	enum class State {
+		IDEL, WALKING
+	};
+
+	Type type;
+	u32 flags;
+
+	Level_Position	position;
+	Level_Position	render_position;
+	Face			face;
+	State			state;
+
+	r32  dp;
+};
+
+struct Player : public Entity {
+	Quat face_direction     = quat_identity();
+	Vec2 movement_direction = vec2(0);
+
+	Player() {
+		type = Type::PLAYER;
+		flags = Entity::MOVABLE | Entity::CONTROLLABLE;
+	}
+};
+
+struct Input {
+	Vec2 move;
+};
+
+struct Beam_Emitter : public Entity {	
+	Beam_Emitter() {
+		type = Type::BEAM_EMITTER;
+		flags = Entity::MOVABLE;
+	}
+};
+
+struct Beam_Reflector : public Entity {
+	Face face1;
+
+	Beam_Reflector() {
+		type  = Type::BEAM_REFLECTOR;
+		flags = Entity::MOVABLE;
+	}
+};
+
+struct Beam_Receiver : public Entity {
+	booli receiving;
+
+	Beam_Receiver() {
+		type = Type::BEAM_RECEIVER;
+		flags = 0;
+	}
+};
+
+struct Door : public Entity {
+	Door() {
+		type = Type::DOOR;
+		flags = 0;
+	}
+};
+
+void door_open(Door *door) {
+	set_bit(door->flags, Entity::WALKABLE);
+}
+
+void door_shut(Door * door) {
+	clear_bit(door->flags, Entity::WALKABLE);
+}
+
+struct World {
+	Level_Map map;
+	Camera camera;
+	Player player;
+	Beam_Emitter beam_emitters[3];
+	Beam_Reflector beam_reflector;
+	Beam_Receiver beam_receiver;
+	Door door;
+	Input input;
+};
+
+Quat face_quaternion(Entity::Face f) {
+	static const Quat quats[] = {
+		quat_angle_axis(vec3(0, 0, 1), MATH_TAU),
+		quat_angle_axis(vec3(0, 0, 1), -MATH_TAU),
+		quat_angle_axis(vec3(0, 0, 1), 0),
+		quat_angle_axis(vec3(0, 0, 1), MATH_PI),
+	};
+
+	return quats[(int)f];
+}
+
+r32 face_rotation(Entity::Face f) {
+	static const r32 angles[] = {
+		MATH_TAU,
+		-MATH_TAU,
+		0,
+		MATH_PI
+	};
+
+	return angles[(int)f];
+}
+
+World *create_default_world() {
+	World *world = new World;
+
+	world->map.x_count = 1;
+	world->map.y_count = 1;
+	world->map.regions = new Level_Map::Region *[world->map.x_count * world->map.y_count];
+
+	world->map.regions[0] = new Level_Map::Region;
+
+	for (int y = 0; y < LEVEL_REGION_Y_CELL_COUNT; ++y) {
+		for (int x = 0; x < LEVEL_REGION_X_CELL_COUNT; ++x) {
+			auto cell = level_map_region_get_cell(world->map.regions[0], x, y);
+
+			if (x == 0 || y == 0 || x == LEVEL_REGION_X_CELL_COUNT - 1 || y == LEVEL_REGION_Y_CELL_COUNT - 1) {
+				cell->type = Level_Map::Cell::EMPTY;
+			} else {
+				cell->type = Level_Map::Cell::WALKABLE;
+			}
+		}
+	}
+
+	world->input.move = vec2(0);
+
+	world->camera = camera_create({vec2s(0), vec2(0)});
+	camera_set_target_distance(&world->camera, 9.0f);
+
+	world->player.position = { vec2s(0), vec2(0) };
+	world->player.render_position = world->player.position;
+	world->player.face = Entity::Face::NORTH;
+	world->player.face_direction = face_quaternion(world->player.face);
+	world->player.movement_direction = vec2(0);
+	world->player.state = Entity::State::IDEL;
+	world->player.dp = 0;
+
+	world->beam_emitters[0].position.region = vec2s(0);
+	world->beam_emitters[0].position.tile = vec2(3, 4);
+	world->beam_emitters[0].render_position = world->beam_emitters[0].position;
+	world->beam_emitters[0].face = Entity::Face::EAST;
+	world->beam_emitters[0].state = Entity::State::IDEL;
+	world->beam_emitters[0].dp = 0;
+	
+	world->beam_emitters[1].position.region = vec2s(0);
+	world->beam_emitters[1].position.tile = vec2(-3, -4);
+	world->beam_emitters[1].render_position = world->beam_emitters[1].position;
+	world->beam_emitters[1].face = Entity::Face::NORTH;
+	world->beam_emitters[1].state = Entity::State::IDEL;
+	world->beam_emitters[1].dp = 0;
+
+	world->beam_emitters[2].position.region = vec2s(0);
+	world->beam_emitters[2].position.tile = vec2(0, -4);
+	world->beam_emitters[2].render_position = world->beam_emitters[2].position;
+	world->beam_emitters[2].face = Entity::Face::WEST;
+	world->beam_emitters[2].state = Entity::State::IDEL;
+	world->beam_emitters[2].dp = 0;
+
+	world->beam_reflector.position.region = vec2s(0);
+	world->beam_reflector.position.tile = vec2(5, -3);
+	world->beam_reflector.render_position = world->beam_reflector.position;
+	world->beam_reflector.face = Entity::Face::WEST;
+	world->beam_reflector.face1 = Entity::Face::SOUTH;
+	world->beam_reflector.state = Entity::State::IDEL;
+	world->beam_reflector.dp = 0;
+
+	world->beam_receiver.position.region = vec2s(0);
+	world->beam_receiver.position.tile = vec2(-5, -3);
+	world->beam_receiver.render_position = world->beam_receiver.position;
+	world->beam_receiver.face = Entity::Face::NORTH;
+	world->beam_receiver.state = Entity::State::IDEL;
+	world->beam_receiver.dp = 0;
+
+	world->door.position.region = vec2s(0);
+	world->door.position.tile = vec2(5, 5);
+	world->door.render_position = world->door.position;
+	world->door.face = Entity::Face::NORTH;
+	world->door.state = Entity::State::IDEL;
+	world->door.dp = 0;
+
+	return world;
+}
+
+static Texture2d_Handle	debug_player_sprite;
+static Texture2d_Handle	debug_torch_sprite;
+static Texture2d_Handle	debug_spiral_sprite;
+static Texture2d_Handle	debug_stone_sprite;
+static Texture2d_Handle	debug_diamond_sprite;
+static Texture2d_Handle	debug_pipe_sprite;
+static Monospaced_Font	debug_font;
+
+void entity_update_movement(Entity *entity, r32 dt) {
+	if (entity->state == Entity::State::WALKING) {
+		Vec2 direction = level_position_unpack(entity->position, entity->render_position);
+		r32 distance = vec2_length(direction);
+
+		if (distance) {
+			r32 acceleration = MOVE_FORCE;
+			entity->dp += dt * acceleration;
+			entity->dp *= powf(0.5f, DRAG * dt);
+			r32 change_in_position = dt * entity->dp;
+
+			if (change_in_position < distance) {
+				direction /= distance;
+				entity->render_position.tile += direction * change_in_position;
+				level_position_normalize(&entity->render_position);
+			} else {
+				entity->render_position = entity->position;
+			}
+
+		} else {
+			entity->state = Entity::State::IDEL;
+		}
+	}
+
+	if (entity->type == Entity::Type::PLAYER) {
+		Player *player = (Player *)entity;
+		player->face_direction = rotate_toward(player->face_direction, face_quaternion(player->face), TURN_VELOCITY * dt);
+	}
+}
+
+bool move_entity(World *world, Entity *entity, Entity::Face direction) {
+	bool moved = false;
+
+	if (entity->state == Entity::State::IDEL) {
+		Level_Position target = entity->position;
+
+		switch (direction) {
+			case Entity::Face::EAST: target.tile.x -= 1; break;
+			case Entity::Face::WEST: target.tile.x += 1; break;
+			case Entity::Face::NORTH: target.tile.y += 1; break;
+			case Entity::Face::SOUTH: target.tile.y -= 1; break;
+		}
+
+		level_position_normalize(&target);
+
+		auto region = level_map_get_region_bounded(&world->map, target.region);
+
+		if (region) {
+			auto cell = level_map_region_get_cell(region, level_map_tile_to_cell(target.tile));
+
+			if (cell->type == cell->WALKABLE) {
+				if (!level_position_are_same(entity->position, target)) {
+					if (cell->entity) {
+						if ((cell->entity->flags & Entity::MOVABLE) && move_entity(world, cell->entity, direction)) {
+							auto current_cell = level_map_region_get_cell(level_map_get_region(&world->map, entity->position.region), level_map_tile_to_cell(target.tile));
+							current_cell->entity = nullptr;
+
+							entity->state = Entity::State::WALKING;
+							entity->position = target;
+							cell->entity = entity;
+							moved = true;
+						} else if (cell->entity->flags & Entity::WALKABLE) {
+							auto current_cell = level_map_region_get_cell(level_map_get_region(&world->map, entity->position.region), level_map_tile_to_cell(target.tile));
+							current_cell->entity = nullptr;
+
+							entity->state = Entity::State::WALKING;
+							entity->position = target;
+							cell->entity = entity;
+							moved = true;
+						}
+					} else {
+						auto current_cell = level_map_region_get_cell(level_map_get_region(&world->map, entity->position.region), level_map_tile_to_cell(target.tile));
+						current_cell->entity = nullptr;
+
+						entity->state = Entity::State::WALKING;
+						entity->position = target;
+						cell->entity = entity;
+						moved = true;
+					}
+					
+				} else {
+					entity->dp = 0;
+				}
+			}
+		}
+
+		if (entity->type == Entity::Type::PLAYER) {
+			entity->face = direction;
+		}
+	}
+
+	return moved;
+}
+
+void level_map_set_entity(Level_Map *level_map, Entity *entity) {
+	auto region = level_map_get_region_bounded(level_map, entity->position.region);
+	if (region) {
+		auto cell = level_map_region_get_cell(region, level_map_tile_to_cell(entity->position.tile));
+		cell->entity = entity;
+	}
+}
+
+void world_update(World *world, r32 dt) {
+	Camera &camera = world->camera;
+	Player &player = world->player;
+
+	constexpr int MAX_UPDATE_REGION_X = 1;
+	constexpr int MAX_UPDATE_REGION_Y = 1;
+
+	{
+		int start_index_y = world->camera.position.region.y - MAX_UPDATE_REGION_Y / 2;
+		int start_index_x = world->camera.position.region.x - MAX_UPDATE_REGION_X / 2;
+
+		for (int region_y = start_index_y; region_y < MAX_UPDATE_REGION_Y; ++region_y) {
+			for (int region_x = start_index_x; region_x < MAX_UPDATE_REGION_X; ++region_x) {
+				auto *region = level_map_get_region_bounded(&world->map, region_x, region_y);
+
+				if (region) {
+					for (int cell_y = 0; cell_y < LEVEL_REGION_Y_CELL_COUNT; ++cell_y) {
+						for (int cell_x = 0; cell_x < LEVEL_REGION_X_CELL_COUNT; ++cell_x) {
+							auto cell = level_map_region_get_cell(region, cell_x, cell_y);
+							cell->entity = nullptr;
+							cell->beam = false;
+						}
+					}
+				}
+
+			}
+		}
+	}
+
+	level_map_set_entity(&world->map, &player);
+	level_map_set_entity(&world->map, world->beam_emitters + 0);
+	level_map_set_entity(&world->map, world->beam_emitters + 1);
+	level_map_set_entity(&world->map, world->beam_emitters + 2);
+	level_map_set_entity(&world->map, &world->beam_reflector);
+	level_map_set_entity(&world->map, &world->beam_receiver);
+	level_map_set_entity(&world->map, &world->door);
+
+	world->beam_receiver.receiving = false;
+
+	if (fabsf(world->input.move.x) > fabsf(world->input.move.y)) {
+		if (world->input.move.x > 0) {
+			move_entity(world, &world->player, Entity::Face::WEST);
+		} else {
+			move_entity(world, &world->player, Entity::Face::EAST);
+		}
+	} else if (fabsf(world->input.move.y) > fabsf(world->input.move.x)) {
+		if (world->input.move.y > 0) {
+			move_entity(world, &world->player, Entity::Face::NORTH);
+		} else {
+			move_entity(world, &world->player, Entity::Face::SOUTH);
+		}
+	}
+
+	entity_update_movement(&world->player, dt);
+	entity_update_movement(world->beam_emitters + 0, dt);
+	entity_update_movement(world->beam_emitters + 1, dt);
+	entity_update_movement(world->beam_emitters + 2, dt);
+	entity_update_movement(&world->beam_reflector, dt);
+	entity_update_movement(&world->beam_receiver, dt);
+	camera_update(&camera, dt, player.render_position, &world->map);
+
+	for (int i = 0; i < static_count(world->beam_emitters); ++i) {
+		Beam_Emitter &beam = world->beam_emitters[i];
+
+		Entity::Face face = beam.face;
+		Level_Position position = beam.position;
+
+		while (true) {
+			switch (face) {
+				case Entity::Face::EAST: {
+					position.tile.x -= 1;
+				} break;
+				
+				case Entity::Face::WEST: {
+					position.tile.x += 1;
+				} break;
+
+				case Entity::Face::NORTH: {
+					position.tile.y += 1;
+				} break;
+				
+				case Entity::Face::SOUTH: {
+					position.tile.y -= 1;
+				} break;
+
+				invalid_default_case();
+			}
+
+			level_position_normalize(&position);
+
+			auto region = level_map_get_region_bounded(&world->map, position.region);
+			if (region) {
+				auto cell = level_map_region_get_cell(region, level_map_tile_to_cell(position.tile));
+				if (cell->type == cell->WALKABLE) {
+					if (cell->entity == nullptr) {
+						cell->beam = true;
+					} else if (cell->entity->type == Entity::Type::BEAM_REFLECTOR) {
+						Beam_Reflector *beam_reflector = (Beam_Reflector *)cell->entity;
+						auto eface0 = beam_reflector->face;
+						auto eface1 = beam_reflector->face1;
+
+						auto blocked = false;
+						switch (face) {
+							case Entity::Face::EAST: {
+								if (eface0 == Entity::Face::WEST) {
+									face = eface1;
+								} else if (eface1 == Entity::Face::WEST) {
+									face = eface0;
+								} else {
+									blocked = true;
+								}
+							} break;
+
+							case Entity::Face::WEST: {
+								if (eface0 == Entity::Face::EAST) {
+									face = eface1;
+								} else if (eface1 == Entity::Face::EAST) {
+									face = eface0;
+								} else {
+									blocked = true;
+								}
+							} break;
+
+							case Entity::Face::NORTH: {
+								if (eface0 == Entity::Face::SOUTH) {
+									face = eface1;
+								} else if (eface1 == Entity::Face::SOUTH) {
+									face = eface0;
+								} else {
+									blocked = true;
+								}
+							} break;
+
+							case Entity::Face::SOUTH: {
+								if (eface0 == Entity::Face::NORTH) {
+									face = eface1;
+								} else if (eface1 == Entity::Face::NORTH) {
+									face = eface0;
+								} else {
+									blocked = true;
+								}
+							} break;
+
+							invalid_default_case();
+						}
+
+						if (blocked) {
+							break;
+						}
+					} else if (cell->entity->type == Entity::Type::BEAM_RECEIVER) {
+						Beam_Receiver *receiver = (Beam_Receiver *)cell->entity;
+						if ((receiver->face == Entity::EAST && face == Entity::WEST) ||
+							(receiver->face == Entity::WEST && face == Entity::EAST) ||
+							(receiver->face == Entity::NORTH && face == Entity::SOUTH) ||
+							(receiver->face == Entity::SOUTH && face == Entity::NORTH)) {
+							receiver->receiving = true;
+						}
+						break;
+					} else {
+						break;
+					}
+				} else {
+					break;
+				}
+			} else {
+				break;
+			}
+		}
+
+	}
+
+	if (world->beam_receiver.receiving) {
+		door_open(&world->door);
+	} else {
+		door_shut(&world->door);
+	}
+
+	static bool complete = false;
+	if (level_position_are_same(world->player.position, world->door.position) && !complete) {
+		Debug_NotifySuccess("Level Complete");
+		complete = true;
+	}
+	
+}
+
+void world_render(World *world) {
+	constexpr int MAX_RENDER_REGION_X = 1;
+	constexpr int MAX_RENDER_REGION_Y = 1;
+
+	Camera &camera = world->camera;
+	Player &player = world->player;
+
+	Mat4 cam_transform = camera_get_transform(camera);
+
+	im2d_begin(camera.view, cam_transform);
+
+	int start_index_y = world->camera.position.region.y - MAX_RENDER_REGION_Y / 2;
+	int start_index_x = world->camera.position.region.x - MAX_RENDER_REGION_X / 2;
+
+	im2d_unbind_texture();
+	im2d_rect_centered(vec2(0), 2 * vec2(MAX_RENDER_REGION_X * LEVEL_REGION_X_CELL_COUNT, MAX_RENDER_REGION_Y * LEVEL_REGION_Y_CELL_COUNT), vec4(0.3f, 0.7f, 0.2f));
+
+	for (int region_y = start_index_y; region_y < MAX_RENDER_REGION_Y; ++region_y) {
+		for (int region_x = start_index_x; region_x < MAX_RENDER_REGION_X; ++region_x) {
+			auto *region = level_map_get_region_bounded(&world->map, region_x, region_y);
+
+			if (region) {
+				r32 draw_y = (r32)((region_y - camera.position.region.y) * LEVEL_REGION_Y_CELL_COUNT);
+				r32 draw_x = (r32)((region_x - camera.position.region.x) * LEVEL_REGION_X_CELL_COUNT);
+
+				for (int cell_y = 0; cell_y < LEVEL_REGION_Y_CELL_COUNT; ++cell_y) {
+					for (int cell_x = 0; cell_x < LEVEL_REGION_X_CELL_COUNT; ++cell_x) {
+						auto cell = level_map_region_get_cell(region, cell_x, cell_y);
+
+						Vec2 draw_pos;
+						draw_pos.y = draw_y;
+						draw_pos.x = draw_x;
+						draw_pos += level_map_cell_to_tile(cell_x, cell_y);
+
+						if (cell->type == Level_Map::Cell::EMPTY) {
+							im2d_bind_texture(debug_stone_sprite);
+							im2d_rect_centered(draw_pos, vec2(1), vec4(1));
+						} else {
+							if (cell->beam) {
+								Color3 color = vec3(0, 1, 1);
+								im2d_unbind_texture();
+								im2d_rect_centered(draw_pos, vec2(1), vec4(3 * color, 0.5f));
+							}
+						}
+					}
+				}
+			}
+
+		}
+	}
+
+	im2d_bind_texture(debug_player_sprite);
+
+	{
+		Vec2 draw_pos;
+		draw_pos.y = (r32)((player.render_position.region.y - camera.position.region.y) * LEVEL_REGION_Y_CELL_COUNT);
+		draw_pos.x = (r32)((player.render_position.region.x - camera.position.region.x) * LEVEL_REGION_X_CELL_COUNT);
+		draw_pos += player.render_position.tile;
+
+		r32  angle;
+		Vec3 axis;
+		quat_get_angle_axis(player.face_direction, &angle, &axis);
+
+		im2d_rect_centered_rotated(draw_pos, vec2(1), axis.z * angle, vec4(1));
+	}
+
+	im2d_unbind_texture();
+
+	{
+		im2d_bind_texture(debug_pipe_sprite);
+		auto &mirror = world->beam_reflector;
+
+		Vec2 draw_pos;
+		draw_pos.y = (r32)((mirror.render_position.region.y - camera.position.region.y) * LEVEL_REGION_Y_CELL_COUNT);
+		draw_pos.x = (r32)((mirror.render_position.region.x - camera.position.region.x) * LEVEL_REGION_X_CELL_COUNT);
+		draw_pos += mirror.render_position.tile;
+
+		im2d_rect_centered(draw_pos, vec2(1), vec4(1));
+	}
+
+	{
+		im2d_bind_texture(debug_diamond_sprite);
+
+		auto &receiver = world->beam_receiver;
+
+		Vec2 draw_pos;
+		draw_pos.y = (r32)((receiver.render_position.region.y - camera.position.region.y) * LEVEL_REGION_Y_CELL_COUNT);
+		draw_pos.x = (r32)((receiver.render_position.region.x - camera.position.region.x) * LEVEL_REGION_X_CELL_COUNT);
+		draw_pos += receiver.render_position.tile;
+
+		Color4 color = vec4(1, 1, 1, 1);
+		if (receiver.receiving) {
+			color.xyz *= 15.0f;
+		} else {
+			color.xyz *= 0.8f;
+		}
+
+		im2d_rect_centered_rotated(draw_pos, vec2(1), face_rotation(receiver.face), color);
+	}
+
+	{
+		im2d_bind_texture(debug_spiral_sprite);
+
+		auto &door = world->door;
+
+		Vec2 draw_pos;
+		draw_pos.y = (r32)((door.render_position.region.y - camera.position.region.y) * LEVEL_REGION_Y_CELL_COUNT);
+		draw_pos.x = (r32)((door.render_position.region.x - camera.position.region.x) * LEVEL_REGION_X_CELL_COUNT);
+		draw_pos += door.render_position.tile;
+
+		Color4 color = vec4(1, 1, 1, 1);
+		if (door.flags & Entity::Flag::WALKABLE) {
+			color.xyz *= 15.0f;
+		} else {
+			color.xyz *= 0.1f;
+		}
+
+		im2d_rect_centered(draw_pos, vec2(1), color);
+	}
+
+	im2d_bind_texture(debug_torch_sprite);
+
+	for (int i = 0; i < static_count(world->beam_emitters); ++i) {
+		auto &beam = world->beam_emitters[i];
+
+		Vec2 draw_pos;
+		draw_pos.y = (r32)((beam.render_position.region.y - camera.position.region.y) * LEVEL_REGION_Y_CELL_COUNT);
+		draw_pos.x = (r32)((beam.render_position.region.x - camera.position.region.x) * LEVEL_REGION_X_CELL_COUNT);
+		draw_pos += beam.render_position.tile;
+
+		im2d_rect_centered_rotated(draw_pos, vec2(1), face_rotation(beam.face), vec4(1));
+	}
+
+	im2d_end();
 }
 
 int system_main() {
@@ -931,8 +1307,6 @@ int system_main() {
 
 	audio_mixer_set_volume(&mixer, 0.0f);
 
-	Camera_Control camera_control = Camera_Control_GAME;
-
 	ImGui_Initialize();
 	Debug_ModeEnable();
 
@@ -941,34 +1315,21 @@ int system_main() {
 	Im_Mesh player_mesh;
 	debug_load_mesh("dev/base.model", &player_mesh);
 
-	World_Map world = create_test_world();
-
 	auto music = play_audio(&mixer, &audio, true);
 
-	auto player_sprite = debug_load_texture("../res/misc/player.png");
-	auto square_texture = debug_load_texture("../res/misc/square.png");
-	auto debug_font = debug_load_font("dev/debug.font");
+	debug_player_sprite = debug_load_texture("../res/misc/player.png");
+	debug_torch_sprite = debug_load_texture("../res/misc/torch.png");
+	debug_spiral_sprite = debug_load_texture("../res/misc/spiral.png");
+	debug_stone_sprite = debug_load_texture("../res/misc/stone.png");
+	debug_diamond_sprite = debug_load_texture("../res/misc/diamond.png");
+	debug_pipe_sprite = debug_load_texture("../res/misc/pipe.png");
+	debug_font			= debug_load_font("dev/debug.font");
+
+	World *world = create_default_world();
 
 	//
 	//
 	//
-
-	Player            player;
-	Game_Controller controller			= {};
-	Camera            camera			= camera_create(player.position);
-	Camera_Controller camera_controller = {};
-
-	Light light;
-	light.position.region = player.position.region;
-	light.position.tile = vec3(5, 5, 0);
-	light.radius = 2;
-
-	Block blocks[2];
-	blocks[0].position.region = player.position.region;
-	blocks[0].position.tile = vec3(-5, -2, 0);
-
-	blocks[1].position.region = player.position.region;
-	blocks[1].position.tile = vec3(2, -2, 0);
 
 	bool running = true;
 
@@ -993,9 +1354,6 @@ int system_main() {
 
 	while (running) {
 		Debug_TimedFrameBegin();
-
-		camera_controller.x = 0;
-		camera_controller.y = 0;
 
 		Debug_TimedBlockBegin(EventHandling);
 		auto events = system_poll_events();
@@ -1054,31 +1412,6 @@ int system_main() {
 							Debug_Notify("Interface: Off");
 						}
 						break;
-					case Key_F6:
-						// TODO: properly reset level!!
-						Debug_NotifySuccess("Level Reset");
-						player = Player{};
-						camera = camera_create(player.position);
-						break;
-					case Key_F7:
-						if (camera.view.kind == Camera_View_Kind::ORTHOGRAPHIC) {
-							Debug_NotifySuccess("Perspective View");
-							camera_set_view(&camera, Camera_View_Kind::PERSPECTIVE);
-						} else {
-							Debug_NotifySuccess("Orthographic View");
-							camera_set_view(&camera, Camera_View_Kind::ORTHOGRAPHIC);
-						}
-						break;
-
-					case Key_F8:
-						if (camera_control == Camera_Control_FREE) {
-							Debug_NotifySuccess("Game Camera");
-							camera_control = Camera_Control_GAME;
-						} else {
-							Debug_NotifySuccess("Free Camera");
-							camera_control = Camera_Control_FREE;
-						}
-						break;
 				}
 			}
 #endif
@@ -1097,17 +1430,6 @@ int system_main() {
 				continue;
 			}
 
-			if (event.type & Event_Type_MOUSE) {
-				if ((event.type & Event_Type_MOUSE_BUTTON) && event.mouse_button.symbol == Button_LEFT) {
-					camera_controller.is_valid = (event.mouse_button.state == Key_State_DOWN);
-				}
-
-				if (event.type == Event_Type_MOUSE_AXIS) {
-					camera_controller.x = event.mouse_axis.x;
-					camera_controller.y = event.mouse_axis.y;
-				}
-			}
-
 			if ((event.type & Event_Type_KEY_UP) && event.key.symbol == Key_ESCAPE) {
 				system_request_quit();
 				break;
@@ -1121,40 +1443,23 @@ int system_main() {
 			if (event.type & Event_Type_KEYBOARD) {
 				float value = (float)(event.key.state == Key_State_DOWN);
 				switch (event.key.symbol) {
-					case Key_D:
-					case Key_RIGHT:
-						controller.x = value;
-						break;
-					case Key_A:
-					case Key_LEFT:
-						controller.x = -value;
-						break;
+				case Key_D:
+				case Key_RIGHT:
+					world->input.move.x = value;
+					break;
+				case Key_A:
+				case Key_LEFT:
+					world->input.move.x = -value;
+					break;
 
-					case Key_W:
-					case Key_UP:
-						controller.y = value;
-						break;
-					case Key_S:
-					case Key_DOWN:
-						controller.y = -value;
-						break;
-
-					case Key_Q:
-					case Key_PAD_0:
-						controller.grab = (event.key.state == Key_State_DOWN);
-						break;
-				}
-			}
-
-			if (event.type == Event_Type_CONTROLLER_AXIS) {
-				switch (event.controller_axis.symbol) {
-					case Controller_Axis_LTHUMB_X:
-						controller.x = event.controller_axis.value;
-						break;
-
-					case Controller_Axis_LTHUMB_Y:
-						controller.y = event.controller_axis.value;
-						break;
+				case Key_W:
+				case Key_UP:
+					world->input.move.y = value;
+					break;
+				case Key_S:
+				case Key_DOWN:
+					world->input.move.y = -value;
+					break;
 				}
 			}
 		}
@@ -1173,178 +1478,11 @@ int system_main() {
 
 		Debug_TimedBlockBegin(Simulation);
 
-		player.movement_direction = vec2(0);
-
-		if (camera_control == Camera_Control_GAME) {
-			Vec2 movement_direction = vec2_normalize_check(vec2(controller.x, controller.y));
-			r32 x_move_abs = fabsf(movement_direction.x);
-			r32 y_move_abs = fabsf(movement_direction.y);
-			if (y_move_abs > x_move_abs) {
-				movement_direction = vec2(0, (r32)sgn(movement_direction.y));
-			} else if (x_move_abs > y_move_abs) {
-				movement_direction = vec2((r32)sgn(movement_direction.x), 0);
-			} else {
-				movement_direction = vec2(0);
-			}
-			player.movement_direction = movement_direction;
-		}
-
 		while (accumulator_t >= fixed_dt) {
 			Debug_TimedScope(SimulationFrame);
 
 			if (state == Time_State_RESUME) {
-				player.face_direction = rotate_toward(player.face_direction, face_quaternion(player.face), player.turn_velocity * dt);
-
-				if (controller.grab) {
-					for (int i = 0; i < static_count(blocks); ++i) {
-						auto *block = blocks + i;
-						if (block->position.region.x == player.position.region.x &&
-							block->position.region.y == player.position.region.y &&
-							block->position.region.z == player.position.region.z) {
-							if (fabsf(block->position.tile.x - player.position.tile.x) <= 1.0f &&
-								fabsf(block->position.tile.y - player.position.tile.y) <= 1.0f &&
-								fabsf(block->position.tile.z - player.position.tile.z) <= 1.0f) {
-								player.grabbed = block;
-								break;
-							}
-						}
-					}
-
-				} else {
-					player.grabbed = nullptr;
-				}
-
-				bool accept_input = false;
-				if (player.state == Player::IDEL) {
-					accept_input = true;
-				} else if (player.state == Player::WALKING) {
-					Vec2 direction = world_position_unpack(player.position, player.render_position).xy;
-					r32 distance = vec2_length(direction);
-
-					if (distance) {
-						r32 acceleration = (player.movement_force / player.mass);
-						player.dp += dt * acceleration;
-						player.dp *= powf(0.5f, player.drag * dt);
-						r32 change_in_position = dt * player.dp;
-
-						if (change_in_position < distance) {
-							direction /= distance;
-							player.render_position.tile.xy += direction * change_in_position;
-							world_position_normalize(&player.render_position);
-						} else {
-							player.render_position = player.position;
-						}
-
-					} else {
-						player.state = Player::IDEL;
-					}
-
-					if (distance < 0.25f)
-						accept_input = true;
-				}
-
-				if (accept_input) {
-					if (player.movement_direction.y > 0 && player.face != Face_NORTH) {
-						player.face = Face_NORTH;
-					} else if (player.movement_direction.y < 0 && player.face != Face_SOUTH) {
-						player.face = Face_SOUTH;
-					} else if (player.movement_direction.x > 0 && player.face != Face_WEST) {
-						player.face = Face_WEST;
-					} else if (player.movement_direction.x < 0 && player.face != Face_EAST) {
-						player.face = Face_EAST;
-					} else {
-						World_Position new_position = player.position;
-						new_position.tile.xy += player.movement_direction;
-						world_position_normalize(&new_position);
-						if (world_map_is_position_available(&world, &light, 1, blocks, static_count(blocks), player.face, new_position, &player)) {
-							if (!world_position_are_same(player.position, new_position)) {
-								player.state = Player::WALKING;
-								player.position = new_position;
-
-								if (player.grabbed) {
-									new_position = player.grabbed->position;
-									new_position.tile.xy += player.movement_direction;
-									world_position_normalize(&new_position);
-									if (world_map_is_position_available(&world, &light, 1, blocks, static_count(blocks), player.face, new_position, player.grabbed)) {
-										player.grabbed->position = new_position;
-									}
-								}
-							} else {
-								player.dp = 0;
-							}
-						}
-					}
-
-				}
-
-				//
-				//
-				//
-
-				if (camera_control == Camera_Control_GAME) {
-					World_Position camera_target_new = camera.position_target;
-					camera_target_new.region = player.render_position.region;
-					camera_target_new.tile.xy = player.render_position.tile.xy;
-
-					bool fix_camera_to_regions_end = true;
-
-					if (fix_camera_to_regions_end) {
-						auto    cam_bounds = camera_get_bounds(camera);
-
-						Vec2 camera_min = camera_target_new.tile.xy + vec2(cam_bounds.left, cam_bounds.bottom);
-						Vec2 camera_max = camera_target_new.tile.xy + vec2(cam_bounds.right, cam_bounds.top);
-
-						Vec2 min_cell = camera_min + vec2(MAP_REGION_HALF_X_CELL_COUNT, MAP_REGION_HALF_Y_CELL_COUNT);
-						Vec2 max_cell = camera_max + vec2(MAP_REGION_HALF_X_CELL_COUNT, MAP_REGION_HALF_Y_CELL_COUNT);
-
-						if (min_cell.x < 0 && 
-							!world_map_has_region(&world, camera_target_new.region.x - 1, camera_target_new.region.y, camera_target_new.region.z)) {
-							camera_target_new.tile.x -= min_cell.x + 1;
-						}
-						else if (max_cell.x >= MAP_REGION_X_CELL_COUNT &&
-							!world_map_has_region(&world, camera_target_new.region.x + 1, camera_target_new.region.y, camera_target_new.region.z)) {
-							camera_target_new.tile.x += (MAP_REGION_X_CELL_COUNT - max_cell.x);
-						}
-
-						if (min_cell.y < 0 &&
-							!world_map_has_region(&world, camera_target_new.region.x, camera_target_new.region.y - 1, camera_target_new.region.z)) {
-							camera_target_new.tile.y -= min_cell.y + 1;
-						}
-						else if (max_cell.y >= MAP_REGION_Y_CELL_COUNT &&
-							!world_map_has_region(&world, camera_target_new.region.x, camera_target_new.region.y + 1, camera_target_new.region.z)) {
-							camera_target_new.tile.y += (MAP_REGION_Y_CELL_COUNT - max_cell.y);
-						}
-					}
-						
-					camera.position_target = camera_target_new;
-
-					Vec2 camera_position_target;
-					camera_position_target.x = (r32)(MAP_REGION_X_CELL_COUNT * (camera.position_target.region.x - camera.position.region.x));
-					camera_position_target.x += camera.position_target.tile.x - camera.position.tile.x;
-
-					camera_position_target.y = (r32)(MAP_REGION_Y_CELL_COUNT * (camera.position_target.region.y - camera.position.region.y));
-					camera_position_target.y += camera.position_target.tile.y - camera.position.tile.y;
-
-					camera.position.tile.xy += lerp(vec2(0), camera_position_target, 1.0f - powf(1.0f - 0.99f, dt));
-					camera.position.tile.z = lerp(camera.position.tile.z, camera.position_target.tile.z, 1.0f - powf(1.0f - 0.8f, dt));
-					world_position_normalize(&camera.position);
-					camera.orientation = slerp(camera.orientation, camera.orientation_target, 1.0f - powf(1.0f - 0.99f, dt));
-				} else {
-					const r32 CAMERA_MOVE_SPEED = 0.5f;
-					const r32 CAMERA_TURN_SPEED = 2;
-
-					if (camera_controller.is_valid) {
-						camera.orientation = 
-							quat_angle_axis(vec3(0, 0, -1), camera_controller.x) *
-							quat_angle_axis(quat_right(camera.orientation), -camera_controller.y) *
-							camera.orientation;
-					}
-
-					Vec2 cam_move = vec2_normalize_check(vec2(controller.x, controller.y));
-					camera.position.tile += cam_move.x * CAMERA_MOVE_SPEED * quat_right(camera.orientation);
-					camera.position.tile -= cam_move.y * CAMERA_MOVE_SPEED * quat_up(camera.orientation);
-					world_position_normalize(&camera.position);
-				}
+				world_update(world, dt);
 			}
 
 			accumulator_t -= fixed_dt;
@@ -1364,206 +1502,66 @@ int system_main() {
 
 		ImGui_UpdateFrame(real_dt);
 
-		r32 thickness = 15.0f / framebuffer_h;
-
-		Mat4 transform = camera_get_transform(camera);
-
-		gfx_begin_drawing(Framebuffer_Type_HDR, Clear_COLOR | Clear_DEPTH, vec4(0));
+		gfx_begin_drawing(Framebuffer_Type_HDR, Clear_ALL, vec4(0.0f));
 		gfx_viewport(0, 0, framebuffer_w, framebuffer_h);
 
-		Vec2 cursorp = system_get_cursor_position();
-		if (cursorp.x < render_x) cursorp.x = render_x;
-		if (cursorp.y < render_y) cursorp.y = render_y;
-		if (cursorp.x > render_x + render_w) cursorp.x = render_x + render_w;
-		if (cursorp.y > render_y + render_h) cursorp.y = render_y + render_h;
-		cursorp.x -= render_x;
-		cursorp.y -= render_y;
-		cursorp.x /= render_w;
-		cursorp.y /= render_h;
-		cursorp.x *= 2;
-		cursorp.y *= 2;
-		cursorp.x -= 1;
-		cursorp.y -= 1;
-
-		Mat4 view_inv = mat4_inverse(gfx_view_transform(camera.view));
-		cursorp = (view_inv * vec4(cursorp, 0, 0)).xy;
-
-		World_Position cursor = camera.position;
-		cursor.tile.xy += cursorp;
-		cursor.tile.x = roundf(cursor.tile.x);
-		cursor.tile.y = roundf(cursor.tile.y);
-
-		if (system_key(Key_B) == Key_State_DOWN) {
-			auto cell_index = world_map_tile_to_cell(cursor.tile.xy);
-			auto region = world_map_get_region(&world, camera.position.region.x, camera.position.region.y, camera.position.region.z);
-			auto cell = world_map_region_get_cell_ranged(region, cell_index.x, cell_index.y);
-			if (cell) {
-				cell->type = Cell_Type_PATH;
-			}
-		}
-		if (system_key(Key_V) == Key_State_DOWN) {
-			auto cell_index = world_map_tile_to_cell(cursor.tile.xy);
-			auto region = world_map_get_region(&world, camera.position.region.x, camera.position.region.y, camera.position.region.z);
-			auto cell = world_map_region_get_cell_ranged(region, cell_index.x, cell_index.y);
-			if (cell) {
-				cell->type = Cell_Type_NULL;
-			}
-		}
-
-		im2d_begin(camera.view, transform);
-		im2d_bind_texture(square_texture);
-
-		constexpr int MAP_MAX_RENDER_REGION_X = 1;
-		constexpr int MAP_MAX_RENDER_REGION_Y = 1;
-		constexpr int MAP_MAX_RENDER_REGION_Z = 0;
-
-		int map_region_start_index_z = camera.position.region.z - MAP_MAX_RENDER_REGION_Z;
-		int map_region_start_index_y = camera.position.region.y - MAP_MAX_RENDER_REGION_Y;
-		int map_region_start_index_x = camera.position.region.x - MAP_MAX_RENDER_REGION_X;
-
-		for (int region_index_z = map_region_start_index_z; region_index_z < MAP_MAX_RENDER_REGION_Z + 1; ++region_index_z) {
-			for (int region_index_y = map_region_start_index_y; region_index_y < MAP_MAX_RENDER_REGION_Y + 1; ++region_index_y) {
-				for (int region_index_x = map_region_start_index_x; region_index_x < MAP_MAX_RENDER_REGION_X + 1; ++region_index_x) {
-					World_Map_Region *map_region = world_map_get_region(&world, region_index_x, region_index_y, region_index_z);
-
-					if (map_region) {
-						map_region_update(&world, map_region, vec3s(region_index_x, region_index_y, region_index_z), &player, &light, 1);
-
-						r32 region_y = (r32)((region_index_y - camera.position.region.y) * MAP_REGION_Y_CELL_COUNT);
-						r32 region_x = (r32)((region_index_x - camera.position.region.x) * MAP_REGION_X_CELL_COUNT);
-						//im3d_cube(vec3(region_x, region_y, 0.5f), quat_identity(), vec3(MAP_REGION_X_CELL_COUNT, MAP_REGION_Y_CELL_COUNT, 0.1f), 
-						//	vec4(0.7f, 0.7f, 0.7f));
-
-						for (int cell_index_y = 0; cell_index_y < MAP_REGION_Y_CELL_COUNT; ++cell_index_y) {
-							for (int cell_index_x = 0; cell_index_x < MAP_REGION_X_CELL_COUNT; ++cell_index_x) {
-								World_Region_Cell* region_cell = world_map_region_get_cell(map_region, cell_index_x, cell_index_y);
-
-								Vec2 draw_pos;
-
-								draw_pos.y = region_y;
-								draw_pos.x = region_x;
-
-								draw_pos += world_map_cell_to_tile(cell_index_x, cell_index_y);
-
-								r32 factor;
-								if (region_cell->visibility == Cell_Visibility_DISABLED) {
-									factor = 0.2f;
-								} else if (region_cell->visibility == Cell_Visibility_VISITED) {
-									factor = 0.5f;
-								} else {
-									factor = 1;
-								}
-
-								if (region_cell->type == Cell_Type_NULL) {
-									Vec4 color = vec4(factor * vec3(0.7f, 0.4f, 0.2f));
-									im2d_rect_centered(draw_pos, vec2(1), color);
-									//im3d_cube(vec3(draw_pos, 1), quat_identity(), vec3(1), vec4(0.7f, 0.4f, 0.2f));
-								} else {
-									im2d_rect_centered(draw_pos, vec2(1), vec4(factor * vec3(0.3f, 0.7f, 0.2f)));
-								}
-							}
-						}
-					}
-
-				}
-			}
-		}
-
-		for (int i = 0; i < static_count(blocks); ++i) {
-			auto &block = blocks[i];
-			Vec3 block_draw_pos;
-			block_draw_pos.y = (r32)((block.position.region.y - camera.position.region.y) * MAP_REGION_Y_CELL_COUNT);
-			block_draw_pos.x = (r32)((block.position.region.x - camera.position.region.x) * MAP_REGION_X_CELL_COUNT);
-			block_draw_pos.xy += block.position.tile.xy;
-			block_draw_pos.z = 0;
-
-			im2d_rect_centered(block_draw_pos, vec2(1), vec4(0.9f, 0.6f, 0.5f));
-		}
-
-		auto cam_bounds = camera_get_bounds(camera);
-		Vec2 draw_dim   = vec2(cam_bounds.right - cam_bounds.left, cam_bounds.top - cam_bounds.bottom);
-
-		Vec3 player_draw_pos;
-		player_draw_pos.y = (r32)((player.render_position.region.y - camera.position.region.y) * MAP_REGION_Y_CELL_COUNT);
-		player_draw_pos.x = (r32)((player.render_position.region.x - camera.position.region.x) * MAP_REGION_X_CELL_COUNT);
-		player_draw_pos.xy += player.render_position.tile.xy;
-		player_draw_pos.z = 0;
-		//player_draw_pos.z = 1.5f;
-
-		r32  angle;
-		Vec3 axis;
-		quat_get_angle_axis(player.face_direction, &angle, &axis);
-
-		im2d_bind_texture(player_sprite);
-		im2d_rect_centered_rotated(player_draw_pos, vec2(1), axis.z * angle, vec4(1));
-		//im3d_mesh(player_mesh, player_draw_pos, player.face_direction, vec3(0.5f), vec4(0.1f, 0.7f, 0.8f));
-
-		im2d_unbind_texture();
-
-		{
-			Vec3 overlay_draw_pos;
-			overlay_draw_pos.y = (r32)((cursor.region.y - camera.position.region.y) * MAP_REGION_Y_CELL_COUNT);
-			overlay_draw_pos.x = (r32)((cursor.region.x - camera.position.region.x) * MAP_REGION_X_CELL_COUNT);
-			overlay_draw_pos.xy += cursor.tile.xy;
-			overlay_draw_pos.z = 0;
-
-			im2d_rect_centered(overlay_draw_pos, vec2(1), vec4(0.8f, 0.8f, 0.2f, 0.7f));
-		}
-
-		{
-			Vec3 light_draw_pos;
-			light_draw_pos.y = (r32)((light.position.region.y - camera.position.region.y) * MAP_REGION_Y_CELL_COUNT);
-			light_draw_pos.x = (r32)((light.position.region.x - camera.position.region.x) * MAP_REGION_X_CELL_COUNT);
-			light_draw_pos.xy += light.position.tile.xy;
-			light_draw_pos.z = 0;
-
-			im2d_circle(light_draw_pos, 0.4f, vec4(0.3f, 0.8f, 0.7f, 1));
-		}
-
-		im2d_end();
+		world_render(world);
 
 		gfx_end_drawing();
 
-#if 0
-		if (emitter.texture)
-			im3d_bind_texture(*emitter.texture);
-
-		for (int i = emitter.emit_count; i >= 0; --i) {
-			Particle *particle = emitter.particles + i;
-			if (particle->life <= particle->life_span) {
-				r32 t = particle->life / particle->life_span;
-
-				r32 fade_t = 1;
-				if (particle->life < emitter.properties.fade_in) {
-					fade_t *= particle->life / emitter.properties.fade_in;
-				}
-				else if (particle->life_span - particle->life < emitter.properties.fade_out) {
-					fade_t *= (particle->life_span - particle->life) / emitter.properties.fade_out;
-				}
-
-				auto particle_color = hsv_to_rgb(lerp(particle->color_a, particle->color_b, t));
-				particle_color.xyz *= emitter.properties.intensity;
-				particle_color.w *= (fade_t * emitter.properties.opacity);
-				im3d_rect_rotated(particle->position, vec2(lerp(particle->scale_a, particle->scale_b, t)), particle->rotation, particle_color);
-			}
-
-			im3d_unbind_texture();
-		}
-
-		PrintRigidBodies();
-#endif
-
 		gfx_apply_bloom(2);
 
-		gfx_begin_drawing(Framebuffer_Type_DEFAULT, Clear_COLOR, vec4(0, 0, 0));
+		gfx_begin_drawing(Framebuffer_Type_DEFAULT, Clear_COLOR, vec4(0));
 
 		gfx_blit_hdr(render_x, render_y, render_w, render_h);
 		gfx_viewport(0, 0, window_w, window_h);
 
+		Vec2 rect_pos = vec2(250);
+		Vec2 rect_dim = vec2(100);
+
+		Mm_Rect rect;
+		rect.min = rect_pos;
+		rect.max = rect.min + rect_dim;
+
+		Vec2 ray_origin = vec2(500);
+		Vec2 cursor_p = system_get_cursor_position();
+
+		im2d_begin(orthographic_view(0, window_w, window_h, 0));
+
+		im2d_unbind_texture();
+		im2d_rect(rect_pos, rect_dim, vec4(1));
+
+		bool hitted = false;
+
+		Ray_Hit hit;
+		if (ray_vs_aabb(ray_origin, cursor_p - ray_origin, rect, &hit) && hit.t <= 1.0f) {
+			im2d_rect_outline(rect_pos, rect_dim, vec4(1, 0, 0), 1);
+			im2d_bind_texture(debug_font.texture);
+			im2d_text(vec2(10), 24, debug_font.info, "Ray Hit", vec4(1));
+
+			hitted = true;
+
+			im2d_unbind_texture();
+		} else {
+			im2d_bind_texture(debug_font.texture);
+			im2d_text(vec2(10), 24, debug_font.info, "Ray Escape", vec4(1));
+		}
+
+		im2d_unbind_texture();
+
+		im2d_line(ray_origin, cursor_p, vec4(0, 1, 1), 1.0f);
+
+		if (hitted) {
+			im2d_circle(hit.point, 5, vec4(1, 0, 1));
+			im2d_line(hit.point, hit.point + 20.0f * hit.normal, vec4(1, 0, 1));
+		}
+
+
+		im2d_end();
+
 #if defined(BUILD_IMGUI)
 		{
 			Debug_TimedScope(ImGuiRender);
-			editor_update(&mixer, &player, &camera);
 			ImGui_RenderFrame();
 		}
 #endif

@@ -1485,8 +1485,57 @@ bool point_inside_rect(Vec2 point, Mm_Rect rect) {
 	return true;
 }
 
-bool aabb_collision(const Mm_Rect &a, const Mm_Rect &b) {
+bool aabb_vs_aabb(const Mm_Rect &a, const Mm_Rect &b) {
 	if (a.max.x < b.min.x || a.min.x > b.max.x) return false;
 	if (a.max.y < b.min.y || a.min.y > b.max.y) return false;
+	return true;
+}
+
+bool ray_vs_aabb(Vec2 origin, Vec2 direction, const Mm_Rect &rect, Ray_Hit *hit) {
+	Vec2 i_direction;
+	i_direction.x = 1.0f / direction.x;
+	i_direction.y = 1.0f / direction.y;
+	Vec2 near_t = vec2_hadamard(rect.min - origin, i_direction);
+	Vec2 far_t  = vec2_hadamard(rect.max - origin, i_direction);
+
+	r32 temp;
+
+	if (near_t.x > far_t.x) {
+		temp = near_t.x;
+		near_t.x = far_t.x;
+		far_t.x = temp;
+	}
+	if (near_t.y > far_t.y) {
+		temp = near_t.y;
+		near_t.y = far_t.y;
+		far_t.y = temp;
+	}
+
+	if (near_t.x > far_t.y || near_t.y > far_t.x) {
+		// No intersection
+		return false;
+	}
+
+	r32 hit_near_t = max_value(near_t.x, near_t.y);
+	r32 hit_far_t  = min_value(far_t.x, far_t.y);
+
+	if (hit_far_t < 0) {
+		// Collision in negative direction
+		return false;
+	}
+
+	hit->point = origin + hit_near_t * direction;
+
+	if (near_t.x > near_t.y) {
+		hit->normal = vec2(-sgn(direction.x), 0);
+	} else if (near_t.x < near_t.y) {
+		hit->normal = vec2(0, -sgn(direction.y));
+	} else {
+		constexpr r32 root_two = 1.4142135623730950488016887242097f;
+		hit->normal = vec2(-sgn(direction.x) * root_two, -sgn(direction.y) * root_two);
+	}
+
+	hit->t = hit_near_t;
+
 	return true;
 }
