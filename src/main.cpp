@@ -1352,6 +1352,15 @@ int system_main() {
 	u64 frequency = system_get_frequency();
 	u64 counter   = system_get_counter();
 
+	Array<Mm_Rect> rects;
+
+	array_add(&rects, mm_rect_from_dimension(vec2(700, 500), vec2(50)));
+	array_add(&rects, mm_rect_from_dimension(vec2(900, 100), vec2(60)));
+	array_add(&rects, mm_rect_from_dimension(vec2(200, 50), vec2(20)));
+	array_add(&rects, mm_rect_from_dimension(vec2(50, 50), vec2(120)));
+	array_add(&rects, mm_rect_from_dimension(vec2(10, 500), vec2(80)));
+	array_add(&rects, mm_rect_from_dimension(vec2(1000, 300), vec2(45)));
+
 	while (running) {
 		Debug_TimedFrameBegin();
 
@@ -1516,46 +1525,36 @@ int system_main() {
 		gfx_blit_hdr(render_x, render_y, render_w, render_h);
 		gfx_viewport(0, 0, window_w, window_h);
 
-		Vec2 rect_pos = vec2(250);
-		Vec2 rect_dim = vec2(100);
-
-		Mm_Rect rect;
-		rect.min = rect_pos;
-		rect.max = rect.min + rect_dim;
+		im2d_begin(orthographic_view(0, window_w, window_h, 0));
+		im2d_unbind_texture();
 
 		Vec2 ray_origin = vec2(500);
 		Vec2 cursor_p = system_get_cursor_position();
+		Vec2 ray_end = cursor_p;
 
-		im2d_begin(orthographic_view(0, window_w, window_h, 0));
+		for (auto& rect : rects) {
+			Vec2 rect_pos = rect.min;
+			Vec2 rect_dim = rect.max - rect.min;
 
-		im2d_unbind_texture();
-		im2d_rect(rect_pos, rect_dim, vec4(1));
+			im2d_rect(rect_pos, rect_dim, vec4(1));
 
-		bool hitted = false;
+			bool hitted = false;
 
-		Ray_Hit hit;
-		if (ray_vs_aabb(ray_origin, cursor_p - ray_origin, rect, &hit) && hit.t <= 1.0f) {
-			im2d_rect_outline(rect_pos, rect_dim, vec4(1, 0, 0), 1);
-			im2d_bind_texture(debug_font.texture);
-			im2d_text(vec2(10), 24, debug_font.info, "Ray Hit", vec4(1));
+			Ray_Hit hit;
+			if (ray_vs_aabb(ray_origin, cursor_p - ray_origin, rect, &hit) && hit.t <= 1.0f) {
+				ray_end = hit.point;
+				im2d_rect_outline(rect_pos, rect_dim, vec4(1, 0, 0), 1);
+				hitted = true;
+			}
 
-			hitted = true;
 
-			im2d_unbind_texture();
-		} else {
-			im2d_bind_texture(debug_font.texture);
-			im2d_text(vec2(10), 24, debug_font.info, "Ray Escape", vec4(1));
+			if (hitted) {
+				im2d_circle(hit.point, 5, vec4(1, 0, 1));
+				im2d_line(hit.point, hit.point + 20.0f * hit.normal, vec4(1, 0, 1));
+			}
 		}
 
-		im2d_unbind_texture();
-
-		im2d_line(ray_origin, cursor_p, vec4(0, 1, 1), 1.0f);
-
-		if (hitted) {
-			im2d_circle(hit.point, 5, vec4(1, 0, 1));
-			im2d_line(hit.point, hit.point + 20.0f * hit.normal, vec4(1, 0, 1));
-		}
-
+		im2d_line(ray_origin, ray_end, vec4(0, 1, 1), 1.0f);
 
 		im2d_end();
 
