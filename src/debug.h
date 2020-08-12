@@ -58,19 +58,19 @@ struct Timed_Procedure {
 
 #if defined(BUILD_DEBUG_SERVICE)
 
-#define Debug_ModeEnable				debug_mode_enable
-#define Debug_HandleEvent				debug_handle_event
-#define Debug_AudioFeedback				debug_audio_feedback
-#define Debug_NotifyLevel(level, ...)	debug_notify_level(level, ##__VA_ARGS__)
-#define Debug_Notify(...)				debug_notify_level(Notification_Level_DEFAULT, ##__VA_ARGS__)
-#define Debug_NotifySuccess(...)		debug_notify_level(Notification_Level_SUCCESS, ##__VA_ARGS__)
-#define Debug_NotifyWarn(...)			debug_notify_level(Notification_Level_WARN, ##__VA_ARGS__)
-#define Debug_NotifyError(...)			debug_notify_level(Notification_Level_ERROR, ##__VA_ARGS__)
-#define Debug_GetPresentationState		debug_get_presentation_state
-#define Debug_SetPresentationState		debug_set_presentation_state
-#define Debug_TogglePresentationState()	debug_set_presentation_state(!debug_get_presentation_state())
-#define Debug_PresentationIsHovered		debug_presentation_is_hovered
-#define Debug_RenderFrame				debug_render_frame
+#define Debug_ModeEnable					debug_mode_enable
+#define Debug_HandleEvent					debug_handle_event
+#define Debug_AudioFeedback					debug_audio_feedback
+#define Debug_NotifyLevel(level, fmt, ...)	debug_notify_level(level, fmt, ##__VA_ARGS__)
+#define Debug_Notify(fmt, ...)				debug_notify_level(Notification_Level_DEFAULT, fmt, ##__VA_ARGS__)
+#define Debug_NotifySuccess(fmt, ...)		debug_notify_level(Notification_Level_SUCCESS, fmt, ##__VA_ARGS__)
+#define Debug_NotifyWarn(fmt, ...)			debug_notify_level(Notification_Level_WARN, fmt, ##__VA_ARGS__)
+#define Debug_NotifyError(fmt, ...)			debug_notify_level(Notification_Level_ERROR, fmt, ##__VA_ARGS__)
+#define Debug_GetPresentationState			debug_get_presentation_state
+#define Debug_SetPresentationState			debug_set_presentation_state
+#define Debug_TogglePresentationState()		debug_set_presentation_state(!debug_get_presentation_state())
+#define Debug_PresentationIsHovered			debug_presentation_is_hovered
+#define Debug_RenderFrame					debug_render_frame
 
 #define Debug_TimedFrameBegin		debug_profiler_timed_frame_begin
 #define Debug_TimedFrameEnd			debug_profiler_timed_frame_end

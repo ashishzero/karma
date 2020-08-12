@@ -328,8 +328,8 @@ void igfx_destory_global_data() {
 
 	for (int index = 0; index < 2; ++index) {
 		if (hdr_data.bloom_framebuffer[index].id) gfx->destroy_framebuffer(hdr_data.bloom_framebuffer[index]);
-		if (hdr_data.bloom_color_view[index].id) gfx->destroy_texture_view(hdr_data.bloom_color_view[index]);
 		if (hdr_data.bloom_color_buffer[index].id) gfx->destroy_texture2d(hdr_data.bloom_color_buffer[index]);
+		if (hdr_data.bloom_color_view[index].id) gfx->destroy_texture_view(hdr_data.bloom_color_view[index]);
 	}
 
 	memset(&hdr_data, 0, sizeof(hdr_data));
@@ -344,13 +344,14 @@ void gfx_resize_framebuffer(u32 width, u32 height, u32 bloom_w, u32 bloom_h) {
 	bloom_texture_w = bloom_w;
 	bloom_texture_h = bloom_h;
 
+	
 	for (int index = 0; index < 2; ++index) {
 		hdr_data.hdr_color_buffer[index] = gfx->create_texture2d(width, height, 4, Data_Format_RGBA16_FLOAT, 0, Buffer_Usage_DEFAULT, Texture_Bind_SHADER_RESOURCE | Texture_Bind_RENDER_TARGET, 1);
-		hdr_data.hdr_color_view[index]   = gfx->create_texture_view(hdr_data.hdr_color_buffer[index]);
+		hdr_data.hdr_color_view[index] = gfx->create_texture_view(hdr_data.hdr_color_buffer[index]);
 
 		hdr_data.bloom_color_buffer[index] = gfx->create_texture2d(bloom_w, bloom_h, 4, Data_Format_RGBA16_FLOAT, 0, Buffer_Usage_DEFAULT, Texture_Bind_SHADER_RESOURCE | Texture_Bind_RENDER_TARGET, 1);
-		hdr_data.bloom_color_view[index]   = gfx->create_texture_view(hdr_data.bloom_color_buffer[index]);
-		hdr_data.bloom_framebuffer[index]  = gfx->create_framebuffer(1, &hdr_data.bloom_color_buffer[index], &hdr_data.bloom_color_view[index], NULL);
+		hdr_data.bloom_color_view[index] = gfx->create_texture_view(hdr_data.bloom_color_buffer[index]);
+		hdr_data.bloom_framebuffer[index] = gfx->create_framebuffer(1, &hdr_data.bloom_color_buffer[index], &hdr_data.bloom_color_view[index], NULL);
 	}
 
 	hdr_data.hdr_depth_buffer = gfx->create_texture2d(width, height, 1, Data_Format_D32_FLOAT, 0, Buffer_Usage_DEFAULT, Texture_Bind_DEPTH_STENCIL, 1);

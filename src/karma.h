@@ -618,6 +618,14 @@ struct Array {
 	inline T *end() {
 		return data + count;
 	}
+
+	inline const T* begin() const {
+		return data;
+	}
+
+	inline const T* end() const {
+		return data + count;
+	}
 };
 
 template <typename T>

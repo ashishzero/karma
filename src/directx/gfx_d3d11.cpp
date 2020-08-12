@@ -438,9 +438,11 @@ struct Gfx_Platform_Directx11 : public Gfx_Platform {
 		framebuffer->count         = count;
 		framebuffer->depth_stencil = depth_view ? (ID3D11DepthStencilView *)depth_view->id.hptr : NULL;
 
+		ID3D11RenderTargetView *render_target = nullptr;
 		for (u32 index = 0; index < count; ++index) {
 			ID3D11Resource *resource = (ID3D11Resource *)textures[index].id.hptr;
-			device->CreateRenderTargetView(resource, NULL, &framebuffer->views[index]);
+			device->CreateRenderTargetView(resource, NULL, &render_target);
+			framebuffer->views[index] = render_target;
 		}
 
 		Framebuffer result;
@@ -624,7 +626,7 @@ struct Gfx_Platform_Directx11 : public Gfx_Platform {
 												   const Depth_Info &     depth_info,
 												   const String           name) final override {
 		Render_Pipeline    result   = {};
-		Internal_Pipeline *pipeline = new Internal_Pipeline;
+		Internal_Pipeline *pipeline = (Internal_Pipeline *)memory_allocate(sizeof(Internal_Pipeline));
 
 		HRESULT hresult;
 
@@ -735,7 +737,7 @@ struct Gfx_Platform_Directx11 : public Gfx_Platform {
 		ptr->blend_state->Release();
 		ptr->depth_stencil_state->Release();
 
-		delete ptr;
+		memory_free(ptr);
 	}
 
 	virtual void begin_drawing(Framebuffer handle, Clear_Flags flags, Color4 color, r32 depth, u8 stencil) final override {

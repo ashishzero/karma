@@ -6,6 +6,57 @@
 #include "imgui/imconfig.h"
 #include "debug.h"
 
+typedef u32 Entity_Handle;
+
+struct Entity {
+	enum Type : u32 {
+		PLAYER,
+		LINE,
+	};
+
+	Entity_Handle	handle;
+	Type			type;
+
+	Vec2 position;
+	Vec2 size;
+	Vec4 color;
+
+	Vec2 velocity;
+	Vec2 force;
+
+	Vec2 start;
+	Vec2 end;
+};
+
+struct Entity_Manager {
+	Array<Entity>	entities;
+	u32				handle_counter;
+};
+
+Entity* add_entity(Entity_Manager* manager, Entity::Type type) {
+	auto entity = array_add(&manager->entities);
+	entity->handle = manager->handle_counter;
+	manager->handle_counter += 1;
+	entity->type = type;
+	return entity;
+}
+
+Entity* manager_find_entity(Entity_Manager &manager, Entity_Handle handle) {
+	for (auto& entity : manager.entities) {
+		if (entity.handle == handle) return &entity;
+	}
+	return nullptr;
+}
+
+Entity_Manager make_manager() {
+	Entity_Manager manager = {};
+	return manager;
+}
+
+struct Player_Controller {
+	r32 x, y;
+};
+
 int system_main() {
 	r32    framebuffer_w = 1280;
 	r32    framebuffer_h = 720;
@@ -31,6 +82,56 @@ int system_main() {
 
 	u64 frequency = system_get_frequency();
 	u64 counter = system_get_counter();
+
+	Entity_Manager manager = make_manager();
+
+	Entity *player = add_entity(&manager, Entity::PLAYER);
+	player->position = vec2(0);
+	player->size = vec2(0.5f);
+	player->color = vec4(1);
+	player->velocity = vec2(0);
+	Entity_Handle player_id = player->handle;
+
+	Entity *line = nullptr;
+
+	line = add_entity(&manager, Entity::LINE);
+	line->start = vec2(-4, -3);
+	line->end = vec2(4, -3);
+	line->color = vec4(1, 0, 0, 1);
+
+	line = add_entity(&manager, Entity::LINE);
+	line->start = vec2(-8, 2);
+	line->end = vec2(-4, -3);
+	line->color = vec4(1, 0, 0, 1);
+
+	line = add_entity(&manager, Entity::LINE);
+	line->start = vec2(2, 4);
+	line->end = vec2(-8, 2);
+	line->color = vec4(1, 0, 0, 1);
+
+	line = add_entity(&manager, Entity::LINE);
+	line->start = vec2(5, 4);
+	line->end = vec2(2, 4);
+	line->color = vec4(1, 0, 0, 1);
+
+	line = add_entity(&manager, Entity::LINE);
+	line->start = vec2(4, 1);
+	line->end = vec2(5, 4);
+	line->color = vec4(1, 0, 0, 1);
+	
+	line = add_entity(&manager, Entity::LINE);
+	line->start = vec2(4, 4);
+	line->end = vec2(-4, -4);
+	line->color = vec4(1, 0, 0, 1);
+
+
+	line = add_entity(&manager, Entity::LINE);
+	line->start = vec2(3.5f, -4);
+	line->end = vec2(3.5f, 4);
+	line->color = vec4(1, 0, 0, 1);
+
+
+	Player_Controller controller = {};
 
 	while (running) {
 		Debug_TimedFrameBegin();
@@ -78,17 +179,138 @@ int system_main() {
 				continue;
 			}
 
+			if (event.type & Event_Type_KEYBOARD) {
+				float value = (float)(event.key.state == Key_State_DOWN);
+				switch (event.key.symbol) {
+				case Key_D:
+				case Key_RIGHT:
+					controller.x = value;
+					break;
+				case Key_A:
+				case Key_LEFT:
+					controller.x = -value;
+					break;
+
+				case Key_W:
+				case Key_UP:
+					controller.y = value;
+					break;
+				case Key_S:
+				case Key_DOWN:
+					controller.y = -value;
+					break;
+				}
+			}
+
 		}
 
 		Debug_TimedBlockEnd(EventHandling);
 
 		Debug_TimedBlockBegin(Simulation);
 
+#if 1
+		Array<Ray_Hit> rayhits;
+		Array<Vec2> normals;
+		Array<r32> t_values;
+		rayhits.allocator = TEMPORARY_ALLOCATOR;
+		normals.allocator = TEMPORARY_ALLOCATOR;
+		t_values.allocator = TEMPORARY_ALLOCATOR;
+
+		player = manager_find_entity(manager, player_id);
+
+		Vec2 prev_velocity = player->velocity;
+
 		while (accumulator_t >= fixed_dt) {
 			Debug_TimedScope(SimulationFrame);
 
+
+			const r32 gravity = 10;
+			const r32 drag = 5;
+
+			player->force = vec2(0);
+
+			r32 len = sqrtf(controller.x * controller.x + controller.y * controller.y);
+			Vec2 dir;
+			if (len) {
+				dir.x = controller.x / len;
+				dir.y = controller.y / len;
+			}
+			else {
+				dir = vec2(0);
+			}
+
+			const float force = 25;
+
+			player->force = force * dir;
+			//player->force.y -= gravity;
+
+			player->velocity += dt * player->force;
+			player->velocity *= powf(0.5f, drag * dt);
+			prev_velocity = player->velocity;
+
+			auto new_player_position = player->position + dt * player->velocity;
+
+			Ray_Hit hit;
+			memset(&hit, 0, sizeof(hit));
+
+			for (auto& entity : manager.entities) {
+				if (entity.type == Entity::LINE) {
+					if (ray_vs_line(player->position, new_player_position, entity.start, entity.end, &hit)) {
+						array_add(&rayhits, hit);
+						r32 dir = vec2_dot(vec2_normalize_check(player->velocity), hit.normal);
+						if (dir < 0 && hit.t >= -0.001f && hit.t < 1) {
+							array_add(&t_values, hit.t);
+							array_add(&normals, hit.point);
+
+							Vec2 reduc_vector = (1.0f - hit.t) * vec2_dot(player->velocity, hit.normal) * hit.normal;
+							array_add(&normals, -reduc_vector);
+
+							player->velocity -= reduc_vector;
+							new_player_position = player->position + dt * player->velocity;
+
+							entity.color = vec4(1, 0, 1);
+						}
+						else {
+							entity.color = vec4(1, 0, 0);
+						}
+					}
+				}
+			}
+
+			player->position += dt * player->velocity;
+
 			accumulator_t -= fixed_dt;
 		}
+
+#endif
+
+#if 0
+		Vec2 cursor = system_get_cursor_position();
+		if (cursor.x < 0) cursor.x = 0;
+		if (cursor.y < 0) cursor.y = 0;
+		if (cursor.x > framebuffer_w) cursor.x = framebuffer_w;
+		if (cursor.y > framebuffer_h) cursor.y = framebuffer_h;
+		cursor.x /= framebuffer_w;
+		cursor.y /= framebuffer_h;
+		cursor.x *= 2;
+		cursor.y *= 2;
+		cursor.x -= 1;
+		cursor.y -= 1;
+#endif
+
+		r32 view_height = 5.0f;
+		r32 view_width = aspect_ratio * view_height;
+
+		auto view = orthographic_view(-view_width, view_width, view_height, -view_height);
+
+#if 0
+		Mat4 view_inv = mat4_inverse(gfx_view_transform(view));
+		cursor = (view_inv * vec4(cursor, 0, 0)).xy;
+		cursor.x = roundf(cursor.x);
+		cursor.y = roundf(cursor.y);
+
+		position = lerp(position, cursor, 0.5f);
+#endif
 
 		Debug_TimedBlockEnd(Simulation);
 
@@ -101,13 +323,39 @@ int system_main() {
 		gfx_begin_drawing(Framebuffer_Type_HDR, Clear_ALL, vec4(0.0f));
 		gfx_viewport(0, 0, window_w, window_h);
 
-		r32 view_height = 5.0f;
-		r32 view_width = aspect_ratio * view_height;
-
-		auto view = orthographic_view(-view_width, view_width, view_height, -view_height);
 		im2d_begin(view);
 
-		im2d_rect(vec2(0), vec2(1), vec4(1));
+		for (auto& entity : manager.entities) {
+			// TODO: Render by type!!!
+			switch (entity.type) {
+				case Entity::PLAYER: {
+					//im2d_circle(entity.position, entity.size.x, entity.color);
+					im2d_rect_centered(entity.position, entity.size, entity.color);
+				} break;
+
+				case Entity::LINE: {
+					im2d_line(entity.start, entity.end, entity.color, 0.01f);
+				} break;
+			}
+		}
+
+		im2d_circle(player->position, 0.08f, vec4(0, 1, 0));
+
+		
+		//for (auto& h : rayhits) {
+		//	im2d_circle(h.point, 0.08f, vec4(0, 0, 1));
+		//	im2d_line(h.point, h.point + h.normal, vec4(1), 0.01f);
+		//}
+		
+#if 1
+		for (s64 index = 0; index < normals.count; index += 2) {
+			im2d_circle(normals[index], 0.08f, vec4(1, 0, 0));
+			im2d_line(normals[index], normals[index] + normals[index + 1], vec4(1, 1, 1), 0.01f);
+		}
+
+		im2d_line(player->position, player->position + player->velocity, vec4(0, 1, 0), 0.03f);
+		im2d_line(player->position, player->position + prev_velocity, vec4(1, 1, 0), 0.03f);
+#endif
 
 		im2d_end();
 
@@ -118,6 +366,19 @@ int system_main() {
 		gfx_begin_drawing(Framebuffer_Type_DEFAULT, Clear_COLOR, vec4(0));
 		gfx_blit_hdr(0, 0, window_w, window_h);
 		gfx_viewport(0, 0, window_w, window_h);
+
+		#if defined(BUILD_IMGUI)
+		ImGui::Begin("Edit");
+
+		ImGui::DragFloat2("Position", player->position.m);
+		ImGui::DragFloat2("Velocity", player->velocity.m);
+
+		for (auto& t : t_values) {
+			ImGui::Text("%.3f", t);
+		}
+
+		ImGui::End();
+		#endif
 
 		#if defined(BUILD_IMGUI)
 		{

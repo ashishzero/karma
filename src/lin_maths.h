@@ -750,12 +750,7 @@ inline T integrate_rk4(const T &x, r32 t, r32 h, Function f) {
 //
 //
 
-struct Ray_Hit {
-	Vec2 point;
-	Vec2 normal;
-	r32 t;
-};
-
 bool point_inside_rect(Vec2 point, Mm_Rect rect);
 bool aabb_vs_aabb(const Mm_Rect &a, const Mm_Rect &b);
 bool ray_vs_aabb(Vec2 origin, Vec2 direction, const Mm_Rect &rect, Ray_Hit *hit);
+bool ray_vs_line(Vec2 p1, Vec2 q1, Vec2 p2, Vec2 q2, Ray_Hit *t);

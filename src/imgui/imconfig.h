@@ -18,8 +18,6 @@
 #define BUILD_IMGUI
 #endif
 
-#ifdef BUILD_IMGUI
-
 //---- Define assertion handler. Defaults to calling assert().
 // If your macro uses multiple statements, make sure is enclosed in a 'do { .. } while (0)' block so it can be used as a single statement.
 #if defined(BUILD_DEBUG) || defined(BUILD_DEBUG_FAST)
@@ -122,6 +120,7 @@
 
 //---- Tip: You can add extra functions within the ImGui:: namespace, here or in your own headers files.
 
+
 #include "../systems.h"
 
 namespace ImGui {
@@ -131,6 +130,8 @@ bool HandleEvent(const Event &event);
 void UpdateFrame(r32 dt);
 void RenderFrame();
 };
+
+#ifdef BUILD_IMGUI
 
 #define ImGui_Initialize()			ImGui::Initialize()
 #define ImGui_Shutdown()			ImGui::Shutdown()

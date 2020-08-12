@@ -1539,3 +1539,26 @@ bool ray_vs_aabb(Vec2 origin, Vec2 direction, const Mm_Rect &rect, Ray_Hit *hit)
 
 	return true;
 }
+
+bool ray_vs_line(Vec2 p1, Vec2 q1, Vec2 p2, Vec2 q2, Ray_Hit* hit) {
+	r32 d = (p1.x - q1.x) * (p2.y - q2.y) - (p1.y - q1.y) * (p2.x - q2.x);
+
+	if (d) {
+		r32 n2 = -(p1.x - q1.x) * (p1.y - p2.y) + (p1.y - q1.y) * (p1.x - p2.x);
+		r32 u = n2 / d;
+
+		if (u >= 0 && u < 1) {
+			r32 n = (p1.x - p2.x) * (p2.y - q2.y) - (p1.y - p2.y) * (p2.x - q2.x);
+			hit->t = n / d;
+
+			hit->point = p2 + u * (q2 - p2);
+			Vec2 normal;
+			normal.x = -q2.y + p2.y;
+			normal.y =  q2.x - p2.x;
+			hit->normal = vec2_normalize(normal);
+			return true;
+		}
+	}
+
+	return false;
+}
