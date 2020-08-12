@@ -584,6 +584,8 @@ struct Array_View {
 	}
 };
 
+#define ARRAY_INITIAL_SIZE 8
+
 template <typename T>
 struct Array {
 	// Using singed type for count because it'll be easy to reverse loop
@@ -619,13 +621,6 @@ struct Array {
 		return data + count;
 	}
 
-	inline const T* begin() const {
-		return data;
-	}
-
-	inline const T* end() const {
-		return data + count;
-	}
 };
 
 template <typename T>
@@ -665,10 +660,13 @@ void array_clear(Array<T> *a) {
 }
 
 inline s64 array_get_grow_capacity(s64 c, s64 n) {
-	s64 geom         = c + c / 2;
-	s64 new_capacity = c + n;
-	if (c < new_capacity) return (new_capacity);
-	return geom;
+	if (c) {
+		s64 geom = c + c / 2;
+		s64 new_capacity = c + n;
+		if (c < new_capacity) return (new_capacity);
+		return geom;
+	}
+	return ARRAY_INITIAL_SIZE;
 }
 
 template <typename T>
