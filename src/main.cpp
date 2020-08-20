@@ -5,6 +5,7 @@
 #include "imgui/imgui.h"
 #include "imgui/imconfig.h"
 #include "debug.h"
+#include "utility.h"
 
 typedef u32 Entity_Handle;
 
@@ -95,11 +96,6 @@ int system_main() {
 	Entity *line = nullptr;
 
 	line = add_entity(&manager, Entity::LINE);
-	line->start = vec2(-4, -3);
-	line->end = vec2(4, -3);
-	line->color = vec4(1, 0, 0, 1);
-
-	line = add_entity(&manager, Entity::LINE);
 	line->start = vec2(-8, 2);
 	line->end = vec2(-4, -3);
 	line->color = vec4(1, 0, 0, 1);
@@ -130,6 +126,10 @@ int system_main() {
 	line->end = vec2(3.5f, 4);
 	line->color = vec4(1, 0, 0, 1);
 
+	line = add_entity(&manager, Entity::LINE);
+	line->start = vec2(-4, -3);
+	line->end = vec2(4, -3);
+	line->color = vec4(1, 0, 0, 1);
 
 	Player_Controller controller = {};
 
@@ -246,33 +246,75 @@ int system_main() {
 
 			player->velocity += dt * player->force;
 			player->velocity *= powf(0.5f, drag * dt);
-			prev_velocity = player->velocity;
 
 			auto new_player_position = player->position + dt * player->velocity;
+
+			struct Entity_Test {
+				Entity_Handle handle;
+				r32 value;
+			};
+
+			Array<Entity_Test> tests;
+			tests.allocator = TEMPORARY_ALLOCATOR;
+
 
 			Ray_Hit hit;
 			memset(&hit, 0, sizeof(hit));
 
+
 			for (auto& entity : manager.entities) {
 				if (entity.type == Entity::LINE) {
+
+					entity.color = vec4(1, 0, 0);
 					if (ray_vs_line(player->position, new_player_position, entity.start, entity.end, &hit)) {
-						array_add(&rayhits, hit);
 						r32 dir = vec2_dot(vec2_normalize_check(player->velocity), hit.normal);
-						if (dir < 0 && hit.t >= -0.001f && hit.t < 1) {
-							array_add(&t_values, hit.t);
-							array_add(&normals, hit.point);
 
-							Vec2 reduc_vector = (1.0f - hit.t) * vec2_dot(player->velocity, hit.normal) * hit.normal;
-							array_add(&normals, -reduc_vector);
+						if (dir <= 0 && hit.t >= -0.001f && hit.t < 1) {
 
-							player->velocity -= reduc_vector;
-							new_player_position = player->position + dt * player->velocity;
+							Entity_Test test;
+							test.handle = entity.handle;
+							test.value = hit.t;
 
-							entity.color = vec4(1, 0, 1);
+							/*
+							r32 dy = entity.end.y - entity.start.y;
+							r32 dx = entity.end.x - entity.start.x;
+							r32 n = dy * player->position.x - dx * player->position.y +
+								entity.end.x * entity.start.y - entity.end.y * entity.start.x;
+							n *= n;
+							r32 d = dy * dy + dx * dx;
+							test.handle = entity.handle;
+							test.value = n / d;
+							*/
+
+							array_add(&tests, test);
 						}
-						else {
-							entity.color = vec4(1, 0, 0);
-						}
+					}
+				}
+			}
+
+			sort(tests.data, tests.count, [](Entity_Test& a, Entity_Test& b) {
+				return a.value > b.value;
+				});
+
+
+			for (auto& test : tests) {
+				Entity* entity = manager_find_entity(manager, test.handle);
+
+				if (ray_vs_line(player->position, new_player_position, entity->start, entity->end, &hit)) {
+					array_add(&rayhits, hit);
+					r32 dir = vec2_dot(vec2_normalize_check(player->velocity), hit.normal);
+
+					if (dir <= 0 && hit.t >= -0.001f && hit.t < 1) {
+						array_add(&t_values, hit.t);
+						array_add(&normals, hit.point);
+
+						Vec2 reduc_vector = (1.0f - hit.t) * vec2_dot(player->velocity, hit.normal) * hit.normal;
+						array_add(&normals, -reduc_vector);
+
+						player->velocity -= reduc_vector;
+						new_player_position = player->position + dt * player->velocity;
+
+						entity->color = vec4(1, 0, 1);
 					}
 				}
 			}
@@ -330,7 +372,8 @@ int system_main() {
 			switch (entity.type) {
 				case Entity::PLAYER: {
 					//im2d_circle(entity.position, entity.size.x, entity.color);
-					im2d_rect_centered(entity.position, entity.size, entity.color);
+					//im2d_rect_centered(entity.position, entity.size, entity.color);
+					im2d_circle(entity.position, 0.08f, vec4(0, 1, 0));
 				} break;
 
 				case Entity::LINE: {
@@ -339,7 +382,6 @@ int system_main() {
 			}
 		}
 
-		im2d_circle(player->position, 0.08f, vec4(0, 1, 0));
 
 		
 		//for (auto& h : rayhits) {
