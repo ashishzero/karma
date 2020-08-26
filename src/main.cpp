@@ -293,7 +293,7 @@ int system_main() {
 			}
 
 			sort(tests.data, tests.count, [](Entity_Test& a, Entity_Test& b) {
-				return a.value > b.value;
+				return a.value < b.value;
 				});
 
 
