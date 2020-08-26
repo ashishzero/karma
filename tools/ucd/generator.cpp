@@ -113,10 +113,10 @@ void ucd_generate_fmt_range_type_category(const char *file_name, const char *nam
 	const String file    = tprintf("res/ucd/%s", file_name);
 	String       content = read_entire_file(file);
 	defer {
-		mfree(content.data);
+		memory_free(content.data);
 	};
 
-	if (content) {
+	if (content.count) {
 		auto stream = istream(content);
 
 		auto lower_caps_name = lower_caps(String(name, strlen(name)));
@@ -133,7 +133,7 @@ void ucd_generate_fmt_range_type_category(const char *file_name, const char *nam
 
 		while (!istream_eof(&stream)) {
 			String line = istream_consume_line(&stream);
-			if (line && line[0] != '#') {
+			if (line.count && line[0] != '#') {
 				scoped_temporary_allocation();
 
 				Fmt_Range_Type_Category parsed;
@@ -206,10 +206,10 @@ void ucd_generate_unicode_data(const char *file_name) {
 	const String file    = tprintf("res/ucd/%s", file_name);
 	String       content = read_entire_file(file);
 	defer {
-		mfree(content.data);
+		memory_free(content.data);
 	};
 
-	if (!content) return;
+	if (!content.count) return;
 	Array<Unicode_Data> unicode_data;
 	defer {
 		array_free(&unicode_data);
@@ -235,7 +235,7 @@ void ucd_generate_unicode_data(const char *file_name) {
 		Ostream normals_code;
 
 		for (auto &unicode : unicode_data) {
-			if (unicode.decomposed) {
+			if (unicode.decomposed.count) {
 				char *name_of_decomposed = lower_caps(unicode.information);
 				int   number_of_normals  = 1;
 				ostream_write_formatted(&normals_code, "\tstatic uint32_t %s [] = { ", name_of_decomposed);
@@ -272,8 +272,8 @@ void ucd_generate_unicode_data(const char *file_name) {
 		fprintf(source, "%s", switch_string.data);
 		fprintf(source, "\t}\n\treturn 0;\n}\n\n");
 
-		mfree(switch_string.data);
-		mfree(normals_string.data);
+		memory_free(switch_string.data);
+		memory_free(normals_string.data);
 	}
 
 	// Category code generation

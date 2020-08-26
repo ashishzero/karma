@@ -456,7 +456,7 @@ int system_main() {
 		dt = fixed_dt * 1;
 
 		accumulator_t += real_dt;
-		accumulator_t = min_value(accumulator_t, 0.3f);
+		accumulator_t = GetMinValue(accumulator_t, 0.3f);
 
 		Debug_TimedFrameEnd(real_dt);
 	}

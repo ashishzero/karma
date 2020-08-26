@@ -141,7 +141,7 @@
     <ClCompile>
       <OmitFramePointers>true</OmitFramePointers>
       <PreprocessorDefinitions>BUILD_RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <LanguageStandard>stdcpp14</LanguageStandard>
+      <LanguageStandard>stdcpp17</LanguageStandard>
       <EnableModules>false</EnableModules>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <EnforceTypeConversionRules>true</EnforceTypeConversionRules>
@@ -173,7 +173,7 @@ popd
     <ClCompile>
       <OmitFramePointers>true</OmitFramePointers>
       <PreprocessorDefinitions>BUILD_DEVELOPER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <LanguageStandard>stdcpp14</LanguageStandard>
+      <LanguageStandard>stdcpp17</LanguageStandard>
       <EnableModules>false</EnableModules>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <EnforceTypeConversionRules>true</EnforceTypeConversionRules>
@@ -210,7 +210,7 @@ popd
     <ClCompile>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>BUILD_DEBUG_FAST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <LanguageStandard>stdcpp14</LanguageStandard>
+      <LanguageStandard>stdcpp17</LanguageStandard>
       <EnableModules>false</EnableModules>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <EnforceTypeConversionRules>true</EnforceTypeConversionRules>
@@ -241,7 +241,7 @@ popd
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <PreprocessorDefinitions>BUILD_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <LanguageStandard>stdcpp14</LanguageStandard>
+      <LanguageStandard>stdcpp17</LanguageStandard>
       <EnableModules>false</EnableModules>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <EnforceTypeConversionRules>true</EnforceTypeConversionRules>

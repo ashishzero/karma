@@ -269,8 +269,8 @@ bool debug_handle_event(Event &event) {
 
 	case Event_Type_MOUSE_AXIS: {
 		if (profiler.resizing) {
-			profiler.width   = max_value(profiler.width + event.mouse_axis.dx, PROFILER_MIN_WIDTH);
-			profiler.height  = max_value(profiler.height + event.mouse_axis.dy, PROFILER_MIN_HEIGHT);
+			profiler.width   = GetMaxValue(profiler.width + event.mouse_axis.dx, PROFILER_MIN_WIDTH);
+			profiler.height  = GetMaxValue(profiler.height + event.mouse_axis.dy, PROFILER_MIN_HEIGHT);
 		}
 	} break;
 	}
@@ -527,7 +527,7 @@ int calculate_max_children_count_in_profiler_records(Record *root_record) {
 			children += 1;
 			record = record->child;
 		}
-		max_children = max_value(max_children, children);
+		max_children = GetMaxValue(max_children, children);
 
 		root_record = root_record->next;
 	}
@@ -679,7 +679,7 @@ r32 draw_profiler(r32 render_height, Vec2 cursor, bool *set_on_hovered, Record *
 
 	auto root_record	= profiler.root_record;
 	r32  children		= (r32)calculate_max_children_count_in_profiler_records(root_record);
-	r32  child_height	= min_value(profiler.height / children, PROFILER_MAX_CHILD_HEIGHT);
+	r32  child_height	= GetMinValue(profiler.height / children, PROFILER_MAX_CHILD_HEIGHT);
 	r32  font_height	= child_height * 0.8f;
 
 	Vec2 draw_region_position	= vec2(draw_x, draw_y);
@@ -817,8 +817,8 @@ void draw_notifications(r32 framebuffer_w, r32 framebuffer_h) {
 
 		auto &notification = notification_handler.notifications[notification_index];
 
-		r32 alpha_in  = 1.0f - map01(1, NOTIFICATION_FADE_STAY_TIME, clamp(1, NOTIFICATION_FADE_STAY_TIME, notification.t));
-		r32 alpha_out = clamp01(notification.t);
+		r32 alpha_in  = 1.0f - map01(1, NOTIFICATION_FADE_STAY_TIME, Clamp(1, NOTIFICATION_FADE_STAY_TIME, notification.t));
+		r32 alpha_out = Clamp01(notification.t);
 		r32 alpha	  = alpha_in * alpha_out;
 
 		Vec4 notification_color;
@@ -887,8 +887,8 @@ void debug_render_frame(r32 framebuffer_w, r32 framebuffer_h) {
 
 			r32 max_w, max_h;
 			max_w = im2d_calculate_text_region(PROFILER_PRESENTATION_FONT_HEIGHT, io.font.info, name).x;
-			max_w = max_value(max_w, im2d_calculate_text_region(PROFILER_PRESENTATION_FONT_HEIGHT, io.font.info, desc).x);
-			max_w = max_value(max_w, im2d_calculate_text_region(PROFILER_PRESENTATION_FONT_HEIGHT, io.font.info, time).x);
+			max_w = GetMaxValue(max_w, im2d_calculate_text_region(PROFILER_PRESENTATION_FONT_HEIGHT, io.font.info, desc).x);
+			max_w = GetMaxValue(max_w, im2d_calculate_text_region(PROFILER_PRESENTATION_FONT_HEIGHT, io.font.info, time).x);
 			max_h = PROFILER_PRESENTATION_FONT_HEIGHT * 3;
 
 			Vec2 pos = cursor + PROFILER_HOVERED_RECORD_OFFSET;

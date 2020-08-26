@@ -492,8 +492,8 @@ void reflection_of_templated_struct(Ostream *stream, CXCursor cursor, Array_View
 
 	if (t_type == 0 || t_call == 0) return;
 	defer {
-		mfree(t_type);
-		mfree(t_call);
+		memory_free(t_type);
+		memory_free(t_call);
 	};
 
 	ostream_write_formatted(stream, "template <%s> struct Reflect<%s<%s>> {\n", t_type, name, t_call);
@@ -598,7 +598,7 @@ void ast_visit_enum(CXCursor cursor) {
 	bool sequential = true;
 	s64  min = 0, max = 0;
 
-	if (members) {
+	if (members.count) {
 		auto a = clang_getEnumConstantDeclValue(members[0]);
 		max    = a;
 		min    = a;
@@ -828,7 +828,7 @@ bool parse_command_line(String command_line, Array<char *> *options, Array<char 
 	Tokenization_Status status;
 	auto                tokens = tokenize(string, &status);
 	defer {
-		mfree(tokens.data);
+		memory_free(tokens.data);
 	};
 
 	if (status.result != Tokenization_Result_SUCCESS) {
@@ -998,8 +998,8 @@ int system_main() {
 	ostream_free(&out.reflected_struct);
 
 	defer {
-		mfree(reflected_enum.data);
-		mfree(reflected_struct.data);
+		memory_free(reflected_enum.data);
+		memory_free(reflected_struct.data);
 	};
 
 	printf("Exporting '%s'...", out_file);

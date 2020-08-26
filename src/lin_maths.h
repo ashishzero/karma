@@ -1,17 +1,14 @@
 #pragma once
 #include "lin_maths_types.h"
 
-#define to_radians(deg)       ((deg) * (MATH_PI / 180.0f))
-#define to_degrees(rad)       ((rad) * (180.0f / MATH_PI_INVERSE))
-#define sgn(n)                ((r32)(0 < (n)) - (r32)((n) < 0))
-#define min_value(a, b)       (((a) < (b)) ? (a) : (b))
-#define max_value(a, b)       (((a) > (b)) ? (a) : (b))
-#define clamp(min, max, v)    min_value(max, max_value(min, v))
-#define r32_equals(a, b, tol) (fabsf((a) - (b)) < (tol))
-
-inline r32 clamp01(r32 v) {
-	return clamp(0.0f, 1.0f, v);
-}
+#define ToRadians(deg)       ((deg) * (MATH_PI / 180.0f))
+#define ToDegrees(rad)       ((rad) * (180.0f / MATH_PI_INVERSE))
+#define Sgn(n)                ((r32)(0 < (n)) - (r32)((n) < 0))
+#define GetMinValue(a, b)       (((a) < (b)) ? (a) : (b))
+#define GetMaxValue(a, b)       (((a) > (b)) ? (a) : (b))
+#define Clamp(min, max, v)    GetMinValue(max, GetMaxValue(min, v))
+#define RealEquals(a, b, tol) (fabsf((a) - (b)) < (tol))
+#define Clamp01(v) Clamp(0.0f, 1.0f, v)
 
 inline r32 map(r32 from_x1, r32 from_x2, r32 to_x1, r32 to_x2, r32 x) {
 	return (to_x2 - to_x1) / (from_x2 - from_x1) * (x - from_x1) + to_x1;
@@ -23,25 +20,25 @@ inline r32 map01(r32 x1, r32 x2, r32 x) {
 
 inline Vec2 vec2_min(Vec2 a, Vec2 b) {
 	Vec2 r;
-	r.x = min_value(a.x, b.x);
-	r.y = min_value(a.y, b.y);
+	r.x = GetMinValue(a.x, b.x);
+	r.y = GetMinValue(a.y, b.y);
 	return r;
 }
 
 inline Vec3 vec3_min(Vec3 a, Vec3 b) {
 	Vec3 r;
-	r.x = min_value(a.x, b.x);
-	r.y = min_value(a.y, b.y);
-	r.z = min_value(a.z, b.z);
+	r.x = GetMinValue(a.x, b.x);
+	r.y = GetMinValue(a.y, b.y);
+	r.z = GetMinValue(a.z, b.z);
 	return r;
 }
 
 inline Vec4 vec4_min(Vec4 a, Vec4 b) {
 	Vec4 r;
-	r.x = min_value(a.x, b.x);
-	r.y = min_value(a.y, b.y);
-	r.z = min_value(a.z, b.z);
-	r.w = min_value(a.w, b.w);
+	r.x = GetMinValue(a.x, b.x);
+	r.y = GetMinValue(a.y, b.y);
+	r.z = GetMinValue(a.z, b.z);
+	r.w = GetMinValue(a.w, b.w);
 	return r;
 }
 
