@@ -1,12 +1,16 @@
+//karma.h for array and string
 #include "karma.h"
+//thread  controller position,systems.h is for window, audio and everything platform related
 #include "systems.h"
+//related to image ellipse mesh cube
 #include "gfx_renderer.h"
 #include "lin_maths.h"
 #include "imgui/imgui.h"
 #include "imgui/imconfig.h"
 #include "debug.h"
+//utility.h contains sorting and hashing, searching and such
 #include "utility.h"
-
+//unsigned int32
 typedef u32 Entity_Handle;
 
 struct Entity {
@@ -33,7 +37,7 @@ struct Entity_Manager {
 	Array<Entity>	entities;
 	u32				handle_counter;
 };
-
+//not getting properly
 Entity* add_entity(Entity_Manager* manager, Entity::Type type) {
 	auto entity = array_add(&manager->entities);
 	entity->handle = manager->handle_counter;
@@ -218,8 +222,8 @@ int system_main() {
 
 		player = manager_find_entity(manager, player_id);
 
-		Vec2 prev_velocity = player->velocity;
-
+		//Vec2 prev_velocity = player->velocity;
+		//only physics code
 		while (accumulator_t >= fixed_dt) {
 			Debug_TimedScope(SimulationFrame);
 
@@ -269,7 +273,7 @@ int system_main() {
 					if (ray_vs_line(player->position, new_player_position, entity.start, entity.end, &hit)) {
 						r32 dir = vec2_dot(vec2_normalize_check(player->velocity), hit.normal);
 
-						if (dir <= 0 && hit.t >= -0.001f && hit.t < 1) {
+						if (dir <= 0 && hit.t >= -0.001f && hit.t < 1.001f) {
 
 							Entity_Test test;
 							test.handle = entity.handle;
@@ -296,15 +300,22 @@ int system_main() {
 				return a.value < b.value;
 				});
 
-
-			for (auto& test : tests) {
+			//yo loop aile sabai ko lagi ekai choti run bhaxa
+			//suru ma euta ko lagi  run garera velocity nikalne
+			//for next lines:
+			//find the intersecting points of ^^ above one line and this line(next lines)
+			//update the velocity such that it bocomes zero  at intersecting point(may be not required)
+			
+			for(int i=0;i<tests.count;++i)
+			{
+				auto& test = tests[i];
 				Entity* entity = manager_find_entity(manager, test.handle);
 
 				if (ray_vs_line(player->position, new_player_position, entity->start, entity->end, &hit)) {
 					array_add(&rayhits, hit);
 					r32 dir = vec2_dot(vec2_normalize_check(player->velocity), hit.normal);
 
-					if (dir <= 0 && hit.t >= -0.001f && hit.t < 1) {
+					if (dir <= 0 && hit.t >= -0.001f && hit.t < 1.001f) {
 						array_add(&t_values, hit.t);
 						array_add(&normals, hit.point);
 
@@ -315,6 +326,22 @@ int system_main() {
 						new_player_position = player->position + dt * player->velocity;
 
 						entity->color = vec4(1, 0, 1);
+					}
+				}
+			}
+
+			for (auto& en : manager.entities) {
+				if (en.type == Entity::LINE) {
+					Entity* entity = manager_find_entity(manager, en.handle);
+					if (ray_vs_line(player->position, new_player_position, entity->start, entity->end, &hit)) {
+						r32 dir = vec2_dot(vec2_normalize_check(player->velocity), hit.normal);
+						if (dir <= 0 && hit.t >= -0.001f && hit.t < 1.001f) {
+							Vec2 reduc_vector = (1.0f - hit.t) * fabsf(vec2_dot(player->velocity, hit.normal)) * player->velocity;
+							player->velocity -= reduc_vector;
+							new_player_position = player->position + dt * player->velocity;
+
+							entity->color = vec4(1, 0, 1);
+						}
 					}
 				}
 			}
@@ -396,7 +423,7 @@ int system_main() {
 		}
 
 		im2d_line(player->position, player->position + player->velocity, vec4(0, 1, 0), 0.03f);
-		im2d_line(player->position, player->position + prev_velocity, vec4(1, 1, 0), 0.03f);
+		//im2d_line(player->position, player->position + prev_velocity, vec4(1, 1, 0), 0.03f);
 #endif
 
 		im2d_end();
