@@ -91,7 +91,7 @@ int system_main() {
 	Entity_Manager manager = make_manager();
 
 	Entity *player = add_entity(&manager, Entity::PLAYER);
-	player->position = vec2(0);
+	player->position = vec2(-0.2f,0);
 	player->size = vec2(0.5f);
 	player->color = vec4(1);
 	player->velocity = vec2(0);
@@ -306,9 +306,10 @@ int system_main() {
 			//find the intersecting points of ^^ above one line and this line(next lines)
 			//update the velocity such that it bocomes zero  at intersecting point(may be not required)
 			
-			for(int i=0;i<tests.count;++i)
+			/*for(int i=0;i<tests.count;++i)
+			{*/if (tests.count)
 			{
-				auto& test = tests[i];
+				auto& test = tests[0];
 				Entity* entity = manager_find_entity(manager, test.handle);
 
 				if (ray_vs_line(player->position, new_player_position, entity->start, entity->end, &hit)) {
@@ -329,6 +330,7 @@ int system_main() {
 					}
 				}
 			}
+			//}
 
 			for (auto& en : manager.entities) {
 				if (en.type == Entity::LINE) {
@@ -336,7 +338,7 @@ int system_main() {
 					if (ray_vs_line(player->position, new_player_position, entity->start, entity->end, &hit)) {
 						r32 dir = vec2_dot(vec2_normalize_check(player->velocity), hit.normal);
 						if (dir <= 0 && hit.t >= -0.001f && hit.t < 1.001f) {
-							Vec2 reduc_vector = (1.0f - hit.t) * fabsf(vec2_dot(player->velocity, hit.normal)) * player->velocity;
+							Vec2 reduc_vector = (1.0f - hit.t) * player->velocity;
 							player->velocity -= reduc_vector;
 							new_player_position = player->position + dt * player->velocity;
 
