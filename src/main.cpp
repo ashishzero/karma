@@ -75,10 +75,11 @@ int system_main() {
 	bool running = true;
 
 	r32 aspect_ratio = framebuffer_w / framebuffer_h;
+	const r32 speed_factor = 1;
 
 	r32 const fixed_dt = 1.0f / 30.0f;
-	r32       dt = fixed_dt * 1;
-	r32       game_dt = fixed_dt * 1;
+	r32       dt = fixed_dt * speed_factor;
+	r32       game_dt = fixed_dt * speed_factor;
 	r32       real_dt = fixed_dt;
 	r32       game_t = 0.0f;
 	r32       real_t = 0.0f;
@@ -137,6 +138,14 @@ int system_main() {
 	line->color = vec4(1, 0, 0, 1);
 
 	Player_Controller controller = {};
+
+	Ray_Hit hit;
+	memset(&hit, 0, sizeof(hit));
+
+	Vec2 normal = vec2(0);
+	r32 penetrate_t = 0;
+	Array<Ray_Hit> ray_hits;
+
 
 	while (running) {
 		Debug_TimedFrameBegin();
@@ -214,20 +223,25 @@ int system_main() {
 		Debug_TimedBlockBegin(Simulation);
 
 #if 1
-		Array<Ray_Hit> rayhits;
-		Array<Vec2> normals;
+		//Array<Vec2> normals;
 		Array<r32> t_values;
-		rayhits.allocator = TEMPORARY_ALLOCATOR;
-		normals.allocator = TEMPORARY_ALLOCATOR;
+		//ray_hits.allocator = TEMPORARY_ALLOCATOR;
+		//normals.allocator = TEMPORARY_ALLOCATOR;
 		t_values.allocator = TEMPORARY_ALLOCATOR;
 
 		player = manager_find_entity(manager, player_id);
 
 		//Vec2 prev_velocity = player->velocity;
 		//only physics code
-		while (accumulator_t >= fixed_dt) {
+		static int test_counter = 0;
+
+		while (accumulator_t >= fixed_dt /*&& test_counter < 2*/) {
 			Debug_TimedScope(SimulationFrame);
 
+			memset(&hit, 0, sizeof(hit));
+			normal = vec2(0);
+			penetrate_t = 0;
+			array_clear(&ray_hits);
 
 			const r32 gravity = 10;
 			const r32 drag = 5;
@@ -252,7 +266,8 @@ int system_main() {
 			player->velocity += dt * player->force;
 			player->velocity *= powf(0.5f, drag * dt);
 
-			auto new_player_position = player->position + dt * player->velocity;
+			auto new_player_velocity = player->velocity;
+			auto new_player_position = player->position + dt * new_player_velocity;
 
 			struct Sorted_Colliders {
 				Entity_Handle handle;
@@ -276,41 +291,37 @@ int system_main() {
 			}
 
 			sort(sorted_colliders.data, sorted_colliders.count, [](Sorted_Colliders & a, Sorted_Colliders &b){
-				return a.distance < b.distance;
+				return a.distance > b.distance;
 			});
 
-			Ray_Hit hit;
-			memset(&hit, 0, sizeof(hit));
 			//collided handle
 			Entity_Handle handle_save = 0;
-			for (auto& entity : manager.entities) {
-				if (entity.type == Entity::LINE) {
+			for (auto& collider : sorted_colliders) {
+				auto entity = manager_find_entity(manager, collider.handle);
+				entity->color = vec4(1, 0, 0);
+				if (ray_vs_line(player->position, new_player_position, entity->start, entity->end, &hit)) {
+					r32 dir = vec2_dot(vec2_normalize_check(player->velocity), hit.normal);
 
-					entity.color = vec4(1, 0, 0);
-					if (ray_vs_line(player->position, new_player_position, entity.start, entity.end, &hit)) {
-						r32 dir = vec2_dot(vec2_normalize_check(player->velocity), hit.normal);
+					if (dir <= 0 && hit.t >= -0.001f && hit.t < 1.001f) {
+						array_add(&t_values, hit.t);
+						//array_add(&normals, hit.point);
 
-						if (dir <= 0 && hit.t >= -0.001f && hit.t < 1.001f) {
-							array_add(&t_values, hit.t);
-							array_add(&normals, hit.point);
+						Vec2 reduc_vector = (1.0f - hit.t) * vec2_dot(player->velocity, hit.normal) * hit.normal;
+						//array_add(&normals, -reduc_vector);
 
-							Vec2 reduc_vector = (1.0f - hit.t) * vec2_dot(player->velocity, hit.normal) * hit.normal;
-							array_add(&normals, -reduc_vector);
-
-							player->velocity -= reduc_vector;
-							new_player_position = player->position + dt * player->velocity;
-							handle_save = entity.handle;
-							
-							entity.color = vec4(1, 0, 1);
-							break;
-						}
+						player->velocity -= reduc_vector;
+						new_player_position = player->position + dt * player->velocity;
+						handle_save = entity->handle;
+						
+						entity->color = vec4(1, 0, 1);
+						break;
 					}
 				}
 			}
 
-			for (auto& en : manager.entities) {
-				if (en.type == Entity::LINE && en.handle!=handle_save) {
-					Entity* entity = manager_find_entity(manager, en.handle);
+			for (auto& collider : sorted_colliders) {
+				Entity* entity = manager_find_entity(manager, collider.handle);
+				if (entity->handle != handle_save) {
 					if (ray_vs_line(player->position, new_player_position, entity->start, entity->end, &hit)) {
 						r32 dir = vec2_dot(vec2_normalize_check(player->velocity), hit.normal);
 						if (dir <= 0 && hit.t >= -0.001f && hit.t < 1.001f) {
@@ -395,11 +406,16 @@ int system_main() {
 		//}
 		
 #if 1
-		for (s64 index = 0; index < normals.count; index += 2) {
-			im2d_circle(normals[index], 0.08f, vec4(1, 0, 0));
-			im2d_line(normals[index], normals[index] + normals[index + 1], vec4(1, 1, 1), 0.01f);
+		//for (s64 index = 0; index < normals.count; index += 2) {
+		//	im2d_circle(normals[index], 0.08f, vec4(1, 0, 0));
+		//	im2d_line(normals[index], normals[index] + normals[index + 1], vec4(1, 1, 1), 0.01f);
+		//}
+
+		for (auto & hit: ray_hits) {
+			im2d_line(player->position, player->position + (1.0f - hit.t) * hit.normal, vec4(0, 1, 1), 0.01f);
 		}
 
+		im2d_line(player->position, player->position + normal, vec4(1), 0.01f);
 		im2d_line(player->position, player->position + player->velocity, vec4(0, 1, 0), 0.03f);
 		//im2d_line(player->position, player->position + prev_velocity, vec4(1, 1, 0), 0.03f);
 #endif
@@ -419,6 +435,8 @@ int system_main() {
 
 		ImGui::DragFloat2("Position", player->position.m,0.01f);
 		ImGui::DragFloat2("Velocity", player->velocity.m,0.01f);
+
+		ImGui::Text("Collision Count: %d", test_counter);
 
 		for (auto& t : t_values) {
 			ImGui::Text("%.3f", t);
@@ -457,8 +475,8 @@ int system_main() {
 		real_dt = ((1000000.0f * (r32)counts) / (r32)frequency) / 1000000.0f;
 		real_t += real_dt;
 
-		game_dt = real_dt * 1;
-		dt = fixed_dt * 1;
+		game_dt = real_dt * speed_factor;
+		dt = fixed_dt * speed_factor;
 
 		accumulator_t += real_dt;
 		accumulator_t = GetMinValue(accumulator_t, 0.3f);
