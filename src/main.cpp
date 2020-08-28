@@ -261,10 +261,33 @@ int system_main() {
 			Array<Entity_Test> tests;
 			tests.allocator = TEMPORARY_ALLOCATOR;
 
+			struct Sorted_Colliders {
+				Entity_Handle handle;
+				r32 distance;
+			};
+
+			Array<Sorted_Colliders> sorted_colliders;
+			sorted_colliders.allocator = TEMPORARY_ALLOCATOR;
+
+			for (auto& entity : manager.entities) {
+				if (entity.type == Entity::LINE) {
+					auto collider = array_add(&sorted_colliders);
+					r32 dx = entity.end.x - entity.start.x;
+					r32 dy = entity.end.y - entity.start.x;
+					r32 d = dx * dx + dy * dy;
+					r32 n = dy * player->position.x - dx * player->position.y + entity.end.x * entity.start.y - entity.end.y * entity.start.x;
+					n *= n;
+					collider->handle = entity.handle;
+					collider->distance = n / d;
+				}
+			}
+
+			sort(sorted_colliders.data, sorted_colliders.count, [](Sorted_Colliders & a, Sorted_Colliders &b){
+				return a.distance < b.distance;
+			});
 
 			Ray_Hit hit;
 			memset(&hit, 0, sizeof(hit));
-
 
 			for (auto& entity : manager.entities) {
 				if (entity.type == Entity::LINE) {
