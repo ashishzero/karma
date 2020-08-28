@@ -102,17 +102,17 @@ int system_main() {
 	Entity *line = nullptr;
 
 	line = add_entity(&manager, Entity::LINE);
-	line->start = vec2(-8, 2);
-	line->end = vec2(-4, -3);
+	line->start = vec2(-4, -3);
+	line->end = vec2(-4, 2);
 	line->color = vec4(1, 0, 0, 1);
 
 	line = add_entity(&manager, Entity::LINE);
 	line->start = vec2(2, 4);
-	line->end = vec2(-8, 2);
+	line->end = vec2(-4, 2);
 	line->color = vec4(1, 0, 0, 1);
 
 	line = add_entity(&manager, Entity::LINE);
-	line->start = vec2(5, 4);
+	line->start = vec2(5.1f, 4);
 	line->end = vec2(2, 4);
 	line->color = vec4(1, 0, 0, 1);
 
@@ -123,18 +123,18 @@ int system_main() {
 	
 	line = add_entity(&manager, Entity::LINE);
 	line->start = vec2(4, 4);
-	line->end = vec2(-4, -4);
+	line->end = vec2(-5, 0);
 	line->color = vec4(1, 0, 0, 1);
 
 
 	line = add_entity(&manager, Entity::LINE);
-	line->start = vec2(3.5f, -4);
+	line->start = vec2(3.5f, -4.1f);
 	line->end = vec2(3.5f, 4);
 	line->color = vec4(1, 0, 0, 1);
 
 	line = add_entity(&manager, Entity::LINE);
-	line->start = vec2(-4, -3);
-	line->end = vec2(4, -3);
+	line->start = vec2(-4, 3);
+	line->end = vec2(3.5f, -4);
 	line->color = vec4(1, 0, 0, 1);
 
 	Player_Controller controller = {};
@@ -258,7 +258,7 @@ int system_main() {
 				dir = vec2(0);
 			}
 
-			const float force = 25;
+			const float force = 50;
 
 			player->force = force * dir;
 			//player->force.y -= gravity;
