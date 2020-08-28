@@ -55,6 +55,7 @@ Entity* manager_find_entity(Entity_Manager &manager, Entity_Handle handle) {
 
 Entity_Manager make_manager() {
 	Entity_Manager manager = {};
+	manager.handle_counter=1;
 	return manager;
 }
 
@@ -253,19 +254,10 @@ int system_main() {
 
 			auto new_player_position = player->position + dt * player->velocity;
 
-			struct Entity_Test {
-				Entity_Handle handle;
-				r32 value;
-			};
-
-			Array<Entity_Test> tests;
-			tests.allocator = TEMPORARY_ALLOCATOR;
-
-
 			Ray_Hit hit;
 			memset(&hit, 0, sizeof(hit));
-
-
+			//collided handle
+			Entity_Handle handle_save = 0;
 			for (auto& entity : manager.entities) {
 				if (entity.type == Entity::LINE) {
 
@@ -274,66 +266,25 @@ int system_main() {
 						r32 dir = vec2_dot(vec2_normalize_check(player->velocity), hit.normal);
 
 						if (dir <= 0 && hit.t >= -0.001f && hit.t < 1.001f) {
+							array_add(&t_values, hit.t);
+							array_add(&normals, hit.point);
 
-							Entity_Test test;
-							test.handle = entity.handle;
-							test.value = hit.t;
+							Vec2 reduc_vector = (1.0f - hit.t) * vec2_dot(player->velocity, hit.normal) * hit.normal;
+							array_add(&normals, -reduc_vector);
 
-							/*
-							r32 dy = entity.end.y - entity.start.y;
-							r32 dx = entity.end.x - entity.start.x;
-							r32 n = dy * player->position.x - dx * player->position.y +
-								entity.end.x * entity.start.y - entity.end.y * entity.start.x;
-							n *= n;
-							r32 d = dy * dy + dx * dx;
-							test.handle = entity.handle;
-							test.value = n / d;
-							*/
-
-							array_add(&tests, test);
+							player->velocity -= reduc_vector;
+							new_player_position = player->position + dt * player->velocity;
+							handle_save = entity.handle;
+							
+							entity.color = vec4(1, 0, 1);
+							break;
 						}
 					}
 				}
 			}
 
-			sort(tests.data, tests.count, [](Entity_Test& a, Entity_Test& b) {
-				return a.value < b.value;
-				});
-
-			//yo loop aile sabai ko lagi ekai choti run bhaxa
-			//suru ma euta ko lagi  run garera velocity nikalne
-			//for next lines:
-			//find the intersecting points of ^^ above one line and this line(next lines)
-			//update the velocity such that it bocomes zero  at intersecting point(may be not required)
-			
-			/*for(int i=0;i<tests.count;++i)
-			{*/if (tests.count)
-			{
-				auto& test = tests[0];
-				Entity* entity = manager_find_entity(manager, test.handle);
-
-				if (ray_vs_line(player->position, new_player_position, entity->start, entity->end, &hit)) {
-					array_add(&rayhits, hit);
-					r32 dir = vec2_dot(vec2_normalize_check(player->velocity), hit.normal);
-
-					if (dir <= 0 && hit.t >= -0.001f && hit.t < 1.001f) {
-						array_add(&t_values, hit.t);
-						array_add(&normals, hit.point);
-
-						Vec2 reduc_vector = (1.0f - hit.t) * vec2_dot(player->velocity, hit.normal) * hit.normal;
-						array_add(&normals, -reduc_vector);
-
-						player->velocity -= reduc_vector;
-						new_player_position = player->position + dt * player->velocity;
-
-						entity->color = vec4(1, 0, 1);
-					}
-				}
-			}
-			//}
-
 			for (auto& en : manager.entities) {
-				if (en.type == Entity::LINE) {
+				if (en.type == Entity::LINE && en.handle!=handle_save) {
 					Entity* entity = manager_find_entity(manager, en.handle);
 					if (ray_vs_line(player->position, new_player_position, entity->start, entity->end, &hit)) {
 						r32 dir = vec2_dot(vec2_normalize_check(player->velocity), hit.normal);
@@ -441,8 +392,8 @@ int system_main() {
 		#if defined(BUILD_IMGUI)
 		ImGui::Begin("Edit");
 
-		ImGui::DragFloat2("Position", player->position.m);
-		ImGui::DragFloat2("Velocity", player->velocity.m);
+		ImGui::DragFloat2("Position", player->position.m,0.01f);
+		ImGui::DragFloat2("Velocity", player->velocity.m,0.01f);
 
 		for (auto& t : t_values) {
 			ImGui::Text("%.3f", t);
