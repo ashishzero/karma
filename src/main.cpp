@@ -63,6 +63,56 @@ struct Player_Controller {
 	r32 x, y;
 };
 
+struct Sorted_Colliders {
+	Entity_Handle handle;
+	r32 distance;
+};
+
+void collision_point_vs_line(Array<Sorted_Colliders>& sorted_colliders,Entity_Manager& manager,Entity* player,Vec2& new_player_position,r32& dt)
+{
+	Ray_Hit hit;
+	Array<r32> t_values;
+	Entity_Handle handle_save = 0;
+	for (auto& collider : sorted_colliders) {
+		auto entity = manager_find_entity(manager, collider.handle);
+		entity->color = vec4(1, 0, 0);
+		if (ray_vs_line(player->position, new_player_position, entity->start, entity->end, &hit)) {
+			r32 dir = vec2_dot(vec2_normalize_check(player->velocity), hit.normal);
+
+			if (dir <= 0 && hit.t >= -0.001f && hit.t < 1.001f) {
+				array_add(&t_values, hit.t);
+				//array_add(&normals, hit.point);
+
+				Vec2 reduc_vector = (1.0f - hit.t) * vec2_dot(player->velocity, hit.normal) * hit.normal;
+				//array_add(&normals, -reduc_vector);
+
+				player->velocity -= reduc_vector;
+				new_player_position = player->position + dt * player->velocity;
+				handle_save = entity->handle;
+
+				entity->color = vec4(1, 0, 1);
+				break;
+			}
+		}
+	}
+
+	for (auto& collider : sorted_colliders) {
+		Entity* entity = manager_find_entity(manager, collider.handle);
+		if (entity->handle != handle_save) {
+			if (ray_vs_line(player->position, new_player_position, entity->start, entity->end, &hit)) {
+				r32 dir = vec2_dot(vec2_normalize_check(player->velocity), hit.normal);
+				if (dir <= 0 && hit.t >= -0.001f && hit.t < 1.001f) {
+					Vec2 reduc_vector = (1.0f - hit.t) * player->velocity;
+					player->velocity -= reduc_vector;
+					new_player_position = player->position + dt * player->velocity;
+
+					entity->color = vec4(1, 0, 1);
+				}
+			}
+		}
+	}
+}
+
 int system_main() {
 	r32    framebuffer_w = 1280;
 	r32    framebuffer_h = 720;
@@ -94,7 +144,7 @@ int system_main() {
 
 	Entity *player = add_entity(&manager, Entity::PLAYER);
 	player->position = vec2(-0.2f,0);
-	player->size = vec2(0.5f);
+	player->size = vec2(0.2f,0.4f);
 	player->color = vec4(1);
 	player->velocity = vec2(0);
 	Entity_Handle player_id = player->handle;
@@ -269,11 +319,7 @@ int system_main() {
 			auto new_player_velocity = player->velocity;
 			auto new_player_position = player->position + dt * new_player_velocity;
 
-			struct Sorted_Colliders {
-				Entity_Handle handle;
-				r32 distance;
-			};
-
+			
 			Array<Sorted_Colliders> sorted_colliders;
 			sorted_colliders.allocator = TEMPORARY_ALLOCATOR;
 
@@ -294,47 +340,61 @@ int system_main() {
 				return a.distance > b.distance;
 			});
 
+			//collision_point_vs_line(sorted_colliders, manager, player, new_player_position, dt);
+			Vec2 get_corner[4] = { {player->size.x / 2,player->size.y / 2},
+				{-player->size.x / 2,-player->size.y / 2},
+				{player->size.x / 2,-player->size.y / 2},
+				{-player->size.x / 2,player->size.y / 2} };
 			//collided handle
 			Entity_Handle handle_save = 0;
 			for (auto& collider : sorted_colliders) {
 				auto entity = manager_find_entity(manager, collider.handle);
 				entity->color = vec4(1, 0, 0);
-				if (ray_vs_line(player->position, new_player_position, entity->start, entity->end, &hit)) {
-					r32 dir = vec2_dot(vec2_normalize_check(player->velocity), hit.normal);
+				bool collision_found = false;
+				for(Vec2 temp:get_corner)
+				{
+					if (ray_vs_line(player->position+temp, new_player_position+temp, entity->start, entity->end, &hit)) {
+						r32 dir = vec2_dot(vec2_normalize_check(player->velocity), hit.normal);
 
-					if (dir <= 0 && hit.t >= -0.001f && hit.t < 1.001f) {
-						array_add(&t_values, hit.t);
-						//array_add(&normals, hit.point);
+						if (dir <= 0 && hit.t >= -0.001f && hit.t < 1.001f) {
+							array_add(&t_values, hit.t);
+							//array_add(&normals, hit.point);
 
-						Vec2 reduc_vector = (1.0f - hit.t) * vec2_dot(player->velocity, hit.normal) * hit.normal;
-						//array_add(&normals, -reduc_vector);
+							Vec2 reduc_vector = (1.0f - hit.t) * vec2_dot(player->velocity, hit.normal) * hit.normal;
+							//array_add(&normals, -reduc_vector);
 
-						player->velocity -= reduc_vector;
-						new_player_position = player->position + dt * player->velocity;
-						handle_save = entity->handle;
-						
-						entity->color = vec4(1, 0, 1);
-						break;
+							player->velocity -= reduc_vector;
+							new_player_position = player->position + dt * player->velocity;
+							handle_save = entity->handle;
+
+							entity->color = vec4(1, 0, 1);
+							collision_found = true;
+						}
 					}
 				}
+				if (collision_found)
+					break;
 			}
 
 			for (auto& collider : sorted_colliders) {
 				Entity* entity = manager_find_entity(manager, collider.handle);
 				if (entity->handle != handle_save) {
-					if (ray_vs_line(player->position, new_player_position, entity->start, entity->end, &hit)) {
-						r32 dir = vec2_dot(vec2_normalize_check(player->velocity), hit.normal);
-						if (dir <= 0 && hit.t >= -0.001f && hit.t < 1.001f) {
-							Vec2 reduc_vector = (1.0f - hit.t) * player->velocity;
-							player->velocity -= reduc_vector;
-							new_player_position = player->position + dt * player->velocity;
+					for (Vec2 temp : get_corner)
+					{
+						if (ray_vs_line(player->position+temp, new_player_position+temp, entity->start, entity->end, &hit)) {
+							r32 dir = vec2_dot(vec2_normalize_check(player->velocity), hit.normal);
+							if (dir <= 0 && hit.t >= -0.001f && hit.t < 1.001f) {
+								Vec2 reduc_vector = (1.0f - hit.t) * player->velocity;
+								player->velocity -= reduc_vector;
+								new_player_position = player->position + dt * player->velocity;
 
-							entity->color = vec4(1, 0, 1);
+								entity->color = vec4(1, 0, 1);
+							}
 						}
 					}
 				}
 			}
-
+			
 			player->position += dt * player->velocity;
 
 			accumulator_t -= fixed_dt;
@@ -388,8 +448,8 @@ int system_main() {
 			switch (entity.type) {
 				case Entity::PLAYER: {
 					//im2d_circle(entity.position, entity.size.x, entity.color);
-					//im2d_rect_centered(entity.position, entity.size, entity.color);
-					im2d_circle(entity.position, 0.08f, vec4(0, 1, 0));
+					im2d_rect_centered(entity.position, entity.size, entity.color);
+					//im2d_circle(entity.position, 0.08f, vec4(0, 1, 0));
 				} break;
 
 				case Entity::LINE: {
