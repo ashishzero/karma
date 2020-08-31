@@ -3,6 +3,9 @@
 #include "../systems.h"
 #include "../stb_sprintf.h"
 #include "resource.h"
+
+#include <winsock2.h>
+
 #include <ShlObj_core.h>
 #include <Windows.h>
 #include <shlwapi.h>
@@ -26,6 +29,7 @@
 #pragma comment(lib, "Ole32.lib")
 #pragma comment(lib, "Shlwapi.lib")
 #pragma comment(lib, "Avrt.lib")
+#pragma comment( lib, "wsock32.lib")
 
 //
 // Win32 Error
@@ -975,7 +979,7 @@ u32 windows_find_files_count(const wchar_t *root_dir, int root_dir_len, const wc
 	search[root_dir_len + 1] = '*';
 	search[root_dir_len + 2] = 0;
 
-	WIN32_FIND_DATA find_data;
+	WIN32_FIND_DATAW find_data;
 	auto find = FindFirstFileW(search, &find_data);
 	if (find == INVALID_HANDLE_VALUE) {
 		win32_check_for_error();
@@ -1011,7 +1015,7 @@ u32 windows_find_files_info(System_Find_File_Info *info, const System_Find_File_
 	search[root_dir_len + 1] = '*';
 	search[root_dir_len + 2] = 0;
 
-	WIN32_FIND_DATA find_data;
+	WIN32_FIND_DATAW find_data;
 	auto find = FindFirstFileW(search, &find_data);
 	if (find == INVALID_HANDLE_VALUE) {
 		win32_check_for_error();
@@ -1936,6 +1940,80 @@ void system_audio_pause() {
 	windows_audio_client.client->Stop();
 }
 
+bool system_net_startup() {
+	WSADATA WsaData;
+	return WSAStartup(MAKEWORD(2, 2), &WsaData) == NO_ERROR;
+}
+
+void system_net_cleanup() {
+	WSACleanup();
+}
+
+bool system_net_set_socket_nonblocking(Socket sock) {
+	DWORD non_blockling = 1;
+	if (ioctlsocket((SOCKET)sock, FIONBIO, &non_blockling) != 0) {
+		win32_check_for_error();
+		return false;
+	}
+	return true;
+}
+
+Socket system_net_open_udp_server(Socket_Address address) {
+	SOCKET win_sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	if (win_sock == INVALID_SOCKET) {
+		win32_check_for_error();
+		return SOCKET_INVALID;
+	}
+	Socket sock = (Socket)win_sock;
+
+	sockaddr_in sock_adrr = {};
+	sock_adrr.sin_family = AF_INET;
+	sock_adrr.sin_addr.s_addr = htonl(address.address);
+	sock_adrr.sin_port = htons(address.port);
+
+	int result = bind(win_sock, (const sockaddr*)&sock_adrr, sizeof(sock_adrr));
+	if (result == SOCKET_ERROR) {
+		result = WSAGetLastError();
+		closesocket(win_sock);
+		win32_check_for_error();
+		return SOCKET_INVALID;
+	}
+
+	return sock;
+}
+
+Socket system_net_open_udp_client() {
+	SOCKET sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	if (sock == INVALID_SOCKET) {
+		closesocket(sock);
+		win32_check_for_error();
+		return SOCKET_INVALID;
+	}
+	Socket result = (Socket)sock;
+	return result;
+}
+
+s32 system_net_send_to(Socket sock, void * buffer, s32 length, Socket_Address address) {
+	sockaddr_in sock_addr;
+	sock_addr.sin_family = AF_INET;
+	sock_addr.sin_addr.s_addr = htonl(address.address);
+	sock_addr.sin_port = htons(address.port);
+	return sendto((SOCKET)sock, (const char *)buffer, length, 0, (sockaddr *)&sock_addr, sizeof(sockaddr_in));
+}
+
+s32 system_net_receive_from(Socket sock, void * packet_buffer, s32 max_packet_size, Socket_Address *address) {
+	sockaddr_in from;
+	int from_length = sizeof(from);
+	s32 bytes = recvfrom((SOCKET)sock, (char*)packet_buffer, max_packet_size, 0, (sockaddr*)&from, &from_length);
+	address->address = ntohl(from.sin_addr.s_addr);
+	address->port = ntohs(from.sin_port);
+	return bytes;
+}
+
+void system_net_close_socket(Socket sock) {
+	closesocket((SOCKET)sock);
+}
+
 static inline Vec2 xinput_axis_deadzone_correction(SHORT x, SHORT y, SHORT deadzone) {
 	r32 mag      = sqrtf(((r32)x * (r32)x + (r32)y * (r32)y));
 	r32 norm_x   = mag ? (r32)x / mag : 0;
@@ -2424,7 +2502,13 @@ void system_unlock_mutex(Handle handle) {
 	ReleaseMutex(handle.hptr);
 }
 
+#if defined(SYSTEM_CONSOLE)
+int main() {
+	LPWSTR cmd_line = GetCommandLineW();
+#else
 int __stdcall wWinMain(HINSTANCE instance, HINSTANCE prev_instance, LPWSTR cmd_line, int show_cmd) {
+#endif
+
 #	if defined(BUILD_DEBUG) || defined(BUILD_DEBUG_FAST)
 	AllocConsole();
 	SetConsoleOutputCP(CP_UTF8);
