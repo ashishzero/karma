@@ -8,7 +8,7 @@
 
 #include<time.h>
 #include<stdlib.h>
-#define NUM_RIGID_BODIES 20
+#define NUM_RIGID_BODIES 2
 #define PI 3.14
 
 int initial = 0;
@@ -36,6 +36,7 @@ typedef struct {
 	BoxShape shape;
 	Mm_Rect min_max_points;
 	bool collided;
+	bool I_am_dragged;
 }RigidBody;
 
 RigidBody rigidBodies[NUM_RIGID_BODIES];
@@ -64,12 +65,12 @@ void CalculateBoxInertia(BoxShape *boxShape) {
 void ComputeForceandTorque(RigidBody *rigidBody) {
 
 	Vec2 f;
-	//f = { r32(2000), r32(2000) };
-	f = { r32(neg_random_number_generator(2 + xy)), r32(neg_random_number_generator(1 + xy)) };
+	f = { 0,0 };
+	//f = { r32(neg_random_number_generator(10 + xy) - 10), r32(neg_random_number_generator(5 + xy) - 5) };
 	//if(initial==1)
-	//	 f = { r32(1500), r32(2000) };
+	//	 f = { r32(-2200), r32(-1600) };
 	//else
-	//	 f = { r32(1500), r32(-2000) };
+	//	 f = { r32(2200), r32(1450) };
 
 	rigidBody->force = f;
 	Vec2 r = { rigidBody->shape.width / 2, rigidBody->shape.height / 2 };
@@ -85,21 +86,34 @@ void InitializeRigidBodies() {
 
 		RigidBody *rigidBody = &rigidBodies[i];
 		ComputeForceandTorque(rigidBody);
-		rigidBody->position = { r32(random_number_generator(350 + x)), r32(random_number_generator(650 + x)) };
-		//if (i == 0)
-		//	rigidBody->position = { 500,100 };
-		//if (i==1)
-		//	rigidBody->position = { 500,500 };
+		//rigidBody->position = { r32(random_number_generator(350 + x)), r32(random_number_generator(650 + x)) };
+		x += 10;
+		if (i == 0) {
+			rigidBody->position = { 0,600 };
+			rigidBody->linear_velocity = { 10,-40};
+		}
+		if (i == 1) {
+			rigidBody->position = { 300,300 };
+			rigidBody->linear_velocity = { -70,50 };
+		}
 		rigidBody->angle = float(random_number_generator(360) / 360.0f * PI * 2);
-		rigidBody->linear_velocity = { 0, 0 };
+		//rigidBody->linear_velocity = { 0,0 };
+		//rigidBody->linear_velocity = { r32(random_number_generator(350 + x)), r32(random_number_generator(650 + x)) };
 		rigidBody->angular_velocity = 0;
 		rigidBody->collided = false;
+		rigidBody->I_am_dragged = false;
 
 		BoxShape shape;
-		shape.mass = float(random_number_generator(5000));
+		//shape.mass = float(random_number_generator(40));
+		//shape.mass += 5.0f;
+		//shape.mass = float((50));
+		if (i == 0)
+			shape.mass = 50;
+		if (i == 1)
+			shape.mass = 50;
 
 		printf("%.2f\t", shape.mass);
-		shape.width = 20 * float(random_number_generator(2));
+		shape.width = 50 * float(random_number_generator(2));
 		shape.height = 20 * float(random_number_generator(4));
 		CalculateBoxInertia(&shape);
 		rigidBody->shape = shape;
@@ -137,26 +151,97 @@ bool AABB_collision_check(RigidBody *a, RigidBody *b)
 	//float d2y = a->min.y - b->max.y;
 
 	if (d1x > 0.0f || d1y > 0.0f) {
-		system_trace("Not Collided\n");
+		//system_trace("Not Collided\n");
 		return false;
 	}
 	if (d2x > 0.0f || d2y > 0.0f) {
-		system_trace("Not Collided\n");
+		//system_trace("Not Collided\n");
 		return false;
 	}
-	system_trace("Collided\n");
+	//system_trace("Collided\n");
 	return true;
 
 }
 
+void manage_box_dragged_action(Vec2 present_curser, Vec2 prev_curser){
 
-
-void PrintRigidBodies() {
 	for (int i = 0; i < NUM_RIGID_BODIES; i++) {
 		RigidBody *rigidBody = &rigidBodies[i];
-		im_rect(vec2(rigidBody->position.x, rigidBody->position.y), vec2(rigidBody->shape.width, rigidBody->shape.height), vec4 (1));
+
+
+		Vec2 del_curser = vec2_sub(present_curser, prev_curser);
+
+		if (rigidBody->I_am_dragged) {
+
+
+			r32 slope = (present_curser.y - prev_curser.y) / (present_curser.x - prev_curser.x);
+
+			if (fabs(slope) < 1) {
+
+				if (del_curser.x > 0 && del_curser.y > 0) {
+
+					rigidBody->linear_velocity.x = r32(fabs(rigidBody->linear_velocity.x) + 20.0f);
+					rigidBody->linear_velocity.y = r32(fabs(slope) * rigidBody->linear_velocity.x);
+				}
+
+				if (del_curser.x < 0 && del_curser.y < 0) {
+
+					rigidBody->linear_velocity.x = r32(fabs(rigidBody->linear_velocity.x) + 20.0f)*-1;
+					rigidBody->linear_velocity.y = r32(fabs(slope) * rigidBody->linear_velocity.x);
+				}
+
+				if (del_curser.x > 0 && del_curser.y < 0) {
+
+					rigidBody->linear_velocity.x = r32(fabs(rigidBody->linear_velocity.x) + 20.0f);
+					rigidBody->linear_velocity.y = r32((slope)* rigidBody->linear_velocity.x);
+				}
+				if (del_curser.x < 0 && del_curser.y > 0) {
+
+					rigidBody->linear_velocity.x = r32(fabs(rigidBody->linear_velocity.x) + 20.0f)*-1;
+					rigidBody->linear_velocity.y = r32((slope)* rigidBody->linear_velocity.x);
+				}
+
+			}
+			else {
+
+				if (del_curser.x > 0 && del_curser.y > 0) {
+
+					rigidBody->linear_velocity.y = r32(fabs(rigidBody->linear_velocity.y) + 20.0f);
+					rigidBody->linear_velocity.x = r32((rigidBody->linear_velocity.y) / slope);
+				}
+
+				if (del_curser.x < 0 && del_curser.y < 0) {
+
+					rigidBody->linear_velocity.y = r32(fabs(rigidBody->linear_velocity.y) + 20.0f)*-1;
+					rigidBody->linear_velocity.x = r32((rigidBody->linear_velocity.y) / slope);
+				}
+
+				if (del_curser.x > 0 && del_curser.y < 0) {
+
+					rigidBody->linear_velocity.y = r32(fabs(rigidBody->linear_velocity.y) + 20.0f)*-1;
+					rigidBody->linear_velocity.x = r32((rigidBody->linear_velocity.y) / slope);
+				}
+				if (del_curser.x < 0 && del_curser.y > 0) {
+
+					rigidBody->linear_velocity.y = r32(fabs(rigidBody->linear_velocity.y) + 20.0f);
+					rigidBody->linear_velocity.x = r32(fabs(rigidBody->linear_velocity.x) / slope);
+
+				}
+
+			}
+
+
+
+		}
+
+	}
+	for (int i = 0; i < NUM_RIGID_BODIES; i++) {
+		RigidBody *rigidBody = &rigidBodies[i];
+		rigidBody->I_am_dragged = false;
 	}
 }
+
+
 
 
 
@@ -184,7 +269,9 @@ int system_main() { // Entry point
 	r32 window_w = 0, window_h = 0;
 
 
-	InitializeRigidBodies();
+	Vec2 prev_curser;
+
+
 
 
 	while (running) {
@@ -225,126 +312,61 @@ int system_main() { // Entry point
 				break;
 			}
 
+			// down event
+			if (event.type == Event_Type_MOUSE_BUTTON_DOWN) {
+				if (event.mouse_button.symbol == Button_LEFT) {
+					// mouse left button down
+				
+					prev_curser.x = r32(event.mouse_cursor.x);
+					prev_curser.y = r32(event.mouse_cursor.y);
+
+					for (int i = 0; i < NUM_RIGID_BODIES; i++) {
+						RigidBody *rigidBody = &rigidBodies[i];
+
+						if (point_inside_rect(rigidBody->min_max_points, prev_curser)) {
+						
+							prev_curser.x = r32(event.mouse_cursor.x);
+							prev_curser.y = r32(event.mouse_cursor.y);
+
+							rigidBody->I_am_dragged = true;
+						
+						}
+
+					}
+
+
+
+				}
+			}
+
+			// up event
+			if (event.type == Event_Type_MOUSE_BUTTON_UP) {
+				if (event.mouse_button.symbol == Button_LEFT) {
+
+					Vec2 present_curser;
+					present_curser.x = r32(event.mouse_cursor.x);
+					present_curser.y = r32(event.mouse_cursor.y);
+
+					//manage_box_dragged_action(present_curser, prev_curser);
+
+					
+				}
+				
+			}
+
+
 		}
 
 		while (accumulator >= dt) {
 			// simulate here
 			//gfx2d_rect(vec2(x, y), vec2(250, 250));
-			for (int i = 0; i < NUM_RIGID_BODIES; i++) {
-				RigidBody *rigidBody = &rigidBodies[i];
+			int r_positive_negative_x = 1;
+			int r_positive_negative_y = 1;
 
-				if (rigidBody->collided == false) {
-					rigidBody->linear_velocity.x += rigidBody->linear_acceleration.x * dt;
-					rigidBody->linear_velocity.y += rigidBody->linear_acceleration.y * dt;
-				}
-
-				for (int j = i + 1; j < NUM_RIGID_BODIES  && j !=i; j++) {
-					RigidBody *rigidBody2 = &rigidBodies[j];
-					if (AABB_collision_check(rigidBody, rigidBody2)) {
-
-						Vec2 prev_velocity_rigidBody = rigidBody->linear_velocity;
-						Vec2 prev_velocity_rigidBody2 = rigidBody2->linear_velocity;
-
-						rigidBody2->linear_velocity.x = ((2 * rigidBody->shape.mass * prev_velocity_rigidBody.x) / (rigidBody->shape.mass + rigidBody2->shape.mass) + ((rigidBody2->shape.mass - rigidBody->shape.mass) / (rigidBody2->shape.mass + rigidBody->shape.mass)) * prev_velocity_rigidBody2.x);
-						rigidBody2->linear_velocity.y = ((2 * rigidBody->shape.mass * prev_velocity_rigidBody.y) / (rigidBody->shape.mass + rigidBody2->shape.mass) + ((rigidBody2->shape.mass - rigidBody->shape.mass) / (rigidBody2->shape.mass + rigidBody->shape.mass)) * prev_velocity_rigidBody2.y);
-
-						rigidBody->linear_velocity.x = (((rigidBody->shape.mass - rigidBody2->shape.mass) / (rigidBody->shape.mass + rigidBody2->shape.mass)) * prev_velocity_rigidBody.x + (2 * rigidBody2->shape.mass * prev_velocity_rigidBody2.x) / (rigidBody->shape.mass + rigidBody2->shape.mass));
-						rigidBody->linear_velocity.y = (((rigidBody->shape.mass - rigidBody2->shape.mass) / (rigidBody->shape.mass + rigidBody2->shape.mass)) * prev_velocity_rigidBody.y + (2 * rigidBody2->shape.mass * prev_velocity_rigidBody2.y) / (rigidBody->shape.mass + rigidBody2->shape.mass));
-
-						if (rigidBody->linear_velocity.x > 80.0f)
-							rigidBody->linear_velocity.x = 80.0f;
-						if (rigidBody->linear_velocity.x < -80.0f)
-							rigidBody->linear_velocity.x = -80.0f;
-						if (rigidBody->linear_velocity.y > 80.0f)
-							rigidBody->linear_velocity.y = 80.0f;
-						if (rigidBody->linear_velocity.y < -80.0f)
-							rigidBody->linear_velocity.y = -80.0f;
-
-						if (rigidBody2->linear_velocity.x > 80.0f)
-							rigidBody2->linear_velocity.x = 80.0f;
-						if (rigidBody2->linear_velocity.x < -80.0f)
-							rigidBody2->linear_velocity.x = -80.0f;
-						if (rigidBody2->linear_velocity.y > 80.0f)
-							rigidBody2->linear_velocity.y = 80.0f;
-						if (rigidBody2->linear_velocity.y < -80.0f)
-							rigidBody2->linear_velocity.y = -80.0f;
-
-						rigidBody->linear_acceleration.x = rigidBody->linear_velocity.x / dt;
-						rigidBody->linear_acceleration.y = rigidBody->linear_velocity.y / dt;
+			int r2_positive_negative_x = 1;
+			int r2_positive_negative_y = 1;
 
 
-						rigidBody->force.x = rigidBody->linear_acceleration.x * rigidBody->shape.mass;
-						rigidBody->force.y = rigidBody->linear_acceleration.y * rigidBody->shape.mass;
-
-
-
-						rigidBody2->linear_acceleration.x = rigidBody2->linear_velocity.x / dt;
-						rigidBody2->linear_acceleration.y = rigidBody2->linear_velocity.y / dt;
-
-						rigidBody2->force.x = rigidBody2->linear_acceleration.x * rigidBody2->shape.mass;
-						rigidBody2->force.y = rigidBody2->linear_acceleration.y * rigidBody2->shape.mass;
-
-						rigidBody2->position.x += rigidBody2->linear_velocity.x * dt;
-						rigidBody2->position.y += rigidBody2->linear_velocity.y * dt;
-						update_min_max(rigidBody2);
-
-						rigidBody2->collided = true;
-
-
-
-					}
-
-				}
-
-				if (rigidBody->collided == false) {
-					rigidBody->position.x += rigidBody->linear_velocity.x * dt;
-					rigidBody->position.y += rigidBody->linear_velocity.y * dt;
-				}
-				float angularAcceleration = rigidBody->torque / rigidBody->shape.momentofInertia;
-				rigidBody->angular_velocity += angularAcceleration * dt;
-				rigidBody->angle += rigidBody->angular_velocity * dt;
-				if (rigidBody->linear_velocity.x > 80.0f)
-					rigidBody->linear_velocity.x = 80.0f;
-				if (rigidBody->linear_velocity.x < -80.0f)
-					rigidBody->linear_velocity.x = -80.0f;
-				if (rigidBody->linear_velocity.y > 80.0f)
-					rigidBody->linear_velocity.y = 80.0f;
-				if (rigidBody->linear_velocity.y < -80.0f)
-					rigidBody->linear_velocity.y = -80.0f;
-
-				if (rigidBody->position.x <= 0)
-				{
-					rigidBody->force.x *= -1;
-					rigidBody->linear_acceleration.x *= -1;
-					rigidBody->linear_velocity.x *= -1;
-				}
-				if (rigidBody->position.x >= window_w)
-				{
-					rigidBody->force.x *= -1;
-					rigidBody->linear_acceleration.x *= -1;
-					rigidBody->linear_velocity.x *= -1;
-				}
-				if (rigidBody->position.y <= 0)
-				{
-					rigidBody->force.y *= -1;
-					rigidBody->linear_acceleration.y *= -1;
-					rigidBody->linear_velocity.y *= -1;
-				}
-				if (rigidBody->position.y >= window_h)
-				{
-					rigidBody->force.y *= -1;
-					rigidBody->linear_acceleration.y *= -1;
-					rigidBody->linear_velocity.y *= -1;
-				}
-				update_min_max(rigidBody);
-
-			}
-
-			for (int i = 0; i < NUM_RIGID_BODIES; i++) {
-				RigidBody *rigidBody = &rigidBodies[i];
-				rigidBody->collided = false;
-
-			}
 
 			t += dt;
 			accumulator -= dt;
@@ -365,7 +387,7 @@ int system_main() { // Entry point
 		gfx_viewport(0, 0, framebuffer_w, framebuffer_h);
 
 		im_begin(view);
-		PrintRigidBodies();
+
 		//{
 		//	const Vec4  line_color       = vec4(0.2f, 0.2f, 0.2f, 1.0f);
 		//	const float x_line_thickness = world_width_half / framebuffer_w;
