@@ -1,17 +1,14 @@
 #pragma once
 #include "lin_maths_types.h"
 
-#define to_radians(deg)       ((deg) * (MATH_PI / 180.0f))
-#define to_degrees(rad)       ((rad) * (180.0f / MATH_PI_INVERSE))
-#define sgn(n)                ((r32)(0 < (n)) - (r32)((n) < 0))
-#define min_value(a, b)       (((a) < (b)) ? (a) : (b))
-#define max_value(a, b)       (((a) > (b)) ? (a) : (b))
-#define clamp(min, max, v)    min_value(max, max_value(min, v))
-#define r32_equals(a, b, tol) (fabsf((a) - (b)) < (tol))
-
-inline r32 clamp01(r32 v) {
-	return clamp(0.0f, 1.0f, v);
-}
+#define ToRadians(deg)       ((deg) * (MATH_PI / 180.0f))
+#define ToDegrees(rad)       ((rad) * (180.0f / MATH_PI_INVERSE))
+#define Sgn(n)                ((r32)(0 < (n)) - (r32)((n) < 0))
+#define GetMinValue(a, b)       (((a) < (b)) ? (a) : (b))
+#define GetMaxValue(a, b)       (((a) > (b)) ? (a) : (b))
+#define Clamp(min, max, v)    GetMinValue(max, GetMaxValue(min, v))
+#define RealEquals(a, b, tol) (fabsf((a) - (b)) < (tol))
+#define Clamp01(v) Clamp(0.0f, 1.0f, v)
 
 inline r32 map(r32 from_x1, r32 from_x2, r32 to_x1, r32 to_x2, r32 x) {
 	return (to_x2 - to_x1) / (from_x2 - from_x1) * (x - from_x1) + to_x1;
@@ -21,9 +18,87 @@ inline r32 map01(r32 x1, r32 x2, r32 x) {
 	return map(x1, x2, 0, 1, x);
 }
 
-const Vec3 WORLD_UP      = vec3(0, 0, 1);
+inline Vec2 vec2_min(Vec2 a, Vec2 b) {
+	Vec2 r;
+	r.x = GetMinValue(a.x, b.x);
+	r.y = GetMinValue(a.y, b.y);
+	return r;
+}
+
+inline Vec3 vec3_min(Vec3 a, Vec3 b) {
+	Vec3 r;
+	r.x = GetMinValue(a.x, b.x);
+	r.y = GetMinValue(a.y, b.y);
+	r.z = GetMinValue(a.z, b.z);
+	return r;
+}
+
+inline Vec4 vec4_min(Vec4 a, Vec4 b) {
+	Vec4 r;
+	r.x = GetMinValue(a.x, b.x);
+	r.y = GetMinValue(a.y, b.y);
+	r.z = GetMinValue(a.z, b.z);
+	r.w = GetMinValue(a.w, b.w);
+	return r;
+}
+
+inline bool operator ==(Vec2 a, Vec2 b) {
+	return a.x == b.x && a.y == b.y;
+}
+inline bool operator !=(Vec2 a, Vec2 b) {
+	return !(a == b);
+}
+
+inline bool operator ==(Vec3 a, Vec3 b) {
+	return a.x == b.x && a.y == b.y && a.z == b.z;
+}
+inline bool operator !=(Vec3 a, Vec3 b) {
+	return !(a == b);
+}
+
+inline bool operator ==(Vec4 a, Vec4 b) {
+	return a.x == b.x && a.y == b.y && a.z == b.z && a.w == b.w;
+}
+inline bool operator !=(Vec4 a, Vec4 b) {
+	return !(a == b);
+}
+
+inline bool operator ==(Vec2s a, Vec2s b) {
+	return a.x == b.x && a.y == b.y;
+}
+inline bool operator !=(Vec2s a, Vec2s b) {
+	return !(a == b);
+}
+
+inline bool operator ==(Vec3s a, Vec3s b) {
+	return a.x == b.x && a.y == b.y && a.z == b.z;
+}
+inline bool operator !=(Vec3s a, Vec3s b) {
+	return !(a == b);
+}
+
+inline bool operator ==(Vec4s a, Vec4s b) {
+	return a.x == b.x && a.y == b.y && a.z == b.z && a.w == b.w;
+}
+inline bool operator !=(Vec4s a, Vec4s b) {
+	return !(a == b);
+}
+
+inline Vec2 to_vec2(Vec2s v) {
+	return vec2((r32)v.x, (r32)v.y);
+}
+
+inline Vec3 to_vec3(Vec3s v) {
+	return vec3((r32)v.x, (r32)v.y, (r32)v.z);
+}
+
+inline Vec4 to_vec4(Vec4s v) {
+	return vec4((r32)v.x, (r32)v.y, (r32)v.z, (r32)v.w);
+}
+
+const Vec3 WORLD_UP      = vec3(0, 1, 0);
 const Vec3 WORLD_RIGHT   = vec3(1, 0, 0);
-const Vec3 WORLD_FORWARD = vec3(0, 1, 0);
+const Vec3 WORLD_FORWARD = vec3(0, 0, 1);
 
 Vec2  vec2_add(Vec2 a, Vec2 b);
 Vec3  vec3_add(Vec3 a, Vec3 b);
@@ -86,22 +161,22 @@ Vec4s vec4s_hadamard(Vec4s l, Vec4s r);
 //
 //
 
-inline Vec2 operator-(Vec2 &v) {
+inline Vec2 operator-(const Vec2 &v) {
 	return vec2(-v.x, -v.y);
 }
-inline Vec3 operator-(Vec3 &v) {
+inline Vec3 operator-(const Vec3 &v) {
 	return vec3(-v.x, -v.y, -v.z);
 }
-inline Vec4 operator-(Vec4 &v) {
+inline Vec4 operator-(const Vec4 &v) {
 	return vec4(-v.x, -v.y, -v.z, -v.w);
 }
-inline Vec2s operator-(Vec2s &v) {
+inline Vec2s operator-(const Vec2s &v) {
 	return vec2s(-v.x, -v.y);
 }
-inline Vec3s operator-(Vec3s &v) {
+inline Vec3s operator-(const Vec3s &v) {
 	return vec3s(-v.x, -v.y, -v.z);
 }
-inline Vec4s operator-(Vec4s &v) {
+inline Vec4s operator-(const Vec4s &v) {
 	return vec4s(-v.x, -v.y, -v.z, -v.w);
 }
 
@@ -384,8 +459,11 @@ r32 vec2_angle_between(Vec2 a, Vec2 b);
 r32 vec2_angle_between_normalize(Vec2 a, Vec2 b);
 r32 vec3_angle_between(Vec3 a, Vec3 b);
 r32 vec3_angle_between_normalize(Vec3 a, Vec3 b);
-r32 vec4_angle_between(Vec4 a, Vec4 b);
-r32 vec4_angle_between_normalize(Vec4 a, Vec4 b);
+
+r32 vec2_signed_angle_between(Vec2 a, Vec2 b);
+r32 vec2_signed_angle_between_normalize(Vec2 a, Vec2 b);
+r32 vec3_signed_angle_between(Vec3 a, Vec3 b, Vec3 n);
+r32 vec3_signed_angle_between_normalize(Vec3 a, Vec3 b, Vec3 n);
 
 //
 //
@@ -612,7 +690,6 @@ Type slerp(Type from, Type to, r32 angle, r32 t) {
 Mat4 lerp(Mat4 &from, Mat4 &to, r32 t);
 Vec2 slerp(Vec2 from, Vec2 to, r32 t);
 Vec3 slerp(Vec3 from, Vec3 to, r32 t);
-Vec4 slerp(Vec4 from, Vec4 to, r32 t);
 Quat slerp(Quat from, Quat to, r32 t);
 
 r32  step(r32 edge, r32 val);
@@ -632,17 +709,16 @@ r32 inverse_smoothstep(r32 x);
 //
 //
 
-r32  move_toward(r32 from, r32 to, r32 factor);
 Vec2 move_toward(Vec2 from, Vec2 to, r32 factor);
 Vec3 move_toward(Vec3 from, Vec3 to, r32 factor);
 Vec4 move_toward(Vec4 from, Vec4 to, r32 factor);
-Quat move_toward(Quat from, Quat to, r32 factor);
 
 //
 //
 //
 
 Vec2 rotate_around(Vec2 point, Vec2 center, r32 angle);
+Quat rotate_toward(Quat from, Quat to, r32 max_angle);
 
 //
 //
@@ -671,5 +747,7 @@ inline T integrate_rk4(const T &x, r32 t, r32 h, Function f) {
 //
 //
 
-bool point_inside_rect(Mm_Rect rect, Vec2 point);
+bool point_inside_rect(Vec2 point, Mm_Rect rect);
 bool aabb_vs_aabb(const Mm_Rect &a, const Mm_Rect &b);
+bool ray_vs_aabb(Vec2 origin, Vec2 direction, const Mm_Rect &rect, Ray_Hit *hit);
+bool ray_vs_line(Vec2 p1, Vec2 q1, Vec2 p2, Vec2 q2, Ray_Hit *t);

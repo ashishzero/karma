@@ -7,7 +7,7 @@
 //
 //
 
-enum Key : u32 {
+enum Key : u8 {
 	Key_UNKNOWN = 0,
 	Key_A,
 	Key_B,
@@ -95,7 +95,7 @@ enum Key : u32 {
 	Key_COUNT
 };
 
-enum Key_Mod : u32 {
+enum Key_Mod : u8 {
 	Key_Mod_NONE        = bit(0),
 	Key_Mod_LEFT_SHIFT  = bit(1),
 	Key_Mod_RIGHT_SHIFT = bit(2),
@@ -108,9 +108,9 @@ enum Key_Mod : u32 {
 	Key_Mod_ALT   = Key_Mod_LEFT_ALT | Key_Mod_RIGHT_ALT,
 	Key_Mod_SHIFT = Key_Mod_LEFT_SHIFT | Key_Mod_RIGHT_SHIFT,
 };
-typedef u32 Key_Mods;
+typedef u8 Key_Mods;
 
-enum Button : u32 {
+enum Button : u8 {
 	Button_UNKNOWN,
 	Button_LEFT,
 	Button_MIDDLE,
@@ -119,6 +119,38 @@ enum Button : u32 {
 	Button_X2,
 
 	Button_COUNT
+};
+
+typedef u8 Controller_Id;
+
+enum Controller_Button : u8 {
+	Controller_Button_DPAD_UP,
+	Controller_Button_DPAD_DOWN,
+	Controller_Button_DPAD_LEFT,
+	Controller_Button_DPAD_RIGHT,
+	Controller_Button_START,
+	Controller_Button_BACK,
+	Controller_Button_LTHUMB,
+	Controller_Button_RTHUMB,
+	Controller_Button_LSHOULDER,
+	Controller_Button_RSHOULDER,
+	Controller_Button_A,
+	Controller_Button_B,
+	Controller_Button_X,
+	Controller_Button_Y,
+
+	Controller_Button_COUNT,
+};
+
+enum Controller_Axis : u8 {
+	Controller_Axis_LTHUMB_X,
+	Controller_Axis_LTHUMB_Y,
+	Controller_Axis_RTHUMB_X,
+	Controller_Axis_RTHUMB_Y,
+	Controller_Axis_LTRIGGER,
+	Controller_Axis_RTRIGGER,
+
+	Controller_Axis_COUNT
 };
 
 //
@@ -148,27 +180,29 @@ enum Event_Type : u32 {
 
 	Event_Type_TEXT_INPUT = bit(12),
 
-	Event_Type_CONTROLLER_JOIN  = bit(13),
-	Event_Type_CONTROLLER_LEAVE = bit(14),
-	Event_Type_CONTROLLER       = Event_Type_CONTROLLER_JOIN | Event_Type_CONTROLLER_LEAVE,
+	Event_Type_CONTROLLER_JOIN		= bit(13),
+	Event_Type_CONTROLLER_LEAVE		= bit(14),
+	Event_Type_CONTROLLER_BUTTON	= bit(15),
+	Event_Type_CONTROLLER_AXIS		= bit(16),
+	Event_Type_CONTROLLER       = Event_Type_CONTROLLER_JOIN | Event_Type_CONTROLLER_LEAVE | Event_Type_CONTROLLER_BUTTON | Event_Type_CONTROLLER_AXIS,
 };
 typedef u32 Event_Types;
 
-enum State {
-	State_UP   = 0,
-	State_DOWN = 1
+enum Key_State : u8 {
+	Key_State_UP   = 0,
+	Key_State_DOWN = 1
 };
 
 struct Key_Event {
-	Key   symbol;
-	State state;
-	u32   repeat;
+	Key			symbol;
+	Key_State	state;
+	u8			repeat;
 };
 
 struct Mouse_Button_Event {
-	Vec2s  position;
-	Button symbol;
-	State  state;
+	Vec2s		position;
+	Button		symbol;
+	Key_State	state;
 };
 
 struct Mouse_Wheel_Event {
@@ -181,6 +215,7 @@ struct Mouse_Cursor_Event {
 
 struct Mouse_Axis_Event {
 	r32 x, y;
+	s32 dx, dy;
 };
 
 struct Window_Resize_Event {
@@ -191,22 +226,36 @@ struct Text_Event {
 	Utf32_Codepoint codepoint;
 };
 
-struct Controller_Event {
-	u32 index;
+struct Controller_Device_Event {
+	Controller_Id id;
+};
+
+struct Controller_Button_Event {
+	Controller_Button	symbol;
+	Key_State			state;
+	Controller_Id		id;
+};
+
+struct Controller_Axis_Event {
+	r32				value;
+	Controller_Axis	symbol;
+	Controller_Id	id;
 };
 
 struct Event {
 	Event_Types type;
 
 	union {
-		Key_Event           key;
-		Mouse_Button_Event  mouse_button;
-		Mouse_Wheel_Event   mouse_wheel;
-		Mouse_Cursor_Event  mouse_cursor;
-		Mouse_Axis_Event    mouse_axis;
-		Window_Resize_Event window;
-		Text_Event          text;
-		Controller_Event    controller;
+		Key_Event					key;
+		Mouse_Button_Event			mouse_button;
+		Mouse_Wheel_Event			mouse_wheel;
+		Mouse_Cursor_Event			mouse_cursor;
+		Mouse_Axis_Event			mouse_axis;
+		Window_Resize_Event			window;
+		Text_Event					text;
+		Controller_Device_Event		controller_device;
+		Controller_Button_Event		controller_button;
+		Controller_Axis_Event		controller_axis;
 	};
 
 	inline Event() {
@@ -214,31 +263,9 @@ struct Event {
 	}
 };
 
-enum Gamepad {
-	Gamepad_DPAD_UP,
-	Gamepad_DPAD_DOWN,
-	Gamepad_DPAD_LEFT,
-	Gamepad_DPAD_RIGHT,
-	Gamepad_START,
-	Gamepad_BACK,
-	Gamepad_LTHUMB,
-	Gamepad_RTHUMB,
-	Gamepad_LSHOULDER,
-	Gamepad_RSHOULDER,
-	Gamepad_A,
-	Gamepad_B,
-	Gamepad_X,
-	Gamepad_Y,
-
-	Gamepad_COUNT,
-};
-
 struct Controller {
-	State buttons[Gamepad_COUNT];
-	r32   left_trigger;
-	r32   right_trigger;
-	Vec2  left_thumb;
-	Vec2  right_thumb;
+	Key_State	buttons[Controller_Button_COUNT];
+	r32			axis[Controller_Axis_COUNT];
 };
 
 //
@@ -247,7 +274,6 @@ struct Controller {
 struct System_Find_File_Info {
 	String path;
 	String name;
-	String extension;
 	u64    size;
 };
 
@@ -305,8 +331,6 @@ enum Cursor_Kind {
 //
 //
 
-typedef int (*Thread_Proc)(void *arg);
-
 enum Thread_Wait {
 	Thread_Wait_ABANDONED,
 	Thread_Wait_OBJECT_0,
@@ -336,6 +360,44 @@ struct System_Info {
 	u32                    allocation_granularity;
 };
 
+enum Virtual_Memory_Flag_Bit {
+	Virtual_Memory_COMMIT     = 0x1,
+	Virtual_Memory_RESERVE    = 0x2,
+	Virtual_Memory_RESET      = 0x4,
+	Virtual_Memory_UNDO_RESET = 0x8,
+	Virtual_Memory_DECOMMIT   = 0x10,
+	Virtual_Memory_RELEASE    = 0x20,
+};
+typedef u32 Vitual_Memory_Flags;
+
+constexpr u32 WAIT_INFINITE = 0xFFFFFFFF;
+
+enum Wait_Result {
+	Wait_Result_SUCCESS,
+	Wait_Result_ABANDONED,
+	Wait_Result_SIGNALED,
+	Wait_Result_TIMEOUT,
+	Wait_Result_FAILED
+};
+
+//
+//
+//
+
+typedef void * System_Audio_Handle;
+
+typedef u8 *(*System_Lock_Audio)(System_Audio_Handle audio, u32 *sample_count);
+typedef void(*System_Unlock_Audio)(System_Audio_Handle audio, u32 samples_written);
+
+struct System_Audio {
+	System_Audio_Handle		handle;
+	System_Lock_Audio		lock;
+	System_Unlock_Audio		unlock;
+};
+
+typedef void(*Audio_Callback)(const System_Audio &sys_audio, void *user_data);
+typedef void(*Audio_Device_Refresh)(u32 sample_rate, u32 channel_count, void *user_data);
+
 //
 //
 //
@@ -343,6 +405,8 @@ constexpr int SYSTEM_ENABLE  = 1;
 constexpr int SYSTEM_DISABLE = 0;
 constexpr int SYSTEM_TOGGLE  = 2;
 constexpr int SYSTEM_QUERY   = -1;
+
+constexpr u32 SYSTEM_AUDIO_BUFFER_SIZE_IN_MILLISECS = 1000;
 
 enum {
 	LOG_INFO,
@@ -360,7 +424,7 @@ bool           system_write_entire_file(const String path, Array_View<u8> conten
 bool system_open_file(const String path, File_Operation op, System_File *file);
 void system_close_file(System_File *file);
 
-Array_View<System_Find_File_Info> system_find_files(const String directory, bool recursive);
+Array_View<System_Find_File_Info> system_find_files(const String directory, const String extension, bool recursive);
 
 Vec2s system_get_primary_monitor_size();
 Vec2s system_get_client_size();
@@ -389,21 +453,58 @@ Handle system_create_window(const char *title, s32 width, s32 height, System_Win
 void   system_request_quit();
 void   system_exit_process(int result);
 
-bool system_poll_events(Event *event);
+bool system_audio(Audio_Callback callback, Audio_Device_Refresh refresh, void *user_data);
+u32 system_audio_sample_rate();
+u32 system_audio_channel_count();
+void system_audio_resume();
+void system_audio_pause();
 
-State    system_button(Button button);
-Key_Mods system_get_key_mods();
-Vec2s    system_get_cursor_position();
+typedef void * Socket;
+const Socket SOCKET_INVALID = (Socket)MAX_UINT64;
+
+struct Socket_Address {
+	u32 address;
+	u16 port;
+};
+
+inline Socket_Address socket_address(u8 a, u8 b, u8 c, u8 d, u16 port) {
+	Socket_Address sock_addr;
+	sock_addr.address = (( a << 24 ) | ( b << 16 ) | ( c << 8  ) | d);
+	sock_addr.port = port;
+	return sock_addr;
+}
+
+inline Socket_Address socket_address_local(u16 port) {
+	return socket_address(127, 0, 0, 1, port);
+}
+
+bool system_net_startup();
+void system_net_cleanup();
+bool system_net_set_socket_nonblocking(Socket sock);
+Socket system_net_open_udp_server(Socket_Address address);
+Socket system_net_open_udp_client();
+s32 system_net_send_to(Socket sock, void * buffer, s32 length, Socket_Address address);
+s32 system_net_receive_from(Socket sock, void * packet_buffer, s32 max_packet_size, Socket_Address *address);
+void system_net_close_socket(Socket sock);
+
+const Array_View<Event> system_poll_events(int poll_count = 1);
+
+Key_State system_button(Button button);
+Key_State system_key(Key key);
+Key_Mods  system_get_key_mods();
+Vec2s	  system_get_cursor_position_vec2s();
+Vec2s	  system_get_cursor_position_y_inverted_vec2s();
+Vec2      system_get_cursor_position();
+Vec2      system_get_cursor_position_y_inverted();
 
 u32               system_max_controllers();
-bool              system_controller_is_available(u32 index);
-void              system_controller_vibrate(u32 index, r32 left_motor, r32 right_motor);
-const Controller &system_get_controller_state(u32 index);
-State             system_controller_button(u32 index, Gamepad button);
-r32               system_controller_left_trigger(u32 index);
-r32               system_controller_right_trigger(u32 index);
-Vec2              system_controller_left_thumb(u32 index);
-Vec2              system_controller_right_thumb(u32 index);
+bool              system_controller_is_available(Controller_Id id);
+void              system_controller_vibrate(Controller_Id id, r32 left_motor, r32 right_motor);
+const Controller &system_get_controller_state(Controller_Id id);
+Key_State         system_controller_button(Controller_Id id, Controller_Button button);
+r32				  system_controller_axis(Controller_Id id, Controller_Axis axis);
+Vec2              system_controller_left_thumb(Controller_Id id);
+Vec2              system_controller_right_thumb(Controller_Id id);
 
 u64 system_get_counter();
 u64 system_get_frequency();
@@ -412,18 +513,25 @@ void system_fatal_error(const String msg);
 void system_display_critical_message(const String msg);
 
 void *system_allocator(Allocation_Type type, ptrsize size, void *ptr, void *user_ptr);
+void *system_virtual_alloc(void *address, ptrsize size, Vitual_Memory_Flags flags);
+void  system_virtual_free(void *ptr, ptrsize size, Vitual_Memory_Flags flags);
 
-Handle      system_thread_create(Thread_Proc proc, void *arg, ptrsize temporary_memory_size = TEMPORARY_MEMORY_SIZE, String name = String((char *)0, 0));
-void        system_thread_run(Handle handle);
-Thread_Wait system_thread_wait(Handle handle, u32 millisecs);
-void        system_thread_terminate(Handle handle, int exit_code);
+bool		system_thread_create(Thread_Proc proc, void *arg, Allocator allocator, ptrsize temporary_memory_size, String name, Thread_Context *thread);
+void        system_thread_run(Thread_Context &thread);
+Thread_Wait system_thread_wait(Thread_Context &thread, u32 millisecs);
+void        system_thread_terminate(Thread_Context &thread, int exit_code);
 void        system_thread_exit(int exit_code);
+
+Handle      system_create_mutex();
+void        system_destory_mutex(Handle handle);
+Wait_Result system_lock_mutex(Handle handle, u32 millisecs);
+void        system_unlock_mutex(Handle handle);
 
 int system_main();
 
 void system_log(int type, const char *title, ANALYSE_PRINTF_FORMAT_STRING(const char *fmt), ...) ANALYSE_PRINTF_FORMAT(3, 4);
 
-#if defined(BUILD_DEBUG) || defined(BUILD_DEVELOPER)
+#if defined(BUILD_DEBUG) || defined(BUILD_DEBUG_FAST)
 #	define system_trace(fmt, ...) system_log(LOG_INFO, "Trace", fmt, ##__VA_ARGS__)
 #	define system_assert(exp, fmt, ...)                                                                                                \
 		if (!exp) {                                                                                                                     \

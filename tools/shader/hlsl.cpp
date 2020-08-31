@@ -34,12 +34,12 @@ bool hlsl_compile_shader(const char *name, String src, Shader_Code *out, const c
 
 	if (success) {
 		out->vertex.count = (s64)vs_code->GetBufferSize();
-		out->vertex.data  = (utf8 *)mallocate(vs_code->GetBufferSize());
+		out->vertex.data  = (utf8 *)memory_allocate(vs_code->GetBufferSize());
 		memcpy(out->vertex.data, vs_code->GetBufferPointer(), vs_code->GetBufferSize());
 		vs_code->Release();
 
 		out->pixel.count = (s64)ps_code->GetBufferSize();
-		out->pixel.data  = (utf8 *)mallocate(ps_code->GetBufferSize());
+		out->pixel.data  = (utf8 *)memory_allocate(ps_code->GetBufferSize());
 		memcpy(out->pixel.data, ps_code->GetBufferPointer(), ps_code->GetBufferSize());
 		ps_code->Release();
 	}

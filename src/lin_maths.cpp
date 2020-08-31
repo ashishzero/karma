@@ -224,21 +224,21 @@ Vec4 vec4_normalize_check(Vec4 v) {
 Vec2 vec2_normalize(Vec2 v) {
 	Vec2 res = {};
 	r32  len = vec2_length(v);
-	assert(len > EPSILON_FLOAT);
+	assert(len != 0);
 	res = v / len;
 	return res;
 }
 Vec3 vec3_normalize(Vec3 v) {
 	Vec3 res = {};
 	r32  len = vec3_length(v);
-	assert(len > EPSILON_FLOAT);
+	assert(len != 0);
 	res = v / len;
 	return res;
 }
 Vec4 vec4_normalize(Vec4 v) {
 	Vec4 res = {};
 	r32  len = vec4_length(v);
-	assert(len > EPSILON_FLOAT);
+	assert(len != 0);
 	res = v * (1.0f / len);
 	return res;
 }
@@ -248,8 +248,7 @@ Vec4 vec4_normalize(Vec4 v) {
 //
 
 r32 vec2_angle_between(Vec2 a, Vec2 b) {
-	r32 dot = vec2_dot(a, b);
-	dot     = clamp(-1.0f, 1.0f, dot);
+	r32 dot = Clamp(-1.0f, 1.0f, vec2_dot(a, b));
 	return acosf(dot);
 }
 r32 vec2_angle_between_normalize(Vec2 a, Vec2 b) {
@@ -258,8 +257,7 @@ r32 vec2_angle_between_normalize(Vec2 a, Vec2 b) {
 	return vec2_angle_between(a, b);
 }
 r32 vec3_angle_between(Vec3 a, Vec3 b) {
-	r32 dot = vec3_dot(a, b);
-	dot     = clamp(-1.0f, 1.0f, dot);
+	r32 dot = Clamp(-1.0f, 1.0f, vec3_dot(a, b));
 	return acosf(dot);
 }
 r32 vec3_angle_between_normalize(Vec3 a, Vec3 b) {
@@ -267,15 +265,35 @@ r32 vec3_angle_between_normalize(Vec3 a, Vec3 b) {
 	b = vec3_normalize(b);
 	return vec3_angle_between(a, b);
 }
-r32 vec4_angle_between(Vec4 a, Vec4 b) {
-	r32 dot = vec4_dot(a, b);
-	dot     = clamp(-1.0f, 1.0f, dot);
-	return acosf(dot);
+
+r32 vec2_signed_angle_between(Vec2 a, Vec2 b) {
+	r32 dot = Clamp(-1.0f, 1.0f, vec2_dot(a, b));
+	r32 angle = acosf(dot);
+	r32 cross = a.x * b.y - a.y * b.x;
+	if (cross < 0) {
+		angle = -angle;
+	}
+	return angle;
 }
-r32 vec4_angle_between_normalize(Vec4 a, Vec4 b) {
-	a = vec4_normalize(a);
-	b = vec4_normalize(b);
-	return vec4_angle_between(a, b);
+r32 vec2_signed_angle_between_normalize(Vec2 a, Vec2 b) {
+	a = vec2_normalize(a);
+	b = vec2_normalize(b);
+	return vec2_signed_angle_between(a, b);
+}
+r32 vec3_signed_angle_between(Vec3 a, Vec3 b, Vec3 n) {
+	r32 dot = Clamp(-1.0f, 1.0f, vec3_dot(a, b));
+	r32 angle = acosf(dot);
+	Vec3 cross = vec3_cross(a, b);
+	if (vec3_dot(n, cross) < 0) {
+		angle = -angle;
+	}
+	return angle;
+}
+r32 vec3_signed_angle_between_normalize(Vec3 a, Vec3 b, Vec3 n) {
+	a = vec3_normalize(a);
+	b = vec3_normalize(b);
+	n = vec3_normalize(n);
+	return vec3_signed_angle_between(a, b, n);
 }
 
 //
@@ -283,13 +301,13 @@ r32 vec4_angle_between_normalize(Vec4 a, Vec4 b) {
 //
 
 bool vec2_equals(Vec2 a, Vec2 b, r32 tolerance) {
-	return r32_equals(a.x, b.x, tolerance) && r32_equals(a.y, b.y, tolerance);
+	return RealEquals(a.x, b.x, tolerance) && RealEquals(a.y, b.y, tolerance);
 }
 bool vec3_equals(Vec3 a, Vec3 b, r32 tolerance) {
-	return r32_equals(a.x, b.x, tolerance) && r32_equals(a.y, b.y, tolerance) && r32_equals(a.z, b.z, tolerance);
+	return RealEquals(a.x, b.x, tolerance) && RealEquals(a.y, b.y, tolerance) && RealEquals(a.z, b.z, tolerance);
 }
 bool vec4_equals(Vec4 a, Vec4 b, r32 tolerance) {
-	return r32_equals(a.x, b.x, tolerance) && r32_equals(a.y, b.y, tolerance) && r32_equals(a.z, b.z, tolerance) && r32_equals(a.w, b.w, tolerance);
+	return RealEquals(a.x, b.x, tolerance) && RealEquals(a.y, b.y, tolerance) && RealEquals(a.z, b.z, tolerance) && RealEquals(a.w, b.w, tolerance);
 }
 
 //
@@ -706,8 +724,8 @@ Mat4 mat4_perspective_gl(r32 fov, r32 aspect_ratio, r32 n, r32 f) {
 	Mat4 m;
 	m.rows[0] = vec4(cot / aspect_ratio, 0.0f, 0.0f, 0.0f);
 	m.rows[1] = vec4(0.0f, cot, 0.0f, 0.0f);
-	m.rows[2] = vec4(0.0f, 0.0f, fpn / fmn, -2.0f * f * n / fmn);
-	m.rows[3] = vec4(0.0f, 0.0f, 1.0f, 0.0f);
+	m.rows[2] = vec4(0.0f, 0.0f, -fpn / fmn, -2.0f * f * n / fmn);
+	m.rows[3] = vec4(0.0f, 0.0f, -1.0f, 0.0f);
 	return m;
 }
 
@@ -726,8 +744,8 @@ Mat4 mat4_perspective_dx(r32 fov, r32 aspect_ratio, r32 n, r32 f) {
 	Mat4 m;
 	m.rows[0] = vec4(cot / aspect_ratio, 0.0f, 0.0f, 0.0f);
 	m.rows[1] = vec4(0.0f, cot, 0.0f, 0.0f);
-	m.rows[2] = vec4(0.0f, 0.0f, f / fmn, - f * n / fmn);
-	m.rows[3] = vec4(0.0f, 0.0f, 1.0f, 0.0f);
+	m.rows[2] = vec4(0.0f, 0.0f, -f / fmn, -f * n / fmn);
+	m.rows[3] = vec4(0.0f, 0.0f, -1.0f, 0.0f);
 	return m;
 }
 
@@ -803,7 +821,7 @@ r32 quat_length(Quat q) {
 
 Quat quat_normalize(Quat q) {
 	r32 len = quat_length(q);
-	assert(len > EPSILON_FLOAT);
+	assert(len != 0);
 	return q * (1.0f / len);
 }
 
@@ -852,7 +870,7 @@ Quat quat_angle_axis_normalize(Vec3 axis, r32 angle) {
 
 void quat_get_angle_axis(Quat q, r32 *angle, Vec3 *axis) {
 	r32 len = sqrtf(q.i * q.i + q.j * q.j + q.k * q.k);
-	if (len > EPSILON_FLOAT) {
+	if (len) {
 		*angle  = 2.0f * atan2f(len, q.real);
 		len     = 1.0f / len;
 		axis->x = q.i * len;
@@ -1032,7 +1050,12 @@ Vec3 quat_get_euler_angles(Quat q) {
 Quat quat_between(Vec3 from, Vec3 to) {
 	Quat q;
 	q.v4.w   = 1.0f + vec3_dot(from, to);
-	q.v4.xyz = vec3_cross(from, to);
+
+	if (q.real) {
+		q.v4.xyz = vec3_cross(from, to);
+	} else {
+		q.v4.xyz = fabsf(from.x) > fabsf(from.z) ? vec3(-from.y, from.x, 0.f) : vec3(0.f, -from.z, from.y);
+	}
 
 	return quat_normalize(q);
 }
@@ -1049,10 +1072,10 @@ Quat quat_lookat(Vec3 from, Vec3 to, Vec3 world_forward) {
 }
 
 bool quat_equals(Quat a, Quat b, r32 tolerance) {
-	bool x = r32_equals(a.x, b.x, tolerance);
-	bool y = r32_equals(a.y, b.y, tolerance);
-	bool z = r32_equals(a.z, b.z, tolerance);
-	bool w = r32_equals(a.w, b.w, tolerance);
+	bool x = RealEquals(a.x, b.x, tolerance);
+	bool y = RealEquals(a.y, b.y, tolerance);
+	bool z = RealEquals(a.z, b.z, tolerance);
+	bool w = RealEquals(a.w, b.w, tolerance);
 	return x && y && z && w;
 }
 
@@ -1173,7 +1196,8 @@ Color3 hsv_to_rgb(Color3 col) {
 		case 2: res = vec3(p, v, t); break;
 		case 3: res = vec3(p, q, v); break;
 		case 4: res = vec3(t, p, v); break;
-		case 5: default: res = vec3(v, p, q); break;
+		case 5:
+		default: res = vec3(v, p, q); break;
 	}
 
 	return res;
@@ -1190,20 +1214,20 @@ Color3 rgb_to_hsv(Color3 c) {
 		auto t = b;
 		b      = g;
 		g      = t;
-		k = -1.f;
+		k      = -1.f;
 	}
 	if (r < g) {
 		auto t = g;
 		g      = r;
 		r      = t;
-		k = -2.f / 6.f - k;
+		k      = -2.f / 6.f - k;
 	}
 
 	Color3 res;
-	r32 chroma = r - (g < b ? g : b);
-	res.x = fabsf(k + (g - b) / (6.f * chroma + 1e-20f));
-	res.y = chroma / (r + 1e-20f);
-	res.z = r;
+	r32    chroma = r - (g < b ? g : b);
+	res.x         = fabsf(k + (g - b) / (6.f * chroma + 1e-20f));
+	res.y         = chroma / (r + 1e-20f);
+	res.z         = r;
 	return res;
 }
 
@@ -1220,23 +1244,23 @@ Color4 rgb_to_hsv(Color4 c) {
 //
 
 Vec2 vec2_clamp(Vec2 min, Vec2 max, Vec2 v) {
-	v.x = clamp(min.x, max.x, v.x);
-	v.y = clamp(min.y, max.y, v.y);
+	v.x = Clamp(min.x, max.x, v.x);
+	v.y = Clamp(min.y, max.y, v.y);
 	return v;
 }
 
 Vec3 vec3_clamp(Vec3 min, Vec3 max, Vec3 v) {
-	v.x = clamp(min.x, max.x, v.x);
-	v.y = clamp(min.y, max.y, v.y);
-	v.z = clamp(min.z, max.z, v.z);
+	v.x = Clamp(min.x, max.x, v.x);
+	v.y = Clamp(min.y, max.y, v.y);
+	v.z = Clamp(min.z, max.z, v.z);
 	return v;
 }
 
 Vec4 vec4_clamp(Vec4 min, Vec4 max, Vec4 v) {
-	v.x = clamp(min.x, max.x, v.x);
-	v.y = clamp(min.y, max.y, v.y);
-	v.z = clamp(min.z, max.z, v.z);
-	v.w = clamp(min.w, max.w, v.w);
+	v.x = Clamp(min.x, max.x, v.x);
+	v.y = Clamp(min.y, max.y, v.y);
+	v.z = Clamp(min.z, max.z, v.z);
+	v.w = Clamp(min.w, max.w, v.w);
 	return v;
 }
 
@@ -1261,12 +1285,8 @@ Vec3 slerp(Vec3 from, Vec3 to, r32 t) {
 	return slerp(from, to, vec3_angle_between(from, to), t);
 }
 
-Vec4 slerp(Vec4 from, Vec4 to, r32 t) {
-	return slerp(from, to, vec4_angle_between(from, to), t);
-}
-
 Quat slerp(Quat from, Quat to, r32 t) {
-	r32 dot = quat_dot(from, to);
+	r32 dot = Clamp(-1.0f, 1.0f, quat_dot(from, to));
 
 	// use shorter path
 	if (dot < 0.0f) {
@@ -1325,27 +1345,31 @@ Quat step(Quat edge, Quat val) {
 }
 
 r32 smoothstep(r32 a, r32 b, r32 x) {
-	x = clamp(0.0f, 1.0f, (x - a) / (b - a));
+	x = Clamp(0.0f, 1.0f, (x - a) / (b - a));
 	return x * x * (3 - 2 * x);
 }
 
 r32 smoothstep(Vec2 a, Vec2 b, Vec2 v) {
-	auto x = clamp(0.0f, 1.0f, vec2_distance(a, v) / vec2_distance(a, b));
+	auto x = Clamp(0.0f, 1.0f, vec2_distance(a, v) / vec2_distance(a, b));
 	return x * x * (3 - 2 * x);
 }
 
 r32 smoothstep(Vec3 a, Vec3 b, Vec3 v) {
-	auto x = clamp(0.0f, 1.0f, vec3_distance(a, v) / vec3_distance(a, b));
-	return x * x * (3 - 2 * x);
+	r32 div_distance = vec3_distance(a, b);
+	if (div_distance) {
+		auto x = Clamp(0.0f, 1.0f, vec3_distance(a, v) / div_distance);
+		return x * x * (3 - 2 * x);
+	}
+	return 1;
 }
 
 r32 smoothstep(Vec4 a, Vec4 b, Vec4 v) {
-	auto x = clamp(0.0f, 1.0f, vec4_distance(a, v) / vec4_distance(a, b));
+	auto x = Clamp(0.0f, 1.0f, vec4_distance(a, v) / vec4_distance(a, b));
 	return x * x * (3 - 2 * x);
 }
 
 r32 smoothstep(Quat a, Quat b, Quat v) {
-	auto x = clamp(0.0f, 1.0f, vec4_distance(a.v4, v.v4) / vec4_distance(a.v4, b.v4));
+	auto x = Clamp(0.0f, 1.0f, vec4_distance(a.v4, v.v4) / vec4_distance(a.v4, b.v4));
 	return x * x * (3 - 2 * x);
 }
 
@@ -1353,31 +1377,55 @@ r32 inverse_smoothstep(r32 x) {
 	return 0.5f - sinf(asinf(1.0f - 2.0f * x) / 3.0f);
 }
 
-r32 move_toward(r32 from, r32 to, r32 factor) {
-	r32 distance  = to - from;
-	r32 direction = sgn(distance);
-	return clamp(from, to, from + factor * direction);
-}
-
 Vec2 move_toward(Vec2 from, Vec2 to, r32 factor) {
-	Vec2 dir = vec2_normalize_check(to - from);
-	return vec2_clamp(from, to, from + factor * dir);
+	if (factor) {
+		Vec2 direction = to - from;
+		r32 distance = vec2_length(direction);
+
+		if (distance < factor) {
+			return to;
+		}
+
+		r32 t = factor / distance;
+
+		return lerp(to, from, t);
+	}
+
+	return from;
 }
 
 Vec3 move_toward(Vec3 from, Vec3 to, r32 factor) {
-	Vec3 dir = vec3_normalize_check(to - from);
-	return vec3_clamp(from, to, from + factor * dir);
+	if (factor) {
+		Vec3 direction = to - from;
+		r32 distance = vec3_length(direction);
+
+		if (distance < factor) {
+			return to;
+		}
+
+		r32 t = factor / distance;
+
+		return lerp(from, to, t);
+	}
+
+	return from;
 }
 
 Vec4 move_toward(Vec4 from, Vec4 to, r32 factor) {
-	Vec4 dir = vec4_normalize_check(to - from);
-	return vec4_clamp(from, to, from + factor * dir);
-}
+	if (factor) {
+		Vec4 direction = to - from;
+		r32 distance = vec4_length(direction);
 
-Quat move_toward(Quat from, Quat to, r32 factor) {
-	Quat res;
-	res.v4 = move_toward(from.v4, to.v4, factor);
-	return res;
+		if (distance < factor) {
+			return to;
+		}
+
+		r32 t = factor / distance;
+
+		return lerp(to, from, t);
+	}
+
+	return from;
 }
 
 //
@@ -1395,11 +1443,43 @@ Vec2 rotate_around(Vec2 point, Vec2 center, r32 angle) {
 	return res;
 }
 
+Quat rotate_toward(Quat from, Quat to, r32 max_angle) {
+	if (max_angle) {
+		r32 dot = Clamp(-1.0f, 1.0f, quat_dot(from, to));
+
+		// use shorter path
+		if (dot < 0.0f) {
+			to  = -to;
+			dot = -dot;
+		}
+
+		r32 theta_0 = acosf(dot);
+
+		if (theta_0 < max_angle) {
+			return to;
+		}
+
+		r32 t = max_angle / theta_0;
+
+		theta_0			= max_angle;
+		r32 theta       = theta_0 * t;
+		r32 sin_theta   = sinf(theta);
+		r32 sin_theta_0 = sinf(theta_0);
+
+		r32 s0 = cosf(theta) - dot * sin_theta / sin_theta_0;
+		r32 s1 = sin_theta / sin_theta_0;
+
+		return (s0 * from) + (s1 * to);
+	} else {
+		return from;
+	}
+}
+
 //
 //
 //
 
-bool point_inside_rect(Mm_Rect rect, Vec2 point) {
+bool point_inside_rect(Vec2 point, Mm_Rect rect) {
 	if (point.x < rect.min.x || point.y < rect.min.y) return false;
 	if (point.x > rect.max.x || point.y > rect.max.y) return false;
 	return true;
@@ -1409,4 +1489,83 @@ bool aabb_vs_aabb(const Mm_Rect &a, const Mm_Rect &b) {
 	if (a.max.x < b.min.x || a.min.x > b.max.x) return false;
 	if (a.max.y < b.min.y || a.min.y > b.max.y) return false;
 	return true;
+}
+
+bool ray_vs_aabb(Vec2 origin, Vec2 direction, const Mm_Rect &rect, Ray_Hit *hit) {
+	Vec2 i_direction;
+	i_direction.x = 1.0f / direction.x;
+	i_direction.y = 1.0f / direction.y;
+	Vec2 near_t = vec2_hadamard(rect.min - origin, i_direction);
+	Vec2 far_t  = vec2_hadamard(rect.max - origin, i_direction);
+
+	r32 temp;
+
+	if (near_t.x > far_t.x) {
+		temp = near_t.x;
+		near_t.x = far_t.x;
+		far_t.x = temp;
+	}
+	if (near_t.y > far_t.y) {
+		temp = near_t.y;
+		near_t.y = far_t.y;
+		far_t.y = temp;
+	}
+
+	if (near_t.x > far_t.y || near_t.y > far_t.x) {
+		// No intersection
+		return false;
+	}
+
+	r32 hit_near_t = GetMaxValue(near_t.x, near_t.y);
+	r32 hit_far_t  = GetMinValue(far_t.x, far_t.y);
+
+	if (hit_far_t < 0) {
+		// Collision in negative direction
+		return false;
+	}
+
+	hit->point = origin + hit_near_t * direction;
+
+	if (near_t.x > near_t.y) {
+		hit->normal = vec2(-Sgn(direction.x), 0);
+	} else if (near_t.x < near_t.y) {
+		hit->normal = vec2(0, -Sgn(direction.y));
+	} else {
+		constexpr r32 root_two = 1.4142135623730950488016887242097f;
+		hit->normal = vec2(-Sgn(direction.x) * root_two, -Sgn(direction.y) * root_two);
+	}
+
+	hit->t = hit_near_t;
+
+	return true;
+}
+
+bool ray_vs_line(Vec2 p1, Vec2 q1, Vec2 p2, Vec2 q2, Ray_Hit* hit) {
+	r32 dx1 = p1.x - q1.x;
+	r32 dy1 = p1.y - q1.y;
+	r32 dx2 = p2.x - q2.x;
+	r32 dy2 = p2.y - q2.y;
+
+	r32 d = dx1 * dy2 - dy1 * dx2;
+
+	if (d) {
+		r32 n2 = -dx1 * (p1.y - p2.y) + dy1 * (p1.x - p2.x);
+		r32 u = n2 / d;
+
+		if (u >= 0 && u <= 1) {
+			r32 n = (p1.x - p2.x) * dy2 - (p1.y - p2.y) * dx2;
+			hit->t = n / d;
+
+			hit->point.x = p2.x - u * dx2;
+			hit->point.y = p2.y - u * dy2;
+
+			Vec2 normal;
+			normal.x = dy2;
+			normal.y = -dx2;
+			hit->normal = vec2_normalize(normal);
+			return true;
+		}
+	}
+
+	return false;
 }

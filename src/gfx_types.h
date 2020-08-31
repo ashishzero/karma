@@ -45,6 +45,15 @@ enum Render_Backend {
 	Render_Backend_COUNT
 };
 
+enum Vsync {
+	Vsync_0 = 0,
+	Vsync_1 = 1,
+	Vsync_2 = 2,
+	Vsync_3 = 3,
+	Vsync_4 = 4,
+	Vsync_ADAPTIVE = -1,
+};
+
 enum Data_Format {
 	Data_Format_UNKNOWN,
 	Data_Format_RGBA32_FLOAT,

@@ -362,6 +362,13 @@ inline Mm_Rect mm_rect(Vec2 _min, Vec2 _max) {
 	rect.max = _max;
 	return rect;
 }
+inline Mm_Rect mm_rect_from_dimension(Vec2 pos, Vec2 dim) {
+	Mm_Rect rect;
+	rect.min = pos;
+	rect.max.x = pos.x + dim.x;
+	rect.max.y = pos.y + dim.y;
+	return rect;
+}
 
 struct Rect {
 	r32 x, y;
@@ -390,3 +397,9 @@ inline Rects rects(s32 _x, s32 _y, s32 _w, s32 _h) {
 	r.h = _h;
 	return r;
 }
+
+struct Ray_Hit {
+	Vec2 point;
+	Vec2 normal;
+	r32 t;
+};

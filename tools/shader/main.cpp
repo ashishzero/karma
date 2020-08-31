@@ -61,7 +61,7 @@ void shader_process_batch(Shader_Batch &batch) {
 	if (batch.dx11) {
 		String content = read_entire_file(batch.dx11);
 		defer {
-			mfree(content.data);
+			memory_free(content.data);
 		};
 
 		if (hlsl_compile_shader(batch.dx11, content, &code, batch.vs_entry_point, batch.ps_entry_point)) {
@@ -73,7 +73,7 @@ void shader_process_batch(Shader_Batch &batch) {
 	if (batch.opengl) {
 		String content = read_entire_file(batch.opengl);
 		defer {
-			mfree(content.data);
+			memory_free(content.data);
 		};
 
 		if (glsl_compile_shader(batch.opengl, content, 420, &code, batch.vs_define, batch.ps_define)) {
@@ -82,7 +82,7 @@ void shader_process_batch(Shader_Batch &batch) {
 		}
 	}
 
-	if (elems) {
+	if (elems.count) {
 		FILE * file         = fopen(batch.name, "wb");
 		u32    magic_number = SHADER_MAGIC_NUMBER;
 		u32    elems_count  = (u32)elems.count;
@@ -94,7 +94,7 @@ void shader_process_batch(Shader_Batch &batch) {
 		fwrite(src_code.data, src_code.count, 1, file);
 		fclose(file);
 
-		mfree(src_code.data);
+		memory_free(src_code.data);
 	}
 }
 
@@ -120,6 +120,8 @@ int system_main() {
 	Array<Shader_Batch> batch;
 
 	add_batch(&batch, "run_tree/data/shaders/quad.kfx", "src/shaders/quad.hlsl", "src/shaders/quad.glsl");
+	add_batch(&batch, "run_tree/data/shaders/im3d.kfx", "src/shaders/im3d.hlsl", "src/shaders/im3d.glsl");
+	add_batch(&batch, "run_tree/data/shaders/debug.kfx", "src/shaders/debug.hlsl", "src/shaders/debug.glsl");
 	add_batch(&batch, "run_tree/data/shaders/hdr.kfx", "src/shaders/hdr.hlsl", "src/shaders/hdr.glsl");
 
 	add_batch(&batch, "run_tree/data/shaders/hblur.kfx", "src/shaders/blur.hlsl", "src/shaders/blur.glsl", "vs_main", "ps_main_h", 0, "BLUR_HORIZONTAL");

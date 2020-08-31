@@ -13,11 +13,11 @@ thread_local Thread_Context context;
 static String               __shared_impl_crt_main_cmd_line__;
 
 void *operator new(ptrsize size, Allocator allocator) {
-	return mallocate(size, allocator);
+	return memory_allocate(size, allocator);
 }
 
 void *operator new(ptrsize size) {
-	return mallocate(size);
+	return memory_allocate(size);
 }
 
 void *malloc_allocator(Allocation_Type type, ptrsize size, const void *ptr, void *user_ptr) {

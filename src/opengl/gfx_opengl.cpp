@@ -4,8 +4,6 @@
 #include "../length_string.h"
 #include "../systems.h"
 
-#if 1
-
 static const GLint INT_FMT_KARMA_TO_OPENGL[] = {
 	GL_RGBA,
 	GL_RGBA32F,
@@ -244,6 +242,13 @@ static const GLenum INDEX_TYPE_KARMA_TO_OPENGL[] {
 };
 static_assert(static_count(INDEX_TYPE_KARMA_TO_OPENGL) == Index_Type_COUNT, "The mapping from Index_Type to OpenGL index type is invalid");
 
+static const GLenum INDEX_SIZE_KARMA_TO_OPENGL[] {
+	sizeof(GLubyte),
+	sizeof(GLushort),
+	sizeof(GLuint),
+};
+static_assert(static_count(INDEX_SIZE_KARMA_TO_OPENGL) == Index_Type_COUNT, "The mapping from Index_Type to OpenGL index type is invalid");
+
 static const GLenum PRIMITIVE_KARMA_TO_OPENGL[] = {
 	GL_TRIANGLES,
 	GL_POINTS,
@@ -406,13 +411,14 @@ struct Gfx_Platform_OpenGL : public Gfx_Platform {
 	GLuint             vertex_array;
 	Internal_Pipeline *current_pipeline = 0;
 	GLenum             current_index_type;
+	GLsizei            current_index_size;
 
 	int (*set_swap_interval_func)(int interval);
 	int (*get_swap_interval_func)();
 
 	Gfx_Platform_Info info;
 
-	bool load_library(s32 vsync);
+	bool load_library(Vsync vsync);
 	void swap_buffers();
 
 	virtual void *get_backend_device() final override {
@@ -453,17 +459,24 @@ struct Gfx_Platform_OpenGL : public Gfx_Platform {
 		return multisamples;
 	}
 
-	virtual void set_swap_interval(s32 interval) final override {
+	virtual void set_sync_interval(Vsync vsync) final override {
 		if (set_swap_interval_func) {
-			set_swap_interval_func(interval);
+			if (vsync == Vsync_ADAPTIVE) {
+				if (!set_swap_interval_func((int)vsync)) {
+					system_log(LOG_WARNING, "OpenGL", "Negative swap interval not supported!");
+					set_swap_interval_func(1);
+				}
+			} else {
+				set_swap_interval_func((int)vsync);
+			}
 		}
 	}
 
-	virtual s32 get_swap_interval() final override {
+	virtual Vsync get_sync_interval() final override {
 		if (get_swap_interval_func) {
-			return get_swap_interval_func();
+			return (Vsync)get_swap_interval_func();
 		} else {
-			return 0;
+			return Vsync_0;
 		}
 	}
 
@@ -487,7 +500,7 @@ struct Gfx_Platform_OpenGL : public Gfx_Platform {
 
 		u32 mip_counts = mip_levels;
 		if (mip_counts == 0) {
-			mip_counts = (u32)min_value(log2(w), log2(h)) + 1;
+			mip_counts = (u32)GetMinValue(log2(w), log2(h)) + 1;
 		}
 
 		GLenum target;
@@ -779,7 +792,7 @@ struct Gfx_Platform_OpenGL : public Gfx_Platform {
 												   const Blend_Info &     blend,
 												   const Depth_Info &     depth,
 												   const String           name) final override {
-		void *             mem      = mallocate(sizeof(Internal_Pipeline) + sizeof(Input_Element_Layout) * shader.input_layouts_count);
+		void *             mem      = memory_allocate(sizeof(Internal_Pipeline) + sizeof(Input_Element_Layout) * shader.input_layouts_count);
 		Internal_Pipeline *pipeline = (Internal_Pipeline *)mem;
 		pipeline->input_layouts     = (Internal_Input_Element_Layout *)((u8 *)mem + sizeof(Internal_Pipeline));
 
@@ -853,7 +866,7 @@ struct Gfx_Platform_OpenGL : public Gfx_Platform {
 	virtual void destory_render_pipeline(Render_Pipeline handle) final override {
 		Internal_Pipeline *pipeline = (Internal_Pipeline *)handle.id.hptr;
 		glDeleteProgram(pipeline->program);
-		mfree(pipeline);
+		memory_free(pipeline);
 	}
 
 	virtual void begin_drawing(Framebuffer framebuffer, Clear_Flags flags, Color4 color, r32 depth, u8 stencil) final override {
@@ -950,6 +963,7 @@ struct Gfx_Platform_OpenGL : public Gfx_Platform {
 	virtual void cmd_bind_index_buffer(Index_Buffer buffer, Index_Type type) final override {
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer.id.h32);
 		current_index_type = INDEX_TYPE_KARMA_TO_OPENGL[type];
+		current_index_size = INDEX_SIZE_KARMA_TO_OPENGL[type];
 	}
 
 	virtual void cmd_bind_vs_uniform_buffers(u32 slot_index, u32 count, Uniform_Buffer *buffer) final override {
@@ -984,7 +998,7 @@ struct Gfx_Platform_OpenGL : public Gfx_Platform {
 	}
 
 	virtual void cmd_draw_indexed(u32 index_count, u32 start_index, u32 base_vertex) final override {
-		size_t offset = start_index;
+		size_t offset = start_index * current_index_size;
 		glDrawElementsBaseVertex(current_pipeline->primitive, index_count, current_index_type, (void *)offset, base_vertex);
 	}
 
@@ -1080,7 +1094,7 @@ struct Gfx_Platform_OpenGL : public Gfx_Platform {
 	}
 };
 
-Gfx_Platform *create_opengl_context(Handle platform, s32 vsync, s32 multisamples) {
+Gfx_Platform *create_opengl_context(Handle platform, Vsync vsync, s32 multisamples) {
 	static Gfx_Platform_OpenGL gfx;
 
 	// NOTE: set these, they are used by *load_library* function
@@ -1092,7 +1106,7 @@ Gfx_Platform *create_opengl_context(Handle platform, s32 vsync, s32 multisamples
 		return &gfx;
 	}
 
-#	if defined(BUILD_DEBUG) || defined(BUILD_DEVELOPER)
+#	if defined(BUILD_DEBUG) || defined(BUILD_DEBUG_FAST)
 	{
 		system_log(LOG_INFO, "OpenGL", "GL_DEBUG_OUTPUT_SYNCHRONOUS enabled.");
 		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
@@ -1139,7 +1153,7 @@ void Gfx_Platform_OpenGL::swap_buffers() {
 	SwapBuffers(wnd_dc);
 }
 
-bool Gfx_Platform_OpenGL::load_library(s32 vsync) {
+bool Gfx_Platform_OpenGL::load_library(Vsync vsync) {
 	HMODULE opengl = LoadLibraryW(L"opengl32.dll");
 	if (!opengl) {
 		// TODO: Handle win32 error!!!
@@ -1347,7 +1361,7 @@ bool Gfx_Platform_OpenGL::load_library(s32 vsync) {
 		2,
 		WGL_CONTEXT_PROFILE_MASK_ARB,
 		WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
-#		if defined(BUILD_DEBUG) || defined(BUILD_DEVELOPER)
+#		if defined(BUILD_DEBUG) || defined(BUILD_DEBUG_FAST)
 		WGL_CONTEXT_FLAGS_ARB,
 		WGL_CONTEXT_DEBUG_BIT_ARB,
 #		endif
@@ -1359,13 +1373,13 @@ bool Gfx_Platform_OpenGL::load_library(s32 vsync) {
 	wgl_make_current(wnd_dc, glContext);
 
 	if (set_swap_interval_func) {
-		if (vsync == -1) {
-			if (!set_swap_interval_func(vsync)) {
+		if (vsync == Vsync_ADAPTIVE) {
+			if (!set_swap_interval_func((int)vsync)) {
 				system_log(0, "OpenGL", "Tearing (-1 swap interval) not supported.");
 				set_swap_interval_func(1);
 			}
 		} else {
-			set_swap_interval_func(vsync);
+			set_swap_interval_func((int)vsync);
 		}
 	} else {
 		system_log(LOG_WARNING, "OpenGL", "WGL_EXT_swap_control extension is not present, Vertical swapping disabled");
@@ -1386,5 +1400,3 @@ bool Gfx_Platform_OpenGL::load_library(s32 vsync) {
 }
 
 #	endif
-
-#endif

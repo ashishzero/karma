@@ -17,7 +17,7 @@ bool is_binary_numeral(u32 codepoint) {
 }
 
 bool parse_integer(const String string, s64 *out) {
-	if (!string) return false;
+	if (!string.count) return false;
 
 	s64 index = 0;
 
@@ -89,7 +89,7 @@ bool parse_integer(const String string, s64 *out) {
 }
 
 bool parse_real(const String string, r64 *out) {
-	if (!string) return false;
+	if (!string.count) return false;
 
 	s64 index = 0;
 

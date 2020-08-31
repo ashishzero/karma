@@ -193,7 +193,7 @@ String mprintf(ANALYSE_PRINTF_FORMAT_STRING(const char *fmt), ...) {
 	va_list args2;
 	va_copy(args2, args1);
 	string.count = stbsp_vsnprintf(0, 0, fmt, args1);
-	string.data  = (u8 *)mallocate(string.count + 1);
+	string.data  = (u8 *)memory_allocate(string.count + 1);
 	va_end(args1);
 	stbsp_vsnprintf((char *)string.data, (int)string.count + 1, fmt, args2);
 	va_end(args2);
@@ -217,6 +217,21 @@ String tprintf(ANALYSE_PRINTF_FORMAT_STRING(const char *fmt), ...) {
 	return string;
 }
 
+const char *null_tprintf(ANALYSE_PRINTF_FORMAT_STRING(const char *fmt), ...) {
+	va_list args1;
+	va_start(args1, fmt);
+	va_list args2;
+	va_copy(args2, args1);
+	int   count  = stbsp_vsnprintf(0, 0, fmt, args1) + 1;
+	char *string = (char *)tallocate(count);
+	va_end(args1);
+	stbsp_vsnprintf(string, count, fmt, args2);
+	va_end(args2);
+
+	string[count - 1] = 0;
+	return string;
+}
+
 String vsprintf(String string, ANALYSE_PRINTF_FORMAT_STRING(char const *fmt), va_list va) {
 	int n = stbsp_vsnprintf((char *)string.data, (int)string.count, fmt, va);
 	return String(string.data, n);
@@ -228,7 +243,7 @@ String vmprintf(ANALYSE_PRINTF_FORMAT_STRING(char const *fmt), va_list va) {
 	va_list vaa;
 	va_copy(vaa, va);
 	string.count = stbsp_vsnprintf(0, 0, fmt, vaa);
-	string.data  = (u8 *)mallocate(string.count + 1);
+	string.data  = (u8 *)memory_allocate(string.count + 1);
 	va_end(vaa);
 	stbsp_vsnprintf((char *)string.data, (int)string.count + 1, fmt, va);
 
@@ -256,7 +271,7 @@ char *tto_cstring(String string) {
 }
 
 char *to_cstring(String string) {
-	char *cstr = (char *)mallocate(string.count + 1);
+	char *cstr = (char *)memory_allocate(string.count + 1);
 	memcpy(cstr, string.data, string.count);
 	cstr[string.count] = 0;
 	return cstr;

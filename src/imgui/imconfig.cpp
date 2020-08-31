@@ -1,10 +1,13 @@
 #include "../gfx_renderer.h"
 #include "../systems.h"
+#include "../debug.h"
 
 #include "imconfig.h"
 #include "imgui.h"
 #include "imgui_impl_opengl3.h"
 #include "imgui_impl_dx11.h"
+
+#if defined(BUILD_DEBUG) || defined(BUILD_DEBUG_FAST) || defined(BUILD_DEVELOPER)
 
 static bool               window_is_active = true;
 static bool               mouse_pressed[3];
@@ -17,10 +20,10 @@ void ImGui::Initialize() {
 
 	ImGui::SetAllocatorFunctions(
 		[](size_t size, void *user_data) -> void * {
-			return mallocate(size);
+			return memory_allocate(size);
 		},
 		[](void *ptr, void *user_data) {
-			mfree(ptr);
+			memory_free(ptr);
 		});
 
 	ImGui::CreateContext();
@@ -35,40 +38,23 @@ void ImGui::Initialize() {
 	io.IniFilename         = 0;
 
 	auto   user_name   = system_get_user_name();
-	String ini_content = system_read_entire_file(tprintf("imgui/%s_config.ini", tto_cstring(user_name)));
+	String ini_content = system_read_entire_file(tprintf("dev/%s_config.ini", tto_cstring(user_name)));
 
 	defer {
-		mfree(user_name.data);
-		mfree(ini_content.data);
+		memory_free(user_name.data);
+		memory_free(ini_content.data);
 	};
 
-	if (ini_content) {
+	if (ini_content.count) {
 		ImGui::LoadIniSettingsFromMemory((char *)ini_content.data, ini_content.count);
 	}
 
 	ImFontConfig config;
-	config.SizePixels  = 16;
-	config.OversampleH = 4;
-	config.OversampleV = 4;
+	config.SizePixels  = 14;
+	config.OversampleH = 2;
+	config.OversampleV = 2;
 	config.PixelSnapH  = true;
-	io.Fonts->AddFontFromFileTTF("imgui/Roboto/RobotoMono-Medium.ttf", 16, &config);
-
-	static const ImWchar devanagari_ranges[] = {
-		0x0900,
-		0x097F,
-		0,
-	};
-
-	//ImVector<ImWchar>        ranges;
-	//ImFontGlyphRangesBuilder builder;
-	//builder.AddRanges(io.Fonts->GetGlyphRangesDefault());
-	//builder.AddRanges(devanagari_ranges);
-	////builder.AddRanges(io.Fonts->GetGlyphRangesJapanese());
-	//builder.BuildRanges(&ranges);
-
-	//
-	//io.Fonts->AddFontFromFileTTF("c:/windows/fonts/mangal.ttf", 24, NULL, ranges.Data);
-	//io.Fonts->Build();
+	io.Fonts->AddFontFromFileTTF("dev/GeneraleStation-Regular.otf", 14, &config);
 
 	auto &style             = ImGui::GetStyle();
 	style.ChildRounding     = 0;
@@ -160,11 +146,11 @@ void ImGui::Initialize() {
 
 	io.GetClipboardTextFn = [](void *user_data) -> const char * {
 		String string = system_get_clipboard_text();
-		if (string) {
+		if (string.count) {
 			char *data = (char *)ImGui::MemAlloc(string.count + 1);
 			memcpy(data, string.data, string.count);
 			data[string.count] = 0;
-			mfree(string.data);
+			memory_free(string.data);
 			return data;
 		}
 		return 0;
@@ -208,9 +194,9 @@ void ImGui::Shutdown() {
 	ini_content.count = (s64)size;
 
 	auto user_name = system_get_user_name();
-	system_write_entire_file(tprintf("imgui/%s_config.ini", tto_cstring(user_name)), ini_content);
+	system_write_entire_file(tprintf("dev/%s_config.ini", tto_cstring(user_name)), ini_content);
 
-	mfree(user_name.data);
+	memory_free(user_name.data);
 
 	auto backend = gfx_render_backend();
 	if (backend == Render_Backend_OPENGL)
@@ -270,7 +256,7 @@ bool ImGui::HandleEvent(const Event &event) {
 	return false;
 }
 
-void ImGui::UpdateFrame(r32 dt, r32 event_time, r32 simulate_time, r32 render_time, r32 gpu_time) {
+void ImGui::UpdateFrame(r32 dt) {
 	auto backend = gfx_render_backend();
 	if (backend == Render_Backend_OPENGL)
 		ImGui_ImplOpenGL3_NewFrame();
@@ -288,15 +274,15 @@ void ImGui::UpdateFrame(r32 dt, r32 event_time, r32 simulate_time, r32 render_ti
 
 	// If a mouse press event came, always pass it as "mouse held this frame",
 	// so we don't miss click-release sys_events that are shorter than 1 frame.
-	if (window_is_active) {
-		io.MouseDown[0] = mouse_pressed[0] || (system_button(Button_LEFT) == State_DOWN);
-		io.MouseDown[1] = mouse_pressed[1] || (system_button(Button_RIGHT) == State_DOWN);
-		io.MouseDown[2] = mouse_pressed[2] || (system_button(Button_MIDDLE) == State_DOWN);
-		auto cursorp    = system_get_cursor_position();
-		io.MousePos     = ImVec2((r32)cursorp.x, (r32)cursorp.y);
+	if (window_is_active && !debug_presentation_is_hovered()) {
+		io.MouseDown[0] = mouse_pressed[0] || (system_button(Button_LEFT) == Key_State_DOWN);
+		io.MouseDown[1] = mouse_pressed[1] || (system_button(Button_RIGHT) == Key_State_DOWN);
+		io.MouseDown[2] = mouse_pressed[2] || (system_button(Button_MIDDLE) == Key_State_DOWN);
+		io.MousePos     = system_get_cursor_position_y_inverted();
 	}
 
 	mouse_pressed[0] = mouse_pressed[1] = mouse_pressed[2] = false;
+
 
 	if (!(io.ConfigFlags & ImGuiConfigFlags_NoMouseCursorChange)) {
 		ImGuiMouseCursor imgui_cursor = ImGui::GetMouseCursor();
@@ -332,3 +318,5 @@ void ImGui::RenderFrame() {
 	else if (backend == Render_Backend_DIRECTX11)
 		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 }
+
+#endif

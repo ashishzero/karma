@@ -239,7 +239,10 @@ struct Gfx_Platform_Directx11 : public Gfx_Platform {
 	ID3D11DeviceContext *device_context;
 	IDXGISwapChain1 *    swap_chain;
 	u32                  swap_chain_flags;
-	s32                  swap_interval;
+
+	u32  sync_interval;
+	u32  sync_flags;
+	bool tearing_capable;
 
 	// Resources
 	ID3D11Texture2D *       render_target_texture;
@@ -258,7 +261,7 @@ struct Gfx_Platform_Directx11 : public Gfx_Platform {
 
 		hresult = device->CreateRenderTargetView(render_target_texture, 0, &render_target_view);
 		if (FAILED(hresult)) {
-			system_log(LOG_ERROR, "Failed to create default Render Target View: %s", dx_error_string(hresult));
+			system_log(LOG_ERROR, "DirectX11", "Failed to create default Render Target View: %s", dx_error_string(hresult));
 		}
 
 		default_framebuffer.count         = 1;
@@ -295,12 +298,21 @@ struct Gfx_Platform_Directx11 : public Gfx_Platform {
 		return desc.SampleDesc.Count;
 	}
 
-	virtual void set_swap_interval(s32 interval) final override {
-		swap_interval = interval;
+	virtual void set_sync_interval(Vsync vsync) final override {
+		if (vsync == Vsync_ADAPTIVE) {
+			if (tearing_capable)
+				sync_flags = DXGI_PRESENT_ALLOW_TEARING;
+			sync_interval = 1;
+		} else {
+			sync_interval = vsync;
+		}
 	}
 
-	virtual s32 get_swap_interval() final override {
-		return swap_interval;
+	virtual Vsync get_sync_interval() final override {
+		if (tearing_capable && (sync_flags & DXGI_PRESENT_ALLOW_TEARING) == DXGI_PRESENT_ALLOW_TEARING) {
+			return Vsync_ADAPTIVE;
+		}
+		return (Vsync)sync_interval;
 	}
 
 	virtual void on_client_resize(u32 w, u32 h) final override {
@@ -319,13 +331,13 @@ struct Gfx_Platform_Directx11 : public Gfx_Platform {
 	}
 
 	virtual Framebuffer get_default_framebuffer() final override {
-		Framebuffer        result;
+		Framebuffer result;
 		result.id.hptr = &default_framebuffer;
 		return result;
 	}
 
 	virtual void present() final override {
-		swap_chain->Present(swap_interval, 0);
+		swap_chain->Present(sync_interval, sync_flags);
 	}
 
 	virtual Texture2d create_texture2d(u32 w, u32 h, u32 channels, Data_Format format, const u8 **pixels, Buffer_Usage usage, Texture_Bind_Flags flags, u32 mip_levels) final override {
@@ -351,7 +363,7 @@ struct Gfx_Platform_Directx11 : public Gfx_Platform {
 
 		u32 mip_counts = mip_levels;
 		if (mip_counts == 0) {
-			mip_counts = (u32)min_value(log2(w), log2(h)) + 1;
+			mip_counts = (u32)GetMinValue(log2(w), log2(h)) + 1;
 		}
 
 		D3D11_SUBRESOURCE_DATA *initial_data = NULL;
@@ -403,8 +415,8 @@ struct Gfx_Platform_Directx11 : public Gfx_Platform {
 	virtual Texture_View create_texture_view(Texture2d texture) final override {
 		ID3D11Resource *          resource = (ID3D11Resource *)texture.id.hptr;
 		ID3D11ShaderResourceView *view     = 0;
-		HRESULT                   hresult  = device->CreateShaderResourceView(resource, NULL, &view);
-		Texture_View              result;
+		device->CreateShaderResourceView(resource, NULL, &view);
+		Texture_View result;
 		result.id.hptr = view;
 		return result;
 	}
@@ -419,16 +431,18 @@ struct Gfx_Platform_Directx11 : public Gfx_Platform {
 	}
 
 	virtual Framebuffer create_framebuffer(u32 count, Texture2d *textures, Texture_View *views, Depth_Stencil_View *depth_view) final override {
-		void *                mem         = mallocate(sizeof(Internal_Framebuffer) + (sizeof(ID3D11RenderTargetView *) * count));
+		void *                mem         = memory_allocate(sizeof(Internal_Framebuffer) + (sizeof(ID3D11RenderTargetView *) * count));
 		Internal_Framebuffer *framebuffer = (Internal_Framebuffer *)mem;
 		framebuffer->views                = (ID3D11RenderTargetView **)((u8 *)mem + sizeof(Internal_Framebuffer));
 
 		framebuffer->count         = count;
 		framebuffer->depth_stencil = depth_view ? (ID3D11DepthStencilView *)depth_view->id.hptr : NULL;
 
+		ID3D11RenderTargetView *render_target = nullptr;
 		for (u32 index = 0; index < count; ++index) {
 			ID3D11Resource *resource = (ID3D11Resource *)textures[index].id.hptr;
-			device->CreateRenderTargetView(resource, NULL, &framebuffer->views[index]);
+			device->CreateRenderTargetView(resource, NULL, &render_target);
+			framebuffer->views[index] = render_target;
 		}
 
 		Framebuffer result;
@@ -452,7 +466,7 @@ struct Gfx_Platform_Directx11 : public Gfx_Platform {
 		for (u32 index = 0; index < framebuffer->count; ++index) {
 			framebuffer->views[index]->Release();
 		}
-		mfree(framebuffer);
+		memory_free(framebuffer);
 	}
 
 	virtual Sampler create_sampler(const Filter &filter, const Texture_Address &address, const Level_Of_Detail &lod) final override {
@@ -612,7 +626,7 @@ struct Gfx_Platform_Directx11 : public Gfx_Platform {
 												   const Depth_Info &     depth_info,
 												   const String           name) final override {
 		Render_Pipeline    result   = {};
-		Internal_Pipeline *pipeline = new Internal_Pipeline;
+		Internal_Pipeline *pipeline = (Internal_Pipeline *)memory_allocate(sizeof(Internal_Pipeline));
 
 		HRESULT hresult;
 
@@ -723,7 +737,7 @@ struct Gfx_Platform_Directx11 : public Gfx_Platform {
 		ptr->blend_state->Release();
 		ptr->depth_stencil_state->Release();
 
-		delete ptr;
+		memory_free(ptr);
 	}
 
 	virtual void begin_drawing(Framebuffer handle, Clear_Flags flags, Color4 color, r32 depth, u8 stencil) final override {
@@ -834,7 +848,7 @@ void directx_error_cleanup(Gfx_Platform_Directx11 &gfx) {
 		return 0;                                                                                      \
 	}
 
-Gfx_Platform *create_directx11_context(Handle platform, s32 vsync, s32 multisamples) {
+Gfx_Platform *create_directx11_context(Handle platform, Vsync vsync, s32 multisamples) {
 	static Gfx_Platform_Directx11 gfx;
 
 	gfx.backend = Render_Backend_NONE;
@@ -842,7 +856,7 @@ Gfx_Platform *create_directx11_context(Handle platform, s32 vsync, s32 multisamp
 	IDXGIFactory2 *factory;
 
 	u32 factory_flags = 0;
-#if defined(BUILD_DEBUG) || defined(BUILD_DEVELOPER)
+#if defined(BUILD_DEBUG) || defined(BUILD_DEBUG_FAST)
 	factory_flags = DXGI_CREATE_FACTORY_DEBUG;
 #endif
 	dx_error_check(CreateDXGIFactory2(factory_flags, IID_PPV_ARGS(&factory)), gfx);
@@ -851,7 +865,7 @@ Gfx_Platform *create_directx11_context(Handle platform, s32 vsync, s32 multisamp
 	};
 
 	u32 flags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
-#if defined(BUILD_DEBUG) || defined(BUILD_DEVELOPER)
+#if defined(BUILD_DEBUG) || defined(BUILD_DEBUG_FAST)
 	flags |= D3D11_CREATE_DEVICE_DEBUG;
 #endif
 
@@ -902,6 +916,7 @@ Gfx_Platform *create_directx11_context(Handle platform, s32 vsync, s32 multisamp
 	dx_error_check(hresult, gfx);
 
 	gfx.swap_chain_flags = 0;
+	gfx.tearing_capable  = false;
 
 	IDXGIFactory5 *factory5;
 	if (SUCCEEDED(factory->GetParent(__uuidof(IDXGIFactory5), reinterpret_cast<void **>(&factory5)))) {
@@ -909,6 +924,7 @@ Gfx_Platform *create_directx11_context(Handle platform, s32 vsync, s32 multisamp
 		if (SUCCEEDED(factory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &tearing, sizeof(tearing)))) {
 			if (tearing == TRUE) {
 				gfx.swap_chain_flags |= DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
+				gfx.tearing_capable = true;
 			}
 		}
 	}
@@ -930,7 +946,7 @@ Gfx_Platform *create_directx11_context(Handle platform, s32 vsync, s32 multisamp
 	hresult = factory->CreateSwapChainForHwnd(gfx.device, (HWND)platform.hptr, &swap_chain_desc, NULL, NULL, &gfx.swap_chain);
 	dx_error_check(hresult, gfx);
 
-#if defined(BUILD_DEBUG) || defined(BUILD_DEVELOPER)
+#if defined(BUILD_DEBUG) || defined(BUILD_DEBUG_FAST)
 	ID3D11Debug *debug = 0;
 
 	if (SUCCEEDED(gfx.device->QueryInterface(__uuidof(ID3D11Debug), (void **)&debug))) {
@@ -958,8 +974,17 @@ Gfx_Platform *create_directx11_context(Handle platform, s32 vsync, s32 multisamp
 
 	gfx.create_resources();
 
-	gfx.swap_interval = vsync;
-	gfx.backend       = Render_Backend_DIRECTX11;
+	gfx.sync_flags = 0;
+	if (vsync == Vsync_ADAPTIVE) {
+		gfx.sync_interval = 1;
+		if (gfx.tearing_capable) {
+			gfx.sync_flags |= DXGI_PRESENT_ALLOW_TEARING;
+		}
+	} else {
+		gfx.sync_interval = vsync;
+	}
+
+	gfx.backend = Render_Backend_DIRECTX11;
 
 	DXGI_ADAPTER_DESC adapter_desc = {};
 	adapter->GetDesc(&adapter_desc);

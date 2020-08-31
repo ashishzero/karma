@@ -27,7 +27,7 @@ bool glsl_compile_shader(const char *name, String src, int version, Shader_Code 
 	Tokenization_Status status;
 	auto                tokens = tokenize(src, &status);
 	defer {
-		mfree(tokens.data);
+		memory_free(tokens.data);
 	};
 
 	if (status.result != Tokenization_Result_SUCCESS) {

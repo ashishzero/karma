@@ -21,9 +21,6 @@
     <ClCompile Include="src\glad\src\glad.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\pcg\pcg_basic.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -73,6 +70,18 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\imgui\imgui_impl_dx11.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\audio.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\debug.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -143,9 +152,6 @@
     <ClInclude Include="src\tokenizer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\prebuild.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\reflection.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -182,18 +188,31 @@
     <ClInclude Include="src\gfx_shaders.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\physics.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\intrinsics.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\audio.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\debug.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitattributes" />
     <None Include=".gitignore" />
     <None Include="readme.md" />
-    <None Include=".clang-format" />
     <None Include="src\prebuild.bat">
       <Filter>Source Files</Filter>
     </None>
     <None Include="src\shaders\quad.glsl" />
     <None Include="src\shaders\hdr.glsl" />
     <None Include="src\shaders\blur.glsl" />
+    <None Include="src\shaders\debug.glsl" />
+    <None Include="src\shaders\im3d.glsl" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="todo.txt" />
@@ -213,5 +232,9 @@
     <FxCompile Include="src\shaders\quad.hlsl" />
     <FxCompile Include="src\shaders\hdr.hlsl" />
     <FxCompile Include="src\shaders\blur.hlsl" />
+    <FxCompile Include="src\shaders\debug.hlsl">
+      <Filter>Header Files</Filter>
+    </FxCompile>
+    <FxCompile Include="src\shaders\im3d.hlsl" />
   </ItemGroup>
 </Project>

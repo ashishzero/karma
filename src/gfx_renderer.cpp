@@ -12,11 +12,19 @@ struct alignas(16) Im_Uniform {
 
 #pragma pack(pop)
 
-struct Im_Vertex {
+struct Im_Vertex2d {
 	Vec3   position;
 	Vec2   tex_coord;
 	Color4 color;
 };
+
+struct Im_Vertex3d {
+	Vec3   position;
+	Vec2   tex_coord;
+	Vec3   normal;
+	Color4 color;
+};
+
 typedef u16 Im_Index;
 
 struct Im_Draw_Cmd {
@@ -26,13 +34,13 @@ struct Im_Draw_Cmd {
 	u32          count;
 };
 
-static constexpr int IM_CONTEXT_MAX_VERTICES        = 2048 * 4;
-static constexpr int IM_CONTEXT_MAX_INDICES         = IM_CONTEXT_MAX_VERTICES * 6;
-static constexpr int IM_CONTEXT_MAX_TRANSFORMATIONS = 100;
+static constexpr u32 IM_CONTEXT_MAX_VERTICES        = 4096 * 4;
+static constexpr u32 IM_CONTEXT_MAX_INDICES         = IM_CONTEXT_MAX_VERTICES * 6;
+static constexpr u32 IM_CONTEXT_MAX_TRANSFORMATIONS = 100;
 static r32           im_unit_circle_cos[IM_MAX_CIRCLE_SEGMENTS];
 static r32           im_unit_circle_sin[IM_MAX_CIRCLE_SEGMENTS];
 
-struct Im_Context {
+struct Im_Context2d {
 	Render_Pipeline pipeline;
 	Uniform_Buffer  uniform_buffer;
 	Vertex_Buffer   vertex_buffer;
@@ -40,16 +48,36 @@ struct Im_Context {
 	Sampler         sampler;
 
 	Im_Draw_Cmd draw_cmds[IM_CONTEXT_MAX_VERTICES];
-	int         draw_cmd;
-	Im_Vertex * vertex_ptr;
-	int         vertex;
+	u32         draw_cmd;
+	Im_Vertex2d * vertex_ptr;
+	u32         vertex;
 	Im_Index *  index_ptr;
 	Im_Index    last_index;
-	int         index;
+	u32         index;
 	Im_Index    counter;
 
 	Mat4 transformations[IM_CONTEXT_MAX_TRANSFORMATIONS];
-	int  transformation;
+	u32  transformation;
+};
+
+struct Im_Context3d {
+	Render_Pipeline pipeline;
+	Uniform_Buffer  uniform_buffer;
+	Vertex_Buffer   vertex_buffer;
+	Index_Buffer    index_buffer;
+	Sampler         sampler;
+
+	Im_Draw_Cmd		draw_cmds[IM_CONTEXT_MAX_VERTICES];
+	u32				draw_cmd;
+	Im_Vertex3d		* vertex_ptr;
+	u32				vertex;
+	Im_Index *		index_ptr;
+	Im_Index		last_index;
+	u32				index;
+	Im_Index		counter;
+
+	Mat4 transformations[IM_CONTEXT_MAX_TRANSFORMATIONS];
+	u32  transformation;
 };
 
 struct Hdr_Data {
@@ -58,14 +86,15 @@ struct Hdr_Data {
 	Texture_View       hdr_color_view[2];
 	Depth_Stencil_View hdr_depth_view;
 	Framebuffer        hdr_framebuffer;
-	// TODO: Currently we are using full window width and window height for bloom effect
-	// which is very expensive and not worth it!!
-	Texture2d    bloom_color_buffer[2];
-	Texture_View bloom_color_view[2];
-	Framebuffer  bloom_framebuffer[2];
+
+	Texture2d          bloom_color_buffer[2];
+	Texture_View       bloom_color_view[2];
+	Framebuffer        bloom_framebuffer[2];
 };
 
-static Im_Context       im_context;
+static Im_Context2d     im_context2d;
+static Im_Context3d     im_context3d;
+Render_Pipeline         debug_pipeline;
 static Hdr_Data         hdr_data;
 static Render_Pipeline  blur_pipelines[2];
 static Texture2d_Handle white_texture;
@@ -102,14 +131,14 @@ static String igfx_find_shader(String content, u32 shader_tag, const char *name 
 		elem += 1;
 	}
 
-	if (!result) {
+	if (result.count == 0) {
 		system_log(LOG_ERROR, "Gfx", "Shader %s not found", name);
 	}
 
 	return result;
 }
 
-bool gfx_create_context(Handle platform, Render_Backend backend, s32 vsync, u32 multisamples, u32 framebuffer_w, u32 framebuffer_h) {
+bool gfx_create_context(Handle platform, Render_Backend backend, Vsync vsync, u32 multisamples, u32 framebuffer_w, u32 framebuffer_h) {
 	if (backend == Render_Backend_OPENGL) {
 		system_log(LOG_INFO, "Gfx", "gfx.backend = Render_Backend_OPENGL");
 		gfx = create_opengl_context(platform, vsync, multisamples);
@@ -160,7 +189,7 @@ bool gfx_create_context(Handle platform, Render_Backend backend, s32 vsync, u32 
 
 		hdr_pipeline = gfx->create_render_pipeline(shader, rasterizer, blend, depth, "postprocess");
 
-		mfree(hdr_shader.data);
+		memory_free(hdr_shader.data);
 	}
 
 	{
@@ -187,17 +216,17 @@ bool gfx_create_context(Handle platform, Render_Backend backend, s32 vsync, u32 
 		blur_pipelines[0] = gfx->create_render_pipeline(shader[0], rasterizer, blend, depth, "h_blur");
 		blur_pipelines[1] = gfx->create_render_pipeline(shader[1], rasterizer, blend, depth, "v_blur");
 
-		mfree(h_blur_shader.data);
-		mfree(v_blur_shader.data);
+		memory_free(h_blur_shader.data);
+		memory_free(v_blur_shader.data);
 	}
 
 	postprocess_sampler = gfx->create_sampler(filter_create(), texture_address_create(), level_of_detail_create());
 
 	{
 		Input_Element_Layout layouts[] = {
-			{ "POSITION", Data_Format_RGB32_FLOAT, offsetof(Im_Vertex, position), Input_Type_PER_VERTEX_DATA, 0 },
-			{ "TEX_COORD", Data_Format_RG32_FLOAT, offsetof(Im_Vertex, tex_coord), Input_Type_PER_VERTEX_DATA, 0 },
-			{ "COLOR", Data_Format_RGBA32_FLOAT, offsetof(Im_Vertex, color), Input_Type_PER_VERTEX_DATA, 0 }
+			{ "POSITION", Data_Format_RGB32_FLOAT, offsetof(Im_Vertex2d, position), Input_Type_PER_VERTEX_DATA, 0 },
+			{ "TEX_COORD", Data_Format_RG32_FLOAT, offsetof(Im_Vertex2d, tex_coord), Input_Type_PER_VERTEX_DATA, 0 },
+			{ "COLOR", Data_Format_RGBA32_FLOAT, offsetof(Im_Vertex2d, color), Input_Type_PER_VERTEX_DATA, 0 }
 		};
 
 		String quad_shader_content = system_read_entire_file("data/shaders/quad.kfx");
@@ -207,27 +236,74 @@ bool gfx_create_context(Handle platform, Render_Backend backend, s32 vsync, u32 
 		shader.input_layouts_count = static_count(layouts);
 		shader.vertex              = igfx_find_shader(quad_shader_content, SHADER_TYPE_VERTEX, "quad.kfx.vertex");
 		shader.pixel               = igfx_find_shader(quad_shader_content, SHADER_TYPE_PIXEL, "quad.kfx.pixel");
-		shader.stride              = sizeof(Im_Vertex);
+		shader.stride              = sizeof(Im_Vertex2d);
 
 		Rasterizer_Info rasterizer = rasterizer_info_create();
-		rasterizer.cull_mode       = Cull_Mode_NONE;
+		rasterizer.cull_mode       = Cull_Mode_BACK;
+
+		Blend_Info blend = blend_info_create(Blend_SRC_ALPHA, Blend_INV_SRC_ALPHA, Blend_Operation_ADD, Blend_SRC_ALPHA, Blend_INV_SRC_ALPHA, Blend_Operation_ADD);
+		Depth_Info depth = depth_info_create(false, Depth_Write_Mask_ZERO, Comparison_Function_NEVER);
+
+		im_context2d.pipeline = gfx->create_render_pipeline(shader, rasterizer, blend, depth, "Im2d_Pipeline");
+		memory_free(quad_shader_content.data);
+
+		String      debug_shader_content = system_read_entire_file("data/shaders/debug.kfx");
+		Shader_Info debug_shader;
+		debug_shader.input_layouts       = layouts;
+		debug_shader.input_layouts_count = static_count(layouts);
+		debug_shader.vertex              = igfx_find_shader(debug_shader_content, SHADER_TYPE_VERTEX, "debug.kfx.vertex");
+		debug_shader.pixel               = igfx_find_shader(debug_shader_content, SHADER_TYPE_PIXEL, "debug.kfx.pixel");
+		debug_shader.stride              = sizeof(Im_Vertex2d);
+		rasterizer.cull_mode			 = Cull_Mode_NONE;
+		depth                            = depth_info_create(false, Depth_Write_Mask_ZERO, Comparison_Function_NEVER);
+		debug_pipeline                   = gfx->create_render_pipeline(debug_shader, rasterizer, blend, depth, "Debug_Pipeline");
+		memory_free(debug_shader_content.data);
+	}
+
+	im_context2d.uniform_buffer = gfx->create_uniform_buffer(Buffer_Usage_DYNAMIC, Cpu_Access_WRITE, sizeof(Mat4), 0);
+	im_context2d.vertex_buffer  = gfx->create_vertex_buffer(Buffer_Usage_DYNAMIC, Cpu_Access_WRITE, sizeof(Im_Vertex2d) * IM_CONTEXT_MAX_VERTICES, 0);
+	im_context2d.index_buffer   = gfx->create_index_buffer(Buffer_Usage_DYNAMIC, Cpu_Access_WRITE, sizeof(Im_Index) * IM_CONTEXT_MAX_INDICES, 0);
+
+	im_context2d.sampler = gfx->create_sampler(filter_create(Filter_Type_MIN_MAG_MIP_POINT), texture_address_create(), level_of_detail_create());
+
+	im_context2d.transformations[0] = mat4_identity();
+	im_context2d.transformation     = 1;
+
+	{
+		Input_Element_Layout layouts[] = {
+		{ "POSITION", Data_Format_RGB32_FLOAT, offsetof(Im_Vertex3d, position), Input_Type_PER_VERTEX_DATA, 0 },
+		{ "TEX_COORD", Data_Format_RG32_FLOAT, offsetof(Im_Vertex3d, tex_coord), Input_Type_PER_VERTEX_DATA, 0 },
+		{ "NORMAL", Data_Format_RGB32_FLOAT, offsetof(Im_Vertex3d, normal), Input_Type_PER_VERTEX_DATA, 0 },
+		{ "COLOR", Data_Format_RGBA32_FLOAT, offsetof(Im_Vertex3d, color), Input_Type_PER_VERTEX_DATA, 0 }
+		};
+
+		String im3d_shader_content = system_read_entire_file("data/shaders/im3d.kfx");
+
+		Shader_Info shader;
+		shader.input_layouts       = layouts;
+		shader.input_layouts_count = static_count(layouts);
+		shader.vertex              = igfx_find_shader(im3d_shader_content, SHADER_TYPE_VERTEX, "im3d.kfx.vertex");
+		shader.pixel               = igfx_find_shader(im3d_shader_content, SHADER_TYPE_PIXEL, "im3d.kfx.pixel");
+		shader.stride              = sizeof(Im_Vertex3d);
+
+		Rasterizer_Info rasterizer = rasterizer_info_create();
+		rasterizer.cull_mode = Cull_Mode_NONE;
 
 		Blend_Info blend = blend_info_create(Blend_SRC_ALPHA, Blend_INV_SRC_ALPHA, Blend_Operation_ADD, Blend_SRC_ALPHA, Blend_INV_SRC_ALPHA, Blend_Operation_ADD);
 		Depth_Info depth = depth_info_create(true, Depth_Write_Mask_ALL, Comparison_Function_LESS);
 
-		im_context.pipeline = gfx->create_render_pipeline(shader, rasterizer, blend, depth, "Im_Pipeline");
-
-		mfree(quad_shader_content.data);
+		im_context3d.pipeline = gfx->create_render_pipeline(shader, rasterizer, blend, depth, "Im3d_Pipeline");
+		memory_free(im3d_shader_content.data);
 	}
 
-	im_context.uniform_buffer = gfx->create_uniform_buffer(Buffer_Usage_DYNAMIC, Cpu_Access_WRITE, sizeof(Mat4), 0);
-	im_context.vertex_buffer  = gfx->create_vertex_buffer(Buffer_Usage_DYNAMIC, Cpu_Access_WRITE, sizeof(Im_Vertex) * IM_CONTEXT_MAX_VERTICES, 0);
-	im_context.index_buffer   = gfx->create_index_buffer(Buffer_Usage_DYNAMIC, Cpu_Access_WRITE, sizeof(Im_Index) * IM_CONTEXT_MAX_INDICES, 0);
+	im_context3d.uniform_buffer = gfx->create_uniform_buffer(Buffer_Usage_DYNAMIC, Cpu_Access_WRITE, sizeof(Mat4), 0);
+	im_context3d.vertex_buffer  = gfx->create_vertex_buffer(Buffer_Usage_DYNAMIC, Cpu_Access_WRITE, sizeof(Im_Vertex3d) * IM_CONTEXT_MAX_VERTICES, 0);
+	im_context3d.index_buffer   = gfx->create_index_buffer(Buffer_Usage_DYNAMIC, Cpu_Access_WRITE, sizeof(Im_Index) * IM_CONTEXT_MAX_INDICES, 0);
 
-	im_context.sampler = gfx->create_sampler(filter_create(Filter_Type_MIN_MAG_MIP_POINT), texture_address_create(), level_of_detail_create());
+	im_context3d.sampler = gfx->create_sampler(filter_create(Filter_Type_MIN_MAG_MIP_POINT), texture_address_create(), level_of_detail_create());
 
-	im_context.transformations[0] = mat4_identity();
-	im_context.transformation     = 1;
+	im_context3d.transformations[0] = mat4_identity();
+	im_context3d.transformation     = 1;
 
 	for (int i = 0; i < IM_MAX_CIRCLE_SEGMENTS; ++i) {
 		r32 theta             = ((r32)i / (r32)IM_MAX_CIRCLE_SEGMENTS) * MATH_PI * 2;
@@ -252,8 +328,8 @@ void igfx_destory_global_data() {
 
 	for (int index = 0; index < 2; ++index) {
 		if (hdr_data.bloom_framebuffer[index].id) gfx->destroy_framebuffer(hdr_data.bloom_framebuffer[index]);
-		if (hdr_data.bloom_color_view[index].id) gfx->destroy_texture_view(hdr_data.bloom_color_view[index]);
 		if (hdr_data.bloom_color_buffer[index].id) gfx->destroy_texture2d(hdr_data.bloom_color_buffer[index]);
+		if (hdr_data.bloom_color_view[index].id) gfx->destroy_texture_view(hdr_data.bloom_color_view[index]);
 	}
 
 	memset(&hdr_data, 0, sizeof(hdr_data));
@@ -268,13 +344,14 @@ void gfx_resize_framebuffer(u32 width, u32 height, u32 bloom_w, u32 bloom_h) {
 	bloom_texture_w = bloom_w;
 	bloom_texture_h = bloom_h;
 
+	
 	for (int index = 0; index < 2; ++index) {
 		hdr_data.hdr_color_buffer[index] = gfx->create_texture2d(width, height, 4, Data_Format_RGBA16_FLOAT, 0, Buffer_Usage_DEFAULT, Texture_Bind_SHADER_RESOURCE | Texture_Bind_RENDER_TARGET, 1);
-		hdr_data.hdr_color_view[index]   = gfx->create_texture_view(hdr_data.hdr_color_buffer[index]);
+		hdr_data.hdr_color_view[index] = gfx->create_texture_view(hdr_data.hdr_color_buffer[index]);
 
 		hdr_data.bloom_color_buffer[index] = gfx->create_texture2d(bloom_w, bloom_h, 4, Data_Format_RGBA16_FLOAT, 0, Buffer_Usage_DEFAULT, Texture_Bind_SHADER_RESOURCE | Texture_Bind_RENDER_TARGET, 1);
-		hdr_data.bloom_color_view[index]   = gfx->create_texture_view(hdr_data.bloom_color_buffer[index]);
-		hdr_data.bloom_framebuffer[index]  = gfx->create_framebuffer(1, &hdr_data.bloom_color_buffer[index], &hdr_data.bloom_color_view[index], NULL);
+		hdr_data.bloom_color_view[index] = gfx->create_texture_view(hdr_data.bloom_color_buffer[index]);
+		hdr_data.bloom_framebuffer[index] = gfx->create_framebuffer(1, &hdr_data.bloom_color_buffer[index], &hdr_data.bloom_color_view[index], NULL);
 	}
 
 	hdr_data.hdr_depth_buffer = gfx->create_texture2d(width, height, 1, Data_Format_D32_FLOAT, 0, Buffer_Usage_DEFAULT, Texture_Bind_DEPTH_STENCIL, 1);
@@ -284,11 +361,18 @@ void gfx_resize_framebuffer(u32 width, u32 height, u32 bloom_w, u32 bloom_h) {
 }
 
 void gfx_destroy_context() {
-	gfx->destroy_vertex_buffer(im_context.vertex_buffer);
-	gfx->destroy_index_buffer(im_context.index_buffer);
-	gfx->destroy_uniform_buffer(im_context.uniform_buffer);
-	gfx->destory_render_pipeline(im_context.pipeline);
-	gfx->destory_sampler(im_context.sampler);
+	gfx->destroy_vertex_buffer(im_context2d.vertex_buffer);
+	gfx->destroy_index_buffer(im_context2d.index_buffer);
+	gfx->destroy_uniform_buffer(im_context2d.uniform_buffer);
+	gfx->destory_render_pipeline(im_context2d.pipeline);
+	gfx->destory_sampler(im_context2d.sampler);
+
+	gfx->destroy_vertex_buffer(im_context3d.vertex_buffer);
+	gfx->destroy_index_buffer(im_context3d.index_buffer);
+	gfx->destroy_uniform_buffer(im_context3d.uniform_buffer);
+	gfx->destory_render_pipeline(im_context3d.pipeline);
+	gfx->destory_sampler(im_context3d.sampler);
+
 	gfx->destroy_texture_view(white_texture.view);
 	gfx->destroy_texture2d(white_texture.buffer);
 	igfx_destory_global_data();
@@ -315,12 +399,41 @@ void gfx_get_render_view_size(u32 *w, u32 *h) {
 	gfx->get_render_view_size(w, h);
 }
 
-void gfx_set_swap_interval(s32 interval) {
-	gfx->set_swap_interval(interval);
+Mat4 gfx_view_transform(Camera_View &view) {
+	auto backend = gfx_render_backend();
+	if (view.kind == ORTHOGRAPHIC) {
+		switch (backend) {
+		case Render_Backend_OPENGL: return mat4_ortho_gl(view.orthographic.left, view.orthographic.right, 
+			view.orthographic.top, view.orthographic.bottom, 
+			view.orthographic.near, view.orthographic.far);
+		case Render_Backend_DIRECTX11: return mat4_ortho_dx(view.orthographic.left, view.orthographic.right,
+			view.orthographic.top, view.orthographic.bottom,
+			view.orthographic.near, view.orthographic.far);
+			invalid_default_case();
+		}
+	} else {
+		switch (backend) {
+		case Render_Backend_OPENGL: return mat4_perspective_gl(view.perspective.field_of_view,
+			view.perspective.aspect_ratio, 
+			view.perspective.near_plane, 
+			view.perspective.far_plane);
+		case Render_Backend_DIRECTX11: return mat4_perspective_dx(view.perspective.field_of_view,
+			view.perspective.aspect_ratio, 
+			view.perspective.near_plane, 
+			view.perspective.far_plane);
+			invalid_default_case();
+		}
+	}
+
+	return mat4_identity();
 }
 
-s32 gfx_get_swap_interval() {
-	return gfx->get_swap_interval();
+void gfx_set_sync_interval(Vsync vsync) {
+	gfx->set_sync_interval(vsync);
+}
+
+Vsync gfx_get_sync_interval() {
+	return gfx->get_sync_interval();
 }
 
 s32 gfx_get_multisamples() {
@@ -347,75 +460,84 @@ void gfx_destroy_texture2d(Texture2d_Handle handle) {
 	gfx->destroy_texture2d(handle.buffer);
 }
 
-inline void im_start_cmd_record(Texture_View texture) {
-	auto draw_cmd     = im_context.draw_cmds + im_context.draw_cmd;
-	draw_cmd->index   = im_context.index;
-	draw_cmd->vertex  = im_context.vertex;
+inline void im2d_start_cmd_record(Texture_View texture) {
+	auto draw_cmd     = im_context2d.draw_cmds + im_context2d.draw_cmd;
+	draw_cmd->index   = im_context2d.index;
+	draw_cmd->vertex  = im_context2d.vertex;
 	draw_cmd->texture = texture;
 	draw_cmd->count   = 0;
 }
 
-inline Im_Vertex *iim_push_vertex_count(int count) {
-	assert(im_context.vertex + count <= IM_CONTEXT_MAX_VERTICES);
+inline Im_Vertex2d *iim2d_push_vertex_count(int count) {
+	assert(im_context2d.vertex + count <= IM_CONTEXT_MAX_VERTICES);
 
-	auto vertex = im_context.vertex_ptr;
-	im_context.vertex_ptr += count;
-	im_context.vertex += count;
+	auto vertex = im_context2d.vertex_ptr;
+	im_context2d.vertex_ptr += count;
+	im_context2d.vertex += count;
 	return vertex;
 }
 
-inline void im_push_vertices(Im_Vertex *vertices, int count) {
-	auto dst = iim_push_vertex_count(count);
-	memcpy(dst, vertices, sizeof(Im_Vertex) * count);
+inline void im2d_push_vertices(Im_Vertex2d *vertices, int count) {
+	auto dst = iim2d_push_vertex_count(count);
+
+	if (im_context2d.transformation > 1) {
+		auto &trans = im_context2d.transformations[im_context2d.transformation - 1];
+		for (int i = 0; i < count; ++i) {
+			vertices[i].position = (trans * vec4(vertices[i].position, 1)).xyz;
+		}
+	}
+
+	memcpy(dst, vertices, sizeof(Im_Vertex2d) * count);
 }
 
-inline void im_push_vertex(Vec3 position, Vec2 texture_coord, Color4 color) {
-	Im_Vertex src = { position, texture_coord, color };
-	im_push_vertices(&src, 1);
+inline void im2d_push_vertex(Vec3 position, Vec2 texture_coord, Color4 color) {
+	Im_Vertex2d src = { position, texture_coord, color };
+	im2d_push_vertices(&src, 1);
 }
 
-inline Im_Index *iim_push_index_count(int count) {
-	assert(im_context.index + count <= IM_CONTEXT_MAX_INDICES);
-	auto index = im_context.index_ptr;
-	im_context.index_ptr += count;
-	im_context.counter += count;
+inline Im_Index *iim2d_push_index_count(int count) {
+	assert(im_context2d.index + count <= IM_CONTEXT_MAX_INDICES);
+	auto index = im_context2d.index_ptr;
+	im_context2d.index_ptr += count;
+	im_context2d.index += count;
+	im_context2d.counter += count;
 	return index;
 }
 
-#define im_get_last_index() (im_context.counter ? im_context.last_index + 1 : im_context.last_index)
-#define im_get_draw_cmd()   (im_context.draw_cmds + im_context.draw_cmd)
+#define im2d_get_last_index() (im_context2d.counter ? im_context2d.last_index + 1 : im_context2d.last_index)
+#define im2d_get_draw_cmd()   (im_context2d.draw_cmds + im_context2d.draw_cmd)
 
-inline void im_push_indices(Im_Index *indices, int count) {
-	assert(im_context.index + count <= IM_CONTEXT_MAX_INDICES);
-	auto prev_counter = im_context.counter;
+inline void im2d_push_indices(Im_Index *indices, int count) {
+	assert(im_context2d.index + count <= IM_CONTEXT_MAX_INDICES);
+	auto prev_counter = im_context2d.counter;
 
-	auto dst = iim_push_index_count(count);
+	auto dst = iim2d_push_index_count(count);
 
 	if (prev_counter) {
-		auto next_index = im_context.last_index + 1;
+		auto next_index = im_context2d.last_index + 1;
 		for (int i = 0; i < count; ++i) {
 			indices[i] += next_index;
 		}
 	}
 
-	im_context.last_index = indices[count - 1];
-	memcpy(dst, indices, count * sizeof(Im_Vertex));
+	im_context2d.last_index = indices[count - 1];
+	memcpy(dst, indices, count * sizeof(Im_Vertex2d));
 }
 
-inline void im_push_draw_cmd() {
-	auto last_cmd   = im_context.draw_cmds + im_context.draw_cmd;
-	last_cmd->count = im_context.counter;
-	im_context.draw_cmd += 1;
-	im_context.counter = 0;
+inline void im2d_push_draw_cmd() {
+	auto last_cmd   = im_context2d.draw_cmds + im_context2d.draw_cmd;
+	last_cmd->count = im_context2d.counter;
+	im_context2d.draw_cmd += 1;
+	im_context2d.counter = 0;
 }
 
-void iim_flush(bool restart = true);
+void iim2d_flush(bool restart = true);
 
-inline void im_ensure_size(int vertex_count, int index_count) {
-	if (im_context.index + index_count - 1 >= IM_CONTEXT_MAX_INDICES ||
-		im_context.vertex + vertex_count - 1 >= IM_CONTEXT_MAX_VERTICES) {
-		im_push_draw_cmd();
-		iim_flush();
+inline void im2d_ensure_size(int vertex_count, int index_count) {
+	if (im_context2d.index + index_count - 1 >= IM_CONTEXT_MAX_INDICES ||
+		im_context2d.vertex + vertex_count - 1 >= IM_CONTEXT_MAX_VERTICES) {
+		im2d_push_draw_cmd();
+		iim2d_flush();
 	}
 }
 
@@ -487,234 +609,238 @@ void gfx_viewport(r32 x, r32 y, r32 w, r32 h) {
 	gfx->cmd_set_viewport(x, y, w, h);
 }
 
-void im_begin(Mat4 &transform) {
-	im_context.draw_cmd       = 0;
-	im_context.vertex         = 0;
-	im_context.index          = 0;
-	im_context.counter        = 0;
-	im_context.transformation = 1;
-
-	im_context.vertex_ptr = (Im_Vertex *)gfx->map(im_context.vertex_buffer, Map_Type_WRITE_DISCARD);
-	im_context.index_ptr  = (Im_Index *)gfx->map(im_context.index_buffer, Map_Type_WRITE_DISCARD);
-
-	im_start_cmd_record(white_texture.view);
-
+void im2d_debug_begin(r32 left, r32 right, r32 top, r32 bottom, r32 near, r32 far) {
 	Im_Uniform uniform;
-	uniform.transform = transform;
 
-	void *ptr = gfx->map(im_context.uniform_buffer, Map_Type_WRITE_DISCARD);
-	memcpy(ptr, &uniform, sizeof(uniform));
-	gfx->unmap(im_context.uniform_buffer);
-
-	gfx->cmd_bind_pipeline(im_context.pipeline);
-	gfx->cmd_bind_samplers(0, 1, &im_context.sampler);
-	gfx->cmd_bind_vs_uniform_buffers(0, 1, &im_context.uniform_buffer);
-}
-
-void im_begin(Camera_View &view, Mat4 &transform) {
-	Mat4 projection;
 	switch (gfx->backend) {
 		case Render_Backend_OPENGL: {
-			if (view.kind == ORTHOGRAPHIC)
-				projection = mat4_ortho_gl(view.orthographic.left,
-										   view.orthographic.right,
-										   view.orthographic.top,
-										   view.orthographic.bottom,
-										   view.orthographic.near,
-										   view.orthographic.far);
-			else
-				projection = mat4_perspective_gl(view.perspective.field_of_view,
-												 view.perspective.aspect_ratio,
-												 view.perspective.near_plane,
-												 view.perspective.far_plane);
+			uniform.transform = mat4_ortho_gl(left, right, top, bottom, near, far);
 		} break;
 
 		case Render_Backend_DIRECTX11: {
-			if (view.kind == ORTHOGRAPHIC)
-				projection = mat4_ortho_dx(view.orthographic.left,
-										   view.orthographic.right,
-										   view.orthographic.top,
-										   view.orthographic.bottom,
-										   view.orthographic.near,
-										   view.orthographic.far);
-			else
-				projection = mat4_perspective_dx(view.perspective.field_of_view,
-												 view.perspective.aspect_ratio,
-												 view.perspective.near_plane,
-												 view.perspective.far_plane);
+			uniform.transform = mat4_ortho_dx(left, right, top, bottom, near, far);
 		} break;
 
 			invalid_default_case();
 	}
 
-	im_begin(projection * transform);
+	im_context2d.draw_cmd       = 0;
+	im_context2d.vertex         = 0;
+	im_context2d.index          = 0;
+	im_context2d.counter        = 0;
+	im_context2d.transformation = 1;
+
+	im_context2d.vertex_ptr = (Im_Vertex2d *)gfx->map(im_context2d.vertex_buffer, Map_Type_WRITE_DISCARD);
+	im_context2d.index_ptr  = (Im_Index *)gfx->map(im_context2d.index_buffer, Map_Type_WRITE_DISCARD);
+
+	im2d_start_cmd_record(white_texture.view);
+
+	void *ptr = gfx->map(im_context2d.uniform_buffer, Map_Type_WRITE_DISCARD);
+	memcpy(ptr, &uniform, sizeof(uniform));
+	gfx->unmap(im_context2d.uniform_buffer);
+
+	gfx->cmd_bind_pipeline(debug_pipeline);
+	gfx->cmd_bind_samplers(0, 1, &im_context2d.sampler);
+	gfx->cmd_bind_vs_uniform_buffers(0, 1, &im_context2d.uniform_buffer);
 }
 
-void iim_flush(bool restart) {
-	gfx->unmap(im_context.vertex_buffer);
-	gfx->unmap(im_context.index_buffer);
+void im2d_begin(const Mat4 &transform) {
+	im_context2d.draw_cmd       = 0;
+	im_context2d.vertex         = 0;
+	im_context2d.index          = 0;
+	im_context2d.counter        = 0;
+	im_context2d.transformation = 1;
 
-	if (im_context.draw_cmd) {
-		gfx->cmd_bind_vertex_buffer(im_context.vertex_buffer, sizeof(Im_Vertex));
-		gfx->cmd_bind_index_buffer(im_context.index_buffer, Index_Type_U16);
+	im_context2d.vertex_ptr = (Im_Vertex2d *)gfx->map(im_context2d.vertex_buffer, Map_Type_WRITE_DISCARD);
+	im_context2d.index_ptr  = (Im_Index *)gfx->map(im_context2d.index_buffer, Map_Type_WRITE_DISCARD);
 
-		for (int draw_cmd_index = 0; draw_cmd_index < im_context.draw_cmd; ++draw_cmd_index) {
-			Im_Draw_Cmd *cmd = im_context.draw_cmds + draw_cmd_index;
+	im2d_start_cmd_record(white_texture.view);
+
+	Im_Uniform uniform;
+	uniform.transform = transform;
+
+	void *ptr = gfx->map(im_context2d.uniform_buffer, Map_Type_WRITE_DISCARD);
+	memcpy(ptr, &uniform, sizeof(uniform));
+	gfx->unmap(im_context2d.uniform_buffer);
+
+	gfx->cmd_bind_pipeline(im_context2d.pipeline);
+	gfx->cmd_bind_samplers(0, 1, &im_context2d.sampler);
+	gfx->cmd_bind_vs_uniform_buffers(0, 1, &im_context2d.uniform_buffer);
+}
+
+void im2d_begin(Camera_View &view, const Mat4 &transform) {
+	Mat4 projection = gfx_view_transform(view);
+	im2d_begin(projection * transform);
+}
+
+void iim2d_flush(bool restart) {
+	gfx->unmap(im_context2d.vertex_buffer);
+	gfx->unmap(im_context2d.index_buffer);
+
+	if (im_context2d.draw_cmd) {
+		gfx->cmd_bind_vertex_buffer(im_context2d.vertex_buffer, sizeof(Im_Vertex2d));
+		gfx->cmd_bind_index_buffer(im_context2d.index_buffer, Index_Type_U16);
+
+		for (u32 draw_cmd_index = 0; draw_cmd_index < im_context2d.draw_cmd; ++draw_cmd_index) {
+			Im_Draw_Cmd *cmd = im_context2d.draw_cmds + draw_cmd_index;
 
 			gfx->cmd_bind_textures(0, 1, &cmd->texture);
-			gfx->cmd_draw_indexed(cmd->count, cmd->index * sizeof(Im_Index), cmd->vertex);
+			gfx->cmd_draw_indexed(cmd->count, cmd->index, cmd->vertex);
 		}
 
-		auto bound_texture = im_context.draw_cmds[im_context.draw_cmd - 1].texture;
+		auto bound_texture = im_context2d.draw_cmds[im_context2d.draw_cmd - 1].texture;
 
-		im_context.draw_cmd = 0;
-		im_context.vertex   = 0;
-		im_context.index    = 0;
-		im_context.counter  = 0;
+		im_context2d.draw_cmd = 0;
+		im_context2d.vertex   = 0;
+		im_context2d.index    = 0;
+		im_context2d.counter  = 0;
 
-		im_start_cmd_record(bound_texture);
+		im2d_start_cmd_record(bound_texture);
 	}
 
 	if (restart) {
-		im_context.vertex_ptr = (Im_Vertex *)gfx->map(im_context.vertex_buffer, Map_Type_WRITE_DISCARD);
-		im_context.index_ptr  = (Im_Index *)gfx->map(im_context.index_buffer, Map_Type_WRITE_DISCARD);
+		im_context2d.vertex_ptr = (Im_Vertex2d *)gfx->map(im_context2d.vertex_buffer, Map_Type_WRITE_DISCARD);
+		im_context2d.index_ptr  = (Im_Index *)gfx->map(im_context2d.index_buffer, Map_Type_WRITE_DISCARD);
 	}
 }
 
-void im_end() {
-	if (im_context.counter) {
-		im_push_draw_cmd();
+void im2d_end() {
+	if (im_context2d.counter) {
+		im2d_push_draw_cmd();
 	}
-	iim_flush(false);
+	iim2d_flush(false);
 }
 
-void im_bind_texture(Texture2d_Handle handle) {
-	if (im_context.counter) {
-		im_push_draw_cmd();
-		im_start_cmd_record(handle.view);
+void im2d_bind_texture(Texture2d_Handle handle) {
+	if (im_context2d.draw_cmds[im_context2d.draw_cmd].texture.id == handle.view.id)
+		return;
+
+	if (im_context2d.counter) {
+		im2d_push_draw_cmd();
+		im2d_start_cmd_record(handle.view);
 	} else {
-		auto draw_cmd     = im_get_draw_cmd();
+		auto draw_cmd     = im2d_get_draw_cmd();
 		draw_cmd->texture = handle.view;
 	}
 }
 
-void im_unbind_texture() {
-	im_bind_texture(white_texture);
+void im2d_unbind_texture() {
+	im2d_bind_texture(white_texture);
 }
 
-void im_push_matrix(const Mat4 &matrix) {
-	assert(im_context.transformation < IM_CONTEXT_MAX_TRANSFORMATIONS);
-	im_context.transformations[im_context.transformation] = im_context.transformations[im_context.transformation - 1] * matrix;
-	im_context.transformation += 1;
+void im2d_push_matrix(const Mat4 &matrix) {
+	assert(im_context2d.transformation < IM_CONTEXT_MAX_TRANSFORMATIONS);
+	im_context2d.transformations[im_context2d.transformation] = im_context2d.transformations[im_context2d.transformation - 1] * matrix;
+	im_context2d.transformation += 1;
 }
 
-void im_pop_matrix() {
-	assert(im_context.transformation > 1);
-	im_context.transformation -= 1;
+void im2d_pop_matrix() {
+	assert(im_context2d.transformation > 1);
+	im_context2d.transformation -= 1;
 }
 
-void im_flush_transformations() {
-	im_context.transformation = 1;
+void im2d_flush_transformations() {
+	im_context2d.transformation = 1;
 }
 
-void im_triangle(Vec3 a, Vec3 b, Vec3 c, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Color4 color) {
-	im_ensure_size(3, 3);
+void im2d_triangle(Vec3 a, Vec3 b, Vec3 c, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Color4 color) {
+	im2d_ensure_size(3, 3);
 
 	Im_Index  indices[]  = { 0, 1, 2 };
-	Im_Vertex vertices[] = {
+	Im_Vertex2d vertices[] = {
 		{ a, uv_a, color },
 		{ b, uv_b, color },
 		{ c, uv_c, color },
 	};
 
-	im_push_indices(indices, static_count(indices));
-	im_push_vertices(vertices, static_count(vertices));
+	im2d_push_indices(indices, static_count(indices));
+	im2d_push_vertices(vertices, static_count(vertices));
 }
 
-void im_triangle(Vec2 a, Vec2 b, Vec2 c, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Color4 color) {
-	im_triangle(vec3(a, 1), vec3(b, 1), vec3(c, 1), uv_a, uv_b, uv_c, color);
+void im2d_triangle(Vec2 a, Vec2 b, Vec2 c, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Color4 color) {
+	im2d_triangle(vec3(a, 1), vec3(b, 1), vec3(c, 1), uv_a, uv_b, uv_c, color);
 }
 
-void im_triangle(Vec3 a, Vec3 b, Vec3 c, Color4 color) {
-	im_triangle(a, b, c, vec2(0), vec2(0), vec2(0), color);
+void im2d_triangle(Vec3 a, Vec3 b, Vec3 c, Color4 color) {
+	im2d_triangle(a, b, c, vec2(0), vec2(0), vec2(0), color);
 }
 
-void im_triangle(Vec2 a, Vec2 b, Vec2 c, Color4 color) {
-	im_triangle(vec3(a, 1), vec3(b, 1), vec3(c, 1), color);
+void im2d_triangle(Vec2 a, Vec2 b, Vec2 c, Color4 color) {
+	im2d_triangle(vec3(a, 1), vec3(b, 1), vec3(c, 1), color);
 }
 
-void im_quad(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Vec2 uv_d, Color4 color) {
-	im_ensure_size(4, 6);
+void im2d_quad(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Vec2 uv_d, Color4 color) {
+	im2d_ensure_size(4, 6);
 
 	Im_Index  indices[]  = { 0, 1, 2, 0, 2, 3 };
-	Im_Vertex vertices[] = {
+	Im_Vertex2d vertices[] = {
 		{ a, uv_a, color },
 		{ b, uv_b, color },
 		{ c, uv_c, color },
 		{ d, uv_d, color },
 	};
 
-	im_push_indices(indices, static_count(indices));
-	im_push_vertices(vertices, static_count(vertices));
+	im2d_push_indices(indices, static_count(indices));
+	im2d_push_vertices(vertices, static_count(vertices));
 }
 
-void im_quad(Vec2 a, Vec2 b, Vec2 c, Vec2 d, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Vec2 uv_d, Color4 color) {
-	im_quad(vec3(a, 1), vec3(b, 1), vec3(c, 1), vec3(d, 1), uv_a, uv_b, uv_c, uv_d, color);
+void im2d_quad(Vec2 a, Vec2 b, Vec2 c, Vec2 d, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Vec2 uv_d, Color4 color) {
+	im2d_quad(vec3(a, 1), vec3(b, 1), vec3(c, 1), vec3(d, 1), uv_a, uv_b, uv_c, uv_d, color);
 }
 
-void im_quad(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Color4 color) {
-	im_quad(a, b, c, d, vec2(0, 0), vec2(0, 1), vec2(1, 1), vec2(1, 0), color);
+void im2d_quad(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Color4 color) {
+	im2d_quad(a, b, c, d, vec2(0, 0), vec2(0, 1), vec2(1, 1), vec2(1, 0), color);
 }
 
-void im_quad(Vec2 a, Vec2 b, Vec2 c, Vec2 d, Color4 color) {
-	im_quad(vec3(a, 1), vec3(b, 1), vec3(c, 1), vec3(d, 1), color);
+void im2d_quad(Vec2 a, Vec2 b, Vec2 c, Vec2 d, Color4 color) {
+	im2d_quad(vec3(a, 1), vec3(b, 1), vec3(c, 1), vec3(d, 1), color);
 }
 
-void im_quad(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Mm_Rect rect, Color4 color) {
+void im2d_quad(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Mm_Rect rect, Color4 color) {
 	auto uv_a = rect.min;
 	auto uv_b = vec2(rect.min.x, rect.max.y);
 	auto uv_c = rect.max;
 	auto uv_d = vec2(rect.max.x, rect.min.y);
-	im_quad(a, b, c, d, uv_a, uv_b, uv_c, uv_d, color);
+	im2d_quad(a, b, c, d, uv_a, uv_b, uv_c, uv_d, color);
 }
 
-void im_quad(Vec2 a, Vec2 b, Vec2 c, Vec2 d, Mm_Rect rect, Color4 color) {
-	im_quad(vec3(a, 1), vec3(b, 1), vec3(c, 1), vec3(d, 1), rect, color);
+void im2d_quad(Vec2 a, Vec2 b, Vec2 c, Vec2 d, Mm_Rect rect, Color4 color) {
+	im2d_quad(vec3(a, 1), vec3(b, 1), vec3(c, 1), vec3(d, 1), rect, color);
 }
 
-void im_rect(Vec3 pos, Vec2 dim, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Vec2 uv_d, Color4 color) {
+void im2d_rect(Vec3 pos, Vec2 dim, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Vec2 uv_d, Color4 color) {
 	Vec3 a = pos;
 	Vec3 b = vec3(pos.x, pos.y + dim.y, pos.z);
 	Vec3 c = vec3(pos.xy + dim, pos.z);
 	Vec3 d = vec3(pos.x + dim.x, pos.y, pos.z);
-	im_quad(a, b, c, d, uv_a, uv_b, uv_c, uv_d, color);
+	im2d_quad(a, b, c, d, uv_a, uv_b, uv_c, uv_d, color);
 }
 
-void im_rect(Vec2 pos, Vec2 dim, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Vec2 uv_d, Color4 color) {
-	im_rect(vec3(pos, 1), dim, uv_a, uv_b, uv_c, uv_d, color);
+void im2d_rect(Vec2 pos, Vec2 dim, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Vec2 uv_d, Color4 color) {
+	im2d_rect(vec3(pos, 1), dim, uv_a, uv_b, uv_c, uv_d, color);
 }
 
-void im_rect(Vec3 pos, Vec2 dim, Color4 color) {
-	im_rect(pos, dim, vec2(0, 0), vec2(0, 1), vec2(1, 1), vec2(1, 0), color);
+void im2d_rect(Vec3 pos, Vec2 dim, Color4 color) {
+	im2d_rect(pos, dim, vec2(0, 0), vec2(0, 1), vec2(1, 1), vec2(1, 0), color);
 }
 
-void im_rect(Vec2 pos, Vec2 dim, Color4 color) {
-	im_rect(vec3(pos, 1), dim, color);
+void im2d_rect(Vec2 pos, Vec2 dim, Color4 color) {
+	im2d_rect(vec3(pos, 1), dim, color);
 }
 
-void im_rect(Vec3 pos, Vec2 dim, Mm_Rect rect, Color4 color) {
+void im2d_rect(Vec3 pos, Vec2 dim, Mm_Rect rect, Color4 color) {
 	auto uv_a = rect.min;
 	auto uv_b = vec2(rect.min.x, rect.max.y);
 	auto uv_c = rect.max;
 	auto uv_d = vec2(rect.max.x, rect.min.y);
-	im_rect(pos, dim, uv_a, uv_b, uv_c, uv_d, color);
+	im2d_rect(pos, dim, uv_a, uv_b, uv_c, uv_d, color);
 }
 
-void im_rect(Vec2 pos, Vec2 dim, Mm_Rect rect, Color4 color) {
-	im_rect(vec3(pos, 1), dim, rect, color);
+void im2d_rect(Vec2 pos, Vec2 dim, Mm_Rect rect, Color4 color) {
+	im2d_rect(vec3(pos, 1), dim, rect, color);
 }
 
-void im_rect_rotated(Vec3 pos, Vec2 dim, r32 angle, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Vec2 uv_d, Color4 color) {
+void im2d_rect_rotated(Vec3 pos, Vec2 dim, r32 angle, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Vec2 uv_d, Color4 color) {
 	Vec2 center = 0.5f * (2 * pos.xy + dim);
 
 	Vec2 a = pos.xy;
@@ -744,35 +870,135 @@ void im_rect_rotated(Vec3 pos, Vec2 dim, r32 angle, Vec2 uv_a, Vec2 uv_b, Vec2 u
 	c += center;
 	d += center;
 
-	im_quad(vec3(a, pos.z), vec3(b, pos.z), vec3(c, pos.z), vec3(d, pos.z), uv_a, uv_b, uv_c, uv_d, color);
+	im2d_quad(vec3(a, pos.z), vec3(b, pos.z), vec3(c, pos.z), vec3(d, pos.z), uv_a, uv_b, uv_c, uv_d, color);
 }
 
-void im_rect_rotated(Vec2 pos, Vec2 dim, r32 angle, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Vec2 uv_d, Color4 color) {
-	im_rect_rotated(vec3(pos, 1), dim, angle, uv_a, uv_b, uv_c, uv_d, color);
+void im2d_rect_rotated(Vec2 pos, Vec2 dim, r32 angle, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Vec2 uv_d, Color4 color) {
+	im2d_rect_rotated(vec3(pos, 1), dim, angle, uv_a, uv_b, uv_c, uv_d, color);
 }
 
-void im_rect_rotated(Vec3 pos, Vec2 dim, r32 angle, Color4 color) {
-	im_rect_rotated(pos, dim, angle, vec2(0, 0), vec2(0, 1), vec2(1, 1), vec2(1, 0), color);
+void im2d_rect_rotated(Vec3 pos, Vec2 dim, r32 angle, Color4 color) {
+	im2d_rect_rotated(pos, dim, angle, vec2(0, 0), vec2(0, 1), vec2(1, 1), vec2(1, 0), color);
 }
 
-void im_rect_rotated(Vec2 pos, Vec2 dim, r32 angle, Color4 color) {
-	im_rect_rotated(vec3(pos, 1), dim, angle, color);
+void im2d_rect_rotated(Vec2 pos, Vec2 dim, r32 angle, Color4 color) {
+	im2d_rect_rotated(vec3(pos, 1), dim, angle, color);
 }
 
-void im_rect_rotated(Vec3 pos, Vec2 dim, r32 angle, Mm_Rect rect, Color4 color) {
+void im2d_rect_rotated(Vec3 pos, Vec2 dim, r32 angle, Mm_Rect rect, Color4 color) {
 	auto uv_a = rect.min;
 	auto uv_b = vec2(rect.min.x, rect.max.y);
 	auto uv_c = rect.max;
 	auto uv_d = vec2(rect.max.x, rect.min.y);
-	im_rect_rotated(pos, dim, angle, uv_a, uv_b, uv_c, uv_d, color);
+	im2d_rect_rotated(pos, dim, angle, uv_a, uv_b, uv_c, uv_d, color);
 }
 
-void im_rect_rotated(Vec2 pos, Vec2 dim, r32 angle, Mm_Rect rect, Color4 color) {
-	im_rect_rotated(vec3(pos, 1), dim, angle, rect, color);
+void im2d_rect_rotated(Vec2 pos, Vec2 dim, r32 angle, Mm_Rect rect, Color4 color) {
+	im2d_rect_rotated(vec3(pos, 1), dim, angle, rect, color);
 }
 
-void im_ellipse(Vec3 pos, r32 radius_a, r32 radius_b, Color4 color, int segments) {
-	segments = clamp(IM_MIN_CIRCLE_SEGMENTS, IM_MAX_CIRCLE_SEGMENTS - 1, segments);
+void im2d_rect_centered(Vec3 pos, Vec2 dim, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Vec2 uv_d, Color4 color) {
+	Vec2 half_dim = 0.5f * dim;
+
+	Vec3 a, b, c, d;
+	a.xy = pos.xy - half_dim;
+	b.xy = vec2(pos.x - half_dim.x, pos.y + half_dim.y);
+	c.xy = pos.xy + half_dim;
+	d.xy = vec2(pos.x + half_dim.x, pos.y - half_dim.y);
+
+	a.z = pos.z;
+	b.z = pos.z;
+	c.z = pos.z;
+	d.z = pos.z;
+
+	im2d_quad(a, b, c, d, uv_a, uv_b, uv_c, uv_d, color);
+}
+
+void im2d_rect_centered(Vec2 pos, Vec2 dim, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Vec2 uv_d, Color4 color) {
+	im2d_rect_centered(vec3(pos, 1), dim, uv_a, uv_b, uv_c, uv_d, color);
+}
+
+void im2d_rect_centered(Vec3 pos, Vec2 dim, Color4 color) {
+	im2d_rect_centered(pos, dim, vec2(0, 0), vec2(0, 1), vec2(1, 1), vec2(1, 0), color);
+}
+
+void im2d_rect_centered(Vec2 pos, Vec2 dim, Color4 color) {
+	im2d_rect_centered(vec3(pos, 1), dim, vec2(0, 0), vec2(0, 1), vec2(1, 1), vec2(1, 0), color);
+}
+
+void im2d_rect_centered(Vec3 pos, Vec2 dim, Mm_Rect rect, Color4 color) {
+	auto uv_a = rect.min;
+	auto uv_b = vec2(rect.min.x, rect.max.y);
+	auto uv_c = rect.max;
+	auto uv_d = vec2(rect.max.x, rect.min.y);
+	im2d_rect_centered(pos, dim, uv_a, uv_b, uv_c, uv_d, color);
+}
+
+void im2d_rect_centered(Vec2 pos, Vec2 dim, Mm_Rect rect, Color4 color) {
+	im2d_rect_centered(vec3(pos, 1), dim, rect, color);
+}
+
+void im2d_rect_centered_rotated(Vec3 pos, Vec2 dim, r32 angle, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Vec2 uv_d, Color4 color) {
+	Vec2 center = pos.xy;
+
+	Vec2 half_dim = 0.5f * dim;
+	Vec2 a, b, c, d;
+	a = pos.xy - half_dim;
+	b = vec2(pos.x - half_dim.x, pos.y + half_dim.y);
+	c = pos.xy + half_dim;
+	d = vec2(pos.x + half_dim.x, pos.y - half_dim.y);
+
+	auto r0 = a - center;
+	auto r1 = b - center;
+	auto r2 = c - center;
+	auto r3 = d - center;
+
+	r32 cv = cosf(angle);
+	r32 sv = sinf(angle);
+
+	a.x = r0.x * cv - r0.y * sv;
+	a.y = r0.x * sv + r0.y * cv;
+	b.x = r1.x * cv - r1.y * sv;
+	b.y = r1.x * sv + r1.y * cv;
+	c.x = r2.x * cv - r2.y * sv;
+	c.y = r2.x * sv + r2.y * cv;
+	d.x = r3.x * cv - r3.y * sv;
+	d.y = r3.x * sv + r3.y * cv;
+
+	a += center;
+	b += center;
+	c += center;
+	d += center;
+
+	im2d_quad(vec3(a, pos.z), vec3(b, pos.z), vec3(c, pos.z), vec3(d, pos.z), uv_a, uv_b, uv_c, uv_d, color);
+}
+
+void im2d_rect_centered_rotated(Vec2 pos, Vec2 dim, r32 angle, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Vec2 uv_d, Color4 color) {
+	im2d_rect_centered_rotated(vec3(pos, 1), dim, angle, uv_a, uv_b, uv_c, uv_d, color);
+}
+
+void im2d_rect_centered_rotated(Vec3 pos, Vec2 dim, r32 angle, Color4 color) {
+	im2d_rect_centered_rotated(pos, dim, angle, vec2(0, 0), vec2(0, 1), vec2(1, 1), vec2(1, 0), color);
+}
+
+void im2d_rect_centered_rotated(Vec2 pos, Vec2 dim, r32 angle, Color4 color) {
+	im2d_rect_centered_rotated(vec3(pos, 1), dim, angle, vec2(0, 0), vec2(0, 1), vec2(1, 1), vec2(1, 0), color);
+}
+
+void im2d_rect_centered_rotated(Vec3 pos, Vec2 dim, r32 angle, Mm_Rect rect, Color4 color) {
+	auto uv_a = rect.min;
+	auto uv_b = vec2(rect.min.x, rect.max.y);
+	auto uv_c = rect.max;
+	auto uv_d = vec2(rect.max.x, rect.min.y);
+	im2d_rect_centered_rotated(pos, dim, angle, uv_a, uv_b, uv_c, uv_d, color);
+}
+
+void im2d_rect_centered_rotated(Vec2 pos, Vec2 dim, r32 angle, Mm_Rect rect, Color4 color) {
+	im2d_rect_centered_rotated(vec3(pos, 1), dim, angle, rect, color);
+}
+
+void im2d_ellipse(Vec3 pos, r32 radius_a, r32 radius_b, Color4 color, int segments) {
+	segments = Clamp(IM_MIN_CIRCLE_SEGMENTS, IM_MAX_CIRCLE_SEGMENTS - 1, segments);
 
 	r32 px = im_unit_circle_cos[0] * radius_a;
 	r32 py = im_unit_circle_sin[0] * radius_b;
@@ -784,33 +1010,33 @@ void im_ellipse(Vec3 pos, r32 radius_a, r32 radius_b, Color4 color, int segments
 		npx = im_unit_circle_cos[lookup] * radius_a;
 		npy = im_unit_circle_sin[lookup] * radius_b;
 
-		im_triangle(pos, pos + vec3(npx, npy, 0), pos + vec3(px, py, 0), color);
+		im2d_triangle(pos, pos + vec3(npx, npy, 0), pos + vec3(px, py, 0), color);
 
 		px = npx;
 		py = npy;
 	}
 }
 
-void im_ellipse(Vec2 pos, r32 radius_a, r32 radius_b, Color4 color, int segments) {
-	im_ellipse(vec3(pos, 1), radius_a, radius_b, color, segments);
+void im2d_ellipse(Vec2 pos, r32 radius_a, r32 radius_b, Color4 color, int segments) {
+	im2d_ellipse(vec3(pos, 1), radius_a, radius_b, color, segments);
 }
 
-void im_circle(Vec3 pos, r32 radius, Color4 color, int segments) {
-	im_ellipse(pos, radius, radius, color, segments);
+void im2d_circle(Vec3 pos, r32 radius, Color4 color, int segments) {
+	im2d_ellipse(pos, radius, radius, color, segments);
 }
 
-void im_circle(Vec2 pos, r32 radius, Color4 color, int segments) {
-	im_ellipse(vec3(pos, 1), radius, radius, color, segments);
+void im2d_circle(Vec2 pos, r32 radius, Color4 color, int segments) {
+	im2d_ellipse(vec3(pos, 1), radius, radius, color, segments);
 }
 
-void im_pie(Vec3 pos, r32 radius_a, r32 radius_b, r32 theta_a, r32 theta_b, Color4 color, int segments) {
+void im2d_pie(Vec3 pos, r32 radius_a, r32 radius_b, r32 theta_a, r32 theta_b, Color4 color, int segments) {
 	assert(theta_a >= 0 && theta_a <= MATH_PI * 2 && theta_b >= 0 && theta_b <= MATH_PI * 2 && theta_b >= theta_a);
 
 	int first_index = (int)((0.5f * theta_a * MATH_PI_INVERSE) * (r32)(IM_MAX_CIRCLE_SEGMENTS - 1) + 0.5f);
 	int last_index  = (int)((0.5f * theta_b * MATH_PI_INVERSE) * (r32)(IM_MAX_CIRCLE_SEGMENTS - 1) + 0.5f);
 
 	auto value_count = last_index - first_index;
-	segments         = min_value(segments, value_count);
+	segments         = GetMinValue(segments, value_count);
 
 	r32 px = im_unit_circle_cos[first_index] * radius_a;
 	r32 py = im_unit_circle_sin[first_index] * radius_b;
@@ -822,26 +1048,26 @@ void im_pie(Vec3 pos, r32 radius_a, r32 radius_b, r32 theta_a, r32 theta_b, Colo
 		npx = im_unit_circle_cos[lookup] * radius_a;
 		npy = im_unit_circle_sin[lookup] * radius_b;
 
-		im_triangle(pos, pos + vec3(npx, npy, 0), pos + vec3(px, py, 0), color);
+		im2d_triangle(pos, pos + vec3(npx, npy, 0), pos + vec3(px, py, 0), color);
 
 		px = npx;
 		py = npy;
 	}
 }
 
-void im_pie(Vec2 pos, r32 radius_a, r32 radius_b, r32 theta_a, r32 theta_b, Color4 color, int segments) {
-	im_pie(vec3(pos, 1), radius_a, radius_b, theta_a, theta_b, color, segments);
+void im2d_pie(Vec2 pos, r32 radius_a, r32 radius_b, r32 theta_a, r32 theta_b, Color4 color, int segments) {
+	im2d_pie(vec3(pos, 1), radius_a, radius_b, theta_a, theta_b, color, segments);
 }
 
-void im_pie(Vec3 pos, r32 radius, r32 theta_a, r32 theta_b, Color4 color, int segments) {
-	im_pie(pos, radius, radius, theta_a, theta_b, color, segments);
+void im2d_pie(Vec3 pos, r32 radius, r32 theta_a, r32 theta_b, Color4 color, int segments) {
+	im2d_pie(pos, radius, radius, theta_a, theta_b, color, segments);
 }
 
-void im_pie(Vec2 pos, r32 radius, r32 theta_a, r32 theta_b, Color4 color, int segments) {
-	im_pie(vec3(pos, 1), radius, radius, theta_a, theta_b, color, segments);
+void im2d_pie(Vec2 pos, r32 radius, r32 theta_a, r32 theta_b, Color4 color, int segments) {
+	im2d_pie(vec3(pos, 1), radius, radius, theta_a, theta_b, color, segments);
 }
 
-void im_cube(Vec3 position, Quat rotation, Vec3 scale,
+void im2d_cube(Vec3 position, Quat rotation, Vec3 scale,
 			 Mm_Rect rect0, Mm_Rect rect1, Mm_Rect rect2,
 			 Mm_Rect rect3, Mm_Rect rect4, Mm_Rect rect5, Color4 color) {
 	Vec3 vertices[] = {
@@ -862,23 +1088,23 @@ void im_cube(Vec3 position, Quat rotation, Vec3 scale,
 		vertices[i] += position;
 	}
 
-	im_quad(vertices[0], vertices[1], vertices[2], vertices[3], rect0, color);
-	im_quad(vertices[3], vertices[2], vertices[5], vertices[4], rect1, color);
-	im_quad(vertices[4], vertices[5], vertices[6], vertices[7], rect2, color);
-	im_quad(vertices[7], vertices[6], vertices[1], vertices[0], rect3, color);
-	im_quad(vertices[1], vertices[6], vertices[5], vertices[2], rect4, color);
-	im_quad(vertices[7], vertices[0], vertices[3], vertices[4], rect5, color);
+	im2d_quad(vertices[0], vertices[1], vertices[2], vertices[3], rect0, color);
+	im2d_quad(vertices[3], vertices[2], vertices[5], vertices[4], rect1, color);
+	im2d_quad(vertices[4], vertices[5], vertices[6], vertices[7], rect2, color);
+	im2d_quad(vertices[7], vertices[6], vertices[1], vertices[0], rect3, color);
+	im2d_quad(vertices[1], vertices[6], vertices[5], vertices[2], rect4, color);
+	im2d_quad(vertices[7], vertices[0], vertices[3], vertices[4], rect5, color);
 }
 
-void im_cube(Vec3 position, Quat rotation, Vec3 scale, Mm_Rect rect, Color4 color) {
-	im_cube(position, rotation, scale, rect, rect, rect, rect, rect, rect, color);
+void im2d_cube(Vec3 position, Quat rotation, Vec3 scale, Mm_Rect rect, Color4 color) {
+	im2d_cube(position, rotation, scale, rect, rect, rect, rect, rect, rect, color);
 }
 
-void im_cube(Vec3 position, Quat rotation, Vec3 scale, Color4 color) {
-	im_cube(position, rotation, scale, mm_rect(0, 0, 1, 1), color);
+void im2d_cube(Vec3 position, Quat rotation, Vec3 scale, Color4 color) {
+	im2d_cube(position, rotation, scale, mm_rect(0, 0, 1, 1), color);
 }
 
-void im_line2d(Vec3 a, Vec3 b, Color4 color, r32 thickness) {
+void im2d_line(Vec3 a, Vec3 b, Color4 color, r32 thickness) {
 	if (vec3_equals(a, b, 0)) return;
 
 	r32 dx   = b.x - a.x;
@@ -887,84 +1113,102 @@ void im_line2d(Vec3 a, Vec3 b, Color4 color, r32 thickness) {
 	dx *= (thickness * ilen);
 	dy *= (thickness * ilen);
 
-	im_quad(vec3(a.x - dy, a.y + dx, a.z), vec3(b.x - dy, b.y + dx, b.z),
+	im2d_quad(vec3(a.x - dy, a.y + dx, a.z), vec3(b.x - dy, b.y + dx, b.z),
 			vec3(b.x + dy, b.y - dx, b.z), vec3(a.x + dy, a.y - dx, a.z), color);
 }
 
-void im_line2d(Vec2 a, Vec2 b, Color4 color, r32 thickness) {
-	im_line2d(vec3(a, 1), vec3(b, 1), color, thickness);
+void im2d_line(Vec2 a, Vec2 b, Color4 color, r32 thickness) {
+	im2d_line(vec3(a, 1), vec3(b, 1), color, thickness);
 }
 
-void im_bezier_quadratic2d(Vec3 a, Vec3 b, Vec3 c, Color4 color, r32 thickness, int segments) {
+void im2d_bezier_quadratic(Vec3 a, Vec3 b, Vec3 c, Color4 color, r32 thickness, int segments) {
 	Vec3 p = a, np;
 	for (int seg_index = 0; seg_index <= segments; ++seg_index) {
 		r32 t = (r32)seg_index / (r32)segments;
 		np    = bezier_quadratic(a, b, c, t);
-		im_line2d(p, np, color, thickness);
+		im2d_line(p, np, color, thickness);
 		p = np;
 	}
 }
 
-void im_bezier_quadratic2d(Vec2 a, Vec2 b, Vec2 c, Color4 color, r32 thickness, int segments) {
-	im_bezier_quadratic2d(vec3(a, 1), vec3(b, 1), vec3(c, 1), color, thickness, segments);
+void im2d_bezier_quadratic(Vec2 a, Vec2 b, Vec2 c, Color4 color, r32 thickness, int segments) {
+	im2d_bezier_quadratic(vec3(a, 1), vec3(b, 1), vec3(c, 1), color, thickness, segments);
 }
 
-void im_bezier_cubic2d(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Color4 color, r32 thickness, int segments) {
+void im2d_bezier_cubic(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Color4 color, r32 thickness, int segments) {
 	Vec3 p = a, np;
 	for (int seg_index = 0; seg_index <= segments; ++seg_index) {
 		r32 t = (r32)seg_index / (r32)segments;
 		np    = bezeir_cubic(a, b, c, d, t);
-		im_line2d(p, np, color, thickness);
+		im2d_line(p, np, color, thickness);
 		p = np;
 	}
 }
 
-void im_bezier_cubic2d(Vec2 a, Vec2 b, Vec2 c, Vec2 d, Color4 color, r32 thickness, int segments) {
-	im_bezier_cubic2d(vec3(a, 1), vec3(b, 1), vec3(c, 1), vec3(d, 1), color, thickness, segments);
+void im2d_bezier_cubic(Vec2 a, Vec2 b, Vec2 c, Vec2 d, Color4 color, r32 thickness, int segments) {
+	im2d_bezier_cubic(vec3(a, 1), vec3(b, 1), vec3(c, 1), vec3(d, 1), color, thickness, segments);
 }
 
-void im_triangle_outline2d(Vec3 a, Vec3 b, Vec3 c, Color4 color, r32 thickness) {
-	im_line2d(a, b, color, thickness);
-	im_line2d(b, c, color, thickness);
-	im_line2d(c, a, color, thickness);
+void im2d_triangle_outline(Vec3 a, Vec3 b, Vec3 c, Color4 color, r32 thickness) {
+	im2d_line(a, b, color, thickness);
+	im2d_line(b, c, color, thickness);
+	im2d_line(c, a, color, thickness);
 }
 
-void im_triangle_outline2d(Vec2 a, Vec2 b, Vec2 c, Color4 color, r32 thickness) {
-	im_line2d(a, b, color, thickness);
-	im_line2d(b, c, color, thickness);
-	im_line2d(c, a, color, thickness);
+void im2d_triangle_outline(Vec2 a, Vec2 b, Vec2 c, Color4 color, r32 thickness) {
+	im2d_line(a, b, color, thickness);
+	im2d_line(b, c, color, thickness);
+	im2d_line(c, a, color, thickness);
 }
 
-void im_quad_outline2d(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Color4 color, r32 thickness) {
-	im_line2d(a, b, color, thickness);
-	im_line2d(b, c, color, thickness);
-	im_line2d(c, d, color, thickness);
-	im_line2d(a, d, color, thickness);
+void im2d_quad_outline(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Color4 color, r32 thickness) {
+	im2d_line(a, b, color, thickness);
+	im2d_line(b, c, color, thickness);
+	im2d_line(c, d, color, thickness);
+	im2d_line(a, d, color, thickness);
 }
 
-void im_quad_outline2d(Vec2 a, Vec2 b, Vec2 c, Vec2 d, Color4 color, r32 thickness) {
-	im_line2d(a, b, color, thickness);
-	im_line2d(b, c, color, thickness);
-	im_line2d(c, d, color, thickness);
-	im_line2d(a, d, color, thickness);
+void im2d_quad_outline(Vec2 a, Vec2 b, Vec2 c, Vec2 d, Color4 color, r32 thickness) {
+	im2d_line(a, b, color, thickness);
+	im2d_line(b, c, color, thickness);
+	im2d_line(c, d, color, thickness);
+	im2d_line(a, d, color, thickness);
 }
 
-void im_rect_outline2d(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Color4 color, r32 thickness) {
-	im_line2d(a, b, color, thickness);
-	im_line2d(b, c, color, thickness);
-	im_line2d(c, d, color, thickness);
-	im_line2d(a, d, color, thickness);
+void im2d_rect_outline(Vec3 pos, Vec2 dim, Color4 color, r32 thickness) {
+	Vec3 a = pos;
+	Vec3 b = pos + vec3(0, dim.y, 0);
+	Vec3 c = pos + vec3(dim, 0);
+	Vec3 d = pos + vec3(dim.x, 0, 0);
+	im2d_quad_outline(a, b, c, d, color, thickness);
 }
 
-void im_rect_outline2d(Vec2 a, Vec2 b, Vec2 c, Vec2 d, Color4 color, r32 thickness) {
-	im_line2d(a, b, color, thickness);
-	im_line2d(b, c, color, thickness);
-	im_line2d(c, d, color, thickness);
-	im_line2d(a, d, color, thickness);
+void im2d_rect_outline(Vec2 pos, Vec2 dim, Color4 color, r32 thickness) {
+	im2d_rect_outline(vec3(pos, 1), dim, color, thickness);
 }
 
-void im_ellipse_outline(Vec3 position, r32 radius_a, r32 radius_b, Color4 color, r32 thickness, int segments) {
-	segments = clamp(IM_MIN_CIRCLE_SEGMENTS, IM_MAX_CIRCLE_SEGMENTS - 1, segments);
+void im2d_rect_centered_outline(Vec3 pos, Vec2 dim, Color4 color, r32 thickness) {
+	Vec2 half_dim  = 0.5f * dim;
+
+	Vec3 a, b, c, d;
+	a.xy = pos.xy - half_dim;
+	b.xy = vec2(pos.x - half_dim.x, pos.y + half_dim.y);
+	c.xy = pos.xy + half_dim;
+	d.xy = vec2(pos.x + half_dim.x, pos.y - half_dim.y);
+
+	a.z = pos.z;
+	b.z = pos.z;
+	c.z = pos.z;
+	d.z = pos.z;
+	im2d_quad_outline(a, b, c, d, color, thickness);
+}
+
+void im2d_rect_centered_outline(Vec2 pos, Vec2 dim, Color4 color, r32 thickness) {
+	im2d_rect_centered_outline(vec3(pos, 1), dim, color, thickness);
+}
+
+void im2d_ellipse_outline(Vec3 position, r32 radius_a, r32 radius_b, Color4 color, r32 thickness, int segments) {
+	segments = Clamp(IM_MIN_CIRCLE_SEGMENTS, IM_MAX_CIRCLE_SEGMENTS - 1, segments);
 
 	r32 px = im_unit_circle_cos[0] * radius_a;
 	r32 py = im_unit_circle_sin[0] * radius_b;
@@ -976,39 +1220,39 @@ void im_ellipse_outline(Vec3 position, r32 radius_a, r32 radius_b, Color4 color,
 		npx = im_unit_circle_cos[lookup] * radius_a;
 		npy = im_unit_circle_sin[lookup] * radius_b;
 
-		im_line2d(position + vec3(px, py, 0), position + vec3(npx, npy, 0), color, thickness);
+		im2d_line(position + vec3(px, py, 0), position + vec3(npx, npy, 0), color, thickness);
 
 		px = npx;
 		py = npy;
 	}
 }
 
-void im_ellipse_outline(Vec2 position, r32 radius_a, r32 radius_b, Color4 color, r32 thickness, int segments) {
-	im_ellipse_outline(vec3(position, 1), radius_a, radius_b, color, thickness, segments);
+void im2d_ellipse_outline(Vec2 position, r32 radius_a, r32 radius_b, Color4 color, r32 thickness, int segments) {
+	im2d_ellipse_outline(vec3(position, 1), radius_a, radius_b, color, thickness, segments);
 }
 
-void im_circle_outline(Vec3 position, r32 radius, Color4 color, r32 thickness, int segments) {
-	im_ellipse_outline(position, radius, radius, color, thickness, segments);
+void im2d_circle_outline(Vec3 position, r32 radius, Color4 color, r32 thickness, int segments) {
+	im2d_ellipse_outline(position, radius, radius, color, thickness, segments);
 }
 
-void im_circle_outline(Vec2 position, r32 radius, Color4 color, r32 thickness, int segments) {
-	im_ellipse_outline(vec3(position, 1), radius, radius, color, thickness, segments);
+void im2d_circle_outline(Vec2 position, r32 radius, Color4 color, r32 thickness, int segments) {
+	im2d_ellipse_outline(vec3(position, 1), radius, radius, color, thickness, segments);
 }
 
-void im_arc_outline(Vec3 position, r32 radius_a, r32 radius_b, r32 theta_a, r32 theta_b, Color4 color, bool closed, r32 thickness, int segments) {
+void im2d_arc_outline(Vec3 position, r32 radius_a, r32 radius_b, r32 theta_a, r32 theta_b, Color4 color, bool closed, r32 thickness, int segments) {
 	assert(theta_a >= 0 && theta_a <= MATH_PI * 2 && theta_b >= 0 && theta_b <= MATH_PI * 2 && theta_b >= theta_a);
 
 	int first_index = (int)((0.5f * theta_a * MATH_PI_INVERSE) * (r32)(IM_MAX_CIRCLE_SEGMENTS - 1) + 0.5f);
 	int last_index  = (int)((0.5f * theta_b * MATH_PI_INVERSE) * (r32)(IM_MAX_CIRCLE_SEGMENTS - 1) + 0.5f);
 
 	auto value_count = last_index - first_index;
-	segments         = min_value(segments, value_count);
+	segments         = GetMinValue(segments, value_count);
 
 	r32 px = im_unit_circle_cos[first_index] * radius_a;
 	r32 py = im_unit_circle_sin[first_index] * radius_b;
 
 	if (closed) {
-		im_line2d(position, position + vec3(px, py, 0), color, thickness);
+		im2d_line(position, position + vec3(px, py, 0), color, thickness);
 	}
 
 	r32 npx, npy;
@@ -1018,25 +1262,444 @@ void im_arc_outline(Vec3 position, r32 radius_a, r32 radius_b, r32 theta_a, r32 
 		npx = im_unit_circle_cos[lookup] * radius_a;
 		npy = im_unit_circle_sin[lookup] * radius_b;
 
-		im_line2d(position + vec3(px, py, 0), position + vec3(npx, npy, 0), color, thickness);
+		im2d_line(position + vec3(px, py, 0), position + vec3(npx, npy, 0), color, thickness);
 
 		px = npx;
 		py = npy;
 	}
 
 	if (closed) {
-		im_line2d(position, position + vec3(px, py, 0), color, thickness);
+		im2d_line(position, position + vec3(px, py, 0), color, thickness);
 	}
 }
 
-void im_arc_outline(Vec2 position, r32 radius_a, r32 radius_b, r32 theta_a, r32 theta_b, Color4 color, bool closed, r32 thickness, int segments) {
-	im_arc_outline(vec3(position, 1), radius_a, radius_b, theta_a, theta_b, color, closed, thickness, segments);
+void im2d_arc_outline(Vec2 position, r32 radius_a, r32 radius_b, r32 theta_a, r32 theta_b, Color4 color, bool closed, r32 thickness, int segments) {
+	im2d_arc_outline(vec3(position, 1), radius_a, radius_b, theta_a, theta_b, color, closed, thickness, segments);
 }
 
-void im_arc_outline(Vec3 position, r32 radius, r32 theta_a, r32 theta_b, Color4 color, bool closed, r32 thickness, int segments) {
-	im_arc_outline(position, radius, radius, theta_a, theta_b, color, closed, thickness, segments);
+void im2d_arc_outline(Vec3 position, r32 radius, r32 theta_a, r32 theta_b, Color4 color, bool closed, r32 thickness, int segments) {
+	im2d_arc_outline(position, radius, radius, theta_a, theta_b, color, closed, thickness, segments);
 }
 
-void im_arc_outline(Vec2 position, r32 radius, r32 theta_a, r32 theta_b, Color4 color, bool closed, r32 thickness, int segments) {
-	im_arc_outline(vec3(position, 1), radius, radius, theta_a, theta_b, color, closed, thickness, segments);
+void im2d_arc_outline(Vec2 position, r32 radius, r32 theta_a, r32 theta_b, Color4 color, bool closed, r32 thickness, int segments) {
+	im2d_arc_outline(vec3(position, 1), radius, radius, theta_a, theta_b, color, closed, thickness, segments);
+}
+
+void im2d_text(Vec3 position, r32 scale, Monospaced_Font_Info &font, const String string, Color4 color) {
+	Vec2 dimension;
+	Vec3 render_pos;
+	render_pos.z = position.z;
+	r32 advance  = font.advance * scale;
+	for (s64 c_index = 0; c_index < string.count; ++c_index) {
+		s32 index = (s32)(string[c_index] - font.first) + 1;
+
+		if (index >= font.count || index < 0) index = 0;
+
+		auto &info    = font.range[index];
+		render_pos.xy = position.xy + info.offset * scale;
+
+		dimension.x = info.width * scale;
+		dimension.y = info.height * scale;
+		im2d_rect(render_pos, dimension, info.rect, color);
+
+		position.x += advance;
+	}
+}
+
+void im2d_text(Vec2 position, r32 scale, Monospaced_Font_Info &font, const String string, Color4 color) {
+	im2d_text(vec3(position, 1), scale, font, string, color);
+}
+
+void im2d_text_region(Vec3 position, Vec2 region, Monospaced_Font_Info &font, const String string, Color4 color) {
+	r32 scale   = region.y;
+	r32 advance = font.advance * scale;
+	r32 max_x   = position.x + region.x - advance;
+
+	Vec2 dimension;
+	Vec3 render_pos;
+	render_pos.z = position.z;
+	for (s64 c_index = 0; c_index < string.count && position.x <= max_x; ++c_index) {
+		s32 index = (s32)(string[c_index] - font.first) + 1;
+
+		if (index >= font.count || index < 0) index = 0;
+
+		auto &info    = font.range[index];
+		render_pos.xy = position.xy + info.offset * scale;
+
+		dimension.x = info.width * scale;
+		dimension.y = info.height * scale;
+		im2d_rect(render_pos, dimension, info.rect, color);
+
+		position.x += advance;
+	}
+}
+
+void im2d_text_region(Vec2 position, Vec2 region, Monospaced_Font_Info &font, const String string, Color4 color) {
+	im2d_text_region(vec3(position, 1), region, font, string, color);
+}
+
+Vec2 im2d_calculate_text_region(r32 scale, Monospaced_Font_Info &font, const String string) {
+	r32 y = scale;
+	r32 x = font.advance * string.count * scale;
+	return vec2(x, y);
+}
+
+//
+//
+//
+
+inline void im3d_start_cmd_record(Texture_View texture) {
+	auto draw_cmd     = im_context3d.draw_cmds + im_context3d.draw_cmd;
+	draw_cmd->index   = im_context3d.index;
+	draw_cmd->vertex  = im_context3d.vertex;
+	draw_cmd->texture = texture;
+	draw_cmd->count   = 0;
+}
+
+inline Im_Vertex3d *iim3d_push_vertex_count(int count) {
+	assert(im_context3d.vertex + count <= IM_CONTEXT_MAX_VERTICES);
+
+	auto vertex = im_context3d.vertex_ptr;
+	im_context3d.vertex_ptr += count;
+	im_context3d.vertex += count;
+	return vertex;
+}
+
+inline void im3d_push_vertices(Im_Vertex3d *vertices, int count) {
+	auto dst = iim3d_push_vertex_count(count);
+
+	if (im_context3d.transformation > 1) {
+		auto &trans = im_context3d.transformations[im_context3d.transformation - 1];
+		auto nmt = mat4_transpose(mat4_inverse(trans));
+		nmt.rows[0].w = 0;
+		nmt.rows[1].w = 0;
+		nmt.rows[2].w = 0;
+		nmt.rows[3] = vec4(0, 0, 0, 1);
+
+		for (int i = 0; i < count; ++i) {
+			vertices[i].position = (trans * vec4(vertices[i].position, 1)).xyz;
+			vertices[i].normal = (nmt * vec4(vertices[i].normal, 0)).xyz;
+		}
+	}
+
+	memcpy(dst, vertices, sizeof(Im_Vertex3d) * count);
+}
+
+inline void im3d_push_vertex(Vec3 position, Vec2 texture_coord, Vec3 normal, Color4 color) {
+	Im_Vertex3d src = { position, texture_coord, normal, color };
+	im3d_push_vertices(&src, 1);
+}
+
+inline Im_Index *iim3d_push_index_count(int count) {
+	assert(im_context3d.index + count <= IM_CONTEXT_MAX_INDICES);
+	auto index = im_context3d.index_ptr;
+	im_context3d.index_ptr += count;
+	im_context3d.index += count;
+	im_context3d.counter += count;
+	return index;
+}
+
+#define im3d_get_last_index() (im_context3d.counter ? im_context3d.last_index + 1 : im_context3d.last_index)
+#define im3d_get_draw_cmd()   (im_context3d.draw_cmds + im_context3d.draw_cmd)
+
+inline void im3d_push_indices(Im_Index *indices, int count) {
+	assert(im_context3d.index + count <= IM_CONTEXT_MAX_INDICES);
+	auto prev_counter = im_context3d.counter;
+
+	auto dst = iim3d_push_index_count(count);
+
+	if (prev_counter) {
+		auto next_index = im_context3d.last_index + 1;
+		for (int i = 0; i < count; ++i) {
+			indices[i] += next_index;
+		}
+	}
+
+	im_context3d.last_index = indices[count - 1];
+	memcpy(dst, indices, count * sizeof(Im_Vertex3d));
+}
+
+inline void im3d_push_draw_cmd() {
+	auto last_cmd   = im_context3d.draw_cmds + im_context3d.draw_cmd;
+	last_cmd->count = im_context3d.counter;
+	im_context3d.draw_cmd += 1;
+	im_context3d.counter = 0;
+}
+
+void iim3d_flush(bool restart = true);
+
+inline void im3d_ensure_size(int vertex_count, int index_count) {
+	if (im_context3d.index + index_count - 1 >= IM_CONTEXT_MAX_INDICES ||
+		im_context3d.vertex + vertex_count - 1 >= IM_CONTEXT_MAX_VERTICES) {
+		im3d_push_draw_cmd();
+		iim3d_flush();
+	}
+}
+
+void im3d_begin(const Mat4 &transform) {
+	im_context3d.draw_cmd       = 0;
+	im_context3d.vertex         = 0;
+	im_context3d.index          = 0;
+	im_context3d.counter        = 0;
+	im_context3d.transformation = 1;
+
+	im_context3d.vertex_ptr = (Im_Vertex3d *)gfx->map(im_context3d.vertex_buffer, Map_Type_WRITE_DISCARD);
+	im_context3d.index_ptr  = (Im_Index *)gfx->map(im_context3d.index_buffer, Map_Type_WRITE_DISCARD);
+
+	im3d_start_cmd_record(white_texture.view);
+
+	Im_Uniform uniform;
+	uniform.transform = transform;
+
+	void *ptr = gfx->map(im_context3d.uniform_buffer, Map_Type_WRITE_DISCARD);
+	memcpy(ptr, &uniform, sizeof(uniform));
+	gfx->unmap(im_context3d.uniform_buffer);
+
+	gfx->cmd_bind_pipeline(im_context3d.pipeline);
+	gfx->cmd_bind_samplers(0, 1, &im_context3d.sampler);
+	gfx->cmd_bind_vs_uniform_buffers(0, 1, &im_context3d.uniform_buffer);
+}
+
+void im3d_begin(Camera_View &view, const Mat4 &transform) {
+	Mat4 projection = gfx_view_transform(view);
+	im3d_begin(projection * transform);
+}
+
+void iim3d_flush(bool restart) {
+	gfx->unmap(im_context3d.vertex_buffer);
+	gfx->unmap(im_context3d.index_buffer);
+
+	if (im_context3d.draw_cmd) {
+		gfx->cmd_bind_vertex_buffer(im_context3d.vertex_buffer, sizeof(Im_Vertex3d));
+		gfx->cmd_bind_index_buffer(im_context3d.index_buffer, Index_Type_U16);
+
+		for (u32 draw_cmd_index = 0; draw_cmd_index < im_context3d.draw_cmd; ++draw_cmd_index) {
+			Im_Draw_Cmd *cmd = im_context3d.draw_cmds + draw_cmd_index;
+
+			gfx->cmd_bind_textures(0, 1, &cmd->texture);
+			gfx->cmd_draw_indexed(cmd->count, cmd->index, cmd->vertex);
+		}
+
+		auto bound_texture = im_context3d.draw_cmds[im_context3d.draw_cmd - 1].texture;
+
+		im_context3d.draw_cmd = 0;
+		im_context3d.vertex   = 0;
+		im_context3d.index    = 0;
+		im_context3d.counter  = 0;
+
+		im3d_start_cmd_record(bound_texture);
+	}
+
+	if (restart) {
+		im_context3d.vertex_ptr = (Im_Vertex3d *)gfx->map(im_context3d.vertex_buffer, Map_Type_WRITE_DISCARD);
+		im_context3d.index_ptr  = (Im_Index *)gfx->map(im_context3d.index_buffer, Map_Type_WRITE_DISCARD);
+	}
+}
+
+void im3d_end() {
+	if (im_context3d.counter) {
+		im3d_push_draw_cmd();
+	}
+	iim3d_flush(false);
+}
+
+void im3d_bind_texture(Texture2d_Handle handle) {
+	if (im_context3d.draw_cmds[im_context3d.draw_cmd].texture.id == handle.view.id)
+		return;
+
+	if (im_context3d.counter) {
+		im3d_push_draw_cmd();
+		im3d_start_cmd_record(handle.view);
+	} else {
+		auto draw_cmd     = im3d_get_draw_cmd();
+		draw_cmd->texture = handle.view;
+	}
+}
+
+void im3d_unbind_texture() {
+	im3d_bind_texture(white_texture);
+}
+
+void im3d_push_matrix(const Mat4 &matrix) {
+	assert(im_context3d.transformation < IM_CONTEXT_MAX_TRANSFORMATIONS);
+	im_context3d.transformations[im_context3d.transformation] = im_context3d.transformations[im_context3d.transformation - 1] * matrix;
+	im_context3d.transformation += 1;
+}
+
+void im3d_pop_matrix() {
+	assert(im_context3d.transformation > 1);
+	im_context3d.transformation -= 1;
+}
+
+void im3d_flush_transformations() {
+	im_context3d.transformation = 1;
+}
+
+void im3d_triangle(Vec3 a, Vec3 b, Vec3 c, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Vec3 na, Vec3 nb, Vec3 nc, Color4 color) {
+	im3d_ensure_size(3, 3);
+
+	Im_Index  indices[]  = { 0, 1, 2 };
+	Im_Vertex3d vertices[] = {
+		{ a, uv_a, na, color },
+		{ b, uv_b, nb, color },
+		{ c, uv_c, nc, color },
+	};
+
+	im3d_push_indices(indices, static_count(indices));
+	im3d_push_vertices(vertices, static_count(vertices));
+}
+
+void im3d_triangle(Vec3 a, Vec3 b, Vec3 c, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Color4 color) {
+	Vec3 dir_a = a - b;
+	Vec3 dir_b = c - b;
+	Vec3 n = vec3_cross(dir_b, dir_a);
+	im3d_triangle(a, b, c, uv_a, uv_b, uv_c, n, n, n, color);
+}
+
+void im3d_triangle(Vec3 a, Vec3 b, Vec3 c, Vec3 na, Vec3 nb, Vec3 nc, Color4 color) {
+	im3d_triangle(a, b, c, vec2(0), vec2(0), vec2(0), na, nb, nc, color);
+}
+
+void im3d_triangle(Vec3 a, Vec3 b, Vec3 c, Color4 color) {
+	im3d_triangle(a, b, c, vec2(0), vec2(0), vec2(0), color);
+}
+
+void im3d_quad(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Vec2 uv_d, Vec3 na, Vec3 nb, Vec3 nc, Vec3 nd, Color4 color) {
+	im3d_triangle(a, b, c, uv_a, uv_b, uv_c, na, nb, nc, color);
+	im3d_triangle(a, c, d, uv_a, uv_c, uv_d, na, nc, nd, color);
+}
+
+void im3d_quad(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Vec2 uv_d, Color4 color) {
+	im3d_triangle(a, b, c, uv_a, uv_b, uv_c, color);
+	im3d_triangle(a, c, d, uv_a, uv_c, uv_d, color);
+}
+
+void im3d_quad(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Vec3 na, Vec3 nb, Vec3 nc, Vec3 nd, Color4 color) {
+	im3d_quad(a, b, c, d, vec2(0, 0), vec2(0, 1), vec2(1, 1), vec2(1, 0), na, nb, nc, nd, color);
+}
+
+void im3d_quad(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Color4 color) {
+	im3d_quad(a, b, c, d, vec2(0, 0), vec2(0, 1), vec2(1, 1), vec2(1, 0), color);
+}
+
+void im3d_quad(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Mm_Rect rect, Vec3 na, Vec3 nb, Vec3 nc, Vec3 nd, Color4 color) {
+	auto uv_a = rect.min;
+	auto uv_b = vec2(rect.min.x, rect.max.y);
+	auto uv_c = rect.max;
+	auto uv_d = vec2(rect.max.x, rect.min.y);
+	im3d_quad(a, b, c, d, uv_a, uv_b, uv_c, uv_d, na, nb, nc, nd, color);
+}
+
+void im3d_quad(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Mm_Rect rect, Color4 color) {
+	auto uv_a = rect.min;
+	auto uv_b = vec2(rect.min.x, rect.max.y);
+	auto uv_c = rect.max;
+	auto uv_d = vec2(rect.max.x, rect.min.y);
+	im3d_quad(a, b, c, d, uv_a, uv_b, uv_c, uv_d, color);
+}
+
+void im3d_rect(Vec3 pos, Vec2 dim, Vec2 uv_a, Vec2 uv_b, Vec2 uv_c, Vec2 uv_d, Color4 color) {
+	Vec2 half_dim = 0.5f * dim;
+
+	Vec3 a, b, c, d;
+	a.xy = pos.xy - half_dim;
+	b.xy = vec2(pos.x - half_dim.x, pos.y + half_dim.y);
+	c.xy = pos.xy + half_dim;
+	d.xy = vec2(pos.x + half_dim.x, pos.y - half_dim.y);
+
+	a.z = pos.z;
+	b.z = pos.z;
+	c.z = pos.z;
+	d.z = pos.z;
+
+	Vec3 n = vec3(0, 0, -1);
+
+	im3d_quad(a, b, c, d, uv_a, uv_b, uv_c, uv_d, n, n, n, n, color);
+}
+
+void im3d_rect(Vec3 pos, Vec2 dim, Color4 color) {
+	im3d_rect(pos, dim, vec2(0, 0), vec2(0, 1), vec2(1, 1), vec2(1, 0), color);
+}
+
+void im3d_rect(Vec3 pos, Vec2 dim, Mm_Rect rect, Color4 color) {
+	auto uv_a = rect.min;
+	auto uv_b = vec2(rect.min.x, rect.max.y);
+	auto uv_c = rect.max;
+	auto uv_d = vec2(rect.max.x, rect.min.y);
+	im3d_rect(pos, dim, uv_a, uv_b, uv_c, uv_d, color);
+}
+
+void im3d_cube(Vec3 position, Quat rotation, Vec3 scale,
+	Mm_Rect rect0, Mm_Rect rect1, Mm_Rect rect2,
+	Mm_Rect rect3, Mm_Rect rect4, Mm_Rect rect5, Color4 color) {
+	Vec3 vertices[] = {
+		vec3(-0.5f, -0.5f, -0.5f),
+		vec3(-0.5f, +0.5f, -0.5f),
+		vec3(+0.5f, +0.5f, -0.5f),
+		vec3(+0.5f, -0.5f, -0.5f),
+
+		vec3(+0.5f, -0.5f, +0.5f),
+		vec3(+0.5f, +0.5f, +0.5f),
+		vec3(-0.5f, +0.5f, +0.5f),
+		vec3(-0.5f, -0.5f, +0.5f),
+	};
+
+	Vec3 normals[] = {
+		vec3( 0,  0, -1),
+		vec3( 1,  0,  0),
+		vec3( 0,  0,  1),
+		vec3(-1,  0,  0),
+		vec3( 0,  1,  0),
+		vec3( 0, -1,  0),
+	};
+
+	for (int i = 0; i < static_count(vertices); ++i) {
+		vertices[i] = vec3_hadamard(vertices[i], scale);
+		vertices[i] = quat_rotate(rotation, vertices[i]);
+		vertices[i] += position;
+	}
+
+	im3d_quad(vertices[0], vertices[1], vertices[2], vertices[3], rect0, normals[0], normals[0], normals[0], normals[0], color);
+	im3d_quad(vertices[3], vertices[2], vertices[5], vertices[4], rect1, normals[1], normals[1], normals[1], normals[1], color);
+	im3d_quad(vertices[4], vertices[5], vertices[6], vertices[7], rect2, normals[2], normals[2], normals[2], normals[2], color);
+	im3d_quad(vertices[7], vertices[6], vertices[1], vertices[0], rect3, normals[3], normals[3], normals[3], normals[3], color);
+	im3d_quad(vertices[1], vertices[6], vertices[5], vertices[2], rect4, normals[4], normals[4], normals[4], normals[4], color);
+	im3d_quad(vertices[7], vertices[0], vertices[3], vertices[4], rect5, normals[5], normals[5], normals[5], normals[5], color);
+}
+
+void im3d_cube(Vec3 position, Quat rotation, Vec3 scale, Mm_Rect rect, Color4 color) {
+	im3d_cube(position, rotation, scale, rect, rect, rect, rect, rect, rect, color);
+}
+
+void im3d_cube(Vec3 position, Quat rotation, Vec3 scale, Color4 color) {
+	im3d_cube(position, rotation, scale, mm_rect(0, 0, 1, 1), color);
+}
+
+void im3d_mesh(Im_Mesh &mesh, Vec3 position, Quat rotation, Vec3 scale, Color4 color) {
+	Vec3 *v = mesh.vertices;
+	Vec2 *t = mesh.texture_coords;
+	Vec3 *n = mesh.normals;
+
+	for (u32 face_index = 0; face_index < mesh.index_count; face_index += 3) {
+		auto &i0 = mesh.indices[face_index + 0];
+		auto &i1 = mesh.indices[face_index + 1];
+		auto &i2 = mesh.indices[face_index + 2];
+
+		Vec3 va = v[i0.v];
+		va = vec3_hadamard(va, scale);
+		va = quat_rotate(rotation, va);
+		va += position;
+
+		Vec3 vb = v[i1.v];
+		vb = vec3_hadamard(vb, scale);
+		vb = quat_rotate(rotation, vb);
+		vb += position;		
+		
+		Vec3 vc = v[i2.v];
+		vc = vec3_hadamard(vc, scale);
+		vc = quat_rotate(rotation, vc);
+		vc += position;
+
+		im3d_triangle(va, vb, vc, t[i0.t], t[i1.t], t[i2.t], n[i0.n], n[i1.n], n[i2.n], color);
+	}
 }

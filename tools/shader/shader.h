@@ -7,8 +7,8 @@ struct Shader_Code {
 };
 
 inline void free_shader_code(Shader_Code *code) {
-	mfree(code->vertex.data);
-	mfree(code->pixel.data);
+	memory_free(code->vertex.data);
+	memory_free(code->pixel.data);
 }
 
 inline void report_error(const char *category, const char *fmt, ...) {

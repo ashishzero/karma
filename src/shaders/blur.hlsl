@@ -15,7 +15,7 @@ static const float2 vertices[] = {
 	{ -1, -1 }, { -1, 1 }, { 1, 1 }, { -1, -1 }, { 1, 1 }, { 1, -1 }
 };
 static const float2 tex_coords[] = {
-	{ 0, 0 }, { 0, 1 }, { 1, 1 }, { 0, 0 }, { 1, 1 }, { 1, 0 }
+	{ 0, 1 }, { 0, 0 }, { 1, 0 }, { 0, 1 }, { 1, 0 }, { 1, 1 }
 };
 
 Vs_Out vs_main(Vs_In input) {
@@ -50,7 +50,6 @@ float4 ps_main_h(Vs_Out input) :
 float4 ps_main_v(Vs_Out input) :
 	SV_TARGET {
 	float2 tex_coord = input.tex_coord;
-	tex_coord.y      = 1.0f - tex_coord.y;
 
 	float2 tex_size;
 	u_texture.GetDimensions(tex_size.x, tex_size.y);

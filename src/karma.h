@@ -8,7 +8,15 @@
 #include <stdio.h>
 #include <string.h>
 
-#if !defined(BUILD_DEBUG) && !defined(BUILD_DEVELOPER) && !defined(BUILD_RELEASE)
+#define MACRO_NUMBER_TO_STRING_HELPER(num) #num
+#define MACRO_NUMBER_TO_STRING(num)        MACRO_NUMBER_TO_STRING_HELPER(num)
+
+#define KARMA_MAJOR_VERSION 0
+#define KARMA_MINOR_VERSION 1
+#define KARMA_PATCH_VERSION 0
+#define KARMA_VERSION_STRING MACRO_NUMBER_TO_STRING(KARMA_MAJOR_VERSION) "." MACRO_NUMBER_TO_STRING(KARMA_MINOR_VERSION) "." MACRO_NUMBER_TO_STRING(KARMA_PATCH_VERSION)
+
+#if !defined(BUILD_DEBUG) && !defined(BUILD_DEBUG_FAST) && !defined(BUILD_DEVELOPER) && !defined(BUILD_RELEASE)
 #	if defined(_DEBUG) || defined(DEBUG)
 #		define BUILD_DEBUG
 #	elif defined(NDEBUG) || defined(RELEASE)
@@ -50,40 +58,40 @@
 #	define TARGET_MOBILE
 #endif
 
-// current function name
+// current procedure name
 #if defined(__GNUC__) || (defined(__MWERKS__) && (__MWERKS__ >= 0x3000)) || (defined(__ICC) && (__ICC >= 600)) || defined(__ghs__)
-#	define CURRENT_FUNCTION __PRETTY_FUNCTION__
+#	define CURRENT_PROCEDURE __PRETTY_PROCEDURE__
 #elif defined(__DMC__) && (__DMC__ >= 0x810)
-#	define CURRENT_FUNCTION __PRETTY_FUNCTION__
+#	define CURRENT_PROCEDURE __PRETTY_PROCEDURE__
 #elif defined(__FUNCSIG__)
-#	define CURRENT_FUNCTION __FUNCSIG__
+#	define CURRENT_PROCEDURE __FUNCSIG__
 #elif (defined(__INTEL_COMPILER) && (__INTEL_COMPILER >= 600)) || \
 	(defined(__IBMCPP__) && (__IBMCPP__ >= 500))
-#	define CURRENT_FUNCTION __FUNCTION__
+#	define CURRENT_PROCEDURE __PROCEDURE__
 #elif defined(__BORLANDC__) && (__BORLANDC__ >= 0x550)
-#	define CURRENT_FUNCTION __FUNC__
+#	define CURRENT_PROCEDURE __FUNC__
 #elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901)
-#	define CURRENT_FUNCTION __func__
+#	define CURRENT_PROCEDURE __func__
 #elif defined(__cplusplus) && (__cplusplus >= 201103)
-#	define CURRENT_FUNCTION __func__
+#	define CURRENT_PROCEDURE __func__
 #elif defined(_MSC_VER)
-#	define CURRENT_FUNCTION __FUNCSIG__
+#	define CURRENT_PROCEDURE __FUNCSIG__
 #else
-#	define CURRENT_FUNCTION "_unknown_"
+#	define CURRENT_PROCEDURE "_unknown_"
 #endif
 
-struct Compile_Info {
+	struct Compile_Info {
 	const char *file;
 	const int   line;
-	const char *current_function;
+	const char *procedure;
 };
 
 #define CURRENT_FILE __FILE__
 #define CURRENT_LINE __LINE__
 
-#define COMPILE_INFO                                 \
-	Compile_Info {                                   \
-		CURRENT_FILE, CURRENT_LINE, CURRENT_FUNCTION \
+#define COMPILE_INFO                                  \
+	Compile_Info {                                    \
+		CURRENT_FILE, CURRENT_LINE, CURRENT_PROCEDURE \
 	}
 
 #if defined(HAVE_SIGNAL_H) && !defined(__WATCOMC__)
@@ -112,7 +120,7 @@ inline void runtime_assert(bool exp) {
 	}
 }
 
-#if defined(BUILD_DEBUG) || defined(BUILD_DEVELOPER)
+#if defined(BUILD_DEBUG) || defined(BUILD_DEBUG_FAST)
 #	define assert(expression) runtime_assert(expression)
 #	define unimplemented() \
 		{ trigger_breakpoint(); }
@@ -126,10 +134,7 @@ inline void runtime_assert(bool exp) {
 		} break
 #	define invalid_code_path() trigger_breakpoint()
 #else
-#	define assert(expression)  \
-		do {                    \
-			sizeof(expression); \
-		} while (0)
+#	define assert(expression) 
 #	define unimplemented()
 #	define trigger_if(x)
 #	define invalid_default_case()
@@ -346,14 +351,17 @@ union Handle {
 		u32 l32;
 	};
 
-	Handle() {
-		hptr = 0;
-	}
-
 	inline operator bool() {
 		return hptr != 0;
 	}
 };
+
+inline bool operator==(Handle a, Handle b) {
+	return a.h64 == b.h64;
+}
+inline bool operator!=(Handle a, Handle b) {
+	return a.h64 != b.h64;
+}
 
 //
 // Defer
@@ -386,7 +394,7 @@ struct ExitScopeHelp {
 //
 
 #ifndef DEFAULT_TEMPORARY_MEMORY_SIZE
-#	define DEFAULT_TEMPORARY_MEMORY_SIZE mega_bytes(32)
+#	define DEFAULT_TEMPORARY_MEMORY_SIZE mega_bytes(128)
 #endif
 
 const ptrsize MEMORY_ALIGNMENT = sizeof(ptrsize);
@@ -418,11 +426,15 @@ struct Temporary_Memory {
 	}
 };
 
+typedef int (*Thread_Proc)();
+
 struct Thread_Context {
+	Handle			 handle;
 	u64              id;
 	Allocator        allocator;
 	Temporary_Memory temp_memory;
-	void *           data;
+	Thread_Proc		 proc;			// Thread entry point
+	void *           data;			// Thread proc argument
 };
 
 struct Push_Allocator {
@@ -431,49 +443,40 @@ struct Push_Allocator {
 
 extern thread_local Thread_Context context;
 
+inline void * thread_get_argument() {
+	return context.data;
+}
+
 inline void *temporary_allocator_proc(Allocation_Type type, ptrsize size, const void *ptr, void *user_ptr) {
 	Temporary_Memory *temp = (Temporary_Memory *)&context.temp_memory;
 
 	if (type == Allocation_Type_NEW) {
 		ptrsize padding = (MEMORY_ALIGNMENT - ((ptrsize)temp->ptr % MEMORY_ALIGNMENT)) % MEMORY_ALIGNMENT;
 
-		u8 *nxtptr = temp->ptr + size + padding + sizeof(ptrsize); // for storing allocated size
+		u8 *nxtptr = temp->ptr + size + padding;
 		u8 *endptr = temp->base + temp->capacity;
 
 		if (nxtptr <= endptr) {
-			ptrsize *result = (ptrsize *)temp->ptr;
-			*result         = size;
-			temp->ptr       = nxtptr;
-			return (void *)(result + 1);
+			void *result = temp->ptr;
+			temp->ptr    = nxtptr;
+			return result;
 		}
 
 		return 0;
 	} else if (type == Allocation_Type_RESIZE) {
-		ptrsize allocated_size = *((ptrsize *)ptr - 1);
+		ptrsize padding = (MEMORY_ALIGNMENT - ((ptrsize)temp->ptr % MEMORY_ALIGNMENT)) % MEMORY_ALIGNMENT;
 
-		if (ptr == (temp->ptr - allocated_size)) { // if no allocation is done after the given *ptr* allocation
-			u8 *beg_ptr = temp->ptr - allocated_size;
-			u8 *nxtptr  = beg_ptr + size;
-			u8 *endptr  = temp->base + temp->capacity;
+		u8 *nxtptr = temp->ptr + size + padding;
+		u8 *endptr = temp->base + temp->capacity;
 
-			if (nxtptr <= endptr) {
-				ptrsize *result = (ptrsize *)beg_ptr - 1;
-				*result         = size;
-				temp->ptr       = nxtptr;
-				return (void *)(result + 1);
-			}
-
-			return 0;
-		} else { // another allocation is done after *ptr*, so new allocation is required
-			void *mem = temporary_allocator_proc(Allocation_Type_NEW, size, 0, user_ptr);
-
-			if (mem) {
-				memmove(mem, ptr, allocated_size);
-			}
-
-			return 0;
+		if (nxtptr <= endptr) {
+			memmove(temp->ptr, ptr, size);
+			void *result = temp->ptr;
+			temp->ptr    = nxtptr;
+			return result;
 		}
 
+		return 0;
 	} else if (type == Allocation_Type_FREE) {
 		// do nothing
 		return 0;
@@ -484,7 +487,12 @@ inline void *temporary_allocator_proc(Allocation_Type type, ptrsize size, const 
 	return 0;
 }
 
+inline void *null_allocator_proc(Allocation_Type type, ptrsize size, const void *ptr, void *user_ptr) {
+	return 0;
+}
+
 constexpr Allocator TEMPORARY_ALLOCATOR = { temporary_allocator_proc, 0 };
+constexpr Allocator NULL_ALLOCATOR = { null_allocator_proc, 0 };
 
 inline Push_Allocator push_temporary_allocator() {
 	Push_Allocator result;
@@ -526,15 +534,15 @@ inline void *tallocate(ptrsize size) {
 	return temporary_allocator_proc(Allocation_Type_NEW, size, 0, 0);
 }
 
-inline void *mallocate(ptrsize size, Allocator allocator = context.allocator) {
+inline void *memory_allocate(ptrsize size, Allocator allocator = context.allocator) {
 	return allocator.proc(Allocation_Type_NEW, size, 0, allocator.data);
 }
 
-inline void *mreallocate(void *ptr, ptrsize size, Allocator allocator = context.allocator) {
+inline void *memory_reallocate(void *ptr, ptrsize size, Allocator allocator = context.allocator) {
 	return allocator.proc(Allocation_Type_RESIZE, size, ptr, allocator.data);
 }
 
-inline void mfree(const void *ptr, Allocator allocator = context.allocator) {
+inline void memory_free(const void *ptr, Allocator allocator = context.allocator) {
 	allocator.proc(Allocation_Type_FREE, 0, ptr, allocator.data);
 }
 
@@ -543,11 +551,11 @@ void *operator new(ptrsize size);
 void  operator delete(void *ptr, Allocator allocator);
 void  operator delete(void *ptr) noexcept;
 
-//
-//
-//
+#define tnew new(TEMPORARY_ALLOCATOR)
 
-// inline void* operator new(ptrsize size, void* ptr) { return ptr; }
+//
+//
+//
 
 template <typename T>
 struct Array_View {
@@ -560,10 +568,6 @@ struct Array_View {
 	inline Array_View(T *p, s64 n) {
 		data  = p;
 		count = n;
-	}
-
-	inline operator bool() {
-		return count;
 	}
 
 	inline T &operator[](s64 index) const {
@@ -579,6 +583,8 @@ struct Array_View {
 		return data + count;
 	}
 };
+
+#define ARRAY_INITIAL_SIZE 8
 
 template <typename T>
 struct Array {
@@ -598,10 +604,6 @@ struct Array {
 		allocator.data = data;
 	}
 
-	inline operator bool() {
-		return count;
-	}
-
 	inline operator Array_View<T>() {
 		return Array_View<T>(data, count);
 	}
@@ -618,6 +620,7 @@ struct Array {
 	inline T *end() {
 		return data + count;
 	}
+
 };
 
 template <typename T>
@@ -657,10 +660,13 @@ void array_clear(Array<T> *a) {
 }
 
 inline s64 array_get_grow_capacity(s64 c, s64 n) {
-	s64 geom         = c + c / 2;
-	s64 new_capacity = c + n;
-	if (c < new_capacity) return (new_capacity);
-	return geom;
+	if (c) {
+		s64 geom = c + c / 2;
+		s64 new_capacity = c + n;
+		if (c < new_capacity) return (new_capacity);
+		return geom;
+	}
+	return ARRAY_INITIAL_SIZE;
 }
 
 template <typename T>
@@ -757,11 +763,9 @@ struct String {
 		return data[index];
 	}
 
-	inline operator bool() const {
-		return count;
-	}
-
 	inline operator Array_View<utf8>() {
 		return Array_View<utf8>(data, count);
 	}
 };
+
+using Buffer = Array_View<u8>;
