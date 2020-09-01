@@ -19,18 +19,26 @@ constexpr u32 EDITOR_FLAG_NO_DISPLAY = bit(1);
 constexpr u32 EDITOR_FLAG_READ_ONLY  = bit(3);
 constexpr u32 EDITOR_FLAG_COLOR		 = bit(4);
 
-u32 editor_get_flags_from_attribute(const String* attrs, s64 count) {
-	u32 flags = 0;
+struct Editor_Attribute {
+	u32 flags;
+	r32 speed;
+};
+
+void editor_get_flags_from_attribute(const String* attrs, s64 count, Editor_Attribute *out) {
+	out->flags = 0;
+	out->speed = 1;
+
 	for (s64 index = 0; index < count; ++index) {
 		if (string_match(attrs[index], "no-display")) {
-			flags |= EDITOR_FLAG_NO_DISPLAY;
+			out->flags |= EDITOR_FLAG_NO_DISPLAY;
 		} else if (string_match(attrs[index], "read-only")) {
-			flags |= EDITOR_FLAG_READ_ONLY;
+			out->flags |= EDITOR_FLAG_READ_ONLY;
 		} else if (string_match(attrs[index], "color")) {
-			flags |= EDITOR_FLAG_COLOR;
+			out->flags |= EDITOR_FLAG_COLOR;
+		} else if (string_starts_with(attrs[index], "speed:")) {
+			sscanf(string_cstr(attrs[index]), "speed:%f", &out->speed);
 		}
 	}
-	return flags;
 }
 
 void imgui_draw_entity(Entity *entity) {
@@ -41,15 +49,15 @@ void imgui_draw_entity(Entity *entity) {
 
 	ImGui::Begin(string_cstr(info->name));
 
-	u32 flags = 0;
+	Editor_Attribute attr;
 
 	for (ptrsize index = 0; index < mem_counts; ++index) {
 		auto mem = info->members + index;
 
-		flags = editor_get_flags_from_attribute(mem->attributes, mem->attribute_count);
-		if (flags & EDITOR_FLAG_NO_DISPLAY) continue;
+		editor_get_flags_from_attribute(mem->attributes, mem->attribute_count, &attr);
+		if (attr.flags & EDITOR_FLAG_NO_DISPLAY) continue;
 
-		if (flags & EDITOR_FLAG_READ_ONLY) {
+		if (attr.flags & EDITOR_FLAG_READ_ONLY) {
 			if (mem->info == reflect_info<r32>()) {
 				r32 val = *(r32 *)(data + mem->offset);
 				ImGui::Text("%s : %.3f", string_cstr(mem->name), val);
@@ -71,23 +79,23 @@ void imgui_draw_entity(Entity *entity) {
 			}
 		} else {
 			if (mem->info == reflect_info<r32>()) {
-				ImGui::DragFloat(string_cstr(mem->name), (r32 *)(data + mem->offset));
+				ImGui::DragFloat(string_cstr(mem->name), (r32 *)(data + mem->offset), attr.speed);
 			} else if (mem->info == reflect_info<Vec2>()) {
-				ImGui::DragFloat2(string_cstr(mem->name), (r32 *)(data + mem->offset));
+				ImGui::DragFloat2(string_cstr(mem->name), (r32 *)(data + mem->offset), attr.speed);
 			} else if (mem->info == reflect_info<Vec3>()) {
-				if (flags & EDITOR_FLAG_COLOR) {
+				if (attr.flags & EDITOR_FLAG_COLOR) {
 					ImGui::ColorEdit3(string_cstr(mem->name), (r32 *)(data + mem->offset));
 				} else {
-					ImGui::DragFloat3(string_cstr(mem->name), (r32 *)(data + mem->offset));
+					ImGui::DragFloat3(string_cstr(mem->name), (r32 *)(data + mem->offset), attr.speed);
 				}
 			} else if (mem->info == reflect_info<Vec4>()) {
-				if (flags & EDITOR_FLAG_COLOR) {
+				if (attr.flags & EDITOR_FLAG_COLOR) {
 					ImGui::ColorEdit4(string_cstr(mem->name), (r32 *)(data + mem->offset));
 				} else {
-					ImGui::DragFloat4(string_cstr(mem->name), (r32 *)(data + mem->offset));
+					ImGui::DragFloat4(string_cstr(mem->name), (r32 *)(data + mem->offset), attr.speed);
 				}
 			} else if (mem->info == reflect_info<u32>()) {
-				ImGui::DragScalar(string_cstr(mem->name), ImGuiDataType_U32, data + mem->offset, 1.0f);
+				ImGui::DragScalar(string_cstr(mem->name), ImGuiDataType_U32, data + mem->offset, attr.speed);
 			} else if (mem->info == reflect_info<Entity::Type>()) {
 				auto items = enum_string_array<Entity::Type>();
 				ImGui::Combo(string_cstr(mem->name), (int *)(data + mem->offset), items.data, (int)items.count);

@@ -13,8 +13,8 @@ struct Entity {
 	attribute("read-only") Entity_Handle	handle;
 	attribute("read-only") Type				type;
 
-	Vec2 position;
-	Vec2 size;
+	attribute("speed:0.01") Vec2 position;
+	attribute("speed:0.01") Vec2 size;
 	attribute("color") Vec4 color;
 
 	attribute("read-only") Vec2 velocity;

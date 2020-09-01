@@ -140,7 +140,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <OmitFramePointers>true</OmitFramePointers>
-      <PreprocessorDefinitions>BUILD_RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;BUILD_RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <EnableModules>false</EnableModules>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
@@ -172,7 +172,7 @@ popd
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Developer|x64'">
     <ClCompile>
       <OmitFramePointers>true</OmitFramePointers>
-      <PreprocessorDefinitions>BUILD_DEVELOPER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;BUILD_DEVELOPER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <EnableModules>false</EnableModules>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
@@ -209,7 +209,7 @@ popd
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug-Fast|x64'">
     <ClCompile>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>BUILD_DEBUG_FAST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;BUILD_DEBUG_FAST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <EnableModules>false</EnableModules>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
@@ -240,7 +240,7 @@ popd
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>BUILD_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;BUILD_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <EnableModules>false</EnableModules>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
