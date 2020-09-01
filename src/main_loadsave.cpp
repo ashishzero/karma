@@ -15,7 +15,7 @@
 #include ".generated/atish.typeinfo"
 //unsigned int32
 typedef u32 Entity_Handle;
-
+#define string_cstr(string) ((char *)((string).data))
 struct Entity {
 	enum Type : u32 {
 		PLAYER,
@@ -116,35 +116,186 @@ void collision_point_vs_line(Array<Sorted_Colliders>& sorted_colliders, Entity_M
 	}
 }
 
+//TODO : testing 
+void serialize_to_file(FILE* fp, String name, const Type_Info* info, char* data)
+{
+	switch (info->id)
+	{
+	case Type_Id_S8:
+	{
+		fprintf(fp, "%s : %d\n", string_cstr(name), (int)*(s8*)(data));
+	}
+		break;
+	case Type_Id_S16:
+	{
+		fprintf(fp, "%s : %d\n", string_cstr(name), (int)*(s16*)(data));
+	}
+		break;
+	case Type_Id_S32:
+	{
+		fprintf(fp, "%s : %d\n", string_cstr(name), *(s32*)(data));
+	}
+		break;
+	case Type_Id_S64:
+	{
+		fprintf(fp, "%s : %zd\n", string_cstr(name), *(s64*)(data));
+	}
+		break;
+	case Type_Id_U8:
+	{
+		fprintf(fp, "%s : %u\n", string_cstr(name), (u32) * (u8*)(data));
+	}
+		break;
+	case Type_Id_U16:
+	{
+		fprintf(fp, "%s : %u\n", string_cstr(name), (u32) * (u16*)(data));
+	}
+		break;
+	case Type_Id_U32:
+	{
+		fprintf(fp, "%s : %u\n", string_cstr(name), (u32) * (u32*)(data));
+	}
+		break;
+	case Type_Id_U64:
+	{
+		fprintf(fp, "%s : %zu\n", string_cstr(name), *(u64*)(data));
+	}
+		break;
+	case Type_Id_R32:
+	{
+		fprintf(fp, "%s : %f\n", string_cstr(name), *(r32*)(data));
+	}
+		break;
+	case Type_Id_R64:
+	{
+		fprintf(fp, "%s : %f\n", string_cstr(name), *(r64*)(data));
+	}
+		break;
+	case Type_Id_CHAR:
+	{
+		fprintf(fp, "%s : %c\n", string_cstr(name), *(char*)(data));
+	}
+		break;
+	case Type_Id_VOID:// invalid_path();
+	{
+		invalid_code_path();
+	}
+		break;
+	case Type_Id_POINTER:// deference 
+	{
+		auto ptr_info = (Type_Info_Pointer*)info;
+		serialize_to_file(fp, name, ptr_info->pointer_to,(char*) (*(u64*)data));
+	}
+		break;
+	
+	case Type_Id_FUNCTION:// skip
+		break;
+	case Type_Id_ENUM:// s64 
+	{
+		//TODO :: need to handle some other things
+		fprintf(fp, "%s : %d\n", string_cstr(name), *(s32*)(data));
+	}
+		break;
+	case Type_Id_STRUCT:
+	{
+		auto struct_info = (Type_Info_Struct*)info;
+		fprintf(fp, "struct %s { \n", string_cstr(struct_info->name));
+		for (int i = 0; i < struct_info->member_count; ++i)
+		{
+			auto mem = struct_info->members + i;
+			serialize_to_file(fp, mem->name, mem->info, data + mem->offset);
+		}
+		fprintf(fp, "}\n");
+	}
+		break;
+	case Type_Id_UNION:// invalid_path();
+	{
+		invalid_code_path();
+	}
+		break;
+		//Type_Id_STATIC_ARRAY,// 
+	}
+}
+
+
 int system_main() {
 	//saving from here
 	
 	FILE* fp;
-	fp = fopen("savegame.txt", "a+" );
+	fp = fopen("savegame.txt", "w+" );
 	if (fp == NULL)
 	{
 		//cout << "file not opened";
 		exit(1);
 	}
 
-	Atish sample = { 1,2 };
+	Atish sample;
+	sample.a_ptr = new int(4);
 
-	const Type_Info* info = reflect_info(sample); // reflect_info<My_Struct>() is also possible
-	if (info->id == Type_Id_STRUCT) { // must be true because My_Struct is struct
-		auto       struct_info = (Type_Info_Struct*)info; // because id is Type_Id_STRUCT
-		//String struct_name = info->name;
-		fwrite(&info->name, sizeof(info->name), 1, fp);
-		//s64 member_count = struct_info->member_count;
-		fwrite(&struct_info->member_count, sizeof(struct_info->member_count), 1, fp);
-		//const Struct_Member* members = struct_info->members;
-		fwrite(&struct_info->members, sizeof(struct_info->members), 1, fp);
-		// members[i].info gives Type_Info for members of the structs
+	char* data = (char*)&sample;
+
+	const Type_Info* info = reflect_info(sample); 
+	serialize_to_file(fp, info->name,info, data);
+
+#if 0
+	if (info->id == Type_Id_STRUCT) { 
+		auto       struct_info = (Type_Info_Struct*)info; 
+		fprintf(fp, "struct %s { \n",string_cstr(struct_info->name));
+		for (int i = 0; i < struct_info->member_count; ++i)
+		{
+			auto mem = struct_info->members + i;
+			switch (mem->info->id)
+			{
+			case Type_Id_S8 :
+				fprintf(fp, "%s : %d\n", string_cstr(struct_info->members[i].info->name),(int) *(s8*)(data + mem->offset));
+				break;
+			case	Type_Id_S16:
+			case		Type_Id_S32:
+				fprintf(fp, "%s : %d\n", string_cstr(struct_info->members[i].info->name),*(s32*)(data+mem->offset));
+				break;
+					Type_Id_S64,
+					Type_Id_U8,
+					Type_Id_U16,
+					Type_Id_U32,
+					Type_Id_U64,
+					Type_Id_R32,
+					Type_Id_R64,
+					Type_Id_CHAR,
+					Type_Id_VOID,// invalid_path();
+					Type_Id_POINTER,// deference 
+					Type_Id_FUNCTION,// skip
+					Type_Id_ENUM,// s64 
+					Type_Id_STRUCT,
+					Type_Id_UNION,// invalid_path();
+					Type_Id_STATIC_ARRAY,// 
+			}
+			fprintf(fp, "%s : %d\n",struct_info->members[i].info->name.data,(int)(struct_info->members[i].info->name.count ));
+		}
+		fprintf(fp, "}\n");
 	}
 
-	
+	//auto info = reflect_info<Atish>();
 
+	//Atish retrieve;
+	//fseek(fp, 0, SEEK_SET);
+	//int count;
+	//fscanf(fp,null_tprintf( "struct %s { \n",info->name.data));
+	//fscanf(fp, "struct Atish { \n");
+	//const char* fmt = null_tprintf("%s : %s\n", string_cstr(info->members[i].info->name), "%d");
+	//fscanf(fp, fmt,(s32*)(data + mem->offset)));
+	//fscanf(fp, "a : %d\n", (s32*)(data + mem->offset)));
+
+	//fscanf(fp, "members_count : %d \n",count);
+	//String name_r;
+	//int data_r;
+	//for (int i = 0; i < count; ++i)
+	//{
+	//	fscanf(fp, "%s : %d\n", name_r, );
+	//}
+	//fscanf(fp, "}\n");
+#endif
 	fclose(fp);
-
+	return 0;
 
 
 
