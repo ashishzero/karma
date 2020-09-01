@@ -140,7 +140,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <OmitFramePointers>true</OmitFramePointers>
-      <PreprocessorDefinitions>BUILD_RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <EnableModules>false</EnableModules>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
@@ -172,7 +172,7 @@ popd
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Developer|x64'">
     <ClCompile>
       <OmitFramePointers>true</OmitFramePointers>
-      <PreprocessorDefinitions>BUILD_DEVELOPER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <EnableModules>false</EnableModules>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
@@ -209,7 +209,7 @@ popd
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug-Fast|x64'">
     <ClCompile>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>BUILD_DEBUG_FAST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <EnableModules>false</EnableModules>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
@@ -240,7 +240,7 @@ popd
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>BUILD_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <EnableModules>false</EnableModules>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
@@ -285,7 +285,7 @@ popd
     <ClCompile Include="src\imgui\imgui_draw.cpp" />
     <ClCompile Include="src\imgui\imgui_impl_opengl3.cpp" />
     <ClCompile Include="src\imgui\imgui_widgets.cpp" />
-    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\main_loadsave.cpp" />
     <ClCompile Include="src\opengl\gfx_opengl.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug-Fast|x64'">false</ExcludedFromBuild>
@@ -340,6 +340,7 @@ popd
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\atish.h" />
     <ClInclude Include="src\audio.h" />
     <ClInclude Include="src\debug.h" />
     <ClInclude Include="src\directx\dx_error.h" />

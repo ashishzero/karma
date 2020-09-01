@@ -49,7 +49,7 @@ Entity* add_entity(Entity_Manager* manager, Entity::Type type) {
 	return entity;
 }
 
-Entity* manager_find_entity(Entity_Manager &manager, Entity_Handle handle) {
+Entity* manager_find_entity(Entity_Manager& manager, Entity_Handle handle) {
 	for (auto& entity : manager.entities) {
 		if (entity.handle == handle) return &entity;
 	}
@@ -58,7 +58,7 @@ Entity* manager_find_entity(Entity_Manager &manager, Entity_Handle handle) {
 
 Entity_Manager make_manager() {
 	Entity_Manager manager = {};
-	manager.handle_counter=1;
+	manager.handle_counter = 1;
 	return manager;
 }
 
@@ -71,7 +71,7 @@ struct Sorted_Colliders {
 	r32 distance;
 };
 
-void collision_point_vs_line(Array<Sorted_Colliders>& sorted_colliders,Entity_Manager& manager,Entity* player,Vec2& new_player_position,r32& dt)
+void collision_point_vs_line(Array<Sorted_Colliders>& sorted_colliders, Entity_Manager& manager, Entity* player, Vec2& new_player_position, r32& dt)
 {
 	Ray_Hit hit;
 	Array<r32> t_values;
@@ -117,6 +117,43 @@ void collision_point_vs_line(Array<Sorted_Colliders>& sorted_colliders,Entity_Ma
 }
 
 int system_main() {
+	//saving from here
+	
+	FILE* fp;
+	fp = fopen("savegame.txt", "a+" );
+	if (fp == NULL)
+	{
+		//cout << "file not opened";
+		exit(1);
+	}
+
+	Atish sample = { 1,2 };
+
+	const Type_Info* info = reflect_info(sample); // reflect_info<My_Struct>() is also possible
+	if (info->id == Type_Id_STRUCT) { // must be true because My_Struct is struct
+		auto       struct_info = (Type_Info_Struct*)info; // because id is Type_Id_STRUCT
+		//String struct_name = info->name;
+		fwrite(&info->name, sizeof(info->name), 1, fp);
+		//s64 member_count = struct_info->member_count;
+		fwrite(&struct_info->member_count, sizeof(struct_info->member_count), 1, fp);
+		//const Struct_Member* members = struct_info->members;
+		fwrite(&struct_info->members, sizeof(struct_info->members), 1, fp);
+		// members[i].info gives Type_Info for members of the structs
+	}
+
+	
+
+	fclose(fp);
+
+
+
+
+
+
+
+
+
+
 	r32    framebuffer_w = 1280;
 	r32    framebuffer_h = 720;
 	Handle platform = system_create_window(u8"Karma", 1280, 720, System_Window_Show_NORMAL);
@@ -145,14 +182,14 @@ int system_main() {
 
 	Entity_Manager manager = make_manager();
 
-	Entity *player = add_entity(&manager, Entity::PLAYER);
-	player->position = vec2(-0.2f,0);
-	player->size = vec2(0.2f,0.4f);
+	Entity* player = add_entity(&manager, Entity::PLAYER);
+	player->position = vec2(-0.2f, 0);
+	player->size = vec2(0.2f, 0.4f);
 	player->color = vec4(1);
 	player->velocity = vec2(0);
 	Entity_Handle player_id = player->handle;
 
-	Entity *line = nullptr;
+	Entity* line = nullptr;
 
 	line = add_entity(&manager, Entity::LINE);
 	line->start = vec2(-4, -3);
@@ -173,7 +210,7 @@ int system_main() {
 	line->start = vec2(4, 1);
 	line->end = vec2(5, 4);
 	line->color = vec4(1, 0, 0, 1);
-	
+
 	line = add_entity(&manager, Entity::LINE);
 	line->start = vec2(4, 4);
 	line->end = vec2(-5, 0);
@@ -322,7 +359,7 @@ int system_main() {
 			auto new_player_velocity = player->velocity;
 			auto new_player_position = player->position + dt * new_player_velocity;
 
-			
+
 			Array<Sorted_Colliders> sorted_colliders;
 			sorted_colliders.allocator = TEMPORARY_ALLOCATOR;
 
@@ -339,9 +376,9 @@ int system_main() {
 				}
 			}
 
-			sort(sorted_colliders.data, sorted_colliders.count, [](Sorted_Colliders & a, Sorted_Colliders &b){
+			sort(sorted_colliders.data, sorted_colliders.count, [](Sorted_Colliders& a, Sorted_Colliders& b) {
 				return a.distance > b.distance;
-			});
+				});
 
 			//collision_point_vs_line(sorted_colliders, manager, player, new_player_position, dt);
 			Vec2 get_corner[4] = { {player->size.x / 2,player->size.y / 2},
@@ -354,9 +391,9 @@ int system_main() {
 				auto entity = manager_find_entity(manager, collider.handle);
 				entity->color = vec4(1, 0, 0);
 				bool collision_found = false;
-				for(Vec2 temp:get_corner)
+				for (Vec2 temp : get_corner)
 				{
-					if (ray_vs_line(player->position+temp, new_player_position+temp, entity->start, entity->end, &hit)) {
+					if (ray_vs_line(player->position + temp, new_player_position + temp, entity->start, entity->end, &hit)) {
 						r32 dir = vec2_dot(vec2_normalize_check(player->velocity), hit.normal);
 
 						if (dir <= 0 && hit.t >= -0.001f && hit.t < 1.001f) {
@@ -384,7 +421,7 @@ int system_main() {
 				if (entity->handle != handle_save) {
 					for (Vec2 temp : get_corner)
 					{
-						if (ray_vs_line(player->position+temp, new_player_position+temp, entity->start, entity->end, &hit)) {
+						if (ray_vs_line(player->position + temp, new_player_position + temp, entity->start, entity->end, &hit)) {
 							r32 dir = vec2_dot(vec2_normalize_check(player->velocity), hit.normal);
 							if (dir <= 0 && hit.t >= -0.001f && hit.t < 1.001f) {
 								Vec2 reduc_vector = (1.0f - hit.t) * player->velocity;
@@ -397,7 +434,7 @@ int system_main() {
 					}
 				}
 			}
-			
+
 			player->position += dt * player->velocity;
 
 			accumulator_t -= fixed_dt;
@@ -449,32 +486,32 @@ int system_main() {
 		for (auto& entity : manager.entities) {
 			// TODO: Render by type!!!
 			switch (entity.type) {
-				case Entity::PLAYER: {
-					//im2d_circle(entity.position, entity.size.x, entity.color);
-					im2d_rect_centered(entity.position, entity.size, entity.color);
-					//im2d_circle(entity.position, 0.08f, vec4(0, 1, 0));
-				} break;
+			case Entity::PLAYER: {
+				//im2d_circle(entity.position, entity.size.x, entity.color);
+				im2d_rect_centered(entity.position, entity.size, entity.color);
+				//im2d_circle(entity.position, 0.08f, vec4(0, 1, 0));
+			} break;
 
-				case Entity::LINE: {
-					im2d_line(entity.start, entity.end, entity.color, 0.01f);
-				} break;
+			case Entity::LINE: {
+				im2d_line(entity.start, entity.end, entity.color, 0.01f);
+			} break;
 			}
 		}
 
 
-		
+
 		//for (auto& h : rayhits) {
 		//	im2d_circle(h.point, 0.08f, vec4(0, 0, 1));
 		//	im2d_line(h.point, h.point + h.normal, vec4(1), 0.01f);
 		//}
-		
+
 #if 1
 		//for (s64 index = 0; index < normals.count; index += 2) {
 		//	im2d_circle(normals[index], 0.08f, vec4(1, 0, 0));
 		//	im2d_line(normals[index], normals[index] + normals[index + 1], vec4(1, 1, 1), 0.01f);
 		//}
 
-		for (auto & hit: ray_hits) {
+		for (auto& hit : ray_hits) {
 			im2d_line(player->position, player->position + (1.0f - hit.t) * hit.normal, vec4(0, 1, 1), 0.01f);
 		}
 
@@ -493,11 +530,11 @@ int system_main() {
 		gfx_blit_hdr(0, 0, window_w, window_h);
 		gfx_viewport(0, 0, window_w, window_h);
 
-		#if defined(BUILD_IMGUI)
+#if defined(BUILD_IMGUI)
 		ImGui::Begin("Edit");
 
-		ImGui::DragFloat2("Position", player->position.m,0.01f);
-		ImGui::DragFloat2("Velocity", player->velocity.m,0.01f);
+		ImGui::DragFloat2("Position", player->position.m, 0.01f);
+		ImGui::DragFloat2("Velocity", player->velocity.m, 0.01f);
 
 		ImGui::Text("Collision Count: %d", test_counter);
 
@@ -506,21 +543,21 @@ int system_main() {
 		}
 
 		ImGui::End();
-		#endif
+#endif
 
-		#if defined(BUILD_IMGUI)
+#if defined(BUILD_IMGUI)
 		{
 			Debug_TimedScope(ImGuiRender);
 			ImGui_RenderFrame();
 		}
-		#endif
+#endif
 
-		#if defined(BUILD_DEBUG_SERVICE)
+#if defined(BUILD_DEBUG_SERVICE)
 		{
 			Debug_TimedScope(DebugRender);
 			Debug_RenderFrame(window_w, window_h);
 		}
-		#endif
+#endif
 
 		gfx_end_drawing();
 
