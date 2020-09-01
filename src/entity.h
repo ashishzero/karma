@@ -17,8 +17,8 @@ struct Entity {
 	Vec2 size;
 	attribute("color") Vec4 color;
 
-	Vec2 velocity;
-	Vec2 force;
+	attribute("read-only") Vec2 velocity;
+	attribute("read-only") Vec2 force;
 
 	Vec2 start;
 	Vec2 end;

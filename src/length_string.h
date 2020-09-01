@@ -7,6 +7,8 @@ constexpr u32 HIGH_SURROGATE_CODEPOINT_LAST  = 0xDBFF;
 constexpr u32 LOW_SURROGATE_CODEPOINT_FIRST  = 0xDC00;
 constexpr u32 LOW_SURROGATE_CODEPOINT_LAST   = 0xDFFF;
 
+#define string_cstr(string) ((char *)((string).data))
+
 struct Utf32_Codepoint {
 	utf32 code;
 	u8    size_in_bytes;

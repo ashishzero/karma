@@ -15,8 +15,6 @@
 #include "entity.h"
 #include ".generated/entity.typeinfo"
 
-#define string_cstr(string) ((char *)((string).data))
-
 constexpr u32 EDITOR_FLAG_NO_DISPLAY = bit(1);
 constexpr u32 EDITOR_FLAG_READ_ONLY  = bit(3);
 constexpr u32 EDITOR_FLAG_COLOR		 = bit(4);
