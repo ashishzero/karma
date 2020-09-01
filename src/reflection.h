@@ -211,6 +211,10 @@ struct Enum_Info {
 		assert(!"File not added for reflection!");
 		return "";
 	}
+	static const Array_View<const char *> string_array() {
+		assert(!"File not added for reflection!");
+		return Array_View<const char *>(nullptr, 0);
+	}
 };
 
 template <typename T>
@@ -423,4 +427,14 @@ constexpr T enum_index_value(s64 index) {
 template <typename T>
 const String enum_string(T v) {
 	return Enum_Info<T>::string(v);
+}
+
+template <typename T>
+const Array_View<const char *> enum_string_array() {
+	return Enum_Info<T>::string_array();
+}
+
+template <typename T>
+const Array_View<const char *> enum_string_array(T v) {
+	return Enum_Info<T>::string_array();
 }
