@@ -1,3 +1,5 @@
+#include "reflection.h"
+
 //karma.h for array and string
 #include "karma.h"
 //thread  controller position,systems.h is for window, audio and everything platform related
@@ -10,28 +12,93 @@
 #include "debug.h"
 //utility.h contains sorting and hashing, searching and such
 #include "utility.h"
-//unsigned int32
-typedef u32 Entity_Handle;
+#include "entity.h"
+#include ".generated/entity.typeinfo"
 
-struct Entity {
-	enum Type : u32 {
-		PLAYER,
-		LINE,
-	};
+#define string_cstr(string) ((char *)((string).data))
 
-	Entity_Handle	handle;
-	Type			type;
+constexpr u32 EDITOR_FLAG_NO_DISPLAY = bit(1);
+constexpr u32 EDITOR_FLAG_READ_ONLY  = bit(3);
+constexpr u32 EDITOR_FLAG_COLOR		 = bit(4);
 
-	Vec2 position;
-	Vec2 size;
-	Vec4 color;
+u32 editor_get_flags_from_attribute(const String* attrs, s64 count) {
+	u32 flags = 0;
+	for (s64 index = 0; index < count; ++index) {
+		if (string_match(attrs[index], "no-display")) {
+			flags |= EDITOR_FLAG_NO_DISPLAY;
+		} else if (string_match(attrs[index], "read-only")) {
+			flags |= EDITOR_FLAG_READ_ONLY;
+		} else if (string_match(attrs[index], "color")) {
+			flags |= EDITOR_FLAG_COLOR;
+		}
+	}
+	return flags;
+}
 
-	Vec2 velocity;
-	Vec2 force;
+void imgui_draw_entity(Entity *entity) {
+	char *data = (char *)entity;
 
-	Vec2 start;
-	Vec2 end;
-};
+	auto info = (Type_Info_Struct *)reflect_info<Entity>();
+	auto mem_counts = info->member_count;
+
+	ImGui::Begin(string_cstr(info->name));
+
+	u32 flags = 0;
+
+	for (ptrsize index = 0; index < mem_counts; ++index) {
+		auto mem = info->members + index;
+
+		flags = editor_get_flags_from_attribute(mem->attributes, mem->attribute_count);
+		if (flags & EDITOR_FLAG_NO_DISPLAY) continue;
+
+		if (flags & EDITOR_FLAG_READ_ONLY) {
+			if (mem->info == reflect_info<r32>()) {
+				r32 val = *(r32 *)(data + mem->offset);
+				ImGui::Text("%s : %.3f", string_cstr(mem->name), val);
+			} else if (mem->info == reflect_info<Vec2>()) {
+				Vec2 *val = (Vec2 *)(data + mem->offset);
+				ImGui::Text("%s : (%.3f, %.3f)", string_cstr(mem->name), val->x, val->y);
+			} else if (mem->info == reflect_info<Vec3>()) {
+				Vec3 *val = (Vec3 *)(data + mem->offset);
+				ImGui::Text("%s : (%.3f, %.3f, %.3f)", string_cstr(mem->name), val->x, val->y, val->z);
+			} else if (mem->info == reflect_info<Vec4>()) {
+				Vec4 *val = (Vec4 *)(data + mem->offset);
+				ImGui::Text("%s : (%.3f, %.3f, %.3f, %.3f)", string_cstr(mem->name), val->x, val->y, val->z, val->w);
+			} else if (mem->info == reflect_info<u32>()) {
+				u32 *val = (u32 *)(data + mem->offset);
+				ImGui::Text("%s : %u", string_cstr(mem->name), *val);
+			} else if (mem->info == reflect_info<Entity::Type>()) {
+				Entity::Type *val = (Entity::Type *)(data + mem->offset);
+				ImGui::Text("%s : %s", string_cstr(mem->name), string_cstr(enum_string(*val)));
+			}
+		} else {
+			if (mem->info == reflect_info<r32>()) {
+				ImGui::DragFloat(string_cstr(mem->name), (r32 *)(data + mem->offset));
+			} else if (mem->info == reflect_info<Vec2>()) {
+				ImGui::DragFloat2(string_cstr(mem->name), (r32 *)(data + mem->offset));
+			} else if (mem->info == reflect_info<Vec3>()) {
+				if (flags & EDITOR_FLAG_COLOR) {
+					ImGui::ColorEdit3(string_cstr(mem->name), (r32 *)(data + mem->offset));
+				} else {
+					ImGui::DragFloat3(string_cstr(mem->name), (r32 *)(data + mem->offset));
+				}
+			} else if (mem->info == reflect_info<Vec4>()) {
+				if (flags & EDITOR_FLAG_COLOR) {
+					ImGui::ColorEdit4(string_cstr(mem->name), (r32 *)(data + mem->offset));
+				} else {
+					ImGui::DragFloat4(string_cstr(mem->name), (r32 *)(data + mem->offset));
+				}
+			} else if (mem->info == reflect_info<u32>()) {
+				ImGui::DragScalar(string_cstr(mem->name), ImGuiDataType_U32, data + mem->offset, 1.0f);
+			} else if (mem->info == reflect_info<Entity::Type>()) {
+				auto items = enum_string_array<Entity::Type>();
+				ImGui::Combo(string_cstr(mem->name), (int *)(data + mem->offset), items.data, (int)items.count);
+			}
+		}
+	}
+
+	ImGui::End();
+}
 
 struct Entity_Manager {
 	Array<Entity>	entities;
@@ -491,10 +558,12 @@ int system_main() {
 		gfx_viewport(0, 0, window_w, window_h);
 
 		#if defined(BUILD_IMGUI)
+
+#if 0
 		ImGui::Begin("Edit");
 
-		ImGui::DragFloat2("Position", player->position.m,0.01f);
-		ImGui::DragFloat2("Velocity", player->velocity.m,0.01f);
+		ImGui::DragFloat2("Position", player->position.m, 0.01f);
+		ImGui::DragFloat2("Velocity", player->velocity.m, 0.01f);
 
 		ImGui::Text("Collision Count: %d", test_counter);
 
@@ -503,6 +572,11 @@ int system_main() {
 		}
 
 		ImGui::End();
+#else
+		imgui_draw_entity(player);
+
+		ImGui::ShowDemoWindow();
+#endif
 		#endif
 
 		#if defined(BUILD_IMGUI)

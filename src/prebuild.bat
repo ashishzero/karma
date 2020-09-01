@@ -5,6 +5,7 @@ rem The generated file should be output in the directory *.generated* in the sou
 rem The header file is given entension *.typeinfo*
 
 tools\reflection\reflection.exe include: 'src/' build: 'src/tokenizer.h' output: 'src/.generated/tokenizer.typeinfo'
+tools\reflection\reflection.exe include: 'src/' build: 'src/entity.h' output: 'src/.generated/entity.typeinfo'
 
 rem Shader Code Generation
 rem To add your shader to prebuild process, goto file tools/shader/main.cpp, and in the system_main function add your shader file

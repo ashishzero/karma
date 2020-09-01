@@ -79,6 +79,16 @@ void reflection_of_enum_info(Ostream *stream, CXCursor cursor, const char *name,
 		ostream_write_formatted(stream, "\t\treturn \"\";\n\t}\n");
 	}
 
+	ostream_write_formatted(stream, "\tstatic const Array_View<const char *> string_array() {\n");
+	ostream_write_formatted(stream, "\t\tstatic const char * strings[] = {\n");
+	for (s64 index = 0; index < enums.count; ++index) {
+		auto spelling = clang_getCursorSpelling(enums[index]);
+		ostream_write_formatted(stream, "\t\t\t\"%s\",\n", clang_getCString(spelling));
+		clang_disposeString(spelling);
+	}
+	ostream_write_formatted(stream, "\t\t};\n");
+	ostream_write_formatted(stream, "\t\treturn Array_View<const char *>(strings, %zd);\n\t}\n", enums.count);
+
 	ostream_write_formatted(stream, "};\n\n");
 }
 
