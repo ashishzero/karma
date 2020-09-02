@@ -92,12 +92,12 @@ void reflection_of_enum_info(Ostream *stream, CXCursor cursor, const char *name,
 	ostream_write_formatted(stream, "};\n\n");
 }
 
-void reflection_of_enum(Ostream *stream, const char *name) {
+void reflection_of_enum(Ostream *stream, const char *name, bool enum_type_is_signed) {
 	ostream_write_formatted(stream, "template <> struct Reflect<%s> {\n", name);
 	ostream_write_formatted(stream, "\tstatic constexpr Type_Id id = Type_Id_ENUM;\n");
 
 	ostream_write_formatted(stream, "\tstatic const Type_Info * const info() {\n");
-	ostream_write_formatted(stream, "\t\tstatic const Type_Info_Enum i(sizeof(%s), \"%s\", enum_count<%s>());\n", name, name, name);
+	ostream_write_formatted(stream, "\t\tstatic const Type_Info_Enum i(sizeof(%s), \"%s\", enum_count<%s>(), %s);\n", name, name, name, enum_type_is_signed ? "true" : "false");
 	ostream_write_formatted(stream, "\t\treturn &i;\n\t}\n};\n\n");
 }
 
@@ -623,9 +623,35 @@ void ast_visit_enum(CXCursor cursor) {
 		}
 	}
 
+	bool enum_type_is_signed = true;
+	CXType item_type = clang_getEnumDeclIntegerType(cursor);
+
+	if (item_type.kind == CXType_Typedef) {
+		auto type_spelling = clang_getTypeSpelling(item_type);
+		auto type_name = clang_getCString(type_spelling);
+
+		if (type_name[0] == 'u' || (strcmp(type_name, "ptrsize") == 0)) {
+			enum_type_is_signed = false;
+		}
+
+		clang_disposeString(type_spelling);
+	} else {
+		switch (item_type.kind) {
+				case CXType_Char_U:
+				case CXType_UChar:
+				case CXType_UShort:
+				case CXType_UInt:
+				case CXType_ULong:
+				case CXType_ULongLong:
+				case CXType_UInt128:
+					enum_type_is_signed = false;
+					break;
+		}
+	}
+
 	const char *name = clang_getCString(spelling);
 	reflection_of_enum_info(&out->reflected_enum, cursor, name, members, min, max, sequential);
-	reflection_of_enum(&out->reflected_enum, name);
+	reflection_of_enum(&out->reflected_enum, name, enum_type_is_signed);
 }
 
 bool struct_check_for_base(CXCursor derived, CXCursor *out) {
