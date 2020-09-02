@@ -28,11 +28,15 @@ constexpr u32 EDITOR_FLAG_COLOR		 = bit(4);
 struct Editor_Attribute {
 	u32 flags;
 	r32 speed;
+	r32 min;
+	r32 max;
 };
 
 void editor_get_flags_from_attribute(const String* attrs, s64 count, Editor_Attribute *out) {
 	out->flags = 0;
 	out->speed = 1;
+	out->min = 0.0f;
+	out->max = 0.0f;
 
 	for (s64 index = 0; index < count; ++index) {
 		if (string_match(attrs[index], "no-display")) {
@@ -43,6 +47,10 @@ void editor_get_flags_from_attribute(const String* attrs, s64 count, Editor_Attr
 			out->flags |= EDITOR_FLAG_COLOR;
 		} else if (string_starts_with(attrs[index], "speed:")) {
 			sscanf(string_cstr(attrs[index]), "speed:%f", &out->speed);
+		} else if (string_starts_with(attrs[index], "min:")) {
+			sscanf(string_cstr(attrs[index]), "min:%f", &out->min);
+		} else if (string_starts_with(attrs[index], "max:")) {
+			sscanf(string_cstr(attrs[index]), "max:%f", &out->min);
 		}
 	}
 }
@@ -85,20 +93,20 @@ void imgui_draw_entity(Entity *entity) {
 			}
 		} else {
 			if (mem->info == reflect_info<r32>()) {
-				ImGui::DragFloat(string_cstr(mem->name), (r32 *)(data + mem->offset), attr.speed);
+				ImGui::DragFloat(string_cstr(mem->name), (r32 *)(data + mem->offset), attr.speed, attr.min, attr.max);
 			} else if (mem->info == reflect_info<Vec2>()) {
-				ImGui::DragFloat2(string_cstr(mem->name), (r32 *)(data + mem->offset), attr.speed);
+				ImGui::DragFloat2(string_cstr(mem->name), (r32 *)(data + mem->offset), attr.speed, attr.min, attr.max);
 			} else if (mem->info == reflect_info<Vec3>()) {
 				if (attr.flags & EDITOR_FLAG_COLOR) {
 					ImGui::ColorEdit3(string_cstr(mem->name), (r32 *)(data + mem->offset));
 				} else {
-					ImGui::DragFloat3(string_cstr(mem->name), (r32 *)(data + mem->offset), attr.speed);
+					ImGui::DragFloat3(string_cstr(mem->name), (r32 *)(data + mem->offset), attr.speed, attr.min, attr.max);
 				}
 			} else if (mem->info == reflect_info<Vec4>()) {
 				if (attr.flags & EDITOR_FLAG_COLOR) {
 					ImGui::ColorEdit4(string_cstr(mem->name), (r32 *)(data + mem->offset));
 				} else {
-					ImGui::DragFloat4(string_cstr(mem->name), (r32 *)(data + mem->offset), attr.speed);
+					ImGui::DragFloat4(string_cstr(mem->name), (r32 *)(data + mem->offset), attr.speed, attr.min, attr.max);
 				}
 			} else if (mem->info == reflect_info<u32>()) {
 				ImGui::DragScalar(string_cstr(mem->name), ImGuiDataType_U32, data + mem->offset, attr.speed);

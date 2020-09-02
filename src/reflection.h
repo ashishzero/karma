@@ -146,12 +146,14 @@ struct Type_Info_Union : public Type_Info {
 
 struct Type_Info_Enum : public Type_Info {
 	ptrsize count;
+	bool type_is_signed;
 
 	inline Type_Info_Enum() {
 	}
-	inline Type_Info_Enum(ptrsize sz, String n, ptrsize num) :
+	inline Type_Info_Enum(ptrsize sz, String n, ptrsize num, bool is_signed) :
 		Type_Info(Type_Id_ENUM, sz, n) {
 		count = num;
+		type_is_signed = is_signed;
 	}
 };
 
