@@ -15,7 +15,7 @@
 #include ".generated/atish.typeinfo"
 //unsigned int32
 typedef u32 Entity_Handle;
-#define string_cstr(string) ((char *)((string).data))
+
 struct Entity {
 	enum Type : u32 {
 		PLAYER,
