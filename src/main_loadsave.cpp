@@ -1,5 +1,3 @@
-#include "reflection.h"
-
 //karma.h for array and string
 #include "karma.h"
 //thread  controller position,systems.h is for window, audio and everything platform related
@@ -17,100 +15,26 @@
 #include ".generated/atish.typeinfo"
 //unsigned int32
 typedef u32 Entity_Handle;
+#define string_cstr(string) ((char *)((string).data))
+struct Entity {
+	enum Type : u32 {
+		PLAYER,
+		LINE,
+	};
 
-#include "entity.h"
-#include ".generated/entity.typeinfo"
+	Entity_Handle	handle;
+	Type			type;
 
-constexpr u32 EDITOR_FLAG_NO_DISPLAY = bit(1);
-constexpr u32 EDITOR_FLAG_READ_ONLY  = bit(3);
-constexpr u32 EDITOR_FLAG_COLOR		 = bit(4);
+	Vec2 position;
+	Vec2 size;
+	Vec4 color;
 
-struct Editor_Attribute {
-	u32 flags;
-	r32 speed;
+	Vec2 velocity;
+	Vec2 force;
+
+	Vec2 start;
+	Vec2 end;
 };
-
-void editor_get_flags_from_attribute(const String* attrs, s64 count, Editor_Attribute *out) {
-	out->flags = 0;
-	out->speed = 1;
-
-	for (s64 index = 0; index < count; ++index) {
-		if (string_match(attrs[index], "no-display")) {
-			out->flags |= EDITOR_FLAG_NO_DISPLAY;
-		} else if (string_match(attrs[index], "read-only")) {
-			out->flags |= EDITOR_FLAG_READ_ONLY;
-		} else if (string_match(attrs[index], "color")) {
-			out->flags |= EDITOR_FLAG_COLOR;
-		} else if (string_starts_with(attrs[index], "speed:")) {
-			sscanf(string_cstr(attrs[index]), "speed:%f", &out->speed);
-		}
-	}
-}
-
-void imgui_draw_entity(Entity *entity) {
-	char *data = (char *)entity;
-
-	auto info = (Type_Info_Struct *)reflect_info<Entity>();
-	auto mem_counts = info->member_count;
-
-	ImGui::Begin(string_cstr(info->name));
-
-	Editor_Attribute attr;
-
-	for (ptrsize index = 0; index < mem_counts; ++index) {
-		auto mem = info->members + index;
-
-		editor_get_flags_from_attribute(mem->attributes, mem->attribute_count, &attr);
-		if (attr.flags & EDITOR_FLAG_NO_DISPLAY) continue;
-
-		if (attr.flags & EDITOR_FLAG_READ_ONLY) {
-			if (mem->info == reflect_info<r32>()) {
-				r32 val = *(r32 *)(data + mem->offset);
-				ImGui::Text("%s : %.3f", string_cstr(mem->name), val);
-			} else if (mem->info == reflect_info<Vec2>()) {
-				Vec2 *val = (Vec2 *)(data + mem->offset);
-				ImGui::Text("%s : (%.3f, %.3f)", string_cstr(mem->name), val->x, val->y);
-			} else if (mem->info == reflect_info<Vec3>()) {
-				Vec3 *val = (Vec3 *)(data + mem->offset);
-				ImGui::Text("%s : (%.3f, %.3f, %.3f)", string_cstr(mem->name), val->x, val->y, val->z);
-			} else if (mem->info == reflect_info<Vec4>()) {
-				Vec4 *val = (Vec4 *)(data + mem->offset);
-				ImGui::Text("%s : (%.3f, %.3f, %.3f, %.3f)", string_cstr(mem->name), val->x, val->y, val->z, val->w);
-			} else if (mem->info == reflect_info<u32>()) {
-				u32 *val = (u32 *)(data + mem->offset);
-				ImGui::Text("%s : %u", string_cstr(mem->name), *val);
-			} else if (mem->info == reflect_info<Entity::Type>()) {
-				Entity::Type *val = (Entity::Type *)(data + mem->offset);
-				ImGui::Text("%s : %s", string_cstr(mem->name), string_cstr(enum_string(*val)));
-			}
-		} else {
-			if (mem->info == reflect_info<r32>()) {
-				ImGui::DragFloat(string_cstr(mem->name), (r32 *)(data + mem->offset), attr.speed);
-			} else if (mem->info == reflect_info<Vec2>()) {
-				ImGui::DragFloat2(string_cstr(mem->name), (r32 *)(data + mem->offset), attr.speed);
-			} else if (mem->info == reflect_info<Vec3>()) {
-				if (attr.flags & EDITOR_FLAG_COLOR) {
-					ImGui::ColorEdit3(string_cstr(mem->name), (r32 *)(data + mem->offset));
-				} else {
-					ImGui::DragFloat3(string_cstr(mem->name), (r32 *)(data + mem->offset), attr.speed);
-				}
-			} else if (mem->info == reflect_info<Vec4>()) {
-				if (attr.flags & EDITOR_FLAG_COLOR) {
-					ImGui::ColorEdit4(string_cstr(mem->name), (r32 *)(data + mem->offset));
-				} else {
-					ImGui::DragFloat4(string_cstr(mem->name), (r32 *)(data + mem->offset), attr.speed);
-				}
-			} else if (mem->info == reflect_info<u32>()) {
-				ImGui::DragScalar(string_cstr(mem->name), ImGuiDataType_U32, data + mem->offset, attr.speed);
-			} else if (mem->info == reflect_info<Entity::Type>()) {
-				auto items = enum_string_array<Entity::Type>();
-				ImGui::Combo(string_cstr(mem->name), (int *)(data + mem->offset), items.data, (int)items.count);
-			}
-		}
-	}
-
-	ImGui::End();
-}
 
 struct Entity_Manager {
 	Array<Entity>	entities;
@@ -125,7 +49,7 @@ Entity* add_entity(Entity_Manager* manager, Entity::Type type) {
 	return entity;
 }
 
-Entity* manager_find_entity(Entity_Manager &manager, Entity_Handle handle) {
+Entity* manager_find_entity(Entity_Manager& manager, Entity_Handle handle) {
 	for (auto& entity : manager.entities) {
 		if (entity.handle == handle) return &entity;
 	}
@@ -192,7 +116,195 @@ void collision_point_vs_line(Array<Sorted_Colliders>& sorted_colliders, Entity_M
 	}
 }
 
+//TODO : testing 
+void serialize_to_file(FILE* fp, String name, const Type_Info* info, char* data)
+{
+	switch (info->id)
+	{
+	case Type_Id_S8:
+	{
+		fprintf(fp, "%s : %d\n", string_cstr(name), (int)*(s8*)(data));
+	}
+		break;
+	case Type_Id_S16:
+	{
+		fprintf(fp, "%s : %d\n", string_cstr(name), (int)*(s16*)(data));
+	}
+		break;
+	case Type_Id_S32:
+	{
+		fprintf(fp, "%s : %d\n", string_cstr(name), *(s32*)(data));
+	}
+		break;
+	case Type_Id_S64:
+	{
+		fprintf(fp, "%s : %zd\n", string_cstr(name), *(s64*)(data));
+	}
+		break;
+	case Type_Id_U8:
+	{
+		fprintf(fp, "%s : %u\n", string_cstr(name), (u32) * (u8*)(data));
+	}
+		break;
+	case Type_Id_U16:
+	{
+		fprintf(fp, "%s : %u\n", string_cstr(name), (u32) * (u16*)(data));
+	}
+		break;
+	case Type_Id_U32:
+	{
+		fprintf(fp, "%s : %u\n", string_cstr(name), (u32) * (u32*)(data));
+	}
+		break;
+	case Type_Id_U64:
+	{
+		fprintf(fp, "%s : %zu\n", string_cstr(name), *(u64*)(data));
+	}
+		break;
+	case Type_Id_R32:
+	{
+		fprintf(fp, "%s : %f\n", string_cstr(name), *(r32*)(data));
+	}
+		break;
+	case Type_Id_R64:
+	{
+		fprintf(fp, "%s : %f\n", string_cstr(name), *(r64*)(data));
+	}
+		break;
+	case Type_Id_CHAR:
+	{
+		fprintf(fp, "%s : %c\n", string_cstr(name), *(char*)(data));
+	}
+		break;
+	case Type_Id_VOID:// invalid_path();
+	{
+		invalid_code_path();
+	}
+		break;
+	case Type_Id_POINTER:// deference 
+	{
+		auto ptr_info = (Type_Info_Pointer*)info;
+		serialize_to_file(fp, name, ptr_info->pointer_to,(char*) (*(u64*)data));
+	}
+		break;
+	
+	case Type_Id_FUNCTION:// skip
+		break;
+	case Type_Id_ENUM:// s64 
+	{
+		//TODO :: need to handle some other things
+		fprintf(fp, "%s : %d\n", string_cstr(name), *(s32*)(data));
+	}
+		break;
+	case Type_Id_STRUCT:
+	{
+		auto struct_info = (Type_Info_Struct*)info;
+		fprintf(fp, "struct %s { \n", string_cstr(struct_info->name));
+		for (int i = 0; i < struct_info->member_count; ++i)
+		{
+			auto mem = struct_info->members + i;
+			serialize_to_file(fp, mem->name, mem->info, data + mem->offset);
+		}
+		fprintf(fp, "}\n");
+	}
+		break;
+	case Type_Id_UNION:// invalid_path();
+	{
+		invalid_code_path();
+	}
+		break;
+		//Type_Id_STATIC_ARRAY,// 
+	}
+}
+
+
 int system_main() {
+	//saving from here
+	
+	FILE* fp;
+	fp = fopen("savegame.txt", "w+" );
+	if (fp == NULL)
+	{
+		//cout << "file not opened";
+		exit(1);
+	}
+
+	Atish sample;
+	sample.a_ptr = new int(4);
+
+	char* data = (char*)&sample;
+
+	const Type_Info* info = reflect_info(sample); 
+	serialize_to_file(fp, info->name,info, data);
+
+#if 0
+	if (info->id == Type_Id_STRUCT) { 
+		auto       struct_info = (Type_Info_Struct*)info; 
+		fprintf(fp, "struct %s { \n",string_cstr(struct_info->name));
+		for (int i = 0; i < struct_info->member_count; ++i)
+		{
+			auto mem = struct_info->members + i;
+			switch (mem->info->id)
+			{
+			case Type_Id_S8 :
+				fprintf(fp, "%s : %d\n", string_cstr(struct_info->members[i].info->name),(int) *(s8*)(data + mem->offset));
+				break;
+			case	Type_Id_S16:
+			case		Type_Id_S32:
+				fprintf(fp, "%s : %d\n", string_cstr(struct_info->members[i].info->name),*(s32*)(data+mem->offset));
+				break;
+					Type_Id_S64,
+					Type_Id_U8,
+					Type_Id_U16,
+					Type_Id_U32,
+					Type_Id_U64,
+					Type_Id_R32,
+					Type_Id_R64,
+					Type_Id_CHAR,
+					Type_Id_VOID,// invalid_path();
+					Type_Id_POINTER,// deference 
+					Type_Id_FUNCTION,// skip
+					Type_Id_ENUM,// s64 
+					Type_Id_STRUCT,
+					Type_Id_UNION,// invalid_path();
+					Type_Id_STATIC_ARRAY,// 
+			}
+			fprintf(fp, "%s : %d\n",struct_info->members[i].info->name.data,(int)(struct_info->members[i].info->name.count ));
+		}
+		fprintf(fp, "}\n");
+	}
+
+	//auto info = reflect_info<Atish>();
+
+	//Atish retrieve;
+	//fseek(fp, 0, SEEK_SET);
+	//int count;
+	//fscanf(fp,null_tprintf( "struct %s { \n",info->name.data));
+	//fscanf(fp, "struct Atish { \n");
+	//const char* fmt = null_tprintf("%s : %s\n", string_cstr(info->members[i].info->name), "%d");
+	//fscanf(fp, fmt,(s32*)(data + mem->offset)));
+	//fscanf(fp, "a : %d\n", (s32*)(data + mem->offset)));
+
+	//fscanf(fp, "members_count : %d \n",count);
+	//String name_r;
+	//int data_r;
+	//for (int i = 0; i < count; ++i)
+	//{
+	//	fscanf(fp, "%s : %d\n", name_r, );
+	//}
+	//fscanf(fp, "}\n");
+#endif
+	fclose(fp);
+	return 0;
+
+
+
+
+
+
+
+
+
 	r32    framebuffer_w = 1280;
 	r32    framebuffer_h = 720;
 	Handle platform = system_create_window(u8"Karma", 1280, 720, System_Window_Show_NORMAL);
@@ -221,14 +333,14 @@ int system_main() {
 
 	Entity_Manager manager = make_manager();
 
-	Entity *player = add_entity(&manager, Entity::PLAYER);
+	Entity* player = add_entity(&manager, Entity::PLAYER);
 	player->position = vec2(-0.2f, 0);
 	player->size = vec2(0.2f, 0.4f);
 	player->color = vec4(1);
 	player->velocity = vec2(0);
 	Entity_Handle player_id = player->handle;
 
-	Entity *line = nullptr;
+	Entity* line = nullptr;
 
 	line = add_entity(&manager, Entity::LINE);
 	line->start = vec2(-4, -3);
@@ -415,9 +527,9 @@ int system_main() {
 				}
 			}
 
-			sort(sorted_colliders.data, sorted_colliders.count, [](Sorted_Colliders & a, Sorted_Colliders &b) {
+			sort(sorted_colliders.data, sorted_colliders.count, [](Sorted_Colliders& a, Sorted_Colliders& b) {
 				return a.distance > b.distance;
-			});
+				});
 
 			//collision_point_vs_line(sorted_colliders, manager, player, new_player_position, dt);
 			Vec2 get_corner[4] = { {player->size.x / 2,player->size.y / 2},
@@ -550,7 +662,7 @@ int system_main() {
 		//	im2d_line(normals[index], normals[index] + normals[index + 1], vec4(1, 1, 1), 0.01f);
 		//}
 
-		for (auto & hit : ray_hits) {
+		for (auto& hit : ray_hits) {
 			im2d_line(player->position, player->position + (1.0f - hit.t) * hit.normal, vec4(0, 1, 1), 0.01f);
 		}
 
@@ -569,11 +681,20 @@ int system_main() {
 		gfx_blit_hdr(0, 0, window_w, window_h);
 		gfx_viewport(0, 0, window_w, window_h);
 
-		#if defined(BUILD_IMGUI)
+#if defined(BUILD_IMGUI)
+		ImGui::Begin("Edit");
 
-		imgui_draw_entity(player);
+		ImGui::DragFloat2("Position", player->position.m, 0.01f);
+		ImGui::DragFloat2("Velocity", player->velocity.m, 0.01f);
 
-		#endif
+		ImGui::Text("Collision Count: %d", test_counter);
+
+		for (auto& t : t_values) {
+			ImGui::Text("%.3f", t);
+		}
+
+		ImGui::End();
+#endif
 
 #if defined(BUILD_IMGUI)
 		{
@@ -619,4 +740,3 @@ int system_main() {
 
 	return 0;
 }
-
