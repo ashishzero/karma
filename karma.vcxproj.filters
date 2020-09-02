@@ -72,6 +72,7 @@
     <ClInclude Include="src\systems.h" />
     <ClInclude Include="src\stb_truetype.h" />
     <ClInclude Include="src\utility.h" />
+    <ClInclude Include="src\atish.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\windows\resource.rc" />

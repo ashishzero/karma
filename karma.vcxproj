@@ -340,6 +340,7 @@ popd
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\atish.h" />
     <ClInclude Include="src\audio.h" />
     <ClInclude Include="src\debug.h" />
     <ClInclude Include="src\directx\dx_error.h" />

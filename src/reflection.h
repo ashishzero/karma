@@ -81,6 +81,8 @@ enum Type_Id {
 	Type_Id_STRUCT,
 	Type_Id_UNION,
 	Type_Id_STATIC_ARRAY,
+	Type_Id_STRING,
+	Type_Id_DYNAMIC_ARRAY
 };
 
 struct Type_Info {
@@ -186,6 +188,22 @@ struct Type_Info_Function : public Type_Info {
 	}
 	inline Type_Info_Function(const Type_Info *const ptr, ptrsize args_count, const Type_Info *const args[]) :
 		Type_Info(Type_Id_FUNCTION, 0, "()"), return_type(ptr), arguments_count(args_count), arguments(args) {
+	}
+};
+
+struct Type_Info_Dynamic_Array : public Type_Info {
+	const Type_Info *const type;
+	inline Type_Info_Dynamic_Array() :
+		type(0) {
+	}
+	inline Type_Info_Dynamic_Array(const Type_Info* const _type) :
+		Type_Info(Type_Id_DYNAMIC_ARRAY, sizeof(Array<char>), "[..]"), type(_type) {
+	}
+};
+
+struct Type_Info_String : public Type_Info {
+	inline Type_Info_String() :
+	Type_Info(Type_Id_STRING,sizeof(String),"String"){
 	}
 };
 

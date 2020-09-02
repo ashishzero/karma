@@ -116,64 +116,79 @@ void collision_point_vs_line(Array<Sorted_Colliders>& sorted_colliders, Entity_M
 	}
 }
 
+void serialize_to_file_static_array(FILE* fp, String name, const Type_Info* info, char* data,int tab_count);
+
+
 //TODO : testing 
-void serialize_to_file(FILE* fp, String name, const Type_Info* info, char* data)
+void serialize_to_file(FILE* fp, String name, const Type_Info* info, char* data,int tab_count=0)
 {
+	fprintf(fp,"%*s", tab_count, "");
 	switch (info->id)
 	{
+	case Type_Id_STRING:
+	{
+		String* string_data = (String*)data;
+		fprintf(fp, "%s : {%zd, \"%s\"}\n", string_cstr(name), string_data->count, tto_cstring(*string_data));
+	}
+		break;
+	case Type_Id_DYNAMIC_ARRAY:
+	{
+		serialize_to_file_static_array(fp, name, info, data, tab_count + 3);
+	}
+		break;
 	case Type_Id_S8:
 	{
-		fprintf(fp, "%s : %d\n", string_cstr(name), (int)*(s8*)(data));
+		fprintf(fp, "%s : %d,\n", string_cstr(name), (int)*(s8*)(data));
 	}
 		break;
 	case Type_Id_S16:
 	{
-		fprintf(fp, "%s : %d\n", string_cstr(name), (int)*(s16*)(data));
+		fprintf(fp, "%s : %d,\n", string_cstr(name), (int)*(s16*)(data));
 	}
 		break;
 	case Type_Id_S32:
 	{
-		fprintf(fp, "%s : %d\n", string_cstr(name), *(s32*)(data));
+		fprintf(fp, "%s : %d,\n", string_cstr(name), *(s32*)(data));
 	}
 		break;
 	case Type_Id_S64:
 	{
-		fprintf(fp, "%s : %zd\n", string_cstr(name), *(s64*)(data));
+		fprintf(fp, "%s : %zd,\n", string_cstr(name), *(s64*)(data));
 	}
 		break;
 	case Type_Id_U8:
 	{
-		fprintf(fp, "%s : %u\n", string_cstr(name), (u32) * (u8*)(data));
+		fprintf(fp, "%s : %u,\n", string_cstr(name), (u32) * (u8*)(data));
 	}
 		break;
 	case Type_Id_U16:
 	{
-		fprintf(fp, "%s : %u\n", string_cstr(name), (u32) * (u16*)(data));
+		fprintf(fp, "%s : %u,\n", string_cstr(name), (u32) * (u16*)(data));
 	}
 		break;
 	case Type_Id_U32:
 	{
-		fprintf(fp, "%s : %u\n", string_cstr(name), (u32) * (u32*)(data));
+		fprintf(fp, "%s : %u,\n", string_cstr(name), (u32) * (u32*)(data));
 	}
 		break;
 	case Type_Id_U64:
 	{
-		fprintf(fp, "%s : %zu\n", string_cstr(name), *(u64*)(data));
+		fprintf(fp, "%s : %zu,\n", string_cstr(name), *(u64*)(data));
 	}
 		break;
 	case Type_Id_R32:
 	{
-		fprintf(fp, "%s : %f\n", string_cstr(name), *(r32*)(data));
+		fprintf(fp, "%s : %f,\n", string_cstr(name), *(r32*)(data));
 	}
 		break;
 	case Type_Id_R64:
 	{
-		fprintf(fp, "%s : %f\n", string_cstr(name), *(r64*)(data));
+		fprintf(fp, "%s : %f,\n", string_cstr(name), *(r64*)(data));
 	}
 		break;
 	case Type_Id_CHAR:
 	{
-		fprintf(fp, "%s : %c\n", string_cstr(name), *(char*)(data));
+		fprintf(fp, "%s : %c,\n", string_cstr(name), *(char*)(data));
 	}
 		break;
 	case Type_Id_VOID:// invalid_path();
@@ -184,7 +199,7 @@ void serialize_to_file(FILE* fp, String name, const Type_Info* info, char* data)
 	case Type_Id_POINTER:// deference 
 	{
 		auto ptr_info = (Type_Info_Pointer*)info;
-		serialize_to_file(fp, name, ptr_info->pointer_to,(char*) (*(u64*)data));
+		serialize_to_file(fp, name, ptr_info->pointer_to,(char*) (*(ptrsize*)data),tab_count-3);
 	}
 		break;
 	
@@ -193,7 +208,7 @@ void serialize_to_file(FILE* fp, String name, const Type_Info* info, char* data)
 	case Type_Id_ENUM:// s64 
 	{
 		//TODO :: need to handle some other things
-		fprintf(fp, "%s : %d\n", string_cstr(name), *(s32*)(data));
+		fprintf(fp, "%s : %d,\n", string_cstr(name), *(s32*)(data));
 	}
 		break;
 	case Type_Id_STRUCT:
@@ -203,8 +218,19 @@ void serialize_to_file(FILE* fp, String name, const Type_Info* info, char* data)
 		for (int i = 0; i < struct_info->member_count; ++i)
 		{
 			auto mem = struct_info->members + i;
-			serialize_to_file(fp, mem->name, mem->info, data + mem->offset);
+			bool no_serialize = false;
+			for (u64 i = 0; i < mem->attribute_count; ++i)
+			{
+				if (string_match(mem->attributes[i], "no-serialize"))
+				{
+					no_serialize = true;
+					break;
+				}
+			}
+			if(!no_serialize)
+				serialize_to_file(fp, mem->name, mem->info, data + mem->offset,tab_count+3);
 		}
+		fprintf(fp, "%*s", tab_count, "");
 		fprintf(fp, "}\n");
 	}
 		break;
@@ -213,8 +239,135 @@ void serialize_to_file(FILE* fp, String name, const Type_Info* info, char* data)
 		invalid_code_path();
 	}
 		break;
-		//Type_Id_STATIC_ARRAY,// 
+	case Type_Id_STATIC_ARRAY: 
+	{
+		serialize_to_file_static_array(fp, name, info, data,tab_count+3);
 	}
+		break;
+	}
+}
+
+void serialize_to_file_static_array(FILE* fp, String name, const Type_Info* info, char* data,int tab_count)
+{
+	s64 count;
+	const Type_Info* type_info;
+	if (info->id == Type_Id_STATIC_ARRAY) {
+		count = ((Type_Info_Static_Array*)info)->count;
+		type_info = ((Type_Info_Static_Array*)info)->type;
+	}
+	else if (info->id == Type_Id_DYNAMIC_ARRAY) {
+		Array<char>* array = (Array<char>*)data;
+		count = array->count;
+		type_info = ((Type_Info_Dynamic_Array*)info)->type;
+		data = array->data;
+	}
+	fprintf(fp, "%s : { %zd, [\n", string_cstr(name), count);
+	switch (type_info->id)
+	{
+	case Type_Id_S8:
+		for (s64 i = 0; i < count; ++i) {
+			fprintf(fp, "%d, ", (int)*(s8*)(data+i*sizeof(s8)));
+		};
+	break;
+	case Type_Id_S16:
+		for (s64 i = 0; i < count; ++i) {
+			fprintf(fp, "%d, ",(int)*(s16*)(data+i*sizeof(s16)));
+		}
+	break;
+	case Type_Id_S32:
+		for (s64 i = 0; i < count; ++i) {
+			fprintf(fp, "%d, ", *(s32*)(data+i*sizeof(s32)));
+		}
+	break;
+	case Type_Id_S64:
+		for (s64 i = 0; i < count; ++i) {
+			fprintf(fp, "%zd, ",  *(s64*)(data+sizeof(s64)));
+		}
+	break;
+	case Type_Id_U8:
+		for (s64 i = 0; i < count; ++i) {
+			fprintf(fp, "%u, ", (u32) * (u8*)(data+i*sizeof(u8)));
+		}
+	break;
+	case Type_Id_U16:
+		for (s64 i = 0; i < count; ++i) {
+			fprintf(fp, "%u, ", (u32) * (u16*)(data+i*sizeof(u16)));
+		}
+	break;
+	case Type_Id_U32:
+		for (s64 i = 0; i < count; ++i) {
+			fprintf(fp, "%u, ", (u32) * (u32*)(data+i*sizeof(u32)));
+		}
+	break;
+	case Type_Id_U64:
+		for (s64 i = 0; i < count; ++i) {
+			fprintf(fp, "%zu, ", *(u64*)(data+i*sizeof(u64)));
+		}
+	break;
+	case Type_Id_R32:
+		for (s64 i = 0; i < count; ++i) {
+			fprintf(fp, "%f, ", *(r32*)(data+i*sizeof(r32)));
+		}
+	break;
+	case Type_Id_R64:
+		for (s64 i = 0; i < count; ++i) {
+			fprintf(fp, "%f, ", *(r64*)(data+i*sizeof(r64)));
+		}
+	break;
+	case Type_Id_CHAR:
+		for (s64 i = 0; i < count; ++i) {
+			fprintf(fp, "%c, ", *(char*)(data+i*sizeof(char)));
+		}
+	break;
+	case Type_Id_VOID:// invalid_path();
+	{
+		invalid_code_path();
+	}
+	break;
+	case Type_Id_POINTER:// deference 
+	{
+		invalid_code_path();
+	}
+	break;
+
+	case Type_Id_FUNCTION:// skip
+		break;
+	case Type_Id_ENUM:// s64 
+		for (s64 i = 0; i < count; ++i) {
+			//TODO :: need to handle some other things
+			fprintf(fp, "%d, ", *(s32*)(data+i*sizeof(s32)));
+		}
+	break;
+	case Type_Id_STRUCT:
+	{
+		auto struct_info = (Type_Info_Struct*)type_info;
+		//TODO  : need optimization
+		for (s64 i = 0; i < count; ++i) {
+			fprintf(fp, "%*s", tab_count, "");
+			fprintf(fp, "{\n");
+			for (int i = 0; i < struct_info->member_count; ++i)
+			{
+				auto mem = struct_info->members + i;
+				serialize_to_file(fp, mem->name, mem->info, data + i * struct_info->size + mem->offset,tab_count+3);
+			}
+			fprintf(fp, "%*s", tab_count, "");
+			fprintf(fp, "},\n");
+		};
+	}
+	break;
+	case Type_Id_UNION:// invalid_path();
+	{
+		invalid_code_path();
+	}
+	break;
+	case Type_Id_STATIC_ARRAY:
+	{
+		invalid_code_path();
+	}
+	break;
+	}
+	fprintf(fp, "%*s", tab_count-3, "");
+	fprintf(fp, " ] },\n");
 }
 
 
@@ -386,7 +539,6 @@ int system_main() {
 	Vec2 normal = vec2(0);
 	r32 penetrate_t = 0;
 	Array<Ray_Hit> ray_hits;
-
 
 	while (running) {
 		Debug_TimedFrameBegin();
