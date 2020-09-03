@@ -80,7 +80,7 @@
 #	define CURRENT_PROCEDURE "_unknown_"
 #endif
 
-	struct Compile_Info {
+struct Compile_Info {
 	const char *file;
 	const int   line;
 	const char *procedure;

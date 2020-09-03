@@ -711,6 +711,24 @@ CXChildVisitResult visit_members(CXCursor cursor, CXCursor parent, CXClientData 
 void ast_visit_struct(CXCursor cursor) {
 	auto out = (Output_Info *)context.data;
 
+	auto struct_spelling = clang_getCursorSpelling(cursor);
+	const char *struct_name = clang_getCString(struct_spelling);
+	defer {
+		clang_disposeString(struct_spelling);
+	};
+
+	static const char* ignored_structs[] = {
+		"Compile_Info",
+		"String",
+		"Buffer",
+	};
+
+	for (int index = 0; index < static_count(ignored_structs); ++index) {
+		if (strcmp(struct_name, ignored_structs[index]) == 0) {
+			return;
+		}
+	}
+
 	Array<CXCursor> members;
 	defer {
 		array_free(&members);
@@ -745,6 +763,24 @@ void ast_visit_union(CXCursor cursor) {
 
 void ast_visit_tempalted_struct(CXCursor cursor) {
 	auto out = (Output_Info *)context.data;
+
+	auto struct_spelling = clang_getCursorSpelling(cursor);
+	const char *struct_name = clang_getCString(struct_spelling);
+	defer {
+		clang_disposeString(struct_spelling);
+	};
+
+	static const char* ignored_structs[] = {
+		"ExitScope",
+		"Array",
+		"Array_View",
+	};
+
+	for (int index = 0; index < static_count(ignored_structs); ++index) {
+		if (strcmp(struct_name, ignored_structs[index]) == 0) {
+			return;
+		}
+	}
 
 	Array<CXCursor> members;
 	defer {

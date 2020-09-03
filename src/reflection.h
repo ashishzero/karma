@@ -82,7 +82,8 @@ enum Type_Id {
 	Type_Id_UNION,
 	Type_Id_STATIC_ARRAY,
 	Type_Id_STRING,
-	Type_Id_DYNAMIC_ARRAY
+	Type_Id_DYNAMIC_ARRAY,
+	Type_Id_ARRAY_VIEW,
 };
 
 struct Type_Info {
@@ -176,7 +177,27 @@ struct Type_Info_Static_Array : public Type_Info {
 		count(0), type(0) {
 	}
 	inline Type_Info_Static_Array(ptrsize sz, size_t n, const Type_Info *const ptr) :
-		Type_Info(Type_Id_STATIC_ARRAY, sz, "[]"), count(n), type(ptr) {
+		Type_Info(Type_Id_STATIC_ARRAY, sz, "[N]"), count(n), type(ptr) {
+	}
+};
+
+struct Type_Info_Dynamic_Array : public Type_Info {
+	const Type_Info *const type;
+	inline Type_Info_Dynamic_Array() :
+		type(0) {
+	}
+	inline Type_Info_Dynamic_Array(ptrsize size, const Type_Info* const _type) :
+		Type_Info(Type_Id_DYNAMIC_ARRAY, size, "[..]"), type(_type) {
+	}
+};
+
+struct Type_Info_Array_View : public Type_Info {
+	const Type_Info *const type;
+	inline Type_Info_Array_View() :
+		type(0) {
+	}
+	inline Type_Info_Array_View(ptrsize size, const Type_Info* const _type) :
+		Type_Info(Type_Id_ARRAY_VIEW, size, "[]"), type(_type) {
 	}
 };
 
@@ -190,22 +211,6 @@ struct Type_Info_Function : public Type_Info {
 	}
 	inline Type_Info_Function(const Type_Info *const ptr, ptrsize args_count, const Type_Info *const args[]) :
 		Type_Info(Type_Id_FUNCTION, 0, "()"), return_type(ptr), arguments_count(args_count), arguments(args) {
-	}
-};
-
-struct Type_Info_Dynamic_Array : public Type_Info {
-	const Type_Info *const type;
-	inline Type_Info_Dynamic_Array() :
-		type(0) {
-	}
-	inline Type_Info_Dynamic_Array(const Type_Info* const _type) :
-		Type_Info(Type_Id_DYNAMIC_ARRAY, sizeof(Array<char>), "[..]"), type(_type) {
-	}
-};
-
-struct Type_Info_String : public Type_Info {
-	inline Type_Info_String() :
-	Type_Info(Type_Id_STRING,sizeof(String),"String"){
 	}
 };
 
@@ -351,6 +356,33 @@ struct Reflect<r64> {
 	static constexpr Type_Id      id = Type_Id_R64;
 	static const Type_Info *const info() {
 		static const Type_Info i(id, sizeof(r64), "r64");
+		return &i;
+	}
+};
+
+template <>
+struct Reflect<String> {
+	static constexpr Type_Id id = Type_Id_STRING;
+	static const Type_Info *const info() {
+		static const Type_Info i(id, sizeof(String), "String");
+		return &i;
+	}
+};
+
+template <typename Type>
+struct Reflect<Array<Type>> {
+	static constexpr Type_Id id = Type_Id_DYNAMIC_ARRAY;
+	static const Type_Info* const info() {
+		static const Type_Info_Dynamic_Array i(sizeof(Array<Type>), Reflect<Type>::info());
+		return &i;
+	}
+};
+
+template <typename Type>
+struct Reflect<Array_View<Type>> {
+	static constexpr Type_Id id = Type_Id_ARRAY_VIEW;
+	static const Type_Info* const info() {
+		static const Type_Info_Array_View i(sizeof(Array_View<Type>), Reflect<Type>::info());
 		return &i;
 	}
 };

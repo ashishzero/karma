@@ -23,5 +23,7 @@ struct Atish {
 	Atishs x[3] = { { 56,78,34 },{ 56,78,34 },{ 56,78,34 } };
 	float h=34.987f;
 	int* a_ptr;
+	Array<String> strings;
+	Array_View<int> values;
 };
 
