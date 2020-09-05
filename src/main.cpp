@@ -422,7 +422,7 @@ int system_main() {
 			}
 
 			sort(sorted_colliders.data, sorted_colliders.count, [](Sorted_Colliders & a, Sorted_Colliders &b) {
-				return a.distance > b.distance;
+				return a.distance < b.distance;
 			});
 
 			//collision_point_vs_line(sorted_colliders, manager, player, new_player_position, dt);
@@ -434,7 +434,7 @@ int system_main() {
 			Entity_Handle handle_save = 0;
 			for (auto& collider : sorted_colliders) {
 				auto entity = manager_find_entity(manager, collider.handle);
-				entity->color = vec4(1, 0, 0);
+				//entity->color = vec4(1, 0, 0);
 				bool collision_found = false;
 				for (Vec2 temp : get_corner)
 				{
@@ -452,7 +452,7 @@ int system_main() {
 							new_player_position = player->position + dt * player->velocity;
 							handle_save = entity->handle;
 
-							entity->color = vec4(1, 0, 1);
+							//entity->color = vec4(1, 0, 1);
 							collision_found = true;
 						}
 					}
@@ -461,19 +461,35 @@ int system_main() {
 					break;
 			}
 
-			for (auto& collider : sorted_colliders) {
-				Entity* entity = manager_find_entity(manager, collider.handle);
-				if (entity->handle != handle_save) {
-					for (Vec2 temp : get_corner)
-					{
-						if (ray_vs_line(player->position + temp, new_player_position + temp, entity->start, entity->end, &hit)) {
-							r32 dir = vec2_dot(vec2_normalize_check(player->velocity), hit.normal);
-							if (dir <= 0 && hit.t >= -0.001f && hit.t < 1.001f) {
-								Vec2 reduc_vector = (1.0f - hit.t) * player->velocity;
-								player->velocity -= reduc_vector;
-								new_player_position = player->position + dt * player->velocity;
+			Entity * line_collided = nullptr;
+			if (handle_save) {
+				line_collided = manager_find_entity(manager, handle_save);
 
-								entity->color = vec4(1, 0, 1);
+				for (auto& collider : sorted_colliders) {
+					Entity* entity = manager_find_entity(manager, collider.handle);
+					if (entity->handle != handle_save) {
+						for (Vec2 temp : get_corner)
+						{
+							if (ray_vs_line(player->position + temp, new_player_position + temp, entity->start, entity->end, &hit)) {
+								r32 dir = vec2_dot(vec2_normalize_check(player->velocity), hit.normal);
+								if (dir <= 0 && hit.t >= -0.001f && hit.t < 1.001f) {
+
+									r32 dot = vec2_dot(vec2_normalize(line_collided->end - line_collided->start),
+													   vec2_normalize(entity->end - entity->start));
+
+									if (dot <= 0.0f) {
+										Vec2 reduc_vector = (1.0f - hit.t) * player->velocity;
+										player->velocity -= reduc_vector;
+										new_player_position = player->position + dt * player->velocity;
+										break;
+									} else {
+										Vec2 reduc_vector = (1.0f - hit.t) * vec2_dot(player->velocity, hit.normal) * hit.normal;
+										player->velocity -= reduc_vector;
+										new_player_position = player->position + dt * player->velocity;
+									}
+
+									//entity->color = vec4(1, 0, 1);
+								}
 							}
 						}
 					}
@@ -577,7 +593,9 @@ int system_main() {
 
 		#if defined(BUILD_IMGUI)
 
-		imgui_draw_entity(manager.entities.data + 2);
+		static int entity_value = 0;
+		ImGui::DragInt("Select Entity", &entity_value, 1.0f, 0, (int)manager.entities.count - 1);
+		imgui_draw_entity(manager.entities.data + entity_value);
 
 		#endif
 
