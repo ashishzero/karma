@@ -13,110 +13,10 @@
 #include "debug.h"
 //utility.h contains sorting and hashing, searching and such
 #include "utility.h"
-//unsigned int32
-typedef u32 Entity_Handle;
-
 #include "entity.h"
+
 #include ".generated/entity.typeinfo"
-
-constexpr u32 EDITOR_FLAG_NO_DISPLAY = bit(1);
-constexpr u32 EDITOR_FLAG_READ_ONLY  = bit(2);
-constexpr u32 EDITOR_FLAG_COLOR		 = bit(3);
-
-struct Editor_Attribute {
-	u32 flags;
-	r32 speed;
-	r32 min;
-	r32 max;
-};
-
-void editor_get_flags_from_attribute(const String* attrs, s64 count, Editor_Attribute *out) {
-	out->flags = 0;
-	out->speed = 1;
-	out->min = 0.0f;
-	out->max = 0.0f;
-
-	for (s64 index = 0; index < count; ++index) {
-		if (string_match(attrs[index], "no-display")) {
-			out->flags |= EDITOR_FLAG_NO_DISPLAY;
-		} else if (string_match(attrs[index], "read-only")) {
-			out->flags |= EDITOR_FLAG_READ_ONLY;
-		} else if (string_match(attrs[index], "color")) {
-			out->flags |= EDITOR_FLAG_COLOR;
-		} else if (string_starts_with(attrs[index], "speed:")) {
-			sscanf(string_cstr(attrs[index]), "speed:%f", &out->speed);
-		} else if (string_starts_with(attrs[index], "min:")) {
-			sscanf(string_cstr(attrs[index]), "min:%f", &out->min);
-		} else if (string_starts_with(attrs[index], "max:")) {
-			sscanf(string_cstr(attrs[index]), "max:%f", &out->min);
-		}
-	}
-}
-
-void imgui_draw_entity(Entity *entity) {
-	char *data = (char *)entity;
-
-	auto info = (Type_Info_Struct *)reflect_info<Entity>();
-	auto mem_counts = info->member_count;
-
-	ImGui::Begin(string_cstr(info->name));
-
-	Editor_Attribute attr;
-
-	for (ptrsize index = 0; index < mem_counts; ++index) {
-		auto mem = info->members + index;
-
-		editor_get_flags_from_attribute(mem->attributes, mem->attribute_count, &attr);
-		if (attr.flags & EDITOR_FLAG_NO_DISPLAY) continue;
-
-		if (attr.flags & EDITOR_FLAG_READ_ONLY) {
-			if (mem->info == reflect_info<r32>()) {
-				r32 val = *(r32 *)(data + mem->offset);
-				ImGui::Text("%s : %.3f", string_cstr(mem->name), val);
-			} else if (mem->info == reflect_info<Vec2>()) {
-				Vec2 *val = (Vec2 *)(data + mem->offset);
-				ImGui::Text("%s : (%.3f, %.3f)", string_cstr(mem->name), val->x, val->y);
-			} else if (mem->info == reflect_info<Vec3>()) {
-				Vec3 *val = (Vec3 *)(data + mem->offset);
-				ImGui::Text("%s : (%.3f, %.3f, %.3f)", string_cstr(mem->name), val->x, val->y, val->z);
-			} else if (mem->info == reflect_info<Vec4>()) {
-				Vec4 *val = (Vec4 *)(data + mem->offset);
-				ImGui::Text("%s : (%.3f, %.3f, %.3f, %.3f)", string_cstr(mem->name), val->x, val->y, val->z, val->w);
-			} else if (mem->info == reflect_info<u32>()) {
-				u32 *val = (u32 *)(data + mem->offset);
-				ImGui::Text("%s : %u", string_cstr(mem->name), *val);
-			} else if (mem->info == reflect_info<Entity::Type>()) {
-				Entity::Type *val = (Entity::Type *)(data + mem->offset);
-				ImGui::Text("%s : %s", string_cstr(mem->name), string_cstr(enum_string(*val)));
-			}
-		} else {
-			if (mem->info == reflect_info<r32>()) {
-				ImGui::DragFloat(string_cstr(mem->name), (r32 *)(data + mem->offset), attr.speed, attr.min, attr.max);
-			} else if (mem->info == reflect_info<Vec2>()) {
-				ImGui::DragFloat2(string_cstr(mem->name), (r32 *)(data + mem->offset), attr.speed, attr.min, attr.max);
-			} else if (mem->info == reflect_info<Vec3>()) {
-				if (attr.flags & EDITOR_FLAG_COLOR) {
-					ImGui::ColorEdit3(string_cstr(mem->name), (r32 *)(data + mem->offset));
-				} else {
-					ImGui::DragFloat3(string_cstr(mem->name), (r32 *)(data + mem->offset), attr.speed, attr.min, attr.max);
-				}
-			} else if (mem->info == reflect_info<Vec4>()) {
-				if (attr.flags & EDITOR_FLAG_COLOR) {
-					ImGui::ColorEdit4(string_cstr(mem->name), (r32 *)(data + mem->offset));
-				} else {
-					ImGui::DragFloat4(string_cstr(mem->name), (r32 *)(data + mem->offset), attr.speed, attr.min, attr.max);
-				}
-			} else if (mem->info == reflect_info<u32>()) {
-				ImGui::DragScalar(string_cstr(mem->name), ImGuiDataType_U32, data + mem->offset, attr.speed);
-			} else if (mem->info == reflect_info<Entity::Type>()) {
-				auto items = enum_string_array<Entity::Type>();
-				ImGui::Combo(string_cstr(mem->name), (int *)(data + mem->offset), items.data, (int)items.count);
-			}
-		}
-	}
-
-	ImGui::End();
-}
+#include "editor.h"
 
 struct Entity_Manager {
 	Array<Entity>	entities;
@@ -496,12 +396,12 @@ int system_main() {
 				}
 			}
 
+#endif
+
 			player->position += dt * player->velocity;
 
 			accumulator_t -= fixed_dt;
 		}
-
-#endif
 
 #if 0
 		Vec2 cursor = system_get_cursor_position();
@@ -594,8 +494,10 @@ int system_main() {
 		#if defined(BUILD_IMGUI)
 
 		static int entity_value = 0;
+		ImGui::Begin("Editor");
 		ImGui::DragInt("Select Entity", &entity_value, 1.0f, 0, (int)manager.entities.count - 1);
-		imgui_draw_entity(manager.entities.data + entity_value);
+		editor_draw(manager.entities.data[entity_value]);
+		ImGui::End();
 
 		#endif
 

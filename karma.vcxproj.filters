@@ -31,6 +31,7 @@
     <ClCompile Include="src\unicode.cpp" />
     <ClCompile Include="src\windows\systems_windows.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\editor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\audio.h" />
@@ -73,6 +74,7 @@
     <ClInclude Include="src\stb_truetype.h" />
     <ClInclude Include="src\utility.h" />
     <ClInclude Include="src\atish.h" />
+    <ClInclude Include="src\editor.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\windows\resource.rc" />
