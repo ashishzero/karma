@@ -1,8 +1,17 @@
 #pragma once
 #include "reflection.h"
-void editor_draw(Type_Info_Struct *info, void * data, u32 parent_flags = 0);
+
+struct Editor_Attribute {
+	u32 flags;
+	r32 speed;
+	r32 min;
+	r32 max;
+};
+
+void editor_draw(const Type_Info *base_info, char * data, Editor_Attribute &attr, const char * name);
 
 template <typename T>
 inline void editor_draw(T& d) {
-	editor_draw((Type_Info_Struct *)reflect_info<T>(), &d);
+	Editor_Attribute attr = {};
+	editor_draw(reflect_info<T>(), (char *)&d, attr, "Root");
 }
