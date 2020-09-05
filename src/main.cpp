@@ -129,7 +129,7 @@ int system_main() {
 
 	Entity *player = add_entity(&manager, Entity::PLAYER);
 	player->position = vec2(-0.2f, 0);
-	player->size = vec2(0.2f, 0.4f);
+	player->size = vec2(0.5f);
 	player->color = vec4(1);
 	player->velocity = vec2(0);
 	Entity_Handle player_id = player->handle;
@@ -422,13 +422,67 @@ int system_main() {
 
 		auto view = orthographic_view(-view_width, view_width, view_height, -view_height);
 
-#if 0
-		Mat4 view_inv = mat4_inverse(gfx_view_transform(view));
-		cursor = (view_inv * vec4(cursor, 0, 0)).xy;
-		cursor.x = roundf(cursor.x);
-		cursor.y = roundf(cursor.y);
+#if 1
+		auto cursor = system_get_cursor_position();
+		cursor.x /= window_w;
+		cursor.y /= window_h;
+		cursor = 2.0f * cursor - vec2(1);
+		cursor.x *= view_width;
+		cursor.y *= view_height;
 
-		position = lerp(position, cursor, 0.5f);
+		static auto last_button_state = Key_State_UP;
+		static Entity *selected_entity = nullptr;
+		Entity *hovered_entity = nullptr;
+
+		auto new_button_state = system_button(Button_LEFT);
+		if (new_button_state == Key_State_DOWN && last_button_state == Key_State_UP) {
+			for (auto& entity : manager.entities) {
+				if (entity.type == Entity::PLAYER) {
+					Mm_Rect rect;
+					rect.min = entity.position - entity.size * 0.5f;
+					rect.max = entity.position + entity.size * 0.5f;
+					if (point_inside_rect(cursor, rect)) {
+						selected_entity = &entity;
+						break;
+					}
+				} else if (entity.type == Entity::LINE) {
+					r32 dx = entity.end.x - entity.start.x;
+					r32 dy = entity.end.y - entity.start.y;
+					r32 v = dx * (cursor.y - entity.start.y) - dy * (cursor.x - entity.start.x);
+					if (fabsf(v) < 0.5f) {
+						selected_entity = &entity;
+						break;
+					}
+				}
+			}
+		} else {
+			for (auto& entity : manager.entities) {
+				if (entity.type == Entity::PLAYER) {
+					Mm_Rect rect;
+					rect.min = entity.position - entity.size * 0.5f;
+					rect.max = entity.position + entity.size * 0.5f;
+					if (point_inside_rect(cursor, rect)) {
+						hovered_entity = &entity;
+						break;
+					}
+				} else if (entity.type == Entity::LINE) {
+					r32 dx = entity.end.x - entity.start.x;
+					r32 dy = entity.end.y - entity.start.y;
+					r32 v = dx * (cursor.y - entity.start.y) - dy * (cursor.x - entity.start.x);
+					if (fabsf(v) < 0.5f) {
+						hovered_entity = &entity;
+						break;
+					}
+				}
+			}
+		}
+
+		last_button_state = new_button_state;
+
+		//Mat4 view_inv = mat4_inverse(gfx_view_transform(view));
+		//cursor = (view_inv * vec4(cursor, 0, 1)).xy;
+		//cursor.x = roundf(cursor.x);
+		//cursor.y = roundf(cursor.y);
 #endif
 
 		Debug_TimedBlockEnd(Simulation);
@@ -459,7 +513,17 @@ int system_main() {
 			}
 		}
 
+		if (hovered_entity) {
+			switch (hovered_entity->type) {
+			case Entity::PLAYER: {
+				im2d_rect_centered_outline(hovered_entity->position, hovered_entity->size, 1.1f*vec4(1, 1, 0), 0.03f);
+			} break;
 
+			case Entity::LINE: {
+				im2d_line(hovered_entity->start, hovered_entity->end, 1.1f*vec4(1, 1, 0), 0.03f);
+			} break;
+			}
+		}
 
 		//for (auto& h : rayhits) {
 		//	im2d_circle(h.point, 0.08f, vec4(0, 0, 1));
@@ -493,10 +557,9 @@ int system_main() {
 
 		#if defined(BUILD_IMGUI)
 
-		static int entity_value = 0;
 		ImGui::Begin("Editor");
-		ImGui::DragInt("Select Entity", &entity_value, 1.0f, 0, (int)manager.entities.count - 1);
-		editor_draw(manager.entities.data[entity_value]);
+		if (selected_entity)
+			editor_draw(*selected_entity);
 		ImGui::End();
 
 		#endif
