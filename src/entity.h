@@ -20,6 +20,6 @@ struct Entity {
 	attribute("read-only") Vec2 velocity;
 	attribute("read-only") Vec2 force;
 
-	Vec2 start;
-	Vec2 end;
+	attribute("speed:0.01") Vec2 start;
+	attribute("speed:0.01") Vec2 end;
 };

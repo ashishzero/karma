@@ -13,8 +13,6 @@
 #include "debug.h"
 //utility.h contains sorting and hashing, searching and such
 #include "utility.h"
-#include "atish.h"
-#include ".generated/atish.typeinfo"
 //unsigned int32
 typedef u32 Entity_Handle;
 
@@ -22,8 +20,8 @@ typedef u32 Entity_Handle;
 #include ".generated/entity.typeinfo"
 
 constexpr u32 EDITOR_FLAG_NO_DISPLAY = bit(1);
-constexpr u32 EDITOR_FLAG_READ_ONLY  = bit(3);
-constexpr u32 EDITOR_FLAG_COLOR		 = bit(4);
+constexpr u32 EDITOR_FLAG_READ_ONLY  = bit(2);
+constexpr u32 EDITOR_FLAG_COLOR		 = bit(3);
 
 struct Editor_Attribute {
 	u32 flags;
@@ -579,7 +577,7 @@ int system_main() {
 
 		#if defined(BUILD_IMGUI)
 
-		imgui_draw_entity(player);
+		imgui_draw_entity(manager.entities.data + 2);
 
 		#endif
 

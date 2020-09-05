@@ -30,7 +30,7 @@
     <ClCompile Include="src\length_string.cpp" />
     <ClCompile Include="src\unicode.cpp" />
     <ClCompile Include="src\windows\systems_windows.cpp" />
-    <ClCompile Include="src\main_loadsave.cpp" />
+    <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\audio.h" />
