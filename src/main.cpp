@@ -53,6 +53,7 @@ struct Sorted_Colliders {
 	r32 distance;
 };
 
+#if 0
 void collision_point_vs_line(Array<Sorted_Colliders>& sorted_colliders, Entity_Manager& manager, Entity* player, Vec2& new_player_position, r32& dt)
 {
 	Ray_Hit hit;
@@ -97,6 +98,7 @@ void collision_point_vs_line(Array<Sorted_Colliders>& sorted_colliders, Entity_M
 		}
 	}
 }
+#endif
 
 int system_main() {
 	r32    framebuffer_w = 1280;
@@ -128,8 +130,8 @@ int system_main() {
 	Entity_Manager manager = make_manager();
 
 	Entity *player = add_entity(&manager, Entity::PLAYER);
-	player->position = vec2(-0.2f, 0);
-	player->size = vec2(0.5f);
+	player->player.position = vec2(-0.2f, 0);
+	player->player.size = vec2(0.5f);
 	player->color = vec4(1);
 	player->velocity = vec2(0);
 	Entity_Handle player_id = player->handle;
@@ -137,39 +139,39 @@ int system_main() {
 	Entity *line = nullptr;
 
 	line = add_entity(&manager, Entity::LINE);
-	line->start = vec2(-4, -3);
-	line->end = vec2(-4, 2);
+	line->line.start = vec2(-4, -3);
+	line->line.end = vec2(-4, 2);
 	line->color = vec4(1, 0, 0, 1);
 
 	line = add_entity(&manager, Entity::LINE);
-	line->start = vec2(2, 4);
-	line->end = vec2(-4, 2);
+	line->line.start = vec2(2, 4);
+	line->line.end = vec2(-4, 2);
 	line->color = vec4(1, 0, 0, 1);
 
 	line = add_entity(&manager, Entity::LINE);
-	line->start = vec2(5.1f, 4);
-	line->end = vec2(2, 4);
+	line->line.start = vec2(5.1f, 4);
+	line->line.end = vec2(2, 4);
 	line->color = vec4(1, 0, 0, 1);
 
 	line = add_entity(&manager, Entity::LINE);
-	line->start = vec2(4, 1);
-	line->end = vec2(5, 4);
+	line->line.start = vec2(4, 1);
+	line->line.end = vec2(5, 4);
 	line->color = vec4(1, 0, 0, 1);
 
 	line = add_entity(&manager, Entity::LINE);
-	line->start = vec2(4, 4);
-	line->end = vec2(-5, 0);
+	line->line.start = vec2(4, 4);
+	line->line.end = vec2(-5, 0);
 	line->color = vec4(1, 0, 0, 1);
 
 
 	line = add_entity(&manager, Entity::LINE);
-	line->start = vec2(3.5f, -4.1f);
-	line->end = vec2(3.5f, 4);
+	line->line.start = vec2(3.5f, -4.1f);
+	line->line.end = vec2(3.5f, 4);
 	line->color = vec4(1, 0, 0, 1);
 
 	line = add_entity(&manager, Entity::LINE);
-	line->start = vec2(-4, 3);
-	line->end = vec2(3.5f, -4);
+	line->line.start = vec2(-4, 3);
+	line->line.end = vec2(3.5f, -4);
 	line->color = vec4(1, 0, 0, 1);
 
 	Player_Controller controller = {};
@@ -302,7 +304,7 @@ int system_main() {
 			player->velocity *= powf(0.5f, drag * dt);
 
 			auto new_player_velocity = player->velocity;
-			auto new_player_position = player->position + dt * new_player_velocity;
+			auto new_player_position = player->player.position + dt * new_player_velocity;
 
 
 			Array<Sorted_Colliders> sorted_colliders;
@@ -311,10 +313,10 @@ int system_main() {
 			for (auto& entity : manager.entities) {
 				if (entity.type == Entity::LINE) {
 					auto collider = array_add(&sorted_colliders);
-					r32 dx = entity.end.x - entity.start.x;
-					r32 dy = entity.end.y - entity.start.x;
+					r32 dx = entity.line.end.x - entity.line.start.x;
+					r32 dy = entity.line.end.y - entity.line.start.x;
 					r32 d = dx * dx + dy * dy;
-					r32 n = dy * player->position.x - dx * player->position.y + entity.end.x * entity.start.y - entity.end.y * entity.start.x;
+					r32 n = dy * player->player.position.x - dx * player->player.position.y + entity.line.end.x * entity.line.start.y - entity.line.end.y * entity.line.start.x;
 					n *= n;
 					collider->handle = entity.handle;
 					collider->distance = n / d;
@@ -326,10 +328,10 @@ int system_main() {
 			});
 
 			//collision_point_vs_line(sorted_colliders, manager, player, new_player_position, dt);
-			Vec2 get_corner[4] = { {player->size.x / 2,player->size.y / 2},
-				{-player->size.x / 2,-player->size.y / 2},
-				{player->size.x / 2,-player->size.y / 2},
-				{-player->size.x / 2,player->size.y / 2} };
+			Vec2 get_corner[4] = { {player->player.size.x / 2,player->player.size.y / 2},
+				{-player->player.size.x / 2,-player->player.size.y / 2},
+				{player->player.size.x / 2,-player->player.size.y / 2},
+				{-player->player.size.x / 2,player->player.size.y / 2} };
 			//collided handle
 			Entity_Handle handle_save = 0;
 			for (auto& collider : sorted_colliders) {
@@ -338,7 +340,7 @@ int system_main() {
 				bool collision_found = false;
 				for (Vec2 temp : get_corner)
 				{
-					if (ray_vs_line(player->position + temp, new_player_position + temp, entity->start, entity->end, &hit)) {
+					if (ray_vs_line(player->player.position + temp, new_player_position + temp, entity->line.start, entity->line.end, &hit)) {
 						r32 dir = vec2_dot(vec2_normalize_check(player->velocity), hit.normal);
 
 						if (dir <= 0 && hit.t >= -0.001f && hit.t < 1.001f) {
@@ -349,7 +351,7 @@ int system_main() {
 							//array_add(&normals, -reduc_vector);
 
 							player->velocity -= reduc_vector;
-							new_player_position = player->position + dt * player->velocity;
+							new_player_position = player->player.position + dt * player->velocity;
 							handle_save = entity->handle;
 
 							//entity->color = vec4(1, 0, 1);
@@ -370,22 +372,22 @@ int system_main() {
 					if (entity->handle != handle_save) {
 						for (Vec2 temp : get_corner)
 						{
-							if (ray_vs_line(player->position + temp, new_player_position + temp, entity->start, entity->end, &hit)) {
+							if (ray_vs_line(player->player.position + temp, new_player_position + temp, entity->line.start, entity->line.end, &hit)) {
 								r32 dir = vec2_dot(vec2_normalize_check(player->velocity), hit.normal);
 								if (dir <= 0 && hit.t >= -0.001f && hit.t < 1.001f) {
 
-									r32 dot = vec2_dot(vec2_normalize(line_collided->end - line_collided->start),
-													   vec2_normalize(entity->end - entity->start));
+									r32 dot = vec2_dot(vec2_normalize(line_collided->line.end - line_collided->line.start),
+													   vec2_normalize(entity->line.end - entity->line.start));
 
 									if (dot <= 0.0f) {
 										Vec2 reduc_vector = (1.0f - hit.t) * player->velocity;
 										player->velocity -= reduc_vector;
-										new_player_position = player->position + dt * player->velocity;
+										new_player_position = player->player.position + dt * player->velocity;
 										break;
 									} else {
 										Vec2 reduc_vector = (1.0f - hit.t) * vec2_dot(player->velocity, hit.normal) * hit.normal;
 										player->velocity -= reduc_vector;
-										new_player_position = player->position + dt * player->velocity;
+										new_player_position = player->player.position + dt * player->velocity;
 									}
 
 									//entity->color = vec4(1, 0, 1);
@@ -398,7 +400,7 @@ int system_main() {
 
 #endif
 
-			player->position += dt * player->velocity;
+			player->player.position += dt * player->velocity;
 
 			accumulator_t -= fixed_dt;
 		}
@@ -439,16 +441,16 @@ int system_main() {
 			for (auto& entity : manager.entities) {
 				if (entity.type == Entity::PLAYER) {
 					Mm_Rect rect;
-					rect.min = entity.position - entity.size * 0.5f;
-					rect.max = entity.position + entity.size * 0.5f;
+					rect.min = entity.player.position - entity.player.size * 0.5f;
+					rect.max = entity.player.position + entity.player.size * 0.5f;
 					if (point_inside_rect(cursor, rect)) {
 						selected_entity = &entity;
 						break;
 					}
 				} else if (entity.type == Entity::LINE) {
-					r32 dx = entity.end.x - entity.start.x;
-					r32 dy = entity.end.y - entity.start.y;
-					r32 v = dx * (cursor.y - entity.start.y) - dy * (cursor.x - entity.start.x);
+					r32 dx = entity.line.end.x - entity.line.start.x;
+					r32 dy = entity.line.end.y - entity.line.start.y;
+					r32 v = dx * (cursor.y - entity.line.start.y) - dy * (cursor.x - entity.line.start.x);
 					if (fabsf(v) < 0.5f) {
 						selected_entity = &entity;
 						break;
@@ -459,16 +461,16 @@ int system_main() {
 			for (auto& entity : manager.entities) {
 				if (entity.type == Entity::PLAYER) {
 					Mm_Rect rect;
-					rect.min = entity.position - entity.size * 0.5f;
-					rect.max = entity.position + entity.size * 0.5f;
+					rect.min = entity.player.position - entity.player.size * 0.5f;
+					rect.max = entity.player.position + entity.player.size * 0.5f;
 					if (point_inside_rect(cursor, rect)) {
 						hovered_entity = &entity;
 						break;
 					}
 				} else if (entity.type == Entity::LINE) {
-					r32 dx = entity.end.x - entity.start.x;
-					r32 dy = entity.end.y - entity.start.y;
-					r32 v = dx * (cursor.y - entity.start.y) - dy * (cursor.x - entity.start.x);
+					r32 dx = entity.line.end.x - entity.line.start.x;
+					r32 dy = entity.line.end.y - entity.line.start.y;
+					r32 v = dx * (cursor.y - entity.line.start.y) - dy * (cursor.x - entity.line.start.x);
 					if (fabsf(v) < 0.5f) {
 						hovered_entity = &entity;
 						break;
@@ -503,12 +505,12 @@ int system_main() {
 			switch (entity.type) {
 			case Entity::PLAYER: {
 				//im2d_circle(entity.position, entity.size.x, entity.color);
-				im2d_rect_centered(entity.position, entity.size, entity.color);
+				im2d_rect_centered(entity.player.position, entity.player.size, entity.color);
 				//im2d_circle(entity.position, 0.08f, vec4(0, 1, 0));
 			} break;
 
 			case Entity::LINE: {
-				im2d_line(entity.start, entity.end, entity.color, 0.01f);
+				im2d_line(entity.line.start, entity.line.end, entity.color, 0.01f);
 			} break;
 			}
 		}
@@ -516,11 +518,11 @@ int system_main() {
 		if (hovered_entity) {
 			switch (hovered_entity->type) {
 			case Entity::PLAYER: {
-				im2d_rect_centered_outline(hovered_entity->position, hovered_entity->size, 1.1f*vec4(1, 1, 0), 0.03f);
+				im2d_rect_centered_outline(hovered_entity->player.position, hovered_entity->player.size, 1.1f*vec4(1, 1, 0), 0.03f);
 			} break;
 
 			case Entity::LINE: {
-				im2d_line(hovered_entity->start, hovered_entity->end, 1.1f*vec4(1, 1, 0), 0.03f);
+				im2d_line(hovered_entity->line.start, hovered_entity->line.end, 1.1f*vec4(1, 1, 0), 0.03f);
 			} break;
 			}
 		}
@@ -537,11 +539,11 @@ int system_main() {
 		//}
 
 		for (auto & hit : ray_hits) {
-			im2d_line(player->position, player->position + (1.0f - hit.t) * hit.normal, vec4(0, 1, 1), 0.01f);
+			im2d_line(player->player.position, player->player.position + (1.0f - hit.t) * hit.normal, vec4(0, 1, 1), 0.01f);
 		}
 
-		im2d_line(player->position, player->position + normal, vec4(1), 0.01f);
-		im2d_line(player->position, player->position + player->velocity, vec4(0, 1, 0), 0.03f);
+		im2d_line(player->player.position, player->player.position + normal, vec4(1), 0.01f);
+		im2d_line(player->player.position, player->player.position + player->velocity, vec4(0, 1, 0), 0.03f);
 		//im2d_line(player->position, player->position + prev_velocity, vec4(1, 1, 0), 0.03f);
 #endif
 
