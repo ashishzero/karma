@@ -86,6 +86,34 @@ enum Type_Id {
 	Type_Id_ARRAY_VIEW,
 };
 
+template <typename T>
+struct Enum_Info {
+	static constexpr size_t get_count() {
+		assert(!"File not added for reflection!");
+		return 0;
+	}
+	static constexpr s64 get_min_value() {
+		assert(!"File not added for reflection!");
+		return 0;
+	}
+	static constexpr s64 get_max_value() {
+		assert(!"File not added for reflection!");
+		return 0;
+	}
+	static const T index_value(s64 index) {
+		assert(!"File not added for reflection!");
+		return (T)0;
+	}
+	static const String string(T value) {
+		assert(!"File not added for reflection!");
+		return "";
+	}
+	static const Array_View<const char *> string_array() {
+		assert(!"File not added for reflection!");
+		return Array_View<const char *>(nullptr, 0);
+	}
+};
+
 struct Type_Info {
 	Type_Id id   = Type_Id_UNKNOWN;
 	ptrsize size = 0;
@@ -148,7 +176,7 @@ struct Type_Info_Union : public Type_Info {
 struct Type_Info_Enum : public Type_Info {
 	ptrsize count;
 	bool type_is_signed;
-
+	
 	inline Type_Info_Enum() {
 	}
 	inline Type_Info_Enum(ptrsize sz, String n, ptrsize num, bool is_signed) :
@@ -211,34 +239,6 @@ struct Type_Info_Function : public Type_Info {
 	}
 	inline Type_Info_Function(const Type_Info *const ptr, ptrsize args_count, const Type_Info *const args[]) :
 		Type_Info(Type_Id_FUNCTION, 0, "()"), return_type(ptr), arguments_count(args_count), arguments(args) {
-	}
-};
-
-template <typename T>
-struct Enum_Info {
-	static constexpr size_t get_count() {
-		assert(!"File not added for reflection!");
-		return 0;
-	}
-	static constexpr s64 get_min_value() {
-		assert(!"File not added for reflection!");
-		return 0;
-	}
-	static constexpr s64 get_max_value() {
-		assert(!"File not added for reflection!");
-		return 0;
-	}
-	static const T index_value(s64 index) {
-		assert(!"File not added for reflection!");
-		return (T)0;
-	}
-	static const String string(T value) {
-		assert(!"File not added for reflection!");
-		return "";
-	}
-	static const Array_View<const char *> string_array() {
-		assert(!"File not added for reflection!");
-		return Array_View<const char *>(nullptr, 0);
 	}
 };
 
