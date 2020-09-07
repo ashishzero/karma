@@ -32,6 +32,7 @@
     <ClCompile Include="src\windows\systems_windows.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\editor.cpp" />
+    <ClCompile Include="src\entity.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\audio.h" />

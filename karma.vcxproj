@@ -279,6 +279,7 @@ popd
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Developer|x64'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="src\editor.cpp" />
+    <ClCompile Include="src\entity.cpp" />
     <ClCompile Include="src\imgui\imgui_impl_dx11.cpp" />
     <ClCompile Include="src\imgui\imconfig.cpp" />
     <ClCompile Include="src\imgui\imgui.cpp" />
