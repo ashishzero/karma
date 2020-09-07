@@ -19,29 +19,118 @@
 #include "editor.h"
 
 struct Entity_Manager {
-	Array<Entity>	entities;
-	u32				handle_counter;
+	struct Entity_By_Type {
+		Array<Player>   players;
+		Array<Line>		lines;
+	};
+
+	Array<Entity_Handle>	entities;
+	Entity_By_Type			by_type;
 };
-//not getting properly
-Entity* add_entity(Entity_Manager* manager, Entity::Type type) {
-	auto entity = array_add(&manager->entities);
-	entity->handle = manager->handle_counter;
-	manager->handle_counter += 1;
-	entity->type = type;
-	return entity;
+
+template <u32>
+inline Entity *entity_down_type(Entity_Manager &manager, Entity_Handle reference) {
+	return nullptr;
 }
 
-Entity* manager_find_entity(Entity_Manager &manager, Entity_Handle handle) {
-	for (auto& entity : manager.entities) {
-		if (entity.handle == handle) return &entity;
+template <>
+inline Entity *entity_down_type<Entity_Player>(Entity_Manager &manager, Entity_Handle reference) {
+	return manager.by_type.players.data + reference.index;
+}
+
+template <>
+inline Entity *entity_down_type<Entity_Line>(Entity_Manager &manager, Entity_Handle reference) {
+	return manager.by_type.lines.data + reference.index;
+}
+
+#define entity_down(manager, reference, entity) (entity *)entity_down_type<Entity_##entity>(manager, reference)
+
+Entity *entity_get(Entity_Manager &manager, Entity_Handle reference) {
+	switch (reference.kind) {
+	case Entity_Player:
+		return entity_down_type<Entity_Player>(manager, reference);
+	case Entity_Line:
+		return entity_down_type<Entity_Line>(manager, reference);
 	}
 	return nullptr;
 }
 
-Entity_Manager make_manager() {
+Entity_Manager manager_create() {
 	Entity_Manager manager = {};
-	manager.handle_counter = 1;
 	return manager;
+}
+
+Entity *manager_add_entity_kind(Entity_Manager *manager, Entity_Kind kind) {
+	Entity *result = nullptr;
+	s64 index = -1;
+
+	switch (kind) {
+	case Entity_Player:
+	{
+		Player *player = array_add(&manager->by_type.players);
+		result = player;
+		index = player - manager->by_type.players.data;
+	} break;
+
+	case Entity_Line:
+	{
+		Line *line = array_add(&manager->by_type.lines);
+		result = line;
+		index = line - manager->by_type.lines.data;
+	} break;
+	}
+
+	assert(index >=0 && index < MAX_UINT32);
+
+	Entity_Handle handle;
+	handle.kind = kind;
+	handle.index = (u32)index;
+	array_add(&manager->entities, handle);
+
+	result->handle = handle;
+	result->kind = kind;
+
+	return result;
+}
+
+#define manager_add_entity(manager, entity) (entity *)manager_add_entity_kind(manager, Entity_##entity)
+
+Entity *manager_find_entity(Entity_Manager &manager, Entity_Handle handle) {
+	Entity *result = nullptr;
+	for (s64 index = 0; index < manager.entities.count; ++index) {
+		auto entity = entity_get(manager, manager.entities[index]);
+		if (handle == entity->handle) {
+			result = entity;
+			break;
+		}
+	}
+	return result;
+}
+
+Player *manager_find_player(Entity_Manager &manager, Entity_Handle handle) {
+	Player *result = nullptr;
+	auto &players = manager.by_type.players;
+	for (s64 index = 0; index < players.count; ++index) {
+		auto player = players.data + index;
+		if (handle == player->handle) {
+			result = player;
+			break;
+		}
+	}
+	return result;
+}
+
+Line *manager_find_line(Entity_Manager &manager, Entity_Handle handle) {
+	Line *result = nullptr;
+	auto &lines = manager.by_type.lines;
+	for (s64 index = 0; index < lines.count; ++index) {
+		auto line = lines.data + index;
+		if (handle == line->handle) {
+			result = line;
+			break;
+		}
+	}
+	return result;
 }
 
 struct Player_Controller {
@@ -54,12 +143,11 @@ struct Sorted_Colliders {
 };
 
 #if 0
-void collision_point_vs_line(Array<Sorted_Colliders>& sorted_colliders, Entity_Manager& manager, Entity* player, Vec2& new_player_position, r32& dt)
-{
+void collision_point_vs_line(Array<Sorted_Colliders> &sorted_colliders, Entity_Manager &manager, Entity *player, Vec2 &new_player_position, r32 &dt) {
 	Ray_Hit hit;
 	Array<r32> t_values;
 	Entity_Handle handle_save = 0;
-	for (auto& collider : sorted_colliders) {
+	for (auto &collider : sorted_colliders) {
 		auto entity = manager_find_entity(manager, collider.handle);
 		entity->color = vec4(1, 0, 0);
 		if (ray_vs_line(player->position, new_player_position, entity->start, entity->end, &hit)) {
@@ -82,8 +170,8 @@ void collision_point_vs_line(Array<Sorted_Colliders>& sorted_colliders, Entity_M
 		}
 	}
 
-	for (auto& collider : sorted_colliders) {
-		Entity* entity = manager_find_entity(manager, collider.handle);
+	for (auto &collider : sorted_colliders) {
+		Entity *entity = manager_find_entity(manager, collider.handle);
 		if (entity->handle != handle_save) {
 			if (ray_vs_line(player->position, new_player_position, entity->start, entity->end, &hit)) {
 				r32 dir = vec2_dot(vec2_normalize_check(player->velocity), hit.normal);
@@ -127,51 +215,50 @@ int system_main() {
 	u64 frequency = system_get_frequency();
 	u64 counter = system_get_counter();
 
-	Entity_Manager manager = make_manager();
+	Entity_Manager manager = manager_create();
 
-	Entity *player = add_entity(&manager, Entity::PLAYER);
-	player->player.position = vec2(-0.2f, 0);
-	player->player.size = vec2(0.5f);
+	auto player = manager_add_entity(&manager, Player);
+
+	player->position = vec2(-0.2f, 0);
+	player->size = vec2(0.5f);
 	player->color = vec4(1);
 	player->velocity = vec2(0);
 	Entity_Handle player_id = player->handle;
 
-	Entity *line = nullptr;
-
-	line = add_entity(&manager, Entity::LINE);
-	line->line.start = vec2(-4, -3);
-	line->line.end = vec2(-4, 2);
+	Line *line = nullptr;
+	line = manager_add_entity(&manager, Line);
+	line->start = vec2(-4, -3);
+	line->end = vec2(-4, 2);
 	line->color = vec4(1, 0, 0, 1);
 
-	line = add_entity(&manager, Entity::LINE);
-	line->line.start = vec2(2, 4);
-	line->line.end = vec2(-4, 2);
+	line = manager_add_entity(&manager, Line);
+	line->start = vec2(2, 4);
+	line->end = vec2(-4, 2);
 	line->color = vec4(1, 0, 0, 1);
 
-	line = add_entity(&manager, Entity::LINE);
-	line->line.start = vec2(5.1f, 4);
-	line->line.end = vec2(2, 4);
+	line = manager_add_entity(&manager, Line);
+	line->start = vec2(5.1f, 4);
+	line->end = vec2(2, 4);
 	line->color = vec4(1, 0, 0, 1);
 
-	line = add_entity(&manager, Entity::LINE);
-	line->line.start = vec2(4, 1);
-	line->line.end = vec2(5, 4);
+	line = manager_add_entity(&manager, Line);
+	line->start = vec2(4, 1);
+	line->end = vec2(5, 4);
 	line->color = vec4(1, 0, 0, 1);
 
-	line = add_entity(&manager, Entity::LINE);
-	line->line.start = vec2(4, 4);
-	line->line.end = vec2(-5, 0);
+	line = manager_add_entity(&manager, Line);
+	line->start = vec2(4, 4);
+	line->end = vec2(-5, 0);
 	line->color = vec4(1, 0, 0, 1);
 
-
-	line = add_entity(&manager, Entity::LINE);
-	line->line.start = vec2(3.5f, -4.1f);
-	line->line.end = vec2(3.5f, 4);
+	line = manager_add_entity(&manager, Line);
+	line->start = vec2(3.5f, -4.1f);
+	line->end = vec2(3.5f, 4);
 	line->color = vec4(1, 0, 0, 1);
 
-	line = add_entity(&manager, Entity::LINE);
-	line->line.start = vec2(-4, 3);
-	line->line.end = vec2(3.5f, -4);
+	line = manager_add_entity(&manager, Line);
+	line->start = vec2(-4, 3);
+	line->end = vec2(3.5f, -4);
 	line->color = vec4(1, 0, 0, 1);
 
 	Player_Controller controller = {};
@@ -190,7 +277,7 @@ int system_main() {
 		Debug_TimedBlockBegin(EventHandling);
 		auto events = system_poll_events();
 		for (s64 event_index = 0; event_index < events.count; ++event_index) {
-			Event& event = events[event_index];
+			Event &event = events[event_index];
 
 			if (event.type & Event_Type_EXIT) {
 				running = false;
@@ -266,7 +353,7 @@ int system_main() {
 		//normals.allocator = TEMPORARY_ALLOCATOR;
 		t_values.allocator = TEMPORARY_ALLOCATOR;
 
-		player = manager_find_entity(manager, player_id);
+		player = manager_find_player(manager, player_id);
 
 		//Vec2 prev_velocity = player->velocity;
 		//only physics code
@@ -290,8 +377,7 @@ int system_main() {
 			if (len) {
 				dir.x = controller.x / len;
 				dir.y = controller.y / len;
-			}
-			else {
+			} else {
 				dir = vec2(0);
 			}
 
@@ -304,43 +390,40 @@ int system_main() {
 			player->velocity *= powf(0.5f, drag * dt);
 
 			auto new_player_velocity = player->velocity;
-			auto new_player_position = player->player.position + dt * new_player_velocity;
+			auto new_player_position = player->position + dt * new_player_velocity;
 
 
 			Array<Sorted_Colliders> sorted_colliders;
 			sorted_colliders.allocator = TEMPORARY_ALLOCATOR;
 
-			for (auto& entity : manager.entities) {
-				if (entity.type == Entity::LINE) {
-					auto collider = array_add(&sorted_colliders);
-					r32 dx = entity.line.end.x - entity.line.start.x;
-					r32 dy = entity.line.end.y - entity.line.start.x;
-					r32 d = dx * dx + dy * dy;
-					r32 n = dy * player->player.position.x - dx * player->player.position.y + entity.line.end.x * entity.line.start.y - entity.line.end.y * entity.line.start.x;
-					n *= n;
-					collider->handle = entity.handle;
-					collider->distance = n / d;
-				}
+			for (auto &entity : manager.by_type.lines) {
+				auto collider = array_add(&sorted_colliders);
+				r32 dx = entity.end.x - entity.start.x;
+				r32 dy = entity.end.y - entity.start.x;
+				r32 d = dx * dx + dy * dy;
+				r32 n = dy * player->position.x - dx * player->position.y + entity.end.x * entity.start.y - entity.end.y * entity.start.x;
+				n *= n;
+				collider->handle = entity.handle;
+				collider->distance = n / d;
 			}
 
-			sort(sorted_colliders.data, sorted_colliders.count, [](Sorted_Colliders & a, Sorted_Colliders &b) {
+			sort(sorted_colliders.data, sorted_colliders.count, [](Sorted_Colliders &a, Sorted_Colliders &b) {
 				return a.distance < b.distance;
 			});
 
 			//collision_point_vs_line(sorted_colliders, manager, player, new_player_position, dt);
-			Vec2 get_corner[4] = { {player->player.size.x / 2,player->player.size.y / 2},
-				{-player->player.size.x / 2,-player->player.size.y / 2},
-				{player->player.size.x / 2,-player->player.size.y / 2},
-				{-player->player.size.x / 2,player->player.size.y / 2} };
+			Vec2 get_corner[4] = { {player->size.x / 2,player->size.y / 2},
+				{-player->size.x / 2,-player->size.y / 2},
+				{player->size.x / 2,-player->size.y / 2},
+				{-player->size.x / 2,player->size.y / 2} };
 			//collided handle
-			Entity_Handle handle_save = 0;
-			for (auto& collider : sorted_colliders) {
-				auto entity = manager_find_entity(manager, collider.handle);
+			Entity_Handle handle_save = INVALID_ENTITY_HANDLE;
+			for (auto &collider : sorted_colliders) {
+				auto entity = manager_find_line(manager, collider.handle);
 				//entity->color = vec4(1, 0, 0);
 				bool collision_found = false;
-				for (Vec2 temp : get_corner)
-				{
-					if (ray_vs_line(player->player.position + temp, new_player_position + temp, entity->line.start, entity->line.end, &hit)) {
+				for (Vec2 temp : get_corner) {
+					if (ray_vs_line(player->position + temp, new_player_position + temp, entity->start, entity->end, &hit)) {
 						r32 dir = vec2_dot(vec2_normalize_check(player->velocity), hit.normal);
 
 						if (dir <= 0 && hit.t >= -0.001f && hit.t < 1.001f) {
@@ -351,7 +434,7 @@ int system_main() {
 							//array_add(&normals, -reduc_vector);
 
 							player->velocity -= reduc_vector;
-							new_player_position = player->player.position + dt * player->velocity;
+							new_player_position = player->position + dt * player->velocity;
 							handle_save = entity->handle;
 
 							//entity->color = vec4(1, 0, 1);
@@ -363,31 +446,30 @@ int system_main() {
 					break;
 			}
 
-			Entity * line_collided = nullptr;
-			if (handle_save) {
-				line_collided = manager_find_entity(manager, handle_save);
+			Line *line_collided = nullptr;
+			if (handle_save != INVALID_ENTITY_HANDLE) {
+				line_collided = manager_find_line(manager, handle_save);
 
-				for (auto& collider : sorted_colliders) {
-					Entity* entity = manager_find_entity(manager, collider.handle);
+				for (auto &collider : sorted_colliders) {
+					auto *entity = manager_find_line(manager, collider.handle);
 					if (entity->handle != handle_save) {
-						for (Vec2 temp : get_corner)
-						{
-							if (ray_vs_line(player->player.position + temp, new_player_position + temp, entity->line.start, entity->line.end, &hit)) {
+						for (Vec2 temp : get_corner) {
+							if (ray_vs_line(player->position + temp, new_player_position + temp, entity->start, entity->end, &hit)) {
 								r32 dir = vec2_dot(vec2_normalize_check(player->velocity), hit.normal);
 								if (dir <= 0 && hit.t >= -0.001f && hit.t < 1.001f) {
 
-									r32 dot = vec2_dot(vec2_normalize(line_collided->line.end - line_collided->line.start),
-													   vec2_normalize(entity->line.end - entity->line.start));
+									r32 dot = vec2_dot(vec2_normalize(line_collided->end - line_collided->start),
+										vec2_normalize(entity->end - entity->start));
 
 									if (dot <= 0.0f) {
 										Vec2 reduc_vector = (1.0f - hit.t) * player->velocity;
 										player->velocity -= reduc_vector;
-										new_player_position = player->player.position + dt * player->velocity;
+										new_player_position = player->position + dt * player->velocity;
 										break;
 									} else {
 										Vec2 reduc_vector = (1.0f - hit.t) * vec2_dot(player->velocity, hit.normal) * hit.normal;
 										player->velocity -= reduc_vector;
-										new_player_position = player->player.position + dt * player->velocity;
+										new_player_position = player->position + dt * player->velocity;
 									}
 
 									//entity->color = vec4(1, 0, 1);
@@ -400,7 +482,7 @@ int system_main() {
 
 #endif
 
-			player->player.position += dt * player->velocity;
+			player->position += dt * player->velocity;
 
 			accumulator_t -= fixed_dt;
 		}
@@ -438,41 +520,45 @@ int system_main() {
 
 		auto new_button_state = system_button(Button_LEFT);
 		if (new_button_state == Key_State_DOWN && last_button_state == Key_State_UP) {
-			for (auto& entity : manager.entities) {
-				if (entity.type == Entity::PLAYER) {
+			for (auto &entity : manager.entities) {
+				if (entity.kind == Entity_Player) {
+					auto e = entity_down(manager, entity, Player);
 					Mm_Rect rect;
-					rect.min = entity.player.position - entity.player.size * 0.5f;
-					rect.max = entity.player.position + entity.player.size * 0.5f;
+					rect.min = e->position - e->size * 0.5f;
+					rect.max = e->position + e->size * 0.5f;
 					if (point_inside_rect(cursor, rect)) {
-						selected_entity = &entity;
+						selected_entity = e;
 						break;
 					}
-				} else if (entity.type == Entity::LINE) {
-					r32 dx = entity.line.end.x - entity.line.start.x;
-					r32 dy = entity.line.end.y - entity.line.start.y;
-					r32 v = dx * (cursor.y - entity.line.start.y) - dy * (cursor.x - entity.line.start.x);
+				} else if (entity.kind == Entity_Line) {
+					auto e = entity_down(manager, entity, Line);
+					r32 dx = e->end.x - e->start.x;
+					r32 dy = e->end.y - e->start.y;
+					r32 v = dx * (cursor.y - e->start.y) - dy * (cursor.x - e->start.x);
 					if (fabsf(v) < 0.5f) {
-						selected_entity = &entity;
+						selected_entity = e;
 						break;
 					}
 				}
 			}
 		} else {
-			for (auto& entity : manager.entities) {
-				if (entity.type == Entity::PLAYER) {
+			for (auto &entity : manager.entities) {
+				if (entity.kind == Entity_Player) {
 					Mm_Rect rect;
-					rect.min = entity.player.position - entity.player.size * 0.5f;
-					rect.max = entity.player.position + entity.player.size * 0.5f;
+					auto e = entity_down(manager, entity, Player);
+					rect.min = e->position - e->size * 0.5f;
+					rect.max = e->position + e->size * 0.5f;
 					if (point_inside_rect(cursor, rect)) {
-						hovered_entity = &entity;
+						hovered_entity = e;
 						break;
 					}
-				} else if (entity.type == Entity::LINE) {
-					r32 dx = entity.line.end.x - entity.line.start.x;
-					r32 dy = entity.line.end.y - entity.line.start.y;
-					r32 v = dx * (cursor.y - entity.line.start.y) - dy * (cursor.x - entity.line.start.x);
+				} else if (entity.kind == Entity_Line) {
+					auto e = entity_down(manager, entity, Line);
+					r32 dx = e->end.x - e->start.x;
+					r32 dy = e->end.y - e->start.y;
+					r32 v = dx * (cursor.y - e->start.y) - dy * (cursor.x - e->start.x);
 					if (fabsf(v) < 0.5f) {
-						hovered_entity = &entity;
+						hovered_entity = e;
 						break;
 					}
 				}
@@ -500,29 +586,26 @@ int system_main() {
 
 		im2d_begin(view);
 
-		for (auto& entity : manager.entities) {
-			// TODO: Render by type!!!
-			switch (entity.type) {
-			case Entity::PLAYER: {
-				//im2d_circle(entity.position, entity.size.x, entity.color);
-				im2d_rect_centered(entity.player.position, entity.player.size, entity.color);
-				//im2d_circle(entity.position, 0.08f, vec4(0, 1, 0));
-			} break;
+		for (auto &player : manager.by_type.players) {
+			im2d_rect_centered(player.position, player.size, player.color);
+		}
 
-			case Entity::LINE: {
-				im2d_line(entity.line.start, entity.line.end, entity.color, 0.01f);
-			} break;
-			}
+		for (auto &line : manager.by_type.lines) {
+			im2d_line(line.start, line.end, line.color, 0.01f);
 		}
 
 		if (hovered_entity) {
-			switch (hovered_entity->type) {
-			case Entity::PLAYER: {
-				im2d_rect_centered_outline(hovered_entity->player.position, hovered_entity->player.size, 1.1f*vec4(1, 1, 0), 0.03f);
+			switch (hovered_entity->kind) {
+			case Entity_Player:
+			{
+				Player *e = (Player *)hovered_entity;
+				im2d_rect_centered_outline(e->position, e->size, 1.1f * vec4(1, 1, 0), 0.03f);
 			} break;
 
-			case Entity::LINE: {
-				im2d_line(hovered_entity->line.start, hovered_entity->line.end, 1.1f*vec4(1, 1, 0), 0.03f);
+			case Entity_Line:
+			{
+				Line *e = (Line *)hovered_entity;
+				im2d_line(e->start, e->end, 1.1f * vec4(1, 1, 0), 0.03f);
 			} break;
 			}
 		}
@@ -538,12 +621,12 @@ int system_main() {
 		//	im2d_line(normals[index], normals[index] + normals[index + 1], vec4(1, 1, 1), 0.01f);
 		//}
 
-		for (auto & hit : ray_hits) {
-			im2d_line(player->player.position, player->player.position + (1.0f - hit.t) * hit.normal, vec4(0, 1, 1), 0.01f);
+		for (auto &hit : ray_hits) {
+			im2d_line(player->position, player->position + (1.0f - hit.t) * hit.normal, vec4(0, 1, 1), 0.01f);
 		}
 
-		im2d_line(player->player.position, player->player.position + normal, vec4(1), 0.01f);
-		im2d_line(player->player.position, player->player.position + player->velocity, vec4(0, 1, 0), 0.03f);
+		im2d_line(player->position, player->position + normal, vec4(1), 0.01f);
+		im2d_line(player->position, player->position + player->velocity, vec4(0, 1, 0), 0.03f);
 		//im2d_line(player->position, player->position + prev_velocity, vec4(1, 1, 0), 0.03f);
 #endif
 
@@ -557,14 +640,23 @@ int system_main() {
 		gfx_blit_hdr(0, 0, window_w, window_h);
 		gfx_viewport(0, 0, window_w, window_h);
 
-		#if defined(BUILD_IMGUI)
+#if defined(BUILD_IMGUI)
 
 		ImGui::Begin("Editor");
-		if (selected_entity)
-			editor_draw(*selected_entity);
+		if (selected_entity) {
+			switch (selected_entity->kind) {
+			case Entity_Player:
+				editor_draw(*(Player *)selected_entity);
+				break;
+			case Entity_Line:
+				editor_draw(*(Line *)selected_entity);
+				break;
+			}
+			
+		}
 		ImGui::End();
 
-		#endif
+#endif
 
 #if defined(BUILD_IMGUI)
 		{
