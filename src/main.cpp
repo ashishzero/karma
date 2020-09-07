@@ -151,11 +151,6 @@ int system_main() {
 	Ray_Hit hit;
 	memset(&hit, 0, sizeof(hit));
 
-	Vec2 normal = vec2(0);
-	r32 penetrate_t = 0;
-	Array<Ray_Hit> ray_hits;
-
-
 	while (running) {
 		Debug_TimedFrameBegin();
 
@@ -244,13 +239,10 @@ int system_main() {
 		//only physics code
 		static int test_counter = 0;
 
-		while (accumulator_t >= fixed_dt /*&& test_counter < 2*/) {
+		while (accumulator_t >= fixed_dt) {
 			Debug_TimedScope(SimulationFrame);
 
 			memset(&hit, 0, sizeof(hit));
-			normal = vec2(0);
-			penetrate_t = 0;
-			array_clear(&ray_hits);
 
 			const r32 gravity = 10;
 			const r32 drag = 5;
@@ -501,18 +493,7 @@ int system_main() {
 		//}
 
 #if 1
-		//for (s64 index = 0; index < normals.count; index += 2) {
-		//	im2d_circle(normals[index], 0.08f, vec4(1, 0, 0));
-		//	im2d_line(normals[index], normals[index] + normals[index + 1], vec4(1, 1, 1), 0.01f);
-		//}
-
-		for (auto &hit : ray_hits) {
-			im2d_line(player->position, player->position + (1.0f - hit.t) * hit.normal, vec4(0, 1, 1), 0.01f);
-		}
-
-		im2d_line(player->position, player->position + normal, vec4(1), 0.01f);
 		im2d_line(player->position, player->position + player->velocity, vec4(0, 1, 0), 0.03f);
-		//im2d_line(player->position, player->position + prev_velocity, vec4(1, 1, 0), 0.03f);
 #endif
 
 		im2d_end();
