@@ -73,6 +73,11 @@ void collision_point_vs_line(Array<Sorted_Colliders> &sorted_colliders, Entity_M
 }
 #endif
 
+struct Quad_Mesh {
+	Quad quad;
+	Vec2 vertices[4];
+};
+
 int system_main() {
 	r32    framebuffer_w = 1280;
 	r32    framebuffer_h = 720;
@@ -110,6 +115,16 @@ int system_main() {
 	player->velocity = vec2(0);
 	Entity_Handle player_id = player->handle;
 
+	Vec2 quad_position = vec2(1);
+	Vec2 scale = vec2(1);
+
+	Quad_Mesh quad_mesh = {};
+	quad_mesh.vertices[0] = vec2(-0.5f, -0.5f);
+	quad_mesh.vertices[1] = vec2(-0.5f + 1.0f,  0.5f);
+	quad_mesh.vertices[2] = vec2( 0.5f + 1.0f,  0.5f);
+	quad_mesh.vertices[3] = vec2( 0.5f, -0.5f);
+
+#if 0
 	Line *line = nullptr;
 	line = manager_add_entity(&manager, Line);
 	line->start = vec2(-4, -3);
@@ -145,6 +160,7 @@ int system_main() {
 	line->start = vec2(-4, 3);
 	line->end = vec2(3.5f, -4);
 	line->color = vec4(1, 0, 0, 1);
+#endif
 
 	Player_Controller controller = {};
 
@@ -359,6 +375,38 @@ int system_main() {
 
 #endif
 
+			{
+				auto &positions = quad_mesh.quad.positions;
+				auto &vertices = quad_mesh.vertices;
+
+				positions[0] = vec2_hadamard(vertices[0], scale) + quad_position;
+				positions[1] = vec2_hadamard(vertices[1], scale) + quad_position;
+				positions[2] = vec2_hadamard(vertices[2], scale) + quad_position;
+				positions[3] = vec2_hadamard(vertices[3], scale) + quad_position;
+
+				quad_mesh.quad.normals[0] = vec2(positions[0].y - positions[1].y, positions[1].x - positions[0].x);
+				quad_mesh.quad.normals[1] = vec2(positions[1].y - positions[2].y, positions[2].x - positions[1].x);
+				quad_mesh.quad.normals[2] = vec2(positions[2].y - positions[3].y, positions[3].x - positions[2].x);
+				quad_mesh.quad.normals[3] = vec2(positions[3].y - positions[0].y, positions[0].x - positions[3].x);
+			}
+
+			Quad player_quad;
+			player_quad.normals[0] = vec2(-1, 0);
+			player_quad.normals[1] = vec2(0, 1);
+			player_quad.normals[2] = vec2(1, 0);
+			player_quad.normals[3] = vec2(0, -1);
+
+			player_quad.positions[0] = player->position + 0.5f * vec2(-player->size.x, -player->size.y);
+			player_quad.positions[1] = player->position + 0.5f * vec2(-player->size.x,  player->size.y);
+			player_quad.positions[2] = player->position + 0.5f * vec2( player->size.x,  player->size.y);
+			player_quad.positions[3] = player->position + 0.5f * vec2( player->size.x, -player->size.y);
+
+			if (quad_vs_quad_sat(player_quad, quad_mesh.quad)) {
+				player->color = vec4(1, 0, 0);
+			} else {
+				player->color = vec4(1, 1, 1);
+			}
+
 			player->position += dt * player->velocity;
 
 			accumulator_t -= fixed_dt;
@@ -463,9 +511,17 @@ int system_main() {
 
 		im2d_begin(view);
 
+		im2d_quad(quad_mesh.quad.positions[0], 
+			quad_mesh.quad.positions[1], 
+			quad_mesh.quad.positions[2], 
+			quad_mesh.quad.positions[3],
+			vec4(1, 0, 1));
+
 		for (auto &player : manager.by_type.players) {
 			im2d_rect_centered(player.position, player.size, player.color);
 		}
+
+		im2d_line(player->position, player->position + player->velocity, vec4(0, 1, 0), 0.03f);
 
 		for (auto &line : manager.by_type.lines) {
 			im2d_line(line.start, line.end, line.color, 0.01f);
@@ -491,10 +547,6 @@ int system_main() {
 		//	im2d_circle(h.point, 0.08f, vec4(0, 0, 1));
 		//	im2d_line(h.point, h.point + h.normal, vec4(1), 0.01f);
 		//}
-
-#if 1
-		im2d_line(player->position, player->position + player->velocity, vec4(0, 1, 0), 0.03f);
-#endif
 
 		im2d_end();
 

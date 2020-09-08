@@ -1491,6 +1491,42 @@ bool aabb_vs_aabb(const Mm_Rect &a, const Mm_Rect &b) {
 	return true;
 }
 
+bool quad_vs_quad_sat(Quad &a, Quad &b) {
+	auto quad_a = &a;
+	auto quad_b = &b;
+
+	for (int quad_index = 0; quad_index < 2; ++quad_index) {
+		for (int edge_index = 0; edge_index < 4; ++edge_index) {
+			r32 min_proj_a = INFINITY, max_proj_a = -INFINITY;
+			r32 min_proj_b = INFINITY, max_proj_b = -INFINITY;
+
+			r32 dot;
+			Vec2 normal = quad_a->normals[edge_index];
+
+			for (int p_index = 0; p_index < 4; ++p_index) {
+				dot = vec2_dot(normal, quad_a->positions[p_index]);
+				min_proj_a = GetMinValue(min_proj_a, dot);
+				max_proj_a = GetMaxValue(max_proj_a, dot);
+			}
+
+			for (int p_index = 0; p_index < 4; ++p_index) {
+				dot = vec2_dot(normal, quad_b->positions[p_index]);
+				min_proj_b = GetMinValue(min_proj_b, dot);
+				max_proj_b = GetMaxValue(max_proj_b, dot);
+			}
+
+			if (!(max_proj_b >= min_proj_a && max_proj_a >= min_proj_b))
+				return false;
+		}
+		
+		auto temp = quad_a;
+		quad_a = quad_b;
+		quad_b = temp;
+	}
+
+	return true;
+}
+
 bool ray_vs_aabb(Vec2 origin, Vec2 direction, const Mm_Rect &rect, Ray_Hit *hit) {
 	Vec2 i_direction;
 	i_direction.x = 1.0f / direction.x;

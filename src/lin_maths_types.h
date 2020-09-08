@@ -398,6 +398,11 @@ inline Rects rects(s32 _x, s32 _y, s32 _w, s32 _h) {
 	return r;
 }
 
+struct Quad {
+	Vec2 positions[4];
+	Vec2 normals[4];
+};
+
 struct Ray_Hit {
 	Vec2 point;
 	Vec2 normal;
