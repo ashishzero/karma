@@ -1,12 +1,12 @@
-#include "src/karma.h"
+#include "modules/core/karma.h"
+#include "modules/core/length_string.h"
 #include "shader.h"
-#include "src/length_string.h"
 
 #if defined(TARGET_WINDOWS)
 
 #	pragma comment(lib, "d3dcompiler")
 #	include <d3dcompiler.h>
-#	include "src/directx/dx_error.h"
+#	include "modules/core/directx/dx_error.h"
 
 bool hlsl_compile_shader(const char *name, String src, Shader_Code *out, const char *vs_main, const char *ps_main) {
 	ID3DBlob *vs_code = 0, *vs_error = 0;

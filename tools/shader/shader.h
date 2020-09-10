@@ -1,5 +1,5 @@
 #pragma once
-#include "src/karma.h"
+#include "modules/core/karma.h"
 
 struct Shader_Code {
 	String vertex;

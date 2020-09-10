@@ -1,5 +1,5 @@
 #pragma once
-#include "pcg/pcg_basic.h"
+#include "modules/pcg/pcg_basic.h"
 #include "lin_maths.h"
 
 typedef pcg_state_setseq_64 Random_Series;

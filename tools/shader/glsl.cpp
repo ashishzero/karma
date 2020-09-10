@@ -1,9 +1,9 @@
 #include "shader.h"
 
-#include "src/tokenizer.cpp"
-#include "src/reflection.h"
-#include "src/.generated/tokenizer.typeinfo"
-#include "src/stream.h"
+#include "modules/core/tokenizer.cpp"
+#include "modules/core/reflection.h"
+#include "modules/core/stream.h"
+#include ".generated/tokenizer.typeinfo"
 
 Token parser_expect_token_kind(Array_View<Token> tokens, s64 index, Token_Kind kind, int *error_count, const char *file) {
 	if (index < tokens.count) {

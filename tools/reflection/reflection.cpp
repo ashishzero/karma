@@ -1,7 +1,7 @@
 #define _CRT_SECURE_NO_WARNINGS
-#include "src/stream.cpp"
-#include "src/karma_crt_impl.hpp"
-#include "src/tokenizer.cpp"
+#include "modules/core/stream.cpp"
+#include "modules/core/karma_crt_impl.hpp"
+#include "modules/core/tokenizer.cpp"
 
 #include <clang-c/Index.h>
 
@@ -89,15 +89,27 @@ void reflection_of_enum_info(Ostream *stream, CXCursor cursor, const char *name,
 	ostream_write_formatted(stream, "\t\t};\n");
 	ostream_write_formatted(stream, "\t\treturn Array_View<const char *>(strings, %zd);\n\t}\n", enums.count);
 
+	ostream_write_formatted(stream, "\tstatic const Array_View<%s> item_array() {\n", name);
+	ostream_write_formatted(stream, "\t\tstatic const %s items[] = {\n", name);
+	for (s64 index = 0; index < enums.count; ++index) {
+		auto spelling = clang_getCursorSpelling(enums[index]);
+		ostream_write_formatted(stream, "\t\t\t%s,\n", clang_getCString(spelling));
+		clang_disposeString(spelling);
+	}
+	ostream_write_formatted(stream, "\t\t};\n");
+	ostream_write_formatted(stream, "\t\treturn Array_View<%s>((%s *)items, %zd);\n\t}\n", name, name, enums.count);
+
 	ostream_write_formatted(stream, "};\n\n");
 }
 
-void reflection_of_enum(Ostream *stream, const char *name, const char *element_type_name) {
+void reflection_of_enum(Ostream *stream, const char *name, const char *element_type_name, bool is_seq) {
 	ostream_write_formatted(stream, "template <> struct Reflect<%s> {\n", name);
 	ostream_write_formatted(stream, "\tstatic constexpr Type_Id id = Type_Id_ENUM;\n");
 
 	ostream_write_formatted(stream, "\tstatic const Type_Info * const info() {\n");
-	ostream_write_formatted(stream, "\t\tstatic const Type_Info_Enum i(sizeof(%s), \"%s\", enum_count<%s>(), reflect_info<%s>());\n", name, name, name, element_type_name);
+	ostream_write_formatted(stream, "\t\tstatic const Type_Info_Enum i(sizeof(%s), \"%s\", reflect_info<%s>(),"
+										"%s, enum_string_array<%s>(), enum_item_array<%s>().data, enum_item_array<%s>().count);\n", 
+							name, name, element_type_name, is_seq ?"true":"false", name, name, name);
 	ostream_write_formatted(stream, "\t\treturn &i;\n\t}\n};\n\n");
 }
 
@@ -630,7 +642,7 @@ void ast_visit_enum(CXCursor cursor) {
 	const char *name	  = clang_getCString(spelling);
 	const char *type_name = clang_getCString(item_type_spelling);
 	reflection_of_enum_info(&out->reflected_enum, cursor, name, members, min, max, sequential);
-	reflection_of_enum(&out->reflected_enum, name, type_name);
+	reflection_of_enum(&out->reflected_enum, name, type_name, sequential);
 }
 
 bool struct_check_for_base(CXCursor derived, CXCursor *out) {

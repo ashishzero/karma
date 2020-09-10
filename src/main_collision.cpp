@@ -1,9 +1,9 @@
-#include "karma.h"        // shared
-#include "systems.h"      // windows
+#include "modules/core/karma.h"        // shared
+#include "modules/core/systems.h"      // windows
+#include "modules/core/length_string.h"
+#include "modules/core/lin_maths.h"
+#include "modules/imgui/imgui.h"
 #include "gfx_renderer.h" // rendering
-#include "length_string.h"
-#include "lin_maths.h"
-#include "imgui/imgui.h"
 //#include "physics.h"
 
 #include<time.h>

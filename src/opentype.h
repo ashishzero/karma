@@ -1,7 +1,7 @@
 #pragma once
-#include "karma.h"
-#include "string.h"
-#include "unicode.h"
+#include "modules/core/karma.h"
+#include "modules/core/unicode.h"
+#include "modules/core/length_string.h"
 
 #define stbtt_uint8        u8
 #define stbtt_uint16       u16
@@ -13,7 +13,7 @@
 #define STBTT_free(x, u)   ((void)(u), mfree(x))
 #define STBTT_assert(x)    assert(x)
 #define STB_TRUETYPE_IMPLEMENTATION
-#include "stb_truetype.h"
+#include "modules/core/stb_truetype.h"
 
 enum Lookup_Flag_Bit : u32 {
 	Lookup_Flag_RIGHT_TO_LEFT          = 0x0001,

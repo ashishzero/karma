@@ -1,12 +1,13 @@
-#include "debug.h"
-#include "intrinsics.h"
-#include "random.h"
-#include "utility.h"
-#include "stream.h"
-#include "stb_sprintf.h"
-#include "gfx_renderer.h"
-#include "systems.h"
+#include "modules/core/intrinsics.h"
+#include "modules/core/random.h"
+#include "modules/core/utility.h"
+#include "modules/core/stream.h"
+#include "modules/core/stb_sprintf.h"
+#include "modules/core/systems.h"
+#include "modules/gfx/gfx_renderer.h"
+
 #include "audio.h"
+#include "debug.h"
 
 static constexpr r32 DEBUG_PRESENTATION_X_OFFSET		= 5.0f;
 static constexpr r32 DEBUG_PRESENTATION_Y_OFFSET		= 2.0f;

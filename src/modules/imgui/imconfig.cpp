@@ -1,6 +1,6 @@
-#include "../gfx_renderer.h"
-#include "../systems.h"
-#include "../debug.h"
+#include "modules/core/systems.h"
+#include "modules/gfx/gfx_renderer.h"
+#include "modules/imgui/debug.h"
 
 #include "imconfig.h"
 #include "imgui.h"

@@ -1,16 +1,15 @@
-//karma.h for array and string
-#include "karma.h"
-//thread  controller position,systems.h is for window, audio and everything platform related
-#include "systems.h"
-#include "reflection.h"
-//related to image ellipse mesh cube
-#include "gfx_renderer.h"
-#include "lin_maths.h"
-#include "imgui/imgui.h"
-#include "imgui/imconfig.h"
+#include "modules/core/reflection.h"
+#include "modules/core/karma.h"
+#include "modules/core/systems.h"
+#include "modules/core/lin_maths.h"
+#include "modules/core/utility.h"
+
+#include "modules/imgui/imconfig.h"
+#include "modules/imgui/imgui.h"
+
 #include "debug.h"
+#include "gfx_renderer.h"
 //utility.h contains sorting and hashing, searching and such
-#include "utility.h"
 #include "atish.h"
 #include ".generated/atish.typeinfo"
 //unsigned int32

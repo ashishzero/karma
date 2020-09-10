@@ -1,5 +1,5 @@
 #pragma once
-#include "karma.h"
+#include "modules/core/karma.h"
 
 #pragma pack(push, 1)
 

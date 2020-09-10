@@ -112,7 +112,66 @@ struct Enum_Info {
 		assert(!"File not added for reflection!");
 		return Array_View<const char *>(nullptr, 0);
 	}
+	static const Array_View<T> item_array() {
+		assert(!"File not added for reflection!");
+		return Array_View<T>(nullptr, 0);
+	}
 };
+
+template <typename T>
+constexpr size_t enum_count(T v) {
+	return Enum_Info<T>::get_count();
+}
+template <typename T>
+constexpr size_t enum_count() {
+	return Enum_Info<T>::get_count();
+}
+
+template <typename T>
+constexpr s64 enum_min(T v) {
+	return Enum_Info<T>::get_min_value();
+}
+template <typename T>
+constexpr s64 enum_min() {
+	return Enum_Info<T>::get_min_value();
+}
+
+template <typename T>
+constexpr s64 enum_max(T v) {
+	return Enum_Info<T>::get_max_value();
+}
+template <typename T>
+constexpr s64 enum_max() {
+	return Enum_Info<T>::get_max_value();
+}
+
+template <typename T>
+constexpr T enum_index_value(s64 index) {
+	return Enum_Info<T>::index_value();
+}
+
+template <typename T>
+const String enum_string(T v) {
+	return Enum_Info<T>::string(v);
+}
+
+template <typename T>
+const Array_View<const char *> enum_string_array() {
+	return Enum_Info<T>::string_array();
+}
+template <typename T>
+const Array_View<const char *> enum_string_array(T v) {
+	return Enum_Info<T>::string_array();
+}
+
+template <typename T>
+const Array_View<T> enum_item_array() {
+	return Enum_Info<T>::item_array();
+}
+template <typename T>
+const Array_View<T> enum_item_array(T v) {
+	return Enum_Info<T>::item_array();
+}
 
 struct Type_Info {
 	Type_Id id   = Type_Id_UNKNOWN;
@@ -174,15 +233,16 @@ struct Type_Info_Union : public Type_Info {
 };
 
 struct Type_Info_Enum : public Type_Info {
-	ptrsize count;
 	const Type_Info *const item_type;
-	
+	bool is_sequential;
+	const Array_View<const char*> item_strings;
+	const Array_View<char> item_values;
+
 	inline Type_Info_Enum() :
-		item_type(nullptr) {
+		item_type(nullptr), is_sequential(false) {
 	}
-	inline Type_Info_Enum(ptrsize sz, String n, ptrsize num, const Type_Info *const elem_type) :
-		Type_Info(Type_Id_ENUM, sz, n), item_type(elem_type) {
-		count = num;
+	inline Type_Info_Enum(ptrsize sz, String n, const Type_Info *const elem_type, bool is_seq, const Array_View<const char*> strings, void *values, s64 value_count) :
+		Type_Info(Type_Id_ENUM, sz, n), item_type(elem_type), is_sequential(is_seq), item_strings(strings), item_values((char *)values, value_count) {
 	}
 };
 
@@ -442,51 +502,4 @@ constexpr const Type_Info *const reflect_info(const T &v) {
 template <typename T>
 constexpr const Type_Info *const reflect_info() {
 	return Reflect<T>::info();
-}
-
-template <typename T>
-constexpr size_t enum_count(T v) {
-	return Enum_Info<T>::get_count();
-}
-template <typename T>
-constexpr size_t enum_count() {
-	return Enum_Info<T>::get_count();
-}
-
-template <typename T>
-constexpr s64 enum_min(T v) {
-	return Enum_Info<T>::get_min_value();
-}
-template <typename T>
-constexpr s64 enum_min() {
-	return Enum_Info<T>::get_min_value();
-}
-
-template <typename T>
-constexpr s64 enum_max(T v) {
-	return Enum_Info<T>::get_max_value();
-}
-template <typename T>
-constexpr s64 enum_max() {
-	return Enum_Info<T>::get_max_value();
-}
-
-template <typename T>
-constexpr T enum_index_value(s64 index) {
-	return Enum_Info<T>::index_value();
-}
-
-template <typename T>
-const String enum_string(T v) {
-	return Enum_Info<T>::string(v);
-}
-
-template <typename T>
-const Array_View<const char *> enum_string_array() {
-	return Enum_Info<T>::string_array();
-}
-
-template <typename T>
-const Array_View<const char *> enum_string_array(T v) {
-	return Enum_Info<T>::string_array();
 }

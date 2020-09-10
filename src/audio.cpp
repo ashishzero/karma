@@ -1,5 +1,5 @@
 #include "audio.h"
-#include "stream.h"
+#include "modules/core/stream.h"
 
 Audio_Stream load_wave(String content) {
 	Istream in				= istream(content);

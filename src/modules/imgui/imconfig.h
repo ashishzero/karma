@@ -12,7 +12,7 @@
 //-----------------------------------------------------------------------------
 
 #pragma once
-#include "../karma.h"
+#include "modules/core/karma.h"
 
 #if defined(BUILD_DEBUG) || defined(BUILD_DEBUG_FAST) || defined(BUILD_DEVELOPER)
 #define BUILD_IMGUI
@@ -72,7 +72,7 @@
 
 //---- Define constructor and implicit cast operators to convert back<>forth between your math types and ImVec2/ImVec4.
 // This will be inlined as part of ImVec2 and ImVec4 class declarations.
-#include "../lin_maths.h"
+#include "modules/core/lin_maths.h"
 #define IM_VEC2_CLASS_EXTRA \
 	ImVec2(const Vec2 &f) { \
 		x = f.x;            \
@@ -121,7 +121,7 @@
 //---- Tip: You can add extra functions within the ImGui:: namespace, here or in your own headers files.
 
 
-#include "../systems.h"
+#include "modules/core/systems.h"
 
 namespace ImGui {
 void Initialize();

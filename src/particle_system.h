@@ -1,5 +1,5 @@
 #pragma once
-#include "random.h"
+#include "modules/core/random.h"
 #include "gfx_renderer.h"
 
 struct Particle_Emitter_Property {

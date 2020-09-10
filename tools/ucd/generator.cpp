@@ -1,6 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
-#include "src/stream.cpp"
-#include "src/karma_crt_impl.hpp"
+#include "modules/core/stream.cpp"
+#include "modules/core/karma_crt_impl.hpp"
 #include <ctype.h>
 
 static FILE *header;

@@ -1,8 +1,9 @@
-#include "../gfx_platform.h"
-#include "../glad/include/glad/glad.h"
-#include "../stream.h"
-#include "../length_string.h"
-#include "../systems.h"
+#include "modules/core/gfx_platform.h"
+#include "glad/include/glad/glad.h"
+
+#include "modules/core/stream.h"
+#include "modules/core/length_string.h"
+#include "modules/core/systems.h"
 
 static const GLint INT_FMT_KARMA_TO_OPENGL[] = {
 	GL_RGBA,

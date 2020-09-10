@@ -1,6 +1,6 @@
 #pragma once
-#include "karma.h"
-#include "systems.h"
+#include "modules/core/karma.h"
+#include "modules/core/systems.h"
 
 #if defined(BUILD_DEBUG) || defined(BUILD_DEBUG_FAST) || defined(BUILD_DEVELOPER)
 #define BUILD_DEBUG_SERVICE

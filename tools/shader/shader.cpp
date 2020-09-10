@@ -1,7 +1,7 @@
 #define _CRT_SECURE_NO_WARNINGS
-#include "src/stream.cpp"
-#include "src/karma_crt_impl.hpp"
-#include "src/gfx_shaders.h"
+#include "modules/core/stream.cpp"
+#include "modules/core/karma_crt_impl.hpp"
+#include "shaders/gfx_shaders.h"
 #include "shader.h"
 #include <ctype.h>
 

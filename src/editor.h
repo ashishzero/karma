@@ -1,5 +1,5 @@
 #pragma once
-#include "reflection.h"
+#include "modules/core/reflection.h"
 
 struct Editor_Attribute {
 	u32 flags;

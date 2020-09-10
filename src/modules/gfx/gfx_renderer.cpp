@@ -1,8 +1,7 @@
 #include "gfx_renderer.h"
-#include "gfx_platform.h"
-#include "string.h"
-#include "systems.h"
-#include "gfx_shaders.h"
+#include "modules/core/gfx_platform.h"
+#include "modules/core/systems.h"
+#include "shaders/gfx_shaders.h"
 
 #pragma pack(push, 4)
 

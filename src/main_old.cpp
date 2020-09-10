@@ -1,11 +1,12 @@
+#include "modules/core/lin_maths.h"
+#include "modules/core/length_string.h"
+#include "modules/core/systems.h"
+
+#include "modules/core/utility.h"
+#include "modules/imgui/imgui.h"
+#include "modules/imgui/imconfig.h"
 
 #include "gfx_renderer.h"
-#include "imgui/imconfig.h"
-#include "imgui/imgui.h"
-#include "lin_maths.h"
-#include "length_string.h"
-#include "systems.h"
-#include "utility.h"
 
 #define THIS_IS_ZERO // uncomment this to make your program work!
 
@@ -18,11 +19,10 @@
 #ifdef BUILD_RELEASE
 #	define STB_IMAGE_IMPLEMENTATION
 #endif
-#include "stb_image.h"
+#include "modules/core/stb_image.h"
+#include "modules/core/stream.h"
 
 #include "opentype.h"
-
-#include "stream.h"
 
 #define timed_begin(x) u64 timed_counter_##x = system_get_counter()
 #define timed_end(x)   ((1000000.0f * (r32)(system_get_counter() - timed_counter_##x)) / (r32)system_get_frequency()) / 1000.0f

@@ -1,7 +1,7 @@
 #pragma once
-#include "karma.h"
-#include "lin_maths.h"
-#include "gfx_types.h"
+#include "modules/core/karma.h"
+#include "modules/core/lin_maths.h"
+#include "modules/core/gfx_types.h"
 
 static constexpr int IM_MIN_CIRCLE_SEGMENTS     = 12;
 static constexpr int IM_MAX_CIRCLE_SEGMENTS     = 512;

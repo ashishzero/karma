@@ -1,12 +1,14 @@
-#include "imgui/imgui.h"
-#include "entity.h"
-#include ".generated/entity.typeinfo"
+#include "modules/imgui/imgui.h"
+#include "modules/core/reflection.h"
+#include "modules/core/lin_maths_types.h"
+#include ".generated/lin_maths_types.typeinfo"
 
 #include "editor.h"
 
-constexpr u32 EDITOR_FLAG_NO_DISPLAY = bit(1);
-constexpr u32 EDITOR_FLAG_READ_ONLY  = bit(2);
-constexpr u32 EDITOR_FLAG_COLOR		 = bit(3);
+constexpr u32 EDITOR_FLAG_NO_DISPLAY	= bit(1);
+constexpr u32 EDITOR_FLAG_READ_ONLY		= bit(2);
+constexpr u32 EDITOR_FLAG_COLOR			= bit(3);
+constexpr u32 EDITOR_FLAG_UNION_DISPLAY = bit(4);
 
 void editor_get_flags_from_attribute(const String* attrs, s64 count, Editor_Attribute *out) {
 	out->flags = 0;
@@ -28,17 +30,19 @@ void editor_get_flags_from_attribute(const String* attrs, s64 count, Editor_Attr
 			sscanf(string_cstr(attrs[index]), "min:%f", &out->min);
 		} else if (string_starts_with(attrs[index], "max:")) {
 			sscanf(string_cstr(attrs[index]), "max:%f", &out->min);
+		} else if (string_match(attrs[index], "display")) {
+			out->flags |= EDITOR_FLAG_UNION_DISPLAY;
 		}
 	}
 }
 
 static const ptrsize TYPE_UID_R32		    = (ptrsize)reflect_info<r32>();
+static const ptrsize TYPE_UID_U32		    = (ptrsize)reflect_info<u32>();
+static const ptrsize TYPE_UID_U64		    = (ptrsize)reflect_info<u64>();
+
 static const ptrsize TYPE_UID_VEC2		    = (ptrsize)reflect_info<Vec2>();
 static const ptrsize TYPE_UID_VEC3		    = (ptrsize)reflect_info<Vec3>();
 static const ptrsize TYPE_UID_VEC4		    = (ptrsize)reflect_info<Vec4>();
-static const ptrsize TYPE_UID_U32		    = (ptrsize)reflect_info<u32>();
-static const ptrsize TYPE_UID_ENTITY_HANDLE = (ptrsize)reflect_info<Entity_Handle>();
-static const ptrsize TYPE_UID_ENTITY_KIND   = (ptrsize)reflect_info<Entity_Kind>();
 
 static inline void editor_display_fundamentals(ptrsize mem_type_uid, const char *name, void * data) {
 	if (mem_type_uid == TYPE_UID_R32) {
@@ -55,12 +59,9 @@ static inline void editor_display_fundamentals(ptrsize mem_type_uid, const char 
 	} else if (mem_type_uid == TYPE_UID_U32) {
 		u32 *val = (u32 *)data;
 		ImGui::Text("%s : %u", name, *val);
-	} else if (mem_type_uid == TYPE_UID_ENTITY_HANDLE) {
-		Entity_Handle *val = (Entity_Handle *)data;
-		ImGui::Text("%s : #%016zx", name, val->id);
-	} else if (mem_type_uid == TYPE_UID_ENTITY_KIND) {
-		Entity_Kind *val = (Entity_Kind *)data;
-		ImGui::Text("%s : %s", name, string_cstr(enum_string(*val)));
+	} else if (mem_type_uid == TYPE_UID_U64) {
+		u64 *val = (u64 *)data;
+		ImGui::Text("%s : #%zx", name, *val);
 	}
 }
 
@@ -83,10 +84,42 @@ static inline void editor_display_editables(ptrsize mem_type_uid, const char* na
 		}
 	} else if (mem_type_uid == TYPE_UID_U32) {
 		ImGui::DragScalar(name, ImGuiDataType_U32, (u32 *)data, attr.speed);
-	} else if (mem_type_uid == TYPE_UID_ENTITY_KIND) {
-		auto items = enum_string_array<Entity_Kind>();
-		ImGui::Combo(name, (int *)data, items.data, (int)items.count);
+	} else if (mem_type_uid == TYPE_UID_U64) {
+		ImGui::DragScalar(name, ImGuiDataType_U64, (u64 *)data, attr.speed);
 	}
+}
+
+int reflected_get_enum_value(const Type_Info_Enum *info, void *data) {
+	switch (info->item_type->id) {
+		case Type_Id_U8:	return (int)*(u8 *)data;
+		case Type_Id_U16:	return (int)*(u16 *)data;
+		case Type_Id_U32:	return (int)*(u32 *)data;
+		case Type_Id_CHAR:	return (int)*(char *)data;
+		case Type_Id_S8:	return (int)*(s8 *)data;
+		case Type_Id_S16:	return (int)*(s16 *)data;
+		case Type_Id_S32:	return (int)*(s32 *)data;
+
+		invalid_default_case();
+	}
+	return 0;
+}
+
+void reflected_set_enum_value(const Type_Info_Enum *info, void *data, int index) {
+	switch (info->item_type->id) {
+		case Type_Id_U8:	*(u8 *)data = (u8)index; break;
+		case Type_Id_U16:	*(u16 *)data = (u16)index; break;
+		case Type_Id_U32:	*(u32 *)data = (u32)index; break;
+		case Type_Id_CHAR:	*(char *)data = (char)index; break;
+		case Type_Id_S8:	*(s8 *)data = (s8)index; break;
+		case Type_Id_S16:	*(s16 *)data = (s16)index; break;
+		case Type_Id_S32:	*(s32 *)data = (s32)index; break;
+
+		invalid_default_case();
+	}
+}
+
+bool editor_item_expands(const Type_Info *info) {
+	return info->id == Type_Id_STRUCT;
 }
 
 void editor_draw(const Type_Info* base_info, char * data, Editor_Attribute &attr, const char * name) {
@@ -117,7 +150,7 @@ void editor_draw(const Type_Info* base_info, char * data, Editor_Attribute &attr
 				attr.flags |= parent_flags;
 				if (attr.flags & EDITOR_FLAG_NO_DISPLAY) continue;
 
-				if (mem->info->id == Type_Id_STRUCT) {
+				if (editor_item_expands(mem->info)) {
 					if (ImGui::CollapsingHeader(string_cstr(mem->name))) {
 						editor_draw(mem->info, data + mem->offset, attr, string_cstr(mem->name));
 					}
@@ -125,6 +158,64 @@ void editor_draw(const Type_Info* base_info, char * data, Editor_Attribute &attr
 					editor_draw(mem->info, data + mem->offset, attr, string_cstr(mem->name));
 				}
 			}
+		} break;
+
+		case Type_Id_UNION: {
+			ptrsize uid = (ptrsize)base_info;
+			if (uid == TYPE_UID_VEC2 || uid == TYPE_UID_VEC3 || uid == TYPE_UID_VEC4) {
+				if (parent_flags & EDITOR_FLAG_READ_ONLY) {
+					editor_display_fundamentals(uid, name, data);
+				} else {
+					editor_display_editables(uid, name, data, attr);
+				}
+
+			} else {
+
+				auto info = (Type_Info_Union *)base_info;
+				auto mem_counts = info->member_count;
+
+				if (mem_counts) {
+					const Union_Member *mem = nullptr;
+					for (ptrsize index = 0; index < mem_counts; ++index) {
+						auto temp_mem = info->members + index;
+						editor_get_flags_from_attribute(temp_mem->attributes, temp_mem->attribute_count, &attr);
+						if (attr.flags & EDITOR_FLAG_UNION_DISPLAY) {
+							mem = temp_mem;
+							break;
+						}
+					}
+
+					// If we don't find display attribute, we display the first member
+					if (mem == nullptr) {
+						mem = info->members;
+						editor_get_flags_from_attribute(mem->attributes, mem->attribute_count, &attr);
+					}
+
+					attr.flags |= parent_flags;
+					if (editor_item_expands(mem->info)) {
+						if (ImGui::CollapsingHeader(string_cstr(mem->name))) {
+							editor_draw(mem->info, data, attr, string_cstr(mem->name));
+						}
+					} else {
+						editor_draw(mem->info, data, attr, string_cstr(mem->name));
+					}
+				}
+
+			}
+		} break;
+
+		case Type_Id_ENUM: {
+			auto info = (Type_Info_Enum *)base_info;
+			assert(info->is_sequential);
+
+			int index = reflected_get_enum_value(info, data);
+
+			if (parent_flags & EDITOR_FLAG_READ_ONLY) {
+				ImGui::Text("%s : %s", name, info->item_strings[index]);
+			} else {
+				ImGui::Combo(name, &index, info->item_strings.data, (int)info->item_strings.count);
+				reflected_set_enum_value(info, data, index);
+			}			
 		} break;
 
 		default: {

@@ -1,5 +1,5 @@
 #pragma once
-#include "karma.h"
+#include "modules/core/karma.h"
 
 typedef u32            Shader_Flags;
 constexpr Shader_Flags SHADER_TYPE_VERTEX  = 0x00000001;

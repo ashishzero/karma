@@ -1,6 +1,6 @@
 #pragma once
-#include "lin_maths.h"
-#include "reflection.h"
+#include "modules/core/lin_maths.h"
+#include "modules/core/reflection.h"
 
 enum Entity_Kind : u32 {
 	Entity_Invalid,
@@ -13,7 +13,7 @@ union Entity_Handle {
 		u32 index;
 		Entity_Kind kind;
 	};
-	u64 id;
+	attribute("display") u64 id;
 };
 
 static constexpr Entity_Handle INVALID_ENTITY_HANDLE = {};

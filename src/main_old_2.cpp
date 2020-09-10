@@ -1,16 +1,19 @@
-#include "karma.h"       
-#include "systems.h"     
-#include "gfx_renderer.h"
-#include "length_string.h"
-#include "lin_maths.h"
-#include "imgui/imgui.h"
-#include "debug.h"
+#include "modules/core/karma.h"       
+#include "modules/core/systems.h"     
+#include "modules/core/length_string.h"
+#include "modules/core/lin_maths.h"
+#include "modules/core/stream.h"
+#include "modules/imgui/debug.h"
+#include "modules/gfx/gfx_renderer.h"
+
 #include "particle_system.h"
-#include "stream.h"
+
 #include "audio.h"
 
+#include "modules/imgui/imgui.h"
+
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+#include "modules/core/stb_image.h"
 
 constexpr s32 MAX_SPEED_FACTOR = 64;
 

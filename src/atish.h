@@ -1,6 +1,7 @@
 #pragma once
-#include "length_string.h"
-#include "reflection.h"
+#include "modules/core/length_string.h"
+#include "modules/core/reflection.h"
+
 struct Atishs {
 	int a;
 	int b;
