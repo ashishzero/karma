@@ -1,5 +1,5 @@
 #include "modules/core/systems.h"
-#include "modules/gfx/gfx_renderer.h"
+#include "modules/gfx/renderer.h"
 #include "modules/imgui/debug.h"
 
 #include "imconfig.h"
@@ -14,6 +14,7 @@ static bool               mouse_pressed[3];
 static Cursor_Kind        mouse_cursor[ImGuiMouseCursor_COUNT];
 static ImGuiDockNodeFlags dockspace_flags;
 ImGuiWindowFlags          dockspace_main_window_flags;
+static ImFont *			  icon_font;
 
 void ImGui::Initialize() {
 	IMGUI_CHECKVERSION();
@@ -54,7 +55,19 @@ void ImGui::Initialize() {
 	config.OversampleH = 2;
 	config.OversampleV = 2;
 	config.PixelSnapH  = true;
+
+	ImFontGlyphRangesBuilder builder;
+	builder.AddChar(0xe911);
+	builder.AddChar(0xe922);
+	builder.AddChar(0xe950);
+	builder.AddChar(0xea15);
+	builder.AddChar(0xea16);
+	ImVector<ImWchar> ranges;
+	builder.BuildRanges(&ranges);          
+
 	io.Fonts->AddFontFromFileTTF("dev/GeneraleStation-Regular.otf", 14, &config);
+	icon_font  = io.Fonts->AddFontFromFileTTF("dev/icomoon.ttf", 14, &config, ranges.Data);
+	io.Fonts->Build();
 
 	auto &style             = ImGui::GetStyle();
 	style.ChildRounding     = 0;
@@ -80,7 +93,7 @@ void ImGui::Initialize() {
 	colors[ImGuiCol_FrameBgActive]         = srgb_to_linear(vec4(0.09f, 0.12f, 0.14f, 1.00f));
 	colors[ImGuiCol_TitleBg]               = srgb_to_linear(vec4(0.09f, 0.12f, 0.14f, 0.65f));
 	colors[ImGuiCol_TitleBgActive]         = srgb_to_linear(vec4(0.08f, 0.10f, 0.12f, 1.00f));
-	colors[ImGuiCol_TitleBgCollapsed]      = srgb_to_linear(vec4(0.00f, 0.00f, 0.00f, 0.51f));
+	colors[ImGuiCol_TitleBgCollapsed]      = srgb_to_linear(vec4(0.00f, 0.00f, 0.00f, 0.90f));
 	colors[ImGuiCol_MenuBarBg]             = srgb_to_linear(vec4(0.15f, 0.18f, 0.22f, 1.00f));
 	colors[ImGuiCol_ScrollbarBg]           = srgb_to_linear(vec4(0.02f, 0.02f, 0.02f, 0.39f));
 	colors[ImGuiCol_ScrollbarGrab]         = srgb_to_linear(vec4(0.20f, 0.25f, 0.29f, 1.00f));
@@ -92,8 +105,8 @@ void ImGui::Initialize() {
 	colors[ImGuiCol_Button]                = srgb_to_linear(vec4(0.20f, 0.25f, 0.29f, 1.00f));
 	colors[ImGuiCol_ButtonHovered]         = srgb_to_linear(vec4(0.28f, 0.56f, 1.00f, 1.00f));
 	colors[ImGuiCol_ButtonActive]          = srgb_to_linear(vec4(0.06f, 0.53f, 0.98f, 1.00f));
-	colors[ImGuiCol_Header]                = srgb_to_linear(vec4(0.20f, 0.25f, 0.29f, 0.55f));
-	colors[ImGuiCol_HeaderHovered]         = srgb_to_linear(vec4(0.26f, 0.59f, 0.98f, 0.80f));
+	colors[ImGuiCol_Header]                = srgb_to_linear(vec4(0.20f, 0.25f, 0.29f, 0.85f));
+	colors[ImGuiCol_HeaderHovered]         = srgb_to_linear(vec4(0.26f, 0.59f, 0.98f, 0.90f));
 	colors[ImGuiCol_HeaderActive]          = srgb_to_linear(vec4(0.26f, 0.59f, 0.98f, 1.00f));
 	colors[ImGuiCol_Separator]             = srgb_to_linear(vec4(0.20f, 0.25f, 0.29f, 1.00f));
 	colors[ImGuiCol_SeparatorHovered]      = srgb_to_linear(vec4(0.10f, 0.40f, 0.75f, 0.78f));
@@ -317,6 +330,14 @@ void ImGui::RenderFrame() {
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 	else if (backend == Render_Backend_DIRECTX11)
 		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+}
+
+void ImGui::BeginIconFont() {
+	ImGui::PushFont(icon_font);
+}
+
+void ImGui::EndIconFont() {
+	ImGui::PopFont();
 }
 
 #endif

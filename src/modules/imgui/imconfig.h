@@ -129,6 +129,8 @@ void Shutdown();
 bool HandleEvent(const Event &event);
 void UpdateFrame(r32 dt);
 void RenderFrame();
+void BeginIconFont();
+void EndIconFont();
 };
 
 #ifdef BUILD_IMGUI

@@ -7,7 +7,7 @@
 #include "modules/imgui/imconfig.h"
 #include "modules/imgui/imgui.h"
 #include "modules/imgui/debug.h"
-#include "modules/gfx/gfx_renderer.h"
+#include "modules/gfx/renderer.h"
 
 #include "entity.h"
 
@@ -572,17 +572,19 @@ int system_main() {
 
 #endif
 
-#if defined(BUILD_IMGUI)
-		{
-			Debug_TimedScope(ImGuiRender);
-			ImGui_RenderFrame();
-		}
-#endif
-
 #if defined(BUILD_DEBUG_SERVICE)
 		{
 			Debug_TimedScope(DebugRender);
 			Debug_RenderFrame(window_w, window_h);
+		}
+#endif
+
+		ImGui::ShowDemoWindow();
+
+#if defined(BUILD_IMGUI)
+		{
+			Debug_TimedScope(ImGuiRender);
+			ImGui_RenderFrame();
 		}
 #endif
 

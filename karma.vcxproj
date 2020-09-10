@@ -298,7 +298,7 @@ popd
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Developer|x64'">false</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="src\modules\gfx\gfx_renderer.cpp">
+    <ClCompile Include="src\modules\gfx\renderer.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug-Fast|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
@@ -375,7 +375,7 @@ popd
     <ClInclude Include="src\modules\core\unicode.h" />
     <ClInclude Include="src\modules\core\windows\resource.h" />
     <ClInclude Include="src\modules\core\gfx_platform.h" />
-    <ClInclude Include="src\modules\gfx\gfx_renderer.h" />
+    <ClInclude Include="src\modules\gfx\renderer.h" />
     <ClInclude Include="src\modules\core\gfx_types.h" />
     <ClInclude Include="src\modules\core\opengl\glad\include\glad\glad.h" />
     <ClInclude Include="src\modules\core\opengl\glad\include\KHR\khrplatform.h" />

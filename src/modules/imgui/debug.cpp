@@ -4,7 +4,9 @@
 #include "modules/core/stream.h"
 #include "modules/core/stb_sprintf.h"
 #include "modules/core/systems.h"
-#include "modules/gfx/gfx_renderer.h"
+
+#include "imgui.h"
+#include "modules/gfx/renderer.h"
 
 #include "audio.h"
 #include "debug.h"
@@ -31,11 +33,18 @@ static_assert(static_count(AUDIO_VISUALIZER_CHANNEL_NAMES) == Audio_Channel_COUN
 
 enum Menu_Icon {
 	Menu_FRAME_TIME,
-	Menu_PROFILER,
 	Menu_AUDIO,
+	Menu_PROFILER,
 
 	Menu_COUNT,
 };
+
+static const char *MENU_ICON_NAMES[] = {
+	"\ue950",
+	"\ue911",
+	"\ue922",
+};
+static_assert(Menu_COUNT == static_count(MENU_ICON_NAMES), "Update this!!");
 
 static const Color4 MENU_ITEM_COLOR_HOVERED		= vec4(1);
 static const Color4 MENU_ITEM_COLOR_DISABLED	= vec4(0.2f, 0.2f, 0.2f);
@@ -372,6 +381,23 @@ r32 draw_header_and_buttons(r32 render_height, r32 framebuffer_w, r32 framebuffe
 	String frame_time_string			= tprintf("FrameTime: %.3fms", frame_time_recorder.stablilized * 1000.0f);
 	String version_string				= "v" KARMA_VERSION_STRING;
 
+	ImGui::TextColored(vec4(1, 1, 0), "FrameTime: %.3fms", frame_time_recorder.stablilized);
+
+	ImGui::BeginIconFont();
+
+	Vec4 color;
+	for (int cindex = 0; cindex < Menu_COUNT; ++cindex) {
+		color = io.menu_icons_value[cindex] ? vec4(0, 1, 1) : vec4(1, 1, 1);
+		ImGui::SameLine();
+		ImGui::PushStyleColor(0, color);
+		if (ImGui::Button(MENU_ICON_NAMES[cindex])) {
+			io.menu_icons_value[cindex] = !io.menu_icons_value[cindex];
+		}
+		ImGui::PopStyleColor();
+	}
+
+	ImGui::EndIconFont();
+
 	r32 draw_y = render_height - HEADER_FONT_HEIGHT;
 
 	im2d_bind_texture(io.font.texture);
@@ -463,11 +489,14 @@ r32 draw_frame_time_graph(r32 render_height, Vec2 cursor, bool *set_on_hovered) 
 	
 	// Find max frame time to display the graph in reference to the max frame time
 	r32 max_frame_time = frame_time_recorder.history[0];
+	r32 min_frame_time = frame_time_recorder.history[0];
 	for (int frame_time_index = 1; frame_time_index < FRAME_TIME_LOGS_COUNT; ++frame_time_index) {
 		if (frame_time_recorder.history[frame_time_index] > max_frame_time)
 			max_frame_time = frame_time_recorder.history[frame_time_index];
+		if (frame_time_recorder.history[frame_time_index] < min_frame_time)
+			min_frame_time = frame_time_recorder.history[frame_time_index];
 	}
-	max_frame_time *= FRAME_TIME_MAX_DT_HEIGHT_FACTOR;
+	//max_frame_time *= FRAME_TIME_MAX_DT_HEIGHT_FACTOR;
 	r32 inv_max_frame_time = 1.0f / max_frame_time;
 
 	Vec2 bg_draw_pos = vec2(draw_x, draw_y);
@@ -489,6 +518,9 @@ r32 draw_frame_time_graph(r32 render_height, Vec2 cursor, bool *set_on_hovered) 
 		x += FRAME_TIME_GRAPH_PROGRESS;
 		prev_y = next_y;
 	}
+
+	ImGui::PlotLines("History", frame_time_recorder.history, static_count(frame_time_recorder.history),
+		0, nullptr, min_frame_time, max_frame_time, vec2(0, 75));
 
 	// Draw important frame-time markers (only if fits in reference with max frame time)
 	r32 t;
@@ -536,11 +568,19 @@ int calculate_max_children_count_in_profiler_records(Record *root_record) {
 	return max_children;
 }
 
-void draw_profiler_timelines_rects(Record *record, Vec2 top_position, r32 profiler_width, r32 child_height, int color_index, r32 inv_cycles, Vec2 cursor, Record **hovered_record) {
+void draw_profiler_timelines_rects(Record *record, Vec2 top_position, r32 profiler_width, r32 child_height, int color_index, r32 inv_cycles, Vec2 cursor, Record **hovered_record, r32 *max_height) {
 	Vec2 render_position;
 	render_position.y = top_position.y - child_height;
 	Vec2 dimension;
 	dimension.y = child_height;
+
+	ImDrawList *draw_list = ImGui::GetWindowDrawList();
+	ImVec2 p = ImGui::GetCursorScreenPos();
+	r32 item_width = ImGui::CalcItemWidth();
+
+	item_width = 0.95f * ImGui::GetWindowWidth();
+
+	*max_height += 25.0f;
 
 	while (record) {
 		Vec4 color = vec4(profiler.block_colors[color_index], 1);
@@ -550,15 +590,47 @@ void draw_profiler_timelines_rects(Record *record, Vec2 top_position, r32 profil
 		render_position.x = top_position.x + profiler_width * (r32)record->begin_cycle * inv_cycles;
 		dimension.x       = profiler_width * (r32)(record->end_cycle - record->begin_cycle) * inv_cycles;
 
+		auto rr_pos = p;
+		rr_pos.x += item_width * (r32)record->begin_cycle * inv_cycles;
+
+		Vec2 min_rect = rr_pos;
+		Vec2 max_rect = rr_pos + vec2(item_width * (r32)(record->end_cycle - record->begin_cycle) * inv_cycles, 25.0f);
+		draw_list->AddRectFilled(min_rect, max_rect, ImGui::ColorConvertFloat4ToU32(color));
+		draw_list->AddRect(min_rect, max_rect, 0xffffffff);
+
+		ImVec4 clip_rect;
+		clip_rect.x = min_rect.x;
+		clip_rect.x = min_rect.x;
+		clip_rect.z = max_rect.y;
+		clip_rect.w = max_rect.y;
+
+		ImVec2 text_draw_pos = min_rect;
+		text_draw_pos.y += 0.5f * ((max_rect.y - min_rect.y) - ImGui::GetFontSize());
+
+		s64 char_draw_count = record->name.count;
+		ImVec2 text_region = ImGui::CalcTextSize((char *)record->name.data, (char *)record->name.data + record->name.count);
+		if (max_rect.x - min_rect.x > text_region.x) {
+			text_draw_pos.x += (max_rect.x - min_rect.x - text_region.x) * 0.5f;
+		} else {
+			char_draw_count -= lroundf(record->name.count * ((text_region.x - max_rect.x + min_rect.x) / text_region.x));
+		}
+
+		draw_list->AddText(text_draw_pos, 0xffffffff, (char *)record->name.data, (char *)record->name.data + char_draw_count);
+
+		//draw_list->AddText(ImGui::GetFont(), 15.0f, rr_pos + vec2(2), 0xffffffff, (char *)record->name.data, (char *)record->name.data + record->name.count, 0.0f, &clip_rect);
+		
 		im2d_rect(render_position, dimension, color);
 		im2d_rect_outline(render_position, dimension, vec4(1), 0.4f);
 
-		if (point_inside_rect(cursor, mm_rect(render_position, render_position + dimension))) {
+		Vec2 cursor_rev = system_get_cursor_position_y_inverted();
+		if (point_inside_rect(cursor_rev, mm_rect(min_rect, max_rect))) {
 			*hovered_record = record;
 		}
 
 		if (record->child) {
-			draw_profiler_timelines_rects(record->child, top_position - vec2(0, child_height), profiler_width, child_height, color_index, inv_cycles, cursor, hovered_record);
+			ImGui::SetCursorScreenPos(ImVec2(p.x, p.y + 25.0f));
+			draw_profiler_timelines_rects(record->child, top_position - vec2(0, child_height), profiler_width, child_height, color_index, inv_cycles, cursor, hovered_record, max_height);
+			ImGui::SetCursorScreenPos(p);
 		}
 
 		record = record->next;
@@ -723,7 +795,37 @@ r32 draw_profiler(r32 render_height, Vec2 cursor, bool *set_on_hovered, Record *
 	im2d_unbind_texture();
 	im2d_rect(draw_region_position, draw_region_dimension, vec4(0, 0, 0, 0.8f));
 
-	draw_profiler_timelines_rects(root_record, top_position, profiler.width, child_height, 0, inv_cycles_count, cursor, &hovered_record);
+	ImGui::NewLine();
+	ImGui::TextColored(vec4(1, 1, 0), "Profiler");
+	ImGui::SameLine();
+
+	ImGui::BeginIconFont();
+
+	if (profiler.next_recording) {
+		if (ImGui::Button("\uea16")) {
+			profiler.next_recording = false;
+		}
+	} else {
+		if (ImGui::Button("\uea15")) {
+			profiler.next_recording = true;
+		}
+	}
+
+	ImGui::EndIconFont();
+
+	auto p = ImGui::GetCursorScreenPos();
+
+	r32 max_height = 0;
+	draw_profiler_timelines_rects(root_record, top_position, profiler.width, child_height, 0, inv_cycles_count, cursor, &hovered_record, &max_height);
+
+	auto pe = p;
+	p.x += 0.95f * ImGui::GetWindowWidth();
+	p.y += GetMaxValue(max_height, 25.0f * 3);
+
+	ImGui::GetWindowDrawList()->AddRect(p, pe, 0xffffffff);
+
+	p.y += max_height;
+	ImGui::SetCursorScreenPos(p);
 
 	im2d_bind_texture(io.font.texture);
 	draw_profiler_timelines_texts(root_record, top_position, profiler.width, child_height, font_height, inv_cycles_count);
@@ -770,11 +872,28 @@ r32 draw_audio_visualizer(r32 render_height, Vec2 cursor, bool *set_on_hovered) 
 	int audio_samples_read = audio_visualizer.write_cursor - AUDIO_VISUALIZER_RENDER_SAMPLE_COUNT;
 	while (audio_samples_read < 0) audio_samples_read += AUDIO_VISUALIZER_RENDER_SAMPLE_COUNT;
 
+	static const char *channel_names[] = {
+		"Left", "Right"
+	};
+	static_assert(Audio_Channel_COUNT == static_count(channel_names), "Channels name not enough");
+
+	ImGui::NewLine();
+	ImGui::TextColored(vec4(1, 1, 0), "Audio: %d channels", Audio_Channel_COUNT);
+	for (int channel_index = 0; channel_index < Audio_Channel_COUNT; ++channel_index) {
+		ImGui::PlotLines(channel_names[channel_index], 
+				audio_visualizer.history, 
+				AUDIO_VISUALIZER_MAX_SAMPLES, 
+				sizeof(r32) * channel_index, 
+				nullptr, -1.0f, 1.0f, vec2(0, 75),
+				sizeof(r32) * Audio_Channel_COUNT);
+	}
+
 	r32 *samples;
 	Vec2 sample_dim;
 	r32 sample_height, sample_draw_y;
 	for (int sample_index = 0; sample_index < AUDIO_VISUALIZER_RENDER_SAMPLE_COUNT; ++sample_index) {
 		samples = audio_visualizer.history + audio_samples_read * Audio_Channel_COUNT;
+		
 		for (int channel_index = 0; channel_index < Audio_Channel_COUNT; ++channel_index) {
 			sample_height = 0.5f * samples[channel_index] * AUDIO_VISUALIZER_CHANNEL_HEIGHT;
 			sample_dim = vec2(AUDIO_VISUALIZER_SAMPLE_WIDTH, sample_height);
@@ -854,15 +973,20 @@ void debug_render_frame(r32 framebuffer_w, r32 framebuffer_h) {
 
 	im2d_debug_begin(0, framebuffer_w, framebuffer_h, 0);
 
+	ImGui::Begin("Debug Information");
+
 	if (io.should_present) {
 		Vec2 cursor = system_get_cursor_position();
 		r32 render_height = framebuffer_h - DEBUG_PRESENTATION_Y_OFFSET;
 
-		
 		render_height = draw_header_and_buttons(render_height, framebuffer_w, framebuffer_h, cursor, &io.hovered);
 
 		if (io.menu_icons_value[Menu_FRAME_TIME]) {
 			render_height = draw_frame_time_graph(render_height, cursor, &io.hovered);
+		}
+
+		if (io.menu_icons_value[Menu_AUDIO]) {
+			render_height = draw_audio_visualizer(render_height, cursor, &io.hovered);
 		}
 
 		Record *hovered_record = nullptr; // overlay
@@ -870,21 +994,24 @@ void debug_render_frame(r32 framebuffer_w, r32 framebuffer_h) {
 			render_height = draw_profiler(render_height, cursor, &io.hovered, &hovered_record);
 		}
 
-		if (io.menu_icons_value[Menu_AUDIO]) {
-			render_height = draw_audio_visualizer(render_height, cursor, &io.hovered);
-		}
-
 		// Rendering Overlays at last
 		if (hovered_record) {
 			constexpr r32 PROFILER_PRESENTATION_FONT_HEIGHT = 16.0f;
-			const Vec2 PROFILER_HOVERED_RECORD_OFFSET = vec2(10.0f, -10.0f);
-
-			io.hovered = true;
+			const Vec2 PROFILER_HOVERED_RECORD_OFFSET = vec2(10.0f, 10.0f);
+			Vec2 pos = cursor + PROFILER_HOVERED_RECORD_OFFSET;
+			pos.y = (r32)system_get_client_size().y - pos.y;
 
 			r32    cycles = (r32)(hovered_record->end_cycle - hovered_record->begin_cycle) / 1000.0f;
 			String name   = hovered_record->name;
 			String desc   = hovered_record->id;
 			String time   = tprintf("%.3fms (%.3fkclocks)", hovered_record->ms, cycles);
+			const char *cctime   = null_tprintf("%.3fms (%.3fkclocks)", hovered_record->ms, cycles);
+
+			ImGui::BeginTooltip();
+			ImGui::SetTooltip("%s\n%s\n%s", name.data, desc.data, cctime);
+			ImGui::EndTooltip();
+
+			io.hovered = true;
 
 			r32 max_w, max_h;
 			max_w = im2d_calculate_text_region(PROFILER_PRESENTATION_FONT_HEIGHT, io.font.info, name).x;
@@ -892,7 +1019,6 @@ void debug_render_frame(r32 framebuffer_w, r32 framebuffer_h) {
 			max_w = GetMaxValue(max_w, im2d_calculate_text_region(PROFILER_PRESENTATION_FONT_HEIGHT, io.font.info, time).x);
 			max_h = PROFILER_PRESENTATION_FONT_HEIGHT * 3;
 
-			Vec2 pos = cursor + PROFILER_HOVERED_RECORD_OFFSET;
 			pos.y -= max_h;
 
 			im2d_unbind_texture();
@@ -907,6 +1033,8 @@ void debug_render_frame(r32 framebuffer_w, r32 framebuffer_h) {
 	}
 
 	draw_notifications(framebuffer_w, framebuffer_h);
+
+	ImGui::End();
 
 	im2d_end();
 
@@ -934,7 +1062,7 @@ void debug_profiler_timed_frame_end(r32 frame_time) {
 	}
 
 	memmove(frame_time_recorder.history + 1, frame_time_recorder.history, sizeof(r32) * (FRAME_TIME_MAX_LOGS - 1));
-	frame_time_recorder.history[0] = frame_time;
+	frame_time_recorder.history[0] = frame_time * 1000.0f;
 
 	io.frame_time = frame_time;
 
