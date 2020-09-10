@@ -6,9 +6,8 @@
 #include "modules/core/systems.h"
 
 #include "imgui.h"
-#include "modules/gfx/renderer.h"
 
-#include "audio.h"
+#include "audio.h" // TODO: Remove this
 #include "debug.h"
 
 static constexpr r32 DEBUG_PRESENTATION_X_OFFSET		= 5.0f;
@@ -63,8 +62,6 @@ struct Debug_Io {
 	bool hovered				= false;
 	bool should_present			= true;
 
-	Monospaced_Font		font;
-	Texture2d_Handle	menu_icons;
 	Mm_Rect				menu_icons_rect[Menu_COUNT];
 	Color4				menu_icons_color[Menu_COUNT];
 	bool				menu_icons_value[Menu_COUNT];
@@ -189,70 +186,6 @@ void debug_mode_enable() {
 		profiler.block_colors[color_index] = random_color3(0.9f, 0.3f);
 	}
 
-	//
-	//
-	//
-
-	{
-		String content = system_read_entire_file("dev/debug.font");
-		defer{ memory_free(content.data); };
-
-		if (content.count) {
-			Istream in = istream(content);
-
-			u32 min_c = *istream_consume(&in, u32);
-			u32 max_c = *istream_consume(&in, u32);
-			r32 advance = *istream_consume(&in, r32);
-			u32 size = *istream_consume(&in, u32);
-
-			io.font.info.range = (Monospaced_Font_Glyph_Range *)memory_allocate(size);
-			memcpy(io.font.info.range, istream_consume_size(&in, size), size);
-			io.font.info.first = (s32)min_c;
-			io.font.info.count = (s32)(max_c - min_c + 2);
-			io.font.info.advance = advance;
-
-			int w = *istream_consume(&in, int);
-			int h = *istream_consume(&in, int);
-			int n = *istream_consume(&in, int);
-			u8 *pixels = (u8 *)istream_consume_size(&in, w * h * n);
-
-			io.font.texture = gfx_create_texture2d((u32)w, (u32)h, (u32)n, Data_Format_RGBA8_UNORM_SRGB, (const u8 **)&pixels, Buffer_Usage_IMMUTABLE, 1);
-		}
-	}
-
-	{
-		String content = system_read_entire_file("dev/icons.img");
-		defer{ memory_free(content.data); };
-
-		if (content.count) {
-			Istream in = istream(content);
-
-			u32 w				= *istream_consume(&in, u32);
-			u32 h				= *istream_consume(&in, u32);
-			u32 x_icon_count	= *istream_consume(&in, u32);
-			u32 y_icon_count	= *istream_consume(&in, u32);
-			u32 sz				= *istream_consume(&in, u32);
-			u8 *pixels			= (u8 *)istream_consume_size(&in, sz);
-
-			assert(x_icon_count * y_icon_count >= Menu_COUNT);
-
-			io.menu_icons = gfx_create_texture2d(w, h, 4, Data_Format_RGBA8_UNORM_SRGB, (const u8 **)&pixels, Buffer_Usage_IMMUTABLE, 1);
-
-			for (u32 y_index = 0; y_index < y_icon_count; ++y_index) {
-				for (u32 x_index = 0; x_index < x_icon_count; ++x_index) {
-					u32 index = x_index + y_index * x_icon_count;
-					if (index >= Menu_COUNT) break;
-
-					io.menu_icons_rect[index].min.x = (r32)x_index / (r32)x_icon_count;
-					io.menu_icons_rect[index].max.y = (r32)y_index / (r32)y_icon_count;
-					io.menu_icons_rect[index].max.x = (r32)(x_index + 1) / (r32)x_icon_count;
-					io.menu_icons_rect[index].min.y = (r32)(y_index + 1) / (r32)y_icon_count;
-
-					io.menu_icons_color[index] = vec4(1);
-				}
-			}
-		}
-	}
 }
 
 bool debug_handle_event(Event &event) {
@@ -400,66 +333,6 @@ r32 draw_header_and_buttons(r32 render_height, r32 framebuffer_w, r32 framebuffe
 
 	r32 draw_y = render_height - HEADER_FONT_HEIGHT;
 
-	im2d_bind_texture(io.font.texture);
-	Vec2 frame_time_draw_pos = vec2(DEBUG_PRESENTATION_X_OFFSET, draw_y);
-	auto ft_size = im2d_calculate_text_region(HEADER_FONT_HEIGHT, io.font.info, frame_time_string);
-	im2d_text(frame_time_draw_pos, HEADER_FONT_HEIGHT, io.font.info, frame_time_string, HEADER_FONT_COLOR);
-
-	if (point_inside_rect(cursor, mm_rect(frame_time_draw_pos, frame_time_draw_pos + ft_size))) {
-		*set_on_hovered = true;
-	}
-
-	auto v_size = im2d_calculate_text_region(HEADER_FONT_HEIGHT, io.font.info, version_string);
-	im2d_text(vec2(framebuffer_w - v_size.x - 8.0f, draw_y), HEADER_FONT_HEIGHT, io.font.info, version_string, HEADER_FONT_COLOR);
-
-	//
-	// Menu Icons update and render
-	//
-
-	Vec2 icon_positions[Menu_COUNT];
-	Vec2 icon_dimensions[Menu_COUNT];
-
-	const r32  FRAME_TIME_AND_MENU_GAP	= 20.0f;
-	const r32  MENU_ICON_X_OFFSET		= 5.0f;
-	const auto MENU_ICON_WIDTH			= HEADER_FONT_HEIGHT;
-	const auto MENU_ICON_X_POSITION		= MENU_ICON_WIDTH + MENU_ICON_X_OFFSET;
-
-	r32 icon_draw_start_x = ft_size.x + FRAME_TIME_AND_MENU_GAP;
-	for (int icon_index = 0; icon_index < Menu_COUNT; ++icon_index) {
-		Vec2 pos = vec2(icon_draw_start_x + MENU_ICON_X_POSITION * icon_index, draw_y);
-		Vec2 dim = vec2(HEADER_FONT_HEIGHT);
-
-		icon_positions[icon_index]  = pos;
-		icon_dimensions[icon_index] = dim;
-
-		bool hovering = point_inside_rect(cursor, mm_rect(pos, pos + dim));
-
-		if (hovering && io.left_button_pressed) {
-			io.menu_icons_value[icon_index] = !io.menu_icons_value[icon_index];
-		}
-
-		if (hovering) {
-			io.menu_icons_color[icon_index] = MENU_ITEM_COLOR_HOVERED;
-		} else if (io.menu_icons_value[icon_index]) {
-			io.menu_icons_color[icon_index] = MENU_ITEMS_COLORS[icon_index];
-		} else {
-			io.menu_icons_color[icon_index] = MENU_ITEM_COLOR_DISABLED;
-		}
-
-	}
-
-	Vec2 min_icons_region = vec2(icon_draw_start_x, draw_y);
-	Vec2 max_icons_region = vec2(icon_draw_start_x + MENU_ICON_X_POSITION * Menu_COUNT, draw_y + HEADER_FONT_HEIGHT);
-	if (point_inside_rect(cursor, mm_rect(min_icons_region, max_icons_region))) {
-		*set_on_hovered = true;
-	}
-
-	im2d_bind_texture(io.menu_icons);
-
-	for (int icon_index = 0; icon_index < Menu_COUNT; ++icon_index) {
-		im2d_rect(icon_positions[icon_index], icon_dimensions[icon_index], io.menu_icons_rect[icon_index], io.menu_icons_color[icon_index]);
-	}
-
 	return render_height - HEADER_FONT_HEIGHT;
 }
 
@@ -499,52 +372,8 @@ r32 draw_frame_time_graph(r32 render_height, Vec2 cursor, bool *set_on_hovered) 
 	//max_frame_time *= FRAME_TIME_MAX_DT_HEIGHT_FACTOR;
 	r32 inv_max_frame_time = 1.0f / max_frame_time;
 
-	Vec2 bg_draw_pos = vec2(draw_x, draw_y);
-	if (point_inside_rect(cursor, mm_rect(bg_draw_pos, bg_draw_pos + vec2(FRAME_TIME_GRAPH_WIDTH, FRAME_TIME_GRAPH_HEIGHT)))) {
-		*set_on_hovered = true;
-	}
-
-	im2d_unbind_texture();
-	im2d_rect(bg_draw_pos, vec2(FRAME_TIME_GRAPH_WIDTH, FRAME_TIME_GRAPH_HEIGHT), vec4(0, 0, 0, 0.8f));
-
-	// Draw the actual graph
-	r32 next_y;
-	r32 x = draw_x;
-	r32 prev_y = frame_time_recorder.history[0] * inv_max_frame_time * FRAME_TIME_GRAPH_HEIGHT + draw_y;
-	for (int frame_time_index = 1; frame_time_index < FRAME_TIME_LOGS_COUNT; ++frame_time_index) {
-		next_y = frame_time_recorder.history[frame_time_index] * inv_max_frame_time * FRAME_TIME_GRAPH_HEIGHT + draw_y;
-
-		im2d_line(vec2(x, prev_y), vec2(x + FRAME_TIME_GRAPH_PROGRESS, next_y), vec4(1), FRAME_TIME_GRAPH_LINE_THICKNESS);
-		x += FRAME_TIME_GRAPH_PROGRESS;
-		prev_y = next_y;
-	}
-
 	ImGui::PlotLines("History", frame_time_recorder.history, static_count(frame_time_recorder.history),
 		0, nullptr, min_frame_time, max_frame_time, vec2(0, 75));
-
-	// Draw important frame-time markers (only if fits in reference with max frame time)
-	r32 t;
-	r32 marked_dt_y_offset[static_count(FRAME_TIME_MARK_DT)] = {};
-	for (int mark_index = 0; mark_index < static_count(FRAME_TIME_MARK_DT); ++mark_index) {
-		t = FRAME_TIME_MARK_DT[mark_index] * inv_max_frame_time;
-		marked_dt_y_offset[mark_index] = t * FRAME_TIME_GRAPH_HEIGHT;
-
-		if (t > 0 && t <= 1) {
-			r32 mark_y = draw_y + marked_dt_y_offset[mark_index];
-			im2d_line(vec2(draw_x, mark_y), vec2(FRAME_TIME_GRAPH_WIDTH, mark_y), FRAME_TIME_MARK_COLOR, FRAME_TIME_MARK_LINE_THICKNESS);
-		}
-	}
-
-	// Draw the outline over the region
-	im2d_rect_outline(bg_draw_pos, vec2(FRAME_TIME_GRAPH_WIDTH, FRAME_TIME_GRAPH_HEIGHT), io.menu_icons_color[Menu_FRAME_TIME], FRAME_TIME_OUTLINE_THICKNESS);
-
-	im2d_bind_texture(io.font.texture);
-	for (int mark_index = 0; mark_index < static_count(FRAME_TIME_MARK_DT); ++mark_index) {
-		if (marked_dt_y_offset[mark_index] > FRAME_TIME_MARK_CRITICAL_Y_OFFSET) {
-			String mark_string = tprintf("%.2fms", 1000.0f * FRAME_TIME_MARK_DT[mark_index]);
-			im2d_text(vec2(draw_x, draw_y + marked_dt_y_offset[mark_index] - FRAME_TIME_MARK_FONT_HEIGHT), FRAME_TIME_MARK_FONT_HEIGHT, io.font.info, mark_string, FRAME_TIME_MARK_COLOR);
-		}
-	}
 
 	return draw_y;
 }
@@ -617,11 +446,6 @@ void draw_profiler_timelines_rects(Record *record, Vec2 top_position, r32 profil
 
 		draw_list->AddText(text_draw_pos, 0xffffffff, (char *)record->name.data, (char *)record->name.data + char_draw_count);
 
-		//draw_list->AddText(ImGui::GetFont(), 15.0f, rr_pos + vec2(2), 0xffffffff, (char *)record->name.data, (char *)record->name.data + record->name.count, 0.0f, &clip_rect);
-		
-		im2d_rect(render_position, dimension, color);
-		im2d_rect_outline(render_position, dimension, vec4(1), 0.4f);
-
 		Vec2 cursor_rev = system_get_cursor_position_y_inverted();
 		if (point_inside_rect(cursor_rev, mm_rect(min_rect, max_rect))) {
 			*hovered_record = record;
@@ -646,14 +470,6 @@ void draw_profiler_timelines_texts(Record *record, Vec2 top_position, r32 profil
 	while (record) {
 		render_position.x = top_position.x + profiler_width * (r32)record->begin_cycle * inv_cycles;
 		dimension.x       = profiler_width * (r32)(record->end_cycle - record->begin_cycle) * inv_cycles;
-
-		Vec2 region = im2d_calculate_text_region(font_height, io.font.info, record->name);
-		if (dimension.x > region.x) {
-			// align font in center only if there is enough space for font to be displayed
-			render_position.x += (dimension.x - region.x) * 0.5f;
-		}
-
-		im2d_text_region(render_position, vec2(dimension.x, font_height), io.font.info, record->name, vec4(1));
 
 		if (record->child) {
 			draw_profiler_timelines_texts(record->child, top_position- vec2(0, child_height), profiler_width, child_height, font_height, inv_cycles);
@@ -768,17 +584,6 @@ r32 draw_profiler(r32 render_height, Vec2 cursor, bool *set_on_hovered, Record *
 
 	Vec4 recording_state_color = vec4(0);
 
-	if (point_inside_rect(cursor, mm_rect(draw_region_position, draw_region_position + draw_region_dimension))) {
-		*set_on_hovered = true;
-
-		if (point_inside_rect(cursor, mm_rect(recording_state_position, recording_state_position + vec2(PROFILER_BUTTON_SIZE)))) {
-			if (io.left_button_pressed) {
-				profiler.next_recording = !profiler.next_recording;
-			}
-			recording_state_color += PROFILER_RECORD_BUTTON_HOVERING_COLOR_ADDITION;
-		}
-	}
-
 	if (profiler.next_recording) {
 		recording_state_color += PROFILER_RECORD_BUTTON_RECORDING_COLOR;
 	} else {
@@ -791,9 +596,6 @@ r32 draw_profiler(r32 render_height, Vec2 cursor, bool *set_on_hovered, Record *
 	} else {
 		resizer_color = vec4(1);
 	}
-
-	im2d_unbind_texture();
-	im2d_rect(draw_region_position, draw_region_dimension, vec4(0, 0, 0, 0.8f));
 
 	ImGui::NewLine();
 	ImGui::TextColored(vec4(1, 1, 0), "Profiler");
@@ -827,13 +629,7 @@ r32 draw_profiler(r32 render_height, Vec2 cursor, bool *set_on_hovered, Record *
 	p.y += max_height;
 	ImGui::SetCursorScreenPos(p);
 
-	im2d_bind_texture(io.font.texture);
 	draw_profiler_timelines_texts(root_record, top_position, profiler.width, child_height, font_height, inv_cycles_count);
-
-	im2d_unbind_texture();
-	im2d_rect(profiler.resizer_position, vec2(PROFILER_BUTTON_SIZE), resizer_color);
-	im2d_rect(recording_state_position, vec2(PROFILER_BUTTON_SIZE), recording_state_color);
-	im2d_rect_outline(draw_region_position, draw_region_dimension, io.menu_icons_color[Menu_PROFILER], PROFILER_OUTLINE_THICKNESS);
 
 	if (out_hovered_record) {
 		*out_hovered_record = hovered_record;
@@ -866,9 +662,6 @@ r32 draw_audio_visualizer(r32 render_height, Vec2 cursor, bool *set_on_hovered) 
 		*set_on_hovered = true;
 	}
 
-	im2d_unbind_texture();
-	im2d_rect(draw_corner, region_dim, vec4(0, 0, 0, 0.8f));
-
 	int audio_samples_read = audio_visualizer.write_cursor - AUDIO_VISUALIZER_RENDER_SAMPLE_COUNT;
 	while (audio_samples_read < 0) audio_samples_read += AUDIO_VISUALIZER_RENDER_SAMPLE_COUNT;
 
@@ -888,34 +681,6 @@ r32 draw_audio_visualizer(r32 render_height, Vec2 cursor, bool *set_on_hovered) 
 				sizeof(r32) * Audio_Channel_COUNT);
 	}
 
-	r32 *samples;
-	Vec2 sample_dim;
-	r32 sample_height, sample_draw_y;
-	for (int sample_index = 0; sample_index < AUDIO_VISUALIZER_RENDER_SAMPLE_COUNT; ++sample_index) {
-		samples = audio_visualizer.history + audio_samples_read * Audio_Channel_COUNT;
-		
-		for (int channel_index = 0; channel_index < Audio_Channel_COUNT; ++channel_index) {
-			sample_height = 0.5f * samples[channel_index] * AUDIO_VISUALIZER_CHANNEL_HEIGHT;
-			sample_dim = vec2(AUDIO_VISUALIZER_SAMPLE_WIDTH, sample_height);
-			sample_draw_y = draw_y + (Audio_Channel_COUNT - channel_index - 1) * AUDIO_VISUALIZER_CHANNEL_HEIGHT + AUDIO_VISUALIZER_CHANNEL_HEIGHT * 0.5f;
-			im2d_rect(vec2(draw_x + sample_index * AUDIO_VISUALIZER_SAMPLE_WIDTH, sample_draw_y), sample_dim, AUDIO_VISUALIZER_CHANNEL_COLOR);
-		}
-		audio_samples_read = (audio_samples_read + 1) % AUDIO_VISUALIZER_MAX_SAMPLES;
-	}
-
-	for (int channel_index = 1; channel_index < Audio_Channel_COUNT; ++channel_index) {
-		r32 channel_seperator_y = draw_y + channel_index * AUDIO_VISUALIZER_CHANNEL_HEIGHT;
-		im2d_line(vec2(draw_x, channel_seperator_y), vec2(draw_x + AUDIO_VISUALIZER_CHANNEL_WIDTH, channel_seperator_y), vec4(1), AUDIO_VISUALIZER_CHANNEL_SEPERATOR_THICKNESS);
-	}
-
-	im2d_rect_outline(draw_corner, region_dim, io.menu_icons_color[Menu_AUDIO]);
-
-	im2d_bind_texture(io.font.texture);
-	for (int channel_index = 0; channel_index < Audio_Channel_COUNT; ++channel_index) {
-		r32 channel_font_y = draw_y + (Audio_Channel_COUNT - channel_index) * AUDIO_VISUALIZER_CHANNEL_HEIGHT - AUDIO_VISUALIZER_CHANNEL_FONT_OFFSET_Y - AUDIO_VISUALIZER_CHANNEL_FONT_SIZE;
-		im2d_text(vec2(draw_x + AUDIO_VISUALIZER_CHANNEL_FONT_OFFSET_X, channel_font_y), AUDIO_VISUALIZER_CHANNEL_FONT_SIZE, io.font.info, AUDIO_VISUALIZER_CHANNEL_NAMES[channel_index], vec4(1));
-	}
-
 	return draw_y;
 }
 
@@ -926,8 +691,6 @@ void draw_notifications(r32 framebuffer_w, r32 framebuffer_h) {
 	const Color3	NOTIFICATION_FONT_COLOR_OUT			= vec3(1, 1, 1);
 	const Color3	NOTIFICATION_FONT_SHADOW_COLOR		= vec3(0.5f, 0, 0);
 	const Vec2		NOTIFICATION_SHADOW_OFFSET			= vec2(1.5f, -1.5f);
-
-	im2d_bind_texture(io.font.texture);
 
 	int done_count = 0;
 	int notification_counter = 0;
@@ -945,18 +708,7 @@ void draw_notifications(r32 framebuffer_w, r32 framebuffer_h) {
 		notification_color.xyz	= lerp(NOTIFICATION_FONT_COLORS_IN[notification.level], NOTIFICATION_FONT_COLOR_OUT, 1.0f - alpha_out);
 		notification_color.w	= alpha;
 
-		Vec2 size = im2d_calculate_text_region(NOTIFICATION_FONT_SIZE, io.font.info, String(notification.msg, notification.msg_length));
-
-		Vec2 draw_pos;
-		draw_pos.x = framebuffer_w * 0.5f - size.x * 0.5f;
-		draw_pos.y = framebuffer_h * NOTIFICATION_DISPLAY_HEIGHT_FACTOR - NOTIFICATION_FONT_SIZE * notification_counter;
-
-		im2d_text(draw_pos + NOTIFICATION_SHADOW_OFFSET, NOTIFICATION_FONT_SIZE, io.font.info, String(notification.msg, notification.msg_length), vec4(NOTIFICATION_FONT_SHADOW_COLOR, alpha));
-		im2d_text(draw_pos, NOTIFICATION_FONT_SIZE, io.font.info, String(notification.msg, notification.msg_length), notification_color);
-
 		notification.t = lerp(notification.t, -1.0f, 1.0f - powf(1.0f - NOTIFICATION_FADE_OUT_RATE, io.frame_time));
-
-		draw_pos.y -= NOTIFICATION_FONT_SIZE;
 
 		if (notification.t <= 0.0f) {
 			done_count += 1;
@@ -970,8 +722,6 @@ void draw_notifications(r32 framebuffer_w, r32 framebuffer_h) {
 
 void debug_render_frame(r32 framebuffer_w, r32 framebuffer_h) {
 	io.hovered = false;
-
-	im2d_debug_begin(0, framebuffer_w, framebuffer_h, 0);
 
 	ImGui::Begin("Debug Information");
 
@@ -1012,22 +762,6 @@ void debug_render_frame(r32 framebuffer_w, r32 framebuffer_h) {
 			ImGui::EndTooltip();
 
 			io.hovered = true;
-
-			r32 max_w, max_h;
-			max_w = im2d_calculate_text_region(PROFILER_PRESENTATION_FONT_HEIGHT, io.font.info, name).x;
-			max_w = GetMaxValue(max_w, im2d_calculate_text_region(PROFILER_PRESENTATION_FONT_HEIGHT, io.font.info, desc).x);
-			max_w = GetMaxValue(max_w, im2d_calculate_text_region(PROFILER_PRESENTATION_FONT_HEIGHT, io.font.info, time).x);
-			max_h = PROFILER_PRESENTATION_FONT_HEIGHT * 3;
-
-			pos.y -= max_h;
-
-			im2d_unbind_texture();
-			im2d_rect(pos, vec2(max_w, max_h), vec4(0.02f, 0.02f, 0.02f, 0.8f));
-
-			im2d_bind_texture(io.font.texture);
-			im2d_text(pos + vec2(0, 2 * PROFILER_PRESENTATION_FONT_HEIGHT), PROFILER_PRESENTATION_FONT_HEIGHT, io.font.info, name, vec4(1));
-			im2d_text(pos + vec2(0, PROFILER_PRESENTATION_FONT_HEIGHT), PROFILER_PRESENTATION_FONT_HEIGHT, io.font.info, desc, vec4(1));
-			im2d_text(pos, PROFILER_PRESENTATION_FONT_HEIGHT, io.font.info, time, vec4(1));
 		}
 		
 	}
@@ -1035,8 +769,6 @@ void debug_render_frame(r32 framebuffer_w, r32 framebuffer_h) {
 	draw_notifications(framebuffer_w, framebuffer_h);
 
 	ImGui::End();
-
-	im2d_end();
 
 	io.left_button_pressed = false;
 }
