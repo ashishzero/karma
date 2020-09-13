@@ -453,6 +453,13 @@ Handle system_create_window(const char *title, s32 width, s32 height, System_Win
 void   system_request_quit();
 void   system_exit_process(int result);
 
+enum Audio_Channel {
+	Audio_Channel_LEFT,
+	Audio_Channel_RIGHT,
+
+	Audio_Channel_COUNT
+};
+
 bool system_audio(Audio_Callback callback, Audio_Device_Refresh refresh, void *user_data);
 u32 system_audio_sample_rate();
 u32 system_audio_channel_count();

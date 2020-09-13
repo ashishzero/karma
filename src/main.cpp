@@ -207,6 +207,11 @@ int system_main() {
 				continue;
 			}
 
+			if ((event.type & Event_Type_KEY_UP) && event.key.symbol == Key_SPACE) {
+				Debug_NotifySuccess("Sent success message");
+				continue;
+			}
+
 			if (event.type & Event_Type_KEYBOARD) {
 				float value = (float)(event.key.state == Key_State_DOWN);
 				switch (event.key.symbol) {
@@ -577,7 +582,7 @@ int system_main() {
 		}
 #endif
 
-		//ImGui::ShowDemoWindow();
+		ImGui::ShowDemoWindow();
 
 #if defined(BUILD_IMGUI)
 		{

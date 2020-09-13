@@ -4,10 +4,9 @@
 #include "modules/core/stream.h"
 #include "modules/core/stb_sprintf.h"
 #include "modules/core/systems.h"
+#include "modules/core/intrinsics.h"
 
 #include "imgui.h"
-
-#include "audio.h" // TODO: Remove this
 #include "debug.h"
 
 static constexpr u32 PROFILER_MAX_TIMED_RECORDS_LOGS				= 5000000; // around 190 MB
@@ -106,17 +105,14 @@ struct Audio_Visualizer {
 	int	write_cursor;
 };
 
+static constexpr int NOTIFICATION_MAX_COUNT			= 10;
+static constexpr r32 NOTIFICATION_FADE_STAY_TIME	= 5;
 
-
-
-static constexpr int NOTIFICATION_MAX_COUNT			= 5;
-static constexpr r32 NOTIFICATION_FADE_STAY_TIME	= 10;
-
-const Color3 NOTIFICATION_FONT_COLORS_IN[]= {
-	vec3(1.0f, 1.0f, 1.0f),
-	vec3(0.2f, 0.9f, 0.3f),
-	vec3(1.0f, 1.0f, 0.1f),
-	vec3(0.9f, 0.1f, 0.3f),
+const Color4 NOTIFICATION_FONT_COLORS_IN[]= {
+	vec4(1.0f, 1.0f, 1.0f),
+	vec4(0.2f, 0.9f, 0.3f),
+	vec4(1.0f, 1.0f, 0.1f),
+	vec4(0.9f, 0.1f, 0.3f),
 };
 static_assert(static_count(NOTIFICATION_FONT_COLORS_IN) == Notification_Level_COUNT, "Notification color not specified for all notification levels");
 
@@ -129,8 +125,8 @@ struct Notification {
 
 struct Notification_Handler {
 	Notification	notifications[NOTIFICATION_MAX_COUNT];
-	int				write_index;
-	int				read_index;
+	s64				write_index;
+	s64				read_index;
 };
 
 static Profiler				profiler;
@@ -202,10 +198,10 @@ void debug_audio_feedback(r32 *samples, u32 size_in_bytes, u32 channel_count, u3
 }
 
 void debug_notify_level(Notification_Level level, ANALYSE_PRINTF_FORMAT_STRING(const char *fmt), ...) {
-	Notification *notification = notification_handler.notifications + notification_handler.write_index;
-	notification_handler.write_index = (notification_handler.write_index + 1) % NOTIFICATION_MAX_COUNT;
-	if (notification_handler.write_index == notification_handler.read_index)
-		notification_handler.read_index = (notification_handler.read_index + 1) % NOTIFICATION_MAX_COUNT;
+	Notification *notification = notification_handler.notifications + (notification_handler.write_index % NOTIFICATION_MAX_COUNT);
+	intrin_InterlockedIncrement64(&notification_handler.write_index);
+	if ((notification_handler.write_index % NOTIFICATION_MAX_COUNT) == (notification_handler.read_index % NOTIFICATION_MAX_COUNT))
+		intrin_InterlockedIncrement64(&notification_handler.read_index);
 	
 	va_list ap;
 	va_start(ap, fmt);
@@ -451,39 +447,33 @@ void draw_audio_visualizer() {
 	}
 }
 
-void draw_notifications(r32 framebuffer_w, r32 framebuffer_h) {
-	constexpr r32	NOTIFICATION_FONT_SIZE				= 32;
-	constexpr r32	NOTIFICATION_FADE_OUT_RATE			= 0.9f;
-	constexpr r32	NOTIFICATION_DISPLAY_HEIGHT_FACTOR	= 0.85f;
-	const Color3	NOTIFICATION_FONT_COLOR_OUT			= vec3(1, 1, 1);
-	const Color3	NOTIFICATION_FONT_SHADOW_COLOR		= vec3(0.5f, 0, 0);
-	const Vec2		NOTIFICATION_SHADOW_OFFSET			= vec2(1.5f, -1.5f);
+void draw_notifications() {
+	r32 dt = ImGui::GetIO().DeltaTime;
 
-	int done_count = 0;
-	int notification_counter = 0;
-	for (int notification_index = notification_handler.read_index; 
-		notification_index != notification_handler.write_index; 
-		notification_index = (notification_index  + 1) % NOTIFICATION_MAX_COUNT, ++notification_counter) {
+	constexpr r32 DISTANCE = 10.0f;
 
-		auto &notification = notification_handler.notifications[notification_index];
+	if (notification_handler.read_index < notification_handler.write_index) {
+		ImGuiViewport* viewport = ImGui::GetMainViewport();
+		ImVec2 work_area_pos = viewport->GetWorkPos();
+		ImVec2 work_area_size = viewport->GetWorkSize();
+		ImVec2 window_pos = ImVec2(work_area_pos.x + work_area_size.x * 0.5f, work_area_pos.y + DISTANCE);
+		ImVec2 window_pos_pivot = ImVec2(0.0f, 0.0f);
+		ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, window_pos_pivot);
+		ImGui::SetNextWindowViewport(viewport->ID);
 
-		r32 alpha_in  = 1.0f - map01(1, NOTIFICATION_FADE_STAY_TIME, mmclamp(1, NOTIFICATION_FADE_STAY_TIME, notification.t));
-		r32 alpha_out = clamp01(notification.t);
-		r32 alpha	  = alpha_in * alpha_out;
-
-		Vec4 notification_color;
-		notification_color.xyz	= lerp(NOTIFICATION_FONT_COLORS_IN[notification.level], NOTIFICATION_FONT_COLOR_OUT, 1.0f - alpha_out);
-		notification_color.w	= alpha;
-
-		notification.t = lerp(notification.t, -1.0f, 1.0f - powf(1.0f - NOTIFICATION_FADE_OUT_RATE, ImGui::GetIO().DeltaTime));
-
-		if (notification.t <= 0.0f) {
-			done_count += 1;
+		ImGuiWindowFlags flags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
+		if (ImGui::Begin("Notifications window", nullptr, flags)) {
+			for (s64 index = notification_handler.read_index; index != notification_handler.write_index; ++index) {
+				auto &notification = notification_handler.notifications[index % NOTIFICATION_MAX_COUNT];
+				if (notification.t > 0.0f) {
+					ImGui::TextColored(NOTIFICATION_FONT_COLORS_IN[notification.level], notification.msg);
+					notification.t -= dt;
+				} else {
+					intrin_InterlockedIncrement64(&notification_handler.read_index);
+				}
+			}
+			ImGui::End();
 		}
-	}
-
-	if (done_count) {
-		notification_handler.read_index = (notification_handler.read_index + done_count) % NOTIFICATION_MAX_COUNT;
 	}
 }
 
@@ -492,7 +482,6 @@ void debug_render_frame() {
 		ImGui::Begin("Debug Information");
 
 		Vec2 cursor = ImGui::GetIO().MousePos;
-		//Vec2 cursor = system_get_cursor_position_y_inverted();
 
 		draw_header_and_buttons();
 
@@ -525,7 +514,7 @@ void debug_render_frame() {
 		ImGui::End();
 	}
 
-	//draw_notifications();
+	draw_notifications();
 }
 
 

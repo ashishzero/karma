@@ -31,14 +31,6 @@ struct Wave_Data {
 //
 //
 
-enum Audio_Channel {
-	Audio_Channel_LEFT,
-	Audio_Channel_RIGHT,
-
-	Audio_Channel_COUNT
-};
-
-
 //
 //
 //
