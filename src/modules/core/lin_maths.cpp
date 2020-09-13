@@ -248,7 +248,7 @@ Vec4 vec4_normalize(Vec4 v) {
 //
 
 r32 vec2_angle_between(Vec2 a, Vec2 b) {
-	r32 dot = Clamp(-1.0f, 1.0f, vec2_dot(a, b));
+	r32 dot = mmclamp(-1.0f, 1.0f, vec2_dot(a, b));
 	return acosf(dot);
 }
 r32 vec2_angle_between_normalize(Vec2 a, Vec2 b) {
@@ -257,7 +257,7 @@ r32 vec2_angle_between_normalize(Vec2 a, Vec2 b) {
 	return vec2_angle_between(a, b);
 }
 r32 vec3_angle_between(Vec3 a, Vec3 b) {
-	r32 dot = Clamp(-1.0f, 1.0f, vec3_dot(a, b));
+	r32 dot = mmclamp(-1.0f, 1.0f, vec3_dot(a, b));
 	return acosf(dot);
 }
 r32 vec3_angle_between_normalize(Vec3 a, Vec3 b) {
@@ -267,7 +267,7 @@ r32 vec3_angle_between_normalize(Vec3 a, Vec3 b) {
 }
 
 r32 vec2_signed_angle_between(Vec2 a, Vec2 b) {
-	r32 dot = Clamp(-1.0f, 1.0f, vec2_dot(a, b));
+	r32 dot = mmclamp(-1.0f, 1.0f, vec2_dot(a, b));
 	r32 angle = acosf(dot);
 	r32 cross = a.x * b.y - a.y * b.x;
 	if (cross < 0) {
@@ -281,7 +281,7 @@ r32 vec2_signed_angle_between_normalize(Vec2 a, Vec2 b) {
 	return vec2_signed_angle_between(a, b);
 }
 r32 vec3_signed_angle_between(Vec3 a, Vec3 b, Vec3 n) {
-	r32 dot = Clamp(-1.0f, 1.0f, vec3_dot(a, b));
+	r32 dot = mmclamp(-1.0f, 1.0f, vec3_dot(a, b));
 	r32 angle = acosf(dot);
 	Vec3 cross = vec3_cross(a, b);
 	if (vec3_dot(n, cross) < 0) {
@@ -301,13 +301,13 @@ r32 vec3_signed_angle_between_normalize(Vec3 a, Vec3 b, Vec3 n) {
 //
 
 bool vec2_equals(Vec2 a, Vec2 b, r32 tolerance) {
-	return RealEquals(a.x, b.x, tolerance) && RealEquals(a.y, b.y, tolerance);
+	return real_equals(a.x, b.x, tolerance) && real_equals(a.y, b.y, tolerance);
 }
 bool vec3_equals(Vec3 a, Vec3 b, r32 tolerance) {
-	return RealEquals(a.x, b.x, tolerance) && RealEquals(a.y, b.y, tolerance) && RealEquals(a.z, b.z, tolerance);
+	return real_equals(a.x, b.x, tolerance) && real_equals(a.y, b.y, tolerance) && real_equals(a.z, b.z, tolerance);
 }
 bool vec4_equals(Vec4 a, Vec4 b, r32 tolerance) {
-	return RealEquals(a.x, b.x, tolerance) && RealEquals(a.y, b.y, tolerance) && RealEquals(a.z, b.z, tolerance) && RealEquals(a.w, b.w, tolerance);
+	return real_equals(a.x, b.x, tolerance) && real_equals(a.y, b.y, tolerance) && real_equals(a.z, b.z, tolerance) && real_equals(a.w, b.w, tolerance);
 }
 
 //
@@ -1072,10 +1072,10 @@ Quat quat_lookat(Vec3 from, Vec3 to, Vec3 world_forward) {
 }
 
 bool quat_equals(Quat a, Quat b, r32 tolerance) {
-	bool x = RealEquals(a.x, b.x, tolerance);
-	bool y = RealEquals(a.y, b.y, tolerance);
-	bool z = RealEquals(a.z, b.z, tolerance);
-	bool w = RealEquals(a.w, b.w, tolerance);
+	bool x = real_equals(a.x, b.x, tolerance);
+	bool y = real_equals(a.y, b.y, tolerance);
+	bool z = real_equals(a.z, b.z, tolerance);
+	bool w = real_equals(a.w, b.w, tolerance);
 	return x && y && z && w;
 }
 
@@ -1244,23 +1244,23 @@ Color4 rgb_to_hsv(Color4 c) {
 //
 
 Vec2 vec2_clamp(Vec2 min, Vec2 max, Vec2 v) {
-	v.x = Clamp(min.x, max.x, v.x);
-	v.y = Clamp(min.y, max.y, v.y);
+	v.x = mmclamp(min.x, max.x, v.x);
+	v.y = mmclamp(min.y, max.y, v.y);
 	return v;
 }
 
 Vec3 vec3_clamp(Vec3 min, Vec3 max, Vec3 v) {
-	v.x = Clamp(min.x, max.x, v.x);
-	v.y = Clamp(min.y, max.y, v.y);
-	v.z = Clamp(min.z, max.z, v.z);
+	v.x = mmclamp(min.x, max.x, v.x);
+	v.y = mmclamp(min.y, max.y, v.y);
+	v.z = mmclamp(min.z, max.z, v.z);
 	return v;
 }
 
 Vec4 vec4_clamp(Vec4 min, Vec4 max, Vec4 v) {
-	v.x = Clamp(min.x, max.x, v.x);
-	v.y = Clamp(min.y, max.y, v.y);
-	v.z = Clamp(min.z, max.z, v.z);
-	v.w = Clamp(min.w, max.w, v.w);
+	v.x = mmclamp(min.x, max.x, v.x);
+	v.y = mmclamp(min.y, max.y, v.y);
+	v.z = mmclamp(min.z, max.z, v.z);
+	v.w = mmclamp(min.w, max.w, v.w);
 	return v;
 }
 
@@ -1286,7 +1286,7 @@ Vec3 slerp(Vec3 from, Vec3 to, r32 t) {
 }
 
 Quat slerp(Quat from, Quat to, r32 t) {
-	r32 dot = Clamp(-1.0f, 1.0f, quat_dot(from, to));
+	r32 dot = mmclamp(-1.0f, 1.0f, quat_dot(from, to));
 
 	// use shorter path
 	if (dot < 0.0f) {
@@ -1345,31 +1345,31 @@ Quat step(Quat edge, Quat val) {
 }
 
 r32 smoothstep(r32 a, r32 b, r32 x) {
-	x = Clamp(0.0f, 1.0f, (x - a) / (b - a));
+	x = mmclamp(0.0f, 1.0f, (x - a) / (b - a));
 	return x * x * (3 - 2 * x);
 }
 
 r32 smoothstep(Vec2 a, Vec2 b, Vec2 v) {
-	auto x = Clamp(0.0f, 1.0f, vec2_distance(a, v) / vec2_distance(a, b));
+	auto x = mmclamp(0.0f, 1.0f, vec2_distance(a, v) / vec2_distance(a, b));
 	return x * x * (3 - 2 * x);
 }
 
 r32 smoothstep(Vec3 a, Vec3 b, Vec3 v) {
 	r32 div_distance = vec3_distance(a, b);
 	if (div_distance) {
-		auto x = Clamp(0.0f, 1.0f, vec3_distance(a, v) / div_distance);
+		auto x = mmclamp(0.0f, 1.0f, vec3_distance(a, v) / div_distance);
 		return x * x * (3 - 2 * x);
 	}
 	return 1;
 }
 
 r32 smoothstep(Vec4 a, Vec4 b, Vec4 v) {
-	auto x = Clamp(0.0f, 1.0f, vec4_distance(a, v) / vec4_distance(a, b));
+	auto x = mmclamp(0.0f, 1.0f, vec4_distance(a, v) / vec4_distance(a, b));
 	return x * x * (3 - 2 * x);
 }
 
 r32 smoothstep(Quat a, Quat b, Quat v) {
-	auto x = Clamp(0.0f, 1.0f, vec4_distance(a.v4, v.v4) / vec4_distance(a.v4, b.v4));
+	auto x = mmclamp(0.0f, 1.0f, vec4_distance(a.v4, v.v4) / vec4_distance(a.v4, b.v4));
 	return x * x * (3 - 2 * x);
 }
 
@@ -1445,7 +1445,7 @@ Vec2 rotate_around(Vec2 point, Vec2 center, r32 angle) {
 
 Quat rotate_toward(Quat from, Quat to, r32 max_angle) {
 	if (max_angle) {
-		r32 dot = Clamp(-1.0f, 1.0f, quat_dot(from, to));
+		r32 dot = mmclamp(-1.0f, 1.0f, quat_dot(from, to));
 
 		// use shorter path
 		if (dot < 0.0f) {
@@ -1505,14 +1505,14 @@ bool quad_vs_quad_sat(Quad &a, Quad &b) {
 
 			for (int p_index = 0; p_index < 4; ++p_index) {
 				dot = vec2_dot(normal, quad_a->positions[p_index]);
-				min_proj_a = GetMinValue(min_proj_a, dot);
-				max_proj_a = GetMaxValue(max_proj_a, dot);
+				min_proj_a = minimum(min_proj_a, dot);
+				max_proj_a = maximum(max_proj_a, dot);
 			}
 
 			for (int p_index = 0; p_index < 4; ++p_index) {
 				dot = vec2_dot(normal, quad_b->positions[p_index]);
-				min_proj_b = GetMinValue(min_proj_b, dot);
-				max_proj_b = GetMaxValue(max_proj_b, dot);
+				min_proj_b = minimum(min_proj_b, dot);
+				max_proj_b = maximum(max_proj_b, dot);
 			}
 
 			if (!(max_proj_b >= min_proj_a && max_proj_a >= min_proj_b))
@@ -1552,8 +1552,8 @@ bool ray_vs_aabb(Vec2 origin, Vec2 direction, const Mm_Rect &rect, Ray_Hit *hit)
 		return false;
 	}
 
-	r32 hit_near_t = GetMaxValue(near_t.x, near_t.y);
-	r32 hit_far_t  = GetMinValue(far_t.x, far_t.y);
+	r32 hit_near_t = maximum(near_t.x, near_t.y);
+	r32 hit_far_t  = minimum(far_t.x, far_t.y);
 
 	if (hit_far_t < 0) {
 		// Collision in negative direction
@@ -1563,12 +1563,12 @@ bool ray_vs_aabb(Vec2 origin, Vec2 direction, const Mm_Rect &rect, Ray_Hit *hit)
 	hit->point = origin + hit_near_t * direction;
 
 	if (near_t.x > near_t.y) {
-		hit->normal = vec2(-Sgn(direction.x), 0);
+		hit->normal = vec2(-sgn(direction.x), 0);
 	} else if (near_t.x < near_t.y) {
-		hit->normal = vec2(0, -Sgn(direction.y));
+		hit->normal = vec2(0, -sgn(direction.y));
 	} else {
 		constexpr r32 root_two = 1.4142135623730950488016887242097f;
-		hit->normal = vec2(-Sgn(direction.x) * root_two, -Sgn(direction.y) * root_two);
+		hit->normal = vec2(-sgn(direction.x) * root_two, -sgn(direction.y) * root_two);
 	}
 
 	hit->t = hit_near_t;

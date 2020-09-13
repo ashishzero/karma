@@ -176,8 +176,6 @@ int system_main() {
 				break;
 			}
 
-			if (Debug_HandleEvent(event))
-				continue;
 			if (ImGui_HandleEvent(event))
 				continue;
 
@@ -575,11 +573,11 @@ int system_main() {
 #if defined(BUILD_DEBUG_SERVICE)
 		{
 			Debug_TimedScope(DebugRender);
-			Debug_RenderFrame(window_w, window_h);
+			Debug_RenderFrame();
 		}
 #endif
 
-		ImGui::ShowDemoWindow();
+		//ImGui::ShowDemoWindow();
 
 #if defined(BUILD_IMGUI)
 		{
@@ -608,7 +606,7 @@ int system_main() {
 		dt = fixed_dt * speed_factor;
 
 		accumulator_t += real_dt;
-		accumulator_t = GetMinValue(accumulator_t, 0.3f);
+		accumulator_t = minimum(accumulator_t, 0.3f);
 
 		Debug_TimedFrameEnd(real_dt);
 	}

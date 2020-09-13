@@ -501,7 +501,7 @@ struct Gfx_Platform_OpenGL : public Gfx_Platform {
 
 		u32 mip_counts = mip_levels;
 		if (mip_counts == 0) {
-			mip_counts = (u32)GetMinValue(log2(w), log2(h)) + 1;
+			mip_counts = (u32)minimum(log2(w), log2(h)) + 1;
 		}
 
 		GLenum target;

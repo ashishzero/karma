@@ -20,16 +20,14 @@ constexpr int NOTIFICATION_MAX_LENGTH		= 128;
 typedef String Timed_Block_Match;
 
 void debug_mode_enable();
-bool debug_handle_event(Event &event);
 void debug_audio_feedback(r32 *samples, u32 size_in_bytes, u32 channel_count, u32 zeroed_size);
 
 void debug_notify_level(Notification_Level level, ANALYSE_PRINTF_FORMAT_STRING(const char *fmt), ...) ANALYSE_PRINTF_FORMAT(2, 3);
 
 bool debug_get_presentation_state();
 bool debug_set_presentation_state(bool state);
-bool debug_presentation_is_hovered();
 
-void debug_render_frame(r32 framebuffer_w, r32 framebuffer_h);
+void debug_render_frame();
 
 //
 //
@@ -59,7 +57,6 @@ struct Timed_Procedure {
 #if defined(BUILD_DEBUG_SERVICE)
 
 #define Debug_ModeEnable					debug_mode_enable
-#define Debug_HandleEvent					debug_handle_event
 #define Debug_AudioFeedback					debug_audio_feedback
 #define Debug_NotifyLevel(level, fmt, ...)	debug_notify_level(level, fmt, ##__VA_ARGS__)
 #define Debug_Notify(fmt, ...)				debug_notify_level(Notification_Level_DEFAULT, fmt, ##__VA_ARGS__)
@@ -69,7 +66,6 @@ struct Timed_Procedure {
 #define Debug_GetPresentationState			debug_get_presentation_state
 #define Debug_SetPresentationState			debug_set_presentation_state
 #define Debug_TogglePresentationState()		debug_set_presentation_state(!debug_get_presentation_state())
-#define Debug_PresentationIsHovered			debug_presentation_is_hovered
 #define Debug_RenderFrame					debug_render_frame
 
 #define Debug_TimedFrameBegin		debug_profiler_timed_frame_begin
@@ -83,7 +79,6 @@ struct Timed_Procedure {
 #else
 
 #define Debug_ModeEnable()			
-#define Debug_HandleEvent(event)				(false)
 #define Debug_AudioFeedback(samples, size_in_bytes, channel_count, zeroed_size)
 #define Debug_NotifyDefault(level, ...)		
 #define Debug_Notify(...)				
@@ -93,7 +88,6 @@ struct Timed_Procedure {
 #define Debug_GetPresentationState()			(false)
 #define Debug_SetPresentationState(state)		(false)
 #define Debug_TogglePresentationState()	
-#define Debug_PresentationIsHovered()			(false)
 #define Debug_RenderFrame(w, h)				
 
 #define Debug_TimedFrameBegin()

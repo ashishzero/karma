@@ -287,7 +287,7 @@ void ImGui::UpdateFrame(r32 dt) {
 
 	// If a mouse press event came, always pass it as "mouse held this frame",
 	// so we don't miss click-release sys_events that are shorter than 1 frame.
-	if (window_is_active && !debug_presentation_is_hovered()) {
+	if (window_is_active) {
 		io.MouseDown[0] = mouse_pressed[0] || (system_button(Button_LEFT) == Key_State_DOWN);
 		io.MouseDown[1] = mouse_pressed[1] || (system_button(Button_RIGHT) == Key_State_DOWN);
 		io.MouseDown[2] = mouse_pressed[2] || (system_button(Button_MIDDLE) == Key_State_DOWN);

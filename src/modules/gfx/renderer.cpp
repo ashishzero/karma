@@ -997,7 +997,7 @@ void im2d_rect_centered_rotated(Vec2 pos, Vec2 dim, r32 angle, Mm_Rect rect, Col
 }
 
 void im2d_ellipse(Vec3 pos, r32 radius_a, r32 radius_b, Color4 color, int segments) {
-	segments = Clamp(IM_MIN_CIRCLE_SEGMENTS, IM_MAX_CIRCLE_SEGMENTS - 1, segments);
+	segments = mmclamp(IM_MIN_CIRCLE_SEGMENTS, IM_MAX_CIRCLE_SEGMENTS - 1, segments);
 
 	r32 px = im_unit_circle_cos[0] * radius_a;
 	r32 py = im_unit_circle_sin[0] * radius_b;
@@ -1035,7 +1035,7 @@ void im2d_pie(Vec3 pos, r32 radius_a, r32 radius_b, r32 theta_a, r32 theta_b, Co
 	int last_index  = (int)((0.5f * theta_b * MATH_PI_INVERSE) * (r32)(IM_MAX_CIRCLE_SEGMENTS - 1) + 0.5f);
 
 	auto value_count = last_index - first_index;
-	segments         = GetMinValue(segments, value_count);
+	segments         = minimum(segments, value_count);
 
 	r32 px = im_unit_circle_cos[first_index] * radius_a;
 	r32 py = im_unit_circle_sin[first_index] * radius_b;
@@ -1207,7 +1207,7 @@ void im2d_rect_centered_outline(Vec2 pos, Vec2 dim, Color4 color, r32 thickness)
 }
 
 void im2d_ellipse_outline(Vec3 position, r32 radius_a, r32 radius_b, Color4 color, r32 thickness, int segments) {
-	segments = Clamp(IM_MIN_CIRCLE_SEGMENTS, IM_MAX_CIRCLE_SEGMENTS - 1, segments);
+	segments = mmclamp(IM_MIN_CIRCLE_SEGMENTS, IM_MAX_CIRCLE_SEGMENTS - 1, segments);
 
 	r32 px = im_unit_circle_cos[0] * radius_a;
 	r32 py = im_unit_circle_sin[0] * radius_b;
@@ -1245,7 +1245,7 @@ void im2d_arc_outline(Vec3 position, r32 radius_a, r32 radius_b, r32 theta_a, r3
 	int last_index  = (int)((0.5f * theta_b * MATH_PI_INVERSE) * (r32)(IM_MAX_CIRCLE_SEGMENTS - 1) + 0.5f);
 
 	auto value_count = last_index - first_index;
-	segments         = GetMinValue(segments, value_count);
+	segments         = minimum(segments, value_count);
 
 	r32 px = im_unit_circle_cos[first_index] * radius_a;
 	r32 py = im_unit_circle_sin[first_index] * radius_b;
