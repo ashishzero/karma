@@ -140,7 +140,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <OmitFramePointers>true</OmitFramePointers>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;BUILD_RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;SYSTEM_CONSOLE;BUILD_RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <EnableModules>false</EnableModules>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
@@ -172,7 +172,7 @@ popd
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Developer|x64'">
     <ClCompile>
       <OmitFramePointers>true</OmitFramePointers>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;BUILD_DEVELOPER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;SYSTEM_CONSOLE;BUILD_DEVELOPER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <EnableModules>false</EnableModules>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
@@ -209,7 +209,7 @@ popd
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug-Fast|x64'">
     <ClCompile>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;BUILD_DEBUG_FAST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;SYSTEM_CONSOLE;BUILD_DEBUG_FAST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <EnableModules>false</EnableModules>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
@@ -240,7 +240,7 @@ popd
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;BUILD_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;SYSTEM_CONSOLE;BUILD_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <EnableModules>false</EnableModules>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
@@ -270,7 +270,40 @@ popd
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\modules\core\karma_newdelete.cpp" />
+    <ClCompile Include="src\modules\core\length_string.cpp" />
+    <ClCompile Include="src\modules\core\lin_maths.cpp" />
+    <ClCompile Include="src\modules\core\stream.cpp" />
+    <ClCompile Include="src\modules\core\tokenizer.cpp" />
+    <ClCompile Include="src\modules\core\unicode.cpp" />
+    <ClCompile Include="src\modules\core\windows\systems_windows.cpp" />
+    <ClCompile Include="src\modules\pcg\pcg_basic.c" />
     <ClCompile Include="src\server.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\modules\core\gfx_platform.h" />
+    <ClInclude Include="src\modules\core\gfx_types.h" />
+    <ClInclude Include="src\modules\core\intrinsics.h" />
+    <ClInclude Include="src\modules\core\karma.h" />
+    <ClInclude Include="src\modules\core\karma_crt_impl.hpp" />
+    <ClInclude Include="src\modules\core\length_string.h" />
+    <ClInclude Include="src\modules\core\lin_maths.h" />
+    <ClInclude Include="src\modules\core\lin_maths_types.h" />
+    <ClInclude Include="src\modules\core\random.h" />
+    <ClInclude Include="src\modules\core\reflection.h" />
+    <ClInclude Include="src\modules\core\stb_image.h" />
+    <ClInclude Include="src\modules\core\stb_sprintf.h" />
+    <ClInclude Include="src\modules\core\stb_truetype.h" />
+    <ClInclude Include="src\modules\core\stream.h" />
+    <ClInclude Include="src\modules\core\systems.h" />
+    <ClInclude Include="src\modules\core\tokenizer.h" />
+    <ClInclude Include="src\modules\core\unicode.h" />
+    <ClInclude Include="src\modules\core\utility.h" />
+    <ClInclude Include="src\modules\core\windows\resource.h" />
+    <ClInclude Include="src\modules\pcg\pcg_basic.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="src\modules\core\windows\resource.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

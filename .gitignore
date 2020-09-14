@@ -19,13 +19,15 @@ run_tree/imgui/*.ini
 
 # execuables
 /run_tree/karma_x64_Debug.exe
-/tools/reflection/reflection_Debug_x64.exe
-/tools/ucd/ucd_Debug_x64.exe
-/tools/shader/shader_Debug_x64.exe
 /run_tree/karma_x64_Debug-Fast.exe
+/run_tree/karma_server_x64_Debug.exe
+/run_tree/karma_server_x64_Debug-Fast.exe
+/tools/reflection/reflection_Debug_x64.exe
 /tools/reflection/reflection_x64_Developer.exe
-/tools/shader/shader_x64_Developer.exe
+/tools/ucd/ucd_Debug_x64.exe
 /tools/ucd/ucd_x64_Developer.exe
+/tools/shader/shader_Debug_x64.exe
+/tools/shader/shader_x64_Developer.exe
 
 # local file
 /run_tree/dev/local.karma
