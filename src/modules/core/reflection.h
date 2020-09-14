@@ -112,10 +112,6 @@ struct Enum_Info {
 		assert(!"File not added for reflection!");
 		return Array_View<const char *>(nullptr, 0);
 	}
-	static const Array_View<T> item_array() {
-		assert(!"File not added for reflection!");
-		return Array_View<T>(nullptr, 0);
-	}
 };
 
 template <typename T>
@@ -162,15 +158,6 @@ const Array_View<const char *> enum_string_array() {
 template <typename T>
 const Array_View<const char *> enum_string_array(T v) {
 	return Enum_Info<T>::string_array();
-}
-
-template <typename T>
-const Array_View<T> enum_item_array() {
-	return Enum_Info<T>::item_array();
-}
-template <typename T>
-const Array_View<T> enum_item_array(T v) {
-	return Enum_Info<T>::item_array();
 }
 
 struct Type_Info {
@@ -236,13 +223,12 @@ struct Type_Info_Enum : public Type_Info {
 	const Type_Info *const item_type;
 	bool is_sequential;
 	const Array_View<const char*> item_strings;
-	const Array_View<char> item_values;
 
 	inline Type_Info_Enum() :
 		item_type(nullptr), is_sequential(false) {
 	}
-	inline Type_Info_Enum(ptrsize sz, String n, const Type_Info *const elem_type, bool is_seq, const Array_View<const char*> strings, void *values, s64 value_count) :
-		Type_Info(Type_Id_ENUM, sz, n), item_type(elem_type), is_sequential(is_seq), item_strings(strings), item_values((char *)values, value_count) {
+	inline Type_Info_Enum(ptrsize sz, String n, const Type_Info *const elem_type, bool is_seq, const Array_View<const char*> strings) :
+		Type_Info(Type_Id_ENUM, sz, n), item_type(elem_type), is_sequential(is_seq), item_strings(strings) {
 	}
 };
 

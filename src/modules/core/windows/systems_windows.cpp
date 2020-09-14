@@ -1824,7 +1824,7 @@ String system_get_user_name() {
 	if (GetUserNameW(buffer, &buffer_len)) {
 		String name;
 		name.data  = (utf8 *)memory_allocate(buffer_len);
-		name.count = WideCharToMultiByte(CP_UTF8, 0, buffer, -1, (char *)name.data, buffer_len, 0, 0);
+		name.count = WideCharToMultiByte(CP_UTF8, 0, buffer, -1, (char *)name.data, buffer_len, 0, 0) - 1;
 		return name;
 	}
 

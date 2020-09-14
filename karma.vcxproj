@@ -275,6 +275,9 @@ popd
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\audio.cpp" />
+    <ClCompile Include="src\first.cpp" />
+    <ClCompile Include="src\main_atish.cpp" />
+    <ClCompile Include="src\main_shankar.cpp" />
     <ClCompile Include="src\modules\imgui\dev.cpp" />
     <ClCompile Include="src\modules\core\directx\gfx_d3d11.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
@@ -291,7 +294,7 @@ popd
     <ClCompile Include="src\modules\imgui\imgui_draw.cpp" />
     <ClCompile Include="src\modules\imgui\imgui_impl_opengl3.cpp" />
     <ClCompile Include="src\modules\imgui\imgui_widgets.cpp" />
-    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\main_zero.cpp" />
     <ClCompile Include="src\modules\core\opengl\gfx_opengl.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug-Fast|x64'">false</ExcludedFromBuild>

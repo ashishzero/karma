@@ -89,16 +89,6 @@ void reflection_of_enum_info(Ostream *stream, CXCursor cursor, const char *name,
 	ostream_write_formatted(stream, "\t\t};\n");
 	ostream_write_formatted(stream, "\t\treturn Array_View<const char *>(strings, %zd);\n\t}\n", enums.count);
 
-	ostream_write_formatted(stream, "\tstatic const Array_View<%s> item_array() {\n", name);
-	ostream_write_formatted(stream, "\t\tstatic const %s items[] = {\n", name);
-	for (s64 index = 0; index < enums.count; ++index) {
-		auto spelling = clang_getCursorSpelling(enums[index]);
-		ostream_write_formatted(stream, "\t\t\t%s,\n", clang_getCString(spelling));
-		clang_disposeString(spelling);
-	}
-	ostream_write_formatted(stream, "\t\t};\n");
-	ostream_write_formatted(stream, "\t\treturn Array_View<%s>((%s *)items, %zd);\n\t}\n", name, name, enums.count);
-
 	ostream_write_formatted(stream, "};\n\n");
 }
 
@@ -107,9 +97,8 @@ void reflection_of_enum(Ostream *stream, const char *name, const char *element_t
 	ostream_write_formatted(stream, "\tstatic constexpr Type_Id id = Type_Id_ENUM;\n");
 
 	ostream_write_formatted(stream, "\tstatic const Type_Info * const info() {\n");
-	ostream_write_formatted(stream, "\t\tstatic const Type_Info_Enum i(sizeof(%s), \"%s\", reflect_info<%s>(),"
-										"%s, enum_string_array<%s>(), enum_item_array<%s>().data, enum_item_array<%s>().count);\n", 
-							name, name, element_type_name, is_seq ?"true":"false", name, name, name);
+	ostream_write_formatted(stream, "\t\tstatic const Type_Info_Enum i(sizeof(%s), \"%s\", reflect_info<%s>(), %s, enum_string_array<%s>());\n", 
+							name, name, element_type_name, is_seq ? "true" : "false", name, name, name);
 	ostream_write_formatted(stream, "\t\treturn &i;\n\t}\n};\n\n");
 }
 

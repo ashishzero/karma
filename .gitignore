@@ -26,3 +26,9 @@ run_tree/imgui/*.ini
 /tools/reflection/reflection_x64_Developer.exe
 /tools/shader/shader_x64_Developer.exe
 /tools/ucd/ucd_x64_Developer.exe
+
+# local file
+/run_tree/dev/local.karma
+
+# temp directory
+/run_tree/temp/

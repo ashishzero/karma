@@ -6,8 +6,6 @@
 #include "imgui_impl_opengl3.h"
 #include "imgui_impl_dx11.h"
 
-#if defined(BUILD_DEBUG) || defined(BUILD_DEBUG_FAST) || defined(BUILD_DEVELOPER)
-
 static bool               window_is_active = true;
 static bool               mouse_pressed[3];
 static Cursor_Kind        mouse_cursor[ImGuiMouseCursor_COUNT];
@@ -339,4 +337,3 @@ void ImGui::EndIconFont() {
 	ImGui::PopFont();
 }
 
-#endif

@@ -23,58 +23,12 @@ struct Sorted_Colliders {
 	r32 distance;
 };
 
-#if 0
-void collision_point_vs_line(Array<Sorted_Colliders> &sorted_colliders, Entity_Manager &manager, Entity *player, Vec2 &new_player_position, r32 &dt) {
-	Ray_Hit hit;
-	Array<r32> t_values;
-	Entity_Handle handle_save = 0;
-	for (auto &collider : sorted_colliders) {
-		auto entity = manager_find_entity(manager, collider.handle);
-		entity->color = vec4(1, 0, 0);
-		if (ray_vs_line(player->position, new_player_position, entity->start, entity->end, &hit)) {
-			r32 dir = vec2_dot(vec2_normalize_check(player->velocity), hit.normal);
-
-			if (dir <= 0 && hit.t >= -0.001f && hit.t < 1.001f) {
-				array_add(&t_values, hit.t);
-				//array_add(&normals, hit.point);
-
-				Vec2 reduc_vector = (1.0f - hit.t) * vec2_dot(player->velocity, hit.normal) * hit.normal;
-				//array_add(&normals, -reduc_vector);
-
-				player->velocity -= reduc_vector;
-				new_player_position = player->position + dt * player->velocity;
-				handle_save = entity->handle;
-
-				entity->color = vec4(1, 0, 1);
-				break;
-			}
-		}
-	}
-
-	for (auto &collider : sorted_colliders) {
-		Entity *entity = manager_find_entity(manager, collider.handle);
-		if (entity->handle != handle_save) {
-			if (ray_vs_line(player->position, new_player_position, entity->start, entity->end, &hit)) {
-				r32 dir = vec2_dot(vec2_normalize_check(player->velocity), hit.normal);
-				if (dir <= 0 && hit.t >= -0.001f && hit.t < 1.001f) {
-					Vec2 reduc_vector = (1.0f - hit.t) * player->velocity;
-					player->velocity -= reduc_vector;
-					new_player_position = player->position + dt * player->velocity;
-
-					entity->color = vec4(1, 0, 1);
-				}
-			}
-		}
-	}
-}
-#endif
-
 struct Quad_Mesh {
 	Quad quad;
 	Vec2 vertices[4];
 };
 
-int system_main() {
+int karma_user_zero() {
 	r32    framebuffer_w = 1280;
 	r32    framebuffer_h = 720;
 	Handle platform = system_create_window(u8"Karma", 1280, 720, System_Window_Show_NORMAL);
@@ -582,7 +536,7 @@ int system_main() {
 		}
 #endif
 
-		ImGui::ShowDemoWindow();
+		//ImGui::ShowDemoWindow();
 
 #if defined(BUILD_IMGUI)
 		{
