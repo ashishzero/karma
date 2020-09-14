@@ -30,8 +30,8 @@
     <ClCompile Include="src\editor.cpp" />
     <ClCompile Include="src\entity.cpp" />
     <ClCompile Include="src\main.cpp" />
-    <ClCompile Include="src\modules\imgui\debug.cpp" />
     <ClCompile Include="src\modules\gfx\renderer.cpp" />
+    <ClCompile Include="src\modules\imgui\dev.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\modules\core\directx\dx_error.h" />
@@ -72,8 +72,8 @@
     <ClInclude Include="src\opentype.h" />
     <ClInclude Include="src\particle_system.h" />
     <ClInclude Include="src\shaders\gfx_shaders.h" />
-    <ClInclude Include="src\modules\imgui\debug.h" />
     <ClInclude Include="src\modules\gfx\renderer.h" />
+    <ClInclude Include="src\modules\imgui\dev.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitattributes" />

@@ -275,7 +275,7 @@ popd
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\audio.cpp" />
-    <ClCompile Include="src\modules\imgui\debug.cpp" />
+    <ClCompile Include="src\modules\imgui\dev.cpp" />
     <ClCompile Include="src\modules\core\directx\gfx_d3d11.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug-Fast|x64'">false</ExcludedFromBuild>
@@ -347,7 +347,7 @@ popd
   <ItemGroup>
     <ClInclude Include="src\atish.h" />
     <ClInclude Include="src\audio.h" />
-    <ClInclude Include="src\modules\imgui\debug.h" />
+    <ClInclude Include="src\modules\imgui\dev.h" />
     <ClInclude Include="src\modules\core\directx\dx_error.h" />
     <ClInclude Include="src\editor.h" />
     <ClInclude Include="src\entity.h" />

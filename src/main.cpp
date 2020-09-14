@@ -6,7 +6,7 @@
 #include "modules/core/utility.h"
 #include "modules/imgui/imconfig.h"
 #include "modules/imgui/imgui.h"
-#include "modules/imgui/debug.h"
+#include "modules/imgui/dev.h"
 #include "modules/gfx/renderer.h"
 
 #include "entity.h"
@@ -81,7 +81,7 @@ int system_main() {
 	gfx_create_context(platform, Render_Backend_DIRECTX11, Vsync_ADAPTIVE, 2, (u32)framebuffer_w, (u32)framebuffer_h);
 
 	ImGui_Initialize();
-	Debug_ModeEnable();
+	Dev_ModeEnable();
 
 	bool running = true;
 
@@ -164,9 +164,9 @@ int system_main() {
 	memset(&hit, 0, sizeof(hit));
 
 	while (running) {
-		Debug_TimedFrameBegin();
+		Dev_TimedFrameBegin();
 
-		Debug_TimedBlockBegin(EventHandling);
+		Dev_TimedBlockBegin(EventHandling);
 		auto events = system_poll_events();
 		for (s64 event_index = 0; event_index < events.count; ++event_index) {
 			Event &event = events[event_index];
@@ -208,7 +208,7 @@ int system_main() {
 			}
 
 			if ((event.type & Event_Type_KEY_UP) && event.key.symbol == Key_SPACE) {
-				Debug_NotifySuccess("Sent success message");
+				Dev_NotifySuccess("Sent success message");
 				continue;
 			}
 
@@ -237,9 +237,9 @@ int system_main() {
 
 		}
 
-		Debug_TimedBlockEnd(EventHandling);
+		Dev_TimedBlockEnd(EventHandling);
 
-		Debug_TimedBlockBegin(Simulation);
+		Dev_TimedBlockBegin(Simulation);
 
 #if 1
 		//Array<Vec2> normals;
@@ -255,7 +255,7 @@ int system_main() {
 		static int test_counter = 0;
 
 		while (accumulator_t >= fixed_dt) {
-			Debug_TimedScope(SimulationFrame);
+			Dev_TimedScope(SimulationFrame);
 
 			memset(&hit, 0, sizeof(hit));
 
@@ -497,9 +497,9 @@ int system_main() {
 		//cursor.y = roundf(cursor.y);
 #endif
 
-		Debug_TimedBlockEnd(Simulation);
+		Dev_TimedBlockEnd(Simulation);
 
-		Debug_TimedBlockBegin(Rendering);
+		Dev_TimedBlockBegin(Rendering);
 
 		r32 alpha = accumulator_t / fixed_dt; // TODO: Use this
 
@@ -575,10 +575,10 @@ int system_main() {
 
 #endif
 
-#if defined(BUILD_DEBUG_SERVICE)
+#if defined(BUILD_DEVELOPER_SERVICE)
 		{
-			Debug_TimedScope(DebugRender);
-			Debug_RenderFrame();
+			Dev_TimedScope(DebugRender);
+			Dev_RenderFrame();
 		}
 #endif
 
@@ -586,17 +586,17 @@ int system_main() {
 
 #if defined(BUILD_IMGUI)
 		{
-			Debug_TimedScope(ImGuiRender);
+			Dev_TimedScope(ImGuiRender);
 			ImGui_RenderFrame();
 		}
 #endif
 
 		gfx_end_drawing();
 
-		Debug_TimedBlockBegin(Present);
+		Dev_TimedBlockBegin(Present);
 		gfx_present();
-		Debug_TimedBlockEnd(Present);
-		Debug_TimedBlockEnd(Rendering);
+		Dev_TimedBlockEnd(Present);
+		Dev_TimedBlockEnd(Rendering);
 
 		reset_temporary_memory();
 
@@ -613,7 +613,7 @@ int system_main() {
 		accumulator_t += real_dt;
 		accumulator_t = minimum(accumulator_t, 0.3f);
 
-		Debug_TimedFrameEnd(real_dt);
+		Dev_TimedFrameEnd(real_dt);
 	}
 
 	ImGui_Shutdown();

@@ -7,7 +7,7 @@
 #include "modules/core/intrinsics.h"
 
 #include "imgui.h"
-#include "debug.h"
+#include "dev.h"
 
 static constexpr u32 PROFILER_MAX_TIMED_RECORDS_LOGS				= 5000000; // around 190 MB
 static constexpr u32 PROFILER_RECORD_CIRCULAR_BUFFER_FRAMES_AHEAD	= 2;
@@ -137,7 +137,7 @@ static bool					menu_icons_value[Menu_COUNT];
 
 static Notification_Handler notification_handler;
 
-void debug_mode_enable() {
+void dev_mode_enable() {
 	// NOTE: Allocated memory are not freed, because it doesn't matter, they will be freed by OS when app closes
 
 	auto memory = system_virtual_alloc(0, PROFILER_RECORD_CIRCULAR_BUFFER_FRAMES_AHEAD * PROFILER_MAX_TIMED_RECORDS_LOGS * sizeof(Timed_Record) + PROFILER_MAX_COLLATION_RECORDS * sizeof(Record), Virtual_Memory_COMMIT | Virtual_Memory_RESERVE);
@@ -161,7 +161,7 @@ void debug_mode_enable() {
 
 }
 
-void debug_audio_feedback(r32 *samples, u32 size_in_bytes, u32 channel_count, u32 zeroed_size) {
+void dev_audio_feedback(r32 *samples, u32 size_in_bytes, u32 channel_count, u32 zeroed_size) {
 	u32 sample_count			= size_in_bytes / (sizeof(r32) * channel_count);
 	u32 zeroed_size_in_sample	= zeroed_size / (sizeof(r32) * channel_count);
 
@@ -197,7 +197,7 @@ void debug_audio_feedback(r32 *samples, u32 size_in_bytes, u32 channel_count, u3
 	}
 }
 
-void debug_notify_level(Notification_Level level, ANALYSE_PRINTF_FORMAT_STRING(const char *fmt), ...) {
+void dev_notify_level(Notification_Level level, ANALYSE_PRINTF_FORMAT_STRING(const char *fmt), ...) {
 	Notification *notification = notification_handler.notifications + (notification_handler.write_index % NOTIFICATION_MAX_COUNT);
 	intrin_InterlockedIncrement64(&notification_handler.write_index);
 	if ((notification_handler.write_index % NOTIFICATION_MAX_COUNT) == (notification_handler.read_index % NOTIFICATION_MAX_COUNT))
@@ -212,11 +212,11 @@ void debug_notify_level(Notification_Level level, ANALYSE_PRINTF_FORMAT_STRING(c
 	notification->t = NOTIFICATION_FADE_STAY_TIME;
 }
 
-bool debug_get_presentation_state() {
+bool dev_get_presentation_state() {
 	return should_present;
 }
 
-bool debug_set_presentation_state(bool state) {
+bool dev_set_presentation_state(bool state) {
 	should_present = state;
 	return state;
 }
@@ -477,7 +477,7 @@ void draw_notifications() {
 	}
 }
 
-void debug_render_frame() {
+void dev_render_frame() {
 	if (should_present) {
 		ImGui::Begin("Debug Information");
 
@@ -518,14 +518,14 @@ void debug_render_frame() {
 }
 
 
-void debug_profiler_timed_frame_begin() {
+void dev_profiler_timed_frame_begin() {
 	if (profiler.recording) {
 		profiler.timed_frame_write_ptr->begin_cycle_value   = intrin__rdtsc();
 		profiler.timed_frame_write_ptr->begin_counter_value = system_get_counter();
 	}
 }
 
-void debug_profiler_timed_frame_end(r32 frame_time) {
+void dev_profiler_timed_frame_end(r32 frame_time) {
 	if (profiler.recording) {
 		profiler.timed_frame_write_ptr->end_cycle_value   = intrin__rdtsc();
 		profiler.timed_frame_write_ptr->end_counter_value = system_get_counter();
@@ -543,7 +543,7 @@ void debug_profiler_timed_frame_end(r32 frame_time) {
 	profiler.recording = profiler.next_recording;
 }
 
-Timed_Block_Match debug_profiler_timed_block_begin(String id, String block_name) {
+Timed_Block_Match dev_profiler_timed_block_begin(String id, String block_name) {
 	if (profiler.recording) {
 		assert(profiler.timed_frame_write_ptr->records_count < PROFILER_MAX_TIMED_RECORDS_LOGS);
 		auto record = profiler.timed_frame_write_ptr->records + profiler.timed_frame_write_ptr->records_count;
@@ -560,7 +560,7 @@ Timed_Block_Match debug_profiler_timed_block_begin(String id, String block_name)
 	return String("", 0);
 }
 
-void debug_profiler_timed_block_end(Timed_Block_Match value, String block_name) {
+void dev_profiler_timed_block_end(Timed_Block_Match value, String block_name) {
 	if (profiler.recording) {
 		assert(profiler.timed_frame_write_ptr->records_count < PROFILER_MAX_TIMED_RECORDS_LOGS);
 		auto record = profiler.timed_frame_write_ptr->records + profiler.timed_frame_write_ptr->records_count;
