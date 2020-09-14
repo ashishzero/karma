@@ -336,4 +336,3 @@ void ImGui::BeginIconFont() {
 void ImGui::EndIconFont() {
 	ImGui::PopFont();
 }
-

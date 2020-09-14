@@ -365,6 +365,8 @@ int karma_user_zero() {
 			accumulator_t -= fixed_dt;
 		}
 
+		ImGui_UpdateFrame(real_dt);
+
 #if 0
 		Vec2 cursor = system_get_cursor_position();
 		if (cursor.x < 0) cursor.x = 0;
@@ -391,6 +393,11 @@ int karma_user_zero() {
 		cursor = 2.0f * cursor - vec2(1);
 		cursor.x *= view_width;
 		cursor.y *= view_height;
+
+		if (ImGui_IsUsingCursor()) {
+			cursor.x = INFINITY;
+			cursor.y = INFINITY;
+		}
 
 		static auto last_button_state = Key_State_UP;
 		static Entity *selected_entity = nullptr;
@@ -456,8 +463,6 @@ int karma_user_zero() {
 		Dev_TimedBlockBegin(Rendering);
 
 		r32 alpha = accumulator_t / fixed_dt; // TODO: Use this
-
-		ImGui_UpdateFrame(real_dt);
 
 		gfx_begin_drawing(Framebuffer_Type_HDR, Clear_ALL, vec4(0.0f));
 		gfx_viewport(0, 0, window_w, window_h);

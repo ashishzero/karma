@@ -140,6 +140,7 @@ void EndIconFont();
 #define ImGui_HandleEvent(event)	ImGui::HandleEvent(event)
 #define ImGui_UpdateFrame(dt)		ImGui::UpdateFrame(dt)
 #define ImGui_RenderFrame()			ImGui::RenderFrame()
+#define ImGui_IsUsingCursor()		ImGui::GetIO().WantCaptureMouse
 
 #else
 
@@ -148,5 +149,6 @@ void EndIconFont();
 #define ImGui_HandleEvent(...) (false)
 #define ImGui_UpdateFrame(...)
 #define ImGui_RenderFrame()
+#define ImGui_IsUsingCursor() (false)
 
 #endif
