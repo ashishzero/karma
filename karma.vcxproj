@@ -277,6 +277,7 @@ popd
     <ClCompile Include="src\audio.cpp" />
     <ClCompile Include="src\first.cpp" />
     <ClCompile Include="src\main_atish.cpp" />
+    <ClCompile Include="src\main_pujan.cpp" />
     <ClCompile Include="src\main_shankar.cpp" />
     <ClCompile Include="src\modules\imgui\dev.cpp" />
     <ClCompile Include="src\modules\core\directx\gfx_d3d11.cpp">

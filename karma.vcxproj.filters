@@ -35,6 +35,7 @@
     <ClCompile Include="src\main_zero.cpp" />
     <ClCompile Include="src\main_atish.cpp" />
     <ClCompile Include="src\main_shankar.cpp" />
+    <ClCompile Include="src\main_pujan.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\modules\core\directx\dx_error.h" />
