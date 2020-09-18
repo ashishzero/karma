@@ -5,8 +5,8 @@
 // Example struct
 
 struct Vector2 {
-    float x;
-    float y;
+    float x=1;
+    float y=2;
 };
 
 enum Block_Type :unsigned int {
@@ -48,7 +48,7 @@ struct Hard_Block : public Base {
     Vector2 size = {2.1f,4.5f};
     Block_Data data[2] = { {1,9},{3,5} };
     String name="barud";
-    Array<int> placements = {};
+    Array<int> placements;
     attribute("no-serialize") World* world;
     Region* region=new Region(3,2);
 
