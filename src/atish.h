@@ -43,14 +43,14 @@ struct Region {
     }
 };
 
-struct Hard_Block : public Base {
-    Vector2 position = {3,6.9f};
-    Vector2 size = {2.1f,4.5f};
+struct Hard_Block:public Base {
+    //Vector2 position = {3,6.9f};
+    //Vector2 size = {2.1f,4.5f};
     Block_Data data[2] = { {1,9},{3,5} };
-    String name="barud";
-    Array<int> placements;
-    attribute("no-serialize") World* world;
-    Region* region=new Region(3,2);
+    //String name="barud";
+    //Array<int> placements;
+    //attribute("no-serialize") World* world;
+    //Region* region=new Region(3,2);
 
     Hard_Block() : Base(Block_Type_HARD_BLOCK) {}
 };
