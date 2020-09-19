@@ -624,6 +624,15 @@ struct Array {
 };
 
 template <typename T>
+Array_View<T> array_slice(Array<T> a, s64 pos, s64 slice_count) {
+	assert(pos + slice_count < a.count);
+	Array_View<T> view;
+	view.data = a.data + pos;
+	view.count = slice_count;
+	return view;
+}
+
+template <typename T>
 void array_resize(Array<T> *a, s64 n) {
 	if (a->data) {
 		a->data     = (T *)a->allocator.proc(Allocation_Type_RESIZE, n * sizeof(T), a->data, a->allocator.data);
