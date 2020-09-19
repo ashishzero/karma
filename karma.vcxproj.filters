@@ -78,6 +78,7 @@
     <ClInclude Include="src\shaders\gfx_shaders.h" />
     <ClInclude Include="src\modules\gfx\renderer.h" />
     <ClInclude Include="src\modules\imgui\dev.h" />
+    <ClInclude Include="src\modules\core\serialize.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitattributes" />

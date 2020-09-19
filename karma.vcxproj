@@ -351,6 +351,7 @@ popd
   <ItemGroup>
     <ClInclude Include="src\atish.h" />
     <ClInclude Include="src\audio.h" />
+    <ClInclude Include="src\modules\core\serialize.h" />
     <ClInclude Include="src\modules\imgui\dev.h" />
     <ClInclude Include="src\modules\core\directx\dx_error.h" />
     <ClInclude Include="src\editor.h" />
