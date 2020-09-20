@@ -1550,15 +1550,15 @@ static LRESULT CALLBACK win32_wnd_proc(HWND wnd, UINT msg, WPARAM wparam, LPARAM
 
 			// need to re-set clip rectangle after resize
 			RECT rc;
-			GetClientRect(window_handle, &rc);
+			GetClientRect(wnd, &rc);
 
 			CURSORINFO info;
 			info.cbSize = sizeof(info);
 			if (GetCursorInfo(&info) && (info.flags == 0)) {
 				POINT pt  = { rc.left, rc.top };
 				POINT pt2 = { rc.right, rc.bottom };
-				ClientToScreen(window_handle, &pt);
-				ClientToScreen(window_handle, &pt2);
+				ClientToScreen(wnd, &pt);
+				ClientToScreen(wnd, &pt2);
 				SetRect(&rc, pt.x, pt.y, pt2.x, pt2.y);
 				ClipCursor(&rc);
 				int c_x = rc.left + (rc.right - rc.left) / 2;
@@ -1660,7 +1660,7 @@ static LRESULT CALLBACK win32_wnd_proc(HWND wnd, UINT msg, WPARAM wparam, LPARAM
 
 		case WM_MOUSEMOVE: {
 			RECT rc;
-			GetClientRect(window_handle, &rc);
+			GetClientRect(wnd, &rc);
 			Vec2s wr = vec2s(rc.right - rc.left, rc.bottom - rc.top);
 
 			event.type = Event_Type_MOUSE_CURSOR;
@@ -1674,8 +1674,8 @@ static LRESULT CALLBACK win32_wnd_proc(HWND wnd, UINT msg, WPARAM wparam, LPARAM
 				// Cursor is hidden, place cursor always at center
 				POINT pt  = { rc.left, rc.top };
 				POINT pt2 = { rc.right, rc.bottom };
-				ClientToScreen(window_handle, &pt);
-				ClientToScreen(window_handle, &pt2);
+				ClientToScreen(wnd, &pt);
+				ClientToScreen(wnd, &pt2);
 				SetRect(&rc, pt.x, pt.y, pt2.x, pt2.y);
 				ClipCursor(&rc);
 				int c_x = rc.left + (rc.right - rc.left) / 2;
@@ -1847,7 +1847,12 @@ Handle system_create_window(const char *title, s32 width, s32 height, System_Win
 	wnd_class.hIcon         = (HICON)LoadImageW(instance, MAKEINTRESOURCEW(IDI_ICON1), IMAGE_ICON, 0, 0, LR_SHARED);
 	wnd_class.hIconSm       = (HICON)LoadImageW(instance, MAKEINTRESOURCEW(IDI_ICON1), IMAGE_ICON, 0, 0, LR_DEFAULTSIZE | LR_SHARED);
 	wnd_class.hCursor       = (HCURSOR)LoadImageW(0, MAKEINTRESOURCEW(OCR_NORMAL), IMAGE_CURSOR, 0, 0, LR_SHARED);
-	RegisterClassExW(&wnd_class);
+	
+	if (!RegisterClassExW(&wnd_class))
+	{
+		win32_check_for_error();
+		return result;
+	}
 
 	DWORD wnd_styles = WS_OVERLAPPEDWINDOW;
 	RECT  wrc        = {};
@@ -1867,7 +1872,7 @@ Handle system_create_window(const char *title, s32 width, s32 height, System_Win
 
 	auto window_size = system_get_client_size();
 	window_width = window_size.x;
-	window_width = window_size.y;
+	window_height = window_size.y;
 
 	if (!window_handle) {
 		win32_check_for_error();
