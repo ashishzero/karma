@@ -4,6 +4,12 @@
 
 // Example struct
 
+struct asset_info {
+    String name;
+    u64 size_of_file;
+    u64 file_location;
+};
+
 struct Vector2 {
     float x=1;
     float y=2;
