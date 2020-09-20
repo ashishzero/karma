@@ -34,6 +34,8 @@ int karma_user_atish() {
 	fread(buffer, size_of_file, 1, fp_destination);
 	fclose(fp_destination);*/
 
+	auto info = reflect_info<asset_info>();
+
 	r32    framebuffer_w = 1280;
 	r32    framebuffer_h = 720;
 	Handle platform = system_create_window(u8"Karma", 1280, 720, System_Window_Show_NORMAL);
@@ -100,7 +102,7 @@ int karma_user_atish() {
 	array_add(&asset_table, single_asset);
 	fwrite(buffer, size_of_file, 1, fp_asset_data);
 
-	serialize_to_file(fp_asset_table, "asset_table", reflect_info(asset_table), (char*)&asset_table,1, 0, true);
+	serialize_to_file(fp_asset_table, "asset_table", info, (char*)&asset_table,1, 0, true);
 	fclose(source);
 	fclose(fp_asset_data);
 	fclose(fp_asset_table);
