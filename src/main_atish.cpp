@@ -27,6 +27,33 @@ void asset_write(FILE* destination,FILE* source)
 
 int karma_user_atish() {
 
+	/*u64 size_of_file;
+	char file_name[1024];
+	fscanf(fp_destination, "%s %zd\n", file_name, &size_of_file);
+	void* buffer = (char*)malloc(sizeof(char) * size_of_file);
+	fread(buffer, size_of_file, 1, fp_destination);
+	fclose(fp_destination);*/
+
+	r32    framebuffer_w = 1280;
+	r32    framebuffer_h = 720;
+	Handle platform = system_create_window(u8"Karma", 1280, 720, System_Window_Show_NORMAL);
+	gfx_create_context(platform, Render_Backend_DIRECTX11, Vsync_ADAPTIVE, 2, (u32)framebuffer_w, (u32)framebuffer_h);
+
+
+	bool running = true;
+
+	r32 aspect_ratio = framebuffer_w / framebuffer_h;
+
+
+	r32 window_w = 0, window_h = 0;
+
+
+
+	Vec2 quad_position = vec2(1);
+	Vec2 scale = vec2(1);
+
+	
+#if 1
 	FILE* fp_asset_table = fopen("temp/asset_table.txt", "wb+");
 	if (fp_asset_table == NULL)
 	{
@@ -77,38 +104,7 @@ int karma_user_atish() {
 	fclose(source);
 	fclose(fp_asset_data);
 	fclose(fp_asset_table);
-
-
-
-	/*u64 size_of_file;
-	char file_name[1024];
-	fscanf(fp_destination, "%s %zd\n", file_name, &size_of_file);
-	void* buffer = (char*)malloc(sizeof(char) * size_of_file);
-	fread(buffer, size_of_file, 1, fp_destination);
-	fclose(fp_destination);*/
-
-	
-	
-	r32    framebuffer_w = 1280;
-	r32    framebuffer_h = 720;
-	Handle platform = system_create_window(u8"Karma", 1280, 720, System_Window_Show_NORMAL);
-	gfx_create_context(platform, Render_Backend_OPENGL, Vsync_ADAPTIVE, 2, (u32)framebuffer_w, (u32)framebuffer_h);
-
-
-	bool running = true;
-
-	r32 aspect_ratio = framebuffer_w / framebuffer_h;
-
-
-	r32 window_w = 0, window_h = 0;
-
-
-
-	Vec2 quad_position = vec2(1);
-	Vec2 scale = vec2(1);
-
-	
-
+#endif
 
 	
 

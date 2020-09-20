@@ -1,10 +1,7 @@
 #pragma once
 
-#include "modules/core/reflection.h"
 #include "modules/core/karma.h"
-#include "modules/core/systems.h"
-#include "modules/core/lin_maths.h"
-#include "modules/core/utility.h"
+#include "modules/core/reflection.h"
 
 //TODO : testing (proper testing is required)
 void serialize_to_file(FILE* fp, String name, const Type_Info* info, char* data, s64 num_of_elements = 1, int tab_count = 0, bool is_array = false) {

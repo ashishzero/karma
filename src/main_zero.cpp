@@ -580,4 +580,3 @@ int karma_user_zero() {
 
 	return 0;
 }
-

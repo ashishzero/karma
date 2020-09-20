@@ -204,12 +204,12 @@ typedef struct _XINPUT_KEYSTROKE {
 	BYTE  HidCode;
 } XINPUT_KEYSTROKE, *PXINPUT_KEYSTROKE;
 
-typedef DWORD (*Proc_XInput_Get_State)(DWORD dwUserIndex, XINPUT_STATE *pState);
-typedef DWORD (*Proc_XInput_Set_State)(DWORD dwUserIndex, XINPUT_VIBRATION *pVibration);
-typedef DWORD (*Proc_XInput_Get_Capabilities)(DWORD dwUserIndex, DWORD dwFlags, XINPUT_CAPABILITIES *pCapabilities);
-typedef DWORD (*Proc_XInput_Get_Audio_Device_Ids)(DWORD dwUserIndex, LPWSTR pRenderDeviceId, UINT *pRenderCount, LPWSTR pCaptureDeviceId, UINT *pCaptureCount);
-typedef DWORD (*Proc_XInput_Get_Battery_Information)(DWORD dwUserIndex, BYTE devType, XINPUT_BATTERY_INFORMATION *pBatteryInformation);
-typedef DWORD (*Proc_XInput_Get_Keystroke)(DWORD dwUserIndex, DWORD dwReserved, PXINPUT_KEYSTROKE pKeystroke);
+typedef DWORD(*Proc_XInput_Get_State)(DWORD dwUserIndex, XINPUT_STATE *pState);
+typedef DWORD(*Proc_XInput_Set_State)(DWORD dwUserIndex, XINPUT_VIBRATION *pVibration);
+typedef DWORD(*Proc_XInput_Get_Capabilities)(DWORD dwUserIndex, DWORD dwFlags, XINPUT_CAPABILITIES *pCapabilities);
+typedef DWORD(*Proc_XInput_Get_Audio_Device_Ids)(DWORD dwUserIndex, LPWSTR pRenderDeviceId, UINT *pRenderCount, LPWSTR pCaptureDeviceId, UINT *pCaptureCount);
+typedef DWORD(*Proc_XInput_Get_Battery_Information)(DWORD dwUserIndex, BYTE devType, XINPUT_BATTERY_INFORMATION *pBatteryInformation);
+typedef DWORD(*Proc_XInput_Get_Keystroke)(DWORD dwUserIndex, DWORD dwReserved, PXINPUT_KEYSTROKE pKeystroke);
 
 static Proc_XInput_Get_State               XInputGetState;
 static Proc_XInput_Set_State               XInputSetState;
@@ -250,35 +250,35 @@ struct Win32_Controller {
 // Windows Audio Client
 //
 
-const CLSID CLSID_MMDeviceEnumerator	= __uuidof(MMDeviceEnumerator);
-const IID IID_IMMDeviceEnumerator		= __uuidof(IMMDeviceEnumerator);
-const IID IID_IAudioClient				= __uuidof(IAudioClient);
-const IID IID_IAudioRenderClient		= __uuidof(IAudioRenderClient);
-const IID IID_IAudioClock				= __uuidof(IAudioClock);
-const IID IID_IAudioSessionControl		= __uuidof(IAudioSessionControl);
+const CLSID CLSID_MMDeviceEnumerator = __uuidof(MMDeviceEnumerator);
+const IID IID_IMMDeviceEnumerator = __uuidof(IMMDeviceEnumerator);
+const IID IID_IAudioClient = __uuidof(IAudioClient);
+const IID IID_IAudioRenderClient = __uuidof(IAudioRenderClient);
+const IID IID_IAudioClock = __uuidof(IAudioClock);
+const IID IID_IAudioSessionControl = __uuidof(IAudioSessionControl);
 
-constexpr u32 REFTIMES_PER_SEC			= 10000000;
-constexpr u32 REFTIMES_PER_MILLISEC		= 10000;
+constexpr u32 REFTIMES_PER_SEC = 10000000;
+constexpr u32 REFTIMES_PER_MILLISEC = 10000;
 
 class Audio_Client : public IAudioSessionEvents {
 public:
-	LONG					reference_count					= 1;
-	IMMDeviceEnumerator		*enumerator						= nullptr;
-	IMMDevice				*device							= nullptr;
-	IAudioClient			*client							= nullptr;
-	IAudioSessionControl	*control						= nullptr;
-	IAudioClock				*clock							= nullptr;
-	IAudioRenderClient		*renderer						= nullptr;
-	WAVEFORMATEXTENSIBLE	 format							= {};
-	HANDLE					thread							= nullptr;
-	HANDLE					write_event						= nullptr;
-	u32						total_samples					= 0;
-	u64						clock_frequency					= 0;
-	u64						write_cursor					= 0;
+	LONG					reference_count = 1;
+	IMMDeviceEnumerator *enumerator = nullptr;
+	IMMDevice *device = nullptr;
+	IAudioClient *client = nullptr;
+	IAudioSessionControl *control = nullptr;
+	IAudioClock *clock = nullptr;
+	IAudioRenderClient *renderer = nullptr;
+	WAVEFORMATEXTENSIBLE	 format = {};
+	HANDLE					thread = nullptr;
+	HANDLE					write_event = nullptr;
+	u32						total_samples = 0;
+	u64						clock_frequency = 0;
+	u64						write_cursor = 0;
 
-	Audio_Callback			on_update				= nullptr;
-	Audio_Device_Refresh	on_refresh				= nullptr;
-	void					*on_update_user_data	= nullptr;
+	Audio_Callback			on_update = nullptr;
+	Audio_Device_Refresh	on_refresh = nullptr;
+	void *on_update_user_data = nullptr;
 
 	void Cleanup() {
 		if (enumerator)		enumerator->Release();
@@ -286,11 +286,11 @@ public:
 		if (client)			client->Release();
 		if (renderer)		renderer->Release();
 
-		enumerator					= nullptr;
-		device						= nullptr;
-		client						= nullptr;
-		renderer					= nullptr;
-		total_samples				= 0;
+		enumerator = nullptr;
+		device = nullptr;
+		client = nullptr;
+		renderer = nullptr;
+		total_samples = 0;
 	}
 
 	void Destroy() {
@@ -344,7 +344,7 @@ public:
 	}
 
 	bool Initialize() {
-		auto hr = CoCreateInstance(CLSID_MMDeviceEnumerator, nullptr, CLSCTX_ALL, IID_IMMDeviceEnumerator, (void**)&enumerator);
+		auto hr = CoCreateInstance(CLSID_MMDeviceEnumerator, nullptr, CLSCTX_ALL, IID_IMMDeviceEnumerator, (void **)&enumerator);
 		if (FAILED(hr)) {
 			// TODO: Better logging
 			win32_check_for_error();
@@ -352,12 +352,11 @@ public:
 		}
 
 		if (FindDevice()) {
-			hr = device->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&client);
+			hr = device->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void **)&client);
 			if (FAILED(hr)) {
 				if (hr == AUDCLNT_E_DEVICE_INVALIDATED) {
 					system_display_critical_message("Audio Device disconnected!");
-				}
-				else {
+				} else {
 					// TODO: Logging
 					win32_check_for_error();
 					system_display_critical_message("Audio Thread could not be initialized");
@@ -373,11 +372,9 @@ public:
 				if (FAILED(hr)) {
 					if (hr == AUDCLNT_E_DEVICE_INVALIDATED) {
 						system_display_critical_message("Audio Device disconnected!");
-					}
-					else if (hr == AUDCLNT_E_SERVICE_NOT_RUNNING) {
+					} else if (hr == AUDCLNT_E_SERVICE_NOT_RUNNING) {
 						system_display_critical_message("The Windows audio service is not running.");
-					}
-					else {
+					} else {
 						// TODO: Logging
 						win32_check_for_error();
 						system_display_critical_message("Audio Thread could not be initialized");
@@ -424,7 +421,7 @@ public:
 				requested_duration = (REFERENCE_TIME)((10000.0 * 1000 / format.Format.nSamplesPerSec * total_samples) + 0.5);
 				client->Release();
 
-				hr = device->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**)&client);
+				hr = device->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void **)&client);
 				if (FAILED(hr)) {
 					// TODO: Logging
 					win32_check_for_error();
@@ -517,8 +514,8 @@ public:
 				return false;
 			}
 
-			ptrsize device_buffer_size	= sizeof(r32) * total_samples * format.Format.nChannels;
-			ptrsize buffer_size			= (sizeof(r32) * format.Format.nSamplesPerSec * SYSTEM_AUDIO_BUFFER_SIZE_IN_MILLISECS * format.Format.nChannels) / 1000;
+			ptrsize device_buffer_size = sizeof(r32) * total_samples * format.Format.nChannels;
+			ptrsize buffer_size = (sizeof(r32) * format.Format.nSamplesPerSec * SYSTEM_AUDIO_BUFFER_SIZE_IN_MILLISECS * format.Format.nChannels) / 1000;
 
 			if (device_buffer_size >= buffer_size) {
 				// TODO: Error or Log??
@@ -576,18 +573,18 @@ public:
 		}
 
 		context.handle.hptr = audio->thread;
-		context.id			= GetCurrentThreadId();
-		context.allocator	= NULL_ALLOCATOR;
+		context.id = GetCurrentThreadId();
+		context.allocator = NULL_ALLOCATOR;
 		context.temp_memory = Temporary_Memory(0, 0);
-		context.proc		= (Thread_Proc)AudioThreadProcedure;
-		context.data		= 0;
+		context.proc = (Thread_Proc)AudioThreadProcedure;
+		context.data = 0;
 
 		SetThreadDescription(audio->thread, L"Platform Audio Thread");
 
-		u32 samples_padding		= 0;
-		u32 samples_available	= 0;
-		BYTE *data				= 0;
-		u32 flags				= 0;
+		u32 samples_padding = 0;
+		u32 samples_available = 0;
+		BYTE *data = 0;
+		u32 flags = 0;
 
 		auto hr = audio->client->Start();
 		if (FAILED(hr)) {
@@ -649,13 +646,11 @@ public:
 	HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, VOID **ppvInterface) {
 		if (IID_IUnknown == riid) {
 			AddRef();
-			*ppvInterface = (IUnknown*)this;
-		}
-		else if (__uuidof(IAudioSessionEvents) == riid) {
+			*ppvInterface = (IUnknown *)this;
+		} else if (__uuidof(IAudioSessionEvents) == riid) {
 			AddRef();
-			*ppvInterface = (IAudioSessionEvents*)this;
-		}
-		else {
+			*ppvInterface = (IAudioSessionEvents *)this;
+		} else {
 			*ppvInterface = NULL;
 			return E_NOINTERFACE;
 		}
@@ -729,7 +724,7 @@ Array_View<u8> system_read_entire_file(const String path) {
 	Array_View<u8> result = {};
 
 	auto     length = path.count + 1;
-	wchar_t *wpath  = (wchar_t *)tallocate(length * sizeof(wchar_t));
+	wchar_t *wpath = (wchar_t *)tallocate(length * sizeof(wchar_t));
 	MultiByteToWideChar(CP_UTF8, 0, (char *)path.data, (int)path.count, wpath, (int)length);
 	wpath[path.count] = 0;
 
@@ -737,7 +732,7 @@ Array_View<u8> system_read_entire_file(const String path) {
 	win32_check_for_error();
 
 	if (handle != INVALID_HANDLE_VALUE) {
-		defer {
+		defer{
 			CloseHandle(handle);
 		};
 
@@ -754,13 +749,13 @@ Array_View<u8> system_read_entire_file(const String path) {
 		}
 
 		DWORD read_bytes = 0;
-		u8 *  end_ptr    = (u8 *)buffer + file_size.QuadPart;
+		u8 *end_ptr = (u8 *)buffer + file_size.QuadPart;
 		for (u8 *read_ptr = (u8 *)buffer;
-			 read_ptr < end_ptr;
-			 read_ptr += read_bytes) {
+			read_ptr < end_ptr;
+			read_ptr += read_bytes) {
 			// resetting *read_bytes* because docs says to (for next loop)
 			read_bytes = 0;
-			BOOL res   = ReadFile(handle, read_ptr, read_size, &read_bytes, 0);
+			BOOL res = ReadFile(handle, read_ptr, read_size, &read_bytes, 0);
 			if (res && (read_bytes == 0 || read_bytes == file_size.QuadPart)) {
 				// END OF FILE reached
 				break;
@@ -775,7 +770,7 @@ Array_View<u8> system_read_entire_file(const String path) {
 			}
 		}
 
-		result.data  = (u8 *)buffer;
+		result.data = (u8 *)buffer;
 		result.count = file_size.QuadPart;
 	}
 
@@ -784,13 +779,13 @@ Array_View<u8> system_read_entire_file(const String path) {
 
 bool system_write_entire_file(const String path, Array_View<u8> content) {
 	auto     length = path.count + 1;
-	wchar_t *wpath  = (wchar_t *)tallocate(length * sizeof(wchar_t));
+	wchar_t *wpath = (wchar_t *)tallocate(length * sizeof(wchar_t));
 	MultiByteToWideChar(CP_UTF8, 0, (char *)path.data, (int)path.count, wpath, (int)length);
 	wpath[path.count] = 0;
 
 	auto handle = CreateFileW(wpath, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
 	if (handle != INVALID_HANDLE_VALUE) {
-		defer {
+		defer{
 			CloseHandle(handle);
 		};
 
@@ -803,10 +798,10 @@ bool system_write_entire_file(const String path, Array_View<u8> content) {
 		}
 
 		DWORD written_bytes = 0;
-		u8 *  end_ptr       = content.data + content.count;
+		u8 *end_ptr = content.data + content.count;
 		for (u8 *write_ptr = content.data;
-			 write_ptr < end_ptr;
-			 write_ptr += written_bytes) {
+			write_ptr < end_ptr;
+			write_ptr += written_bytes) {
 			DWORD left_size = (DWORD)(content.count - (s64)written_bytes);
 			if (write_size > left_size) {
 				write_size = left_size;
@@ -814,7 +809,7 @@ bool system_write_entire_file(const String path, Array_View<u8> content) {
 
 			// resetting *written_bytes* because docs says to (for next loop)
 			written_bytes = 0;
-			BOOL res      = WriteFile(handle, write_ptr, write_size, &written_bytes, 0);
+			BOOL res = WriteFile(handle, write_ptr, write_size, &written_bytes, 0);
 			if (res) {
 				if (written_bytes == content.count) break;
 			} else {
@@ -835,7 +830,7 @@ ptrsize isystem_get_file_pointer(Handle handle) {
 
 bool isystem_set_file_pointer(Handle handle, ptrsize position, File_Position start_position) {
 	LARGE_INTEGER move_distance = {};
-	move_distance.QuadPart      = position;
+	move_distance.QuadPart = position;
 	DWORD method;
 	if (start_position == File_Position_BEG)
 		method = FILE_BEGIN;
@@ -856,13 +851,13 @@ bool isystem_read_file(Handle handle, ptrsize size, u8 *buffer) {
 	}
 
 	DWORD read_bytes = 0;
-	u8 *  end_ptr    = buffer + size;
+	u8 *end_ptr = buffer + size;
 	for (u8 *read_ptr = buffer;
-		 read_ptr < end_ptr;
-		 read_ptr += read_bytes) {
+		read_ptr < end_ptr;
+		read_ptr += read_bytes) {
 		// resetting *read_bytes* because docs says to (for next loop)
 		read_bytes = 0;
-		BOOL res   = ReadFile(handle.hptr, read_ptr, read_size, &read_bytes, 0);
+		BOOL res = ReadFile(handle.hptr, read_ptr, read_size, &read_bytes, 0);
 		if (res && (read_bytes == 0 || read_bytes == size)) {
 			// END OF FILE reached
 			break;
@@ -891,10 +886,10 @@ bool isystem_write_file(Handle handle, void *ptr, ptrsize size) {
 	}
 
 	DWORD written_bytes = 0;
-	u8 *  end_ptr       = content + size;
+	u8 *end_ptr = content + size;
 	for (u8 *write_ptr = content;
-		 write_ptr < end_ptr;
-		 write_ptr += written_bytes) {
+		write_ptr < end_ptr;
+		write_ptr += written_bytes) {
 		DWORD left_size = (DWORD)(size - (s64)written_bytes);
 		if (write_size > left_size) {
 			write_size = left_size;
@@ -902,7 +897,7 @@ bool isystem_write_file(Handle handle, void *ptr, ptrsize size) {
 
 		// resetting *written_bytes* because docs says to (for next loop)
 		written_bytes = 0;
-		BOOL res      = WriteFile(handle.hptr, write_ptr, write_size, &written_bytes, 0);
+		BOOL res = WriteFile(handle.hptr, write_ptr, write_size, &written_bytes, 0);
 		if (res) {
 			if (written_bytes == size) break;
 		} else {
@@ -914,31 +909,31 @@ bool isystem_write_file(Handle handle, void *ptr, ptrsize size) {
 }
 
 bool system_open_file(const String path, File_Operation options, System_File *file) {
-	DWORD access   = 0;
+	DWORD access = 0;
 	DWORD creation = 0;
 
 	*file = {};
 	if (options == File_Operation_READ) {
-		access     = GENERIC_READ;
-		creation   = OPEN_EXISTING;
+		access = GENERIC_READ;
+		creation = OPEN_EXISTING;
 		file->read = isystem_read_file;
 	} else if (options == File_Operation_APPEND) {
-		access      = GENERIC_WRITE;
-		creation    = OPEN_EXISTING;
+		access = GENERIC_WRITE;
+		creation = OPEN_EXISTING;
 		file->write = isystem_write_file;
 	} else if (options == File_Operation_READ_WRITE) {
-		access      = GENERIC_READ | GENERIC_WRITE;
-		creation    = OPEN_EXISTING;
-		file->read  = isystem_read_file;
+		access = GENERIC_READ | GENERIC_WRITE;
+		creation = OPEN_EXISTING;
+		file->read = isystem_read_file;
 		file->write = isystem_write_file;
 	} else {
-		access      = GENERIC_WRITE;
-		creation    = CREATE_ALWAYS;
+		access = GENERIC_WRITE;
+		creation = CREATE_ALWAYS;
 		file->write = isystem_write_file;
 	}
 
 	auto     length = path.count + 1;
-	wchar_t *wpath  = (wchar_t *)tallocate(length * sizeof(wchar_t));
+	wchar_t *wpath = (wchar_t *)tallocate(length * sizeof(wchar_t));
 	MultiByteToWideChar(CP_UTF8, 0, (char *)path.data, (int)path.count, wpath, (int)length);
 	wpath[length] = 0;
 
@@ -951,8 +946,8 @@ bool system_open_file(const String path, File_Operation options, System_File *fi
 	}
 
 	file->handle.hptr = handle;
-	file->get_cursor  = isystem_get_file_pointer;
-	file->set_cursor  = isystem_set_file_pointer;
+	file->get_cursor = isystem_get_file_pointer;
+	file->set_cursor = isystem_set_file_pointer;
 
 	return true;
 }
@@ -1027,7 +1022,7 @@ u32 windows_find_files_info(System_Find_File_Info *info, const System_Find_File_
 	do {
 		if (recursive && (find_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
 			if (wcscmp(find_data.cFileName, L".") != 0 && wcscmp(find_data.cFileName, L"..") != 0) {
-				int next_dir_len  = (int)(root_dir_len + wcslen(find_data.cFileName) + 1);
+				int next_dir_len = (int)(root_dir_len + wcslen(find_data.cFileName) + 1);
 				wchar_t *next_dir = (wchar_t *)tallocate((next_dir_len + 1) * sizeof(wchar_t));
 				wcscpy_s(next_dir, next_dir_len + 1, root_dir);
 				wcscat_s(next_dir, next_dir_len + 1, L"/");
@@ -1037,9 +1032,9 @@ u32 windows_find_files_info(System_Find_File_Info *info, const System_Find_File_
 				info += next_count;
 			}
 		} else if (wcscmp(windows_get_file_extension(find_data.cFileName), extension) == 0) {
-			int found_file_len		= (int)wcslen(find_data.cFileName);
+			int found_file_len = (int)wcslen(find_data.cFileName);
 			int found_full_file_len = root_dir_len + found_file_len + 1;
-			wchar_t *full_file_name	= (wchar_t *)tallocate((found_full_file_len + 1) * sizeof(wchar_t));
+			wchar_t *full_file_name = (wchar_t *)tallocate((found_full_file_len + 1) * sizeof(wchar_t));
 			wcscpy_s(full_file_name, found_full_file_len + 1, root_dir);
 			wcscat_s(full_file_name, found_full_file_len + 1, L"/");
 			wcscat_s(full_file_name, found_full_file_len + 1, find_data.cFileName);
@@ -1048,11 +1043,11 @@ u32 windows_find_files_info(System_Find_File_Info *info, const System_Find_File_
 			WideCharToMultiByte(CP_UTF8, 0, full_file_name, found_full_file_len, utf_full_file_name, found_full_file_len, 0, 0);
 			utf_full_file_name[found_full_file_len] = 0;
 
-			info->path.data		= (u8 *)utf_full_file_name;
-			info->path.count	= root_dir_len + 1;
-			info->name.data		= (u8 *)utf_full_file_name + root_dir_len + 1;
-			info->name.count	= found_file_len;
-			info->size			= (find_data.nFileSizeHigh * ((u64)MAXDWORD+1)) + find_data.nFileSizeLow;
+			info->path.data = (u8 *)utf_full_file_name;
+			info->path.count = root_dir_len + 1;
+			info->name.data = (u8 *)utf_full_file_name + root_dir_len + 1;
+			info->name.count = found_file_len;
+			info->size = (find_data.nFileSizeHigh * ((u64)MAXDWORD + 1)) + find_data.nFileSizeLow;
 
 			count += 1;
 			info += 1;
@@ -1076,7 +1071,7 @@ Array_View<System_Find_File_Info> system_find_files(const String directory, cons
 	u32 items_count = windows_find_files_count(wsearch, length, wextension, recursive);
 
 	Array_View<System_Find_File_Info> items;
-	items.data	= (System_Find_File_Info *)memory_allocate(items_count * sizeof(System_Find_File_Info));
+	items.data = (System_Find_File_Info *)memory_allocate(items_count * sizeof(System_Find_File_Info));
 	items.count = windows_find_files_info(items.data, items.data + items_count, wsearch, length, wextension, recursive);
 
 	return items;
@@ -1101,7 +1096,7 @@ Vec2s system_get_client_size() {
 }
 
 int system_fullscreen_state(int toggle) {
-	LONG_PTR style   = GetWindowLongPtrW(window_handle, GWL_STYLE);
+	LONG_PTR style = GetWindowLongPtrW(window_handle, GWL_STYLE);
 	bool     is_full = !(style & WS_OVERLAPPEDWINDOW);
 
 	if (toggle == SYSTEM_TOGGLE) {
@@ -1114,40 +1109,43 @@ int system_fullscreen_state(int toggle) {
 	windowed_placement.length = sizeof(WINDOWPLACEMENT);
 
 	switch (toggle) {
-		case SYSTEM_ENABLE: {
-			if (!is_full) {
-				MONITORINFO mi;
-				mi.cbSize = sizeof(mi);
-				if (GetWindowPlacement(window_handle, &windowed_placement) &&
-					GetMonitorInfoW(MonitorFromWindow(window_handle,
-													  MONITOR_DEFAULTTONEAREST),
-									&mi)) {
-					SetWindowLongPtrW(window_handle, GWL_STYLE, style & ~WS_OVERLAPPEDWINDOW);
-					SetWindowPos(window_handle, HWND_TOP,
-								 mi.rcMonitor.left, mi.rcMonitor.top,
-								 mi.rcMonitor.right - mi.rcMonitor.left,
-								 mi.rcMonitor.bottom - mi.rcMonitor.top,
-								 SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
-				}
+	case SYSTEM_ENABLE:
+	{
+		if (!is_full) {
+			MONITORINFO mi;
+			mi.cbSize = sizeof(mi);
+			if (GetWindowPlacement(window_handle, &windowed_placement) &&
+				GetMonitorInfoW(MonitorFromWindow(window_handle,
+					MONITOR_DEFAULTTONEAREST),
+					&mi)) {
+				SetWindowLongPtrW(window_handle, GWL_STYLE, style & ~WS_OVERLAPPEDWINDOW);
+				SetWindowPos(window_handle, HWND_TOP,
+					mi.rcMonitor.left, mi.rcMonitor.top,
+					mi.rcMonitor.right - mi.rcMonitor.left,
+					mi.rcMonitor.bottom - mi.rcMonitor.top,
+					SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
 			}
-			return SYSTEM_ENABLE;
-		} break;
+		}
+		return SYSTEM_ENABLE;
+	} break;
 
-		case SYSTEM_DISABLE: {
-			if (is_full) {
-				SetWindowLongPtrW(window_handle, GWL_STYLE, style | WS_OVERLAPPEDWINDOW);
-				SetWindowPlacement(window_handle, &windowed_placement);
-				SetWindowPos(window_handle, 0, 0, 0, 0, 0,
-							 SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER |
-								 SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
-			}
-			return SYSTEM_DISABLE;
-		} break;
-		case SYSTEM_QUERY: {
-			return (is_full ? SYSTEM_ENABLE : SYSTEM_DISABLE);
-		} break;
+	case SYSTEM_DISABLE:
+	{
+		if (is_full) {
+			SetWindowLongPtrW(window_handle, GWL_STYLE, style | WS_OVERLAPPEDWINDOW);
+			SetWindowPlacement(window_handle, &windowed_placement);
+			SetWindowPos(window_handle, 0, 0, 0, 0, 0,
+				SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER |
+				SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+		}
+		return SYSTEM_DISABLE;
+	} break;
+	case SYSTEM_QUERY:
+	{
+		return (is_full ? SYSTEM_ENABLE : SYSTEM_DISABLE);
+	} break;
 
-			invalid_default_case();
+	invalid_default_case();
 	}
 
 	return SYSTEM_QUERY; // i don't know what to return here so...
@@ -1155,7 +1153,7 @@ int system_fullscreen_state(int toggle) {
 
 int system_maximize_state(int toggle) {
 	WINDOWPLACEMENT wnd_placement = {};
-	wnd_placement.length          = sizeof(WINDOWPLACEMENT);
+	wnd_placement.length = sizeof(WINDOWPLACEMENT);
 	GetWindowPlacement(window_handle, &wnd_placement);
 	bool is_maximized = (wnd_placement.showCmd == SW_SHOWMAXIMIZED);
 
@@ -1167,26 +1165,29 @@ int system_maximize_state(int toggle) {
 	}
 
 	switch (toggle) {
-		case SYSTEM_ENABLE: {
-			if (!is_maximized) {
-				wnd_placement.showCmd = SW_SHOWMAXIMIZED;
-				SetWindowPlacement(window_handle, &wnd_placement);
-			}
-			return SYSTEM_ENABLE;
-		} break;
+	case SYSTEM_ENABLE:
+	{
+		if (!is_maximized) {
+			wnd_placement.showCmd = SW_SHOWMAXIMIZED;
+			SetWindowPlacement(window_handle, &wnd_placement);
+		}
+		return SYSTEM_ENABLE;
+	} break;
 
-		case SYSTEM_DISABLE: {
-			if (is_maximized) {
-				wnd_placement.showCmd = SW_SHOWNORMAL;
-				SetWindowPlacement(window_handle, &wnd_placement);
-			}
-			return SYSTEM_DISABLE;
-		} break;
-		case SYSTEM_QUERY: {
-			return (is_maximized ? SYSTEM_ENABLE : SYSTEM_DISABLE);
-		} break;
+	case SYSTEM_DISABLE:
+	{
+		if (is_maximized) {
+			wnd_placement.showCmd = SW_SHOWNORMAL;
+			SetWindowPlacement(window_handle, &wnd_placement);
+		}
+		return SYSTEM_DISABLE;
+	} break;
+	case SYSTEM_QUERY:
+	{
+		return (is_maximized ? SYSTEM_ENABLE : SYSTEM_DISABLE);
+	} break;
 
-			invalid_default_case();
+	invalid_default_case();
 	}
 
 	return SYSTEM_QUERY; // i don't know what to return here so...
@@ -1196,10 +1197,10 @@ System_Window_State system_get_window_state() {
 	System_Window_State state = {};
 
 	WINDOWPLACEMENT *placement = (WINDOWPLACEMENT *)memory_allocate(sizeof(*placement));
-	placement->length          = sizeof(*placement);
+	placement->length = sizeof(*placement);
 	if (GetWindowPlacement(window_handle, placement)) {
 		state.handle = placement;
-		state.size   = sizeof(*placement);
+		state.size = sizeof(*placement);
 	} else {
 		memory_free(placement);
 	}
@@ -1244,39 +1245,39 @@ void system_hide_cursor() {
 void system_set_cursor_kind(Cursor_Kind kind) {
 	HANDLE handle = INVALID_HANDLE_VALUE;
 	switch (kind) {
-		case Cursor_Kind_ARROW:
-			handle = LoadImageW(0, MAKEINTRESOURCEW(OCR_NORMAL), IMAGE_CURSOR, 0, 0, LR_SHARED);
-			break;
+	case Cursor_Kind_ARROW:
+		handle = LoadImageW(0, MAKEINTRESOURCEW(OCR_NORMAL), IMAGE_CURSOR, 0, 0, LR_SHARED);
+		break;
 
-		case Cursor_Kind_IBEAM:
-			handle = LoadImageW(0, MAKEINTRESOURCEW(OCR_IBEAM), IMAGE_CURSOR, 0, 0, LR_SHARED);
-			break;
+	case Cursor_Kind_IBEAM:
+		handle = LoadImageW(0, MAKEINTRESOURCEW(OCR_IBEAM), IMAGE_CURSOR, 0, 0, LR_SHARED);
+		break;
 
-		case Cursor_Kind_SIZE_ALL:
-			handle = LoadImageW(0, MAKEINTRESOURCEW(OCR_SIZEALL), IMAGE_CURSOR, 0, 0, LR_SHARED);
-			break;
+	case Cursor_Kind_SIZE_ALL:
+		handle = LoadImageW(0, MAKEINTRESOURCEW(OCR_SIZEALL), IMAGE_CURSOR, 0, 0, LR_SHARED);
+		break;
 
-		case Cursor_Kind_SIZE_NS:
-			handle = LoadImageW(0, MAKEINTRESOURCEW(OCR_SIZENS), IMAGE_CURSOR, 0, 0, LR_SHARED);
-			break;
+	case Cursor_Kind_SIZE_NS:
+		handle = LoadImageW(0, MAKEINTRESOURCEW(OCR_SIZENS), IMAGE_CURSOR, 0, 0, LR_SHARED);
+		break;
 
-		case Cursor_Kind_SIZE_EW:
-			handle = LoadImageW(0, MAKEINTRESOURCEW(OCR_SIZEWE), IMAGE_CURSOR, 0, 0, LR_SHARED);
-			break;
+	case Cursor_Kind_SIZE_EW:
+		handle = LoadImageW(0, MAKEINTRESOURCEW(OCR_SIZEWE), IMAGE_CURSOR, 0, 0, LR_SHARED);
+		break;
 
-		case Cursor_Kind_SIZE_NESW:
-			handle = LoadImageW(0, MAKEINTRESOURCEW(OCR_SIZENESW), IMAGE_CURSOR, 0, 0, LR_SHARED);
-			break;
+	case Cursor_Kind_SIZE_NESW:
+		handle = LoadImageW(0, MAKEINTRESOURCEW(OCR_SIZENESW), IMAGE_CURSOR, 0, 0, LR_SHARED);
+		break;
 
-		case Cursor_Kind_SIZE_NWSE:
-			handle = LoadImageW(0, MAKEINTRESOURCEW(OCR_SIZENWSE), IMAGE_CURSOR, 0, 0, LR_SHARED);
-			break;
+	case Cursor_Kind_SIZE_NWSE:
+		handle = LoadImageW(0, MAKEINTRESOURCEW(OCR_SIZENWSE), IMAGE_CURSOR, 0, 0, LR_SHARED);
+		break;
 
-		case Cursor_Kind_HAND:
-			handle = LoadImageW(0, MAKEINTRESOURCEW(OCR_HAND), IMAGE_CURSOR, 0, 0, LR_SHARED);
-			break;
+	case Cursor_Kind_HAND:
+		handle = LoadImageW(0, MAKEINTRESOURCEW(OCR_HAND), IMAGE_CURSOR, 0, 0, LR_SHARED);
+		break;
 
-			invalid_default_case();
+		invalid_default_case();
 	}
 	SetCursor((HCURSOR)handle);
 }
@@ -1290,10 +1291,10 @@ bool system_is_cursor_visible() {
 String system_get_clipboard_text() {
 	if (IsClipboardFormatAvailable(CF_UNICODETEXT)) {
 		if (OpenClipboard(window_handle)) {
-			HANDLE   buffer  = GetClipboardData(CF_UNICODETEXT);
+			HANDLE   buffer = GetClipboardData(CF_UNICODETEXT);
 			wchar_t *wstring = (wchar_t *)GlobalLock(buffer);
-			char *   string  = 0;
-			int      length  = 0;
+			char *string = 0;
+			int      length = 0;
 			if (wstring) {
 				length = WideCharToMultiByte(CP_UTF8, 0, wstring, -1, 0, 0, 0, 0);
 				string = (char *)memory_allocate(length);
@@ -1304,7 +1305,7 @@ String system_get_clipboard_text() {
 			return String(string, length);
 		}
 	}
-	return String {};
+	return String{};
 }
 
 void system_set_clipboard_text(const String string) {
@@ -1365,44 +1366,44 @@ void win32_map_keys() {
 	windows_key_map[(u32)'8'] = Key_8;
 	windows_key_map[(u32)'9'] = Key_9;
 
-	windows_key_map[VK_RETURN]  = Key_RETURN;
-	windows_key_map[VK_ESCAPE]  = Key_ESCAPE;
-	windows_key_map[VK_BACK]    = Key_BACKSPACE;
-	windows_key_map[VK_TAB]     = Key_TAB;
-	windows_key_map[VK_SPACE]   = Key_SPACE;
-	windows_key_map[VK_SHIFT]   = Key_SHIFT;
+	windows_key_map[VK_RETURN] = Key_RETURN;
+	windows_key_map[VK_ESCAPE] = Key_ESCAPE;
+	windows_key_map[VK_BACK] = Key_BACKSPACE;
+	windows_key_map[VK_TAB] = Key_TAB;
+	windows_key_map[VK_SPACE] = Key_SPACE;
+	windows_key_map[VK_SHIFT] = Key_SHIFT;
 	windows_key_map[VK_CONTROL] = Key_CTRL;
 
-	windows_key_map[VK_F1]  = Key_F1;
-	windows_key_map[VK_F2]  = Key_F2;
-	windows_key_map[VK_F3]  = Key_F3;
-	windows_key_map[VK_F4]  = Key_F4;
-	windows_key_map[VK_F5]  = Key_F5;
-	windows_key_map[VK_F6]  = Key_F6;
-	windows_key_map[VK_F7]  = Key_F7;
-	windows_key_map[VK_F8]  = Key_F8;
-	windows_key_map[VK_F9]  = Key_F9;
+	windows_key_map[VK_F1] = Key_F1;
+	windows_key_map[VK_F2] = Key_F2;
+	windows_key_map[VK_F3] = Key_F3;
+	windows_key_map[VK_F4] = Key_F4;
+	windows_key_map[VK_F5] = Key_F5;
+	windows_key_map[VK_F6] = Key_F6;
+	windows_key_map[VK_F7] = Key_F7;
+	windows_key_map[VK_F8] = Key_F8;
+	windows_key_map[VK_F9] = Key_F9;
 	windows_key_map[VK_F10] = Key_F10;
 	windows_key_map[VK_F11] = Key_F11;
 	windows_key_map[VK_F12] = Key_F12;
 
 	windows_key_map[VK_SNAPSHOT] = Key_PRINT_SCREEN;
-	windows_key_map[VK_INSERT]   = Key_INSERT;
-	windows_key_map[VK_HOME]     = Key_HOME;
-	windows_key_map[VK_PRIOR]    = Key_PAGE_UP;
-	windows_key_map[VK_NEXT]     = Key_PAGE_DOWN;
-	windows_key_map[VK_DELETE]   = Key_DELETE;
-	windows_key_map[VK_END]      = Key_END;
-	windows_key_map[VK_RIGHT]    = Key_RIGHT;
-	windows_key_map[VK_LEFT]     = Key_LEFT;
-	windows_key_map[VK_DOWN]     = Key_DOWN;
-	windows_key_map[VK_UP]       = Key_UP;
-	windows_key_map[VK_DIVIDE]   = Key_DIVIDE;
+	windows_key_map[VK_INSERT] = Key_INSERT;
+	windows_key_map[VK_HOME] = Key_HOME;
+	windows_key_map[VK_PRIOR] = Key_PAGE_UP;
+	windows_key_map[VK_NEXT] = Key_PAGE_DOWN;
+	windows_key_map[VK_DELETE] = Key_DELETE;
+	windows_key_map[VK_END] = Key_END;
+	windows_key_map[VK_RIGHT] = Key_RIGHT;
+	windows_key_map[VK_LEFT] = Key_LEFT;
+	windows_key_map[VK_DOWN] = Key_DOWN;
+	windows_key_map[VK_UP] = Key_UP;
+	windows_key_map[VK_DIVIDE] = Key_DIVIDE;
 	windows_key_map[VK_MULTIPLY] = Key_MULTIPLY;
-	windows_key_map[VK_ADD]      = Key_PLUS;
+	windows_key_map[VK_ADD] = Key_PLUS;
 	windows_key_map[VK_SUBTRACT] = Key_MINUS;
-	windows_key_map[VK_DECIMAL]  = Key_PERIOD;
-	windows_key_map[VK_OEM_3]    = Key_BACK_TICK;
+	windows_key_map[VK_DECIMAL] = Key_PERIOD;
+	windows_key_map[VK_OEM_3] = Key_BACK_TICK;
 
 	windows_key_map[VK_NUMPAD0] = Key_PAD_0;
 	windows_key_map[VK_NUMPAD1] = Key_PAD_1;
@@ -1453,13 +1454,13 @@ void win32_map_keys() {
 	windows_vk_key_map[Key_8] = (u32)'8';
 	windows_vk_key_map[Key_9] = (u32)'9';
 
-	windows_vk_key_map[Key_RETURN]		= VK_RETURN;
-	windows_vk_key_map[Key_ESCAPE]		= VK_ESCAPE;
-	windows_vk_key_map[Key_BACKSPACE]	= VK_BACK;
-	windows_vk_key_map[Key_TAB]			= VK_TAB;
-	windows_vk_key_map[Key_SPACE]		= VK_SPACE;
-	windows_vk_key_map[Key_SHIFT]		= VK_SHIFT;
-	windows_vk_key_map[Key_CTRL]		= VK_CONTROL;
+	windows_vk_key_map[Key_RETURN] = VK_RETURN;
+	windows_vk_key_map[Key_ESCAPE] = VK_ESCAPE;
+	windows_vk_key_map[Key_BACKSPACE] = VK_BACK;
+	windows_vk_key_map[Key_TAB] = VK_TAB;
+	windows_vk_key_map[Key_SPACE] = VK_SPACE;
+	windows_vk_key_map[Key_SHIFT] = VK_SHIFT;
+	windows_vk_key_map[Key_CTRL] = VK_CONTROL;
 
 	windows_vk_key_map[Key_F1] = VK_F1;
 	windows_vk_key_map[Key_F2] = VK_F2;
@@ -1474,23 +1475,23 @@ void win32_map_keys() {
 	windows_vk_key_map[Key_F11] = VK_F11;
 	windows_vk_key_map[Key_F12] = VK_F12;
 
-	windows_vk_key_map[Key_PRINT_SCREEN]	 = VK_SNAPSHOT;
-	windows_vk_key_map[Key_INSERT]			 = VK_INSERT;  
-	windows_vk_key_map[Key_HOME]			 = VK_HOME;    
-	windows_vk_key_map[Key_PAGE_UP]			 = VK_PRIOR;   
-	windows_vk_key_map[Key_PAGE_DOWN]		 = VK_NEXT;    
-	windows_vk_key_map[Key_DELETE]			 = VK_DELETE;  
-	windows_vk_key_map[Key_END]				 = VK_END;     
-	windows_vk_key_map[Key_RIGHT]			 = VK_RIGHT;   
-	windows_vk_key_map[Key_LEFT]			 = VK_LEFT;    
-	windows_vk_key_map[Key_DOWN]			 = VK_DOWN;    
-	windows_vk_key_map[Key_UP]				 = VK_UP;      
-	windows_vk_key_map[Key_DIVIDE]			 = VK_DIVIDE;  
-	windows_vk_key_map[Key_MULTIPLY]		 = VK_MULTIPLY;
-	windows_vk_key_map[Key_PLUS]			 = VK_ADD;     
-	windows_vk_key_map[Key_MINUS]			 = VK_SUBTRACT;
-	windows_vk_key_map[Key_PERIOD]			 = VK_DECIMAL; 
-	windows_vk_key_map[Key_BACK_TICK]		 = VK_OEM_3;   
+	windows_vk_key_map[Key_PRINT_SCREEN] = VK_SNAPSHOT;
+	windows_vk_key_map[Key_INSERT] = VK_INSERT;
+	windows_vk_key_map[Key_HOME] = VK_HOME;
+	windows_vk_key_map[Key_PAGE_UP] = VK_PRIOR;
+	windows_vk_key_map[Key_PAGE_DOWN] = VK_NEXT;
+	windows_vk_key_map[Key_DELETE] = VK_DELETE;
+	windows_vk_key_map[Key_END] = VK_END;
+	windows_vk_key_map[Key_RIGHT] = VK_RIGHT;
+	windows_vk_key_map[Key_LEFT] = VK_LEFT;
+	windows_vk_key_map[Key_DOWN] = VK_DOWN;
+	windows_vk_key_map[Key_UP] = VK_UP;
+	windows_vk_key_map[Key_DIVIDE] = VK_DIVIDE;
+	windows_vk_key_map[Key_MULTIPLY] = VK_MULTIPLY;
+	windows_vk_key_map[Key_PLUS] = VK_ADD;
+	windows_vk_key_map[Key_MINUS] = VK_SUBTRACT;
+	windows_vk_key_map[Key_PERIOD] = VK_DECIMAL;
+	windows_vk_key_map[Key_BACK_TICK] = VK_OEM_3;
 
 	windows_vk_key_map[Key_PAD_0] = VK_NUMPAD0;
 	windows_vk_key_map[Key_PAD_1] = VK_NUMPAD1;
@@ -1514,8 +1515,8 @@ WPARAM win32_get_mapped_vk_key(Key key) {
 }
 
 void win32_mouse_button_event(Mouse_Button_Event *event, WPARAM wparam, LPARAM lparam) {
-	int   x         = GET_X_LPARAM(lparam);
-	int   y         = GET_Y_LPARAM(lparam);
+	int   x = GET_X_LPARAM(lparam);
+	int   y = GET_Y_LPARAM(lparam);
 	event->position = vec2s(x, window_height - y); // inverting y
 }
 
@@ -1526,259 +1527,284 @@ void win32_add_event(Event event) {
 }
 
 static LRESULT CALLBACK win32_wnd_proc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam) {
-	Event   event  = {};
+	Event   event = {};
 	LRESULT result = 0;
 
 	switch (msg) {
-		case WM_ACTIVATE: {
-			int low = LOWORD(wparam);
+	case WM_ACTIVATE:
+	{
+		int low = LOWORD(wparam);
 
-			if (low == WA_ACTIVE || low == WA_CLICKACTIVE)
-				event.type = Event_Type_WINDOW_ACTIVE;
-			else
-				event.type = Event_Type_WINDOW_INACTIVE;
+		if (low == WA_ACTIVE || low == WA_CLICKACTIVE)
+			event.type = Event_Type_WINDOW_ACTIVE;
+		else
+			event.type = Event_Type_WINDOW_INACTIVE;
 
-			result = DefWindowProcW(wnd, msg, wparam, lparam);
-		} break;
+		result = DefWindowProcW(wnd, msg, wparam, lparam);
+	} break;
 
-		case WM_SIZE: {
-			int x = LOWORD(lparam);
-			int y = HIWORD(lparam);
+	case WM_SIZE:
+	{
+		int x = LOWORD(lparam);
+		int y = HIWORD(lparam);
 
-			window_width  = x;
-			window_height = y;
+		window_width = x;
+		window_height = y;
 
-			// need to re-set clip rectangle after resize
-			RECT rc;
-			GetClientRect(wnd, &rc);
+		// need to re-set clip rectangle after resize
+		RECT rc;
+		GetClientRect(wnd, &rc);
 
-			CURSORINFO info;
-			info.cbSize = sizeof(info);
-			if (GetCursorInfo(&info) && (info.flags == 0)) {
-				POINT pt  = { rc.left, rc.top };
-				POINT pt2 = { rc.right, rc.bottom };
-				ClientToScreen(wnd, &pt);
-				ClientToScreen(wnd, &pt2);
-				SetRect(&rc, pt.x, pt.y, pt2.x, pt2.y);
-				ClipCursor(&rc);
-				int c_x = rc.left + (rc.right - rc.left) / 2;
-				int c_y = rc.top + (rc.bottom - rc.top) / 2;
-				SetCursorPos(c_x, c_y);
-			}
+		CURSORINFO info;
+		info.cbSize = sizeof(info);
+		if (GetCursorInfo(&info) && (info.flags == 0)) {
+			POINT pt = { rc.left, rc.top };
+			POINT pt2 = { rc.right, rc.bottom };
+			ClientToScreen(wnd, &pt);
+			ClientToScreen(wnd, &pt2);
+			SetRect(&rc, pt.x, pt.y, pt2.x, pt2.y);
+			ClipCursor(&rc);
+			int c_x = rc.left + (rc.right - rc.left) / 2;
+			int c_y = rc.top + (rc.bottom - rc.top) / 2;
+			SetCursorPos(c_x, c_y);
+		}
 
-			if (x > 0 && y > 0) {
-				HDC dc = GetDC(wnd);
-				SwapBuffers(dc);
-				ReleaseDC(wnd, dc);
-			}
+		if (x > 0 && y > 0) {
+			HDC dc = GetDC(wnd);
+			SwapBuffers(dc);
+			ReleaseDC(wnd, dc);
+		}
 
-			event.type             = Event_Type_WINDOW_RESIZE;
-			event.window.dimension = vec2s(x, y);
-		} break;
+		event.type = Event_Type_WINDOW_RESIZE;
+		event.window.dimension = vec2s(x, y);
+	} break;
 
-		case WM_ENTERSIZEMOVE: {
-			windows_audio_client.client->Stop();
-			result = DefWindowProcW(wnd, msg, wparam, lparam);
-		} break;
+	case WM_ENTERSIZEMOVE:
+	{
+		windows_audio_client.client->Stop();
+		result = DefWindowProcW(wnd, msg, wparam, lparam);
+	} break;
 
-		case WM_EXITSIZEMOVE: {
-			windows_audio_client.client->Start();
-			result = DefWindowProcW(wnd, msg, wparam, lparam);
-		} break;
+	case WM_EXITSIZEMOVE:
+	{
+		windows_audio_client.client->Start();
+		result = DefWindowProcW(wnd, msg, wparam, lparam);
+	} break;
 
-		case WM_DPICHANGED: {
-			RECT *const suggested_rect = (RECT *)lparam;
-			auto        left           = suggested_rect->left;
-			auto        top            = suggested_rect->top;
-			auto        width          = suggested_rect->right - suggested_rect->left;
-			auto        height         = suggested_rect->bottom - suggested_rect->top;
-			SetWindowPos(wnd, 0, left, top, width, height, SWP_NOZORDER | SWP_NOACTIVATE);
-		} break;
+	case WM_DPICHANGED:
+	{
+		RECT *const suggested_rect = (RECT *)lparam;
+		auto        left = suggested_rect->left;
+		auto        top = suggested_rect->top;
+		auto        width = suggested_rect->right - suggested_rect->left;
+		auto        height = suggested_rect->bottom - suggested_rect->top;
+		SetWindowPos(wnd, 0, left, top, width, height, SWP_NOZORDER | SWP_NOACTIVATE);
+	} break;
 
-		case WM_CLOSE: {
-			PostQuitMessage(0);
-		} break;
+	case WM_CLOSE:
+	{
+		PostQuitMessage(0);
+	} break;
 
-		case WM_DESTROY: {
-		} break;
+	case WM_DESTROY:
+	{
+	} break;
 
-		case WM_LBUTTONDOWN: {
-			event.type                = Event_Type_MOUSE_BUTTON_DOWN;
-			event.mouse_button.symbol = Button_LEFT;
-			event.mouse_button.state  = Key_State_DOWN;
-			win32_mouse_button_event(&event.mouse_button, wparam, lparam);
-		} break;
+	case WM_LBUTTONDOWN:
+	{
+		event.type = Event_Type_MOUSE_BUTTON_DOWN;
+		event.mouse_button.symbol = Button_LEFT;
+		event.mouse_button.state = Key_State_DOWN;
+		win32_mouse_button_event(&event.mouse_button, wparam, lparam);
+	} break;
 
-		case WM_LBUTTONUP: {
-			event.type                = Event_Type_MOUSE_BUTTON_UP;
-			event.mouse_button.symbol = Button_LEFT;
-			event.mouse_button.state  = Key_State_UP;
-			win32_mouse_button_event(&event.mouse_button, wparam, lparam);
-		} break;
+	case WM_LBUTTONUP:
+	{
+		event.type = Event_Type_MOUSE_BUTTON_UP;
+		event.mouse_button.symbol = Button_LEFT;
+		event.mouse_button.state = Key_State_UP;
+		win32_mouse_button_event(&event.mouse_button, wparam, lparam);
+	} break;
 
-		case WM_MBUTTONDOWN: {
-			event.type                = Event_Type_MOUSE_BUTTON_DOWN;
-			event.mouse_button.symbol = Button_MIDDLE;
-			event.mouse_button.state  = Key_State_DOWN;
-			win32_mouse_button_event(&event.mouse_button, wparam, lparam);
-		} break;
+	case WM_MBUTTONDOWN:
+	{
+		event.type = Event_Type_MOUSE_BUTTON_DOWN;
+		event.mouse_button.symbol = Button_MIDDLE;
+		event.mouse_button.state = Key_State_DOWN;
+		win32_mouse_button_event(&event.mouse_button, wparam, lparam);
+	} break;
 
-		case WM_MBUTTONUP: {
-			event.type                = Event_Type_MOUSE_BUTTON_UP;
-			event.mouse_button.symbol = Button_MIDDLE;
-			event.mouse_button.state  = Key_State_UP;
-			win32_mouse_button_event(&event.mouse_button, wparam, lparam);
-		} break;
+	case WM_MBUTTONUP:
+	{
+		event.type = Event_Type_MOUSE_BUTTON_UP;
+		event.mouse_button.symbol = Button_MIDDLE;
+		event.mouse_button.state = Key_State_UP;
+		win32_mouse_button_event(&event.mouse_button, wparam, lparam);
+	} break;
 
-		case WM_RBUTTONDOWN: {
-			event.type                = Event_Type_MOUSE_BUTTON_DOWN;
-			event.mouse_button.symbol = Button_RIGHT;
-			event.mouse_button.state  = Key_State_DOWN;
-			win32_mouse_button_event(&event.mouse_button, wparam, lparam);
-		} break;
+	case WM_RBUTTONDOWN:
+	{
+		event.type = Event_Type_MOUSE_BUTTON_DOWN;
+		event.mouse_button.symbol = Button_RIGHT;
+		event.mouse_button.state = Key_State_DOWN;
+		win32_mouse_button_event(&event.mouse_button, wparam, lparam);
+	} break;
 
-		case WM_RBUTTONUP: {
-			event.type                = Event_Type_MOUSE_BUTTON_UP;
-			event.mouse_button.symbol = Button_RIGHT;
-			event.mouse_button.state  = Key_State_UP;
-			win32_mouse_button_event(&event.mouse_button, wparam, lparam);
-		} break;
+	case WM_RBUTTONUP:
+	{
+		event.type = Event_Type_MOUSE_BUTTON_UP;
+		event.mouse_button.symbol = Button_RIGHT;
+		event.mouse_button.state = Key_State_UP;
+		win32_mouse_button_event(&event.mouse_button, wparam, lparam);
+	} break;
 
-		case WM_XBUTTONDOWN: {
-			event.type                = Event_Type_MOUSE_BUTTON_DOWN;
-			event.mouse_button.symbol = ((wparam & MK_XBUTTON1) == MK_XBUTTON1) ? Button_X1 : Button_X2;
-			event.mouse_button.state  = Key_State_DOWN;
-			win32_mouse_button_event(&event.mouse_button, wparam, lparam);
-		} break;
+	case WM_XBUTTONDOWN:
+	{
+		event.type = Event_Type_MOUSE_BUTTON_DOWN;
+		event.mouse_button.symbol = ((wparam & MK_XBUTTON1) == MK_XBUTTON1) ? Button_X1 : Button_X2;
+		event.mouse_button.state = Key_State_DOWN;
+		win32_mouse_button_event(&event.mouse_button, wparam, lparam);
+	} break;
 
-		case WM_XBUTTONUP: {
-			event.type                = Event_Type_MOUSE_BUTTON_UP;
-			event.mouse_button.symbol = ((wparam & MK_XBUTTON1) == MK_XBUTTON1) ? Button_X1 : Button_X2;
-			event.mouse_button.state  = Key_State_UP;
-			win32_mouse_button_event(&event.mouse_button, wparam, lparam);
-		} break;
+	case WM_XBUTTONUP:
+	{
+		event.type = Event_Type_MOUSE_BUTTON_UP;
+		event.mouse_button.symbol = ((wparam & MK_XBUTTON1) == MK_XBUTTON1) ? Button_X1 : Button_X2;
+		event.mouse_button.state = Key_State_UP;
+		win32_mouse_button_event(&event.mouse_button, wparam, lparam);
+	} break;
 
-		case WM_MOUSEMOVE: {
-			RECT rc;
-			GetClientRect(wnd, &rc);
-			Vec2s wr = vec2s(rc.right - rc.left, rc.bottom - rc.top);
+	case WM_MOUSEMOVE:
+	{
+		RECT rc;
+		GetClientRect(wnd, &rc);
+		Vec2s wr = vec2s(rc.right - rc.left, rc.bottom - rc.top);
 
-			event.type = Event_Type_MOUSE_CURSOR;
-			int x      = GET_X_LPARAM(lparam);
-			int ny     = GET_Y_LPARAM(lparam);
-			int y      = wr.y - ny; // inverting y
+		event.type = Event_Type_MOUSE_CURSOR;
+		int x = GET_X_LPARAM(lparam);
+		int ny = GET_Y_LPARAM(lparam);
+		int y = wr.y - ny; // inverting y
 
-			CURSORINFO info;
-			info.cbSize = sizeof(info);
-			if (GetCursorInfo(&info) && (info.flags == 0)) { 
-				// Cursor is hidden, place cursor always at center
-				POINT pt  = { rc.left, rc.top };
-				POINT pt2 = { rc.right, rc.bottom };
-				ClientToScreen(wnd, &pt);
-				ClientToScreen(wnd, &pt2);
-				SetRect(&rc, pt.x, pt.y, pt2.x, pt2.y);
-				ClipCursor(&rc);
-				int c_x = rc.left + (rc.right - rc.left) / 2;
-				int c_y = rc.top + (rc.bottom - rc.top) / 2;
-				SetCursorPos(c_x, c_y);
-				event.mouse_cursor.x = c_x;
-				event.mouse_cursor.y = c_y;
-			} else {
-				event.mouse_cursor.x = x;
-				event.mouse_cursor.y = y;
-			}
-		} break;
+		CURSORINFO info;
+		info.cbSize = sizeof(info);
+		if (GetCursorInfo(&info) && (info.flags == 0)) {
+			// Cursor is hidden, place cursor always at center
+			POINT pt = { rc.left, rc.top };
+			POINT pt2 = { rc.right, rc.bottom };
+			ClientToScreen(wnd, &pt);
+			ClientToScreen(wnd, &pt2);
+			SetRect(&rc, pt.x, pt.y, pt2.x, pt2.y);
+			ClipCursor(&rc);
+			int c_x = rc.left + (rc.right - rc.left) / 2;
+			int c_y = rc.top + (rc.bottom - rc.top) / 2;
+			SetCursorPos(c_x, c_y);
+			event.mouse_cursor.x = c_x;
+			event.mouse_cursor.y = c_y;
+		} else {
+			event.mouse_cursor.x = x;
+			event.mouse_cursor.y = y;
+		}
+	} break;
 
-		case WM_MOUSEWHEEL: {
-			event.type                   = Event_Type_MOUSE_WHEEL;
-			event.mouse_wheel.horizontal = 0;
-			event.mouse_wheel.vertical   = GET_WHEEL_DELTA_WPARAM(wparam);
-		} break;
+	case WM_MOUSEWHEEL:
+	{
+		event.type = Event_Type_MOUSE_WHEEL;
+		event.mouse_wheel.horizontal = 0;
+		event.mouse_wheel.vertical = GET_WHEEL_DELTA_WPARAM(wparam);
+	} break;
 
-		case WM_MOUSEHWHEEL: {
-			event.type                   = Event_Type_MOUSE_WHEEL;
-			event.mouse_wheel.vertical   = 0;
-			event.mouse_wheel.horizontal = GET_WHEEL_DELTA_WPARAM(wparam);
-		} break;
+	case WM_MOUSEHWHEEL:
+	{
+		event.type = Event_Type_MOUSE_WHEEL;
+		event.mouse_wheel.vertical = 0;
+		event.mouse_wheel.horizontal = GET_WHEEL_DELTA_WPARAM(wparam);
+	} break;
 
-		case WM_INPUT: {
-			if (GET_RAWINPUT_CODE_WPARAM(wparam) == RIM_INPUT) {
-				UINT size;
-				GetRawInputData((HRAWINPUT)lparam, RID_INPUT, 0, &size, sizeof(RAWINPUTHEADER));
+	case WM_INPUT:
+	{
+		if (GET_RAWINPUT_CODE_WPARAM(wparam) == RIM_INPUT) {
+			UINT size;
+			GetRawInputData((HRAWINPUT)lparam, RID_INPUT, 0, &size, sizeof(RAWINPUTHEADER));
 
-				RAWINPUT *input = (RAWINPUT *)tallocate(size);
-				if (GetRawInputData((HRAWINPUT)lparam, RID_INPUT, input, &size, sizeof(RAWINPUTHEADER)) == size &&
-					input->header.dwType == RIM_TYPEMOUSE) {
-					MONITORINFO monitor_info;
-					monitor_info.cbSize = sizeof(monitor_info);
+			RAWINPUT *input = (RAWINPUT *)tallocate(size);
+			if (GetRawInputData((HRAWINPUT)lparam, RID_INPUT, input, &size, sizeof(RAWINPUTHEADER)) == size &&
+				input->header.dwType == RIM_TYPEMOUSE) {
+				MONITORINFO monitor_info;
+				monitor_info.cbSize = sizeof(monitor_info);
 
-					if (GetMonitorInfoW(MonitorFromWindow(wnd, MONITOR_DEFAULTTONEAREST), &monitor_info)) {
-						LONG monitor_w = monitor_info.rcMonitor.right - monitor_info.rcMonitor.left;
-						LONG monitor_h = monitor_info.rcMonitor.bottom - monitor_info.rcMonitor.top;
+				if (GetMonitorInfoW(MonitorFromWindow(wnd, MONITOR_DEFAULTTONEAREST), &monitor_info)) {
+					LONG monitor_w = monitor_info.rcMonitor.right - monitor_info.rcMonitor.left;
+					LONG monitor_h = monitor_info.rcMonitor.bottom - monitor_info.rcMonitor.top;
 
-						LONG xrel = input->data.mouse.lLastX;
-						LONG yrel = input->data.mouse.lLastY;
+					LONG xrel = input->data.mouse.lLastX;
+					LONG yrel = input->data.mouse.lLastY;
 
-						event.type         = Event_Type_MOUSE_AXIS;
-						event.mouse_axis.x = (float)xrel / (float)monitor_w;
-						event.mouse_axis.y = (float)yrel / (float)monitor_h;
-						event.mouse_axis.dx = xrel;
-						event.mouse_axis.dy = yrel;
-					}
+					event.type = Event_Type_MOUSE_AXIS;
+					event.mouse_axis.x = (float)xrel / (float)monitor_w;
+					event.mouse_axis.y = (float)yrel / (float)monitor_h;
+					event.mouse_axis.dx = xrel;
+					event.mouse_axis.dy = yrel;
 				}
 			}
-			result = DefWindowProcW(wnd, msg, wparam, lparam);
-		} break;
-
-		case WM_SYSKEYDOWN: {
-			if (wparam == VK_F10) {
-				event.type       = Event_Type_KEY_DOWN;
-				event.key.symbol = Key_F10;
-				event.key.state  = Key_State_DOWN;
-				event.key.repeat = ((lparam & bit(30)) == bit(30));
-			}
-		} break;
-
-		case WM_SYSKEYUP: {
-			if (wparam == VK_F10) {
-				event.type       = Event_Type_KEY_UP;
-				event.key.symbol = Key_F10;
-				event.key.state  = Key_State_UP;
-				event.key.repeat = ((lparam & bit(30)) == bit(30));
-			}
-		} break;
-
-		case WM_KEYDOWN: {
-			Key key = win32_get_mapped_key(wparam);
-			if (key != Key_UNKNOWN) {
-				event.type       = Event_Type_KEY_DOWN;
-				event.key.symbol = key;
-				event.key.state  = Key_State_DOWN;
-				event.key.repeat = ((lparam & bit(30)) == bit(30));
-			}
-		} break;
-
-		case WM_KEYUP: {
-			Key key = win32_get_mapped_key(wparam);
-			if (key != Key_UNKNOWN) {
-				event.type       = Event_Type_KEY_UP;
-				event.key.symbol = key;
-				event.key.state  = Key_State_UP;
-				event.key.repeat = ((lparam & bit(30)) == bit(30));
-			}
-		} break;
-
-		case WM_CHAR: {
-			event.type          = Event_Type_TEXT_INPUT;
-			wchar_t text        = (wchar_t)wparam;
-			char    text_utf[4] = {};
-			WideCharToMultiByte(CP_UTF8, 0, &text, 1, (char *)text_utf, sizeof(text_utf), 0, 0);
-			event.text.codepoint = utf8_to_utf32((u8 *)text_utf);
-		} break;
-
-		default: {
-			result = DefWindowProcW(wnd, msg, wparam, lparam);
 		}
+		result = DefWindowProcW(wnd, msg, wparam, lparam);
+	} break;
+
+	case WM_SYSKEYDOWN:
+	{
+		if (wparam == VK_F10) {
+			event.type = Event_Type_KEY_DOWN;
+			event.key.symbol = Key_F10;
+			event.key.state = Key_State_DOWN;
+			event.key.repeat = ((lparam & bit(30)) == bit(30));
+		}
+	} break;
+
+	case WM_SYSKEYUP:
+	{
+		if (wparam == VK_F10) {
+			event.type = Event_Type_KEY_UP;
+			event.key.symbol = Key_F10;
+			event.key.state = Key_State_UP;
+			event.key.repeat = ((lparam & bit(30)) == bit(30));
+		}
+	} break;
+
+	case WM_KEYDOWN:
+	{
+		Key key = win32_get_mapped_key(wparam);
+		if (key != Key_UNKNOWN) {
+			event.type = Event_Type_KEY_DOWN;
+			event.key.symbol = key;
+			event.key.state = Key_State_DOWN;
+			event.key.repeat = ((lparam & bit(30)) == bit(30));
+		}
+	} break;
+
+	case WM_KEYUP:
+	{
+		Key key = win32_get_mapped_key(wparam);
+		if (key != Key_UNKNOWN) {
+			event.type = Event_Type_KEY_UP;
+			event.key.symbol = key;
+			event.key.state = Key_State_UP;
+			event.key.repeat = ((lparam & bit(30)) == bit(30));
+		}
+	} break;
+
+	case WM_CHAR:
+	{
+		event.type = Event_Type_TEXT_INPUT;
+		wchar_t text = (wchar_t)wparam;
+		char    text_utf[4] = {};
+		WideCharToMultiByte(CP_UTF8, 0, &text, 1, (char *)text_utf, sizeof(text_utf), 0, 0);
+		event.text.codepoint = utf8_to_utf32((u8 *)text_utf);
+	} break;
+
+	default:
+	{
+		result = DefWindowProcW(wnd, msg, wparam, lparam);
+	}
 	}
 
 	if (event.type != Event_Type_NONE) {
@@ -1800,19 +1826,19 @@ System_Info system_get_info() {
 
 	auto arch = winfo.wProcessorArchitecture;
 	switch (arch) {
-		case PROCESSOR_ARCHITECTURE_AMD64: info.architecture = Processor_Architecture_AMD64; break;
-		case PROCESSOR_ARCHITECTURE_ARM: info.architecture = Processor_Architecture_ARM; break;
-		case PROCESSOR_ARCHITECTURE_ARM64: info.architecture = Processor_Architecture_ARM64; break;
-		case PROCESSOR_ARCHITECTURE_IA64: info.architecture = Processor_Architecture_IA64; break;
-		case PROCESSOR_ARCHITECTURE_INTEL: info.architecture = Processor_Architecture_INTEL; break;
-		default: info.architecture = Processor_Architecture_UNKNOWN;
+	case PROCESSOR_ARCHITECTURE_AMD64: info.architecture = Processor_Architecture_AMD64; break;
+	case PROCESSOR_ARCHITECTURE_ARM: info.architecture = Processor_Architecture_ARM; break;
+	case PROCESSOR_ARCHITECTURE_ARM64: info.architecture = Processor_Architecture_ARM64; break;
+	case PROCESSOR_ARCHITECTURE_IA64: info.architecture = Processor_Architecture_IA64; break;
+	case PROCESSOR_ARCHITECTURE_INTEL: info.architecture = Processor_Architecture_INTEL; break;
+	default: info.architecture = Processor_Architecture_UNKNOWN;
 	}
 
-	info.page_size               = winfo.dwPageSize;
+	info.page_size = winfo.dwPageSize;
 	info.min_application_address = (ptrsize)winfo.lpMinimumApplicationAddress;
 	info.max_application_address = (ptrsize)winfo.lpMaximumApplicationAddress;
-	info.number_of_processors    = winfo.dwNumberOfProcessors;
-	info.allocation_granularity  = winfo.dwAllocationGranularity;
+	info.number_of_processors = winfo.dwNumberOfProcessors;
+	info.allocation_granularity = winfo.dwAllocationGranularity;
 
 	return info;
 }
@@ -1823,7 +1849,7 @@ String system_get_user_name() {
 
 	if (GetUserNameW(buffer, &buffer_len)) {
 		String name;
-		name.data  = (utf8 *)memory_allocate(buffer_len);
+		name.data = (utf8 *)memory_allocate(buffer_len);
 		name.count = WideCharToMultiByte(CP_UTF8, 0, buffer, -1, (char *)name.data, buffer_len, 0, 0) - 1;
 		return name;
 	}
@@ -1838,28 +1864,27 @@ Handle system_create_window(const char *title, s32 width, s32 height, System_Win
 
 	HINSTANCE instance = GetModuleHandleW(0);
 
-	WNDCLASSEXW wnd_class   = {};
-	wnd_class.cbSize        = sizeof(wnd_class);
-	wnd_class.style         = CS_HREDRAW | CS_VREDRAW;
-	wnd_class.lpfnWndProc   = win32_wnd_proc;
-	wnd_class.hInstance     = instance;
+	WNDCLASSEXW wnd_class = {};
+	wnd_class.cbSize = sizeof(wnd_class);
+	wnd_class.style = CS_HREDRAW | CS_VREDRAW;
+	wnd_class.lpfnWndProc = win32_wnd_proc;
+	wnd_class.hInstance = instance;
 	wnd_class.lpszClassName = L"Karma";
-	wnd_class.hIcon         = (HICON)LoadImageW(instance, MAKEINTRESOURCEW(IDI_ICON1), IMAGE_ICON, 0, 0, LR_SHARED);
-	wnd_class.hIconSm       = (HICON)LoadImageW(instance, MAKEINTRESOURCEW(IDI_ICON1), IMAGE_ICON, 0, 0, LR_DEFAULTSIZE | LR_SHARED);
-	wnd_class.hCursor       = (HCURSOR)LoadImageW(0, MAKEINTRESOURCEW(OCR_NORMAL), IMAGE_CURSOR, 0, 0, LR_SHARED);
-	
-	if (!RegisterClassExW(&wnd_class))
-	{
+	wnd_class.hIcon = (HICON)LoadImageW(instance, MAKEINTRESOURCEW(IDI_ICON1), IMAGE_ICON, 0, 0, LR_SHARED);
+	wnd_class.hIconSm = (HICON)LoadImageW(instance, MAKEINTRESOURCEW(IDI_ICON1), IMAGE_ICON, 0, 0, LR_DEFAULTSIZE | LR_SHARED);
+	wnd_class.hCursor = (HCURSOR)LoadImageW(0, MAKEINTRESOURCEW(OCR_NORMAL), IMAGE_CURSOR, 0, 0, LR_SHARED);
+
+	if (!RegisterClassExW(&wnd_class)) {
 		win32_check_for_error();
 		return result;
 	}
 
 	DWORD wnd_styles = WS_OVERLAPPEDWINDOW;
-	RECT  wrc        = {};
-	wrc.right        = width;
-	wrc.bottom       = height;
+	RECT  wrc = {};
+	wrc.right = width;
+	wrc.bottom = height;
 	AdjustWindowRectExForDpi(&wrc, wnd_styles, FALSE, 0, DPI_AWARENESS_PER_MONITOR_AWARE);
-	width  = wrc.right - wrc.left;
+	width = wrc.right - wrc.left;
 	height = wrc.bottom - wrc.top;
 
 	int      length = MultiByteToWideChar(CP_UTF8, 0, title, -1, 0, 0);
@@ -1867,12 +1892,8 @@ Handle system_create_window(const char *title, s32 width, s32 height, System_Win
 	MultiByteToWideChar(CP_UTF8, 0, title, -1, wtitle, length);
 
 	window_handle = CreateWindowExW(0, L"Karma", wtitle, wnd_styles,
-									CW_USEDEFAULT, CW_USEDEFAULT,
-									width, height, 0, 0, instance, 0);
-
-	auto window_size = system_get_client_size();
-	window_width = window_size.x;
-	window_height = window_size.y;
+		CW_USEDEFAULT, CW_USEDEFAULT,
+		width, height, 0, 0, instance, 0);
 
 	if (!window_handle) {
 		win32_check_for_error();
@@ -1880,11 +1901,15 @@ Handle system_create_window(const char *title, s32 width, s32 height, System_Win
 		return result;
 	}
 
+	auto window_size = system_get_client_size();
+	window_width = window_size.x;
+	window_height = window_size.y;
+
 	RAWINPUTDEVICE device;
 	device.usUsagePage = 0x1;
-	device.usUsage     = 0x2;
-	device.dwFlags     = 0;
-	device.hwndTarget  = window_handle;
+	device.usUsage = 0x2;
+	device.dwFlags = 0;
+	device.hwndTarget = window_handle;
 
 	if (!RegisterRawInputDevices(&device, 1, sizeof(device))) {
 		win32_check_for_error();
@@ -1976,7 +2001,7 @@ Socket system_net_open_udp_server(Socket_Address address) {
 	sock_adrr.sin_addr.s_addr = htonl(address.address);
 	sock_adrr.sin_port = htons(address.port);
 
-	int result = bind(win_sock, (const sockaddr*)&sock_adrr, sizeof(sock_adrr));
+	int result = bind(win_sock, (const sockaddr *)&sock_adrr, sizeof(sock_adrr));
 	if (result == SOCKET_ERROR) {
 		result = WSAGetLastError();
 		closesocket(win_sock);
@@ -1998,7 +2023,7 @@ Socket system_net_open_udp_client() {
 	return result;
 }
 
-s32 system_net_send_to(Socket sock, void * buffer, s32 length, Socket_Address address) {
+s32 system_net_send_to(Socket sock, void *buffer, s32 length, Socket_Address address) {
 	sockaddr_in sock_addr;
 	sock_addr.sin_family = AF_INET;
 	sock_addr.sin_addr.s_addr = htonl(address.address);
@@ -2006,10 +2031,10 @@ s32 system_net_send_to(Socket sock, void * buffer, s32 length, Socket_Address ad
 	return sendto((SOCKET)sock, (const char *)buffer, length, 0, (sockaddr *)&sock_addr, sizeof(sockaddr_in));
 }
 
-s32 system_net_receive_from(Socket sock, void * packet_buffer, s32 max_packet_size, Socket_Address *address) {
+s32 system_net_receive_from(Socket sock, void *packet_buffer, s32 max_packet_size, Socket_Address *address) {
 	sockaddr_in from;
 	int from_length = sizeof(from);
-	s32 bytes = recvfrom((SOCKET)sock, (char*)packet_buffer, max_packet_size, 0, (sockaddr*)&from, &from_length);
+	s32 bytes = recvfrom((SOCKET)sock, (char *)packet_buffer, max_packet_size, 0, (sockaddr *)&from, &from_length);
 	address->address = ntohl(from.sin_addr.s_addr);
 	address->port = ntohs(from.sin_port);
 	return bytes;
@@ -2020,9 +2045,9 @@ void system_net_close_socket(Socket sock) {
 }
 
 static inline Vec2 xinput_axis_deadzone_correction(SHORT x, SHORT y, SHORT deadzone) {
-	r32 mag      = sqrtf(((r32)x * (r32)x + (r32)y * (r32)y));
-	r32 norm_x   = mag ? (r32)x / mag : 0;
-	r32 norm_y   = mag ? (r32)y / mag : 0;
+	r32 mag = sqrtf(((r32)x * (r32)x + (r32)y * (r32)y));
+	r32 norm_x = mag ? (r32)x / mag : 0;
+	r32 norm_y = mag ? (r32)y / mag : 0;
 	r32 norm_mag = 0.0f;
 
 	if (mag > deadzone) {
@@ -2068,8 +2093,7 @@ const Array_View<Event> system_poll_events(int poll_count) {
 				s64 event_count = (s64)windows_event_count;
 				windows_event_count = 0;
 				return Array_View<Event>(windows_event_buffer, event_count);
-			}
-			else {
+			} else {
 				TranslateMessage(&msg);
 				DispatchMessageW(&msg);
 			}
@@ -2094,7 +2118,7 @@ const Array_View<Event> system_poll_events(int poll_count) {
 
 					Controller *controller = controllers + user_index;
 
-					#define win32_update_controller_button(xbutton, button)													\
+#define win32_update_controller_button(xbutton, button)													\
 						if ((new_state.Gamepad.wButtons & xbutton) != ((old_state->state.Gamepad.wButtons & xbutton))) {	\
 							Key_State button_state = (Key_State)((new_state.Gamepad.wButtons & xbutton) == xbutton);						\
 							controller_event.type = Event_Type_CONTROLLER_BUTTON;											\
@@ -2122,9 +2146,9 @@ const Array_View<Event> system_poll_events(int poll_count) {
 						win32_update_controller_button(XINPUT_GAMEPAD_Y, Controller_Button_Y);
 					}
 
-					#undef win32_update_controller_button
+#undef win32_update_controller_button
 
-					#define	win32_add_controller_axis_event(in_value, in_axis)				\
+#define	win32_add_controller_axis_event(in_value, in_axis)				\
 								controller_event.type = Event_Type_CONTROLLER_AXIS;			\
 								controller_event.controller_axis.value = in_value;			\
 								controller_event.controller_axis.symbol = in_axis;			\
@@ -2136,7 +2160,7 @@ const Array_View<Event> system_poll_events(int poll_count) {
 					value = xinput_trigger_deadzone_correction(new_state.Gamepad.bLeftTrigger, XINPUT_GAMEPAD_TRIGGER_THRESHOLD);
 					if (value != controller->axis[Controller_Axis_LTRIGGER]) {
 						win32_add_controller_axis_event(value, Controller_Axis_LTRIGGER);
-						controller->axis[Controller_Axis_LTRIGGER]  = value;
+						controller->axis[Controller_Axis_LTRIGGER] = value;
 					}
 
 					value = xinput_trigger_deadzone_correction(new_state.Gamepad.bRightTrigger, XINPUT_GAMEPAD_TRIGGER_THRESHOLD);
@@ -2145,16 +2169,16 @@ const Array_View<Event> system_poll_events(int poll_count) {
 						controller->axis[Controller_Axis_RTRIGGER] = value;
 					}
 
-					Vec2 left_thumb  = xinput_axis_deadzone_correction(new_state.Gamepad.sThumbLX, new_state.Gamepad.sThumbLY, XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
+					Vec2 left_thumb = xinput_axis_deadzone_correction(new_state.Gamepad.sThumbLX, new_state.Gamepad.sThumbLY, XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
 					Vec2 right_thumb = xinput_axis_deadzone_correction(new_state.Gamepad.sThumbRX, new_state.Gamepad.sThumbRY, XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE);
 
 					if (left_thumb.x != controller->axis[Controller_Axis_LTHUMB_X]) {
 						win32_add_controller_axis_event(left_thumb.x, Controller_Axis_LTHUMB_X);
-						controller->axis[Controller_Axis_LTHUMB_X]	= left_thumb.x;
+						controller->axis[Controller_Axis_LTHUMB_X] = left_thumb.x;
 					}
 					if (left_thumb.y != controller->axis[Controller_Axis_LTHUMB_Y]) {
 						win32_add_controller_axis_event(left_thumb.y, Controller_Axis_LTHUMB_Y);
-						controller->axis[Controller_Axis_LTHUMB_Y]	= left_thumb.y;
+						controller->axis[Controller_Axis_LTHUMB_Y] = left_thumb.y;
 					}
 
 					if (right_thumb.x != controller->axis[Controller_Axis_RTHUMB_X]) {
@@ -2166,12 +2190,11 @@ const Array_View<Event> system_poll_events(int poll_count) {
 						controller->axis[Controller_Axis_RTHUMB_Y] = right_thumb.y;
 					}
 
-					#undef win32_add_controller_axis_event
+#undef win32_add_controller_axis_event
 
 					old_state->state = new_state;
 				}
-			}
-			else if (old_state->connected) {
+			} else if (old_state->connected) {
 				Event cevent;
 				cevent.type = Event_Type_CONTROLLER_LEAVE;
 				cevent.controller_device.id = user_index;
@@ -2191,18 +2214,18 @@ const Array_View<Event> system_poll_events(int poll_count) {
 
 Key_State system_button(Button button) {
 	switch (button) {
-		case Button_LEFT:
-			return (GetAsyncKeyState(VK_LBUTTON) & 0x8000) ? Key_State_DOWN : Key_State_UP;
-		case Button_MIDDLE:
-			return (GetAsyncKeyState(VK_MBUTTON) & 0x8000) ? Key_State_DOWN : Key_State_UP;
-		case Button_RIGHT:
-			return (GetAsyncKeyState(VK_RBUTTON) & 0x8000) ? Key_State_DOWN : Key_State_UP;
-		case Button_X1:
-			return (GetAsyncKeyState(VK_XBUTTON1) & 0x8000) ? Key_State_DOWN : Key_State_UP;
-		case Button_X2:
-			return (GetAsyncKeyState(VK_XBUTTON2) & 0x8000) ? Key_State_DOWN : Key_State_UP;
+	case Button_LEFT:
+		return (GetAsyncKeyState(VK_LBUTTON) & 0x8000) ? Key_State_DOWN : Key_State_UP;
+	case Button_MIDDLE:
+		return (GetAsyncKeyState(VK_MBUTTON) & 0x8000) ? Key_State_DOWN : Key_State_UP;
+	case Button_RIGHT:
+		return (GetAsyncKeyState(VK_RBUTTON) & 0x8000) ? Key_State_DOWN : Key_State_UP;
+	case Button_X1:
+		return (GetAsyncKeyState(VK_XBUTTON1) & 0x8000) ? Key_State_DOWN : Key_State_UP;
+	case Button_X2:
+		return (GetAsyncKeyState(VK_XBUTTON2) & 0x8000) ? Key_State_DOWN : Key_State_UP;
 
-			invalid_default_case();
+		invalid_default_case();
 	}
 	return Key_State_UP;
 }
@@ -2269,7 +2292,7 @@ void system_controller_vibrate(Controller_Id id, r32 left_motor, r32 right_motor
 	assert(id < XUSER_MAX_COUNT);
 
 	XINPUT_VIBRATION in_vibration;
-	in_vibration.wLeftMotorSpeed  = (WORD)(left_motor * XINPUT_GAMEPAD_VIBRATION_MAX);
+	in_vibration.wLeftMotorSpeed = (WORD)(left_motor * XINPUT_GAMEPAD_VIBRATION_MAX);
 	in_vibration.wRightMotorSpeed = (WORD)(right_motor * XINPUT_GAMEPAD_VIBRATION_MAX);
 
 	XInputSetState(id, &in_vibration);
@@ -2320,7 +2343,7 @@ u64 system_get_frequency() {
 
 void system_fatal_error(const String msg) {
 	auto     write_len = msg.count;
-	wchar_t *pool      = (wchar_t *)memory_allocate((msg.count + 1) * sizeof(wchar_t));
+	wchar_t *pool = (wchar_t *)memory_allocate((msg.count + 1) * sizeof(wchar_t));
 	MultiByteToWideChar(CP_UTF8, 0, (const char *)msg.data, (int)write_len, pool, (int)msg.count + 1);
 	pool[write_len] = 0;
 
@@ -2331,7 +2354,7 @@ void system_fatal_error(const String msg) {
 
 void system_display_critical_message(const String msg) {
 	auto     write_len = msg.count;
-	wchar_t *pool      = (wchar_t *)tallocate((msg.count + 1) * sizeof(wchar_t));
+	wchar_t *pool = (wchar_t *)tallocate((msg.count + 1) * sizeof(wchar_t));
 	MultiByteToWideChar(CP_UTF8, 0, (const char *)msg.data, (int)write_len, pool, (int)msg.count + 1);
 	pool[write_len] = 0;
 
@@ -2399,12 +2422,12 @@ void win32_initialize_xinput() {
 	}
 
 	if (xinput) {
-		XInputGetState              = (Proc_XInput_Get_State)GetProcAddress(xinput, "XInputGetState");
-		XInputSetState              = (Proc_XInput_Set_State)GetProcAddress(xinput, "XInputSetState");
-		XInputGetCapabilities       = (Proc_XInput_Get_Capabilities)GetProcAddress(xinput, "XInputGetCapabilities");
-		XInputGetAudioDeviceIds     = (Proc_XInput_Get_Audio_Device_Ids)GetProcAddress(xinput, "XInputGetAudioDeviceIds");
+		XInputGetState = (Proc_XInput_Get_State)GetProcAddress(xinput, "XInputGetState");
+		XInputSetState = (Proc_XInput_Set_State)GetProcAddress(xinput, "XInputSetState");
+		XInputGetCapabilities = (Proc_XInput_Get_Capabilities)GetProcAddress(xinput, "XInputGetCapabilities");
+		XInputGetAudioDeviceIds = (Proc_XInput_Get_Audio_Device_Ids)GetProcAddress(xinput, "XInputGetAudioDeviceIds");
 		XInputGetBatteryInformation = (Proc_XInput_Get_Battery_Information)GetProcAddress(xinput, "XInputGetBatteryInformation");
-		XInputGetKeystroke          = (Proc_XInput_Get_Keystroke)GetProcAddress(xinput, "XInputGetKeystroke");
+		XInputGetKeystroke = (Proc_XInput_Get_Keystroke)GetProcAddress(xinput, "XInputGetKeystroke");
 	}
 
 	if (!XInputGetState) XInputGetState = xinput_get_state_stub;
@@ -2425,8 +2448,8 @@ DWORD WINAPI win_thread_proc(LPVOID param) {
 }
 
 bool system_thread_create(Thread_Proc proc, void *arg, Allocator allocator, ptrsize temporary_memory_size, String name, Thread_Context *thread) {
-	thread->proc      = proc;
-	thread->data      = arg;
+	thread->proc = proc;
+	thread->data = arg;
 	thread->allocator = allocator;
 
 	if (temporary_memory_size) {
@@ -2465,10 +2488,10 @@ void system_thread_run(Thread_Context &thread) {
 Thread_Wait system_thread_wait(Thread_Context &thread, u32 millisecs) {
 	auto result = WaitForSingleObject(thread.handle.hptr, millisecs);
 	switch (result) {
-		case WAIT_ABANDONED: return Thread_Wait_ABANDONED;
-		case WAIT_OBJECT_0: return Thread_Wait_OBJECT_0;
-		case WAIT_TIMEOUT: return Thread_Wait_TIMEOUT;
-		case WAIT_FAILED: return Thread_Wait_FAILED;
+	case WAIT_ABANDONED: return Thread_Wait_ABANDONED;
+	case WAIT_OBJECT_0: return Thread_Wait_OBJECT_0;
+	case WAIT_TIMEOUT: return Thread_Wait_TIMEOUT;
+	case WAIT_FAILED: return Thread_Wait_FAILED;
 	}
 	return Thread_Wait_FAILED;
 }
@@ -2495,10 +2518,10 @@ void system_destory_mutex(Handle handle) {
 Wait_Result system_lock_mutex(Handle handle, u32 millisecs) {
 	auto result = WaitForSingleObject(handle.hptr, millisecs);
 	switch (result) {
-		case WAIT_ABANDONED: return Wait_Result_ABANDONED;
-		case WAIT_OBJECT_0: return Wait_Result_SIGNALED;
-		case WAIT_TIMEOUT: return Wait_Result_TIMEOUT;
-		case WAIT_FAILED: return Wait_Result_FAILED;
+	case WAIT_ABANDONED: return Wait_Result_ABANDONED;
+	case WAIT_OBJECT_0: return Wait_Result_SIGNALED;
+	case WAIT_TIMEOUT: return Wait_Result_TIMEOUT;
+	case WAIT_FAILED: return Wait_Result_FAILED;
 	}
 	return Wait_Result_SUCCESS;
 }
@@ -2534,17 +2557,17 @@ int __stdcall wWinMain(HINSTANCE instance, HINSTANCE prev_instance, LPWSTR cmd_l
 
 	SetThreadDescription(GetCurrentThread(), L"Main");
 
-	context.handle.hptr    = GetCurrentThread();
-	context.id             = GetCurrentThreadId();
+	context.handle.hptr = GetCurrentThread();
+	context.id = GetCurrentThreadId();
 	context.allocator.proc = system_allocator;
 	context.allocator.data = HeapCreate(HEAP_NO_SERIALIZE, 0, 0);
-	context.proc		   = system_main;
+	context.proc = system_main;
 
 	int      len = WideCharToMultiByte(CP_UTF8, 0, cmd_line, -1, 0, 0, 0, 0);
 	String   cmd_line_string;
-	cmd_line_string.data	  = new u8[len];
-	cmd_line_string.count	  = WideCharToMultiByte(CP_UTF8, 0, cmd_line, -1, (char *)cmd_line_string.data, len, 0, 0);
-	context.data			  = &cmd_line_string;
+	cmd_line_string.data = new u8[len];
+	cmd_line_string.count = WideCharToMultiByte(CP_UTF8, 0, cmd_line, -1, (char *)cmd_line_string.data, len, 0, 0);
+	context.data = &cmd_line_string;
 
 	void *ptr = memory_allocate(static_cast<SIZE_T>(TEMPORARY_MEMORY_SIZE));
 	if (ptr == 0) {
@@ -2562,7 +2585,7 @@ int __stdcall wWinMain(HINSTANCE instance, HINSTANCE prev_instance, LPWSTR cmd_l
 	int result = system_main();
 
 	windows_audio_client.StopThread();
-	
+
 	HeapDestroy(context.allocator.data);
 
 	CoUninitialize();
@@ -2596,7 +2619,7 @@ void system_log(int type, const char *title, ANALYSE_PRINTF_FORMAT_STRING(const 
 		WriteConsoleW(handle, msg, len, &written, 0);
 		OutputDebugStringW(msg);
 
-		ctx.wbuf   = msg;
+		ctx.wbuf = msg;
 		ctx.handle = handle;
 
 		va_list ap;
@@ -2605,12 +2628,12 @@ void system_log(int type, const char *title, ANALYSE_PRINTF_FORMAT_STRING(const 
 			auto *ctx = (Ctx *)user;
 			MultiByteToWideChar(CP_UTF8, 0, buf, len, ctx->wbuf, sizeof(wchar_t) * (STB_SPRINTF_MIN));
 			ctx->wbuf[len] = 0;
-			DWORD written  = 0;
+			DWORD written = 0;
 			WriteConsoleW(ctx->handle, ctx->wbuf, len, &written, 0);
 			OutputDebugStringW(ctx->wbuf);
 			return (char *)buf;
 		},
-						 &ctx, pool, fmt, ap);
+			&ctx, pool, fmt, ap);
 		va_end(ap);
 
 		len = stbsp_snprintf(pool, STB_SPRINTF_MIN, "\n");

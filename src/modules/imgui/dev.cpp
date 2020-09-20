@@ -30,7 +30,7 @@ enum Menu_Icon {
 	Menu_COUNT,
 };
 
-static const u8 *MENU_ICON_NAMES[] = {
+static const char *MENU_ICON_NAMES[] = {
 	"\xe9\x50",
 	"\xe9\x11",
 	"\xe9\x22",
