@@ -95,14 +95,22 @@ String ostream_build_string(Ostream *stream, bool null_terminate) {
 	string.data  = new u8[count + (s64)(null_terminate)];
 	string.count = 0;
 
-	for (auto buk = &stream->head; buk != 0; buk = buk->next) {
-		memcpy(string.data + string.count, buk->data, buk->filled);
-		string.count += buk->filled;
-	}
+	ostream_builder(stream, [](u8 *data, s64 size, void *user) {
+		String *str = (String *)user;
+		memcpy(str->data + str->count, data, size);
+		str->count += size;
+	}, &string);
 
 	if (null_terminate) string.data[count] = 0;
 
 	return string;
+}
+
+void ostream_build_out_file(Ostream *stream, System_File *file) {
+	ostream_builder(stream, [](u8 *data, s64 size, void *user) {
+		auto fp = (System_File *)user;
+		fp->write(fp->handle, data, size);
+	}, file);
 }
 
 void ostream_free(Ostream *stream) {

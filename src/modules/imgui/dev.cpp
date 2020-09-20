@@ -30,7 +30,7 @@ enum Menu_Icon {
 	Menu_COUNT,
 };
 
-static const char *MENU_ICON_NAMES[] = {
+static const u8 *MENU_ICON_NAMES[] = {
 	"\xe9\x50",
 	"\xe9\x11",
 	"\xe9\x22",
@@ -250,7 +250,7 @@ void draw_header_and_buttons() {
 		color = menu_icons_value[cindex] ? MENU_ITEMS_COLORS[cindex] : vec4(1, 1, 1);
 		ImGui::SameLine();
 		ImGui::PushStyleColor(0, color);
-		if (ImGui::Button(MENU_ICON_NAMES[cindex])) {
+		if (ImGui::Button((char *)MENU_ICON_NAMES[cindex])) {
 			menu_icons_value[cindex] = !menu_icons_value[cindex];
 		}
 		ImGui::PopStyleColor();
@@ -407,11 +407,11 @@ Record *draw_profiler(Vec2 cursor) {
 
 	ImGui::BeginIconFont();
 	if (profiler.next_recording) {
-		if (ImGui::Button("\xea\x16")) {
+		if (ImGui::Button(u8"\xea\x16")) {
 			profiler.next_recording = false;
 		}
 	} else {
-		if (ImGui::Button("\xea\x15")) {
+		if (ImGui::Button(u8"\xea\x15")) {
 			profiler.next_recording = true;
 		}
 	}

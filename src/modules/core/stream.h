@@ -1,7 +1,9 @@
 #pragma once
 
 #include "karma.h"
+#include "systems.h"
 
+#if 0
 // TODO: remove or clean this up!
 inline u8 *move_ahead(u8 **ptr, int bytes) {
 	u8 *r = *ptr;
@@ -57,6 +59,7 @@ inline s64 get_s64_le(u8 **ptr) {
 	auto r = bswap64p_le(move_ahead(ptr, 8));
 	return *((s64 *)&r);
 }
+#endif
 
 //
 //
@@ -79,7 +82,7 @@ bool istream_eof(Istream *b);
 //
 //
 
-constexpr int OSTREAM_BUCKET_SIZE = 4096;
+constexpr int OSTREAM_BUCKET_SIZE = 16384;
 
 struct Ostream {
 	struct Bucket {
@@ -104,5 +107,12 @@ void ostream_write(Ostream *stream, const T &v) {
 }
 void   ostream_write_formatted(Ostream *stream, const char *fmt, ...);
 s64    ostream_get_size(Ostream *stream);
+template <typename Procedure>
+void ostream_builder(Ostream *stream, const Procedure &procedure, void *user_context) {
+	for (auto buk = &stream->head; buk != 0; buk = buk->next) {
+		procedure(buk->data, buk->filled, user_context);
+	}
+}
 String ostream_build_string(Ostream *stream, bool null_terminate = false);
+void   ostream_build_out_file(Ostream *stream, System_File *file);
 void   ostream_free(Ostream *stream);
