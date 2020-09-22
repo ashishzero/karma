@@ -478,10 +478,12 @@ bool vec4_equals(Vec4 a, Vec4 b, r32 tolerance = MATH_R32_EQUALS_DEFAULT_TOLERAN
 //
 
 Mat3 mat3_identity();
+r32 mat3_det(const Mat3 &mat);
 Mat3 mat3_inverse(const Mat3 &mat);
 Mat3 mat3_transpose(const Mat3 &m);
 
 Mat4 mat4_identity();
+r32 mat4_det(const Mat4 &mat);
 Mat4 mat4_inverse(const Mat4 &mat);
 Mat4 mat4_transpose(const Mat4 &m);
 
@@ -742,6 +744,16 @@ inline T integrate_rk4(const T &x, r32 t, r32 h, Function f) {
 	T k4 = h * f(t + h, x + k3);
 	return x + (k1 + 2.0f * (k2 + k3) + k4) / 6.0f;
 }
+
+//
+//
+//
+
+Vec3 barycentric(Vec2 a, Vec2 b, Vec2 c, Vec2 p);
+Vec3 barycentric(Vec3 a, Vec3 b, Vec3 c, Vec3 p);
+
+r32 signed_area(Vec2 a, Vec2 b, Vec2 c);
+r32 signed_area(Vec3 a, Vec3 b, Vec3 c);
 
 //
 //

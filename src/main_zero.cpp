@@ -114,6 +114,12 @@ int karma_user_zero() {
 
 	Player_Controller controller = {};
 
+
+	Vec3 p[3];
+	p[0] = vec3(0.0f, 0.0f, 0.0f);
+	p[1] = vec3(0.0f, 0.0f, 0.0f);
+	p[2] = vec3(0.0f, 0.0f, 0.0f);
+
 	Ray_Hit hit;
 	memset(&hit, 0, sizeof(hit));
 
@@ -467,6 +473,7 @@ int karma_user_zero() {
 		gfx_begin_drawing(Framebuffer_Type_HDR, Clear_ALL, vec4(0.0f));
 		gfx_viewport(0, 0, window_w, window_h);
 
+#if 0
 		im2d_begin(view);
 
 		im2d_quad(quad_mesh.quad.positions[0], 
@@ -507,6 +514,13 @@ int karma_user_zero() {
 		//}
 
 		im2d_end();
+#endif
+
+		im3d_begin(perspective_view(to_radians(30.0f), aspect_ratio, 0.01f, 100.0f), mat4_identity());
+
+		im3d_triangle(p[0], p[1], p[2], vec4(1));
+
+		im3d_end();
 
 		gfx_end_drawing();
 
@@ -540,6 +554,14 @@ int karma_user_zero() {
 			Dev_RenderFrame();
 		}
 #endif
+
+		ImGui::Begin("Area of Triangle");
+		ImGui::DragFloat3("Point 1:", p[0].m, 0.01f);
+		ImGui::DragFloat3("Point 2:", p[1].m, 0.01f);
+		ImGui::DragFloat3("Point 3:", p[2].m, 0.01f);
+		ImGui::Text("Area is: %f", signed_area(p[0], p[1], p[2]));
+		ImGui::Text("Area of Triangle is: %f", signed_area(vec2(0), vec2(0, 2), vec2(1, 0)));
+		ImGui::End();
 
 		//ImGui::ShowDemoWindow();
 

@@ -334,6 +334,13 @@ Mat3 mat3_identity() {
 	return m;
 }
 
+r32 mat3_det(const Mat3 &mat) {
+	r32 det = mat.m2[0][0] * (mat.m2[1][1] * mat.m2[2][2] - mat.m2[2][1] * mat.m2[1][2]) + 
+			  mat.m2[0][1] * (mat.m2[1][2] * mat.m2[2][0] - mat.m2[1][0] * mat.m2[2][2]) + 
+			  mat.m2[0][2] * (mat.m2[1][0] * mat.m2[2][1] - mat.m2[2][0] * mat.m2[1][1]);
+	return det;
+}
+
 Mat3 mat3_inverse(const Mat3 &mat) {
 	Mat3 result;
 	result.m2[0][0] = mat.m2[1][1] * mat.m2[2][2] - mat.m2[2][1] * mat.m2[1][2];
@@ -368,6 +375,39 @@ Mat4 mat4_identity() {
 	m.rows[2] = vec4(0.0f, 0.0f, 1.0f, 0.0f);
 	m.rows[3] = vec4(0.0f, 0.0f, 0.0f, 1.0f);
 	return m;
+}
+
+r32 mat4_det(const Mat4 &mat) {
+	r32 m0 = mat.m[5] * mat.m[10] * mat.m[15] -
+		mat.m[5] * mat.m[11] * mat.m[14] -
+		mat.m[9] * mat.m[6] * mat.m[15] +
+		mat.m[9] * mat.m[7] * mat.m[14] +
+		mat.m[13] * mat.m[6] * mat.m[11] -
+		mat.m[13] * mat.m[7] * mat.m[10];
+
+	r32 m4 = -mat.m[4] * mat.m[10] * mat.m[15] +
+		mat.m[4] * mat.m[11] * mat.m[14] +
+		mat.m[8] * mat.m[6] * mat.m[15] -
+		mat.m[8] * mat.m[7] * mat.m[14] -
+		mat.m[12] * mat.m[6] * mat.m[11] +
+		mat.m[12] * mat.m[7] * mat.m[10];
+
+	r32 m8 = mat.m[4] * mat.m[9] * mat.m[15] -
+		mat.m[4] * mat.m[11] * mat.m[13] -
+		mat.m[8] * mat.m[5] * mat.m[15] +
+		mat.m[8] * mat.m[7] * mat.m[13] +
+		mat.m[12] * mat.m[5] * mat.m[11] -
+		mat.m[12] * mat.m[7] * mat.m[9];
+
+	r32 m12 = -mat.m[4] * mat.m[9] * mat.m[14] +
+		mat.m[4] * mat.m[10] * mat.m[13] +
+		mat.m[8] * mat.m[5] * mat.m[14] -
+		mat.m[8] * mat.m[6] * mat.m[13] -
+		mat.m[12] * mat.m[5] * mat.m[10] +
+		mat.m[12] * mat.m[6] * mat.m[9];
+
+	r32 det = mat.m[0] * m0 + mat.m[1] * m4 + mat.m[2] * m8 + mat.m[3] * m12;
+	return det;
 }
 
 Mat4 mat4_inverse(const Mat4 &mat) {
@@ -1473,6 +1513,58 @@ Quat rotate_toward(Quat from, Quat to, r32 max_angle) {
 	} else {
 		return from;
 	}
+}
+
+//
+//
+//
+
+Vec3 barycentric(Vec2 a, Vec2 b, Vec2 c, Vec2 p) {
+	Vec2 v0 = b - a, v1 = c - a, v2 = p - a;
+	r32 d00 = vec2_dot(v0, v0);
+	r32 d01 = vec2_dot(v0, v1);
+	r32 d11 = vec2_dot(v1, v1);
+	r32 d20 = vec2_dot(v2, v0);
+	r32 d21 = vec2_dot(v2, v1);
+	float denom = d00 * d11 - d01 * d01;
+	Vec3 res;
+	res.x = (d11 * d20 - d01 * d21) / denom;
+	res.y = (d00 * d21 - d01 * d20) / denom;
+	res.z = 1.0f - res.x - res.y;
+	return res;
+}
+
+Vec3 barycentric(Vec3 a, Vec3 b, Vec3 c, Vec3 p) {
+	Vec3 v0 = b - a, v1 = c - a, v2 = p - a;
+	r32 d00 = vec3_dot(v0, v0);
+	r32 d01 = vec3_dot(v0, v1);
+	r32 d11 = vec3_dot(v1, v1);
+	r32 d20 = vec3_dot(v2, v0);
+	r32 d21 = vec3_dot(v2, v1);
+	float denom = d00 * d11 - d01 * d01;
+	Vec3 res;
+	res.x = (d11 * d20 - d01 * d21) / denom;
+	res.y = (d00 * d21 - d01 * d20) / denom;
+	res.z = 1.0f - res.x - res.y;
+	return res;
+}
+
+inline r32 signed_area_double(Vec2 a, Vec2 b, Vec2 c) {
+	return ((a.x - b.x) * (b.y - c.y) - (b.x - c.x) * (a.y - b.y));
+}
+
+r32 signed_area(Vec2 a, Vec2 b, Vec2 c) {
+	return 0.5f * signed_area_double(a, b, c);
+}
+
+r32 signed_area(Vec3 a, Vec3 b, Vec3 c) {
+	r32 px = signed_area_double(vec2(a.y, a.z), vec2(b.y, b.z), vec2(c.y, c.z));
+	r32 py = signed_area_double(vec2(a.z, a.x), vec2(b.z, b.x), vec2(c.z, c.x));
+	r32 pz = signed_area_double(vec2(a.x, a.y), vec2(b.x, b.y), vec2(c.x, c.y));
+	px *= px;
+	py *= py;
+	pz *= pz;
+	return 0.5f * sqrtf(px + py + pz);
 }
 
 //
