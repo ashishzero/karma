@@ -150,6 +150,18 @@ r32 vec4_dot(Vec4 a, Vec4 b) {
 //
 //
 
+r32 orientation(Vec2 a, Vec2 b) {
+	return (a.x * b.y) - (a.y * b.x);
+}
+
+Vec3 vec2_cross(Vec2 a, Vec2 b) {
+	Vec3 res;
+	res.x = 0;
+	res.y = 0;
+	res.z = (a.x * b.y) - (a.y * b.x);
+	return res;
+}
+
 Vec3 vec3_cross(Vec3 a, Vec3 b) {
 	Vec3 res;
 	res.x = (a.y * b.z) - (a.z * b.y);
@@ -1519,34 +1531,8 @@ Quat rotate_toward(Quat from, Quat to, r32 max_angle) {
 //
 //
 
-Vec3 barycentric(Vec2 a, Vec2 b, Vec2 c, Vec2 p) {
-	Vec2 v0 = b - a, v1 = c - a, v2 = p - a;
-	r32 d00 = vec2_dot(v0, v0);
-	r32 d01 = vec2_dot(v0, v1);
-	r32 d11 = vec2_dot(v1, v1);
-	r32 d20 = vec2_dot(v2, v0);
-	r32 d21 = vec2_dot(v2, v1);
-	float denom = d00 * d11 - d01 * d01;
-	Vec3 res;
-	res.x = (d11 * d20 - d01 * d21) / denom;
-	res.y = (d00 * d21 - d01 * d20) / denom;
-	res.z = 1.0f - res.x - res.y;
-	return res;
-}
-
-Vec3 barycentric(Vec3 a, Vec3 b, Vec3 c, Vec3 p) {
-	Vec3 v0 = b - a, v1 = c - a, v2 = p - a;
-	r32 d00 = vec3_dot(v0, v0);
-	r32 d01 = vec3_dot(v0, v1);
-	r32 d11 = vec3_dot(v1, v1);
-	r32 d20 = vec3_dot(v2, v0);
-	r32 d21 = vec3_dot(v2, v1);
-	float denom = d00 * d11 - d01 * d01;
-	Vec3 res;
-	res.x = (d11 * d20 - d01 * d21) / denom;
-	res.y = (d00 * d21 - d01 * d20) / denom;
-	res.z = 1.0f - res.x - res.y;
-	return res;
+inline float signed_area_double(r32 x1, r32 y1, r32 x2, r32 y2, r32 x3, r32 y3) {
+	return (x1 - x2) * (y2 - y3) - (x2 - x3) * (y1 - y2);
 }
 
 inline r32 signed_area_double(Vec2 a, Vec2 b, Vec2 c) {
@@ -1558,13 +1544,72 @@ r32 signed_area(Vec2 a, Vec2 b, Vec2 c) {
 }
 
 r32 signed_area(Vec3 a, Vec3 b, Vec3 c) {
-	r32 px = signed_area_double(vec2(a.y, a.z), vec2(b.y, b.z), vec2(c.y, c.z));
-	r32 py = signed_area_double(vec2(a.z, a.x), vec2(b.z, b.x), vec2(c.z, c.x));
-	r32 pz = signed_area_double(vec2(a.x, a.y), vec2(b.x, b.y), vec2(c.x, c.y));
+	r32 px = signed_area_double(a.y, a.z, b.y, b.z, c.y, c.z);
+	r32 py = signed_area_double(a.z, a.x, b.z, b.x, c.z, c.x);
+	r32 pz = signed_area_double(a.x, a.y, b.x, b.y, c.x, c.y);
 	px *= px;
 	py *= py;
 	pz *= pz;
 	return 0.5f * sqrtf(px + py + pz);
+}
+
+Vec3 barycentric(Vec2 a, Vec2 b, Vec2 c, Vec2 p) {
+	auto m = (a.x * b.y) - (a.y * b.x);
+
+	r32 nu = signed_area_double(p.x, p.y, b.x, b.y, c.x, c.y);
+	r32 nv = signed_area_double(p.x, p.y, c.x, c.y, a.x, a.y);
+	r32 ood = 1.0f / m;
+
+	Vec3 res;
+	res.x = nu * ood;
+	res.y = nv * ood;
+	res.z = 1.0f - res.x - res.y;
+
+	return res;
+}
+
+Vec3 barycentric(Vec3 a, Vec3 b, Vec3 c, Vec3 p) {
+	auto m = vec3_cross(b - a, c - a);
+
+	r32 nu, nv, ood;
+
+	// Absolute components for determining projection plane
+	r32 x = fabsf(m.x), y = fabsf(m.y), z = fabsf(m.z);
+
+	// Compute areas in plane of largest projection
+	if (x >= y && x >= z) {
+		// x is largest, project to the yz plane
+		nu = signed_area_double(p.y, p.z, b.y, b.z, c.y, c.z);
+		nv = signed_area_double(p.y, p.z, c.y, c.z, a.y, a.z);
+		ood = 1.0f / m.x;
+	} else if (y >= x && y >= z) {
+		// y is largest, project to the xz plane
+		nu = signed_area_double(p.x, p.z, b.x, b.z, c.x, c.z);
+		nv = signed_area_double(p.x, p.z, c.x, c.z, a.x, a.z);
+		ood = 1.0f / -m.y;
+	} else {
+		// z is largest, project to the xy plane
+		nu = signed_area_double(p.x, p.y, b.x, b.y, c.x, c.y);
+		nv = signed_area_double(p.x, p.y, c.x, c.y, a.x, a.y);
+		ood = 1.0f / m.z;
+	}
+
+	Vec3 res;
+	res.x = nu * ood;
+	res.y = nv * ood;
+	res.z = 1.0f - res.x - res.y;
+
+	return res;
+}
+
+bool point_inside_triangle(Vec2 a, Vec2 b, Vec2 c, Vec2 p) {
+	Vec3 bary = barycentric(a, b, c, p);
+	return bary.y >= 0.0f && bary.z >= 0.0f && (bary.y + bary.z) <= 1.0f;
+}
+
+bool point_inside_triangle(Vec3 a, Vec3 b, Vec3 c, Vec3 p) {
+	Vec3 bary = barycentric(a, b, c, p);
+	return bary.y >= 0.0f && bary.z >= 0.0f && (bary.y + bary.z) <= 1.0f;
 }
 
 //

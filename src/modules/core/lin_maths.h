@@ -418,6 +418,8 @@ r32 vec4_dot(Vec4 a, Vec4 b);
 //
 //
 
+r32 orientation(Vec2 a, Vec2 b);
+Vec3 vec2_cross(Vec2 a, Vec2 b);
 Vec3 vec3_cross(Vec3 a, Vec3 b);
 
 //
@@ -749,11 +751,14 @@ inline T integrate_rk4(const T &x, r32 t, r32 h, Function f) {
 //
 //
 
+r32 signed_area(Vec2 a, Vec2 b, Vec2 c);
+r32 signed_area(Vec3 a, Vec3 b, Vec3 c);
+
 Vec3 barycentric(Vec2 a, Vec2 b, Vec2 c, Vec2 p);
 Vec3 barycentric(Vec3 a, Vec3 b, Vec3 c, Vec3 p);
 
-r32 signed_area(Vec2 a, Vec2 b, Vec2 c);
-r32 signed_area(Vec3 a, Vec3 b, Vec3 c);
+bool point_inside_triangle(Vec2 a, Vec2 b, Vec2 c, Vec2 p);
+bool point_inside_triangle(Vec3 a, Vec3 b, Vec3 c, Vec3 p);
 
 //
 //
