@@ -789,6 +789,8 @@ bool point_inside_triangle(Vec3 a, Vec3 b, Vec3 c, Vec3 p);
 
 s32 point_farthest_from_edge(Vec2 a, Vec2 b, Vec2 *p, s32 n);
 void extreme_points_alone_direction(Vec2 dir, Vec2 *pt, s32 n, s32 *min_index, s32 *max_index);
+void most_seperated_points_on_aabb(Vec2 *pt, s32 n, s32 *min, s32 *max);
+Circle circle_from_distant_points(Vec2 *pt, s32 n);
 
 Mm_Rect transform_mmrect(const Mm_Rect &a, Mat2 &mat, Vec2 t);
 Mm_Rect transform_mmrect(const Mm_Rect &a, r32 rot, Vec2 t);

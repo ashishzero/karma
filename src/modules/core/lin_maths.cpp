@@ -1747,6 +1747,38 @@ void extreme_points_alone_direction(Vec2 dir, Vec2 *pt, s32 n, s32 *min_index, s
 	}
 }
 
+void most_seperated_points_on_aabb(Vec2 *pt, s32 n, s32 *min, s32 *max) {
+	s32 minx = 0, maxx = 0, miny = 0, maxy = 0;
+
+	for (s32 i = 1; i < n; i++) {
+		if (pt[i].x < pt[minx].x) minx = i;
+		if (pt[i].x > pt[maxx].x) maxx = i;
+		if (pt[i].y < pt[miny].y) miny = i;
+		if (pt[i].y > pt[maxy].y) maxy = i;
+	}
+
+	r32 dist2x = vec2_dot(pt[maxx] - pt[minx], pt[maxx] - pt[minx]);
+	r32 dist2y = vec2_dot(pt[maxy] - pt[miny], pt[maxy] - pt[miny]);
+
+	if (dist2y > dist2x) {
+		*max = maxy;
+		*min = miny;
+	} else {
+		*min = minx;
+		*max = maxx;
+	}
+}
+
+Circle circle_from_distant_points(Vec2 *pt, s32 n) {
+	s32 min, max;
+	most_seperated_points_on_aabb(pt, n, &min, &max);	
+	Circle c;
+	c.center = (pt[min] + pt[max]) * 0.5f;
+	c.radius = vec2_dot(pt[max] - c.center, pt[max] - c.center);
+	c.radius = sqrtf(c.radius);
+	return c;
+}
+
 Mm_Rect transform_mmrect(const Mm_Rect &a, Mat2 &mat, Vec2 t) {
 	Mm_Rect b;
 	for (int i = 0; i < 2; i++) {
