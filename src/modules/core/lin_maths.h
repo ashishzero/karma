@@ -757,6 +757,9 @@ r32 signed_area(Vec3 a, Vec3 b, Vec3 c);
 Vec3 barycentric(Vec2 a, Vec2 b, Vec2 c, Vec2 p);
 Vec3 barycentric(Vec3 a, Vec3 b, Vec3 c, Vec3 p);
 
+bool is_quad_convex(Vec2 a, Vec2 b, Vec2 c, Vec2 d);
+bool is_quad_convex(Vec3 a, Vec3 b, Vec3 c, Vec3 d);
+
 bool point_inside_triangle(Vec2 a, Vec2 b, Vec2 c, Vec2 p);
 bool point_inside_triangle(Vec3 a, Vec3 b, Vec3 c, Vec3 p);
 

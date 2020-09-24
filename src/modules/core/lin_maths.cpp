@@ -1602,6 +1602,24 @@ Vec3 barycentric(Vec3 a, Vec3 b, Vec3 c, Vec3 p) {
 	return res;
 }
 
+bool is_quad_convex(Vec2 a, Vec2 b, Vec2 c, Vec2 d) {
+	auto bda = orientation(d - b, a - b);
+	auto bdc = orientation(d - b, c - b);
+	if ((bda * bdc) >= 0.0f) return false;
+	auto acd = orientation(c - a, d - a);
+	auto acb = orientation(c - a, b - a);
+	return (acd * acb) < 0.0f;
+}
+
+bool is_quad_convex(Vec3 a, Vec3 b, Vec3 c, Vec3 d) {
+	auto bda = vec3_cross(d - b, a - b);
+	auto bdc = vec3_cross(d - b, c - b);
+	if (vec3_dot(bda, bdc) >= 0.0f) return false;
+	auto acd = vec3_cross(c - a, d - a);
+	auto acb = vec3_cross(c - a, b - a);
+	return vec3_dot(acd, acb) < 0.0f;
+}
+
 bool point_inside_triangle(Vec2 a, Vec2 b, Vec2 c, Vec2 p) {
 	Vec3 bary = barycentric(a, b, c, p);
 	return bary.y >= 0.0f && bary.z >= 0.0f && (bary.y + bary.z) <= 1.0f;
