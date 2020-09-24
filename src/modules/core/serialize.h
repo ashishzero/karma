@@ -245,6 +245,16 @@ void serialize_to_file(FILE* fp, String name, const Type_Info* info, char* data,
 
 
 void deserialize_from_file(FILE* fp, String name, const Type_Info* info, char* data, s64 num_of_elements = 1, int tab_count = 0) {
+	// check if file is empty
+	long temp = ftell(fp);
+	fseek(fp, 0, SEEK_END);
+	if (ftell(fp) == temp)
+	{
+		// some problem
+		printf("the file is empty so cant read");
+		return;
+	}
+	fseek(fp, temp, SEEK_SET);
 	if (name.count) {
 		fscanf(fp, null_tprintf("%*s", tab_count, ""));
 		fscanf(fp, null_tprintf("%s : ", string_cstr(name)));
