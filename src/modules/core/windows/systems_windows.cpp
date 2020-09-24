@@ -962,7 +962,7 @@ inline wchar_t *windows_get_file_extension(wchar_t *file) {
 		if (*file == L'.') return file;
 		file += 1;
 	}
-	return 0;
+	return L"";
 }
 
 u32 windows_find_files_count(const wchar_t *root_dir, int root_dir_len, const wchar_t *extension, bool recursive) {
@@ -993,7 +993,7 @@ u32 windows_find_files_count(const wchar_t *root_dir, int root_dir_len, const wc
 				wcscat_s(next_dir, next_dir_len + 1, find_data.cFileName);
 				count += windows_find_files_count(next_dir, next_dir_len, extension, recursive);
 			}
-		} else if (wcscmp(windows_get_file_extension(find_data.cFileName), extension) == 0) {
+		} else if (wcscmp(extension, L"*") == 0 || wcscmp(windows_get_file_extension(find_data.cFileName), extension) == 0) {
 			count += 1;
 		}
 	} while (FindNextFileW(find, &find_data) != 0);
@@ -1031,7 +1031,7 @@ u32 windows_find_files_info(System_Find_File_Info *info, const System_Find_File_
 				count += next_count;
 				info += next_count;
 			}
-		} else if (wcscmp(windows_get_file_extension(find_data.cFileName), extension) == 0) {
+		} else if (wcscmp(extension, L"*") == 0 || wcscmp(windows_get_file_extension(find_data.cFileName), extension) == 0) {
 			int found_file_len = (int)wcslen(find_data.cFileName);
 			int found_full_file_len = root_dir_len + found_file_len + 1;
 			wchar_t *full_file_name = (wchar_t *)tallocate((found_full_file_len + 1) * sizeof(wchar_t));
