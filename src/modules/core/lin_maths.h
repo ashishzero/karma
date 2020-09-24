@@ -790,6 +790,11 @@ bool point_inside_triangle(Vec3 a, Vec3 b, Vec3 c, Vec3 p);
 s32 point_farthest_from_edge(Vec2 a, Vec2 b, Vec2 *p, s32 n);
 void extreme_points_alone_direction(Vec2 dir, Vec2 *pt, s32 n, s32 *min_index, s32 *max_index);
 
+Mm_Rect transform_mmrect(const Mm_Rect &a, Mat2 &mat, Vec2 t);
+Mm_Rect transform_mmrect(const Mm_Rect &a, r32 rot, Vec2 t);
+Aabb2d update_aabb(const Aabb2d &a, Mat2 &mat, Vec2 t);
+Aabb2d update_aabb(const Aabb2d &a, r32 rot, Vec2 t);
+
 bool mmrect_vs_mmrect(const Mm_Rect &a, const Mm_Rect &b);
 bool aabb_vs_aabb(Aabb2d &a, Aabb2d &b);
 

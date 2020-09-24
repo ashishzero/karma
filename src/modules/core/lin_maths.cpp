@@ -1768,14 +1768,24 @@ Mm_Rect transform_mmrect(const Mm_Rect &a, Mat2 &mat, Vec2 t) {
 }
 
 Mm_Rect transform_mmrect(const Mm_Rect &a, r32 rot, Vec2 t) {
-	r32 c = cosf(rot);
-	r32 s = sinf(rot);
+	return transform_mmrect(a, mat2_rotation(rot), t);
+}
 
-	Mat2 mat;
-	mat.rows[0] = vec2(c, -s);
-	mat.rows[1] = vec2(s, c);
+Aabb2d update_aabb(const Aabb2d &a, Mat2 &mat, Vec2 t) {
+	Aabb2d b;
+	for (int i = 0; i < 2; i++) {
+		b.center.m[i] = t.m[i];
+		b.radius[i]   = 0.0f;
+		for (int j = 0; j < 2; j++) {
+			b.center.m[i] += mat.m2[i][j] * a.center.m[j];
+			b.radius[i] += fabsf(mat.m2[i][j]) * a.radius[j];
+		}
+	}
+	return b;
+}
 
-	return transform_mmrect(a, mat, t);
+Aabb2d update_aabb(const Aabb2d &a, r32 rot, Vec2 t) {
+	return update_aabb(a, mat2_rotation(rot), t);
 }
 
 bool mmrect_vs_mmrect(const Mm_Rect &a, const Mm_Rect &b) {
