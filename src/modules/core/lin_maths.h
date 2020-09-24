@@ -796,7 +796,8 @@ Aabb2d update_aabb(const Aabb2d &a, Mat2 &mat, Vec2 t);
 Aabb2d update_aabb(const Aabb2d &a, r32 rot, Vec2 t);
 
 bool mmrect_vs_mmrect(const Mm_Rect &a, const Mm_Rect &b);
-bool aabb_vs_aabb(Aabb2d &a, Aabb2d &b);
+bool aabb_vs_aabb(const Aabb2d &a, const Aabb2d &b);
+bool circle_vs_circle(const Circle &a, const Circle &b);
 
 //
 //

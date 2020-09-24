@@ -431,6 +431,18 @@ inline Aabb2d aabb2d(Vec2 center, r32 a, r32 b) {
 	return aabb;
 }
 
+struct Circle {
+	Vec2 center;
+	r32 radius;
+};
+
+inline Circle circle(Vec2 center, r32 radius) {
+	Circle c;
+	c.center = center;
+	c.radius = radius;
+	return c;
+}
+
 struct Quad {
 	Vec2 positions[4];
 	Vec2 normals[4];

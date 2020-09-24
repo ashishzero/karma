@@ -608,7 +608,6 @@ Vec2 mat2_vec2_mul(const Mat2 &mat, Vec2 vec) {
 	Vec2 res;
 	res.m[0] = vec2_dot(vec, mat.rows[0]);
 	res.m[1] = vec2_dot(vec, mat.rows[1]);
-	res.m[2] = vec2_dot(vec, mat.rows[2]);
 	return res;
 }
 
@@ -1794,10 +1793,17 @@ bool mmrect_vs_mmrect(const Mm_Rect &a, const Mm_Rect &b) {
 	return true;
 }
 
-bool aabb_vs_aabb(Aabb2d &a, Aabb2d &b) {
+bool aabb_vs_aabb(const Aabb2d &a, const Aabb2d &b) {
 	if (fabsf(a.center.x - b.center.x) > (a.radius[0] + b.radius[0])) return false;
 	if (fabsf(a.center.y - b.center.y) > (a.radius[1] + b.radius[1])) return false;
 	return true;
+}
+
+bool circle_vs_circle(const Circle &a, const Circle &b) {
+	auto d = a.center - b.center;
+	r32 dist2 = vec2_dot(d, d);
+	r32 radius_sum = a.radius + b.radius;
+	return dist2 <= radius_sum * radius_sum;
 }
 
 //
