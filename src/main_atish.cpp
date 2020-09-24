@@ -14,6 +14,11 @@
 
 //If any error occurs while updating files, delete two file asset_data.txt and asset_table.txt and run the program
 
+static const String ASSET_EXTENSIONS[] = {
+	".png",
+	".wav"
+};
+
 u64 get_asset_data(Array_View<asset_info>& asset_table, FILE* fp, String file_name,void* &buffer)
 {
 	for (s64 i = 0; i < asset_table.count; ++i)
@@ -33,7 +38,11 @@ u64 get_asset_data(Array_View<asset_info>& asset_table, FILE* fp, String file_na
 
 Array_View<asset_info> prepare_asset()
 {
-	auto all_files = system_find_files("../res/misc", ".png", true);
+	auto all_files = system_find_files("../res", "*", true);
+
+	// load all files
+	// Check if it is not .png or .wav then remove it from all files
+	// remaining work same
 	Array<asset_info> asset_table;
 	FILE* fp_asset_table = fopen("temp/asset_table.txt", "rb+");
 	if (fp_asset_table == NULL)
@@ -59,6 +68,19 @@ Array_View<asset_info> prepare_asset()
 	for (s64 i = 0; i < all_files.count; ++i)
 	{
 		bool found = false;
+
+		for (s64 ii = 0; ii < static_count(ASSET_EXTENSIONS); ++ii)
+		{
+			if (string_match(all_files[i].extension, ASSET_EXTENSIONS[ii]))
+			{
+				found = true;
+				break;
+			}
+		}
+		if (!found)
+			continue;
+
+		found = false;
 		for (s64 j = 0; j < asset_table.count; ++j)
 		{
 			if (string_match(all_files[i].name, asset_table[j].name))
@@ -123,7 +145,7 @@ int karma_user_atish() {
 	}
 
 	void* buffer = nullptr;
-	u64 size = get_asset_data(asset_table, fp_asset_data, "stone.png", buffer);
+	u64 size = get_asset_data(asset_table, fp_asset_data, "boing.wav", buffer);
 	int x, y, n;
 	auto pixels = stbi_load_from_memory((u8*)buffer,(int) size, &x, &y, &n, 4);
 	auto handle = gfx_create_texture2d(x, y, 4, Data_Format_RGBA8_UNORM, (const u8**)&pixels, Buffer_Usage_IMMUTABLE, 1);
