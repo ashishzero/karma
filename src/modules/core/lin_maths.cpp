@@ -1630,6 +1630,26 @@ bool point_inside_triangle(Vec3 a, Vec3 b, Vec3 c, Vec3 p) {
 	return bary.y >= 0.0f && bary.z >= 0.0f && (bary.y + bary.z) <= 1.0f;
 }
 
+int point_farthest_from_edge(Vec2 a, Vec2 b, Vec2 *p, int n) {
+	Vec2 e = b - a;
+	Vec2 eperp = vec2(-e.y, e.x);
+
+	int best_index = -1;
+	float max_value = -FLT_MAX, right_most_value = -FLT_MAX;
+	
+	for (int i = 1; i < n; i++) {
+		float d = vec2_dot(p[i] - a, eperp);
+		float r = vec2_dot(p[i] - a, e);
+		if (d > max_value || (d == max_value && r > right_most_value)) {
+			best_index = i;
+			max_value = d;
+			right_most_value = r;
+		}
+	}
+
+	return best_index;
+}
+
 //
 //
 //
