@@ -479,6 +479,11 @@ bool vec4_equals(Vec4 a, Vec4 b, r32 tolerance = MATH_R32_EQUALS_DEFAULT_TOLERAN
 //
 //
 
+Mat2 mat2_identity();
+r32 mat2_det(const Mat2 &mat);
+Mat2 mat2_inverse(const Mat2 &mat);
+Mat2 mat2_transpose(const Mat2 &m);
+
 Mat3 mat3_identity();
 r32 mat3_det(const Mat3 &mat);
 Mat3 mat3_inverse(const Mat3 &mat);
@@ -493,11 +498,25 @@ Mat4 mat4_transpose(const Mat4 &m);
 //
 //
 
+Mat2 mat2_mul(const Mat2 &left, const Mat2 &right);
+Vec2 mat2_vec2_mul(const Mat2 &mat, Vec2 vec);
+
 Mat3 mat3_mul(const Mat3 &left, const Mat3 &right);
 Vec3 mat3_vec3_mul(const Mat3 &mat, Vec3 vec);
 
 Mat4 mat4_mul(const Mat4 &left, const Mat4 &right);
 Vec4 mat4_vec4_mul(const Mat4 &mat, Vec4 vec);
+
+inline Mat2 operator*(const Mat2 &a, const Mat2 &b) {
+	return mat2_mul(a, b);
+}
+inline Mat2 &operator*=(Mat2 &t, Mat2 &o) {
+	t = mat2_mul(t, o);
+	return t;
+}
+inline Vec2 operator*(const Mat2 &m, Vec2 v) {
+	return mat2_vec2_mul(m, v);
+}
 
 inline Mat3 operator*(const Mat3 &a, const Mat3 &b) {
 	return mat3_mul(a, b);
@@ -524,6 +543,11 @@ inline Vec4 operator*(const Mat4 &m, Vec4 v) {
 //
 //
 //
+
+Mat2 mat2_scalar(r32 x, r32 y);
+Mat2 mat2_scalar(Vec2 s);
+
+Mat2 mat2_rotation(r32 angle);
 
 Mat3 mat3_scalar(r32 S_1, r32 S_2);
 Mat3 mat3_scalar(Vec2 s);
@@ -763,12 +787,17 @@ bool is_quad_convex(Vec3 a, Vec3 b, Vec3 c, Vec3 d);
 bool point_inside_triangle(Vec2 a, Vec2 b, Vec2 c, Vec2 p);
 bool point_inside_triangle(Vec3 a, Vec3 b, Vec3 c, Vec3 p);
 
+s32 point_farthest_from_edge(Vec2 a, Vec2 b, Vec2 *p, s32 n);
+void extreme_points_alone_direction(Vec2 dir, Vec2 *pt, s32 n, s32 *min_index, s32 *max_index);
+
+bool mmrect_vs_mmrect(const Mm_Rect &a, const Mm_Rect &b);
+bool aabb_vs_aabb(Aabb2d &a, Aabb2d &b);
+
 //
 //
 //
 
 bool point_inside_rect(Vec2 point, Mm_Rect rect);
-bool aabb_vs_aabb(const Mm_Rect &a, const Mm_Rect &b);
 
 bool quad_vs_quad_sat(Quad &a, Quad &qb);
 

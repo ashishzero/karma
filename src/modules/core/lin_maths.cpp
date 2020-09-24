@@ -338,6 +338,41 @@ r32 mm_height(Mm_Rect m) {
 //
 //
 
+Mat2 mat2_identity() {
+	Mat2 m;
+	m.rows[0] = vec2(1.0f, 0.0f);
+	m.rows[1] = vec2(0.0f, 1.0f);
+	return m;
+}
+
+r32 mat2_det(const Mat2 &mat) {
+	return mat.m2[0][0] * mat.m2[1][1] - mat.m2[0][1] * mat.m2[1][0];
+}
+
+Mat2 mat2_inverse(const Mat2 &mat) {
+	r32 det = mat.m2[0][0] * mat.m2[1][1] - mat.m2[0][1] * mat.m2[1][0];
+	det /= det;
+	Mat2 res;
+	res.m2[0][0] =  mat.m2[1][1];
+	res.m2[0][1] = -mat.m2[0][1];
+	res.m2[1][0] = -mat.m2[1][0];
+	res.m2[1][1] =  mat.m2[0][0];
+	res.m[0] *= det;
+	res.m[1] *= det;
+	res.m[2] *= det;
+	res.m[3] *= det;
+	return res;
+}
+
+Mat2 mat2_transpose(const Mat2 &m) {
+	Mat2 t;
+	t.m2[0][0] = m.m2[0][0];
+	t.m2[0][1] = m.m2[1][0];
+	t.m2[1][0] = m.m2[0][1];
+	t.m2[1][1] = m.m2[1][1];
+	return t;
+}
+
 Mat3 mat3_identity() {
 	Mat3 m;
 	m.rows[0] = vec3(1.0f, 0.0f, 0.0f);
@@ -557,6 +592,26 @@ Mat4 mat4_transpose(const Mat4 &m) {
 //
 //
 
+Mat2 mat2_mul(const Mat2 &left, const Mat2 &right) {
+	Mat2 res;
+	Mat2 tras = mat2_transpose(right);
+
+	res.m2[0][0] = vec2_dot(left.rows[0], tras.rows[0]);
+	res.m2[0][1] = vec2_dot(left.rows[0], tras.rows[1]);
+	res.m2[1][0] = vec2_dot(left.rows[1], tras.rows[0]);
+	res.m2[1][1] = vec2_dot(left.rows[1], tras.rows[1]);
+
+	return res;
+}
+
+Vec2 mat2_vec2_mul(const Mat2 &mat, Vec2 vec) {
+	Vec2 res;
+	res.m[0] = vec2_dot(vec, mat.rows[0]);
+	res.m[1] = vec2_dot(vec, mat.rows[1]);
+	res.m[2] = vec2_dot(vec, mat.rows[2]);
+	return res;
+}
+
 Mat3 mat3_mul(const Mat3 &left, const Mat3 &right) {
 	Mat3 res;
 	Mat3 tras = mat3_transpose(right);
@@ -623,6 +678,31 @@ Vec4 mat4_vec4_mul(const Mat4 &mat, Vec4 vec) {
 //
 //
 //
+
+Mat2 mat2_scalar(r32 x, r32 y) {
+	Mat2 m;
+	m.rows[0] = vec2(x, 0.0f);
+	m.rows[1] = vec2(0.0f, y);
+	return m;
+
+}
+
+Mat2 mat2_scalar(Vec2 s) {
+	Mat2 m;
+	m.rows[0] = vec2(s.x, 0.0f);
+	m.rows[1] = vec2(0.0f, s.y);
+	return m;
+}
+
+Mat2 mat2_rotation(r32 angle) {
+	r32 c = cosf(angle);
+	r32 s = sinf(angle);
+
+	Mat2 mat;
+	mat.rows[0] = vec2(c, -s);
+	mat.rows[1] = vec2(s, c);
+	return mat;
+}
 
 Mat3 mat3_scalar(r32 S_1, r32 S_2) {
 	Mat3 m;
@@ -1630,16 +1710,16 @@ bool point_inside_triangle(Vec3 a, Vec3 b, Vec3 c, Vec3 p) {
 	return bary.y >= 0.0f && bary.z >= 0.0f && (bary.y + bary.z) <= 1.0f;
 }
 
-int point_farthest_from_edge(Vec2 a, Vec2 b, Vec2 *p, int n) {
+s32 point_farthest_from_edge(Vec2 a, Vec2 b, Vec2 *p, s32 n) {
 	Vec2 e = b - a;
 	Vec2 eperp = vec2(-e.y, e.x);
 
-	int best_index = -1;
-	float max_value = -FLT_MAX, right_most_value = -FLT_MAX;
+	s32 best_index = -1;
+	r32 max_value = -FLT_MAX, right_most_value = -FLT_MAX;
 	
-	for (int i = 1; i < n; i++) {
-		float d = vec2_dot(p[i] - a, eperp);
-		float r = vec2_dot(p[i] - a, e);
+	for (s32 i = 1; i < n; i++) {
+		r32 d = vec2_dot(p[i] - a, eperp);
+		r32 r = vec2_dot(p[i] - a, e);
 		if (d > max_value || (d == max_value && r > right_most_value)) {
 			best_index = i;
 			max_value = d;
@@ -1650,6 +1730,66 @@ int point_farthest_from_edge(Vec2 a, Vec2 b, Vec2 *p, int n) {
 	return best_index;
 }
 
+void extreme_points_alone_direction(Vec2 dir, Vec2 *pt, s32 n, s32 *min_index, s32 *max_index) {
+	r32 min_proj = FLT_MAX, max_proj = -FLT_MAX;
+
+	for (s32 i = 0; i < n; i++) {
+		auto proj = vec2_dot(pt[i], dir);
+
+		if (proj < min_proj) {
+			min_proj = proj;
+			*min_index = i;
+		}
+
+		if (proj > max_proj) {
+			max_proj = proj;
+			*max_index = i;
+		}
+	}
+}
+
+Mm_Rect transform_mmrect(const Mm_Rect &a, Mat2 &mat, Vec2 t) {
+	Mm_Rect b;
+	for (int i = 0; i < 2; i++) {
+		b.min.m[i] = b.max.m[i] = t.m[i];
+		for (int j = 0; j < 2; j++) {
+			r32 e = mat.m2[i][j] * a.min.m[j];
+			r32 f = mat.m2[i][j] * a.max.m[j];
+			if (e < f) {
+				b.min.m[i] += e;
+				b.max.m[i] += f;
+			} else {
+				b.min.m[i] += f;
+				b.max.m[i] += e;
+			}
+		}
+	}
+	return b;
+}
+
+Mm_Rect transform_mmrect(const Mm_Rect &a, r32 rot, Vec2 t) {
+	r32 c = cosf(rot);
+	r32 s = sinf(rot);
+
+	Mat2 mat;
+	mat.rows[0] = vec2(c, -s);
+	mat.rows[1] = vec2(s, c);
+
+	return transform_mmrect(a, mat, t);
+}
+
+bool mmrect_vs_mmrect(const Mm_Rect &a, const Mm_Rect &b) {
+	if (a.max.x < b.min.x || a.min.x > b.max.x) return false;
+	if (a.max.y < b.min.y || a.min.y > b.max.y) return false;
+	return true;
+}
+
+bool aabb_vs_aabb(Aabb2d &a, Aabb2d &b) {
+	if (fabsf(a.center.x - b.center.x) > (a.radius[0] + b.radius[0])) return false;
+	if (fabsf(a.center.y - b.center.y) > (a.radius[1] + b.radius[1])) return false;
+	return true;
+}
+
 //
 //
 //
@@ -1657,12 +1797,6 @@ int point_farthest_from_edge(Vec2 a, Vec2 b, Vec2 *p, int n) {
 bool point_inside_rect(Vec2 point, Mm_Rect rect) {
 	if (point.x < rect.min.x || point.y < rect.min.y) return false;
 	if (point.x > rect.max.x || point.y > rect.max.y) return false;
-	return true;
-}
-
-bool aabb_vs_aabb(const Mm_Rect &a, const Mm_Rect &b) {
-	if (a.max.x < b.min.x || a.min.x > b.max.x) return false;
-	if (a.max.y < b.min.y || a.min.y > b.max.y) return false;
 	return true;
 }
 

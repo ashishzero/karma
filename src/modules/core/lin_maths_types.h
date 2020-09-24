@@ -265,6 +265,26 @@ inline Colorh colorh(u32 color) {
 	return c;
 }
 
+union Mat2 {
+	Vec2 rows[2];
+	r32  m[4];
+	r32  m2[2][2];
+};
+
+inline Mat2 mat2(Vec2 r0, Vec2 r1) {
+	Mat2 res;
+	res.rows[0] = r0;
+	res.rows[1] = r1;
+	return res;
+}
+
+inline Mat2 mat2(r32 x00, r32 x10, r32 x01, r32 x11) {
+	Mat2 res;
+	res.rows[0] = vec2(x00, x10);
+	res.rows[1] = vec2(x01, x11);
+	return res;
+}
+
 union Mat3 {
 	Vec3 rows[3];
 	r32  m[9];
@@ -396,6 +416,19 @@ inline Rects rects(s32 _x, s32 _y, s32 _w, s32 _h) {
 	r.w = _w;
 	r.h = _h;
 	return r;
+}
+
+struct Aabb2d {
+	Vec2 center;
+	r32 radius[2];
+};
+
+inline Aabb2d aabb2d(Vec2 center, r32 a, r32 b) {
+	Aabb2d aabb;
+	aabb.center = center;
+	aabb.radius[0] = a;
+	aabb.radius[1] = b;
+	return aabb;
 }
 
 struct Quad {
