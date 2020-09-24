@@ -274,6 +274,7 @@ struct Controller {
 struct System_Find_File_Info {
 	String path;
 	String name;
+	String extension;
 	u64    size;
 };
 

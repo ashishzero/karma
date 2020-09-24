@@ -1047,6 +1047,14 @@ u32 windows_find_files_info(System_Find_File_Info *info, const System_Find_File_
 			info->path.count = root_dir_len + 1;
 			info->name.data = (u8 *)utf_full_file_name + root_dir_len + 1;
 			info->name.count = found_file_len;
+
+			auto find_result = string_isearch_reverse(info->name, ".");
+			if (find_result.found) {
+				info->extension = string_substring(info->name, find_result.start_index, info->name.count - find_result.start_index);
+			} else {
+				info->extension = String(info->name.data + info->name.count, 0);
+			}
+
 			info->size = (find_data.nFileSizeHigh * ((u64)MAXDWORD + 1)) + find_data.nFileSizeLow;
 
 			count += 1;
