@@ -520,7 +520,12 @@ u64 system_get_frequency();
 void system_fatal_error(const String msg);
 void system_display_critical_message(const String msg);
 
-void *system_allocator(Allocation_Type type, ptrsize size, void *ptr, void *user_ptr);
+enum Heap_Type {
+	Heap_Type_NO_SERIALIZE,
+	Heap_Type_SERIALIZE,
+};
+
+Allocator system_create_heap_allocator(Heap_Type type = Heap_Type_NO_SERIALIZE, ptrsize initial_size = 0, ptrsize maximum_size = 0);
 void *system_virtual_alloc(void *address, ptrsize size, Vitual_Memory_Flags flags);
 void  system_virtual_free(void *ptr, ptrsize size, Vitual_Memory_Flags flags);
 

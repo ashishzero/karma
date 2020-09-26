@@ -2369,7 +2369,7 @@ void system_display_critical_message(const String msg) {
 	MessageBoxW(window_handle, pool, L"Karma - Critical Error", MB_TOPMOST | MB_ICONWARNING | MB_OK);
 }
 
-void *system_allocator(Allocation_Type type, ptrsize size, const void *ptr, void *user_ptr) {
+void *system_heap_allocator_proc(Allocation_Type type, ptrsize size, const void *ptr, void *user_ptr) {
 	HANDLE heap = (HANDLE)user_ptr;
 
 	if (type == Allocation_Type_NEW) {
@@ -2394,6 +2394,13 @@ void *system_allocator(Allocation_Type type, ptrsize size, const void *ptr, void
 	}
 
 	return 0;
+}
+
+Allocator system_create_heap_allocator(Heap_Type type, ptrsize initial_size, ptrsize maximum_size) {
+	Allocator allocator;
+	allocator.proc = system_heap_allocator_proc;
+	allocator.data = HeapCreate(type == Heap_Type_NO_SERIALIZE ? HEAP_NO_SERIALIZE : 0, initial_size, maximum_size);
+	return allocator;
 }
 
 void *system_virtual_alloc(void *address, ptrsize size, Vitual_Memory_Flags flags) {
@@ -2567,8 +2574,7 @@ int __stdcall wWinMain(HINSTANCE instance, HINSTANCE prev_instance, LPWSTR cmd_l
 
 	context.handle.hptr = GetCurrentThread();
 	context.id = GetCurrentThreadId();
-	context.allocator.proc = system_allocator;
-	context.allocator.data = HeapCreate(HEAP_NO_SERIALIZE, 0, 0);
+	context.allocator = system_create_heap_allocator();
 	context.proc = system_main;
 
 	int      len = WideCharToMultiByte(CP_UTF8, 0, cmd_line, -1, 0, 0, 0, 0);
