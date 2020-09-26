@@ -12,8 +12,6 @@
 #include "modules/gfx/renderer.h"
 #include "modules/core/stb_image.h"
 #include "asset_loader.h"
-//If any error occurs while updating files, delete two file asset_data.txt and asset_table.txt and run the program
-
 
 int karma_user_atish() {
 	r32    framebuffer_w = 1280;
