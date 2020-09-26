@@ -6,7 +6,7 @@ rem The header file is given entension *.typeinfo*
 
 tools\reflection\reflection.exe include: 'src/' build: 'src/modules/core/tokenizer.h' output: 'src/.generated/tokenizer.typeinfo'
 tools\reflection\reflection.exe include: 'src/' build: 'src/modules/core/lin_maths_types.h' output: 'src/.generated/lin_maths_types.typeinfo'
-tools\reflection\reflection.exe include: 'src/' build: 'src/atish.h' output: 'src/.generated/atish.typeinfo'
+tools\reflection\reflection.exe include: 'src/' build: 'src/asset.h' output: 'src/.generated/asset.typeinfo'
 tools\reflection\reflection.exe include: 'src/' build: 'src/entity.h' output: 'src/.generated/entity.typeinfo'
 
 rem Shader Code Generation

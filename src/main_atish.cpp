@@ -1,100 +1,17 @@
 #pragma once
 
 #define STB_IMAGE_IMPLEMENTATION
+
 #include "modules/core/reflection.h"
 #include "modules/core/karma.h"
 #include "modules/core/systems.h"
 #include "modules/core/lin_maths.h"
 #include "modules/core/utility.h"
 #include "modules/core/serialize.h"
-#include "atish.h"
-#include ".generated/atish.typeinfo"
+
 #include "modules/gfx/renderer.h"
 #include "modules/core/stb_image.h"
-
-//If any error occurs while updating files, delete two file asset_data.txt and asset_table.txt and run the program
-
-u64 get_asset_data(Array_View<asset_info>& asset_table, FILE* fp, String file_name,void* &buffer)
-{
-	for (s64 i = 0; i < asset_table.count; ++i)
-	{
-		if (string_match(asset_table[i].name, file_name))
-		{
-			buffer = (char*)malloc(sizeof(char) * asset_table[i].size_of_file);
-			fseek(fp, (long)asset_table[i].file_location, SEEK_SET);
-			fread(buffer, asset_table[i].size_of_file, 1, fp);
-			return asset_table[i].size_of_file;
-		}
-	}
-	trigger_breakpoint();
-	return 0;
-	//TODO : Not found condition needs to be checked
-}
-
-Array_View<asset_info> prepare_asset()
-{
-	auto all_files = system_find_files("../res/misc", ".png", true);
-	Array<asset_info> asset_table;
-	FILE* fp_asset_table = fopen("temp/asset_table.txt", "rb+");
-	if (fp_asset_table == NULL)
-	{
-		printf("file not opened");
-		exit(1);
-	}
-	FILE* fp_asset_data = fopen("temp/asset_data.txt", "rb+");
-	if (fp_asset_data == NULL)
-	{
-		printf("file not opened");
-		exit(1);
-	}
-
-	//defer{ fclose(fp_asset_data); };
-
-	fseek(fp_asset_data, 0, SEEK_END);
-	deserialize_from_file(fp_asset_table, "asset_table", reflect_info<Array<asset_info>>(), (char*)&asset_table, 1, 0);
-	FILE* source;
-	asset_info single_asset;
-	char* buffer;
-	// TODO : need optimization
-	for (s64 i = 0; i < all_files.count; ++i)
-	{
-		bool found = false;
-		for (s64 j = 0; j < asset_table.count; ++j)
-		{
-			if (string_match(all_files[i].name, asset_table[j].name))
-			{
-				found = true;
-				break;
-			}
-		}
-		if (found)
-			continue;
-		else
-		{
-			const char* temp = (char*) all_files[i].path.data;
-			source = fopen(temp, "rb");
-			if (source == NULL)
-			{
-				printf("image not opened");
-				exit(0);
-			}
-			buffer = (char*)malloc(sizeof(char) * all_files[i].size);
-			fread(buffer, all_files[i].size, 1, source);
-			single_asset.name = all_files[i].name;
-			single_asset.file_location = ftell(fp_asset_data);
-			single_asset.size_of_file = all_files[i].size;
-			array_add(&asset_table, single_asset);
-			fwrite(buffer, all_files[i].size, 1, fp_asset_data);
-			fclose(source);
-		}
-	}
-	fclose(fp_asset_table);
-	fp_asset_table = fopen("temp/asset_table.txt", "wb");
-	serialize_to_file(fp_asset_table, "asset_table", reflect_info<Array<asset_info>>(), (char*)&asset_table, 1, 0, true);
-	fclose(fp_asset_table);
-	fclose(fp_asset_data);
-	return asset_table;
-}
+#include "asset_loader.h"
 
 int karma_user_atish() {
 	r32    framebuffer_w = 1280;
@@ -123,7 +40,7 @@ int karma_user_atish() {
 	}
 
 	void* buffer = nullptr;
-	u64 size = get_asset_data(asset_table, fp_asset_data, "stone.png", buffer);
+	u64 size = get_asset_data(asset_table, fp_asset_data, "love.png", buffer);
 	int x, y, n;
 	auto pixels = stbi_load_from_memory((u8*)buffer,(int) size, &x, &y, &n, 4);
 	auto handle = gfx_create_texture2d(x, y, 4, Data_Format_RGBA8_UNORM, (const u8**)&pixels, Buffer_Usage_IMMUTABLE, 1);

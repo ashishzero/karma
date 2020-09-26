@@ -349,7 +349,8 @@ popd
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\atish.h" />
+    <ClInclude Include="src\asset_loader.h" />
+    <ClInclude Include="src\asset.h" />
     <ClInclude Include="src\audio.h" />
     <ClInclude Include="src\modules\core\serialize.h" />
     <ClInclude Include="src\modules\imgui\dev.h" />
