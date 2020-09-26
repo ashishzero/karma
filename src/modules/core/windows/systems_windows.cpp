@@ -1823,8 +1823,12 @@ static LRESULT CALLBACK win32_wnd_proc(HWND wnd, UINT msg, WPARAM wparam, LPARAM
 }
 
 String system_get_command_line() {
-	assert(context.proc == system_main);
-	return *((String *)context.data);
+	auto cmd_line = GetCommandLineW();
+	int      len = WideCharToMultiByte(CP_UTF8, 0, cmd_line, -1, 0, 0, 0, 0);
+	String   cmd_line_string;
+	cmd_line_string.data = new u8[len];
+	cmd_line_string.count = WideCharToMultiByte(CP_UTF8, 0, cmd_line, -1, (char *)cmd_line_string.data, len, 0, 0);
+	return cmd_line_string;
 }
 
 System_Info system_get_info() {
@@ -2462,18 +2466,18 @@ DWORD WINAPI win_thread_proc(LPVOID param) {
 	return result;
 }
 
-bool system_thread_create(Thread_Proc proc, void *arg, Allocator allocator, ptrsize temporary_memory_size, String name, Thread_Context *thread) {
-	thread->proc = proc;
-	thread->data = arg;
-	thread->allocator = allocator;
+bool system_thread_create(const Builder &builder, String name, Thread_Context *thread) {
+	thread->proc = builder.entry;
+	thread->data = builder.data;
+	thread->allocator = builder.allocator;
 
-	if (temporary_memory_size) {
-		void *ptr = memory_allocate(temporary_memory_size, thread->allocator);
+	if (builder.temporary_buffer_size) {
+		void *ptr = memory_allocate(builder.temporary_buffer_size, thread->allocator);
 		if (ptr == 0) {
 			win32_check_for_error();
 			system_fatal_error("Out of memory: Unable to allocate temporary storage memory!");
 		}
-		thread->temp_memory = Temporary_Memory(ptr, temporary_memory_size);
+		thread->temp_memory = Temporary_Memory(ptr, builder.temporary_buffer_size);
 	} else {
 		thread->temp_memory = Temporary_Memory(0, 0);
 	}
@@ -2572,23 +2576,23 @@ int __stdcall wWinMain(HINSTANCE instance, HINSTANCE prev_instance, LPWSTR cmd_l
 
 	SetThreadDescription(GetCurrentThread(), L"Main");
 
+	Builder builder = system_builder();
+
 	context.handle.hptr = GetCurrentThread();
 	context.id = GetCurrentThreadId();
-	context.allocator = system_create_heap_allocator();
-	context.proc = system_main;
+	context.allocator = builder.allocator;
+	context.proc = builder.entry;
+	context.data = builder.data;
 
-	int      len = WideCharToMultiByte(CP_UTF8, 0, cmd_line, -1, 0, 0, 0, 0);
-	String   cmd_line_string;
-	cmd_line_string.data = new u8[len];
-	cmd_line_string.count = WideCharToMultiByte(CP_UTF8, 0, cmd_line, -1, (char *)cmd_line_string.data, len, 0, 0);
-	context.data = &cmd_line_string;
-
-	void *ptr = memory_allocate(static_cast<SIZE_T>(TEMPORARY_MEMORY_SIZE));
-	if (ptr == 0) {
-		win32_check_for_error();
-		system_fatal_error("Out of memory: Unable to allocate temporary storage memory!");
+	void *ptr = nullptr;
+	if (builder.temporary_buffer_size) {
+		ptr = memory_allocate(builder.temporary_buffer_size);
+		if (ptr == 0) {
+			win32_check_for_error();
+			system_fatal_error("Out of memory: Unable to allocate temporary storage memory!");
+		}
 	}
-	context.temp_memory = Temporary_Memory(ptr, static_cast<ptrsize>(TEMPORARY_MEMORY_SIZE));
+	context.temp_memory = Temporary_Memory(ptr, builder.temporary_buffer_size);
 
 	if (!windows_audio_client.Initialize()) {
 		system_log(LOG_WARNING, "Windows", "Audio could not be initialized");
@@ -2596,11 +2600,9 @@ int __stdcall wWinMain(HINSTANCE instance, HINSTANCE prev_instance, LPWSTR cmd_l
 
 	win32_initialize_xinput();
 
-	int result = system_main();
+	int result = context.proc();
 
 	windows_audio_client.StopThread();
-
-	HeapDestroy(context.allocator.data);
 
 	CoUninitialize();
 

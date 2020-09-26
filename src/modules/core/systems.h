@@ -525,11 +525,18 @@ enum Heap_Type {
 	Heap_Type_SERIALIZE,
 };
 
+struct Builder {
+	Allocator allocator;
+	Thread_Proc entry;
+	ptrsize temporary_buffer_size;
+	void *data;
+};
+
 Allocator system_create_heap_allocator(Heap_Type type = Heap_Type_NO_SERIALIZE, ptrsize initial_size = 0, ptrsize maximum_size = 0);
 void *system_virtual_alloc(void *address, ptrsize size, Vitual_Memory_Flags flags);
 void  system_virtual_free(void *ptr, ptrsize size, Vitual_Memory_Flags flags);
 
-bool		system_thread_create(Thread_Proc proc, void *arg, Allocator allocator, ptrsize temporary_memory_size, String name, Thread_Context *thread);
+bool		system_thread_create(const Builder &builder, String name, Thread_Context *thread);
 void        system_thread_run(Thread_Context &thread);
 Thread_Wait system_thread_wait(Thread_Context &thread, u32 millisecs);
 void        system_thread_terminate(Thread_Context &thread, int exit_code);
@@ -540,7 +547,7 @@ void        system_destory_mutex(Handle handle);
 Wait_Result system_lock_mutex(Handle handle, u32 millisecs);
 void        system_unlock_mutex(Handle handle);
 
-int system_main();
+Builder system_builder();
 
 void system_log(int type, const char *title, ANALYSE_PRINTF_FORMAT_STRING(const char *fmt), ...) ANALYSE_PRINTF_FORMAT(3, 4);
 
