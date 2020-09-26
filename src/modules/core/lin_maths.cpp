@@ -1779,6 +1779,37 @@ Circle circle_from_distant_points(Vec2 *pt, s32 n) {
 	return c;
 }
 
+r32 min_area_rect(Vec2 *pt, int num_pts, Vec2 *center, Vec2 u[2]) {
+	r32 min_area = FLT_MAX;
+	
+	for (s32 i = 0, j = num_pts - 1; i < num_pts; j = i, i++) {
+		auto e0 = pt[i] - pt[j];
+		e0 /= vec2_length(e0);
+		auto e1 = vec2(-e0.y, e0.x);
+										
+		r32 min0 = 0.0f, min1 = 0.0f, max0 = 0.0f, max1 = 0.0f;
+		for (s32 k = 0; k < num_pts; k++) {
+			Vec2 d = pt[k] - pt[j];
+			r32 dot = vec2_dot(d, e0);
+			if (dot < min0) min0 = dot;
+			if (dot > max0) max0 = dot;
+			dot = vec2_dot(d, e1);
+			if (dot < min1) min1 = dot;
+			if (dot > max1) max1 = dot;
+		}
+		r32 area = (max0 - min0) * (max1 - min1);
+		
+		if (area < min_area) {
+			min_area = area;
+			*center = pt[j] + 0.5f * ((min0 + max0) * e0 + (min1 + max1) * e1);
+			u[0] = e0;
+			u[1] = e1;
+		}
+	}
+
+	return min_area;
+}
+
 Mm_Rect transform_mmrect(const Mm_Rect &a, Mat2 &mat, Vec2 t) {
 	Mm_Rect b;
 	for (int i = 0; i < 2; i++) {
@@ -1838,17 +1869,7 @@ bool circle_vs_circle(const Circle &a, const Circle &b) {
 	return dist2 <= radius_sum * radius_sum;
 }
 
-//
-//
-//
-
-bool point_inside_rect(Vec2 point, Mm_Rect rect) {
-	if (point.x < rect.min.x || point.y < rect.min.y) return false;
-	if (point.x > rect.max.x || point.y > rect.max.y) return false;
-	return true;
-}
-
-bool quad_vs_quad_sat(Quad &a, Quad &b) {
+bool quad_vs_quad(Quad &a, Quad &b) {
 	auto quad_a = &a;
 	auto quad_b = &b;
 
@@ -1875,12 +1896,22 @@ bool quad_vs_quad_sat(Quad &a, Quad &b) {
 			if (!(max_proj_b >= min_proj_a && max_proj_a >= min_proj_b))
 				return false;
 		}
-		
+
 		auto temp = quad_a;
 		quad_a = quad_b;
 		quad_b = temp;
 	}
 
+	return true;
+}
+
+//
+//
+//
+
+bool point_inside_rect(Vec2 point, Mm_Rect rect) {
+	if (point.x < rect.min.x || point.y < rect.min.y) return false;
+	if (point.x > rect.max.x || point.y > rect.max.y) return false;
 	return true;
 }
 

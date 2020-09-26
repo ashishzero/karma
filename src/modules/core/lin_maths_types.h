@@ -448,6 +448,19 @@ struct Quad {
 	Vec2 normals[4];
 };
 
+inline Quad quad(Vec2 a, Vec2 b, Vec2 c, Vec2 d, Vec2 n1, Vec2 n2, Vec2 n3, Vec2 n4) {
+	Quad quad;
+	quad.positions[0] = a;
+	quad.positions[1] = b;
+	quad.positions[2] = c;
+	quad.positions[3] = d;
+	quad.normals[0] = n1;
+	quad.normals[1] = n2;
+	quad.normals[2] = n3;
+	quad.normals[3] = n4;
+	return quad;
+}
+
 struct Ray_Hit {
 	Vec2 point;
 	Vec2 normal;

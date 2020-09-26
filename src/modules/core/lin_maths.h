@@ -652,6 +652,30 @@ bool quat_equals(Quat a, Quat b, r32 tolerance = MATH_R32_EQUALS_DEFAULT_TOLERAN
 //
 //
 
+inline Quad quad_from_points(Vec2 a, Vec2 b, Vec2 c, Vec2 d) {
+	Quad quad;
+	quad.positions[0] = a;
+	quad.positions[1] = b;
+	quad.positions[2] = c;
+	quad.positions[3] = d;
+
+	auto n1 = vec2_normalize(b - a);
+	auto n2 = vec2_normalize(c - b);
+	auto n3 = vec2_normalize(d - c);
+	auto n4 = vec2_normalize(a - d);
+
+	quad.normals[0] = vec2(-n1.y, n1.x);
+	quad.normals[1] = vec2(-n2.y, n2.x);
+	quad.normals[2] = vec2(-n3.y, n3.x);
+	quad.normals[3] = vec2(-n4.y, n4.x);
+
+	return quad;
+}
+
+//
+//
+//
+
 Color3 linear_to_srgb(Color3 color);
 Color4 linear_to_srgb(Color4 color);
 Color3 linear_to_srgb(Color3 color, r32 gamma);
@@ -791,6 +815,7 @@ s32 point_farthest_from_edge(Vec2 a, Vec2 b, Vec2 *p, s32 n);
 void extreme_points_alone_direction(Vec2 dir, Vec2 *pt, s32 n, s32 *min_index, s32 *max_index);
 void most_seperated_points_on_aabb(Vec2 *pt, s32 n, s32 *min, s32 *max);
 Circle circle_from_distant_points(Vec2 *pt, s32 n);
+r32 min_area_rect(Vec2 *pt, int num_pts, Vec2 *center, Vec2 u[2]);
 
 Mm_Rect transform_mmrect(const Mm_Rect &a, Mat2 &mat, Vec2 t);
 Mm_Rect transform_mmrect(const Mm_Rect &a, r32 rot, Vec2 t);
@@ -800,14 +825,13 @@ Aabb2d update_aabb(const Aabb2d &a, r32 rot, Vec2 t);
 bool mmrect_vs_mmrect(const Mm_Rect &a, const Mm_Rect &b);
 bool aabb_vs_aabb(const Aabb2d &a, const Aabb2d &b);
 bool circle_vs_circle(const Circle &a, const Circle &b);
+bool quad_vs_quad(Quad &a, Quad &b);
 
 //
 //
 //
 
 bool point_inside_rect(Vec2 point, Mm_Rect rect);
-
-bool quad_vs_quad_sat(Quad &a, Quad &qb);
 
 bool ray_vs_aabb(Vec2 origin, Vec2 direction, const Mm_Rect &rect, Ray_Hit *hit);
 bool ray_vs_line(Vec2 p1, Vec2 q1, Vec2 p2, Vec2 q2, Ray_Hit *t);
