@@ -818,9 +818,6 @@ Vec3 barycentric(Vec3 a, Vec3 b, Vec3 c, Vec3 p);
 bool is_quad_convex(Vec2 a, Vec2 b, Vec2 c, Vec2 d);
 bool is_quad_convex(Vec3 a, Vec3 b, Vec3 c, Vec3 d);
 
-bool point_inside_triangle(Vec2 a, Vec2 b, Vec2 c, Vec2 p);
-bool point_inside_triangle(Vec3 a, Vec3 b, Vec3 c, Vec3 p);
-
 s32 point_farthest_from_edge(Vec2 a, Vec2 b, Vec2 *p, s32 n);
 void extreme_points_alone_direction(Vec2 dir, Vec2 *pt, s32 n, s32 *min_index, s32 *max_index);
 void most_seperated_points_on_aabb(Vec2 *pt, s32 n, s32 *min, s32 *max);
@@ -832,12 +829,13 @@ Mm_Rect transform_mmrect(const Mm_Rect &a, r32 rot, Vec2 t);
 Aabb2d update_aabb(const Aabb2d &a, Mat2 &mat, Vec2 t);
 Aabb2d update_aabb(const Aabb2d &a, r32 rot, Vec2 t);
 
-bool mmrect_vs_mmrect(const Mm_Rect &a, const Mm_Rect &b);
-bool aabb_vs_aabb(const Aabb2d &a, const Aabb2d &b);
-bool circle_vs_circle(const Circle &a, const Circle &b);
-bool quad_vs_quad(const Quad &a, const Quad &b);
-bool circle_vs_capsule(const Circle& circle, const Capsule2d& capsule);
-
+bool test_point_inside_triangle(Vec2 a, Vec2 b, Vec2 c, Vec2 p);
+bool test_point_inside_triangle(Vec3 a, Vec3 b, Vec3 c, Vec3 p);
+bool test_mmrect_vs_mmrect(const Mm_Rect &a, const Mm_Rect &b);
+bool test_aabb_vs_aabb(const Aabb2d &a, const Aabb2d &b);
+bool test_circle_vs_circle(const Circle &a, const Circle &b);
+bool test_quad_vs_quad(const Quad &a, const Quad &b);
+bool test_circle_vs_capsule(const Circle& circle, const Capsule2d& capsule);
 
 //
 //

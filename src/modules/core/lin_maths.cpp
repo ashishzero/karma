@@ -1869,16 +1869,6 @@ bool is_quad_convex(Vec3 a, Vec3 b, Vec3 c, Vec3 d) {
 	return vec3_dot(acd, acb) < 0.0f;
 }
 
-bool point_inside_triangle(Vec2 a, Vec2 b, Vec2 c, Vec2 p) {
-	Vec3 bary = barycentric(a, b, c, p);
-	return bary.y >= 0.0f && bary.z >= 0.0f && (bary.y + bary.z) <= 1.0f;
-}
-
-bool point_inside_triangle(Vec3 a, Vec3 b, Vec3 c, Vec3 p) {
-	Vec3 bary = barycentric(a, b, c, p);
-	return bary.y >= 0.0f && bary.z >= 0.0f && (bary.y + bary.z) <= 1.0f;
-}
-
 s32 point_farthest_from_edge(Vec2 a, Vec2 b, Vec2 *p, s32 n) {
 	Vec2 e = b - a;
 	Vec2 eperp = vec2(-e.y, e.x);
@@ -2022,26 +2012,36 @@ Aabb2d update_aabb(const Aabb2d &a, r32 rot, Vec2 t) {
 	return update_aabb(a, mat2_rotation(rot), t);
 }
 
-bool mmrect_vs_mmrect(const Mm_Rect &a, const Mm_Rect &b) {
+bool test_point_inside_triangle(Vec2 a, Vec2 b, Vec2 c, Vec2 p) {
+	Vec3 bary = barycentric(a, b, c, p);
+	return bary.y >= 0.0f && bary.z >= 0.0f && (bary.y + bary.z) <= 1.0f;
+}
+
+bool test_point_inside_triangle(Vec3 a, Vec3 b, Vec3 c, Vec3 p) {
+	Vec3 bary = barycentric(a, b, c, p);
+	return bary.y >= 0.0f && bary.z >= 0.0f && (bary.y + bary.z) <= 1.0f;
+}
+
+bool test_mmrect_vs_mmrect(const Mm_Rect &a, const Mm_Rect &b) {
 	if (a.max.x < b.min.x || a.min.x > b.max.x) return false;
 	if (a.max.y < b.min.y || a.min.y > b.max.y) return false;
 	return true;
 }
 
-bool aabb_vs_aabb(const Aabb2d &a, const Aabb2d &b) {
+bool test_aabb_vs_aabb(const Aabb2d &a, const Aabb2d &b) {
 	if (fabsf(a.center.x - b.center.x) > (a.radius[0] + b.radius[0])) return false;
 	if (fabsf(a.center.y - b.center.y) > (a.radius[1] + b.radius[1])) return false;
 	return true;
 }
 
-bool circle_vs_circle(const Circle &a, const Circle &b) {
+bool test_circle_vs_circle(const Circle &a, const Circle &b) {
 	auto d = a.center - b.center;
 	r32 dist2 = vec2_dot(d, d);
 	r32 radius_sum = a.radius + b.radius;
 	return dist2 <= radius_sum * radius_sum;
 }
 
-bool quad_vs_quad(const Quad &a, const Quad &b) {
+bool test_quad_vs_quad(const Quad &a, const Quad &b) {
 	auto quad_a = &a;
 	auto quad_b = &b;
 
@@ -2077,13 +2077,13 @@ bool quad_vs_quad(const Quad &a, const Quad &b) {
 	return true;
 }
 
-bool circle_vs_capsule(const Circle &circle, const Capsule2d &capsule) {
+bool test_circle_vs_capsule(const Circle &circle, const Capsule2d &capsule) {
 	r32 dst2 = point_to_segment_length2(circle.center, capsule.a, capsule.b);
 	r32 radius = circle.radius + capsule.radius;
 	return dst2 <= radius *radius;
 }
 
-bool capsule_vs_capsule(const Capsule2d &capsule1, const Capsule2d &capsule2) {
+bool test_capsule_vs_capsule(const Capsule2d &capsule1, const Capsule2d &capsule2) {
 	r32 s, t;
 	Vec2 c1, c2;
 	r32 dist2 = closest_point_segment_segment(capsule1.a, capsule1.b, capsule2.a, capsule2.b, &s, &t, &c1, &c2);
