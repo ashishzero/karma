@@ -802,6 +802,16 @@ inline T integrate_rk4(const T &x, r32 t, r32 h, Function f) {
 r32 signed_area(Vec2 a, Vec2 b, Vec2 c);
 r32 signed_area(Vec3 a, Vec3 b, Vec3 c);
 
+r32 point_to_segment_length2(Vec2 p, Vec2 a, Vec2 b);
+r32 point_to_mm_rect_length2(Vec2 p, Mm_Rect &rect);
+r32 point_to_aabb2d_length2(Vec2 p, Aabb2d &aabb);
+
+Vec2 closest_point_point_segment(Vec2 p, Vec2 a, Vec2 b, r32 *t);
+Vec2 closest_point_point_mm_rect(Vec2 a, Mm_Rect &rect);
+Vec2 closest_point_point_aabb2d(Vec2 a, Aabb2d &aabb);
+
+r32 closest_point_segment_segment(Vec2 p1, Vec2 q1, Vec2 p2, Vec2 q2, r32 *s, r32 *t, Vec2 *c1, Vec2 *c2);
+
 Vec3 barycentric(Vec2 a, Vec2 b, Vec2 c, Vec2 p);
 Vec3 barycentric(Vec3 a, Vec3 b, Vec3 c, Vec3 p);
 
@@ -825,7 +835,9 @@ Aabb2d update_aabb(const Aabb2d &a, r32 rot, Vec2 t);
 bool mmrect_vs_mmrect(const Mm_Rect &a, const Mm_Rect &b);
 bool aabb_vs_aabb(const Aabb2d &a, const Aabb2d &b);
 bool circle_vs_circle(const Circle &a, const Circle &b);
-bool quad_vs_quad(Quad &a, Quad &b);
+bool quad_vs_quad(const Quad &a, const Quad &b);
+bool circle_vs_capsule(const Circle& circle, const Capsule2d& capsule);
+
 
 //
 //

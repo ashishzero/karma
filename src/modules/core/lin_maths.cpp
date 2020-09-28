@@ -353,10 +353,10 @@ Mat2 mat2_inverse(const Mat2 &mat) {
 	r32 det = mat.m2[0][0] * mat.m2[1][1] - mat.m2[0][1] * mat.m2[1][0];
 	det /= det;
 	Mat2 res;
-	res.m2[0][0] =  mat.m2[1][1];
+	res.m2[0][0] = mat.m2[1][1];
 	res.m2[0][1] = -mat.m2[0][1];
 	res.m2[1][0] = -mat.m2[1][0];
-	res.m2[1][1] =  mat.m2[0][0];
+	res.m2[1][1] = mat.m2[0][0];
 	res.m[0] *= det;
 	res.m[1] *= det;
 	res.m[2] *= det;
@@ -382,9 +382,9 @@ Mat3 mat3_identity() {
 }
 
 r32 mat3_det(const Mat3 &mat) {
-	r32 det = mat.m2[0][0] * (mat.m2[1][1] * mat.m2[2][2] - mat.m2[2][1] * mat.m2[1][2]) + 
-			  mat.m2[0][1] * (mat.m2[1][2] * mat.m2[2][0] - mat.m2[1][0] * mat.m2[2][2]) + 
-			  mat.m2[0][2] * (mat.m2[1][0] * mat.m2[2][1] - mat.m2[2][0] * mat.m2[1][1]);
+	r32 det = mat.m2[0][0] * (mat.m2[1][1] * mat.m2[2][2] - mat.m2[2][1] * mat.m2[1][2]) +
+		mat.m2[0][1] * (mat.m2[1][2] * mat.m2[2][0] - mat.m2[1][0] * mat.m2[2][2]) +
+		mat.m2[0][2] * (mat.m2[1][0] * mat.m2[2][1] - mat.m2[2][0] * mat.m2[1][1]);
 	return det;
 }
 
@@ -573,7 +573,7 @@ Mat4 mat4_inverse(const Mat4 &mat) {
 		mat.m[8] * mat.m[2] * mat.m[5];
 
 	r32 det = mat.m[0] * result.m[0] + mat.m[1] * result.m[4] + mat.m[2] * result.m[8] + mat.m[3] * result.m[12];
-	det     = 1.0f / det;
+	det = 1.0f / det;
 	for (int i = 0; i < 4; i++)
 		result.rows[i] = result.rows[i] * det;
 	return result;
@@ -729,8 +729,8 @@ Mat3 mat3_translation(Vec2 t) {
 
 Mat3 mat3_rotation(r32 angle) {
 	Mat3 m;
-	r32  c    = cosf(angle);
-	r32  s    = sinf(angle);
+	r32  c = cosf(angle);
+	r32  s = sinf(angle);
 	m.rows[0] = vec3(c, -s, 0.0f);
 	m.rows[1] = vec3(s, c, 0.0f);
 	m.rows[2] = vec3(0.0f, 0.0f, 1.0f);
@@ -738,7 +738,7 @@ Mat3 mat3_rotation(r32 angle) {
 }
 
 Mat3 mat3_lookat(Vec2 from, Vec2 to, Vec2 forward) {
-	Vec2 dir       = vec2_normalize(to - from);
+	Vec2 dir = vec2_normalize(to - from);
 	r32  cos_theta = vec2_dot(dir, forward);
 	r32  sin_theta = sqrtf(1.0f - cos_theta * cos_theta);
 
@@ -980,8 +980,8 @@ Quat quat_mul(Quat q1, Quat q2) {
 }
 
 Vec3 quat_rotate(Quat q, Vec3 v) {
-	Quat p   = quat(v.x, v.y, v.z, 0);
-	Quat qc  = quat_conjugate(q);
+	Quat p = quat(v.x, v.y, v.z, 0);
+	Quat qc = quat_conjugate(q);
 	Quat res = (q * p * qc);
 	return vec3(res.x, res.y, res.z);
 }
@@ -1002,15 +1002,16 @@ Quat quat_angle_axis_normalize(Vec3 axis, r32 angle) {
 void quat_get_angle_axis(Quat q, r32 *angle, Vec3 *axis) {
 	r32 len = sqrtf(q.i * q.i + q.j * q.j + q.k * q.k);
 	if (len) {
-		*angle  = 2.0f * atan2f(len, q.real);
-		len     = 1.0f / len;
+		*angle = 2.0f * atan2f(len, q.real);
+		len = 1.0f / len;
 		axis->x = q.i * len;
 		axis->y = q.j * len;
 		axis->z = q.k * len;
-	} else {
+	}
+	else {
 		// degenerate case, unit quaternion
 		*angle = 0;
-		*axis  = WORLD_FORWARD;
+		*axis = WORLD_FORWARD;
 	}
 }
 
@@ -1033,29 +1034,32 @@ Quat quat_mat4(const Mat4 &m) {
 	r32  trace = m.m2[0][0] + m.m2[1][1] + m.m2[2][2];
 	if (trace > 0.0f) {
 		r32 s = 0.5f / sqrtf(trace + 1.0f);
-		q.w   = 0.25f / s;
-		q.x   = (m.m2[2][1] - m.m2[1][2]) * s;
-		q.y   = (m.m2[0][2] - m.m2[2][0]) * s;
-		q.z   = (m.m2[1][0] - m.m2[0][1]) * s;
-	} else {
+		q.w = 0.25f / s;
+		q.x = (m.m2[2][1] - m.m2[1][2]) * s;
+		q.y = (m.m2[0][2] - m.m2[2][0]) * s;
+		q.z = (m.m2[1][0] - m.m2[0][1]) * s;
+	}
+	else {
 		if (m.m2[0][0] > m.m2[1][1] && m.m2[0][0] > m.m2[2][2]) {
 			r32 s = 2.0f * sqrtf(1.0f + m.m2[0][0] - m.m2[1][1] - m.m2[2][2]);
-			q.w   = (m.m2[2][1] - m.m2[1][2]) / s;
-			q.x   = 0.25f * s;
-			q.y   = (m.m2[0][1] + m.m2[1][0]) / s;
-			q.z   = (m.m2[0][2] + m.m2[2][0]) / s;
-		} else if (m.m2[1][1] > m.m2[2][2]) {
+			q.w = (m.m2[2][1] - m.m2[1][2]) / s;
+			q.x = 0.25f * s;
+			q.y = (m.m2[0][1] + m.m2[1][0]) / s;
+			q.z = (m.m2[0][2] + m.m2[2][0]) / s;
+		}
+		else if (m.m2[1][1] > m.m2[2][2]) {
 			r32 s = 2.0f * sqrtf(1.0f + m.m2[1][1] - m.m2[0][0] - m.m2[2][2]);
-			q.w   = (m.m2[0][2] - m.m2[2][0]) / s;
-			q.x   = (m.m2[0][1] + m.m2[1][0]) / s;
-			q.y   = 0.25f * s;
-			q.z   = (m.m2[1][2] + m.m2[2][1]) / s;
-		} else {
+			q.w = (m.m2[0][2] - m.m2[2][0]) / s;
+			q.x = (m.m2[0][1] + m.m2[1][0]) / s;
+			q.y = 0.25f * s;
+			q.z = (m.m2[1][2] + m.m2[2][1]) / s;
+		}
+		else {
 			r32 s = 2.0f * sqrtf(1.0f + m.m2[2][2] - m.m2[0][0] - m.m2[1][1]);
-			q.w   = (m.m2[1][0] - m.m2[0][1]) / s;
-			q.x   = (m.m2[0][2] + m.m2[2][0]) / s;
-			q.y   = (m.m2[1][2] + m.m2[2][1]) / s;
-			q.z   = 0.25f * s;
+			q.w = (m.m2[1][0] - m.m2[0][1]) / s;
+			q.x = (m.m2[0][2] + m.m2[2][0]) / s;
+			q.y = (m.m2[1][2] + m.m2[2][1]) / s;
+			q.z = 0.25f * s;
 		}
 	}
 	return quat_normalize(q);
@@ -1161,30 +1165,32 @@ Vec3 quat_get_euler_angles(Quat q) {
 
 	r32 sinr_cosp = 2.0f * (q.w * q.x + q.y * q.z);
 	r32 cosr_cosp = 1.0f - 2.0f * (q.x * q.x + q.y * q.y);
-	angles.z      = atan2f(sinr_cosp, cosr_cosp);
+	angles.z = atan2f(sinr_cosp, cosr_cosp);
 
 	r32 sinp = 2.0f * (q.w * q.y - q.z * q.x);
 	if (fabsf(sinp) >= 1.0f) {
 		// use 90 degrees if out of range
 		angles.x = copysignf(MATH_PI / 2, sinp);
-	} else {
+	}
+	else {
 		angles.x = asinf(sinp);
 	}
 
 	r32 siny_cosp = 2.0f * (q.w * q.z + q.x * q.y);
 	r32 cosy_cosp = 1.0f - 2.0f * (q.y * q.y + q.z * q.z);
-	angles.y      = atan2f(siny_cosp, cosy_cosp);
+	angles.y = atan2f(siny_cosp, cosy_cosp);
 
 	return angles;
 }
 
 Quat quat_between(Vec3 from, Vec3 to) {
 	Quat q;
-	q.v4.w   = 1.0f + vec3_dot(from, to);
+	q.v4.w = 1.0f + vec3_dot(from, to);
 
 	if (q.real) {
 		q.v4.xyz = vec3_cross(from, to);
-	} else {
+	}
+	else {
 		q.v4.xyz = fabsf(from.x) > fabsf(from.z) ? vec3(-from.y, from.x, 0.f) : vec3(0.f, -from.z, from.y);
 	}
 
@@ -1193,7 +1199,7 @@ Quat quat_between(Vec3 from, Vec3 to) {
 
 Quat quat_between(Quat a, Quat b) {
 	Quat t = quat_conjugate(a);
-	t      = t * (1.0f / quat_dot(t, t));
+	t = t * (1.0f / quat_dot(t, t));
 	return quat_mul(t, b);
 }
 
@@ -1225,7 +1231,7 @@ Color3 linear_to_srgb(Color3 color) {
 Color4 linear_to_srgb(Color4 color) {
 	Color4 res;
 	res.xyz = linear_to_srgb(color.xyz);
-	res.w   = color.w;
+	res.w = color.w;
 	return res;
 }
 
@@ -1241,7 +1247,7 @@ Color3 linear_to_srgb(Color3 color, r32 gamma) {
 Color4 linear_to_srgb(Color4 color, r32 gamma) {
 	Color4 res;
 	res.xyz = linear_to_srgb(color.xyz, gamma);
-	res.w   = color.w;
+	res.w = color.w;
 	return res;
 }
 
@@ -1256,7 +1262,7 @@ Color3 srgb_to_linear(Color3 color) {
 Color4 srgb_to_linear(Color4 color) {
 	Color4 res;
 	res.xyz = srgb_to_linear(color.xyz);
-	res.w   = color.w;
+	res.w = color.w;
 	return res;
 }
 
@@ -1271,7 +1277,7 @@ Color3 srgb_to_linear(Color3 color, r32 gamma) {
 Color4 srgb_to_linear(Color4 color, r32 gamma) {
 	Color4 res;
 	res.xyz = srgb_to_linear(color.xyz, gamma);
-	res.w   = color.w;
+	res.w = color.w;
 	return res;
 }
 
@@ -1285,18 +1291,18 @@ Colorh color4_to_hex(Color4 v) {
 
 Color4 hex_to_color4(Colorh c) {
 	r32 div = 1.0f / 255.0f;
-	r32 r   = static_cast<r32>(c.r) * div;
-	r32 g   = static_cast<r32>(c.g) * div;
-	r32 b   = static_cast<r32>(c.b) * div;
-	r32 a   = static_cast<r32>(c.a) * div;
+	r32 r = static_cast<r32>(c.r) * div;
+	r32 g = static_cast<r32>(c.g) * div;
+	r32 b = static_cast<r32>(c.b) * div;
+	r32 a = static_cast<r32>(c.a) * div;
 	return vec4(r, g, b, a);
 }
 
 Color3 hex_to_color3(Colorh c) {
 	r32 div = 1.0f / 255.0f;
-	r32 r   = static_cast<r32>(c.r) * div;
-	r32 g   = static_cast<r32>(c.g) * div;
-	r32 b   = static_cast<r32>(c.b) * div;
+	r32 r = static_cast<r32>(c.r) * div;
+	r32 g = static_cast<r32>(c.g) * div;
+	r32 b = static_cast<r32>(c.b) * div;
 	return vec3(r, g, b);
 }
 
@@ -1314,7 +1320,7 @@ Color3 hsv_to_rgb(Color3 col) {
 		return res;
 	}
 
-	h       = fmodf(h, 1.0f) / (60.0f / 360.0f);
+	h = fmodf(h, 1.0f) / (60.0f / 360.0f);
 	int   i = (int)h;
 	float f = h - (float)i;
 	float p = v * (1.0f - s);
@@ -1322,13 +1328,13 @@ Color3 hsv_to_rgb(Color3 col) {
 	float t = v * (1.0f - s * (1.0f - f));
 
 	switch (i) {
-		case 0: res = vec3(v, t, p); break;
-		case 1: res = vec3(q, v, p); break;
-		case 2: res = vec3(p, v, t); break;
-		case 3: res = vec3(p, q, v); break;
-		case 4: res = vec3(t, p, v); break;
-		case 5:
-		default: res = vec3(v, p, q); break;
+	case 0: res = vec3(v, t, p); break;
+	case 1: res = vec3(q, v, p); break;
+	case 2: res = vec3(p, v, t); break;
+	case 3: res = vec3(p, q, v); break;
+	case 4: res = vec3(t, p, v); break;
+	case 5:
+	default: res = vec3(v, p, q); break;
 	}
 
 	return res;
@@ -1343,22 +1349,22 @@ Color3 rgb_to_hsv(Color3 c) {
 	r32 k = 0.f;
 	if (g < b) {
 		auto t = b;
-		b      = g;
-		g      = t;
-		k      = -1.f;
+		b = g;
+		g = t;
+		k = -1.f;
 	}
 	if (r < g) {
 		auto t = g;
-		g      = r;
-		r      = t;
-		k      = -2.f / 6.f - k;
+		g = r;
+		r = t;
+		k = -2.f / 6.f - k;
 	}
 
 	Color3 res;
 	r32    chroma = r - (g < b ? g : b);
-	res.x         = fabsf(k + (g - b) / (6.f * chroma + 1e-20f));
-	res.y         = chroma / (r + 1e-20f);
-	res.z         = r;
+	res.x = fabsf(k + (g - b) / (6.f * chroma + 1e-20f));
+	res.y = chroma / (r + 1e-20f);
+	res.z = r;
 	return res;
 }
 
@@ -1421,7 +1427,7 @@ Quat slerp(Quat from, Quat to, r32 t) {
 
 	// use shorter path
 	if (dot < 0.0f) {
-		to  = -to;
+		to = -to;
 		dot = -dot;
 	}
 
@@ -1430,9 +1436,9 @@ Quat slerp(Quat from, Quat to, r32 t) {
 		return result;
 	}
 
-	r32 theta_0     = acosf(dot);
-	r32 theta       = theta_0 * t;
-	r32 sin_theta   = sinf(theta);
+	r32 theta_0 = acosf(dot);
+	r32 theta = theta_0 * t;
+	r32 sin_theta = sinf(theta);
 	r32 sin_theta_0 = sinf(theta_0);
 
 	r32 s0 = cosf(theta) - dot * sin_theta / sin_theta_0;
@@ -1568,8 +1574,8 @@ Vec2 rotate_around(Vec2 point, Vec2 center, r32 angle) {
 	r32  s = sinf(angle);
 	Vec2 res;
 	Vec2 p = point - center;
-	res.x  = p.x * c - p.y * s;
-	res.y  = p.x * s + p.y * c;
+	res.x = p.x * c - p.y * s;
+	res.y = p.x * s + p.y * c;
 	res += center;
 	return res;
 }
@@ -1580,7 +1586,7 @@ Quat rotate_toward(Quat from, Quat to, r32 max_angle) {
 
 		// use shorter path
 		if (dot < 0.0f) {
-			to  = -to;
+			to = -to;
 			dot = -dot;
 		}
 
@@ -1592,16 +1598,17 @@ Quat rotate_toward(Quat from, Quat to, r32 max_angle) {
 
 		r32 t = max_angle / theta_0;
 
-		theta_0			= max_angle;
-		r32 theta       = theta_0 * t;
-		r32 sin_theta   = sinf(theta);
+		theta_0 = max_angle;
+		r32 theta = theta_0 * t;
+		r32 sin_theta = sinf(theta);
 		r32 sin_theta_0 = sinf(theta_0);
 
 		r32 s0 = cosf(theta) - dot * sin_theta / sin_theta_0;
 		r32 s1 = sin_theta / sin_theta_0;
 
 		return (s0 * from) + (s1 * to);
-	} else {
+	}
+	else {
 		return from;
 	}
 }
@@ -1630,6 +1637,167 @@ r32 signed_area(Vec3 a, Vec3 b, Vec3 c) {
 	py *= py;
 	pz *= pz;
 	return 0.5f * sqrtf(px + py + pz);
+}
+
+r32 point_to_segment_length2(Vec2 p, Vec2 a, Vec2 b) {
+	Vec2 ab = b - a, ap = p - a, bp = p - b;
+	r32 e = vec2_dot(ap, ab);
+	// Handle cases where p projects outside ab
+	if (e <= 0.0f) return vec2_dot(ap, ap);
+	r32 f = vec2_dot(ab, ab);
+	if (e >= f) return vec2_dot(bp, bp);
+	// Handle cases where p projects onto ab
+	return vec2_dot(ap, ap) - e * e / f;
+}
+
+r32 point_to_mm_rect_length2(Vec2 p, Mm_Rect &rect) {
+	r32 dist2 = 0;
+	for (s32 i = 0; i < 2; i++) {
+		r32 v = p.m[i];
+		if (v < rect.min.m[i]) dist2 += (rect.min.m[i] - v) * (rect.min.m[i] - v);
+		if (v > rect.max.m[i]) dist2 += (v - rect.max.m[i]) * (v - rect.max.m[i]);
+	}
+	return dist2;
+}
+
+r32 point_to_aabb2d_length2(Vec2 p, Aabb2d &aabb) {
+	Vec2 dim = vec2(aabb.radius[0], aabb.radius[1]);
+	Mm_Rect rect;
+	rect.min = aabb.center - dim;
+	rect.max = aabb.center + dim;
+	return point_to_mm_rect_length2(p, rect);
+}
+
+Vec2 closest_point_point_segment(Vec2 p, Vec2 a, Vec2 b, r32 *t) {
+	Vec2 ab = b - a;
+	*t = vec2_dot(p - a, ab) / vec2_dot(ab, ab);
+	if (*t < 0.0f) *t = 0.0f;
+	if (*t > 1.0f) *t = 1.0f;
+	return a + (*t * ab);
+}
+
+Vec2 closest_point_point_mm_rect(Vec2 p, Mm_Rect &rect) {
+	Vec2 q;
+	for (s32 i = 0; i < 2; i++) {
+		r32 v = p.m[i];
+		v = maximum(v, rect.min.m[i]);
+		v = minimum(v, rect.max.m[i]);
+		q.m[i] = v;
+	}
+	return q;
+}
+
+Vec2 closest_point_point_aabb2d(Vec2 a, Aabb2d &aabb) {
+	Vec2 dim = vec2(aabb.radius[0], aabb.radius[1]);
+	Mm_Rect rect;
+	rect.min = aabb.center - dim;
+	rect.max = aabb.center + dim;
+	return closest_point_point_mm_rect(a, rect);
+}
+
+Vec2 closest_point_point_triangle(Vec2 p, Vec2 a, Vec2 b, Vec2 c) {
+	// Check if P in vertex region outside A
+	Vec2 ab = b - a;
+	Vec2 ac = c - a;
+	Vec2 ap = p - a;
+	r32 d1 = vec2_dot(ab, ap);
+	r32 d2 = vec2_dot(ac, ap);
+	if (d1 <= 0.0f && d2 <= 0.0f) return a; // barycentric coordinates (1,0,0)
+
+	// Check if P in vertex region outside B
+	Vec2 bp = p - b;
+	r32 d3 = vec2_dot(ab, bp);
+	r32 d4 = vec2_dot(ac, bp);
+	if (d3 >= 0.0f && d4 <= d3) return b; // barycentric coordinates (0,1,0)
+
+	// Check if P in edge region of AB, if so return projection of P onto AB
+	r32 vc = d1 * d4 - d3 * d2;
+	if (vc <= 0.0f && d1 >= 0.0f && d3 <= 0.0f) {
+		r32 v = d1 / (d1 - d3);
+		return a + v * ab; // barycentric coordinates (1-v,v,0)
+	}
+
+	// Check if P in vertex region outside C
+	Vec2 cp = p - c;
+	r32 d5 = vec2_dot(ab, cp);
+	r32 d6 = vec2_dot(ac, cp);
+	if (d6 >= 0.0f && d5 <= d6) return c; // barycentric coordinates (0,0,1)
+
+	// Check if P in edge region of AC, if so return projection of P onto AC
+	r32 vb = d5 * d2 - d1 * d6;
+	if (vb <= 0.0f && d2 >= 0.0f && d6 <= 0.0f) {
+		r32 w = d2 / (d2 - d6);
+		return a + w * ac; // barycentric coordinates (1-w,0,w)
+	}
+
+	// Check if P in edge region of BC, if so return projection of P onto BC
+	r32 va = d3 * d6 - d5 * d4;
+	if (va <= 0.0f && (d4 - d3) >= 0.0f && (d5 - d6) >= 0.0f) {
+		r32 w = (d4 - d3) / ((d4 - d3) + (d5 - d6));
+		return b + w * (c - b); // barycentric coordinates (0,1-w,w)
+	}
+
+	// P inside face region
+	r32 denom = 1.0f / (va + vb + vc);
+	r32 v = vb * denom;
+	r32 w = vc * denom;
+	return a + ab * v + ac * w;
+}
+
+r32 closest_point_segment_segment(Vec2 p1, Vec2 q1, Vec2 p2, Vec2 q2, r32 *s, r32 *t, Vec2 *c1, Vec2 *c2) {
+	Vec2 d1 = q1 - p1;
+	Vec2 d2 = q2 - p2;
+	Vec2 r = p1 - p2;
+	r32 a = vec2_dot(d1, d1);
+	r32 e = vec2_dot(d2, d2);
+	r32 f = vec2_dot(d2, r);
+
+	// Check if either or both segments degenerate into points
+	if (a <= EPSILON_FLOAT && e <= EPSILON_FLOAT) {
+		// Both segments degenerate into points
+		*s = *t = 0.0f;
+		*c1 = p1;
+		*c2 = p2;
+		return vec2_dot(*c1 - *c2, *c1 - *c2);
+	}
+
+	if (a <= EPSILON_FLOAT) {
+		// First segment degenerates into a point
+		*s = 0.0f;
+		*t = f / e;
+		*t = clamp01(*t);
+	} else {
+		r32 c = vec2_dot(d1, r);
+		if (e <= EPSILON_FLOAT) {
+			// Second segment degenerates into a point
+			*t = 0.0f;
+			*s = clamp01(-c / a);
+		} else {
+			// The general nondegenerate case starts here
+			r32 b = vec2_dot(d1, d2);
+			r32 denom = a * e - b * b;
+			if (denom != 0.0f) {
+				*s = clamp01((b * f - c * e) / denom);
+			} else {
+				*s = 0.0f;
+			}
+
+			r32 tnom = b * *s + f;
+			if (tnom < 0.0f) {
+				*t = 0.0f;
+				*s = clamp01(-c / a);
+			} else if (tnom > e) {
+				*t = 1.0f;
+				*s = clamp01((b - c) / a);
+			} else {
+				*t = tnom / e;
+			}
+		}
+	}
+
+	*c1 = p1 + d1 * *s;
+	*c2 = p2 + d2 * *t;
+	return vec2_dot(*c1 - *c2, *c1 - *c2);
 }
 
 Vec3 barycentric(Vec2 a, Vec2 b, Vec2 c, Vec2 p) {
@@ -1661,12 +1829,14 @@ Vec3 barycentric(Vec3 a, Vec3 b, Vec3 c, Vec3 p) {
 		nu = signed_area_double(p.y, p.z, b.y, b.z, c.y, c.z);
 		nv = signed_area_double(p.y, p.z, c.y, c.z, a.y, a.z);
 		ood = 1.0f / m.x;
-	} else if (y >= x && y >= z) {
+	}
+	else if (y >= x && y >= z) {
 		// y is largest, project to the xz plane
 		nu = signed_area_double(p.x, p.z, b.x, b.z, c.x, c.z);
 		nv = signed_area_double(p.x, p.z, c.x, c.z, a.x, a.z);
 		ood = 1.0f / -m.y;
-	} else {
+	}
+	else {
 		// z is largest, project to the xy plane
 		nu = signed_area_double(p.x, p.y, b.x, b.y, c.x, c.y);
 		nv = signed_area_double(p.x, p.y, c.x, c.y, a.x, a.y);
@@ -1715,7 +1885,7 @@ s32 point_farthest_from_edge(Vec2 a, Vec2 b, Vec2 *p, s32 n) {
 
 	s32 best_index = -1;
 	r32 max_value = -FLT_MAX, right_most_value = -FLT_MAX;
-	
+
 	for (s32 i = 1; i < n; i++) {
 		r32 d = vec2_dot(p[i] - a, eperp);
 		r32 r = vec2_dot(p[i] - a, e);
@@ -1763,7 +1933,8 @@ void most_seperated_points_on_aabb(Vec2 *pt, s32 n, s32 *min, s32 *max) {
 	if (dist2y > dist2x) {
 		*max = maxy;
 		*min = miny;
-	} else {
+	}
+	else {
 		*min = minx;
 		*max = maxx;
 	}
@@ -1771,7 +1942,7 @@ void most_seperated_points_on_aabb(Vec2 *pt, s32 n, s32 *min, s32 *max) {
 
 Circle circle_from_distant_points(Vec2 *pt, s32 n) {
 	s32 min, max;
-	most_seperated_points_on_aabb(pt, n, &min, &max);	
+	most_seperated_points_on_aabb(pt, n, &min, &max);
 	Circle c;
 	c.center = (pt[min] + pt[max]) * 0.5f;
 	c.radius = vec2_dot(pt[max] - c.center, pt[max] - c.center);
@@ -1781,12 +1952,12 @@ Circle circle_from_distant_points(Vec2 *pt, s32 n) {
 
 r32 min_area_rect(Vec2 *pt, int num_pts, Vec2 *center, Vec2 u[2]) {
 	r32 min_area = FLT_MAX;
-	
+
 	for (s32 i = 0, j = num_pts - 1; i < num_pts; j = i, i++) {
 		auto e0 = pt[i] - pt[j];
 		e0 /= vec2_length(e0);
 		auto e1 = vec2(-e0.y, e0.x);
-										
+
 		r32 min0 = 0.0f, min1 = 0.0f, max0 = 0.0f, max1 = 0.0f;
 		for (s32 k = 0; k < num_pts; k++) {
 			Vec2 d = pt[k] - pt[j];
@@ -1798,7 +1969,7 @@ r32 min_area_rect(Vec2 *pt, int num_pts, Vec2 *center, Vec2 u[2]) {
 			if (dot > max1) max1 = dot;
 		}
 		r32 area = (max0 - min0) * (max1 - min1);
-		
+
 		if (area < min_area) {
 			min_area = area;
 			*center = pt[j] + 0.5f * ((min0 + max0) * e0 + (min1 + max1) * e1);
@@ -1820,7 +1991,8 @@ Mm_Rect transform_mmrect(const Mm_Rect &a, Mat2 &mat, Vec2 t) {
 			if (e < f) {
 				b.min.m[i] += e;
 				b.max.m[i] += f;
-			} else {
+			}
+			else {
 				b.min.m[i] += f;
 				b.max.m[i] += e;
 			}
@@ -1837,7 +2009,7 @@ Aabb2d update_aabb(const Aabb2d &a, Mat2 &mat, Vec2 t) {
 	Aabb2d b;
 	for (int i = 0; i < 2; i++) {
 		b.center.m[i] = t.m[i];
-		b.radius[i]   = 0.0f;
+		b.radius[i] = 0.0f;
 		for (int j = 0; j < 2; j++) {
 			b.center.m[i] += mat.m2[i][j] * a.center.m[j];
 			b.radius[i] += fabsf(mat.m2[i][j]) * a.radius[j];
@@ -1869,7 +2041,7 @@ bool circle_vs_circle(const Circle &a, const Circle &b) {
 	return dist2 <= radius_sum * radius_sum;
 }
 
-bool quad_vs_quad(Quad &a, Quad &b) {
+bool quad_vs_quad(const Quad &a, const Quad &b) {
 	auto quad_a = &a;
 	auto quad_b = &b;
 
@@ -1905,6 +2077,20 @@ bool quad_vs_quad(Quad &a, Quad &b) {
 	return true;
 }
 
+bool circle_vs_capsule(const Circle &circle, const Capsule2d &capsule) {
+	r32 dst2 = point_to_segment_length2(circle.center, capsule.a, capsule.b);
+	r32 radius = circle.radius + capsule.radius;
+	return dst2 <= radius *radius;
+}
+
+bool capsule_vs_capsule(const Capsule2d &capsule1, const Capsule2d &capsule2) {
+	r32 s, t;
+	Vec2 c1, c2;
+	r32 dist2 = closest_point_segment_segment(capsule1.a, capsule1.b, capsule2.a, capsule2.b, &s, &t, &c1, &c2);
+	r32 radius = capsule1.radius + capsule2.radius;
+	return dist2 <= radius * radius;
+}
+
 //
 //
 //
@@ -1920,7 +2106,7 @@ bool ray_vs_aabb(Vec2 origin, Vec2 direction, const Mm_Rect &rect, Ray_Hit *hit)
 	i_direction.x = 1.0f / direction.x;
 	i_direction.y = 1.0f / direction.y;
 	Vec2 near_t = vec2_hadamard(rect.min - origin, i_direction);
-	Vec2 far_t  = vec2_hadamard(rect.max - origin, i_direction);
+	Vec2 far_t = vec2_hadamard(rect.max - origin, i_direction);
 
 	r32 temp;
 
@@ -1941,7 +2127,7 @@ bool ray_vs_aabb(Vec2 origin, Vec2 direction, const Mm_Rect &rect, Ray_Hit *hit)
 	}
 
 	r32 hit_near_t = maximum(near_t.x, near_t.y);
-	r32 hit_far_t  = minimum(far_t.x, far_t.y);
+	r32 hit_far_t = minimum(far_t.x, far_t.y);
 
 	if (hit_far_t < 0) {
 		// Collision in negative direction
@@ -1952,9 +2138,11 @@ bool ray_vs_aabb(Vec2 origin, Vec2 direction, const Mm_Rect &rect, Ray_Hit *hit)
 
 	if (near_t.x > near_t.y) {
 		hit->normal = vec2(-sgn(direction.x), 0);
-	} else if (near_t.x < near_t.y) {
+	}
+	else if (near_t.x < near_t.y) {
 		hit->normal = vec2(0, -sgn(direction.y));
-	} else {
+	}
+	else {
 		constexpr r32 root_two = 1.4142135623730950488016887242097f;
 		hit->normal = vec2(-sgn(direction.x) * root_two, -sgn(direction.y) * root_two);
 	}
@@ -1964,7 +2152,7 @@ bool ray_vs_aabb(Vec2 origin, Vec2 direction, const Mm_Rect &rect, Ray_Hit *hit)
 	return true;
 }
 
-bool ray_vs_line(Vec2 p1, Vec2 q1, Vec2 p2, Vec2 q2, Ray_Hit* hit) {
+bool ray_vs_line(Vec2 p1, Vec2 q1, Vec2 p2, Vec2 q2, Ray_Hit *hit) {
 	r32 dx1 = p1.x - q1.x;
 	r32 dy1 = p1.y - q1.y;
 	r32 dx2 = p2.x - q2.x;

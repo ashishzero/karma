@@ -461,6 +461,18 @@ inline Quad quad(Vec2 a, Vec2 b, Vec2 c, Vec2 d, Vec2 n1, Vec2 n2, Vec2 n3, Vec2
 	return quad;
 }
 
+struct Capsule2d {
+	Vec2 a;
+	Vec2 b;
+	r32 radius;
+};
+
+struct Lozenge {
+	Vec2 a;
+	Vec2 u[2];
+	r32 radius;
+};
+
 struct Ray_Hit {
 	Vec2 point;
 	Vec2 normal;
