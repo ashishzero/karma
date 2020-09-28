@@ -2091,6 +2091,27 @@ bool test_capsule_vs_capsule(const Capsule2d &capsule1, const Capsule2d &capsule
 	return dist2 <= radius * radius;
 }
 
+bool segment_vs_segment(Vec2 a, Vec2 b, Vec2 c, Vec2 d, r32 *t, Vec2 *p) {
+	// Sign of areas correspond to which side of ab points c and d are
+	r32 a1 = signed_area_double(a, b, d);
+	r32 a2 = signed_area_double(a, b, c);
+
+	// If c and d are on different sides of ab, areas have different signs
+	if (a1 != 0.0f && a2 != 0.0f && a1 * a2 < 0.0f) {
+		// Compute signs for a and b with respect to segment cd
+		r32 a3 = signed_area_double(c, d, a);
+		r32 a4 = a3 + a2 - a1;
+		// Points a and b on different sides of cd if areas have different signs
+		if (a3 != 0.0f && a4 != 0.0f && a3 * a4 < 0.0f) {
+			*t = a3 / (a3 - a4);
+			*p = a + *t * (b - a);
+			return true;
+		}
+	}
+
+	return false;
+}
+
 //
 //
 //

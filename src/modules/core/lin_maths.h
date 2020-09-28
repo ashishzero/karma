@@ -837,6 +837,8 @@ bool test_circle_vs_circle(const Circle &a, const Circle &b);
 bool test_quad_vs_quad(const Quad &a, const Quad &b);
 bool test_circle_vs_capsule(const Circle& circle, const Capsule2d& capsule);
 
+bool segment_vs_segment(Vec2 a, Vec2 b, Vec2 c, Vec2 d, r32 *t, Vec2 *p);
+
 //
 //
 //
