@@ -672,6 +672,10 @@ inline Quad quad_from_points(Vec2 a, Vec2 b, Vec2 c, Vec2 d) {
 	return quad;
 }
 
+inline Ray2d ray_from_points(Vec2 a, Vec2 b) {
+	return ray2d(a, vec2_normalize(b - a));
+}
+
 //
 //
 //
@@ -842,6 +846,7 @@ bool test_quad_vs_quad(const Quad &a, const Quad &b);
 bool test_circle_vs_capsule(const Circle& circle, const Capsule2d& capsule);
 bool test_segment_vs_circle(Vec2 a, Vec2 b, const Circle &c);
 bool test_circle_vs_aabb(const Circle &c, const Aabb2d &b);
+bool test_ray_vs_circle(const Ray2d &ray, const Circle &circle);
 
 bool segment_vs_segment(Vec2 a, Vec2 b, Vec2 c, Vec2 d, r32 *t, Vec2 *p);
 bool circle_vs_aabb(const Circle &c, Aabb2d &b, Vec2 *p);
@@ -853,6 +858,7 @@ bool intersect_ray_ray(Vec2 p1, Vec2 q1, Vec2 p2, Vec2 q2, r32 *t, r32 *u, Vec2 
 bool intersect_ray_ray(Vec2 p1, Vec2 q1, const Ray2d &b, r32 *t, r32 *u, Vec2 *p);
 bool intersect_ray_ray(const Ray2d &a, const Ray2d &b, r32 *t, r32 *u, Vec2 *p);
 bool intersect_segment_segment(Vec2 p1, Vec2 q1, Vec2 p2, Vec2 q2, r32 *t, r32 *u, Vec2 *p);
+bool intersect_circle_ray(const Circle &circle, const Ray2d &ray, r32 *t, Vec2 *p);
 
 //
 //

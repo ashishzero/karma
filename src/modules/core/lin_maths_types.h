@@ -478,6 +478,13 @@ struct Ray2d {
 	Vec2 dir;
 };
 
+inline Ray2d ray2d(Vec2 origin, Vec2 dir) {
+	Ray2d ray;
+	ray.origin = origin;
+	ray.dir = dir;
+	return ray;
+}
+
 struct Ray_Hit {
 	Vec2 point;
 	Vec2 normal;

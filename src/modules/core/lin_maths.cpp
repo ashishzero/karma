@@ -2124,6 +2124,20 @@ bool test_circle_vs_aabb(const Circle &c, const Aabb2d &b) {
 	return dist2 <= c.radius * c.radius;
 }
 
+bool test_ray_vs_circle(const Ray2d &ray, const Circle &circle) {
+	Vec2 m = ray.origin - circle.center;
+	r32 c = vec2_dot(m, m) - circle.radius * circle.radius;
+	if (c <= 0.0f) return true;
+
+	r32 b = vec2_dot(m, ray.dir);
+	// Early exit if ray origin outside sphere and ray pointing away from sphere
+	if (b > 0.0f) return false;
+
+	r32 disc = b * b - c;
+	if (disc < 0.0f) return false;
+	return true;
+}
+
 bool segment_vs_segment(Vec2 a, Vec2 b, Vec2 c, Vec2 d, r32 *t, Vec2 *p) {
 	// Sign of areas correspond to which side of ab points c and d are
 	r32 a1 = signed_area_double(a, b, d);
@@ -2249,6 +2263,27 @@ bool intersect_segment_segment(Vec2 p1, Vec2 q1, Vec2 p2, Vec2 q2, r32 *t, r32 *
 	}
 
 	return false;
+}
+
+bool intersect_circle_ray(const Circle &circle, const Ray2d &ray, r32 *t, Vec2 *p) {
+	Vec2 m = ray.origin - circle.center;
+
+	r32 b = vec2_dot(m, ray.dir);
+	r32 c = vec2_dot(m, m) - circle.radius * circle.radius;
+
+	// Exit if ray’s origin outside circle (c > 0) and ray pointing away from circle (b > 0)
+	if (c > 0.0f && b > 0.0f) return false;
+
+	r32 discr = b * b - c;
+	if (discr < 0.0f) return false;
+
+	// Ray found to intersect sphere, compute smallest t value of intersection
+	*t = -b - sqrtf(discr);
+
+	// If t is negative, ray started inside sphere so clamp t to zero
+	if (*t < 0.0f) *t = 0.0f;
+	*p = ray.origin + *t * ray.dir;
+	return true;
 }
 
 //
