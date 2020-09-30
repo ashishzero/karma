@@ -473,6 +473,11 @@ struct Lozenge {
 	r32 radius;
 };
 
+struct Ray2d {
+	Vec2 origin;
+	Vec2 dir;
+};
+
 struct Ray_Hit {
 	Vec2 point;
 	Vec2 normal;

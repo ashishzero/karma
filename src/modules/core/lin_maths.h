@@ -847,6 +847,13 @@ bool segment_vs_segment(Vec2 a, Vec2 b, Vec2 c, Vec2 d, r32 *t, Vec2 *p);
 bool circle_vs_aabb(const Circle &c, Aabb2d &b, Vec2 *p);
 bool circle_vs_triangle(const Circle &circle, Vec2 a, Vec2 b, Vec2 c, Vec2 *p);
 
+bool intersect_segment_ray(Vec2 p1, Vec2 p2, Vec2 q1, Vec2 q2, r32 *t, Vec2 *p);
+bool intersect_segment_ray(Vec2 p1, Vec2 q1, const Ray2d &ray, r32 *t, Vec2 *p);
+bool intersect_ray_ray(Vec2 p1, Vec2 q1, Vec2 p2, Vec2 q2, r32 *t, r32 *u, Vec2 *p);
+bool intersect_ray_ray(Vec2 p1, Vec2 q1, const Ray2d &b, r32 *t, r32 *u, Vec2 *p);
+bool intersect_ray_ray(const Ray2d &a, const Ray2d &b, r32 *t, r32 *u, Vec2 *p);
+bool intersect_segment_segment(Vec2 p1, Vec2 q1, Vec2 p2, Vec2 q2, r32 *t, r32 *u, Vec2 *p);
+
 //
 //
 //

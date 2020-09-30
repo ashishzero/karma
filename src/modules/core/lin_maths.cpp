@@ -2157,6 +2157,100 @@ bool circle_vs_triangle(const Circle &circle, Vec2 a, Vec2 b, Vec2 c, Vec2 *p) {
 	return vec2_dot(v, v) <= circle.radius * circle.radius;
 }
 
+bool intersect_segment_ray(Vec2 p1, Vec2 q1, Vec2 p2, Vec2 q2, r32 *t, Vec2 *p) {
+	r32 dx1 = p1.x - q1.x;
+	r32 dy1 = p1.y - q1.y;
+	r32 dx2 = p2.x - q2.x;
+	r32 dy2 = p2.y - q2.y;
+
+	r32 d = dx1 * dy2 - dy1 * dx2;
+
+	if (d) {
+		r32 n2 = -dx1 * (p1.y - p2.y) + dy1 * (p1.x - p2.x);
+		r32 u = n2 / d;
+
+		r32 n = (p1.x - p2.x) * dy2 - (p1.y - p2.y) * dx2;
+		*t = n / d;
+
+		if ((*t >= 0.0f && *t <= 1.0f) && u >= 0.0f) {
+			p->x = p1.x - (*t * dx1);
+			p->y = p1.y - (*t * dy1);
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool intersect_segment_ray(Vec2 p1, Vec2 q1, const Ray2d &ray, r32 *t, Vec2 *p) {
+	Vec2 p2 = ray.origin;
+	Vec2 q2 = ray.origin + ray.dir;
+	return intersect_segment_ray(p1, q1, p2, q2, t, p);
+}
+
+bool intersect_ray_ray(Vec2 p1, Vec2 q1, Vec2 p2, Vec2 q2, r32 *t, r32 *u, Vec2 *p) {
+	r32 dx1 = p1.x - q1.x;
+	r32 dy1 = p1.y - q1.y;
+	r32 dx2 = p2.x - q2.x;
+	r32 dy2 = p2.y - q2.y;
+
+	r32 d = dx1 * dy2 - dy1 * dx2;
+
+	if (d) {
+		r32 n2 = -dx1 * (p1.y - p2.y) + dy1 * (p1.x - p2.x);
+		*u = n2 / d;
+
+		r32 n = (p1.x - p2.x) * dy2 - (p1.y - p2.y) * dx2;
+		*t = n / d;
+
+		p->x = p2.x - (*u * dx2);
+		p->y = p2.y - (*u * dy2);
+		return true;
+	}
+
+	return false;
+}
+
+bool intersect_ray_ray(Vec2 p1, Vec2 q1, const Ray2d &b, r32 *t, r32 *u, Vec2 *p) {
+	Vec2 p2 = b.origin;
+	Vec2 q2 = b.origin + b.dir;
+	return intersect_ray_ray(p1, q1, p2, q2, t, u, p);
+}
+
+bool intersect_ray_ray(const Ray2d &a, const Ray2d &b, r32 *t, r32 *u, Vec2 *p) {
+	Vec2 p1 = a.origin;
+	Vec2 q1 = a.origin + a.dir;
+	Vec2 p2 = b.origin;
+	Vec2 q2 = b.origin + b.dir;
+	return intersect_ray_ray(p1, q1, p2, q2, t, u, p);
+}
+
+bool intersect_segment_segment(Vec2 p1, Vec2 q1, Vec2 p2, Vec2 q2, r32 *t, r32 *u, Vec2 *p) {
+	r32 dx1 = p1.x - q1.x;
+	r32 dy1 = p1.y - q1.y;
+	r32 dx2 = p2.x - q2.x;
+	r32 dy2 = p2.y - q2.y;
+
+	r32 d = dx1 * dy2 - dy1 * dx2;
+
+	if (d) {
+		r32 n2 = -dx1 * (p1.y - p2.y) + dy1 * (p1.x - p2.x);
+		*u = n2 / d;
+
+		if (*u >= 0.0f && *u <= 1.0f) {
+			r32 n = (p1.x - p2.x) * dy2 - (p1.y - p2.y) * dx2;
+			*t = n / d;
+			if (*t >= 0.0f && *t <= 1.0f) {
+				p->x = p2.x - (*u * dx2);
+				p->y = p2.y - (*u * dy2);
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
 //
 //
 //
