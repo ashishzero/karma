@@ -1650,7 +1650,7 @@ r32 point_to_segment_length2(Vec2 p, Vec2 a, Vec2 b) {
 	return vec2_dot(ap, ap) - e * e / f;
 }
 
-r32 point_to_mm_rect_length2(Vec2 p, Mm_Rect &rect) {
+r32 point_to_mm_rect_length2(Vec2 p, const Mm_Rect &rect) {
 	r32 dist2 = 0;
 	for (s32 i = 0; i < 2; i++) {
 		r32 v = p.m[i];
@@ -1660,7 +1660,7 @@ r32 point_to_mm_rect_length2(Vec2 p, Mm_Rect &rect) {
 	return dist2;
 }
 
-r32 point_to_aabb2d_length2(Vec2 p, Aabb2d &aabb) {
+r32 point_to_aabb2d_length2(Vec2 p, const Aabb2d &aabb) {
 	Vec2 dim = vec2(aabb.radius[0], aabb.radius[1]);
 	Mm_Rect rect;
 	rect.min = aabb.center - dim;
@@ -1676,7 +1676,7 @@ Vec2 closest_point_point_segment(Vec2 p, Vec2 a, Vec2 b, r32 *t) {
 	return a + (*t * ab);
 }
 
-Vec2 closest_point_point_mm_rect(Vec2 p, Mm_Rect &rect) {
+Vec2 closest_point_point_mm_rect(Vec2 p, const Mm_Rect &rect) {
 	Vec2 q;
 	for (s32 i = 0; i < 2; i++) {
 		r32 v = p.m[i];
@@ -1687,7 +1687,7 @@ Vec2 closest_point_point_mm_rect(Vec2 p, Mm_Rect &rect) {
 	return q;
 }
 
-Vec2 closest_point_point_aabb2d(Vec2 a, Aabb2d &aabb) {
+Vec2 closest_point_point_aabb2d(Vec2 a, const Aabb2d &aabb) {
 	Vec2 dim = vec2(aabb.radius[0], aabb.radius[1]);
 	Mm_Rect rect;
 	rect.min = aabb.center - dim;
@@ -2012,6 +2012,18 @@ Aabb2d update_aabb(const Aabb2d &a, r32 rot, Vec2 t) {
 	return update_aabb(a, mat2_rotation(rot), t);
 }
 
+bool test_point_inside_rect(Vec2 point, const Mm_Rect &rect) {
+	if (point.x < rect.min.x || point.y < rect.min.y) return false;
+	if (point.x > rect.max.x || point.y > rect.max.y) return false;
+	return true;
+}
+
+bool test_point_inside_aabb(Vec2 point, const Aabb2d &aabb) {
+	if (point.x < (aabb.center.x - aabb.radius[0]) || point.y < (aabb.center.y - aabb.radius[1])) return false;
+	if (point.x > (aabb.center.x + aabb.radius[0]) || point.y > (aabb.center.y + aabb.radius[1])) return false;
+	return true;
+}
+
 bool test_point_inside_triangle(Vec2 a, Vec2 b, Vec2 c, Vec2 p) {
 	Vec3 bary = barycentric(a, b, c, p);
 	return bary.y >= 0.0f && bary.z >= 0.0f && (bary.y + bary.z) <= 1.0f;
@@ -2022,10 +2034,21 @@ bool test_point_inside_triangle(Vec3 a, Vec3 b, Vec3 c, Vec3 p) {
 	return bary.y >= 0.0f && bary.z >= 0.0f && (bary.y + bary.z) <= 1.0f;
 }
 
+bool test_point_inside_circle(Vec2 p, const Circle &c) {
+	Vec2 d = c.center - p;
+	r32 dist2 = vec2_dot(d, d);
+	return dist2 < c.radius * c.radius;
+}
+
 bool test_mmrect_vs_mmrect(const Mm_Rect &a, const Mm_Rect &b) {
 	if (a.max.x < b.min.x || a.min.x > b.max.x) return false;
 	if (a.max.y < b.min.y || a.min.y > b.max.y) return false;
 	return true;
+}
+
+bool test_point_inside_capsule(Vec2 p, const Capsule2d &c) {
+	r32 dst2 = point_to_segment_length2(p, c.a, c.b);
+	return dst2 <= c.radius * c.radius;
 }
 
 bool test_aabb_vs_aabb(const Aabb2d &a, const Aabb2d &b) {
@@ -2083,12 +2106,22 @@ bool test_circle_vs_capsule(const Circle &circle, const Capsule2d &capsule) {
 	return dst2 <= radius *radius;
 }
 
+bool test_segment_vs_circle(Vec2 a, Vec2 b, const Circle &c) {
+	r32 dist2 = point_to_segment_length2(c.center, a, b);
+	return dist2 <= c.radius * c.radius;
+}
+
 bool test_capsule_vs_capsule(const Capsule2d &capsule1, const Capsule2d &capsule2) {
 	r32 s, t;
 	Vec2 c1, c2;
 	r32 dist2 = closest_point_segment_segment(capsule1.a, capsule1.b, capsule2.a, capsule2.b, &s, &t, &c1, &c2);
 	r32 radius = capsule1.radius + capsule2.radius;
 	return dist2 <= radius * radius;
+}
+
+bool test_circle_vs_aabb(const Circle &c, const Aabb2d &b) {
+	r32 dist2 = point_to_aabb2d_length2(c.center, b);
+	return dist2 <= c.radius * c.radius;
 }
 
 bool segment_vs_segment(Vec2 a, Vec2 b, Vec2 c, Vec2 d, r32 *t, Vec2 *p) {
@@ -2112,15 +2145,21 @@ bool segment_vs_segment(Vec2 a, Vec2 b, Vec2 c, Vec2 d, r32 *t, Vec2 *p) {
 	return false;
 }
 
-//
-//
-//
-
-bool point_inside_rect(Vec2 point, Mm_Rect rect) {
-	if (point.x < rect.min.x || point.y < rect.min.y) return false;
-	if (point.x > rect.max.x || point.y > rect.max.y) return false;
-	return true;
+bool circle_vs_aabb(const Circle &c, Aabb2d &b, Vec2 *p) {
+	*p = closest_point_point_aabb2d(c.center, b);
+	Vec2 v = *p - c.center;
+	return vec2_dot(v, v) <= c.radius * c.radius;
 }
+
+bool circle_vs_triangle(const Circle &circle, Vec2 a, Vec2 b, Vec2 c, Vec2 *p) {
+	*p = closest_point_point_triangle(circle.center, a, b, c);
+	Vec2 v = *p - circle.center;
+	return vec2_dot(v, v) <= circle.radius * circle.radius;
+}
+
+//
+//
+//
 
 bool ray_vs_aabb(Vec2 origin, Vec2 direction, const Mm_Rect &rect, Ray_Hit *hit) {
 	Vec2 i_direction;
