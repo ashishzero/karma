@@ -2028,16 +2028,6 @@ bool test_point_inside_aabb(Vec2 point, const Aabb2d &aabb) {
 	return true;
 }
 
-bool test_point_inside_triangle(Vec2 a, Vec2 b, Vec2 c, Vec2 p) {
-	Vec3 bary = barycentric(a, b, c, p);
-	return bary.y >= 0.0f && bary.z >= 0.0f && (bary.y + bary.z) <= 1.0f;
-}
-
-bool test_point_inside_triangle(Vec3 a, Vec3 b, Vec3 c, Vec3 p) {
-	Vec3 bary = barycentric(a, b, c, p);
-	return bary.y >= 0.0f && bary.z >= 0.0f && (bary.y + bary.z) <= 1.0f;
-}
-
 bool test_point_inside_circle(Vec2 p, const Circle &c) {
 	Vec2 d = c.center - p;
 	r32 dist2 = vec2_dot(d, d);

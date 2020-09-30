@@ -836,8 +836,6 @@ Aabb2d update_aabb(const Aabb2d &a, r32 rot, Vec2 t);
 
 bool test_point_inside_rect(Vec2 point, const Mm_Rect &rect);
 bool test_point_inside_aabb(Vec2 point, const Aabb2d &aabb);
-bool test_point_inside_triangle(Vec2 a, Vec2 b, Vec2 c, Vec2 p);
-bool test_point_inside_triangle(Vec3 a, Vec3 b, Vec3 c, Vec3 p);
 bool test_point_inside_circle(Vec2 p, const Circle &c);
 bool test_point_inside_capsule(Vec2 p, const Capsule2d &c);
 bool test_point_inside_triangle(Vec2 p, Vec2 a, Vec2 b, Vec2 c);
