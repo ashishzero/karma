@@ -1639,6 +1639,10 @@ r32 signed_area(Vec3 a, Vec3 b, Vec3 c) {
 	return 0.5f * sqrtf(px + py + pz);
 }
 
+bool triangle_is_cw(Vec2 a, Vec2 b, Vec2 c) {
+	return orientation(b - a, c - a) > 0.0f;
+}
+
 r32 point_to_segment_length2(Vec2 p, Vec2 a, Vec2 b) {
 	Vec2 ab = b - a, ap = p - a, bp = p - b;
 	r32 e = vec2_dot(ap, ab);
@@ -2051,6 +2055,37 @@ bool test_point_inside_capsule(Vec2 p, const Capsule2d &c) {
 	return dst2 <= c.radius * c.radius;
 }
 
+bool test_point_inside_triangle(Vec2 p, Vec2 a, Vec2 b, Vec2 c) {
+	a -= p; b -= p; c -= p;
+
+	r32 u = orientation(b, c);
+	r32 v = orientation(c, a);	
+	if ((u * v) < 0.0f) return false;
+
+	r32 w = orientation(a, b);
+	if ((u * w) < 0.0f) return false;
+
+	return true;
+}
+
+bool test_point_inside_convex_polygon(Vec2 p, Vec2 *v, int n) {
+	// Do binary search over polygon vertices to find the fan triangle
+	// (v[0], v[low], v[high]) the point p lies within the near sides of
+	int low = 0, high = n;
+	do {
+		int mid = (low + high) / 2;
+		if (triangle_is_cw(v[0], v[mid], p))
+			low = mid;
+		else
+			high = mid;
+	} while (low + 1 < high);
+	// If point outside last (or first) edge, then it is not inside the n-gon
+	if (low == 0 || high == n) return 0;
+	// p is inside the polygon if it is left of
+	// the directed edge from v[low] to v[high]
+	return triangle_is_cw(v[low], v[high], p);
+}
+
 bool test_aabb_vs_aabb(const Aabb2d &a, const Aabb2d &b) {
 	if (fabsf(a.center.x - b.center.x) > (a.radius[0] + b.radius[0])) return false;
 	if (fabsf(a.center.y - b.center.y) > (a.radius[1] + b.radius[1])) return false;
@@ -2135,6 +2170,25 @@ bool test_ray_vs_circle(const Ray2d &ray, const Circle &circle) {
 
 	r32 disc = b * b - c;
 	if (disc < 0.0f) return false;
+	return true;
+}
+
+bool test_segment_vs_mm_rect(Vec2 p0, Vec2 p1, const Mm_Rect &rect) {
+	Vec2 c = (rect.min + rect.max) * 0.5f;
+	Vec2 e = rect.max - c;
+	Vec2 m = (p0 + p1) * 0.5f;
+	Vec2 d = p1 - m;
+
+	m = m - c;
+
+	r32 adx = fabsf(d.x); if (fabsf(m.x) > e.x + adx) return false;
+	r32 ady = fabsf(d.y); if (fabsf(m.y) > e.y + ady) return false;
+
+	// Add in an epsilon term to counteract arithmetic errors when segment is
+	// (near) parallel to a coordinate axis (see text for detail)
+	adx += EPSILON_FLOAT; ady += EPSILON_FLOAT;
+	if (fabsf(m.x * d.y - m.y * d.x) > e.x * ady + e.y * adx) return false;
+
 	return true;
 }
 

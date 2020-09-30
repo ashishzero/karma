@@ -805,6 +805,7 @@ inline T integrate_rk4(const T &x, r32 t, r32 h, Function f) {
 
 r32 signed_area(Vec2 a, Vec2 b, Vec2 c);
 r32 signed_area(Vec3 a, Vec3 b, Vec3 c);
+bool triangle_is_cw(Vec2 a, Vec2 b, Vec2 c);
 
 r32 point_to_segment_length2(Vec2 p, Vec2 a, Vec2 b);
 r32 point_to_mm_rect_length2(Vec2 p, const Mm_Rect &rect);
@@ -839,6 +840,9 @@ bool test_point_inside_triangle(Vec2 a, Vec2 b, Vec2 c, Vec2 p);
 bool test_point_inside_triangle(Vec3 a, Vec3 b, Vec3 c, Vec3 p);
 bool test_point_inside_circle(Vec2 p, const Circle &c);
 bool test_point_inside_capsule(Vec2 p, const Capsule2d &c);
+bool test_point_inside_triangle(Vec2 p, Vec2 a, Vec2 b, Vec2 c);
+bool test_point_inside_convex_polygon(Vec2 p, Vec2 *v, int n);
+
 bool test_mmrect_vs_mmrect(const Mm_Rect &a, const Mm_Rect &b);
 bool test_aabb_vs_aabb(const Aabb2d &a, const Aabb2d &b);
 bool test_circle_vs_circle(const Circle &a, const Circle &b);
@@ -847,6 +851,7 @@ bool test_circle_vs_capsule(const Circle& circle, const Capsule2d& capsule);
 bool test_segment_vs_circle(Vec2 a, Vec2 b, const Circle &c);
 bool test_circle_vs_aabb(const Circle &c, const Aabb2d &b);
 bool test_ray_vs_circle(const Ray2d &ray, const Circle &circle);
+bool test_segment_vs_mm_rect(Vec2 p0, Vec2 p1, const Mm_Rect &rect);
 
 bool segment_vs_segment(Vec2 a, Vec2 b, Vec2 c, Vec2 d, r32 *t, Vec2 *p);
 bool circle_vs_aabb(const Circle &c, Aabb2d &b, Vec2 *p);
@@ -859,6 +864,7 @@ bool intersect_ray_ray(Vec2 p1, Vec2 q1, const Ray2d &b, r32 *t, r32 *u, Vec2 *p
 bool intersect_ray_ray(const Ray2d &a, const Ray2d &b, r32 *t, r32 *u, Vec2 *p);
 bool intersect_segment_segment(Vec2 p1, Vec2 q1, Vec2 p2, Vec2 q2, r32 *t, r32 *u, Vec2 *p);
 bool intersect_circle_ray(const Circle &circle, const Ray2d &ray, r32 *t, Vec2 *p);
+bool intersect_mm_rect_ray(const Ray2d &ray, const Mm_Rect &rect, r32 *tmin, Vec2 *q);
 
 //
 //
