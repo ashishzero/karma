@@ -2286,6 +2286,37 @@ bool intersect_circle_ray(const Circle &circle, const Ray2d &ray, r32 *t, Vec2 *
 	return true;
 }
 
+bool intersect_mm_rect_ray(const Ray2d &ray, const Mm_Rect &rect, r32 *tmin, Vec2 *q) {
+	*tmin = 0.0f;
+	r32 tmax = FLT_MAX;
+
+	for (int i = 0; i < 2; i++) {
+		if (fabsf(ray.dir.m[i]) < EPSILON_FLOAT) {
+			// Ray is parallel to slab. No hit if origin not within slab
+			if (ray.origin.m[i] < rect.min.m[i] || ray.origin.m[i] > rect.max.m[i]) return false;
+		} else {
+			// Compute intersection t value of ray with near and far plane of slab
+			r32 ood = 1.0f / ray.dir.m[i];
+			r32 t1 = (rect.min.m[i] - ray.origin.m[i]) * ood;
+			r32 t2 = (rect.max.m[i] - ray.origin.m[i]) * ood;
+			// Make t1 be intersection with near plane, t2 with far plane
+			if (t1 > t2) {
+				auto temp = t1;
+				t1 = t2;
+				t2 = temp;
+			}
+			// Compute the intersection of slab intersection intervals
+			if (t1 > *tmin) *tmin = t1;
+			if (t2 > tmax) tmax = t2;
+			// Exit with no collision as soon as slab intersection becomes empty
+			if (*tmin > tmax) return false;
+		}
+	}
+
+	*q = ray.origin + ray.dir * *tmin;
+	return true;
+}
+
 //
 //
 //
