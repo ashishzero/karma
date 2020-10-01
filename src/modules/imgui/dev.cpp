@@ -309,7 +309,7 @@ void draw_profiler_timelines_rects(Record *record, int color_index, r32 inv_cycl
 
 		draw_list->AddText(text_draw_pos, 0xffffffff, (char *)record->name.data, (char *)record->name.data + char_draw_count);
 
-		if (point_inside_rect(cursor, mm_rect(min_rect, max_rect))) {
+		if (test_point_inside_rect(cursor, mm_rect(min_rect, max_rect))) {
 			*hovered_record = record;
 		}
 

@@ -1975,7 +1975,7 @@ r32 min_area_rect(Vec2 *pt, int num_pts, Vec2 *center, Vec2 u[2]) {
 	return min_area;
 }
 
-Mm_Rect transform_mmrect(const Mm_Rect &a, Mat2 &mat, Vec2 t) {
+Mm_Rect transform_mmrect(const Mm_Rect &a, const Mat2 &mat, Vec2 t) {
 	Mm_Rect b;
 	for (int i = 0; i < 2; i++) {
 		b.min.m[i] = b.max.m[i] = t.m[i];
@@ -1999,7 +1999,7 @@ Mm_Rect transform_mmrect(const Mm_Rect &a, r32 rot, Vec2 t) {
 	return transform_mmrect(a, mat2_rotation(rot), t);
 }
 
-Aabb2d update_aabb(const Aabb2d &a, Mat2 &mat, Vec2 t) {
+Aabb2d update_aabb(const Aabb2d &a, const Mat2 &mat, Vec2 t) {
 	Aabb2d b;
 	for (int i = 0; i < 2; i++) {
 		b.center.m[i] = t.m[i];
@@ -2358,6 +2358,31 @@ bool intersect_mm_rect_ray(const Ray2d &ray, const Mm_Rect &rect, r32 *tmin, Vec
 	}
 
 	*q = ray.origin + ray.dir * *tmin;
+	return true;
+}
+
+bool dynamic_circle_vs_circle(const Circle &c0, const Circle &c1, Vec2 v0, Vec2 v1, r32 *t) {
+	Vec2 s = c1.center - c0.center;
+	Vec2 v = v1 - v0; // Relative motion of c1 with respect to stationary c0
+	r32 r = c1.radius + c0.radius;
+	r32 c = vec2_dot(s, s) - r * r;
+
+	if (c < 0.0f) {
+		// Spheres initially overlapping so exit directly
+		*t = 0.0f;
+		return true;
+	}
+
+	r32 a = vec2_dot(v, v);
+	if (a < EPSILON_FLOAT) return false; // Spheres not moving relative each other
+
+	r32 b = vec2_dot(v, s);
+	if (b >= 0.0f) return false; // Spheres not moving towards each other
+
+	r32 d = b * b - a * c;
+	if (d < 0.0f) return false; // No real-valued root, spheres do not intersect
+
+	*t = (-b - sqrtf(d)) / a;
 	return true;
 }
 

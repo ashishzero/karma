@@ -1,24 +1,15 @@
 #pragma once
 #define _CRT_SECURE_NO_WARNINGS
 #include "karma.h"
-#include "stream.h"
-#include "length_string.cpp"
+#include "length_string.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <thread>
 
-int system_main();
+int crt_main();
 
 thread_local Thread_Context context;
 static String               __shared_impl_crt_main_cmd_line__;
-
-void *operator new(ptrsize size, Allocator allocator) {
-	return memory_allocate(size, allocator);
-}
-
-void *operator new(ptrsize size) {
-	return memory_allocate(size);
-}
 
 void *malloc_allocator(Allocation_Type type, ptrsize size, const void *ptr, void *user_ptr) {
 	if (type == Allocation_Type_NEW) {
@@ -45,14 +36,16 @@ int main(int argc, char *argv[]) {
 	context.allocator.data = 0;
 	context.temp_memory    = {};
 
-	void *ptr = malloc(TEMPORARY_MEMORY_SIZE);
+	ptrsize temp_memory_size = mega_bytes(128);
+
+	void *ptr = malloc(temp_memory_size);
 	if (ptr == 0) {
-		printf("Fatal error: Unable to allocate temporary memory of size: %zu bytes\n", TEMPORARY_MEMORY_SIZE);
+		printf("Fatal error: Unable to allocate temporary memory of size: %zu bytes\n", temp_memory_size);
 		printf("Exiting...\n");
 		return 0;
 	}
 
-	context.temp_memory = Temporary_Memory(ptr, static_cast<ptrsize>(TEMPORARY_MEMORY_SIZE));
+	context.temp_memory = Temporary_Memory(ptr, temp_memory_size);
 
 	Array<String> strings;
 	array_resize(&strings, argc);
@@ -66,7 +59,7 @@ int main(int argc, char *argv[]) {
 	__shared_impl_crt_main_cmd_line__.count -= 1; // Don't count null terminator
 	array_free(&strings);
 
-	int result = system_main();
+	int result = crt_main();
 
 	free(ptr);
 	context = {};
