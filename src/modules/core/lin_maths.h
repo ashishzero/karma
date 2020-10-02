@@ -803,9 +803,14 @@ inline T integrate_rk4(const T &x, r32 t, r32 h, Function f) {
 //
 //
 
+//
+// TODO: Testing all of these functions
+//
+
 r32 signed_area(Vec2 a, Vec2 b, Vec2 c);
 r32 signed_area(Vec3 a, Vec3 b, Vec3 c);
 bool triangle_is_cw(Vec2 a, Vec2 b, Vec2 c);
+Vec2 corner_point(const Mm_Rect &b, u32 n); // n=00,01,10,11 for 4 different corners
 
 r32 point_to_segment_length2(Vec2 p, Vec2 a, Vec2 b);
 r32 point_to_mm_rect_length2(Vec2 p, const Mm_Rect &rect);
@@ -863,10 +868,15 @@ bool intersect_ray_ray(const Ray2d &a, const Ray2d &b, r32 *t, r32 *u, Vec2 *p);
 bool intersect_segment_segment(Vec2 p1, Vec2 q1, Vec2 p2, Vec2 q2, r32 *t, r32 *u, Vec2 *p);
 bool intersect_circle_ray(const Circle &circle, const Ray2d &ray, r32 *t, Vec2 *p);
 bool intersect_mm_rect_ray(const Ray2d &ray, const Mm_Rect &rect, r32 *tmin, Vec2 *q);
+bool intersect_mm_rect_segment(Vec2 a, Vec2 b, const Mm_Rect &rect, r32 *tmin, Vec2 *q);
+bool intersect_capsule_segment(const Capsule2d &capsule, Vec2 a, Vec2 b, r32 *t);
+
+bool dynamic_circle_vs_mm_rect(const Circle &c, Vec2 d, const Mm_Rect &b, r32 *t);
 
 //
 //
 //
 
+// TODO: Remove these
 bool ray_vs_aabb(Vec2 origin, Vec2 direction, const Mm_Rect &rect, Ray_Hit *hit);
 bool ray_vs_line(Vec2 p1, Vec2 q1, Vec2 p2, Vec2 q2, Ray_Hit *t);

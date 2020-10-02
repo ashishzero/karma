@@ -467,6 +467,14 @@ struct Capsule2d {
 	r32 radius;
 };
 
+inline Capsule2d capsule2d(Vec2 a, Vec2 b, r32 r) {
+	Capsule2d c;
+	c.a = a;
+	c.b = b;
+	c.radius = r;
+	return c;
+}
+
 struct Lozenge {
 	Vec2 a;
 	Vec2 u[2];

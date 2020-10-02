@@ -1643,6 +1643,13 @@ bool triangle_is_cw(Vec2 a, Vec2 b, Vec2 c) {
 	return orientation(b - a, c - a) > 0.0f;
 }
 
+Vec2 corner_point(const Mm_Rect &b, u32 n) {
+	Vec2 p;
+	p.x = ((n & 1) ? b.max.x : b.min.x);
+	p.y = ((n & 2) ? b.max.y : b.min.y);
+	return p;
+}
+
 r32 point_to_segment_length2(Vec2 p, Vec2 a, Vec2 b) {
 	Vec2 ab = b - a, ap = p - a, bp = p - b;
 	r32 e = vec2_dot(ap, ab);
@@ -2358,6 +2365,139 @@ bool intersect_mm_rect_ray(const Ray2d &ray, const Mm_Rect &rect, r32 *tmin, Vec
 	}
 
 	*q = ray.origin + ray.dir * *tmin;
+	return true;
+}
+
+bool intersect_mm_rect_segment(Vec2 a, Vec2 b, const Mm_Rect &rect, r32 *tmin, Vec2 *q) {
+	Ray2d ray = ray2d(a, b - a);
+	
+	*tmin = 0.0f;
+	r32 tmax = 1.0f;
+
+	for (int i = 0; i < 2; i++) {
+		if (fabsf(ray.dir.m[i]) < EPSILON_FLOAT) {
+			// Ray is parallel to slab. No hit if origin not within slab
+			if (ray.origin.m[i] < rect.min.m[i] || ray.origin.m[i] > rect.max.m[i]) return false;
+		}
+		else {
+			// Compute intersection t value of ray with near and far plane of slab
+			r32 ood = 1.0f / ray.dir.m[i];
+			r32 t1 = (rect.min.m[i] - ray.origin.m[i]) * ood;
+			r32 t2 = (rect.max.m[i] - ray.origin.m[i]) * ood;
+			// Make t1 be intersection with near plane, t2 with far plane
+			if (t1 > t2) {
+				auto temp = t1;
+				t1 = t2;
+				t2 = temp;
+			}
+			// Compute the intersection of slab intersection intervals
+			if (t1 > * tmin) *tmin = t1;
+			if (t2 > tmax) tmax = t2;
+			// Exit with no collision as soon as slab intersection becomes empty
+			if (*tmin > tmax) return false;
+		}
+	}
+
+	*q = ray.origin + ray.dir * *tmin;
+	return true;
+}
+
+bool intersect_capsule_segment(const Capsule2d &capsule, Vec2 p, Vec2 q, r32 *t) {
+	Vec2 d = capsule.b - capsule.a, m = p - capsule.a, n = q - p;
+	r32 md = vec2_dot(m, d);
+	r32 nd = vec2_dot(n, d);
+	r32 dd = vec2_dot(d, d);
+	
+	// Test if segment fully outside either endcap of cylinder
+	if (md < 0.0f && md + nd < 0.0f) return false; // Segment outside 'p' side of cylinder
+	if (md > dd && md + nd > dd) return false; // Segment outside 'q' side of cylinder
+
+	r32 nn = vec2_dot(n, n);
+	r32 mn = vec2_dot(m, n);
+	r32 a = dd * nn - nd * nd;
+	r32 k = vec2_dot(m, m) - capsule.radius * capsule.radius;
+	r32 c = dd * k - md * md;
+
+	if (fabsf(a) < EPSILON_FLOAT) {
+		// Segment runs parallel to cylinder axis
+		if (c > 0.0f) return false;
+
+		// Now known that segment intersects cylinder; figure out how it intersects
+		if (md < 0.0f) *t = -mn / nn; // Intersect segment against 'p' endcap
+		else if (md > dd) *t = (nd - mn) / nn; // Intersect segment against 'q' endcap
+		else *t = 0.0f; // 'a' lies inside cylinder
+		return true;
+	}
+
+	float b = dd * mn - nd * md;
+	float discr = b * b - a * c;
+	if (discr < 0.0f) return false;
+
+	*t = (-b - sqrtf(discr)) / a;
+	if (*t < 0.0f || *t > 1.0f) return false; // Intersection lies outside segment
+
+	if (md + *t * nd < 0.0f) {
+		// Intersection outside cylinder on 'p' side
+		if (nd <= 0.0f) return false; // Segment pointing away from endcap
+		*t = -md / nd;
+		// Keep intersection if Dot(S(t) - p, S(t) - p) <= r∧2
+		return k + 2 * *t * (mn + *t * nn) <= 0.0f;
+	} else if (md + *t * nd > dd) {
+		// Intersection outside cylinder on 'q' side
+		if (nd >= 0.0f) return false; // Segment pointing away from endcap
+		*t = (dd - md) / nd;
+		// Keep intersection if Dot(S(t) - q, S(t) - q) <= r∧2
+		return k + dd - 2 * md + *t * (2 * (mn - nd) + *t * nn) <= 0.0f;
+	}
+
+	// Segment intersects cylinder between the endcaps; t is correct
+	return true;
+}
+
+bool dynamic_circle_vs_mm_rect(const Circle &c, Vec2 d, const Mm_Rect &b, r32 *t) {
+	// Compute the AABB resulting from expanding b by circle radius r
+	Mm_Rect e = b;
+	e.min.x -= c.radius; e.min.y -= c.radius;
+	e.max.x += c.radius; e.max.y += c.radius;
+
+	// Define line segment [p0, p1] specified by the circle movement
+	Vec2 p0 = c.center;
+	Vec2 p1 = c.center + d;
+
+	// Intersect ray against expanded AABB e. Exit with no intersection if ray
+	// misses e, else get intersection point p and time t as result
+	Vec2 p;
+	if (!intersect_mm_rect_segment(p0, p1, e, t, &p)) {
+		return false;
+	}
+
+	// Compute which min and max faces of b the intersection point p lies
+	// outside of. Note, u and v cannot have the same bits set and
+	// they must have at least one bit set among them
+	u32 u = 0, v = 0;
+	if (p.x < b.min.x) u |= 1;
+	if (p.x > b.max.x) v |= 1;
+	if (p.y < b.min.y) u |= 2;
+	if (p.y > b.max.y) v |= 2;
+
+	// ‘Or’ all set bits together into a bit mask (note: here u + v == u | v)
+	int m = u + v;
+
+	// If both 2 bits set (m == 3) then p is in a vertex region
+	if (m == 3) {
+		// Must now intersect segment [p0, p1] against the capsules of the two
+		// edges meeting at the vertex and return the best time, if one or more hit
+		float tmin = MAX_FLOAT;
+		if (intersect_capsule_segment(Capsule2d{ corner_point(b, v), corner_point(b, v ^ 1), c.radius }, p0, p1, t))
+			tmin = minimum(*t, tmin);
+		if (intersect_capsule_segment(Capsule2d{ corner_point(b, v), corner_point(b, v ^ 2), c.radius }, p0, p1, t))
+			tmin = minimum(*t, tmin);
+
+		if (tmin == MAX_FLOAT) return false; // No intersection
+		// Intersection at time t == tmin
+		*t = tmin;
+	}
+
 	return true;
 }
 
