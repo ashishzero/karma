@@ -1,7 +1,9 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include "modules/core/stream.cpp"
-#include "modules/core/karma_crt_impl.hpp"
+#include "modules/core/length_string.cpp"
 #include "modules/core/tokenizer.cpp"
+#include "modules/core/karma_newdelete.cpp"
+#include "modules/core/karma_crt_impl.hpp"
 
 #include <clang-c/Index.h>
 
@@ -990,7 +992,7 @@ bool parse_command_line(String command_line, Array<char *> *options, Array<char 
 	return success;
 }
 
-int system_main() {
+int crt_main() {
 	Array<char *> options, files;
 	char *        out_file = 0;
 	if (!parse_command_line(get_command_line(), &options, &files, &out_file)) {

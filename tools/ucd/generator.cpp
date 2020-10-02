@@ -1,5 +1,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include "modules/core/stream.cpp"
+#include "modules/core/karma_newdelete.cpp"
+#include "modules/core/length_string.cpp"
 #include "modules/core/karma_crt_impl.hpp"
 #include <ctype.h>
 
@@ -315,7 +317,7 @@ void ucd_generate_unicode_data(const char *file_name) {
 	}
 }
 
-int system_main() {
+int crt_main() {
 	header = fopen("src/unicode.h", "wb");
 	source = fopen("src/unicode.cpp", "wb");
 

@@ -834,9 +834,9 @@ void most_seperated_points_on_aabb(Vec2 *pt, s32 n, s32 *min, s32 *max);
 Circle circle_from_distant_points(Vec2 *pt, s32 n);
 r32 min_area_rect(Vec2 *pt, int num_pts, Vec2 *center, Vec2 u[2]);
 
-Mm_Rect transform_mmrect(const Mm_Rect &a, Mat2 &mat, Vec2 t);
+Mm_Rect transform_mmrect(const Mm_Rect &a, const Mat2 &mat, Vec2 t);
 Mm_Rect transform_mmrect(const Mm_Rect &a, r32 rot, Vec2 t);
-Aabb2d update_aabb(const Aabb2d &a, Mat2 &mat, Vec2 t);
+Aabb2d update_aabb(const Aabb2d &a, const Mat2 &mat, Vec2 t);
 Aabb2d update_aabb(const Aabb2d &a, r32 rot, Vec2 t);
 
 bool test_point_inside_rect(Vec2 point, const Mm_Rect &rect);
@@ -872,6 +872,8 @@ bool intersect_mm_rect_segment(Vec2 a, Vec2 b, const Mm_Rect &rect, r32 *tmin, V
 bool intersect_capsule_segment(const Capsule2d &capsule, Vec2 a, Vec2 b, r32 *t);
 
 bool dynamic_circle_vs_mm_rect(const Circle &c, Vec2 d, const Mm_Rect &b, r32 *t);
+
+bool dynamic_circle_vs_circle(const Circle &c0, const Circle &c1, Vec2 v0, Vec2 v1, r32 *t);
 
 //
 //

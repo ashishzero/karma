@@ -360,7 +360,7 @@ int karma_user_zero() {
 			player_quad.positions[2] = player->position + 0.5f * vec2( player->size.x,  player->size.y);
 			player_quad.positions[3] = player->position + 0.5f * vec2( player->size.x, -player->size.y);
 
-			if (quad_vs_quad(player_quad, quad_mesh.quad)) {
+			if (test_quad_vs_quad(player_quad, quad_mesh.quad)) {
 				player->color = vec4(1, 0, 0);
 			} else {
 				player->color = vec4(1, 1, 1);
@@ -417,7 +417,7 @@ int karma_user_zero() {
 					Mm_Rect rect;
 					rect.min = e->position - e->size * 0.5f;
 					rect.max = e->position + e->size * 0.5f;
-					if (point_inside_rect(cursor, rect)) {
+					if (test_point_inside_rect(cursor, rect)) {
 						selected_entity = e;
 						break;
 					}
@@ -439,7 +439,7 @@ int karma_user_zero() {
 					auto e = entity_down(manager, entity, Player);
 					rect.min = e->position - e->size * 0.5f;
 					rect.max = e->position + e->size * 0.5f;
-					if (point_inside_rect(cursor, rect)) {
+					if (test_point_inside_rect(cursor, rect)) {
 						hovered_entity = e;
 						break;
 					}
