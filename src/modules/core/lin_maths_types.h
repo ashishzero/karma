@@ -395,28 +395,10 @@ struct Rect {
 	r32 w, h;
 };
 
-inline Rect rect(r32 _x, r32 _y, r32 _w, r32 _h) {
-	Rect r;
-	r.x = _x;
-	r.y = _y;
-	r.w = _w;
-	r.h = _h;
-	return r;
-}
-
 struct Rects {
 	s32 x, y;
 	s32 w, h;
 };
-
-inline Rects rects(s32 _x, s32 _y, s32 _w, s32 _h) {
-	Rects r;
-	r.x = _x;
-	r.y = _y;
-	r.w = _w;
-	r.h = _h;
-	return r;
-}
 
 struct Aabb2d {
 	Vec2 center;
@@ -435,13 +417,6 @@ struct Circle {
 	Vec2 center;
 	r32 radius;
 };
-
-inline Circle circle(Vec2 center, r32 radius) {
-	Circle c;
-	c.center = center;
-	c.radius = radius;
-	return c;
-}
 
 struct Quad {
 	Vec2 positions[4];
@@ -467,14 +442,6 @@ struct Capsule2d {
 	r32 radius;
 };
 
-inline Capsule2d capsule2d(Vec2 a, Vec2 b, r32 r) {
-	Capsule2d c;
-	c.a = a;
-	c.b = b;
-	c.radius = r;
-	return c;
-}
-
 struct Lozenge {
 	Vec2 a;
 	Vec2 u[2];
@@ -485,13 +452,6 @@ struct Ray2d {
 	Vec2 origin;
 	Vec2 dir;
 };
-
-inline Ray2d ray2d(Vec2 origin, Vec2 dir) {
-	Ray2d ray;
-	ray.origin = origin;
-	ray.dir = dir;
-	return ray;
-}
 
 struct Ray_Hit {
 	Vec2 point;

@@ -2328,13 +2328,18 @@ bool intersect_circle_ray(const Circle &circle, const Ray2d &ray, r32 *t, Vec2 *
 	r32 discr = b * b - c;
 	if (discr < 0.0f) return false;
 
-	// Ray found to intersect sphere, compute smallest t value of intersection
+	// Ray found to intersect circle, compute smallest t value of intersection
 	*t = -b - sqrtf(discr);
 
 	// If t is negative, ray started inside sphere so clamp t to zero
 	if (*t < 0.0f) *t = 0.0f;
 	*p = ray.origin + *t * ray.dir;
 	return true;
+}
+
+bool intersect_circle_segment(const Circle &circle, Vec2 p, Vec2 q, r32 *t) {
+	unimplemented();
+	return false;
 }
 
 bool intersect_mm_rect_ray(const Ray2d &ray, const Mm_Rect &rect, r32 *tmin, Vec2 *q) {
@@ -2369,7 +2374,7 @@ bool intersect_mm_rect_ray(const Ray2d &ray, const Mm_Rect &rect, r32 *tmin, Vec
 }
 
 bool intersect_mm_rect_segment(Vec2 a, Vec2 b, const Mm_Rect &rect, r32 *tmin, Vec2 *q) {
-	Ray2d ray = ray2d(a, b - a);
+	Ray2d ray = { a, b - a };
 	
 	*tmin = 0.0f;
 	r32 tmax = 1.0f;
@@ -2402,55 +2407,28 @@ bool intersect_mm_rect_segment(Vec2 a, Vec2 b, const Mm_Rect &rect, r32 *tmin, V
 	return true;
 }
 
-bool intersect_capsule_segment(const Capsule2d &capsule, Vec2 p, Vec2 q, r32 *t) {
-	Vec2 d = capsule.b - capsule.a, m = p - capsule.a, n = q - p;
-	r32 md = vec2_dot(m, d);
-	r32 nd = vec2_dot(n, d);
-	r32 dd = vec2_dot(d, d);
-	
-	// Test if segment fully outside either endcap of cylinder
-	if (md < 0.0f && md + nd < 0.0f) return false; // Segment outside 'p' side of cylinder
-	if (md > dd && md + nd > dd) return false; // Segment outside 'q' side of cylinder
+bool dynamic_circle_vs_circle(const Circle &c0, const Circle &c1, Vec2 v0, Vec2 v1, r32 *t) {
+	Vec2 s = c1.center - c0.center;
+	Vec2 v = v1 - v0; // Relative motion of c1 with respect to stationary c0
+	r32 r = c1.radius + c0.radius;
+	r32 c = vec2_dot(s, s) - r * r;
 
-	r32 nn = vec2_dot(n, n);
-	r32 mn = vec2_dot(m, n);
-	r32 a = dd * nn - nd * nd;
-	r32 k = vec2_dot(m, m) - capsule.radius * capsule.radius;
-	r32 c = dd * k - md * md;
-
-	if (fabsf(a) < EPSILON_FLOAT) {
-		// Segment runs parallel to cylinder axis
-		if (c > 0.0f) return false;
-
-		// Now known that segment intersects cylinder; figure out how it intersects
-		if (md < 0.0f) *t = -mn / nn; // Intersect segment against 'p' endcap
-		else if (md > dd) *t = (nd - mn) / nn; // Intersect segment against 'q' endcap
-		else *t = 0.0f; // 'a' lies inside cylinder
+	if (c < 0.0f) {
+		// Spheres initially overlapping so exit directly
+		*t = 0.0f;
 		return true;
 	}
 
-	float b = dd * mn - nd * md;
-	float discr = b * b - a * c;
-	if (discr < 0.0f) return false;
+	r32 a = vec2_dot(v, v);
+	if (a < EPSILON_FLOAT) return false; // Spheres not moving relative each other
 
-	*t = (-b - sqrtf(discr)) / a;
-	if (*t < 0.0f || *t > 1.0f) return false; // Intersection lies outside segment
+	r32 b = vec2_dot(v, s);
+	if (b >= 0.0f) return false; // Spheres not moving towards each other
 
-	if (md + *t * nd < 0.0f) {
-		// Intersection outside cylinder on 'p' side
-		if (nd <= 0.0f) return false; // Segment pointing away from endcap
-		*t = -md / nd;
-		// Keep intersection if Dot(S(t) - p, S(t) - p) <= r∧2
-		return k + 2 * *t * (mn + *t * nn) <= 0.0f;
-	} else if (md + *t * nd > dd) {
-		// Intersection outside cylinder on 'q' side
-		if (nd >= 0.0f) return false; // Segment pointing away from endcap
-		*t = (dd - md) / nd;
-		// Keep intersection if Dot(S(t) - q, S(t) - q) <= r∧2
-		return k + dd - 2 * md + *t * (2 * (mn - nd) + *t * nn) <= 0.0f;
-	}
+	r32 d = b * b - a * c;
+	if (d < 0.0f) return false; // No real-valued root, spheres do not intersect
 
-	// Segment intersects cylinder between the endcaps; t is correct
+	*t = (-b - sqrtf(d)) / a;
 	return true;
 }
 
@@ -2485,44 +2463,11 @@ bool dynamic_circle_vs_mm_rect(const Circle &c, Vec2 d, const Mm_Rect &b, r32 *t
 
 	// If both 2 bits set (m == 3) then p is in a vertex region
 	if (m == 3) {
-		// Must now intersect segment [p0, p1] against the capsules of the two
-		// edges meeting at the vertex and return the best time, if one or more hit
-		float tmin = MAX_FLOAT;
-		if (intersect_capsule_segment(Capsule2d{ corner_point(b, v), corner_point(b, v ^ 1), c.radius }, p0, p1, t))
-			tmin = minimum(*t, tmin);
-		if (intersect_capsule_segment(Capsule2d{ corner_point(b, v), corner_point(b, v ^ 2), c.radius }, p0, p1, t))
-			tmin = minimum(*t, tmin);
-
-		if (tmin == MAX_FLOAT) return false; // No intersection
-		// Intersection at time t == tmin
-		*t = tmin;
+		// Now check [p0, p1] against the circle in the vertex
+		Vec2 vertex = corner_point(b, v);
+		if (!intersect_circle_segment(Circle{ v, c.radius }, p0, p1, t)) return false;
 	}
 
-	return true;
-}
-
-bool dynamic_circle_vs_circle(const Circle &c0, const Circle &c1, Vec2 v0, Vec2 v1, r32 *t) {
-	Vec2 s = c1.center - c0.center;
-	Vec2 v = v1 - v0; // Relative motion of c1 with respect to stationary c0
-	r32 r = c1.radius + c0.radius;
-	r32 c = vec2_dot(s, s) - r * r;
-
-	if (c < 0.0f) {
-		// Spheres initially overlapping so exit directly
-		*t = 0.0f;
-		return true;
-	}
-
-	r32 a = vec2_dot(v, v);
-	if (a < EPSILON_FLOAT) return false; // Spheres not moving relative each other
-
-	r32 b = vec2_dot(v, s);
-	if (b >= 0.0f) return false; // Spheres not moving towards each other
-
-	r32 d = b * b - a * c;
-	if (d < 0.0f) return false; // No real-valued root, spheres do not intersect
-
-	*t = (-b - sqrtf(d)) / a;
 	return true;
 }
 

@@ -866,14 +866,13 @@ bool intersect_ray_ray(Vec2 p1, Vec2 q1, Vec2 p2, Vec2 q2, r32 *t, r32 *u, Vec2 
 bool intersect_ray_ray(Vec2 p1, Vec2 q1, const Ray2d &b, r32 *t, r32 *u, Vec2 *p);
 bool intersect_ray_ray(const Ray2d &a, const Ray2d &b, r32 *t, r32 *u, Vec2 *p);
 bool intersect_segment_segment(Vec2 p1, Vec2 q1, Vec2 p2, Vec2 q2, r32 *t, r32 *u, Vec2 *p);
-bool intersect_circle_ray(const Circle &circle, const Ray2d &ray, r32 *t, Vec2 *p);
+bool intersect_circle_ray(const Circle &circle, const Ray2d &ray, r32 *t, Vec2 *p); // |ray.dir|=1
+bool intersect_circle_segment(const Circle &circle, Vec2 p, Vec2 q, r32 *t);
 bool intersect_mm_rect_ray(const Ray2d &ray, const Mm_Rect &rect, r32 *tmin, Vec2 *q);
 bool intersect_mm_rect_segment(Vec2 a, Vec2 b, const Mm_Rect &rect, r32 *tmin, Vec2 *q);
-bool intersect_capsule_segment(const Capsule2d &capsule, Vec2 a, Vec2 b, r32 *t);
-
-bool dynamic_circle_vs_mm_rect(const Circle &c, Vec2 d, const Mm_Rect &b, r32 *t);
 
 bool dynamic_circle_vs_circle(const Circle &c0, const Circle &c1, Vec2 v0, Vec2 v1, r32 *t);
+bool dynamic_circle_vs_mm_rect(const Circle &c, Vec2 d, const Mm_Rect &b, r32 *t);
 
 //
 //
