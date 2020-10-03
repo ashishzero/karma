@@ -873,6 +873,7 @@ bool intersect_mm_rect_segment(Vec2 a, Vec2 b, const Mm_Rect &rect, r32 *tmin, V
 
 bool dynamic_circle_vs_circle(const Circle &c0, const Circle &c1, Vec2 v0, Vec2 v1, r32 *t);
 bool dynamic_circle_vs_mm_rect(const Circle &c, Vec2 d, const Mm_Rect &b, r32 *t);
+bool dynamic_mm_rect_vs_mm_rect(const Mm_Rect &a, const Mm_Rect &b, Vec2 va, Vec2 vb, r32 *tfirst, r32 *tlast);
 
 //
 //

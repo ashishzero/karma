@@ -2488,6 +2488,45 @@ bool dynamic_circle_vs_mm_rect(const Circle &c, Vec2 d, const Mm_Rect &b, r32 *t
 	return true;
 }
 
+bool dynamic_mm_rect_vs_mm_rect(const Mm_Rect &a, const Mm_Rect &b, Vec2 va, Vec2 vb, r32 *tfirst, r32 *tlast) {
+	// Exit early if 'a' and 'b' initially overlapping
+	if (test_mmrect_vs_mmrect(a, b)) {
+		*tfirst = *tlast = 0.0f;
+		return true;
+	}
+
+	// Use relative velocity; effectively treating 'a' as stationary
+	Vec2 v = vb - va;
+
+	// Initialize times of first and last contact
+	*tfirst = 0.0f;
+	*tlast  = 1.0f;
+
+	// For each axis, determine times of first and last contact, if any
+	for (int i = 0; i < 2; i++) {
+		if (v.m[i] < 0.0f) {
+			if (b.max.m[i] < a.min.m[i]) return false; // Nonintersecting and moving apart
+			if (a.max.m[i] < b.min.m[i]) 
+				*tfirst = maximum((a.max.m[i] - b.min.m[i]) / v.m[i], *tfirst);
+			if (b.max.m[i] > a.min.m[i]) 
+				*tlast = minimum((a.min.m[i] - b.max.m[i]) / v.m[i], *tlast);
+		}
+
+		if (v.m[i] > 0.0f) {
+			if (b.min.m[i] > a.max.m[i]) return false; // Nonintersecting and moving apart
+			if (b.max.m[i] < a.min.m[i]) 
+				*tfirst = maximum((a.min.m[i] - b.max.m[i]) / v.m[i], *tfirst);
+			if (a.max.m[i] > b.min.m[i]) 
+				*tlast = minimum((a.max.m[i] - b.min.m[i]) / v.m[i], *tlast);
+		}
+
+		// No overlap possible if time of first contact occurs after time of last contact
+		if (*tfirst > *tlast) return false;
+	}
+
+	return true;
+}
+
 //
 //
 //
