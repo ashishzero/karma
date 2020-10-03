@@ -2338,8 +2338,25 @@ bool intersect_circle_ray(const Circle &circle, const Ray2d &ray, r32 *t, Vec2 *
 }
 
 bool intersect_circle_segment(const Circle &circle, Vec2 p, Vec2 q, r32 *t) {
-	unimplemented();
-	return false;
+	Vec2 m = p - circle.center;
+	Vec2 d = q - p;
+
+	r32 b = vec2_dot(m, d);
+	r32 c = vec2_dot(m, m) - circle.radius * circle.radius;
+
+	// Exit if ray’s origin outside circle (c > 0) and ray pointing away from circle (b > 0)
+	if (c > 0.0f && b > 0.0f) return false;
+
+	r32 a = vec2_dot(d, d);
+
+	r32 discr = b * b - a * c;
+	if (discr < 0.0f) return false;
+
+	// Ray found to intersect circle, compute smallest t value of intersection
+	*t = (-b - sqrtf(discr)) / a;
+	if (*t <0.0f || *t > 1.0f) return false;
+
+	return true;
 }
 
 bool intersect_mm_rect_ray(const Ray2d &ray, const Mm_Rect &rect, r32 *tmin, Vec2 *q) {
