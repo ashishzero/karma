@@ -831,6 +831,10 @@ Vec3 barycentric(Vec3 a, Vec3 b, Vec3 c, Vec3 p);
 bool is_quad_convex(Vec2 a, Vec2 b, Vec2 c, Vec2 d);
 bool is_quad_convex(Vec3 a, Vec3 b, Vec3 c, Vec3 d);
 
+Mm_Rect enclosing_mm_rect_mm_rect(const Mm_Rect &a0, const Mm_Rect &a1);
+Circle enclosing_circle_circle(const Circle &c0, const Circle &c1);
+Mm_Rect enclosing_mm_rect_circle(const Mm_Rect &r, const Circle &c);
+
 s32 point_farthest_from_edge(Vec2 a, Vec2 b, Vec2 *p, s32 n);
 void extreme_points_alone_direction(Vec2 dir, Vec2 *pt, s32 n, s32 *min_index, s32 *max_index);
 void most_seperated_points_on_aabb(Vec2 *pt, s32 n, s32 *min, s32 *max);

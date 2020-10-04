@@ -1880,6 +1880,49 @@ bool is_quad_convex(Vec3 a, Vec3 b, Vec3 c, Vec3 d) {
 	return vec3_dot(acd, acb) < 0.0f;
 }
 
+Mm_Rect enclosing_mm_rect_mm_rect(const Mm_Rect &a0, const Mm_Rect &a1) {
+	Mm_Rect a;
+	for (int i = 0; i < 2; i++) {
+		a.min.m[i] = minimum(a0.min.m[i], a1.min.m[i]);
+		a.max.m[i] = maximum(a0.max.m[i], a1.max.m[i]);
+	}
+	return a;
+}
+
+Circle enclosing_circle_circle(const Circle &c0, const Circle &c1) {
+	Circle c;
+	// Compute the squared distance between the circle centers
+	Vec2 d = c1.center - c0.center;
+	r32 dist2 = vec2_dot(d, d);
+	r32 dr2 = c1.radius - c0.radius;
+	dr2 *= dr2;
+	if (dr2 >= dist2) {
+		// The circle with the larger radius encloses the other
+		// just set c to be the larger of the two spheres
+		if (c1.radius >= c0.radius)
+			c = c1;
+		else
+			c = c0;
+	} else {
+		// Spheres partially overlapping or disjoint
+		r32 dist = sqrt(dist2);
+		c.radius = (dist + c0.radius + c1.radius) * 0.5f;
+		c.center = c0.center;
+		if (dist > EPSILON_FLOAT)
+			c.center += ((c.radius - c0.radius) / dist) * d;
+	}
+	return c;
+}
+
+Mm_Rect enclosing_mm_rect_circle(const Mm_Rect &r, const Circle &c) {
+	Mm_Rect b;
+	b.min.x = c.center.x - c.radius;
+	b.min.y = c.center.y - c.radius;
+	b.max.x = c.center.x + c.radius;
+	b.max.y = c.center.y + c.radius;
+	return enclosing_mm_rect_mm_rect(r, b);
+}
+
 s32 point_farthest_from_edge(Vec2 a, Vec2 b, Vec2 *p, s32 n) {
 	Vec2 e = b - a;
 	Vec2 eperp = vec2(-e.y, e.x);
