@@ -2,6 +2,17 @@
 
 #define SOCKET_BUFFER_SIZE kilo_bytes(1)
 
+int system_main();
+
+Builder system_builder() {
+	Builder builder;
+	builder.allocator = system_create_heap_allocator();
+	builder.entry = system_main;
+	builder.temporary_buffer_size = mega_bytes(128);
+	builder.flags = Builder_NETWORK;
+	return builder;
+}
+
 int system_main() {	
 	system_net_startup();
 

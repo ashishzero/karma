@@ -30,5 +30,6 @@ Builder system_builder() {
 	builder.allocator = system_create_heap_allocator();
 	builder.entry = main;
 	builder.temporary_buffer_size = mega_bytes(128);
+	builder.flags = Builder_ALL;
 	return builder;
 }

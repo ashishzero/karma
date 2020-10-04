@@ -1905,7 +1905,7 @@ Circle enclosing_circle_circle(const Circle &c0, const Circle &c1) {
 			c = c0;
 	} else {
 		// Spheres partially overlapping or disjoint
-		r32 dist = sqrt(dist2);
+		r32 dist = sqrtf(dist2);
 		c.radius = (dist + c0.radius + c1.radius) * 0.5f;
 		c.center = c0.center;
 		if (dist > EPSILON_FLOAT)

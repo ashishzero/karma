@@ -486,8 +486,8 @@ inline Socket_Address socket_address_local(u16 port) {
 	return socket_address(127, 0, 0, 1, port);
 }
 
-bool system_net_startup();
-void system_net_cleanup();
+bool system_net_startup(); // TODO: Remove these, call these function based on Builder::flags automatically
+void system_net_cleanup(); // TODO: Remove these, call these function based on Builder::flags automatically
 bool system_net_set_socket_nonblocking(Socket sock);
 Socket system_net_open_udp_server(Socket_Address address);
 Socket system_net_open_udp_client();
@@ -525,11 +525,21 @@ enum Heap_Type {
 	Heap_Type_SERIALIZE,
 };
 
+typedef u32 Builder_Flags;
+enum Builder_Flag_Bit : Builder_Flags {
+	Builder_NONE	= 0,
+	Builder_VIDEO	= bit(0),
+	Builder_AUDIO	= bit(1),
+	Builder_NETWORK	= bit(1),
+	Builder_ALL		= Builder_VIDEO | Builder_AUDIO | Builder_NETWORK
+};
+
 struct Builder {
 	Allocator allocator;
 	Thread_Proc entry;
 	ptrsize temporary_buffer_size;
 	void *data;
+	Builder_Flags flags; // TODO: Use this in system_windows.cpp
 };
 
 Allocator system_create_heap_allocator(Heap_Type type = Heap_Type_NO_SERIALIZE, ptrsize initial_size = 0, ptrsize maximum_size = 0);
