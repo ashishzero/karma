@@ -673,7 +673,10 @@ inline Quad quad_from_points(Vec2 a, Vec2 b, Vec2 c, Vec2 d) {
 }
 
 inline Ray2d ray_from_points(Vec2 a, Vec2 b) {
-	return ray2d(a, vec2_normalize(b - a));
+	Ray2d ray;
+	ray.origin	= a;
+	ray.dir		= vec2_normalize(b - a);
+	return ray;
 }
 
 //
