@@ -413,7 +413,7 @@ int karma_user_zero() {
 		if (new_button_state == Key_State_DOWN && last_button_state == Key_State_UP) {
 			for (auto &entity : manager.entities) {
 				if (entity.kind == Entity_Player) {
-					auto e = entity_down(manager, entity, Player);
+					auto e = manager_find<Player>(manager.by_type.players, entity);
 					Mm_Rect rect;
 					rect.min = e->position - e->size * 0.5f;
 					rect.max = e->position + e->size * 0.5f;
@@ -422,7 +422,7 @@ int karma_user_zero() {
 						break;
 					}
 				} else if (entity.kind == Entity_Line) {
-					auto e = entity_down(manager, entity, Line);
+					auto e = manager_find<Line>(manager.by_type.lines, entity);
 					r32 dx = e->end.x - e->start.x;
 					r32 dy = e->end.y - e->start.y;
 					r32 v = dx * (cursor.y - e->start.y) - dy * (cursor.x - e->start.x);
@@ -436,7 +436,7 @@ int karma_user_zero() {
 			for (auto &entity : manager.entities) {
 				if (entity.kind == Entity_Player) {
 					Mm_Rect rect;
-					auto e = entity_down(manager, entity, Player);
+					auto e = manager_find<Player>(manager.by_type.players, entity);
 					rect.min = e->position - e->size * 0.5f;
 					rect.max = e->position + e->size * 0.5f;
 					if (test_point_inside_rect(cursor, rect)) {
@@ -444,7 +444,7 @@ int karma_user_zero() {
 						break;
 					}
 				} else if (entity.kind == Entity_Line) {
-					auto e = entity_down(manager, entity, Line);
+					auto e = manager_find<Line>(manager.by_type.lines, entity);
 					r32 dx = e->end.x - e->start.x;
 					r32 dy = e->end.y - e->start.y;
 					r32 v = dx * (cursor.y - e->start.y) - dy * (cursor.x - e->start.x);

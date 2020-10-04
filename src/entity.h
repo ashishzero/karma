@@ -55,37 +55,8 @@ struct Entity_Manager {
 
 	Array<Entity_Handle>	entities;
 	Entity_By_Type			by_type;
+	u32						_counter = 0;
 };
-
-template <u32>
-inline Entity *entity_down_type(Entity_Manager &manager, Entity_Handle reference) {
-	return nullptr;
-}
-#define entity_down(manager, reference, entity) (entity *)entity_down_type<Entity_##entity>(manager, reference)
-
-template <>
-inline Entity *entity_down_type<Entity_Player>(Entity_Manager &manager, Entity_Handle reference) {
-	return manager.by_type.players.data + reference.index;
-}
-
-template <>
-inline Entity *entity_down_type<Entity_Line>(Entity_Manager &manager, Entity_Handle reference) {
-	return manager.by_type.lines.data + reference.index;
-}
-
-inline Entity *entity_get(Entity_Manager &manager, Entity_Handle reference) {
-	switch (reference.kind) {
-	case Entity_Player: return entity_down_type<Entity_Player>(manager, reference);
-	case Entity_Line: return entity_down_type<Entity_Line>(manager, reference);
-	}
-	return nullptr;
-}
-
-
-////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////
-
 
 Entity_Manager manager_create();
 
@@ -103,4 +74,15 @@ T *manager_find(Array_View<T> a, Entity_Handle handle) {
 		}
 	}
 	return result;
+}
+
+inline Entity *manager_find(Entity_Manager &manager, Entity_Handle handle) {
+	switch (handle.kind) {
+		case Entity_Player: return manager_find<Player>(manager.by_type.players, handle);
+		case Entity_Line:	return manager_find<Line>(manager.by_type.lines, handle);
+
+		invalid_default_case();
+	}
+
+	return nullptr;
 }
