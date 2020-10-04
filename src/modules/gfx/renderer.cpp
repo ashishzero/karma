@@ -564,7 +564,7 @@ void gfx_apply_blur(Texture_View src, Framebuffer ping_pongs[2], Texture_View ds
 }
 
 void gfx_apply_bloom(int amount) {
-	auto viewport = rect(0, 0, (r32)bloom_texture_w, (r32)bloom_texture_h);
+	auto viewport = Rect{ 0, 0, (r32)bloom_texture_w, (r32)bloom_texture_h };
 	gfx_apply_blur(hdr_data.hdr_color_view[1], hdr_data.bloom_framebuffer, hdr_data.bloom_color_view, viewport, 4);
 }
 

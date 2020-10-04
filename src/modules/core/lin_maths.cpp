@@ -2482,7 +2482,7 @@ bool dynamic_circle_vs_mm_rect(const Circle &c, Vec2 d, const Mm_Rect &b, r32 *t
 	if (m == 3) {
 		// Now check [p0, p1] against the circle in the vertex
 		Vec2 vertex = corner_point(b, v);
-		if (!intersect_circle_segment(Circle{ v, c.radius }, p0, p1, t)) return false;
+		if (!intersect_circle_segment(Circle{ vertex, c.radius }, p0, p1, t)) return false;
 	}
 
 	return true;

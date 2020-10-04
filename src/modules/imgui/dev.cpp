@@ -31,9 +31,9 @@ enum Menu_Icon {
 };
 
 static const char *MENU_ICON_NAMES[] = {
-	"\xe9\x50",
-	"\xe9\x11",
-	"\xe9\x22",
+	u8"",
+	u8"",
+	u8"",
 };
 static_assert(Menu_COUNT == static_count(MENU_ICON_NAMES), "Update this!!");
 
@@ -407,11 +407,11 @@ Record *draw_profiler(Vec2 cursor) {
 
 	ImGui::BeginIconFont();
 	if (profiler.next_recording) {
-		if (ImGui::Button(u8"\xea\x16")) {
+		if (ImGui::Button(u8"")) {
 			profiler.next_recording = false;
 		}
 	} else {
-		if (ImGui::Button(u8"\xea\x15")) {
+		if (ImGui::Button(u8"")) {
 			profiler.next_recording = true;
 		}
 	}
