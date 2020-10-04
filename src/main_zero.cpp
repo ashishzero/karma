@@ -208,7 +208,7 @@ int karma_user_zero() {
 		//normals.allocator = TEMPORARY_ALLOCATOR;
 		t_values.allocator = TEMPORARY_ALLOCATOR;
 
-		player = manager_find_player(manager, player_id);
+		player = manager_find<Player>(manager.by_type.players, player_id);
 
 		//Vec2 prev_velocity = player->velocity;
 		//only physics code
@@ -271,7 +271,7 @@ int karma_user_zero() {
 			//collided handle
 			Entity_Handle handle_save = INVALID_ENTITY_HANDLE;
 			for (auto &collider : sorted_colliders) {
-				auto entity = manager_find_line(manager, collider.handle);
+				auto entity = manager_find<Line>(manager.by_type.lines, collider.handle);
 				//entity->color = vec4(1, 0, 0);
 				bool collision_found = false;
 				for (Vec2 temp : get_corner) {
@@ -300,10 +300,10 @@ int karma_user_zero() {
 
 			Line *line_collided = nullptr;
 			if (handle_save != INVALID_ENTITY_HANDLE) {
-				line_collided = manager_find_line(manager, handle_save);
+				line_collided = manager_find<Line>(manager.by_type.lines, handle_save);
 
 				for (auto &collider : sorted_colliders) {
-					auto *entity = manager_find_line(manager, collider.handle);
+					auto *entity = manager_find<Line>(manager.by_type.lines, collider.handle);
 					if (entity->handle != handle_save) {
 						for (Vec2 temp : get_corner) {
 							if (ray_vs_line(player->position + temp, new_player_position + temp, entity->start, entity->end, &hit)) {

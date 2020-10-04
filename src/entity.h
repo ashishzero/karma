@@ -92,7 +92,15 @@ Entity_Manager manager_create();
 Entity *manager_add_entity_kind(Entity_Manager *manager, Entity_Kind kind);
 #define manager_add_entity(manager, entity) (entity *)manager_add_entity_kind(manager, Entity_##entity)
 
-Player *manager_find_player(Entity_Manager &manager, Entity_Handle handle);
-Line *manager_find_line(Entity_Manager &manager, Entity_Handle handle);
-
-Entity *manager_find_entity(Entity_Manager &manager, Entity_Handle handle);
+template <typename T>
+T *manager_find(Array_View<T> a, Entity_Handle handle) {
+	T *result = nullptr;
+	for (s64 index = 0; index < a.count; ++index) {
+		auto en = a.data + index;
+		if (handle == en->handle) {
+			result = en;
+			break;
+		}
+	}
+	return result;
+}
