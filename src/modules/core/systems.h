@@ -296,6 +296,10 @@ typedef ptrsize (*System_Get_File_Pointer)(Handle handle);
 typedef bool (*System_Set_File_Pointer)(Handle handle, ptrsize position, File_Position start_position);
 typedef bool (*System_Read_File)(Handle handle, ptrsize size, u8 *buffer);
 typedef bool (*System_Write_File)(Handle handle, void *buffer, ptrsize size);
+typedef u64 (*System_Get_File_Size)(Handle handle);
+typedef u64 (*System_Get_Creation_Time)(Handle handle);
+typedef u64 (*System_Get_Last_Modified_Time)(Handle handle);
+typedef u64 (*System_Get_Last_Access_Time)(Handle handle);
 
 struct System_File {
 	Handle handle = {};
@@ -305,6 +309,11 @@ struct System_File {
 
 	System_Read_File  read  = 0;
 	System_Write_File write = 0;
+
+	System_Get_File_Size get_size = 0;
+	System_Get_Creation_Time get_creation_time = 0;
+	System_Get_Last_Modified_Time get_last_modified_time = 0;
+	System_Get_Last_Access_Time get_last_access_time = 0;
 };
 
 enum System_Window_Show {

@@ -908,6 +908,47 @@ bool isystem_write_file(Handle handle, void *ptr, ptrsize size) {
 	return true;
 }
 
+u64 isystem_get_file_size(Handle handle) {
+	LARGE_INTEGER size;
+	if (GetFileSizeEx(handle.hptr, &size)) {
+		return size.QuadPart;
+	}
+	return 0;
+}
+
+u64 isystem_get_file_creation_time(Handle handle) {
+	FILETIME t;
+	if (GetFileTime(handle.hptr, &t, nullptr, nullptr)) {
+		ULARGE_INTEGER r;
+		r.HighPart = t.dwHighDateTime;
+		r.LowPart = t.dwLowDateTime;
+		return r.QuadPart;
+	}
+	return 0;
+}
+
+u64 isystem_get_file_last_access_time(Handle handle) {
+	FILETIME t;
+	if (GetFileTime(handle.hptr, nullptr, &t, nullptr)) {
+		ULARGE_INTEGER r;
+		r.HighPart = t.dwHighDateTime;
+		r.LowPart = t.dwLowDateTime;
+		return r.QuadPart;
+	}
+	return 0;
+}
+
+u64 isystem_get_file_last_modified_time(Handle handle) {
+	FILETIME t;
+	if (GetFileTime(handle.hptr, nullptr, nullptr, &t)) {
+		ULARGE_INTEGER r;
+		r.HighPart = t.dwHighDateTime;
+		r.LowPart = t.dwLowDateTime;
+		return r.QuadPart;
+	}
+	return 0;
+}
+
 bool system_open_file(const String path, File_Operation options, System_File *file) {
 	DWORD access = 0;
 	DWORD creation = 0;
@@ -948,6 +989,10 @@ bool system_open_file(const String path, File_Operation options, System_File *fi
 	file->handle.hptr = handle;
 	file->get_cursor = isystem_get_file_pointer;
 	file->set_cursor = isystem_set_file_pointer;
+	file->get_size = isystem_get_file_size;
+	file->get_creation_time = isystem_get_file_creation_time;
+	file->get_last_modified_time = isystem_get_file_last_modified_time;
+	file->get_last_access_time = isystem_get_file_last_access_time;
 
 	return true;
 }
