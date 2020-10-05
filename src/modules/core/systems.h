@@ -276,6 +276,7 @@ struct System_Find_File_Info {
 	String name;
 	String extension;
 	u64    size;
+	u64	   modified;
 };
 
 enum File_Operation {
