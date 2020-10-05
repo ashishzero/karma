@@ -14,8 +14,6 @@ Builder system_builder() {
 }
 
 int system_main() {	
-	system_net_startup();
-
 	Socket_Address address = socket_address_local(9999);
 	Socket socket = system_net_open_udp_server(address);
 

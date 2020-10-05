@@ -486,8 +486,6 @@ inline Socket_Address socket_address_local(u16 port) {
 	return socket_address(127, 0, 0, 1, port);
 }
 
-bool system_net_startup(); // TODO: Remove these, call these function based on Builder::flags automatically
-void system_net_cleanup(); // TODO: Remove these, call these function based on Builder::flags automatically
 bool system_net_set_socket_nonblocking(Socket sock);
 Socket system_net_open_udp_server(Socket_Address address);
 Socket system_net_open_udp_client();

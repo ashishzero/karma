@@ -3,8 +3,6 @@
 #define SOCKET_BUFFER_SIZE kilo_bytes(1)
 
 int karma_user_shankar() {
-	system_net_startup();
-
 	Socket_Address to = socket_address_local(9999);
 
 	auto socket = system_net_open_udp_client();

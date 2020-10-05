@@ -1982,15 +1982,6 @@ void system_audio_pause() {
 	windows_audio_client.client->Stop();
 }
 
-bool system_net_startup() {
-	WSADATA WsaData;
-	return WSAStartup(MAKEWORD(2, 2), &WsaData) == NO_ERROR;
-}
-
-void system_net_cleanup() {
-	WSACleanup();
-}
-
 bool system_net_set_socket_nonblocking(Socket sock) {
 	DWORD non_blockling = 1;
 	if (ioctlsocket((SOCKET)sock, FIONBIO, &non_blockling) != 0) {
@@ -2563,20 +2554,22 @@ int __stdcall wWinMain(HINSTANCE instance, HINSTANCE prev_instance, LPWSTR cmd_l
 
 	DWORD task_index = 0;
 	HANDLE task_handle = AvSetMmThreadCharacteristicsW(L"Games", &task_index);
-
-	win32_map_keys();
-
-	SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
-
-	HRESULT res = CoInitializeEx(0, COINIT_MULTITHREADED | COINIT_DISABLE_OLE1DDE);
-	if (FAILED(res)) {
-		win32_check_for_error();
-		system_fatal_error("Failed to Initialize COM Objects");
-	}
-
 	SetThreadDescription(GetCurrentThread(), L"Main");
 
 	Builder builder = system_builder();
+
+	win32_map_keys();
+	win32_initialize_xinput();
+
+	if (builder.flags & Builder_VIDEO) {
+		SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+
+		HRESULT res = CoInitializeEx(0, COINIT_MULTITHREADED | COINIT_DISABLE_OLE1DDE);
+		if (FAILED(res)) {
+			win32_check_for_error();
+			system_fatal_error("Failed to Initialize COM Objects");
+		}
+	}
 
 	context.handle.hptr = GetCurrentThread();
 	context.id = GetCurrentThreadId();
@@ -2594,17 +2587,32 @@ int __stdcall wWinMain(HINSTANCE instance, HINSTANCE prev_instance, LPWSTR cmd_l
 	}
 	context.temp_memory = Temporary_Memory(ptr, builder.temporary_buffer_size);
 
-	if (!windows_audio_client.Initialize()) {
-		system_log(LOG_WARNING, "Windows", "Audio could not be initialized");
+	if (builder.flags & Builder_NETWORK) {
+		WSADATA WsaData;
+		if (WSAStartup(MAKEWORD(2, 2), &WsaData) != NO_ERROR) {
+			system_log(LOG_WARNING, "Windows", "Network could not be initialized");
+		}
 	}
 
-	win32_initialize_xinput();
+	if (builder.flags & Builder_AUDIO) {
+		if (!windows_audio_client.Initialize()) {
+			system_log(LOG_WARNING, "Windows", "Audio could not be initialized");
+		}
+	}
 
 	int result = context.proc();
 
-	windows_audio_client.StopThread();
+	if (builder.flags & Builder_NETWORK) {
+		WSACleanup();
+	}
 
-	CoUninitialize();
+	if (builder.flags & Builder_AUDIO) {
+		windows_audio_client.StopThread();
+	}
+
+	if (builder.flags & Builder_VIDEO) {
+		CoUninitialize();
+	}
 
 	return result;
 }
