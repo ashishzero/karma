@@ -1,7 +1,6 @@
 #pragma once
 #include "karma.h"
 #include "lin_maths.h"
-#include <algorithm>
 
 inline u32 murmur3_32(const void *ptr, size_t len, u32 seed) {
 	const u8 *key = (u8 *)ptr;
@@ -79,11 +78,6 @@ inline void sort_insert(Type *a, s64 n, Compare cmp) {
 		}
 		a[j + 1] = t;
 	}
-}
-
-template <typename Type, typename Compare>
-void sort(Type *a, s64 n, Compare cmp) {
-	std::sort(a, a + n, cmp);
 }
 
 // NOTE: *left* is inclusive but *right* is exclusive

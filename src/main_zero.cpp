@@ -55,6 +55,7 @@ int karma_user_zero() {
 	u64 frequency = system_get_frequency();
 	u64 counter = system_get_counter();
 
+#if 0
 	Entity_Manager manager = manager_create();
 
 	auto player = manager_add_entity(&manager, Player);
@@ -74,7 +75,6 @@ int karma_user_zero() {
 	quad_mesh.vertices[2] = vec2( 0.5f + 1.0f,  0.5f);
 	quad_mesh.vertices[3] = vec2( 0.5f, -0.5f);
 
-#if 1
 	Line *line = nullptr;
 	line = manager_add_entity(&manager, Line);
 	line->start = vec2(-4, -3);
@@ -201,7 +201,7 @@ int karma_user_zero() {
 
 		Dev_TimedBlockBegin(Simulation);
 
-#if 1
+#if 0
 		//Array<Vec2> normals;
 		Array<r32> t_values;
 		//ray_hits.allocator = TEMPORARY_ALLOCATOR;
@@ -209,14 +209,12 @@ int karma_user_zero() {
 		t_values.allocator = TEMPORARY_ALLOCATOR;
 
 		player = manager_find<Player>(manager.by_type.players, player_id);
-
-		//Vec2 prev_velocity = player->velocity;
-		//only physics code
-		static int test_counter = 0;
+#endif
 
 		while (accumulator_t >= fixed_dt) {
 			Dev_TimedScope(SimulationFrame);
 
+#if 0
 			memset(&hit, 0, sizeof(hit));
 
 			const r32 gravity = 10;
@@ -259,8 +257,8 @@ int karma_user_zero() {
 				collider->distance = n / d;
 			}
 
-			sort(sorted_colliders.data, sorted_colliders.count, [](Sorted_Colliders &a, Sorted_Colliders &b) {
-				return a.distance < b.distance;
+			sort_insert(sorted_colliders.data, sorted_colliders.count, [](Sorted_Colliders &a, Sorted_Colliders &b) {
+				return (int)(a.distance - b.distance);
 			});
 
 			//collision_point_vs_line(sorted_colliders, manager, player, new_player_position, dt);
@@ -332,8 +330,6 @@ int karma_user_zero() {
 				}
 			}
 
-#endif
-
 			{
 				auto &positions = quad_mesh.quad.positions;
 				auto &vertices = quad_mesh.vertices;
@@ -367,6 +363,7 @@ int karma_user_zero() {
 			}
 
 			player->position += dt * player->velocity;
+#endif
 
 			accumulator_t -= fixed_dt;
 		}
@@ -387,12 +384,11 @@ int karma_user_zero() {
 		cursor.y -= 1;
 #endif
 
-		r32 view_height = 5.0f;
+		r32 view_height = 10.0f;
 		r32 view_width = aspect_ratio * view_height;
 
 		auto view = orthographic_view(-view_width, view_width, view_height, -view_height);
 
-#if 1
 		auto cursor = system_get_cursor_position();
 		cursor.x /= window_w;
 		cursor.y /= window_h;
@@ -405,6 +401,7 @@ int karma_user_zero() {
 			cursor.y = INFINITY;
 		}
 
+#if 0
 		static auto last_button_state = Key_State_UP;
 		static Entity *selected_entity = nullptr;
 		Entity *hovered_entity = nullptr;
@@ -457,12 +454,12 @@ int karma_user_zero() {
 		}
 
 		last_button_state = new_button_state;
+#endif
 
 		//Mat4 view_inv = mat4_inverse(gfx_view_transform(view));
 		//cursor = (view_inv * vec4(cursor, 0, 1)).xy;
 		//cursor.x = roundf(cursor.x);
 		//cursor.y = roundf(cursor.y);
-#endif
 
 		Dev_TimedBlockEnd(Simulation);
 
@@ -473,9 +470,9 @@ int karma_user_zero() {
 		gfx_begin_drawing(Framebuffer_Type_HDR, Clear_ALL, vec4(0.0f));
 		gfx_viewport(0, 0, window_w, window_h);
 
-#if 1
 		im2d_begin(view);
 
+#if 0
 		im2d_quad(quad_mesh.quad.positions[0], 
 			quad_mesh.quad.positions[1], 
 			quad_mesh.quad.positions[2], 
@@ -513,16 +510,26 @@ int karma_user_zero() {
 		//	im2d_line(h.point, h.point + h.normal, vec4(1), 0.01f);
 		//}
 
-		im2d_end();
 #endif
 
-		im3d_begin(perspective_view(to_radians(30.0f), aspect_ratio, 0.01f, 100.0f), mat4_identity());
+		Circle circle = { vec2(0), 2 };
 
-		im3d_triangle(p[0], p[1], p[2], vec4(1));
+		Mm_Rect rect = mm_rect(vec2(-2), vec2(3, 4));
 
-		im3d_end();
+		Vec2 a = vec2(-5);
+		Vec2 b = cursor;
+		Vec2 d = b - a;
+
+		im2d_line(a, b, vec4(1, 1, 0), 0.02f);
+		im2d_circle_outline(circle.center, circle.radius, vec4(1, 0, 0), 0.02f);
+		im2d_quad_outline(corner_point(rect, 0), corner_point(rect, 2), corner_point(rect, 3), corner_point(rect, 1), vec4(1, 0, 0), 0.02f);
+		im2d_circle(farthest_point_in_dir(circle, d), 0.1f, vec4(0, 1, 1));
+		im2d_circle(farthest_point_in_dir(rect, d), 0.1f, vec4(0, 1, 1));		
+
+		im2d_end();
 
 		gfx_end_drawing();
+
 
 		gfx_apply_bloom(2);
 
@@ -532,6 +539,7 @@ int karma_user_zero() {
 
 #if defined(BUILD_IMGUI)
 
+#if 0
 		ImGui::Begin("Editor");
 		if (selected_entity) {
 			switch (selected_entity->kind) {
@@ -545,13 +553,14 @@ int karma_user_zero() {
 			
 		}
 		ImGui::End();
+#endif
 
 #endif
 
 #if defined(BUILD_DEVELOPER_SERVICE)
 		{
 			Dev_TimedScope(DebugRender);
-			Dev_RenderFrame();
+			//Dev_RenderFrame();
 		}
 #endif
 

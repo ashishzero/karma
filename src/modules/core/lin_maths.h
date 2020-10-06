@@ -882,6 +882,9 @@ bool dynamic_circle_vs_circle(const Circle &c0, const Circle &c1, Vec2 v0, Vec2 
 bool dynamic_circle_vs_mm_rect(const Circle &c, Vec2 d, const Mm_Rect &b, r32 *t);
 bool dynamic_mm_rect_vs_mm_rect(const Mm_Rect &a, const Mm_Rect &b, Vec2 va, Vec2 vb, r32 *tfirst, r32 *tlast);
 
+Vec2 farthest_point_in_dir(const Circle &c, Vec2 dir);
+Vec2 farthest_point_in_dir(const Mm_Rect &m, Vec2 dir);
+
 //
 //
 //

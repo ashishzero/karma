@@ -12,7 +12,7 @@ int main() {
 		user = system_get_user_name();
 	}
 
-	if (string_match(user, "user")|| string_match(user, "zeroa")) {
+	if (string_match(user, "user") || string_match(user, "zeroa")) {
 		return karma_user_zero();
 	} else if (string_match(user, "atish")) {
 		return karma_user_atish();
