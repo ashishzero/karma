@@ -114,7 +114,7 @@ int karma_user_zero() {
 
 	Player_Controller controller = {};
 
-
+#if 0
 	Vec3 p[3];
 	p[0] = vec3(0.0f, 0.0f, 0.0f);
 	p[1] = vec3(0.0f, 0.0f, 0.0f);
@@ -122,6 +122,17 @@ int karma_user_zero() {
 
 	Ray_Hit hit;
 	memset(&hit, 0, sizeof(hit));
+#endif
+
+#define CIRCLE_SEGMENTS 64
+	r32 unit_circle_cos[CIRCLE_SEGMENTS];
+	r32 unit_circle_sin[CIRCLE_SEGMENTS];
+
+	for (int i = 0; i < CIRCLE_SEGMENTS; ++i) {
+		r32 theta = ((r32)i / (r32)CIRCLE_SEGMENTS) * MATH_PI * 2;
+		unit_circle_cos[i] = cosf(theta);
+		unit_circle_sin[i] = sinf(theta);
+	}
 
 	while (running) {
 		Dev_TimedFrameBegin();
@@ -516,24 +527,36 @@ int karma_user_zero() {
 			vec2(-3, 2), vec2(4, 3), vec2(4, -3), vec2(-0.5f, -5), vec2(-5, -2)
 		};
 
-		Circle circle = { vec2(3), 2 };
+		Circle circle = { cursor, 2 };
 
 		Mm_Rect rect = mm_rect(vec2(-2), vec2(3, 4));
 
-		Vec2 a = vec2(-5);
-		Vec2 b = cursor;
-		Vec2 d = b - a;
+		//Vec2 a = vec2(-5);
+		//Vec2 b = cursor;
+		//Vec2 d = b - a;
+		//im2d_line(a, b, vec4(1, 1, 0), 0.02f);
 
-		im2d_line(a, b, vec4(1, 1, 0), 0.02f);
 		im2d_circle_outline(circle.center, circle.radius, vec4(1, 0, 0), 0.02f);
 		im2d_quad_outline(corner_point(rect, 0), corner_point(rect, 2), corner_point(rect, 3), corner_point(rect, 1), vec4(1, 0, 0), 0.02f);
-		im2d_circle(farthest_vertex_in_dir(circle, d), 0.1f, vec4(0, 1, 1));
-		im2d_circle(farthest_vertex_in_dir(rect, d), 0.1f, vec4(0, 1, 1));		
-		im2d_circle(farthest_vertex_in_dir(points, static_count(points), d), 0.1f, vec4(0, 1, 1));		
+		//for (int i = 0; i < static_count(points); ++i) {
+		//	im2d_line(points[i], points[(i + 1) % static_count(points)], vec4(1, 0, 0), 0.02f);
+		//}
 
-		for (int i = 0; i < static_count(points); ++i) {
-			im2d_line(points[i], points[(i + 1) % static_count(points)], vec4(1, 0, 0), 0.02f);
+		//im2d_circle(farthest_vertex_in_dir(circle, d), 0.1f, vec4(0, 1, 1));
+		//im2d_circle(farthest_vertex_in_dir(rect, d), 0.1f, vec4(0, 1, 1));		
+		//im2d_circle(farthest_vertex_in_dir(points, static_count(points), d), 0.1f, vec4(0, 1, 1));		
+
+		im2d_circle(vec2(0), 0.1f, vec4(1));
+
+		Vec2 s0, s1;
+		s0 = support(rect, circle, vec2(unit_circle_cos[0], unit_circle_sin[0]));
+		Vec2 first = s0;
+		for (int i = 1; i < CIRCLE_SEGMENTS; ++i) {
+			s1 = support(rect, circle, vec2(unit_circle_cos[i], unit_circle_sin[i]));
+			im2d_line(s0, s1, vec4(0, 1, 0), 0.02f);
+			s0 = s1;
 		}
+		im2d_line(s0, first, vec4(0, 1, 0), 0.02f);
 
 		im2d_end();
 

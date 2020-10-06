@@ -453,6 +453,11 @@ struct Ray2d {
 	Vec2 dir;
 };
 
+//
+//
+//
+
+// TODO: Remove this
 struct Ray_Hit {
 	Vec2 point;
 	Vec2 normal;
