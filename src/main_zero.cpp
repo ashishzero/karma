@@ -512,7 +512,11 @@ int karma_user_zero() {
 
 #endif
 
-		Circle circle = { vec2(0), 2 };
+		Vec2 points[] = {
+			vec2(-3, 2), vec2(4, 3), vec2(4, -3), vec2(-0.5f, -5), vec2(-5, -2)
+		};
+
+		Circle circle = { vec2(3), 2 };
 
 		Mm_Rect rect = mm_rect(vec2(-2), vec2(3, 4));
 
@@ -523,8 +527,13 @@ int karma_user_zero() {
 		im2d_line(a, b, vec4(1, 1, 0), 0.02f);
 		im2d_circle_outline(circle.center, circle.radius, vec4(1, 0, 0), 0.02f);
 		im2d_quad_outline(corner_point(rect, 0), corner_point(rect, 2), corner_point(rect, 3), corner_point(rect, 1), vec4(1, 0, 0), 0.02f);
-		im2d_circle(farthest_point_in_dir(circle, d), 0.1f, vec4(0, 1, 1));
-		im2d_circle(farthest_point_in_dir(rect, d), 0.1f, vec4(0, 1, 1));		
+		im2d_circle(farthest_vertex_in_dir(circle, d), 0.1f, vec4(0, 1, 1));
+		im2d_circle(farthest_vertex_in_dir(rect, d), 0.1f, vec4(0, 1, 1));		
+		im2d_circle(farthest_vertex_in_dir(points, static_count(points), d), 0.1f, vec4(0, 1, 1));		
+
+		for (int i = 0; i < static_count(points); ++i) {
+			im2d_line(points[i], points[(i + 1) % static_count(points)], vec4(1, 0, 0), 0.02f);
+		}
 
 		im2d_end();
 

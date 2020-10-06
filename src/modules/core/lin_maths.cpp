@@ -2570,13 +2570,41 @@ bool dynamic_mm_rect_vs_mm_rect(const Mm_Rect &a, const Mm_Rect &b, Vec2 va, Vec
 	return true;
 }
 
-Vec2 farthest_point_in_dir(const Circle &c, Vec2 dir) {
+Vec2 farthest_vertex_in_dir(const Circle &c, Vec2 dir) {
 	Vec2 n = vec2_normalize(dir);
 	return c.center + n * c.radius;
 }
 
-Vec2 farthest_point_in_dir(const Mm_Rect &m, Vec2 dir) {
+Vec2 farthest_vertex_in_dir(const Mm_Rect &m, Vec2 dir) {
 	return vec2(dir.x >= 0.0f ? m.max.x : m.min.x, dir.y >= 0.0f ? m.max.y : m.min.y);
+}
+
+Vec2 farthest_vertex_in_dir(const Vec2 *v, int n, Vec2 dir, int index) {
+	assert(index < n);
+
+	r32 p = vec2_dot(dir, v[index]);
+
+	int adj_index;
+	r32 adj_p;
+	while (true) {
+		adj_index = (index + 1 == n ? 0 : index + 1);
+		adj_p = vec2_dot(dir, v[adj_index]);
+		if (adj_p > p) {
+			p = adj_p;
+			index = adj_index;
+		} else {
+			adj_index = (index - 1 == -1 ? n - 1 : index - 1);
+			adj_p = vec2_dot(dir, v[adj_index]);
+			if (adj_p > p) {
+				p = adj_p;
+				index = adj_index;
+			} else {
+				break;
+			}
+		}
+	}
+
+	return v[index];
 }
 
 //
