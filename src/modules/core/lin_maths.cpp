@@ -2607,6 +2607,68 @@ Vec2 support(const Vec2 *v, int n, Vec2 dir, int index) {
 	return v[index];
 }
 
+Vec2 support(const Circle &a, const Circle &b, Vec2 dir) {
+	Vec2 n = vec2_normalize(dir);
+	return a.center - b.center + n * (a.radius + b.radius);
+}
+
+Vec2 support(const Mm_Rect &a, const Mm_Rect &b, Vec2 dir) {
+	Vec2 s;
+	if (dir.x >= 0.0f) {
+		s.x = a.max.x - b.min.x;
+	} else {
+		s.x = a.min.x - b.max.x;
+	}
+	if (dir.y >= 0.0f) {
+		s.y = a.max.y - b.min.y;
+	} else {
+		s.y = a.min.y - b.max.y;
+	}
+	return s;
+}
+
+Vec2 support(const Circle &a, const Mm_Rect &b, Vec2 dir) {
+	Vec2 p0 = support(a, dir);
+	Vec2 p1 = support(b, -dir);
+	return p0 - p1;
+}
+
+Vec2 support(const Mm_Rect &a, const Circle &b, Vec2 dir) {
+	Vec2 p0 = support(a, dir);
+	Vec2 p1 = support(b, -dir);
+	return p0 - p1;
+}
+
+Vec2 support(const Vec2 *a, int an, int ai, const Vec2 *b, int bn, int bi, Vec2 dir) {
+	Vec2 p0 = support(a, an, dir, ai);
+	Vec2 p1 = support(b, bn, -dir, bi);
+	return p0 - p1;
+}
+
+Vec2 support(const Vec2 *v, int n, int i, const Circle &c, Vec2 dir) {
+	Vec2 p0 = support(v, n, dir, i);
+	Vec2 p1 = support(c, -dir);
+	return p0 - p1;
+}
+
+Vec2 support(const Circle &c, const Vec2 *v, int n, int i, Vec2 dir) {
+	Vec2 p0 = support(c, dir);
+	Vec2 p1 = support(v, n, -dir, i);
+	return p0 - p1;
+}
+
+Vec2 support(const Vec2 *v, int n, int i, const Mm_Rect &m, Vec2 dir) {
+	Vec2 p0 = support(v, n, dir, i);
+	Vec2 p1 = support(m, -dir);
+	return p0 - p1;
+}
+
+Vec2 support(const Mm_Rect &m, const Vec2 *v, int n, int i, Vec2 dir) {
+	Vec2 p0 = support(m, dir);
+	Vec2 p1 = support(v, n, -dir, i);
+	return p0 - p1;
+}
+
 //
 //
 //
