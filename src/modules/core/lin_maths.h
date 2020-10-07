@@ -895,7 +895,30 @@ Vec2 support(const Circle &c, const Polygon &p, Vec2 dir);
 Vec2 support(const Polygon &p, const Mm_Rect &m, Vec2 dir);
 Vec2 support(const Mm_Rect &m, const Polygon &p, Vec2 dir);
 
-bool gjk(const Circle &a, const Circle &b);
+bool do_simplex(Simplex2d *const simplex, Vec2 *dir);
+
+template <typename ShapeA, typename ShapeB>
+bool gjk(const ShapeA &sa, const ShapeB &sb) {
+	Vec2 dir = vec2(1, 0);
+	Simplex2d simplex;
+	simplex.p[0] = support(sa, sb, dir);
+	dir = -simplex.p[0];
+	simplex.n = 1;
+
+	Vec2 a;
+	while (true) {
+		a = support(sa, sb, dir);
+		if (vec2_dot(a, dir) < 0.0f) return false; // no intersection
+		simplex.p[simplex.n] = a;
+		simplex.n += 1;
+
+		if (do_simplex(&simplex, &dir)) {
+			return true;
+		}
+	}
+
+	return false;
+}
 
 //
 //

@@ -2670,12 +2670,7 @@ Vec2 support(const Mm_Rect &m, const Polygon &p, Vec2 dir) {
 	return p0 - p1;
 }
 
-struct Simplex2d {
-	Vec2 p[3];
-	s32 n;
-};
-
-inline bool do_simplex(Simplex2d * const simplex, Vec2 *dir) {
+bool do_simplex(Simplex2d * const simplex, Vec2 *dir) {
 	switch (simplex->n) {
 	case 2: {
 		// a = simplex[1]
@@ -2742,28 +2737,6 @@ inline bool do_simplex(Simplex2d * const simplex, Vec2 *dir) {
 			}
 		}
 	} break;
-	}
-
-	return false;
-}
-
-bool gjk(const Circle &sa, const Circle &sb) {
-	Vec2 dir = vec2(1, 0);
-	Simplex2d simplex;
-	simplex.p[0] = support(sa, sb, dir);
-	dir = -simplex.p[0];
-	simplex.n = 1;
-
-	Vec2 a;
-	while (true) {
-		a = support(sa, sb, dir);
-		if (vec2_dot(a, dir) < 0.0f) return false; // no intersection
-		simplex.p[simplex.n] = a;
-		simplex.n += 1;
-
-		if (do_simplex(&simplex, &dir)) {
-			return true;
-		}
 	}
 
 	return false;

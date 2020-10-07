@@ -459,6 +459,11 @@ struct Polygon {
 	s32 first_index;
 };
 
+struct Simplex2d {
+	Vec2 p[3];
+	s32 n;
+};
+
 //
 //
 //

@@ -523,21 +523,25 @@ int karma_user_zero() {
 
 #endif
 
-#if 0
-		Vec2 points_0[] = {
+#if 1
+		Vec2 points_1[] = {
 			vec2(-3, 2), vec2(4, 3), vec2(4, -3), vec2(-0.5f, -5), vec2(-5, -2)
 		};
 
-		Vec2 points_1[] = {
+		Vec2 points_0[] = {
 			cursor, cursor + vec2(-2, 4), cursor + vec2(3)
 		};
 #endif
 
-		Circle circle0 = { cursor, 2 };
-		Circle circle1 = { vec2(-2, 2), 3.2f };
+		//Circle shape0 = { cursor, 2 };
+		//Circle shape1 = { vec2(-2, 2), 3.2f };
 
-		//Mm_Rect rect0 = mm_rect(cursor, cursor + vec2(3, 4));
-		//Mm_Rect rect1 = mm_rect(vec2(3), vec2(5));
+		//Mm_Rect shape0 = mm_rect(cursor, cursor + vec2(3, 4));
+		//Mm_Rect shape1 = mm_rect(vec2(3), vec2(5));
+
+
+		Polygon shape0 = { points_0, static_count(points_0), 0 };
+		Polygon shape1 = { points_1, static_count(points_1), 0 };
 
 		//Vec2 a = vec2(-5);
 		//Vec2 b = cursor;
@@ -545,21 +549,21 @@ int karma_user_zero() {
 		//im2d_line(a, b, vec4(1, 1, 0), 0.02f);
 
 		auto color = vec4(1, 0, 0);
-		if (gjk(circle0, circle1)) {
+		if (gjk(shape0, shape1)) {
 			color = vec4(0, 1, 1);
 		}
 
-		im2d_circle_outline(circle0.center, circle0.radius, color, 0.02f);
-		im2d_circle_outline(circle1.center, circle1.radius, color, 0.02f);
-		//im2d_quad_outline(corner_point(rect0, 0), corner_point(rect0, 2), corner_point(rect0, 3), corner_point(rect0, 1), vec4(1, 0, 0), 0.02f);
-		//im2d_quad_outline(corner_point(rect1, 0), corner_point(rect1, 2), corner_point(rect1, 3), corner_point(rect1, 1), vec4(1, 0, 0), 0.02f);
+		//im2d_circle_outline(shape0.center, shape0.radius, color, 0.02f);
+		//im2d_circle_outline(shape1.center, shape1.radius, color, 0.02f);
+		//im2d_quad_outline(corner_point(shape0, 0), corner_point(shape0, 2), corner_point(shape0, 3), corner_point(shape0, 1), color, 0.02f);
+		//im2d_quad_outline(corner_point(shape1, 0), corner_point(shape1, 2), corner_point(shape1, 3), corner_point(shape1, 1), color, 0.02f);
 
-#if 0
+#if 1
 		for (int i = 0; i < static_count(points_0); ++i) {
-			im2d_line(points_0[i], points_0[(i + 1) % static_count(points_0)], vec4(1, 0, 0), 0.02f);
+			im2d_line(points_0[i], points_0[(i + 1) % static_count(points_0)], color, 0.02f);
 		}
 		for (int i = 0; i < static_count(points_1); ++i) {
-			im2d_line(points_1[i], points_1[(i + 1) % static_count(points_1)], vec4(1, 0, 0), 0.02f);
+			im2d_line(points_1[i], points_1[(i + 1) % static_count(points_1)], color, 0.02f);
 		}
 #endif
 
@@ -569,14 +573,11 @@ int karma_user_zero() {
 
 		im2d_circle(vec2(0), 0.1f, vec4(1));
 
-		//Polygon poly1 = { points_0, static_count(points_0), 0 };
-		//Polygon poly2 = { points_1, static_count(points_1), 0 };
-
 		Vec2 s0, s1;
-		s0 = support(circle0, circle1, vec2(unit_circle_cos[0], unit_circle_sin[0]));
+		s0 = support(shape0, shape1, vec2(unit_circle_cos[0], unit_circle_sin[0]));
 		Vec2 first = s0;
 		for (int i = 1; i < CIRCLE_SEGMENTS; ++i) {
-			s1 = support(circle0, circle1, vec2(unit_circle_cos[i], unit_circle_sin[i]));
+			s1 = support(shape0, shape1, vec2(unit_circle_cos[i], unit_circle_sin[i]));
 			im2d_line(s0, s1, vec4(0, 1, 0), 0.02f);
 			s0 = s1;
 		}
