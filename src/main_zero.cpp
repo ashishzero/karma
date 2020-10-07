@@ -560,11 +560,14 @@ int karma_user_zero() {
 
 		im2d_circle(vec2(0), 0.1f, vec4(1));
 
+		Polygon poly1 = { points_0, static_count(points_0), 0 };
+		Polygon poly2 = { points_1, static_count(points_1), 0 };
+
 		Vec2 s0, s1;
-		s0 = support(points_0, static_count(points_0), 0, points_1, static_count(points_1), 0, vec2(unit_circle_cos[0], unit_circle_sin[0]));
+		s0 = support(poly1, poly2, vec2(unit_circle_cos[0], unit_circle_sin[0]));
 		Vec2 first = s0;
 		for (int i = 1; i < CIRCLE_SEGMENTS; ++i) {
-			s1 = support(points_0, static_count(points_0), 0, points_1, static_count(points_1), 0, vec2(unit_circle_cos[i], unit_circle_sin[i]));
+			s1 = support(poly1, poly2, vec2(unit_circle_cos[i], unit_circle_sin[i]));
 			im2d_line(s0, s1, vec4(0, 1, 0), 0.02f);
 			s0 = s1;
 		}

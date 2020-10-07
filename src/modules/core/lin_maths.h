@@ -839,7 +839,7 @@ s32 point_farthest_from_edge(Vec2 a, Vec2 b, Vec2 *p, s32 n);
 void extreme_points_alone_direction(Vec2 dir, Vec2 *pt, s32 n, s32 *min_index, s32 *max_index);
 void most_seperated_points_on_aabb(Vec2 *pt, s32 n, s32 *min, s32 *max);
 Circle circle_from_distant_points(Vec2 *pt, s32 n);
-r32 min_area_rect(Vec2 *pt, int num_pts, Vec2 *center, Vec2 u[2]);
+r32 min_area_rect(Vec2 *pt, s32 num_pts, Vec2 *center, Vec2 u[2]);
 
 Mm_Rect transform_mmrect(const Mm_Rect &a, const Mat2 &mat, Vec2 t);
 Mm_Rect transform_mmrect(const Mm_Rect &a, r32 rot, Vec2 t);
@@ -851,7 +851,7 @@ bool test_point_inside_aabb(Vec2 point, const Aabb2d &aabb);
 bool test_point_inside_circle(Vec2 p, const Circle &c);
 bool test_point_inside_capsule(Vec2 p, const Capsule2d &c);
 bool test_point_inside_triangle(Vec2 p, Vec2 a, Vec2 b, Vec2 c);
-bool test_point_inside_convex_polygon(Vec2 p, Vec2 *v, int n);
+bool test_point_inside_convex_polygon(Vec2 p, Vec2 *v, s32 n);
 
 bool test_mmrect_vs_mmrect(const Mm_Rect &a, const Mm_Rect &b);
 bool test_aabb_vs_aabb(const Aabb2d &a, const Aabb2d &b);
@@ -884,16 +884,18 @@ bool dynamic_mm_rect_vs_mm_rect(const Mm_Rect &a, const Mm_Rect &b, Vec2 va, Vec
 
 Vec2 support(const Circle &c, Vec2 dir);
 Vec2 support(const Mm_Rect &m, Vec2 dir);
-Vec2 support(const Vec2 *v, int n, Vec2 dir, int start_index);
+Vec2 support(const Polygon &p, Vec2 dir);
 Vec2 support(const Circle &a, const Circle &b, Vec2 dir);
 Vec2 support(const Mm_Rect &a, const Mm_Rect &b, Vec2 dir);
 Vec2 support(const Circle &a, const Mm_Rect &b, Vec2 dir);
 Vec2 support(const Mm_Rect &a, const Circle &b, Vec2 dir);
-Vec2 support(const Vec2 *a, int an, int ai, const Vec2 *b, int bn, int bi, Vec2 dir);
-Vec2 support(const Vec2 *v, int n, int i, const Circle &c, Vec2 dir);
-Vec2 support(const Circle &c, const Vec2 *v, int n, int i, Vec2 dir);
-Vec2 support(const Vec2 *v, int n, int i, const Mm_Rect &m, Vec2 dir);
-Vec2 support(const Mm_Rect &m, const Vec2 *v, int n, int i, Vec2 dir);
+Vec2 support(const Polygon &a, const Polygon &b, Vec2 dir);
+Vec2 support(const Polygon &p, const Circle &c, Vec2 dir);
+Vec2 support(const Circle &c, const Polygon &p, Vec2 dir);
+Vec2 support(const Polygon &p, const Mm_Rect &m, Vec2 dir);
+Vec2 support(const Mm_Rect &m, const Polygon &p, Vec2 dir);
+
+bool gjk(const Circle &a, const Circle &b);
 
 //
 //

@@ -402,7 +402,7 @@ Mat3 mat3_inverse(const Mat3 &mat) {
 
 	r32 det = mat.m2[0][0] * result.m2[0][0] + mat.m2[0][1] * result.m2[1][0] + mat.m2[0][2] * result.m2[2][0];
 	det /= det;
-	for (int i = 0; i < 3; i++)
+	for (s32 i = 0; i < 3; i++)
 		result.rows[i] = result.rows[i] * det;
 	return result;
 }
@@ -574,7 +574,7 @@ Mat4 mat4_inverse(const Mat4 &mat) {
 
 	r32 det = mat.m[0] * result.m[0] + mat.m[1] * result.m[4] + mat.m[2] * result.m[8] + mat.m[3] * result.m[12];
 	det = 1.0f / det;
-	for (int i = 0; i < 4; i++)
+	for (s32 i = 0; i < 4; i++)
 		result.rows[i] = result.rows[i] * det;
 	return result;
 }
@@ -1321,7 +1321,7 @@ Color3 hsv_to_rgb(Color3 col) {
 	}
 
 	h = fmodf(h, 1.0f) / (60.0f / 360.0f);
-	int   i = (int)h;
+	s32   i = (int)h;
 	float f = h - (float)i;
 	float p = v * (1.0f - s);
 	float q = v * (1.0f - s * f);
@@ -1882,7 +1882,7 @@ bool is_quad_convex(Vec3 a, Vec3 b, Vec3 c, Vec3 d) {
 
 Mm_Rect enclosing_mm_rect_mm_rect(const Mm_Rect &a0, const Mm_Rect &a1) {
 	Mm_Rect a;
-	for (int i = 0; i < 2; i++) {
+	for (s32 i = 0; i < 2; i++) {
 		a.min.m[i] = minimum(a0.min.m[i], a1.min.m[i]);
 		a.max.m[i] = maximum(a0.max.m[i], a1.max.m[i]);
 	}
@@ -1994,7 +1994,7 @@ Circle circle_from_distant_points(Vec2 *pt, s32 n) {
 	return c;
 }
 
-r32 min_area_rect(Vec2 *pt, int num_pts, Vec2 *center, Vec2 u[2]) {
+r32 min_area_rect(Vec2 *pt, s32 num_pts, Vec2 *center, Vec2 u[2]) {
 	r32 min_area = FLT_MAX;
 
 	for (s32 i = 0, j = num_pts - 1; i < num_pts; j = i, i++) {
@@ -2027,9 +2027,9 @@ r32 min_area_rect(Vec2 *pt, int num_pts, Vec2 *center, Vec2 u[2]) {
 
 Mm_Rect transform_mmrect(const Mm_Rect &a, const Mat2 &mat, Vec2 t) {
 	Mm_Rect b;
-	for (int i = 0; i < 2; i++) {
+	for (s32 i = 0; i < 2; i++) {
 		b.min.m[i] = b.max.m[i] = t.m[i];
-		for (int j = 0; j < 2; j++) {
+		for (s32 j = 0; j < 2; j++) {
 			r32 e = mat.m2[i][j] * a.min.m[j];
 			r32 f = mat.m2[i][j] * a.max.m[j];
 			if (e < f) {
@@ -2051,10 +2051,10 @@ Mm_Rect transform_mmrect(const Mm_Rect &a, r32 rot, Vec2 t) {
 
 Aabb2d update_aabb(const Aabb2d &a, const Mat2 &mat, Vec2 t) {
 	Aabb2d b;
-	for (int i = 0; i < 2; i++) {
+	for (s32 i = 0; i < 2; i++) {
 		b.center.m[i] = t.m[i];
 		b.radius[i] = 0.0f;
-		for (int j = 0; j < 2; j++) {
+		for (s32 j = 0; j < 2; j++) {
 			b.center.m[i] += mat.m2[i][j] * a.center.m[j];
 			b.radius[i] += fabsf(mat.m2[i][j]) * a.radius[j];
 		}
@@ -2108,18 +2108,18 @@ bool test_point_inside_triangle(Vec2 p, Vec2 a, Vec2 b, Vec2 c) {
 	return true;
 }
 
-bool test_point_inside_convex_polygon(Vec2 p, Vec2 *v, int n) {
+bool test_point_inside_convex_polygon(Vec2 p, Vec2 *v, s32 n) {
 	// Do binary search over polygon vertices to find the fan triangle
-	// (v[0], v[low], v[high]) the point p lies within the near sides of
-	int low = 0, high = n;
+	// (v[0], v[low], v[high]) the pos32 p lies within the near sides of
+	s32 low = 0, high = n;
 	do {
-		int mid = (low + high) / 2;
+		s32 mid = (low + high) / 2;
 		if (triangle_is_cw(v[0], v[mid], p))
 			low = mid;
 		else
 			high = mid;
 	} while (low + 1 < high);
-	// If point outside last (or first) edge, then it is not inside the n-gon
+	// If pos32 outside last (or first) edge, then it is not inside the n-gon
 	if (low == 0 || high == n) return 0;
 	// p is inside the polygon if it is left of
 	// the directed edge from v[low] to v[high]
@@ -2143,21 +2143,21 @@ bool test_quad_vs_quad(const Quad &a, const Quad &b) {
 	auto quad_a = &a;
 	auto quad_b = &b;
 
-	for (int quad_index = 0; quad_index < 2; ++quad_index) {
-		for (int edge_index = 0; edge_index < 4; ++edge_index) {
+	for (s32 quad_index = 0; quad_index < 2; ++quad_index) {
+		for (s32 edge_index = 0; edge_index < 4; ++edge_index) {
 			r32 min_proj_a = INFINITY, max_proj_a = -INFINITY;
 			r32 min_proj_b = INFINITY, max_proj_b = -INFINITY;
 
 			r32 dot;
 			Vec2 normal = quad_a->normals[edge_index];
 
-			for (int p_index = 0; p_index < 4; ++p_index) {
+			for (s32 p_index = 0; p_index < 4; ++p_index) {
 				dot = vec2_dot(normal, quad_a->positions[p_index]);
 				min_proj_a = minimum(min_proj_a, dot);
 				max_proj_a = maximum(max_proj_a, dot);
 			}
 
-			for (int p_index = 0; p_index < 4; ++p_index) {
+			for (s32 p_index = 0; p_index < 4; ++p_index) {
 				dot = vec2_dot(normal, quad_b->positions[p_index]);
 				min_proj_b = minimum(min_proj_b, dot);
 				max_proj_b = maximum(max_proj_b, dot);
@@ -2406,7 +2406,7 @@ bool intersect_mm_rect_ray(const Ray2d &ray, const Mm_Rect &rect, r32 *tmin, Vec
 	*tmin = 0.0f;
 	r32 tmax = FLT_MAX;
 
-	for (int i = 0; i < 2; i++) {
+	for (s32 i = 0; i < 2; i++) {
 		if (fabsf(ray.dir.m[i]) < EPSILON_FLOAT) {
 			// Ray is parallel to slab. No hit if origin not within slab
 			if (ray.origin.m[i] < rect.min.m[i] || ray.origin.m[i] > rect.max.m[i]) return false;
@@ -2439,7 +2439,7 @@ bool intersect_mm_rect_segment(Vec2 a, Vec2 b, const Mm_Rect &rect, r32 *tmin, V
 	*tmin = 0.0f;
 	r32 tmax = 1.0f;
 
-	for (int i = 0; i < 2; i++) {
+	for (s32 i = 0; i < 2; i++) {
 		if (fabsf(ray.dir.m[i]) < EPSILON_FLOAT) {
 			// Ray is parallel to slab. No hit if origin not within slab
 			if (ray.origin.m[i] < rect.min.m[i] || ray.origin.m[i] > rect.max.m[i]) return false;
@@ -2503,13 +2503,13 @@ bool dynamic_circle_vs_mm_rect(const Circle &c, Vec2 d, const Mm_Rect &b, r32 *t
 	Vec2 p1 = c.center + d;
 
 	// Intersect ray against expanded AABB e. Exit with no intersection if ray
-	// misses e, else get intersection point p and time t as result
+	// misses e, else get intersection pos32 p and time t as result
 	Vec2 p;
 	if (!intersect_mm_rect_segment(p0, p1, e, t, &p)) {
 		return false;
 	}
 
-	// Compute which min and max faces of b the intersection point p lies
+	// Compute which min and max faces of b the intersection pos32 p lies
 	// outside of. Note, u and v cannot have the same bits set and
 	// they must have at least one bit set among them
 	u32 u = 0, v = 0;
@@ -2519,7 +2519,7 @@ bool dynamic_circle_vs_mm_rect(const Circle &c, Vec2 d, const Mm_Rect &b, r32 *t
 	if (p.y > b.max.y) v |= 2;
 
 	// ‘Or’ all set bits together into a bit mask (note: here u + v == u | v)
-	int m = u + v;
+	s32 m = u + v;
 
 	// If both 2 bits set (m == 3) then p is in a vertex region
 	if (m == 3) {
@@ -2546,7 +2546,7 @@ bool dynamic_mm_rect_vs_mm_rect(const Mm_Rect &a, const Mm_Rect &b, Vec2 va, Vec
 	*tlast  = 1.0f;
 
 	// For each axis, determine times of first and last contact, if any
-	for (int i = 0; i < 2; i++) {
+	for (s32 i = 0; i < 2; i++) {
 		if (v.m[i] < 0.0f) {
 			if (b.max.m[i] < a.min.m[i]) return false; // Nonintersecting and moving apart
 			if (a.max.m[i] < b.min.m[i]) 
@@ -2579,22 +2579,23 @@ Vec2 support(const Mm_Rect &m, Vec2 dir) {
 	return vec2(dir.x >= 0.0f ? m.max.x : m.min.x, dir.y >= 0.0f ? m.max.y : m.min.y);
 }
 
-Vec2 support(const Vec2 *v, int n, Vec2 dir, int index) {
-	assert(index < n);
+Vec2 support(const Polygon &shape, Vec2 dir) {
+	assert(shape.first_index < shape.vertex_count);
 
-	r32 p = vec2_dot(dir, v[index]);
+	s32 index = shape.first_index;
+	r32 p = vec2_dot(dir, shape.vertices[index]);
 
-	int adj_index;
+	s32 adj_index;
 	r32 adj_p;
 	while (true) {
-		adj_index = (index + 1 == n ? 0 : index + 1);
-		adj_p = vec2_dot(dir, v[adj_index]);
+		adj_index = (index + 1 == shape.vertex_count ? 0 : index + 1);
+		adj_p = vec2_dot(dir, shape.vertices[adj_index]);
 		if (adj_p > p) {
 			p = adj_p;
 			index = adj_index;
 		} else {
-			adj_index = (index - 1 == -1 ? n - 1 : index - 1);
-			adj_p = vec2_dot(dir, v[adj_index]);
+			adj_index = (index - 1 == -1 ? shape.vertex_count - 1 : index - 1);
+			adj_p = vec2_dot(dir, shape.vertices[adj_index]);
 			if (adj_p > p) {
 				p = adj_p;
 				index = adj_index;
@@ -2604,7 +2605,7 @@ Vec2 support(const Vec2 *v, int n, Vec2 dir, int index) {
 		}
 	}
 
-	return v[index];
+	return shape.vertices[index];
 }
 
 Vec2 support(const Circle &a, const Circle &b, Vec2 dir) {
@@ -2639,34 +2640,66 @@ Vec2 support(const Mm_Rect &a, const Circle &b, Vec2 dir) {
 	return p0 - p1;
 }
 
-Vec2 support(const Vec2 *a, int an, int ai, const Vec2 *b, int bn, int bi, Vec2 dir) {
-	Vec2 p0 = support(a, an, dir, ai);
-	Vec2 p1 = support(b, bn, -dir, bi);
+Vec2 support(const Polygon &a, const Polygon &b, Vec2 dir) {
+	Vec2 p0 = support(a, dir);
+	Vec2 p1 = support(b, -dir);
 	return p0 - p1;
 }
 
-Vec2 support(const Vec2 *v, int n, int i, const Circle &c, Vec2 dir) {
-	Vec2 p0 = support(v, n, dir, i);
+Vec2 support(const Polygon &p, const Circle &c, Vec2 dir) {
+	Vec2 p0 = support(p, dir);
 	Vec2 p1 = support(c, -dir);
 	return p0 - p1;
 }
 
-Vec2 support(const Circle &c, const Vec2 *v, int n, int i, Vec2 dir) {
+Vec2 support(const Circle &c, const Polygon &p, Vec2 dir) {
 	Vec2 p0 = support(c, dir);
-	Vec2 p1 = support(v, n, -dir, i);
+	Vec2 p1 = support(p, -dir);
 	return p0 - p1;
 }
 
-Vec2 support(const Vec2 *v, int n, int i, const Mm_Rect &m, Vec2 dir) {
-	Vec2 p0 = support(v, n, dir, i);
+Vec2 support(const Polygon &p, const Mm_Rect &m, Vec2 dir) {
+	Vec2 p0 = support(p, dir);
 	Vec2 p1 = support(m, -dir);
 	return p0 - p1;
 }
 
-Vec2 support(const Mm_Rect &m, const Vec2 *v, int n, int i, Vec2 dir) {
+Vec2 support(const Mm_Rect &m, const Polygon &p, Vec2 dir) {
 	Vec2 p0 = support(m, dir);
-	Vec2 p1 = support(v, n, -dir, i);
+	Vec2 p1 = support(p, -dir);
 	return p0 - p1;
+}
+
+inline bool do_simplex(Vec2 *s, s32 *n, Vec2 *dir) {
+	unimplemented();
+	if (*n == 2) {
+		//if (vec2_dot(s[1], s[0] - s[1]) ) return
+	} else { // n == 3
+
+	}
+	return false;
+}
+
+bool gjk(const Circle &sa, const Circle &sb) {
+	Vec2 dir = vec2(1, 0);
+	
+	Vec2 s[3], a;
+	s[0] = support(sa, sb, dir);
+	dir = -s[0];
+	s32 n = 1;
+
+	while (true) {
+		a = support(sa, sb, dir);
+		if (vec2_dot(a, dir) < 0.0f) return false; // no intersection
+		s[n] = a;
+		n += 1;
+		if (do_simplex(s, &n, &dir)) {
+			return true;
+		}
+	}
+
+	unimplemented();
+	return false;
 }
 
 //

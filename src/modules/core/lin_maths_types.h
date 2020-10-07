@@ -453,6 +453,12 @@ struct Ray2d {
 	Vec2 dir;
 };
 
+struct Polygon {
+	Vec2 *vertices;
+	s32 vertex_count;
+	s32 first_index;
+};
+
 //
 //
 //
