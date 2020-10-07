@@ -418,7 +418,7 @@ r32 vec4_dot(Vec4 a, Vec4 b);
 //
 //
 
-r32 orientation(Vec2 a, Vec2 b);
+r32 vec2_determinant(Vec2 a, Vec2 b);
 Vec3 vec2_cross(Vec2 a, Vec2 b);
 Vec3 vec3_cross(Vec3 a, Vec3 b);
 

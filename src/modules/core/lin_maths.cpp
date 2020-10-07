@@ -150,7 +150,7 @@ r32 vec4_dot(Vec4 a, Vec4 b) {
 //
 //
 
-r32 orientation(Vec2 a, Vec2 b) {
+r32 vec2_determinant(Vec2 a, Vec2 b) {
 	return (a.x * b.y) - (a.y * b.x);
 }
 
@@ -1640,7 +1640,7 @@ r32 signed_area(Vec3 a, Vec3 b, Vec3 c) {
 }
 
 bool triangle_is_cw(Vec2 a, Vec2 b, Vec2 c) {
-	return orientation(b - a, c - a) > 0.0f;
+	return vec2_determinant(b - a, c - a) > 0.0f;
 }
 
 Vec2 corner_point(const Mm_Rect &b, u32 n) {
@@ -1863,11 +1863,11 @@ Vec3 barycentric(Vec3 a, Vec3 b, Vec3 c, Vec3 p) {
 }
 
 bool is_quad_convex(Vec2 a, Vec2 b, Vec2 c, Vec2 d) {
-	auto bda = orientation(d - b, a - b);
-	auto bdc = orientation(d - b, c - b);
+	auto bda = vec2_determinant(d - b, a - b);
+	auto bdc = vec2_determinant(d - b, c - b);
 	if ((bda * bdc) >= 0.0f) return false;
-	auto acd = orientation(c - a, d - a);
-	auto acb = orientation(c - a, b - a);
+	auto acd = vec2_determinant(c - a, d - a);
+	auto acb = vec2_determinant(c - a, b - a);
 	return (acd * acb) < 0.0f;
 }
 
@@ -2098,11 +2098,11 @@ bool test_point_inside_capsule(Vec2 p, const Capsule2d &c) {
 bool test_point_inside_triangle(Vec2 p, Vec2 a, Vec2 b, Vec2 c) {
 	a -= p; b -= p; c -= p;
 
-	r32 u = orientation(b, c);
-	r32 v = orientation(c, a);	
+	r32 u = vec2_determinant(b, c);
+	r32 v = vec2_determinant(c, a);	
 	if ((u * v) < 0.0f) return false;
 
-	r32 w = orientation(a, b);
+	r32 w = vec2_determinant(a, b);
 	if ((u * w) < 0.0f) return false;
 
 	return true;
@@ -2670,35 +2670,102 @@ Vec2 support(const Mm_Rect &m, const Polygon &p, Vec2 dir) {
 	return p0 - p1;
 }
 
-inline bool do_simplex(Vec2 *s, s32 *n, Vec2 *dir) {
-	unimplemented();
-	if (*n == 2) {
-		//if (vec2_dot(s[1], s[0] - s[1]) ) return
-	} else { // n == 3
+struct Simplex2d {
+	Vec2 p[3];
+	s32 n;
+};
 
+inline bool do_simplex(Simplex2d * const simplex, Vec2 *dir) {
+	switch (simplex->n) {
+	case 2: {
+		// a = simplex[1]
+		// b = simplex[0]
+		Vec2 ab = simplex->p[0] - simplex->p[1];
+		Vec2 ao = -simplex->p[1];
+		if (vec2_dot(ao, ab) > 0.0f) {
+			r32 det = vec2_determinant(simplex->p[1], simplex->p[0]);
+			dir->x = -ab.y * det;
+			dir->y = ab.x * det;
+		} else {
+			*dir = ao;
+			simplex->p[0] = simplex->p[1];
+			simplex->n = 1;
+		}
+	} break;
+
+	case 3: {
+		// a = simplex[2]
+		// b = simplex[1]
+		// c = simplex[0]
+		Vec2 ab = simplex->p[1] - simplex->p[2];
+		Vec2 ac = simplex->p[0] - simplex->p[2];
+		Vec2 ao = -simplex->p[2];
+		r32 abc = vec2_determinant(ab, ac);
+
+		if (vec2_dot(vec2(-ac.y * abc, ac.x * abc), ao) > 0.0f) {
+			if (vec2_dot(ac, ao) > 0.0f) {
+				r32 det = vec2_determinant(simplex->p[2], simplex->p[0]);
+				dir->x = -ac.y * det;
+				dir->y = ac.x * det;
+				simplex->p[1] = simplex->p[0];
+				simplex->p[0] = simplex->p[2];
+				simplex->n = 2;
+			} else {
+				if (vec2_dot(ab, ao) > 0.0f) {
+					r32 det = vec2_determinant(simplex->p[2], simplex->p[1]);
+					dir->x = -ab.y * det;
+					dir->y = ab.x * det;
+					simplex->p[0] = simplex->p[2];
+					simplex->n = 2;
+				} else {
+					*dir = -simplex->p[2];
+					simplex->p[0] = simplex->p[2];
+					simplex->n = 1;
+				}
+			}
+		} else {
+			if (vec2_dot(vec2(ab.y * abc, -ab.x * abc), ao) > 0.0f) {
+				if (vec2_dot(ab, ao) > 0.0f) {
+					r32 det = vec2_determinant(simplex->p[2], simplex->p[1]);
+					dir->x = -ab.y * det;
+					dir->y = ab.x * det;
+					simplex->p[0] = simplex->p[2];
+					simplex->n = 2;
+				} else {
+					*dir = -simplex->p[2];
+					simplex->p[0] = simplex->p[2];
+					simplex->n = 1;
+				}
+			} else {
+				// point is inside the triangle
+				return true;
+			}
+		}
+	} break;
 	}
+
 	return false;
 }
 
 bool gjk(const Circle &sa, const Circle &sb) {
 	Vec2 dir = vec2(1, 0);
-	
-	Vec2 s[3], a;
-	s[0] = support(sa, sb, dir);
-	dir = -s[0];
-	s32 n = 1;
+	Simplex2d simplex;
+	simplex.p[0] = support(sa, sb, dir);
+	dir = -simplex.p[0];
+	simplex.n = 1;
 
+	Vec2 a;
 	while (true) {
 		a = support(sa, sb, dir);
 		if (vec2_dot(a, dir) < 0.0f) return false; // no intersection
-		s[n] = a;
-		n += 1;
-		if (do_simplex(s, &n, &dir)) {
+		simplex.p[simplex.n] = a;
+		simplex.n += 1;
+
+		if (do_simplex(&simplex, &dir)) {
 			return true;
 		}
 	}
 
-	unimplemented();
 	return false;
 }
 
