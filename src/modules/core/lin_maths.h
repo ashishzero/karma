@@ -882,44 +882,44 @@ bool dynamic_circle_vs_circle(const Circle &c0, const Circle &c1, Vec2 v0, Vec2 
 bool dynamic_circle_vs_mm_rect(const Circle &c, Vec2 d, const Mm_Rect &b, r32 *t);
 bool dynamic_mm_rect_vs_mm_rect(const Mm_Rect &a, const Mm_Rect &b, Vec2 va, Vec2 vb, r32 *tfirst, r32 *tlast);
 
-Vec2 farthest_vertex_in_dir(const Circle &c, Vec2 dir);
-Vec2 farthest_vertex_in_dir(const Mm_Rect &m, Vec2 dir);
-Vec2 farthest_vertex_in_dir(const Vec2 *v, int n, Vec2 dir, int start_index = 0);
+Vec2 support(const Circle &c, Vec2 dir);
+Vec2 support(const Mm_Rect &m, Vec2 dir);
+Vec2 support(const Vec2 *v, int n, Vec2 dir, int start_index = 0);
 
 template <typename A, typename B>
 inline Vec2 support(const A &a, const B &b, Vec2 dir) {
-	Vec2 p0 = farthest_vertex_in_dir(a, dir);
-	Vec2 p1 = farthest_vertex_in_dir(b, -dir);
+	Vec2 p0 = support(a, dir);
+	Vec2 p1 = support(b, -dir);
 	return p0 - p1;
 }
 
 inline Vec2 support(const Vec2 *a, int an, int ai, const Vec2 *b, int bn, int bi, Vec2 dir) {
-	Vec2 p0 = farthest_vertex_in_dir(a, an, dir, ai);
-	Vec2 p1 = farthest_vertex_in_dir(b, bn, -dir, bi);
+	Vec2 p0 = support(a, an, dir, ai);
+	Vec2 p1 = support(b, bn, -dir, bi);
 	return p0 - p1;
 }
 
 inline Vec2 support(const Vec2 *v, int n, int i, const Circle &c, Vec2 dir) {
-	Vec2 p0 = farthest_vertex_in_dir(v, n, dir, i);
-	Vec2 p1 = farthest_vertex_in_dir(c, -dir);
+	Vec2 p0 = support(v, n, dir, i);
+	Vec2 p1 = support(c, -dir);
 	return p0 - p1;
 }
 
 inline Vec2 support(const Circle &c, const Vec2 *v, int n, int i, Vec2 dir) {
-	Vec2 p0 = farthest_vertex_in_dir(c, dir);
-	Vec2 p1 = farthest_vertex_in_dir(v, n, -dir, i);
+	Vec2 p0 = support(c, dir);
+	Vec2 p1 = support(v, n, -dir, i);
 	return p0 - p1;
 }
 
 inline Vec2 support(const Vec2 *v, int n, int i, const Mm_Rect &m, Vec2 dir) {
-	Vec2 p0 = farthest_vertex_in_dir(v, n, dir, i);
-	Vec2 p1 = farthest_vertex_in_dir(m, -dir);
+	Vec2 p0 = support(v, n, dir, i);
+	Vec2 p1 = support(m, -dir);
 	return p0 - p1;
 }
 
 inline Vec2 support(const Mm_Rect &m, const Vec2 *v, int n, int i, Vec2 dir) {
-	Vec2 p0 = farthest_vertex_in_dir(m, dir);
-	Vec2 p1 = farthest_vertex_in_dir(v, n, -dir, i);
+	Vec2 p0 = support(m, dir);
+	Vec2 p1 = support(v, n, -dir, i);
 	return p0 - p1;
 }
 
