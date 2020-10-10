@@ -1687,6 +1687,24 @@ Vec2 closest_point_point_segment(Vec2 p, Vec2 a, Vec2 b, r32 *t) {
 	return a + (*t * ab);
 }
 
+Vec2 closest_point_point_segment(Vec2 p, Vec2 a, Vec2 b) {
+	r32 t;
+	return closest_point_point_segment(p, a, b, &t);
+}
+
+Vec2 closest_point_origin_segment(Vec2 a, Vec2 b, r32 *t) {
+	Vec2 ab = b - a;
+	*t = vec2_dot(-a, ab) / vec2_dot(ab, ab);
+	if (*t < 0.0f) *t = 0.0f;
+	if (*t > 1.0f) *t = 1.0f;
+	return a + (*t * ab);
+}
+
+Vec2 closest_point_origin_segment(Vec2 a, Vec2 b) {
+	r32 t;
+	return closest_point_origin_segment(a, b, &t);
+}
+
 Vec2 closest_point_point_mm_rect(Vec2 p, const Mm_Rect &rect) {
 	Vec2 q;
 	for (s32 i = 0; i < 2; i++) {
@@ -1698,12 +1716,20 @@ Vec2 closest_point_point_mm_rect(Vec2 p, const Mm_Rect &rect) {
 	return q;
 }
 
+Vec2 closest_point_origin_mm_rect(const Mm_Rect &rect) {
+	return closest_point_point_mm_rect(vec2(0), rect);
+}
+
 Vec2 closest_point_point_aabb2d(Vec2 a, const Aabb2d &aabb) {
 	Vec2 dim = vec2(aabb.radius[0], aabb.radius[1]);
 	Mm_Rect rect;
 	rect.min = aabb.center - dim;
 	rect.max = aabb.center + dim;
 	return closest_point_point_mm_rect(a, rect);
+}
+
+Vec2 closest_point_point_aabb2d(const Aabb2d &aabb) {
+	return closest_point_point_aabb2d(vec2(0), aabb);
 }
 
 Vec2 closest_point_point_triangle(Vec2 p, Vec2 a, Vec2 b, Vec2 c) {
@@ -1749,6 +1775,55 @@ Vec2 closest_point_point_triangle(Vec2 p, Vec2 a, Vec2 b, Vec2 c) {
 	}
 
 	// P inside face region
+	r32 denom = 1.0f / (va + vb + vc);
+	r32 v = vb * denom;
+	r32 w = vc * denom;
+	return a + ab * v + ac * w;
+}
+
+Vec2 closest_point_origin_triangle(Vec2 a, Vec2 b, Vec2 c) {
+	// Check if origin in vertex region outside A
+	Vec2 ab = b - a;
+	Vec2 ac = c - a;
+	Vec2 ap = -a;
+	r32 d1 = vec2_dot(ab, ap);
+	r32 d2 = vec2_dot(ac, ap);
+	if (d1 <= 0.0f && d2 <= 0.0f) return a; // barycentric coordinates (1,0,0)
+
+	// Check if P in vertex region outside B
+	Vec2 bp = -b;
+	r32 d3 = vec2_dot(ab, bp);
+	r32 d4 = vec2_dot(ac, bp);
+	if (d3 >= 0.0f && d4 <= d3) return b; // barycentric coordinates (0,1,0)
+
+	// Check if P in edge region of AB, if so return projection of P onto AB
+	r32 vc = d1 * d4 - d3 * d2;
+	if (vc <= 0.0f && d1 >= 0.0f && d3 <= 0.0f) {
+		r32 v = d1 / (d1 - d3);
+		return a + v * ab; // barycentric coordinates (1-v,v,0)
+	}
+
+	// Check if P in vertex region outside C
+	Vec2 cp = -c;
+	r32 d5 = vec2_dot(ab, cp);
+	r32 d6 = vec2_dot(ac, cp);
+	if (d6 >= 0.0f && d5 <= d6) return c; // barycentric coordinates (0,0,1)
+
+	// Check if P in edge region of AC, if so return projection of P onto AC
+	r32 vb = d5 * d2 - d1 * d6;
+	if (vb <= 0.0f && d2 >= 0.0f && d6 <= 0.0f) {
+		r32 w = d2 / (d2 - d6);
+		return a + w * ac; // barycentric coordinates (1-w,0,w)
+	}
+
+	// Check if P in edge region of BC, if so return projection of P onto BC
+	r32 va = d3 * d6 - d5 * d4;
+	if (va <= 0.0f && (d4 - d3) >= 0.0f && (d5 - d6) >= 0.0f) {
+		r32 w = (d4 - d3) / ((d4 - d3) + (d5 - d6));
+		return b + w * (c - b); // barycentric coordinates (0,1-w,w)
+	}
+
+	// origin inside face region
 	r32 denom = 1.0f / (va + vb + vc);
 	r32 v = vb * denom;
 	r32 w = vc * denom;
@@ -1812,10 +1887,10 @@ r32 closest_point_segment_segment(Vec2 p1, Vec2 q1, Vec2 p2, Vec2 q2, r32 *s, r3
 }
 
 Vec3 barycentric(Vec2 a, Vec2 b, Vec2 c, Vec2 p) {
-	auto m = (a.x * b.y) - (a.y * b.x);
+	auto m = signed_area_double(a, b, c);
 
-	r32 nu = signed_area_double(p.x, p.y, b.x, b.y, c.x, c.y);
-	r32 nv = signed_area_double(p.x, p.y, c.x, c.y, a.x, a.y);
+	r32 nu = signed_area_double(p, b, c);
+	r32 nv = signed_area_double(a, p, c);
 	r32 ood = 1.0f / m;
 
 	Vec3 res;
@@ -2100,6 +2175,17 @@ bool test_point_inside_triangle(Vec2 p, Vec2 a, Vec2 b, Vec2 c) {
 
 	r32 u = vec2_determinant(b, c);
 	r32 v = vec2_determinant(c, a);	
+	if ((u * v) < 0.0f) return false;
+
+	r32 w = vec2_determinant(a, b);
+	if ((u * w) < 0.0f) return false;
+
+	return true;
+}
+
+bool test_origin_inside_triangle(Vec2 a, Vec2 b, Vec2 c) {
+	r32 u = vec2_determinant(b, c);
+	r32 v = vec2_determinant(c, a);
 	if ((u * v) < 0.0f) return false;
 
 	r32 w = vec2_determinant(a, b);
@@ -2608,70 +2694,75 @@ Vec2 support(const Polygon &shape, Vec2 dir) {
 	return shape.vertices[index];
 }
 
-Vec2 support(const Circle &a, const Circle &b, Vec2 dir) {
+Vec2 support(const Circle &a, const Circle &b, Vec2 dir, Vec2 *pa, Vec2 *pb) {
 	Vec2 n = vec2_normalize(dir);
-	return a.center - b.center + n * (a.radius + b.radius);
+	*pa = a.center + n * a.radius;
+	*pb = b.center - n * b.radius;
+	return *pa - *pb;
 }
 
-Vec2 support(const Mm_Rect &a, const Mm_Rect &b, Vec2 dir) {
-	Vec2 s;
+Vec2 support(const Mm_Rect &a, const Mm_Rect &b, Vec2 dir, Vec2 *pa, Vec2 *pb) {
 	if (dir.x >= 0.0f) {
-		s.x = a.max.x - b.min.x;
+		pa->x = a.max.x;
+		pb->x = b.min.x;
 	} else {
-		s.x = a.min.x - b.max.x;
+		pa->x = a.min.x;
+		pb->x = b.max.x;
 	}
 	if (dir.y >= 0.0f) {
-		s.y = a.max.y - b.min.y;
+		pa->y = a.max.y;
+		pb->y = b.min.y;
 	} else {
-		s.y = a.min.y - b.max.y;
+		pa->y = a.min.y;
+		pb->y = b.max.y;
 	}
-	return s;
+	return *pa - *pb;
 }
 
-Vec2 support(const Circle &a, const Mm_Rect &b, Vec2 dir) {
-	Vec2 p0 = support(a, dir);
-	Vec2 p1 = support(b, -dir);
-	return p0 - p1;
+Vec2 support(const Circle &a, const Mm_Rect &b, Vec2 dir, Vec2 *pa, Vec2 *pb) {
+	*pa = support(a, dir);
+	*pb = support(b, -dir);
+	return *pa - *pb;
 }
 
-Vec2 support(const Mm_Rect &a, const Circle &b, Vec2 dir) {
-	Vec2 p0 = support(a, dir);
-	Vec2 p1 = support(b, -dir);
-	return p0 - p1;
+Vec2 support(const Mm_Rect &a, const Circle &b, Vec2 dir, Vec2 *pa, Vec2 *pb) {
+	*pa = support(a, dir);
+	*pb = support(b, -dir);
+	return *pa - *pb;
 }
 
-Vec2 support(const Polygon &a, const Polygon &b, Vec2 dir) {
-	Vec2 p0 = support(a, dir);
-	Vec2 p1 = support(b, -dir);
-	return p0 - p1;
+Vec2 support(const Polygon &a, const Polygon &b, Vec2 dir, Vec2 *pa, Vec2 *pb) {
+	*pa = support(a, dir);
+	*pb = support(b, -dir);
+	return *pa - *pb;
 }
 
-Vec2 support(const Polygon &p, const Circle &c, Vec2 dir) {
-	Vec2 p0 = support(p, dir);
-	Vec2 p1 = support(c, -dir);
-	return p0 - p1;
+Vec2 support(const Polygon &p, const Circle &c, Vec2 dir, Vec2 *pa, Vec2 *pb) {
+	*pa = support(p, dir);
+	*pb = support(c, -dir);
+	return *pa - *pb;
 }
 
-Vec2 support(const Circle &c, const Polygon &p, Vec2 dir) {
-	Vec2 p0 = support(c, dir);
-	Vec2 p1 = support(p, -dir);
-	return p0 - p1;
+Vec2 support(const Circle &c, const Polygon &p, Vec2 dir, Vec2 *pa, Vec2 *pb) {
+	*pa = support(c, dir);
+	*pb = support(p, -dir);
+	return *pa - *pb;
 }
 
-Vec2 support(const Polygon &p, const Mm_Rect &m, Vec2 dir) {
-	Vec2 p0 = support(p, dir);
-	Vec2 p1 = support(m, -dir);
-	return p0 - p1;
+Vec2 support(const Polygon &p, const Mm_Rect &m, Vec2 dir, Vec2 *pa, Vec2 *pb) {
+	*pa = support(p, dir);
+	*pb = support(m, -dir);
+	return *pa - *pb;
 }
 
-Vec2 support(const Mm_Rect &m, const Polygon &p, Vec2 dir) {
-	Vec2 p0 = support(m, dir);
-	Vec2 p1 = support(p, -dir);
-	return p0 - p1;
+Vec2 support(const Mm_Rect &m, const Polygon &p, Vec2 dir, Vec2 *pa, Vec2 *pb) {
+	*pa = support(m, dir);
+	*pb = support(p, -dir);
+	return *pa - *pb;
 }
 
-bool do_simplex(Simplex2d * const simplex, Vec2 *dir) {
-	switch (simplex->n) {
+bool next_simplex(Gjk_Simplex2d * const simplex, Vec2 *dir, s32 *n) {
+	switch (*n) {
 	case 2: {
 		// a = simplex[1]
 		// b = simplex[0]
@@ -2684,7 +2775,9 @@ bool do_simplex(Simplex2d * const simplex, Vec2 *dir) {
 		} else {
 			*dir = ao;
 			simplex->p[0] = simplex->p[1];
-			simplex->n = 1;
+			simplex->a[0] = simplex->a[1];
+			simplex->b[0] = simplex->b[1];
+			*n = 1;
 		}
 	} break;
 
@@ -2702,20 +2795,31 @@ bool do_simplex(Simplex2d * const simplex, Vec2 *dir) {
 				r32 det = vec2_determinant(simplex->p[2], simplex->p[0]);
 				dir->x = -ac.y * det;
 				dir->y = ac.x * det;
+
 				simplex->p[1] = simplex->p[0];
+				simplex->a[1] = simplex->a[0];
+				simplex->b[1] = simplex->b[0];
+
 				simplex->p[0] = simplex->p[2];
-				simplex->n = 2;
+				simplex->a[0] = simplex->a[2];
+				simplex->b[0] = simplex->b[2];
+
+				*n = 2;
 			} else {
 				if (vec2_dot(ab, ao) > 0.0f) {
 					r32 det = vec2_determinant(simplex->p[2], simplex->p[1]);
 					dir->x = -ab.y * det;
 					dir->y = ab.x * det;
 					simplex->p[0] = simplex->p[2];
-					simplex->n = 2;
+					simplex->a[0] = simplex->a[2];
+					simplex->b[0] = simplex->b[2];
+					*n = 2;
 				} else {
 					*dir = -simplex->p[2];
 					simplex->p[0] = simplex->p[2];
-					simplex->n = 1;
+					simplex->a[0] = simplex->a[2];
+					simplex->b[0] = simplex->b[2];
+					*n = 1;
 				}
 			}
 		} else {
@@ -2725,11 +2829,15 @@ bool do_simplex(Simplex2d * const simplex, Vec2 *dir) {
 					dir->x = -ab.y * det;
 					dir->y = ab.x * det;
 					simplex->p[0] = simplex->p[2];
-					simplex->n = 2;
+					simplex->a[0] = simplex->a[2];
+					simplex->b[0] = simplex->b[2];
+					*n = 2;
 				} else {
 					*dir = -simplex->p[2];
 					simplex->p[0] = simplex->p[2];
-					simplex->n = 1;
+					simplex->a[0] = simplex->a[2];
+					simplex->b[0] = simplex->b[2];
+					*n = 1;
 				}
 			} else {
 				// point is inside the triangle

@@ -408,8 +408,8 @@ int karma_user_zero() {
 		cursor.y *= view_height;
 
 		if (ImGui_IsUsingCursor()) {
-			cursor.x = INFINITY;
-			cursor.y = INFINITY;
+			cursor.x = 0;
+			cursor.y = 0;
 		}
 
 #if 0
@@ -523,7 +523,7 @@ int karma_user_zero() {
 
 #endif
 
-#if 1
+#if 0
 		Vec2 points_1[] = {
 			vec2(-3, 2), vec2(4, 3), vec2(4, -3), vec2(-0.5f, -5), vec2(-5, -2)
 		};
@@ -533,32 +533,36 @@ int karma_user_zero() {
 		};
 #endif
 
-		//Circle shape0 = { cursor, 2 };
-		//Circle shape1 = { vec2(-2, 2), 3.2f };
+		Circle shape0 = { cursor, 2 };
+		Circle shape1 = { vec2(-2, 2), 3.2f };
 
 		//Mm_Rect shape0 = mm_rect(cursor, cursor + vec2(3, 4));
 		//Mm_Rect shape1 = mm_rect(vec2(3), vec2(5));
 
 
-		Polygon shape0 = { points_0, static_count(points_0), 0 };
-		Polygon shape1 = { points_1, static_count(points_1), 0 };
+		//Polygon shape0 = { points_0, static_count(points_0), 0 };
+		//Polygon shape1 = { points_1, static_count(points_1), 0 };
 
 		//Vec2 a = vec2(-5);
 		//Vec2 b = cursor;
 		//Vec2 d = b - a;
 		//im2d_line(a, b, vec4(1, 1, 0), 0.02f);
 
+		bool collision = false;
+		Gjk_Simplex2d simplex;
+		Gjk_Manifold2d manifold;
 		auto color = vec4(1, 0, 0);
-		if (gjk(shape0, shape1)) {
+		if (gjk(shape0, shape1, &simplex, &manifold)) {
 			color = vec4(0, 1, 1);
+			collision = true;
 		}
 
-		//im2d_circle_outline(shape0.center, shape0.radius, color, 0.02f);
-		//im2d_circle_outline(shape1.center, shape1.radius, color, 0.02f);
+		im2d_circle_outline(shape0.center, shape0.radius, color, 0.02f);
+		im2d_circle_outline(shape1.center, shape1.radius, color, 0.02f);
 		//im2d_quad_outline(corner_point(shape0, 0), corner_point(shape0, 2), corner_point(shape0, 3), corner_point(shape0, 1), color, 0.02f);
 		//im2d_quad_outline(corner_point(shape1, 0), corner_point(shape1, 2), corner_point(shape1, 3), corner_point(shape1, 1), color, 0.02f);
 
-#if 1
+#if 0
 		for (int i = 0; i < static_count(points_0); ++i) {
 			im2d_line(points_0[i], points_0[(i + 1) % static_count(points_0)], color, 0.02f);
 		}
@@ -573,15 +577,34 @@ int karma_user_zero() {
 
 		im2d_circle(vec2(0), 0.1f, vec4(1));
 
+		Vec2 a, b;
 		Vec2 s0, s1;
-		s0 = support(shape0, shape1, vec2(unit_circle_cos[0], unit_circle_sin[0]));
+		s0 = support(shape0, shape1, vec2(unit_circle_cos[0], unit_circle_sin[0]), &a, &b);
 		Vec2 first = s0;
 		for (int i = 1; i < CIRCLE_SEGMENTS; ++i) {
-			s1 = support(shape0, shape1, vec2(unit_circle_cos[i], unit_circle_sin[i]));
+			s1 = support(shape0, shape1, vec2(unit_circle_cos[i], unit_circle_sin[i]), &a, &b);
 			im2d_line(s0, s1, vec4(0, 1, 0), 0.02f);
 			s0 = s1;
 		}
 		im2d_line(s0, first, vec4(0, 1, 0), 0.02f);
+
+		if (collision) {
+			//for (int i = 0; i < 3; ++i) {
+			//	im2d_circle(simplex.p[i], 0.1f, vec4(1, 1, 0));
+			//	im2d_circle(simplex.a[i], 0.1f, vec4(1, 0, 1));
+			//	im2d_circle(simplex.b[i], 0.1f, vec4(1, 0, 1));
+			//}
+
+			Vec2 ca, cb;
+			manifold_points(simplex, manifold, &ca, &cb);
+
+			im2d_line(ca, cb, vec4(1.2f, 0, 0), 0.02f);
+			im2d_triangle_outline(simplex.p[0], simplex.p[1], simplex.p[2], vec4(0.7f, 0.7f, 0.0f), 0.02f);
+			im2d_line(vec2(0), manifold.point, vec4(1, 0, 1), 0.02f);
+			im2d_circle(manifold.point, 0.1f, vec4(1, 0, 1));
+			//im2d_triangle_outline(simplex.a[0], simplex.a[1], simplex.a[2], vec4(0.7f, 0.0f, 0.7f), 0.02f);
+			//im2d_triangle_outline(simplex.b[0], simplex.b[1], simplex.b[2], vec4(0.7f, 0.0f, 0.7f), 0.02f);
+		}
 
 		im2d_end();
 

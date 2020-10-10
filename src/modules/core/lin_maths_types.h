@@ -459,9 +459,15 @@ struct Polygon {
 	s32 first_index;
 };
 
-struct Simplex2d {
+struct Gjk_Simplex2d {
 	Vec2 p[3];
-	s32 n;
+	Vec2 a[3];
+	Vec2 b[3];
+};
+
+struct Gjk_Manifold2d {
+	Vec2 point;
+	r32 dist2;
 };
 
 //
