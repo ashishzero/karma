@@ -2499,21 +2499,21 @@ void win32_initialize_xinput() {
 }
 
 DWORD WINAPI win_thread_proc(LPVOID param) {
-	Thread_Context *thread = (Thread_Context *)param;
-	context = *thread;
+	Thread_Context *thread = (Thread_Context *)((ptrsize)param);
+	memcpy(&context, thread, sizeof(context));
 
 	int result = thread->proc();
 
 	return result;
 }
 
-bool system_thread_create(const Builder &builder, String name, Thread_Context *thread) {
+bool system_thread_create(const Builder &builder, String name, Allocator temporary_storage_allocator, Thread_Context *thread) {
 	thread->proc = builder.entry;
 	thread->data = builder.data;
 	thread->allocator = builder.allocator;
 
 	if (builder.temporary_buffer_size) {
-		void *ptr = memory_allocate(builder.temporary_buffer_size, thread->allocator);
+		void *ptr = memory_allocate(builder.temporary_buffer_size, temporary_storage_allocator);
 		if (ptr == 0) {
 			win32_check_for_error();
 			system_fatal_error("Out of memory: Unable to allocate temporary storage memory!");
@@ -2523,7 +2523,7 @@ bool system_thread_create(const Builder &builder, String name, Thread_Context *t
 		thread->temp_memory = Temporary_Memory(0, 0);
 	}
 
-	thread->handle.hptr = CreateThread(0, 0, win_thread_proc, &thread, CREATE_SUSPENDED, 0);
+	thread->handle.hptr = CreateThread(0, 0, win_thread_proc, thread, CREATE_SUSPENDED, 0);
 	if (thread->handle.hptr != NULL) {
 		if (name.count) {
 			wchar_t *desc = (wchar_t *)tallocate((name.count + 1) * sizeof(wchar_t));

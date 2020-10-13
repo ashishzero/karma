@@ -986,7 +986,7 @@ bool gjk(const ShapeA &sa, const ShapeB &sb, Gjk_Simplex2d *simplex, Gjk_Manifol
 		simplex->b[remove_index] = simplex->b[2];
 	}
 
-	return true;
+	return test_origin_inside_triangle(simplex->p[0], simplex->p[1], simplex->p[2]);
 }
 
 inline void manifold_points(Gjk_Simplex2d &simplex, Gjk_Manifold2d &manifold, Vec2 *a, Vec2 *b) {

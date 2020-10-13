@@ -28,11 +28,36 @@ struct Quad_Mesh {
 	Vec2 vertices[4];
 };
 
+int temp_thread() {
+	String output = "This is a sample string 2";
+
+	System_File file;
+	if (system_open_file("temp/thread_test.txt", File_Operation_NEW, &file)) {
+		file.write(file.handle, output.data, output.count);
+		system_close_file(&file);
+	}
+
+	return 0;
+}
+
 int karma_user_zero() {
 	r32    framebuffer_w = 1280;
 	r32    framebuffer_h = 720;
 	Handle platform = system_create_window(u8"Karma", 1280, 720, System_Window_Show_NORMAL);
 	gfx_create_context(platform, Render_Backend_DIRECTX11, Vsync_ADAPTIVE, 2, (u32)framebuffer_w, (u32)framebuffer_h);
+
+	Builder builder;
+	builder.allocator = NULL_ALLOCATOR;
+	builder.data = nullptr;
+	builder.entry = temp_thread;
+	builder.flags = Builder_NONE;
+	builder.temporary_buffer_size = mega_bytes(32);
+
+	Thread_Context thread;
+	if (!system_thread_create(builder, "Async", context.allocator, &thread)) {
+		system_fatal_error("Failed to create thread");
+	}
+	system_thread_run(thread);
 
 	ImGui_Initialize();
 	Dev_ModeEnable();

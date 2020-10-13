@@ -554,7 +554,7 @@ Allocator system_create_heap_allocator(Heap_Type type = Heap_Type_NO_SERIALIZE, 
 void *system_virtual_alloc(void *address, ptrsize size, Vitual_Memory_Flags flags);
 void  system_virtual_free(void *ptr, ptrsize size, Vitual_Memory_Flags flags);
 
-bool		system_thread_create(const Builder &builder, String name, Thread_Context *thread);
+bool		system_thread_create(const Builder &builder, String name, Allocator temp_storage_allocator, Thread_Context *thread);
 void        system_thread_run(Thread_Context &thread);
 Thread_Wait system_thread_wait(Thread_Context &thread, u32 millisecs);
 void        system_thread_terminate(Thread_Context &thread, int exit_code);
