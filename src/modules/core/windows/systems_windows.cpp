@@ -2590,6 +2590,32 @@ void system_unlock_mutex(Handle handle) {
 	ReleaseMutex(handle.hptr);
 }
 
+Handle system_create_semaphore(u32 initial_count, u32 maximum_count) {
+	HANDLE semaphore = CreateSemaphoreW(nullptr, initial_count, maximum_count, nullptr);
+	Handle handle;
+	handle.hptr = semaphore;
+	return handle;
+}
+
+void system_destroy_semaphore(Handle handle) {
+	CloseHandle(handle.hptr);
+}
+
+Wait_Result system_wait_semaphore(Handle handle, u32 millisecs) {
+	auto result = WaitForSingleObject(handle.hptr, millisecs);
+	switch (result) {
+	case WAIT_ABANDONED: return Wait_Result_ABANDONED;
+	case WAIT_OBJECT_0: return Wait_Result_SIGNALED;
+	case WAIT_TIMEOUT: return Wait_Result_TIMEOUT;
+	case WAIT_FAILED: return Wait_Result_FAILED;
+	}
+	return Wait_Result_SUCCESS;
+}
+
+bool system_signal_semaphore(Handle handle, u32 count) {
+	return ReleaseSemaphore(handle.hptr, count, nullptr);
+}
+
 #if defined(SYSTEM_CONSOLE)
 int main() {
 	LPWSTR cmd_line = GetCommandLineW();

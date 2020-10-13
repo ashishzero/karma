@@ -565,6 +565,11 @@ void        system_destory_mutex(Handle handle);
 Wait_Result system_lock_mutex(Handle handle, u32 millisecs);
 void        system_unlock_mutex(Handle handle);
 
+Handle		system_create_semaphore(u32 initial_count, u32 maximum_count);
+void		system_destroy_semaphore(Handle handle);
+Wait_Result system_wait_semaphore(Handle handle, u32 millisecs);
+bool		system_signal_semaphore(Handle handle, u32 count);
+
 Builder system_builder();
 
 void system_log(int type, const char *title, ANALYSE_PRINTF_FORMAT_STRING(const char *fmt), ...) ANALYSE_PRINTF_FORMAT(3, 4);
