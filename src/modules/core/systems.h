@@ -568,7 +568,7 @@ void        system_unlock_mutex(Handle handle);
 Handle		system_create_semaphore(u32 initial_count, u32 maximum_count);
 void		system_destroy_semaphore(Handle handle);
 Wait_Result system_wait_semaphore(Handle handle, u32 millisecs);
-bool		system_signal_semaphore(Handle handle, u32 count);
+bool		system_signal_semaphore(Handle handle, u32 count = 1);
 
 Builder system_builder();
 

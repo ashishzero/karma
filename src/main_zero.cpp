@@ -28,15 +28,23 @@ struct Quad_Mesh {
 	Vec2 vertices[4];
 };
 
-int temp_thread() {
-	String output = "This is a sample string 2";
+bool running_worker_thread = true;
 
-	System_File file;
-	if (system_open_file("temp/thread_test.txt", File_Operation_NEW, &file)) {
-		file.write(file.handle, output.data, output.count);
-		system_close_file(&file);
+int worker_thread() {
+#if 0
+	Work_Thread_Info *info = (Work_Thread_Info *)context.data;
+	
+	Handle semaphore = info->semaphore;
+
+	while (running_worker_thread) {
+		Work *work = get_work();
+		if (work) {
+			work->proc(work->param);
+		} else {
+			system_wait_semaphore(semaphore, WAIT_INFINITE);
+		}
 	}
-
+#endif
 	return 0;
 }
 
@@ -49,7 +57,7 @@ int karma_user_zero() {
 	Builder builder;
 	builder.allocator = NULL_ALLOCATOR;
 	builder.data = nullptr;
-	builder.entry = temp_thread;
+	builder.entry = worker_thread;
 	builder.flags = Builder_NONE;
 	builder.temporary_buffer_size = mega_bytes(32);
 
@@ -665,7 +673,7 @@ int karma_user_zero() {
 #if defined(BUILD_DEVELOPER_SERVICE)
 		{
 			Dev_TimedScope(DebugRender);
-			//Dev_RenderFrame();
+			Dev_RenderFrame();
 		}
 #endif
 

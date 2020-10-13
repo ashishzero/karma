@@ -127,6 +127,7 @@ struct Notification_Handler {
 	Notification	notifications[NOTIFICATION_MAX_COUNT];
 	s64				write_index;
 	s64				read_index;
+	Handle			mutex;
 };
 
 static Profiler				profiler;
@@ -159,6 +160,7 @@ void dev_mode_enable() {
 		profiler.block_colors[color_index] = random_color3(0.9f, 0.3f);
 	}
 
+	notification_handler.mutex = system_create_mutex();
 }
 
 void dev_audio_feedback(r32 *samples, u32 size_in_bytes, u32 channel_count, u32 zeroed_size) {
@@ -198,10 +200,15 @@ void dev_audio_feedback(r32 *samples, u32 size_in_bytes, u32 channel_count, u32 
 }
 
 void dev_notify_level(Notification_Level level, ANALYSE_PRINTF_FORMAT_STRING(const char *fmt), ...) {
-	Notification *notification = notification_handler.notifications + (notification_handler.write_index % NOTIFICATION_MAX_COUNT);
-	intrin_InterlockedIncrement64(&notification_handler.write_index);
-	if ((notification_handler.write_index % NOTIFICATION_MAX_COUNT) == (notification_handler.read_index % NOTIFICATION_MAX_COUNT))
-		intrin_InterlockedIncrement64(&notification_handler.read_index);
+	system_lock_mutex(notification_handler.mutex, WAIT_INFINITE);
+
+	Notification *notification = notification_handler.notifications + notification_handler.write_index;
+	
+	notification_handler.write_index += 1;
+	if (notification_handler.read_index == notification_handler.write_index) {
+		notification_handler.read_index = (notification_handler.read_index + 1) % NOTIFICATION_MAX_COUNT;
+	}
+	if (notification_handler.write_index == NOTIFICATION_MAX_COUNT) notification_handler.write_index = 0;
 	
 	va_list ap;
 	va_start(ap, fmt);
@@ -210,6 +217,8 @@ void dev_notify_level(Notification_Level level, ANALYSE_PRINTF_FORMAT_STRING(con
 
 	notification->level = level;
 	notification->t = NOTIFICATION_FADE_STAY_TIME;
+
+	system_unlock_mutex(notification_handler.mutex);
 }
 
 bool dev_get_presentation_state() {
@@ -452,28 +461,64 @@ void draw_notifications() {
 
 	constexpr r32 DISTANCE = 10.0f;
 
-	if (notification_handler.read_index < notification_handler.write_index) {
-		ImGuiViewport* viewport = ImGui::GetMainViewport();
+	if (notification_handler.read_index != notification_handler.write_index) {
+		system_lock_mutex(notification_handler.mutex, WAIT_INFINITE);
+
+		ImGuiViewport *viewport = ImGui::GetMainViewport();
 		ImVec2 work_area_pos = viewport->GetWorkPos();
 		ImVec2 work_area_size = viewport->GetWorkSize();
 		ImVec2 window_pos = ImVec2(work_area_pos.x + work_area_size.x * 0.5f, work_area_pos.y + DISTANCE);
 		ImVec2 window_pos_pivot = ImVec2(0.0f, 0.0f);
 		ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, window_pos_pivot);
 		ImGui::SetNextWindowViewport(viewport->ID);
+		ImGui::SetNextWindowBgAlpha(0);
 
 		ImGuiWindowFlags flags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
 		if (ImGui::Begin("Notifications window", nullptr, flags)) {
-			for (s64 index = notification_handler.read_index; index != notification_handler.write_index; ++index) {
-				auto &notification = notification_handler.notifications[index % NOTIFICATION_MAX_COUNT];
-				if (notification.t > 0.0f) {
-					ImGui::TextColored(NOTIFICATION_FONT_COLORS_IN[notification.level], notification.msg);
-					notification.t -= dt;
-				} else {
-					intrin_InterlockedIncrement64(&notification_handler.read_index);
+
+			s32 finished = 0;
+
+			if (notification_handler.read_index < notification_handler.write_index) {
+				for (s64 index = notification_handler.read_index; index < notification_handler.write_index; ++index) {
+					auto &notification = notification_handler.notifications[index];
+					if (notification.t > 0.0f) {
+						ImGui::TextColored(NOTIFICATION_FONT_COLORS_IN[notification.level], notification.msg);
+						notification.t -= dt;
+					}
+					else {
+						finished += 1;
+					}
 				}
 			}
+			else {
+				for (s64 index = notification_handler.read_index; index < NOTIFICATION_MAX_COUNT; ++index) {
+					auto &notification = notification_handler.notifications[index];
+					if (notification.t > 0.0f) {
+						ImGui::TextColored(NOTIFICATION_FONT_COLORS_IN[notification.level], notification.msg);
+						notification.t -= dt;
+					}
+					else {
+						finished += 1;
+					}
+				}
+				for (s64 index = 0; index < notification_handler.write_index; ++index) {
+					auto &notification = notification_handler.notifications[index];
+					if (notification.t > 0.0f) {
+						ImGui::TextColored(NOTIFICATION_FONT_COLORS_IN[notification.level], notification.msg);
+						notification.t -= dt;
+					}
+					else {
+						finished += 1;
+					}
+				}
+			}
+
+			notification_handler.read_index = (notification_handler.read_index + finished) % NOTIFICATION_MAX_COUNT;
+
 			ImGui::End();
 		}
+
+		system_unlock_mutex(notification_handler.mutex);
 	}
 }
 
