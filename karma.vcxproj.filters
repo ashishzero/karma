@@ -16,7 +16,6 @@
     <ClCompile Include="src\modules\core\length_string.cpp" />
     <ClCompile Include="src\modules\core\lin_maths.cpp" />
     <ClCompile Include="src\modules\core\stream.cpp" />
-    <ClCompile Include="src\modules\core\tokenizer.cpp" />
     <ClCompile Include="src\modules\core\unicode.cpp" />
     <ClCompile Include="src\modules\imgui\imconfig.cpp" />
     <ClCompile Include="src\modules\imgui\imgui.cpp" />
@@ -37,6 +36,7 @@
     <ClCompile Include="src\main_shankar.cpp" />
     <ClCompile Include="src\main_pujan.cpp" />
     <ClCompile Include="src\modules\core\thread_pool.cpp" />
+    <ClCompile Include="src\modules\core\tokenizer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\modules\core\directx\dx_error.h" />

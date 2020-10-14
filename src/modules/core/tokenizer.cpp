@@ -88,7 +88,10 @@ bool parse_integer(const String string, s64 *out) {
 	return index >= string.count;
 }
 
-bool parse_real(const String string, r64 *out) {
+bool parse_real(const String string, r64 *out, bool *found_period, bool *found_exponential) {
+	*found_period = false;
+	*found_exponential = false;
+
 	if (!string.count) return false;
 
 	s64 index = 0;
@@ -113,6 +116,8 @@ bool parse_real(const String string, r64 *out) {
 	bool period_fail = false;
 	if (index < string.count && code == '.') {
 		r64 p = 1, s = 0;
+		*found_period = true;
+		s32 loop_count = 0;
 
 		for (index += 1; index < string.count; index += 1) {
 			code = string[index];
@@ -121,14 +126,16 @@ bool parse_real(const String string, r64 *out) {
 			else
 				break;
 			p *= 10;
+			loop_count += 1;
 		}
 
 		value += s / p;
-		period_fail = (s == 0);
+		period_fail = (loop_count == 0);
 	}
 
 	bool exponent_fail = false;
 	if (index < string.count && (code == 'e' || code == 'E')) {
+		*found_exponential = true;
 		index += 1;
 
 		if (index < string.count) {
@@ -437,13 +444,17 @@ Token tokenizer_next_token(Tokenizer_State *tokenizer) {
 			}
 
 			if (kind != Token_Kind_NONE) {
-				if (!count) {
+				if (kind == Token_Kind_PERIOD && is_numeral(b)) {
+					kind = Token_Kind_NONE;
+				} else if (!count) {
 					count       = 1;
 					token.kind  = kind;
 					token.value = tokenizer->at[0].codepoint;
 					tokenizer_advance(tokenizer, 1);
+					break;
+				} else {
+					break;
 				}
-				break;
 			}
 
 			if (a == '"' || a == '\'') {
@@ -495,12 +506,23 @@ Token tokenizer_next_token(Tokenizer_State *tokenizer) {
 		if (count) {
 			r64 rval;
 			s64 ival;
-			if (parse_integer(token.content, &ival)) {
-				token.kind  = Token_Kind_INTEGER_LITERAL;
+			bool found_period, found_exponential;
+			if (parse_real(token.content, &rval, &found_period, &found_exponential)) {
+				if (!found_period && !found_exponential) {
+					if (parse_integer(token.content, &ival)) {
+						token.kind = Token_Kind_INTEGER_LITERAL;
+						token.value = ival;
+					} else {
+						token.kind = Token_Kind_REAL_LITERAL;
+						token.value = rval;
+					}
+				} else {
+					token.kind = Token_Kind_REAL_LITERAL;
+					token.value = rval;
+				}
+			} else if (parse_integer(token.content, &ival)) {
+				token.kind = Token_Kind_INTEGER_LITERAL;
 				token.value = ival;
-			} else if (parse_real(token.content, &rval)) {
-				token.kind  = Token_Kind_REAL_LITERAL;
-				token.value = rval;
 			} else {
 				if (string_match(token.content, "true")) {
 					token.kind  = Token_Kind_INTEGER_LITERAL;

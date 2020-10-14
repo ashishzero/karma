@@ -13,7 +13,7 @@ union Entity_Handle {
 		u32 index;
 		Entity_Kind kind;
 	};
-	attribute("display") u64 id;
+	attribute("display", "write") u64 id;
 };
 
 static constexpr Entity_Handle INVALID_ENTITY_HANDLE = {};

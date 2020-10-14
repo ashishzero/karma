@@ -13,10 +13,10 @@ constexpr r32 MATH_R32_EQUALS_DEFAULT_TOLERANCE = 0.001f;
 #include <math.h>
 
 union Vec2 {
+	r32 m[2];
 	struct {
 		r32 x, y;
 	};
-	r32 m[2];
 };
 
 inline Vec2 vec2(r32 a) {
@@ -32,10 +32,10 @@ inline Vec2 vec2(r32 a, r32 b) {
 }
 
 union Vec2s {
+	s32 m[2];
 	struct {
 		s32 x, y;
 	};
-	s32 m[2];
 };
 
 inline Vec2s vec2s(int a) {
@@ -51,6 +51,7 @@ inline Vec2s vec2s(int a, int b) {
 }
 
 union Vec3 {
+	r32 m[3];
 	struct {
 		r32 x, y, z;
 	};
@@ -62,7 +63,6 @@ union Vec3 {
 		r32  _ignorex;
 		Vec2 yz;
 	};
-	r32 m[3];
 };
 
 inline Vec3 vec3(r32 a) {
@@ -93,6 +93,7 @@ inline Vec3 vec3(r32 a, Vec2 b) {
 }
 
 union Vec3s {
+	s32 m[3];
 	struct {
 		s32 x, y, z;
 	};
@@ -104,7 +105,6 @@ union Vec3s {
 		s32   _ignorex;
 		Vec2s yz;
 	};
-	s32 m[3];
 };
 
 inline Vec3s vec3s(int a) {
@@ -133,6 +133,7 @@ inline Vec3s vec3s(int a, Vec2s b) {
 }
 
 union Vec4 {
+	r32 m[4];
 	struct {
 		r32 x, y, z, w;
 	};
@@ -148,7 +149,6 @@ union Vec4 {
 		r32  _ignorex;
 		Vec3 yzw;
 	};
-	r32 m[4];
 };
 
 inline Vec4 vec4(r32 a) {
@@ -191,6 +191,7 @@ inline Vec4 vec4(r32 a, Vec3 b) {
 }
 
 union Vec4s {
+	s32 m[4];
 	struct {
 		s32 x, y, z, w;
 	};
@@ -206,7 +207,6 @@ union Vec4s {
 		s32   _ignorex;
 		Vec3s yzw;
 	};
-	s32 m[4];
 };
 
 inline Vec4s vec4s(int a) {
@@ -245,10 +245,10 @@ typedef Vec4 Color4;
 typedef Vec3 Color3;
 
 union Colorh {
+	u32 hex;
 	struct {
 		u8 r, g, b, a;
 	};
-	u32 hex;
 };
 
 inline Colorh colorh(u8 _r, u8 _g, u8 _b, u8 _a = 0xff) {
@@ -337,6 +337,7 @@ inline Mat4 mat4(r32 x00, r32 x10, r32 x20, r32 x30,
 }
 
 union Quat {
+	r32 m[4];
 	struct {
 		r32 x, y, z, w;
 	};
@@ -346,7 +347,6 @@ union Quat {
 	struct {
 		Vec4 v4;
 	};
-	r32 m[4];
 };
 
 inline Quat quat(r32 _b, r32 _c, r32 _d, r32 _a) {

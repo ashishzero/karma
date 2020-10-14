@@ -37,12 +37,7 @@ Array_View<asset_info> prepare_asset()
 {
 	auto all_files = system_find_files("../res", "*", true);
 	Array<asset_info> asset_table;
-	FILE* fp_asset_table = fopen("temp/asset_table.txt", "rb+");
-	if (fp_asset_table == NULL)
-	{
-		printf("file not opened");
-		exit(1);
-	}
+
 	FILE* fp_asset_data = fopen("temp/asset_data.txt", "rb+");
 	if (fp_asset_data == NULL)
 	{
@@ -51,9 +46,24 @@ Array_View<asset_info> prepare_asset()
 	}
 
 	//defer{ fclose(fp_asset_data); };
+	String asset_table_content = system_read_entire_file("temp/asset_table.txt");
+	Tokenization_Status status;
+	auto asset_table_tokens = tokenize(asset_table_content, &status);
+	defer {
+		memory_free(asset_table_content.data);
+		memory_free(asset_table_tokens.data);
+	};
+	if (status.result != Tokenization_Result_SUCCESS) {
+		printf("Failed to tokenize: %zd, %zd\n", status.row, status.column);
+		exit(0);
+	}
 
 	fseek(fp_asset_data, 0, SEEK_END);
-	deserialize_from_file(fp_asset_table, "asset_table", reflect_info<Array<asset_info>>(), (char*)&asset_table, 1, 0);
+	if (!deserialize_from_file(asset_table_tokens, "asset_table", reflect_info<Array<asset_info>>(), (char *)&asset_table, 1, 0)) {
+		printf("Failed to deserialize\n");
+		exit(0);
+	}
+
 	FILE* source;
 	asset_info single_asset;
 	char* buffer;
@@ -103,10 +113,14 @@ Array_View<asset_info> prepare_asset()
 			fclose(source);
 		}
 	}
-	fclose(fp_asset_table);
-	fp_asset_table = fopen("temp/asset_table.txt", "wb");
-	serialize_to_file(fp_asset_table, "asset_table", reflect_info<Array<asset_info>>(), (char*)&asset_table, 1, 0, true);
-	fclose(fp_asset_table);
+	System_File asset_table_file;
+	Ostream out;
+	serialize_to_file(&out, "asset_table", reflect_info<Array<asset_info>>(), (char*)&asset_table, 1, 0, true);
+	if (system_open_file("temp/asset_table.txt", File_Operation_NEW, &asset_table_file)) {
+		ostream_build_out_file(&out, &asset_table_file);
+		system_close_file(&asset_table_file);
+	}
+	ostream_free(&out);
 	fclose(fp_asset_data);
 	return asset_table;
 }

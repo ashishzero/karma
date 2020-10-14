@@ -9,6 +9,7 @@
 #include "modules/imgui/dev.h"
 #include "modules/gfx/renderer.h"
 #include "modules/core/thread_pool.h"
+#include "modules/core/serialize.h"
 
 #include "entity.h"
 
@@ -34,6 +35,67 @@ void test_print(void *param) {
 	system_log(LOG_INFO, "Task", "ThreadId:%5zu %s. ", context.id, string);
 }
 
+struct Async_Serialize {
+	const Type_Info *info;
+	void *data;
+	const char *file;
+	Allocator allocator;
+};
+
+void test_serialize(void *param) {
+	Async_Serialize *work = (Async_Serialize *)param;
+	
+	Ostream out;
+	out.allocator = work->allocator;
+	serialize_to_file(&out, "test", work->info, (char *)work->data);
+	
+	defer{
+		ostream_free(&out);
+	};
+
+	System_File file;
+	if (!system_open_file(String(work->file, strlen(work->file)), File_Operation_NEW, &file)) {
+		system_log(LOG_ERROR, "Serialize", "File: %s could not be opened!", work->file);
+		return;
+	}
+	ostream_build_out_file(&out, &file);
+	system_close_file(&file);
+
+	system_log(LOG_INFO, "Serialization", "Written file: %s", work->file);
+}
+
+void test_deserialize(void *param) {
+	Async_Serialize *work = (Async_Serialize *)param;
+
+	auto allocator = context.allocator;
+	context.allocator = work->allocator;
+	defer{
+		context.allocator = allocator;
+	};
+
+	String content = system_read_entire_file(String(work->file, strlen(work->file)));
+	if (!content.count) {
+		system_log(LOG_ERROR, "Deserialize", "File: %s could not be opened!", work->file);
+		return;
+	}
+
+	Tokenization_Status status;
+	auto tokens = tokenize(content, &status);
+	if (status.result != Tokenization_Result_SUCCESS) {
+		system_log(LOG_ERROR, "Deserialize", "File: %s could not be tokenized [%zd, %zd]", status.row, status.column);
+		return;
+	}
+
+	if (!deserialize_from_file(tokens, "test", work->info, (char *)work->data)) {
+		system_log(LOG_ERROR, "Deserialization", "Deserialization Failed: %s", work->file);
+		return;
+	}
+
+	memory_free(tokens.data);
+	memory_free(content.data);
+	system_log(LOG_INFO, "Deserialization", "Loaded from file: %s", work->file);
+}
+
 int karma_user_zero() {
 	if (!async_initialize(2, mega_bytes(32), context.allocator)) {
 		system_fatal_error("Thread could not be created");
@@ -43,6 +105,9 @@ int karma_user_zero() {
 	r32    framebuffer_h = 720;
 	Handle platform = system_create_window(u8"Karma", 1280, 720, System_Window_Show_NORMAL);
 	gfx_create_context(platform, Render_Backend_DIRECTX11, Vsync_ADAPTIVE, 2, (u32)framebuffer_w, (u32)framebuffer_h);
+
+	Async_Serialize save_work;
+	save_work.allocator = system_create_heap_allocator(Heap_Type_SERIALIZE);
 
 	Work_Queue *queue = async_queue(0);
 	Work_Queue *bg_queue = async_queue(1);
@@ -93,7 +158,7 @@ int karma_user_zero() {
 	u64 frequency = system_get_frequency();
 	u64 counter = system_get_counter();
 
-#if 0
+#if 1
 	Entity_Manager manager = manager_create();
 
 	auto player = manager_add_entity(&manager, Player);
@@ -152,7 +217,7 @@ int karma_user_zero() {
 
 	Player_Controller controller = {};
 
-#if 0
+#if 1
 	Vec3 p[3];
 	p[0] = vec3(0.0f, 0.0f, 0.0f);
 	p[1] = vec3(0.0f, 0.0f, 0.0f);
@@ -250,7 +315,7 @@ int karma_user_zero() {
 
 		Dev_TimedBlockBegin(Simulation);
 
-#if 0
+#if 1
 		//Array<Vec2> normals;
 		Array<r32> t_values;
 		//ray_hits.allocator = TEMPORARY_ALLOCATOR;
@@ -263,7 +328,7 @@ int karma_user_zero() {
 		while (accumulator_t >= fixed_dt) {
 			Dev_TimedScope(SimulationFrame);
 
-#if 0
+#if 1
 			memset(&hit, 0, sizeof(hit));
 
 			const r32 gravity = 10;
@@ -438,6 +503,7 @@ int karma_user_zero() {
 
 		auto view = orthographic_view(-view_width, view_width, view_height, -view_height);
 
+#if 1 // collision test
 		auto cursor = system_get_cursor_position();
 		cursor.x /= window_w;
 		cursor.y /= window_h;
@@ -449,8 +515,9 @@ int karma_user_zero() {
 			cursor.x = 0;
 			cursor.y = 0;
 		}
+#endif
 
-#if 0
+#if 1
 		static auto last_button_state = Key_State_UP;
 		static Entity *selected_entity = nullptr;
 		Entity *hovered_entity = nullptr;
@@ -521,7 +588,7 @@ int karma_user_zero() {
 
 		im2d_begin(view);
 
-#if 0
+#if 1
 		im2d_quad(quad_mesh.quad.positions[0], 
 			quad_mesh.quad.positions[1], 
 			quad_mesh.quad.positions[2], 
@@ -560,6 +627,8 @@ int karma_user_zero() {
 		//}
 
 #endif
+
+#if 0 // collision test
 
 #if 0
 		Vec2 points_1[] = {
@@ -643,6 +712,7 @@ int karma_user_zero() {
 			//im2d_triangle_outline(simplex.a[0], simplex.a[1], simplex.a[2], vec4(0.7f, 0.0f, 0.7f), 0.02f);
 			//im2d_triangle_outline(simplex.b[0], simplex.b[1], simplex.b[2], vec4(0.7f, 0.0f, 0.7f), 0.02f);
 		}
+#endif
 
 		im2d_end();
 
@@ -678,11 +748,25 @@ int karma_user_zero() {
 #if defined(BUILD_DEVELOPER_SERVICE)
 		{
 			Dev_TimedScope(DebugRender);
-			Dev_RenderFrame();
+			//Dev_RenderFrame();
 		}
 #endif
 
-		
+		ImGui::Begin("Test Window");
+		editor_draw(*player);
+		if (ImGui::Button("Save Player")) {
+			save_work.data = player;
+			save_work.file = "temp/player.txt";
+			save_work.info = reflect_info<Player>();
+			async_add_work(bg_queue, test_serialize, &save_work);
+		}
+		if (ImGui::Button("Load Player")) {
+			save_work.data = player;
+			save_work.file = "temp/player.txt";
+			save_work.info = reflect_info<Player>();
+			async_add_work(bg_queue, test_deserialize, &save_work);
+		}
+		ImGui::End();
 
 		//ImGui::ShowDemoWindow();
 
