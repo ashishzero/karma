@@ -31,7 +31,7 @@ struct Quad_Mesh {
 
 void test_print(void *param) {
 	const char *string = (const char *)param;
-	system_log(LOG_INFO, "", "%zu %s. ", context.id, string);
+	system_log(LOG_INFO, "Task", "ThreadId:%5zu %s. ", context.id, string);
 }
 
 int karma_user_zero() {

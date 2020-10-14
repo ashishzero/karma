@@ -2715,12 +2715,6 @@ void system_log(int type, const char *title, ANALYSE_PRINTF_FORMAT_STRING(const 
 	char    pool[STB_SPRINTF_MIN];
 	wchar_t msg[STB_SPRINTF_MIN + 1];
 
-	struct Ctx {
-		wchar_t *wbuf;
-		HANDLE   handle;
-	};
-	Ctx ctx;
-
 	HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
 	if (handle != INVALID_HANDLE_VALUE) {
 		if (type == LOG_INFO) {
@@ -2733,28 +2727,12 @@ void system_log(int type, const char *title, ANALYSE_PRINTF_FORMAT_STRING(const 
 		DWORD written = 0;
 
 		int len = stbsp_snprintf(pool, STB_SPRINTF_MIN, "[%s] - ", title);
-		MultiByteToWideChar(CP_UTF8, 0, pool, -1, msg, sizeof(wchar_t) * (STB_SPRINTF_MIN));
-		WriteConsoleW(handle, msg, len, &written, 0);
-		OutputDebugStringW(msg);
-
-		ctx.wbuf = msg;
-		ctx.handle = handle;
-
 		va_list ap;
 		va_start(ap, fmt);
-		stbsp_vsprintfcb([](char const *buf, void *user, int len) -> char * {
-			auto *ctx = (Ctx *)user;
-			MultiByteToWideChar(CP_UTF8, 0, buf, len, ctx->wbuf, sizeof(wchar_t) * (STB_SPRINTF_MIN));
-			ctx->wbuf[len] = 0;
-			DWORD written = 0;
-			WriteConsoleW(ctx->handle, ctx->wbuf, len, &written, 0);
-			OutputDebugStringW(ctx->wbuf);
-			return (char *)buf;
-		},
-			&ctx, pool, fmt, ap);
+		len += stbsp_vsnprintf(pool + len, STB_SPRINTF_MIN, fmt, ap);
 		va_end(ap);
+		len += stbsp_snprintf(pool + len, STB_SPRINTF_MIN, "\n");
 
-		len = stbsp_snprintf(pool, STB_SPRINTF_MIN, "\n");
 		MultiByteToWideChar(CP_UTF8, 0, pool, -1, msg, sizeof(wchar_t) * (STB_SPRINTF_MIN));
 		WriteConsoleW(handle, msg, len, &written, 0);
 		OutputDebugStringW(msg);
