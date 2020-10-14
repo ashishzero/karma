@@ -35,7 +35,9 @@ void test_print(void *param) {
 }
 
 int karma_user_zero() {
-	async_initialize(2, mega_bytes(32), context.allocator);
+	if (!async_initialize(2, mega_bytes(32), context.allocator)) {
+		system_fatal_error("Thread could not be created");
+	}
 
 	r32    framebuffer_w = 1280;
 	r32    framebuffer_h = 720;
@@ -43,6 +45,19 @@ int karma_user_zero() {
 	gfx_create_context(platform, Render_Backend_DIRECTX11, Vsync_ADAPTIVE, 2, (u32)framebuffer_w, (u32)framebuffer_h);
 
 	Work_Queue *queue = async_queue(0);
+	Work_Queue *bg_queue = async_queue(1);
+
+	async_add_work(bg_queue, test_print, "String 10");
+	async_add_work(bg_queue, test_print, "String 11");
+	async_add_work(bg_queue, test_print, "String 12");
+	async_add_work(bg_queue, test_print, "String 13");
+	async_add_work(bg_queue, test_print, "String 14");
+	async_add_work(bg_queue, test_print, "String 15");
+	async_add_work(bg_queue, test_print, "String 16");
+	async_add_work(bg_queue, test_print, "String 17");
+	async_add_work(bg_queue, test_print, "String 18");
+	async_add_work(bg_queue, test_print, "String 19");
+	async_add_work(bg_queue, test_print, "String 20");
 
 	async_add_work(queue, test_print, "String 0");
 	async_add_work(queue, test_print, "String 1");
@@ -54,18 +69,6 @@ int karma_user_zero() {
 	async_add_work(queue, test_print, "String 7");
 	async_add_work(queue, test_print, "String 8");
 	async_add_work(queue, test_print, "String 9");
-
-	async_add_work(queue, test_print, "String 10");
-	async_add_work(queue, test_print, "String 11");
-	async_add_work(queue, test_print, "String 12");
-	async_add_work(queue, test_print, "String 13");
-	async_add_work(queue, test_print, "String 14");
-	async_add_work(queue, test_print, "String 15");
-	async_add_work(queue, test_print, "String 16");
-	async_add_work(queue, test_print, "String 17");
-	async_add_work(queue, test_print, "String 18");
-	async_add_work(queue, test_print, "String 19");
-	async_add_work(queue, test_print, "String 20");
 
 	async_flush_work(queue);
 
@@ -209,7 +212,7 @@ int karma_user_zero() {
 			}
 
 			if ((event.type & Event_Type_KEY_UP) && event.key.symbol == Key_SPACE) {
-				async_add_work(queue, test_print, "Test Print");
+				async_add_work(bg_queue, test_print, "Test Print");
 				break;
 			}
 

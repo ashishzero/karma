@@ -99,21 +99,32 @@ void async_flush_work(Work_Queue *queue) {
 }
 
 int worker_thread() {
-	// TODO: Support multiple queues
-	Work_Queue *queue = async.work_queues;
+	Work_Queue *queue = nullptr;
+	u32 q_index = 0;
+
+	auto work_queues = async.work_queues;
 
 	while (true) {
-		if (queue->work_count) {
-			s32 check_read_index = queue->read_index;
-			s32 new_read_index = (check_read_index + 1) % WORK_QUEUE_MAX_ENTRY_COUNT;
-			s32 read_index = system_interlocked_compare_exchange(&queue->read_index, new_read_index, check_read_index);
-			if (read_index == check_read_index) {
-				Work_Queue::Entry entry = queue->entries[read_index];
-				system_interlocked_decrement(&queue->work_count);
-				entry.proc(entry.param);
+		queue = nullptr;
+		for (q_index = 0; q_index < MAX_WORK_QUEUE; ++q_index) {
+			if (work_queues[q_index].work_count) {
+				queue = work_queues + q_index;
+				break;
 			}
 		}
-		else {
+
+		if (queue) {
+			if (queue->work_count) {
+				s32 check_read_index = queue->read_index;
+				s32 new_read_index = (check_read_index + 1) % WORK_QUEUE_MAX_ENTRY_COUNT;
+				s32 read_index = system_interlocked_compare_exchange(&queue->read_index, new_read_index, check_read_index);
+				if (read_index == check_read_index) {
+					Work_Queue::Entry entry = queue->entries[read_index];
+					system_interlocked_decrement(&queue->work_count);
+					entry.proc(entry.param);
+				}
+			}
+		} else {
 			system_wait_semaphore(async.semaphore, WAIT_INFINITE);
 		}
 	}

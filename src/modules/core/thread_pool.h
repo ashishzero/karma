@@ -1,10 +1,12 @@
 #pragma once
 #include "karma.h"
 
-constexpr u32 MAX_WORK_QUEUE = 1;
+constexpr u32 MAX_WORK_QUEUE = 2;
 constexpr u32 WORK_QUEUE_MAX_ENTRY_COUNT = 128;
 constexpr u32 MIN_THREAD_COUNT = 1;
 constexpr u32 MAX_THREAD_COUNT = 8;
+
+static_assert(MAX_WORK_QUEUE <= 32);
 
 typedef void(*Work_Procedure)(void *param);
 
