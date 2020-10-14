@@ -559,6 +559,7 @@ void        system_thread_run(Thread_Context &thread);
 Thread_Wait system_thread_wait(Thread_Context &thread, u32 millisecs);
 void        system_thread_terminate(Thread_Context &thread, int exit_code);
 void        system_thread_exit(int exit_code);
+void		system_thread_sleep(u32 millisecs);
 
 Handle      system_create_mutex();
 void        system_destory_mutex(Handle handle);
@@ -569,6 +570,9 @@ Handle		system_create_semaphore(u32 initial_count, u32 maximum_count);
 void		system_destroy_semaphore(Handle handle);
 Wait_Result system_wait_semaphore(Handle handle, u32 millisecs);
 bool		system_signal_semaphore(Handle handle, u32 count = 1);
+
+s32 system_interlocked_increment(s32 volatile *added);
+s32 system_interlocked_compare_exchange(s32 volatile *dest, s32 exchange, s32 comperand);
 
 Builder system_builder();
 

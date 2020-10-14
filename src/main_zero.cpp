@@ -31,6 +31,10 @@ struct Quad_Mesh {
 bool running_worker_thread = true;
 
 int worker_thread() {
+	while (true) {
+		system_log(LOG_INFO, "Worker Thread", "Test Message");
+		system_thread_sleep(2000);
+	}
 #if 0
 	Work_Thread_Info *info = (Work_Thread_Info *)context.data;
 	
@@ -206,13 +210,13 @@ int karma_user_zero() {
 				break;
 			}
 
-			if ((event.type & Event_Type_KEY_UP) && event.key.symbol == Key_F11) {
-				system_fullscreen_state(SYSTEM_TOGGLE);
-				continue;
+			if ((event.type & Event_Type_KEY_UP) && event.key.symbol == Key_SPACE) {
+				system_log(LOG_INFO, "Main Thread", "Test output");
+				break;
 			}
 
-			if ((event.type & Event_Type_KEY_UP) && event.key.symbol == Key_SPACE) {
-				Dev_NotifySuccess("Sent success message");
+			if ((event.type & Event_Type_KEY_UP) && event.key.symbol == Key_F11) {
+				system_fullscreen_state(SYSTEM_TOGGLE);
 				continue;
 			}
 
@@ -676,6 +680,8 @@ int karma_user_zero() {
 			Dev_RenderFrame();
 		}
 #endif
+
+		
 
 		//ImGui::ShowDemoWindow();
 

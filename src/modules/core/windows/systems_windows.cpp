@@ -2564,6 +2564,10 @@ void system_thread_exit(int exit_code) {
 	ExitThread(exit_code);
 }
 
+void system_thread_sleep(u32 millisecs) {
+	Sleep(millisecs);
+}
+
 Handle system_create_mutex() {
 	HANDLE mutex = CreateMutexA(NULL, FALSE, 0);
 	Handle result;
@@ -2614,6 +2618,14 @@ Wait_Result system_wait_semaphore(Handle handle, u32 millisecs) {
 
 bool system_signal_semaphore(Handle handle, u32 count) {
 	return ReleaseSemaphore(handle.hptr, count, nullptr);
+}
+
+s32 system_interlocked_increment(s32 volatile *added) {
+	return InterlockedIncrement((long volatile *)added);
+}
+
+s32 system_interlocked_compare_exchange(s32 volatile *dest, s32 exchange, s32 comperand) {
+	return InterlockedCompareExchange((long volatile *)dest, exchange, comperand);
 }
 
 #if defined(SYSTEM_CONSOLE)
