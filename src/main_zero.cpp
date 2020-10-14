@@ -8,6 +8,7 @@
 #include "modules/imgui/imgui.h"
 #include "modules/imgui/dev.h"
 #include "modules/gfx/renderer.h"
+#include "modules/core/thread_pool.h"
 
 #include "entity.h"
 
@@ -28,48 +29,45 @@ struct Quad_Mesh {
 	Vec2 vertices[4];
 };
 
-bool running_worker_thread = true;
-
-int worker_thread() {
-	while (true) {
-		system_log(LOG_INFO, "Worker Thread", "Test Message");
-		system_thread_sleep(2000);
-	}
-#if 0
-	Work_Thread_Info *info = (Work_Thread_Info *)context.data;
-	
-	Handle semaphore = info->semaphore;
-
-	while (running_worker_thread) {
-		Work *work = get_work();
-		if (work) {
-			work->proc(work->param);
-		} else {
-			system_wait_semaphore(semaphore, WAIT_INFINITE);
-		}
-	}
-#endif
-	return 0;
+void test_print(void *param) {
+	const char *string = (const char *)param;
+	system_log(LOG_INFO, "", "%zu %s. ", context.id, string);
 }
 
 int karma_user_zero() {
+	async_initialize(2, mega_bytes(32), context.allocator);
+
 	r32    framebuffer_w = 1280;
 	r32    framebuffer_h = 720;
 	Handle platform = system_create_window(u8"Karma", 1280, 720, System_Window_Show_NORMAL);
 	gfx_create_context(platform, Render_Backend_DIRECTX11, Vsync_ADAPTIVE, 2, (u32)framebuffer_w, (u32)framebuffer_h);
 
-	Builder builder;
-	builder.allocator = NULL_ALLOCATOR;
-	builder.data = nullptr;
-	builder.entry = worker_thread;
-	builder.flags = Builder_NONE;
-	builder.temporary_buffer_size = mega_bytes(32);
+	Work_Queue *queue = async_queue(0);
 
-	Thread_Context thread;
-	if (!system_thread_create(builder, "Async", context.allocator, &thread)) {
-		system_fatal_error("Failed to create thread");
-	}
-	system_thread_run(thread);
+	async_add_work(queue, test_print, "String 0");
+	async_add_work(queue, test_print, "String 1");
+	async_add_work(queue, test_print, "String 2");
+	async_add_work(queue, test_print, "String 3");
+	async_add_work(queue, test_print, "String 4");
+	async_add_work(queue, test_print, "String 5");
+	async_add_work(queue, test_print, "String 6");
+	async_add_work(queue, test_print, "String 7");
+	async_add_work(queue, test_print, "String 8");
+	async_add_work(queue, test_print, "String 9");
+
+	async_add_work(queue, test_print, "String 10");
+	async_add_work(queue, test_print, "String 11");
+	async_add_work(queue, test_print, "String 12");
+	async_add_work(queue, test_print, "String 13");
+	async_add_work(queue, test_print, "String 14");
+	async_add_work(queue, test_print, "String 15");
+	async_add_work(queue, test_print, "String 16");
+	async_add_work(queue, test_print, "String 17");
+	async_add_work(queue, test_print, "String 18");
+	async_add_work(queue, test_print, "String 19");
+	async_add_work(queue, test_print, "String 20");
+
+	async_flush_work(queue);
 
 	ImGui_Initialize();
 	Dev_ModeEnable();
@@ -211,7 +209,7 @@ int karma_user_zero() {
 			}
 
 			if ((event.type & Event_Type_KEY_UP) && event.key.symbol == Key_SPACE) {
-				system_log(LOG_INFO, "Main Thread", "Test output");
+				async_add_work(queue, test_print, "Test Print");
 				break;
 			}
 

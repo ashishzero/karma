@@ -36,6 +36,7 @@
     <ClCompile Include="src\main_atish.cpp" />
     <ClCompile Include="src\main_shankar.cpp" />
     <ClCompile Include="src\main_pujan.cpp" />
+    <ClCompile Include="src\modules\core\thread_pool.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\modules\core\directx\dx_error.h" />
@@ -80,6 +81,7 @@
     <ClInclude Include="src\modules\core\serialize.h" />
     <ClInclude Include="src\asset_loader.h" />
     <ClInclude Include="src\asset.h" />
+    <ClInclude Include="src\modules\core\thread_pool.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitattributes" />

@@ -2504,6 +2504,8 @@ DWORD WINAPI win_thread_proc(LPVOID param) {
 
 	int result = thread->proc();
 
+	CloseHandle(context.handle.hptr);
+
 	return result;
 }
 
@@ -2620,8 +2622,12 @@ bool system_signal_semaphore(Handle handle, u32 count) {
 	return ReleaseSemaphore(handle.hptr, count, nullptr);
 }
 
-s32 system_interlocked_increment(s32 volatile *added) {
-	return InterlockedIncrement((long volatile *)added);
+s32 system_interlocked_increment(s32 volatile *addend) {
+	return InterlockedIncrement((long volatile *)addend);
+}
+
+s32 system_interlocked_decrement(s32 volatile *addend) {
+	return InterlockedDecrement((long volatile *)addend);
 }
 
 s32 system_interlocked_compare_exchange(s32 volatile *dest, s32 exchange, s32 comperand) {

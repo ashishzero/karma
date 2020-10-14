@@ -571,7 +571,8 @@ void		system_destroy_semaphore(Handle handle);
 Wait_Result system_wait_semaphore(Handle handle, u32 millisecs);
 bool		system_signal_semaphore(Handle handle, u32 count = 1);
 
-s32 system_interlocked_increment(s32 volatile *added);
+s32 system_interlocked_increment(s32 volatile *addend);
+s32 system_interlocked_decrement(s32 volatile *addend);
 s32 system_interlocked_compare_exchange(s32 volatile *dest, s32 exchange, s32 comperand);
 
 Builder system_builder();
