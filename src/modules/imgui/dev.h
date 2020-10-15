@@ -47,7 +47,7 @@ struct Timed_Procedure {
 #define Dev_AudioFeedback					dev_audio_feedback
 #define Dev_GetPresentationState			dev_get_presentation_state
 #define Dev_SetPresentationState			dev_set_presentation_state
-#define Dev_TogglePresentationState()		dev_set_presentation_state(!debug_get_presentation_state())
+#define Dev_TogglePresentationState()		dev_set_presentation_state(!dev_get_presentation_state())
 #define Dev_RenderFrame						dev_render_frame
 
 #define Dev_TimedFrameBegin			dev_profiler_timed_frame_begin

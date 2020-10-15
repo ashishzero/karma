@@ -11,7 +11,6 @@ static bool               mouse_pressed[3];
 static Cursor_Kind        mouse_cursor[ImGuiMouseCursor_COUNT];
 static ImGuiDockNodeFlags dockspace_flags;
 ImGuiWindowFlags          dockspace_main_window_flags;
-static ImFont *			  icon_font;
 
 void ImGui::Initialize() {
 	IMGUI_CHECKVERSION();
@@ -53,17 +52,7 @@ void ImGui::Initialize() {
 	config.OversampleV = 2;
 	config.PixelSnapH  = true;
 
-	ImFontGlyphRangesBuilder builder;
-	builder.AddChar(0xe911);
-	builder.AddChar(0xe922);
-	builder.AddChar(0xe950);
-	builder.AddChar(0xea15);
-	builder.AddChar(0xea16);
-	ImVector<ImWchar> ranges;
-	builder.BuildRanges(&ranges);          
-
 	io.Fonts->AddFontFromFileTTF("dev/GeneraleStation-Regular.otf", 14, &config);
-	icon_font  = io.Fonts->AddFontFromFileTTF("dev/icomoon.ttf", 14, &config, ranges.Data);
 	io.Fonts->Build();
 
 	auto &style             = ImGui::GetStyle();
@@ -327,12 +316,4 @@ void ImGui::RenderFrame() {
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 	else if (backend == Render_Backend_DIRECTX11)
 		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-}
-
-void ImGui::BeginIconFont() {
-	ImGui::PushFont(icon_font);
-}
-
-void ImGui::EndIconFont() {
-	ImGui::PopFont();
 }

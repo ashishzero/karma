@@ -30,9 +30,9 @@ enum Menu_Icon {
 };
 
 static const char *MENU_ICON_NAMES[] = {
-	u8"",
-	u8"",
-	u8"",
+	u8"Frame Time",
+	u8"Audio",
+	u8"Profiler",
 };
 static_assert(Menu_COUNT == static_count(MENU_ICON_NAMES), "Update this!!");
 
@@ -201,8 +201,6 @@ void draw_header_and_buttons() {
 
 	ImGui::TextColored(vec4(1, 1, 0), "FrameTime: %.3fms", frame_time_recorder.stablilized);
 
-	ImGui::BeginIconFont();
-
 	Vec4 color;
 	for (int cindex = 0; cindex < Menu_COUNT; ++cindex) {
 		color = menu_icons_value[cindex] ? MENU_ITEMS_COLORS[cindex] : vec4(1, 1, 1);
@@ -213,8 +211,6 @@ void draw_header_and_buttons() {
 		}
 		ImGui::PopStyleColor();
 	}
-
-	ImGui::EndIconFont();
 }
 
 void draw_frame_time_graph() {
@@ -363,17 +359,15 @@ Record *draw_profiler(Vec2 cursor) {
 	ImGui::TextColored(vec4(1, 1, 0), "Profiler");
 	ImGui::SameLine();
 
-	ImGui::BeginIconFont();
 	if (profiler.next_recording) {
-		if (ImGui::Button(u8"")) {
+		if (ImGui::Button(u8"Pause")) {
 			profiler.next_recording = false;
 		}
 	} else {
-		if (ImGui::Button(u8"")) {
+		if (ImGui::Button(u8"Resume")) {
 			profiler.next_recording = true;
 		}
 	}
-	ImGui::EndIconFont();
 
 	auto p = ImGui::GetCursorScreenPos();
 
