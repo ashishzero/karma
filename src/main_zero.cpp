@@ -47,7 +47,7 @@ void test_serialize(void *param) {
 	
 	Ostream out;
 	out.allocator = work->allocator;
-	serialize_to_file(&out, "test", work->info, (char *)work->data);
+	serialize_fmt_text(&out, "test", work->info, (char *)work->data);
 	
 	defer{
 		ostream_free(&out);
@@ -86,7 +86,7 @@ void test_deserialize(void *param) {
 		return;
 	}
 
-	if (!deserialize_from_file(tokens, "test", work->info, (char *)work->data)) {
+	if (!deserialize_fmt_text(tokens, "test", work->info, (char *)work->data)) {
 		system_log(LOG_ERROR, "Deserialization", "Deserialization Failed: %s", work->file);
 		return;
 	}

@@ -4,8 +4,7 @@
 #include "reflection.h"
 #include "stream.h"
 
-//TODO : testing (proper testing is required)
-inline void serialize_to_file(Ostream *out, String name, const Type_Info *info, char *data, s64 num_of_elements = 1, int tab_count = 0, bool is_array = false) {
+inline void serialize_fmt_text(Ostream *out, String name, const Type_Info *info, char *data, s64 num_of_elements = 1, int tab_count = 0, bool is_array = false) {
 	if (name.count) {
 		ostream_write_formatted(out, "%*s", tab_count, "");
 		ostream_write_buffer(out, name.data, name.count);
@@ -91,7 +90,7 @@ inline void serialize_to_file(Ostream *out, String name, const Type_Info *info, 
 		break;
 	case Type_Id_CHAR:
 		for (s64 i = 0; i < num_of_elements; ++i) {
-			ostream_write_formatted(out, "%d, ", (s32)*(char *)(data + i * sizeof(char)));
+			ostream_write_formatted(out, "%d, ", (s32) * (char *)(data + i * sizeof(char)));
 		}
 		if (!is_array)
 			ostream_write_formatted(out, "\n");
@@ -105,7 +104,7 @@ inline void serialize_to_file(Ostream *out, String name, const Type_Info *info, 
 	{
 		auto ptr_info = (Type_Info_Pointer *)info;
 		for (s64 i = 0; i < num_of_elements; ++i) {
-			serialize_to_file(out, "", ptr_info->pointer_to, (char *)(*(ptrsize *)(data + i * sizeof(ptrsize))), 1, tab_count);
+			serialize_fmt_text(out, "", ptr_info->pointer_to, (char *)(*(ptrsize *)(data + i * sizeof(ptrsize))), 1, tab_count);
 		}
 	}
 	break;
@@ -115,7 +114,7 @@ inline void serialize_to_file(Ostream *out, String name, const Type_Info *info, 
 	{
 		auto enum_info = (Type_Info_Enum *)info;
 		for (s64 i = 0; i < num_of_elements; ++i) {
-			serialize_to_file(out, "", enum_info->item_type, data + i * enum_info->size, 1, tab_count);
+			serialize_fmt_text(out, "", enum_info->item_type, data + i * enum_info->size, 1, tab_count);
 		}
 	}
 	break;
@@ -128,7 +127,7 @@ inline void serialize_to_file(Ostream *out, String name, const Type_Info *info, 
 			ostream_write_formatted(out, "%*s", tab_count, "");
 			ostream_write_formatted(out, "{\n");
 			if (struct_info->base) {
-				serialize_to_file(out, ".base", struct_info->base, data + j * struct_info->size, 1, tab_count + 3);
+				serialize_fmt_text(out, ".base", struct_info->base, data + j * struct_info->size, 1, tab_count + 3);
 			}
 			for (int i = 0; i < struct_info->member_count; ++i) {
 				auto mem = struct_info->members + i;
@@ -140,7 +139,7 @@ inline void serialize_to_file(Ostream *out, String name, const Type_Info *info, 
 					}
 				}
 				if (!no_serialize)
-					serialize_to_file(out, mem->name, mem->info, data + j * struct_info->size + mem->offset, 1, tab_count + 3);
+					serialize_fmt_text(out, mem->name, mem->info, data + j * struct_info->size + mem->offset, 1, tab_count + 3);
 			}
 			ostream_write_formatted(out, "%*s", tab_count, "");
 			ostream_write_formatted(out, "},\n");
@@ -162,7 +161,7 @@ inline void serialize_to_file(Ostream *out, String name, const Type_Info *info, 
 				}
 				if (write) {
 					ostream_write_formatted(out, "{\n");
-					serialize_to_file(out, mem->name, mem->info, data + k * union_info->size, 1, tab_count + 3);
+					serialize_fmt_text(out, mem->name, mem->info, data + k * union_info->size, 1, tab_count + 3);
 					ostream_write_formatted(out, "%*s", tab_count, "");
 					ostream_write_formatted(out, "},\n");
 					break;
@@ -170,7 +169,7 @@ inline void serialize_to_file(Ostream *out, String name, const Type_Info *info, 
 			}
 			if (!write) {
 				ostream_write_formatted(out, "{\n");
-				serialize_to_file(out, union_info->members->name, union_info->members->info, k * union_info->size + data, 1, tab_count + 3);
+				serialize_fmt_text(out, union_info->members->name, union_info->members->info, k * union_info->size + data, 1, tab_count + 3);
 				ostream_write_formatted(out, "%*s", tab_count, "");
 				ostream_write_formatted(out, "},\n");
 			}
@@ -200,7 +199,7 @@ inline void serialize_to_file(Ostream *out, String name, const Type_Info *info, 
 		for (s64 i = 0; i < num_of_elements; ++i) {
 			ostream_write_formatted(out, "[N] : ");
 			ostream_write_formatted(out, "{ %zd, [ ", count);
-			serialize_to_file(out, "", elem_type_info, data + i * elem_type_info->size * count, count, tab_count + 3, true);
+			serialize_fmt_text(out, "", elem_type_info, data + i * elem_type_info->size * count, count, tab_count + 3, true);
 			ostream_write_formatted(out, " ] }\n");
 		}
 		if (num_of_elements > 1) {
@@ -220,7 +219,7 @@ inline void serialize_to_file(Ostream *out, String name, const Type_Info *info, 
 
 			ostream_write_formatted(out, "[..] : ");
 			ostream_write_formatted(out, "{ %zd, [ ", count);
-			serialize_to_file(out, "", ((Type_Info_Dynamic_Array *)info)->type, array->data, count, tab_count + 3, true);
+			serialize_fmt_text(out, "", ((Type_Info_Dynamic_Array *)info)->type, array->data, count, tab_count + 3, true);
 			ostream_write_formatted(out, " ] }\n");
 		}
 		if (num_of_elements > 1) {
@@ -241,7 +240,7 @@ inline void serialize_to_file(Ostream *out, String name, const Type_Info *info, 
 
 			ostream_write_formatted(out, "[] : ");
 			ostream_write_formatted(out, "{ %zd, [ ", count);
-			serialize_to_file(out, "", elem_type_info, view->data, count, tab_count + 3, true);
+			serialize_fmt_text(out, "", elem_type_info, view->data, count, tab_count + 3, true);
 			ostream_write_formatted(out, " ] }\n");
 		}
 		if (num_of_elements > 1) {
@@ -253,34 +252,34 @@ inline void serialize_to_file(Ostream *out, String name, const Type_Info *info, 
 	}
 }
 
-struct Token_Walker {
+struct Parse_State {
 	Token *start;
 	Token *end;
 	Token *current;
 };
 
-inline bool token_left(Token_Walker *w) {
+inline bool parsing(Parse_State *w) {
 	return w->current < w->end;
 }
 
-inline Token *token_consume(Token_Walker *w) {
-	if (token_left(w)) {
+inline Token *parse_next(Parse_State *w) {
+	if (parsing(w)) {
 		w->current += 1;
 		return w->current - 1;
 	}
 	return nullptr;
 }
 
-inline bool require_token(Token_Walker *w, String string) {
-	auto t = token_consume(w);
+inline bool parse_require_token(Parse_State *w, String string) {
+	auto t = parse_next(w);
 	if (t && t->kind == Token_Kind_IDENTIFIER && string_match(string, t->content))
 		return true;
 	return false;
 }
 
 template <typename T>
-inline bool require_integer(Token_Walker *w, T *d) {
-	auto t = token_consume(w);
+inline bool parse_require_integer(Parse_State *w, T *d) {
+	auto t = parse_next(w);
 	if (t && t->kind == Token_Kind_INTEGER_LITERAL) {
 		*d = (T)t->value.integer;
 		return true;
@@ -289,13 +288,14 @@ inline bool require_integer(Token_Walker *w, T *d) {
 }
 
 template <typename T>
-inline bool require_real(Token_Walker *w, T *d) {
-	auto t = token_consume(w);
+inline bool parse_require_real(Parse_State *w, T *d) {
+	auto t = parse_next(w);
 	if (t) {
 		if (t->kind == Token_Kind_INTEGER_LITERAL) {
 			*d = (T)t->value.integer;
 			return true;
-		} else if (t->kind == Token_Kind_REAL_LITERAL) {
+		}
+		else if (t->kind == Token_Kind_REAL_LITERAL) {
 			*d = (T)t->value.real;
 			return true;
 		}
@@ -303,15 +303,15 @@ inline bool require_real(Token_Walker *w, T *d) {
 	return false;
 }
 
-inline bool require_token(Token_Walker *w, Token_Kind kind) {
-	auto t = token_consume(w);
+inline bool parse_require_token(Parse_State *w, Token_Kind kind) {
+	auto t = parse_next(w);
 	if (t && t->kind == kind)
 		return true;
 	return false;
 }
 
-inline bool require_string(Token_Walker *w, String *d) {
-	auto t = token_consume(w);
+inline bool parse_require_string(Parse_State *w, String *d) {
+	auto t = parse_next(w);
 	if (t && t->kind == Token_Kind_DQ_STRING) {
 		*d = t->value.string;
 		return true;
@@ -320,43 +320,43 @@ inline bool require_string(Token_Walker *w, String *d) {
 }
 
 template <typename T>
-inline bool ideserialize_literals(Token_Walker *w, s64 num_of_elements, T *data) {
+inline bool parse_integer_array(Parse_State *w, s64 num_of_elements, T *data) {
 	for (s64 i = 0; i < num_of_elements; ++i) {
-		if (!require_integer<T>(w, data + i) ||
-			!require_token(w, Token_Kind_COMMA)) {
+		if (!parse_require_integer<T>(w, data + i) ||
+			!parse_require_token(w, Token_Kind_COMMA)) {
 			return false;
 		}
 	}
 	if (num_of_elements > 1) {
-		if (!require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET) ||
-			!require_token(w, Token_Kind_CLOSE_CURLY_BRACKET)) {
+		if (!parse_require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET) ||
+			!parse_require_token(w, Token_Kind_CLOSE_CURLY_BRACKET)) {
 			return false;
 		}
 	}
 	return true;
 }
 
-inline bool ideserialize_char(Token_Walker *w, s64 num_of_elements, char *data) {
+inline bool parse_char_array(Parse_State *w, s64 num_of_elements, char *data) {
 	s32 temp;
 	for (s64 i = 0; i < num_of_elements; ++i) {
-		if (!require_integer<s32>(w, &temp) ||
-			!require_token(w, Token_Kind_COMMA)) {
+		if (!parse_require_integer<s32>(w, &temp) ||
+			!parse_require_token(w, Token_Kind_COMMA)) {
 			return false;
 		}
 		*(data + i) = temp;
 	}
 	if (num_of_elements > 1) {
-		if (!require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET) ||
-			!require_token(w, Token_Kind_CLOSE_CURLY_BRACKET)) {
+		if (!parse_require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET) ||
+			!parse_require_token(w, Token_Kind_CLOSE_CURLY_BRACKET)) {
 			return false;
 		}
 	}
 	return true;
 }
 
-inline bool deserialize_from_file(Token_Walker *w, String name, const Type_Info *info, char *data, s64 num_of_elements, int tab_count) {
+inline bool deserialize_fmt_text(Parse_State *w, String name, const Type_Info *info, char *data, s64 num_of_elements, int tab_count) {
 	if (name.count) {
-		if (!require_token(w, name) || !require_token(w, Token_Kind_COLON)) {
+		if (!parse_require_token(w, name) || !parse_require_token(w, Token_Kind_COLON)) {
 			return false;
 		}
 	}
@@ -364,63 +364,63 @@ inline bool deserialize_from_file(Token_Walker *w, String name, const Type_Info 
 	switch (info->id) {
 	case Type_Id_S8:
 	{
-		if (!ideserialize_literals<s8>(w, num_of_elements, (s8 *)data))
+		if (!parse_integer_array<s8>(w, num_of_elements, (s8 *)data))
 			return false;
 	}
 	break;
 	case Type_Id_S16:
 	{
-		if (!ideserialize_literals<s16>(w, num_of_elements, (s16 *)data))
+		if (!parse_integer_array<s16>(w, num_of_elements, (s16 *)data))
 			return false;
 	}
 	break;
 	case Type_Id_S32:
 	{
-		if (!ideserialize_literals<s32>(w, num_of_elements, (s32 *)data))
+		if (!parse_integer_array<s32>(w, num_of_elements, (s32 *)data))
 			return false;
 	}
 	break;
 	case Type_Id_S64:
 	{
-		if (!ideserialize_literals<s64>(w, num_of_elements, (s64 *)data))
+		if (!parse_integer_array<s64>(w, num_of_elements, (s64 *)data))
 			return false;
 	}
 	break;
 	case Type_Id_U8:
 	{
-		if (!ideserialize_literals<u8>(w, num_of_elements, (u8 *)data))
+		if (!parse_integer_array<u8>(w, num_of_elements, (u8 *)data))
 			return false;
 	}
 	break;
 	case Type_Id_U16:
 	{
-		if (!ideserialize_literals<u16>(w, num_of_elements, (u16 *)data))
+		if (!parse_integer_array<u16>(w, num_of_elements, (u16 *)data))
 			return false;
 	}
 	break;
 	case Type_Id_U32:
 	{
-		if (!ideserialize_literals<u32>(w, num_of_elements, (u32 *)data))
+		if (!parse_integer_array<u32>(w, num_of_elements, (u32 *)data))
 			return false;
 	}
 	break;
 	case Type_Id_U64:
 	{
-		if (!ideserialize_literals<u64>(w, num_of_elements, (u64 *)data))
+		if (!parse_integer_array<u64>(w, num_of_elements, (u64 *)data))
 			return false;
 	}
 	break;
 	case Type_Id_R32:
 	{
 		for (s64 i = 0; i < num_of_elements; ++i) {
-			if (!require_real<r32>(w, (r32 *)data + i) ||
-				!require_token(w, Token_Kind_COMMA)) {
+			if (!parse_require_real<r32>(w, (r32 *)data + i) ||
+				!parse_require_token(w, Token_Kind_COMMA)) {
 				return false;
 			}
 		}
 		if (num_of_elements > 1) {
-			if (!require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET) ||
-				!require_token(w, Token_Kind_CLOSE_CURLY_BRACKET)) {
+			if (!parse_require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET) ||
+				!parse_require_token(w, Token_Kind_CLOSE_CURLY_BRACKET)) {
 				return false;
 			}
 		}
@@ -429,22 +429,22 @@ inline bool deserialize_from_file(Token_Walker *w, String name, const Type_Info 
 	case Type_Id_R64:
 	{
 		for (s64 i = 0; i < num_of_elements; ++i) {
-			if (!require_real<r32>(w, (r32 *)data + i) ||
-				!require_token(w, Token_Kind_COMMA)) {
+			if (!parse_require_real<r32>(w, (r32 *)data + i) ||
+				!parse_require_token(w, Token_Kind_COMMA)) {
 				return false;
 			}
 		}
 		if (num_of_elements > 1) {
-			if (!require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET) ||
-				!require_token(w, Token_Kind_CLOSE_CURLY_BRACKET)) {
+			if (!parse_require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET) ||
+				!parse_require_token(w, Token_Kind_CLOSE_CURLY_BRACKET)) {
 				return false;
 			}
 		}
 	}
-		break;
-	case Type_Id_CHAR: 
+	break;
+	case Type_Id_CHAR:
 	{
-		if (!ideserialize_char(w, num_of_elements, (char *)data))
+		if (!parse_char_array(w, num_of_elements, (char *)data))
 			return false;
 	}
 	break;
@@ -458,13 +458,13 @@ inline bool deserialize_from_file(Token_Walker *w, String name, const Type_Info 
 		auto ptr_info = (Type_Info_Pointer *)info;
 		for (s64 i = 0; i < num_of_elements; ++i) {
 			(*(ptrsize *)(data + i * sizeof(ptrsize))) = (ptrsize)memory_allocate(ptr_info->pointer_to->size);
-			if (!deserialize_from_file(w, "", ptr_info->pointer_to, (char *)(*(ptrsize *)(data + i * sizeof(ptrsize))), 1, tab_count))
+			if (!deserialize_fmt_text(w, "", ptr_info->pointer_to, (char *)(*(ptrsize *)(data + i * sizeof(ptrsize))), 1, tab_count))
 				return false;
 
 		}
 		if (num_of_elements > 1) {
-			if (!require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET) ||
-				!require_token(w, Token_Kind_CLOSE_CURLY_BRACKET)) {
+			if (!parse_require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET) ||
+				!parse_require_token(w, Token_Kind_CLOSE_CURLY_BRACKET)) {
 				return false;
 			}
 		}
@@ -476,12 +476,12 @@ inline bool deserialize_from_file(Token_Walker *w, String name, const Type_Info 
 	{
 		auto enum_info = (Type_Info_Enum *)info;
 		for (s64 i = 0; i < num_of_elements; ++i) {
-			if (!deserialize_from_file(w, "", enum_info->item_type, data + i * enum_info->size, 1, tab_count))
+			if (!deserialize_fmt_text(w, "", enum_info->item_type, data + i * enum_info->size, 1, tab_count))
 				return false;
 		}
 		if (num_of_elements > 1) {
-			if (!require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET) ||
-				!require_token(w, Token_Kind_CLOSE_CURLY_BRACKET)) {
+			if (!parse_require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET) ||
+				!parse_require_token(w, Token_Kind_CLOSE_CURLY_BRACKET)) {
 				return false;
 			}
 		}
@@ -492,12 +492,12 @@ inline bool deserialize_from_file(Token_Walker *w, String name, const Type_Info 
 		auto struct_info = (Type_Info_Struct *)info;
 		//TODO  : need optimization
 		for (s64 j = 0; j < num_of_elements; ++j) {
-			if (!require_token(w, Token_Kind_OPEN_CURLY_BRACKET))
+			if (!parse_require_token(w, Token_Kind_OPEN_CURLY_BRACKET))
 				return false;
 			if (struct_info->base) {
-				if (!require_token(w, Token_Kind_PERIOD))
+				if (!parse_require_token(w, Token_Kind_PERIOD))
 					return false;
-				if (!deserialize_from_file(w, "base", struct_info->base, data + j * struct_info->size, 1, tab_count + 3))
+				if (!deserialize_fmt_text(w, "base", struct_info->base, data + j * struct_info->size, 1, tab_count + 3))
 					return false;
 			}
 			for (int i = 0; i < struct_info->member_count; ++i) {
@@ -510,16 +510,16 @@ inline bool deserialize_from_file(Token_Walker *w, String name, const Type_Info 
 					}
 				}
 				if (!no_serialize)
-					if (!deserialize_from_file(w, mem->name, mem->info, data + j * struct_info->size + mem->offset, 1, tab_count + 3))
+					if (!deserialize_fmt_text(w, mem->name, mem->info, data + j * struct_info->size + mem->offset, 1, tab_count + 3))
 						return false;
 			}
-			if (!require_token(w, Token_Kind_CLOSE_CURLY_BRACKET) || !require_token(w, Token_Kind_COMMA)) {
+			if (!parse_require_token(w, Token_Kind_CLOSE_CURLY_BRACKET) || !parse_require_token(w, Token_Kind_COMMA)) {
 				return false;
 			}
 		}
 		if (num_of_elements > 1) {
-			if (!require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET) ||
-				!require_token(w, Token_Kind_CLOSE_CURLY_BRACKET)) {
+			if (!parse_require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET) ||
+				!parse_require_token(w, Token_Kind_CLOSE_CURLY_BRACKET)) {
 				return false;
 			}
 		}
@@ -539,29 +539,29 @@ inline bool deserialize_from_file(Token_Walker *w, String name, const Type_Info 
 					}
 				}
 				if (write) {
-					if (!require_token(w, Token_Kind_OPEN_CURLY_BRACKET))
+					if (!parse_require_token(w, Token_Kind_OPEN_CURLY_BRACKET))
 						return false;
-					if (!deserialize_from_file(w, mem->name, mem->info, data + k * union_info->size, 1, tab_count + 3))
+					if (!deserialize_fmt_text(w, mem->name, mem->info, data + k * union_info->size, 1, tab_count + 3))
 						return false;
-					if (!require_token(w, Token_Kind_CLOSE_CURLY_BRACKET) || !require_token(w, Token_Kind_COMMA)) {
+					if (!parse_require_token(w, Token_Kind_CLOSE_CURLY_BRACKET) || !parse_require_token(w, Token_Kind_COMMA)) {
 						return false;
 					}
 					break;
 				}
 			}
 			if (!write) {
-				if (!require_token(w, Token_Kind_OPEN_CURLY_BRACKET))
+				if (!parse_require_token(w, Token_Kind_OPEN_CURLY_BRACKET))
 					return false;
-				if (!deserialize_from_file(w, union_info->members->name, union_info->members->info, k * union_info->size + data, 1, tab_count + 3))
+				if (!deserialize_fmt_text(w, union_info->members->name, union_info->members->info, k * union_info->size + data, 1, tab_count + 3))
 					return false;
-				if (!require_token(w, Token_Kind_CLOSE_CURLY_BRACKET) || !require_token(w, Token_Kind_COMMA)) {
+				if (!parse_require_token(w, Token_Kind_CLOSE_CURLY_BRACKET) || !parse_require_token(w, Token_Kind_COMMA)) {
 					return false;
 				}
 			}
 		}
 		if (num_of_elements > 1) {
-			if (!require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET) ||
-				!require_token(w, Token_Kind_CLOSE_CURLY_BRACKET)) {
+			if (!parse_require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET) ||
+				!parse_require_token(w, Token_Kind_CLOSE_CURLY_BRACKET)) {
 				return false;
 			}
 		}
@@ -570,35 +570,35 @@ inline bool deserialize_from_file(Token_Walker *w, String name, const Type_Info 
 	case Type_Id_STATIC_ARRAY:
 	{
 		if (num_of_elements > 1) {
-			if (!require_token(w, Token_Kind_OPEN_CURLY_BRACKET) ||
-				!require_integer<s64>(w, &num_of_elements) ||
-				!require_token(w, Token_Kind_COMMA) ||
-				!require_token(w, Token_Kind_OPEN_SQUARE_BRACKET))
-					return false;
+			if (!parse_require_token(w, Token_Kind_OPEN_CURLY_BRACKET) ||
+				!parse_require_integer<s64>(w, &num_of_elements) ||
+				!parse_require_token(w, Token_Kind_COMMA) ||
+				!parse_require_token(w, Token_Kind_OPEN_SQUARE_BRACKET))
+				return false;
 		}
 
 		const Type_Info *elem_type_info = ((Type_Info_Static_Array *)info)->type;
 		s64 count = ((Type_Info_Static_Array *)info)->count;
 		for (s64 i = 0; i < num_of_elements; ++i) {
-			if (!require_token(w, Token_Kind_OPEN_SQUARE_BRACKET) ||
-				!require_token(w, "N") ||
-				!require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET) ||
-				!require_token(w, Token_Kind_COLON)) {
+			if (!parse_require_token(w, Token_Kind_OPEN_SQUARE_BRACKET) ||
+				!parse_require_token(w, "N") ||
+				!parse_require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET) ||
+				!parse_require_token(w, Token_Kind_COLON)) {
 				return false;
 			}
 
-			if (!require_token(w, Token_Kind_OPEN_CURLY_BRACKET) ||
-				!require_integer<s64>(w, &count) ||
-				!require_token(w, Token_Kind_COMMA) ||
-				!require_token(w, Token_Kind_OPEN_SQUARE_BRACKET))
-					return false;
+			if (!parse_require_token(w, Token_Kind_OPEN_CURLY_BRACKET) ||
+				!parse_require_integer<s64>(w, &count) ||
+				!parse_require_token(w, Token_Kind_COMMA) ||
+				!parse_require_token(w, Token_Kind_OPEN_SQUARE_BRACKET))
+				return false;
 
-			if (!deserialize_from_file(w, "", elem_type_info, data + i * elem_type_info->size * count, count, tab_count + 3))
+			if (!deserialize_fmt_text(w, "", elem_type_info, data + i * elem_type_info->size * count, count, tab_count + 3))
 				return false;
 		}
 		if (num_of_elements > 1) {
-			if (!require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET) ||
-				!require_token(w, Token_Kind_CLOSE_CURLY_BRACKET)) {
+			if (!parse_require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET) ||
+				!parse_require_token(w, Token_Kind_CLOSE_CURLY_BRACKET)) {
 				return false;
 			}
 		}
@@ -610,15 +610,15 @@ inline bool deserialize_from_file(Token_Walker *w, String name, const Type_Info 
 			for (s64 i = 0; i < num_of_elements; ++i) {
 				String *string_data = (String *)(data + i * sizeof(String));
 				String temp;
-				if (!require_string(w, &temp) || !require_token(w, Token_Kind_COMMA))
+				if (!parse_require_string(w, &temp) || !parse_require_token(w, Token_Kind_COMMA))
 					return false;
 				string_data->count = temp.count;
 				string_data->data = new u8[string_data->count];
 				memcpy(string_data->data, temp.data, string_data->count);
 			}
 			if (num_of_elements > 1) {
-				if (!require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET) ||
-					!require_token(w, Token_Kind_CLOSE_CURLY_BRACKET)) {
+				if (!parse_require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET) ||
+					!parse_require_token(w, Token_Kind_CLOSE_CURLY_BRACKET)) {
 					return false;
 				}
 			}
@@ -628,10 +628,10 @@ inline bool deserialize_from_file(Token_Walker *w, String name, const Type_Info 
 	case Type_Id_DYNAMIC_ARRAY:
 	{
 		if (num_of_elements > 1) {
-			if (!require_token(w, Token_Kind_OPEN_CURLY_BRACKET) ||
-				!require_integer<s64>(w, &num_of_elements) ||
-				!require_token(w, Token_Kind_COMMA) ||
-				!require_token(w, Token_Kind_OPEN_SQUARE_BRACKET))
+			if (!parse_require_token(w, Token_Kind_OPEN_CURLY_BRACKET) ||
+				!parse_require_integer<s64>(w, &num_of_elements) ||
+				!parse_require_token(w, Token_Kind_COMMA) ||
+				!parse_require_token(w, Token_Kind_OPEN_SQUARE_BRACKET))
 				return false;
 		}
 
@@ -641,29 +641,29 @@ inline bool deserialize_from_file(Token_Walker *w, String name, const Type_Info 
 			*array = Array<char>();
 			array->data = nullptr;
 
-			if (!require_token(w, Token_Kind_OPEN_SQUARE_BRACKET) ||
-				!require_token(w, Token_Kind_PERIOD) ||
-				!require_token(w, Token_Kind_PERIOD) ||
-				!require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET) ||
-				!require_token(w, Token_Kind_COLON)) {
+			if (!parse_require_token(w, Token_Kind_OPEN_SQUARE_BRACKET) ||
+				!parse_require_token(w, Token_Kind_PERIOD) ||
+				!parse_require_token(w, Token_Kind_PERIOD) ||
+				!parse_require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET) ||
+				!parse_require_token(w, Token_Kind_COLON)) {
 				return false;
 			}
 
-			if (!require_token(w, Token_Kind_OPEN_CURLY_BRACKET) ||
-				!require_integer<s64>(w, &count) ||
-				!require_token(w, Token_Kind_COMMA) ||
-				!require_token(w, Token_Kind_OPEN_SQUARE_BRACKET))
+			if (!parse_require_token(w, Token_Kind_OPEN_CURLY_BRACKET) ||
+				!parse_require_integer<s64>(w, &count) ||
+				!parse_require_token(w, Token_Kind_COMMA) ||
+				!parse_require_token(w, Token_Kind_OPEN_SQUARE_BRACKET))
 				return false;
 
 			array->capacity = count;
 			array->count = count;
 			array->data = (char *)memory_reallocate(array->data, array->capacity * ((Type_Info_Dynamic_Array *)info)->type->size, array->allocator);
-			if (!deserialize_from_file(w, "", ((Type_Info_Dynamic_Array *)info)->type, array->data, count, tab_count + 3))
+			if (!deserialize_fmt_text(w, "", ((Type_Info_Dynamic_Array *)info)->type, array->data, count, tab_count + 3))
 				return false;
 		}
 		if (num_of_elements > 1) {
-			if (!require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET) ||
-				!require_token(w, Token_Kind_CLOSE_CURLY_BRACKET)) {
+			if (!parse_require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET) ||
+				!parse_require_token(w, Token_Kind_CLOSE_CURLY_BRACKET)) {
 				return false;
 			}
 		}
@@ -672,10 +672,10 @@ inline bool deserialize_from_file(Token_Walker *w, String name, const Type_Info 
 	case Type_Id_ARRAY_VIEW:
 	{
 		if (num_of_elements > 1) {
-			if (!require_token(w, Token_Kind_OPEN_CURLY_BRACKET) ||
-				!require_integer<s64>(w, &num_of_elements) ||
-				!require_token(w, Token_Kind_COMMA) ||
-				!require_token(w, Token_Kind_OPEN_SQUARE_BRACKET))
+			if (!parse_require_token(w, Token_Kind_OPEN_CURLY_BRACKET) ||
+				!parse_require_integer<s64>(w, &num_of_elements) ||
+				!parse_require_token(w, Token_Kind_COMMA) ||
+				!parse_require_token(w, Token_Kind_OPEN_SQUARE_BRACKET))
 				return false;
 		}
 
@@ -683,25 +683,25 @@ inline bool deserialize_from_file(Token_Walker *w, String name, const Type_Info 
 		for (s64 i = 0; i < num_of_elements; ++i) {
 			Array_View<char> *view = (Array_View<char> *)(data + i * sizeof(Array_View<char>));
 
-			if (!require_token(w, Token_Kind_OPEN_SQUARE_BRACKET) ||
-				!require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET) ||
-				!require_token(w, Token_Kind_COLON))
-					return false;
-			
-			if (!require_token(w, Token_Kind_OPEN_CURLY_BRACKET) ||
-				!require_integer<s64>(w, &count) ||
-				!require_token(w, Token_Kind_COMMA) ||
-				!require_token(w, Token_Kind_OPEN_SQUARE_BRACKET))
+			if (!parse_require_token(w, Token_Kind_OPEN_SQUARE_BRACKET) ||
+				!parse_require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET) ||
+				!parse_require_token(w, Token_Kind_COLON))
+				return false;
+
+			if (!parse_require_token(w, Token_Kind_OPEN_CURLY_BRACKET) ||
+				!parse_require_integer<s64>(w, &count) ||
+				!parse_require_token(w, Token_Kind_COMMA) ||
+				!parse_require_token(w, Token_Kind_OPEN_SQUARE_BRACKET))
 				return false;
 
 			view->count = count;
 			view->data = (char *)memory_allocate(view->count * ((Type_Info_Array_View *)info)->type->size);
-			if (!deserialize_from_file(w, "", ((Type_Info_Array_View *)info)->type, view->data, count, tab_count + 3))
+			if (!deserialize_fmt_text(w, "", ((Type_Info_Array_View *)info)->type, view->data, count, tab_count + 3))
 				return false;
 		}
 		if (num_of_elements > 1) {
-			if (!require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET) ||
-				!require_token(w, Token_Kind_CLOSE_CURLY_BRACKET)) {
+			if (!parse_require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET) ||
+				!parse_require_token(w, Token_Kind_CLOSE_CURLY_BRACKET)) {
 				return false;
 			}
 		}
@@ -711,14 +711,14 @@ inline bool deserialize_from_file(Token_Walker *w, String name, const Type_Info 
 	return true;
 }
 
-inline bool deserialize_from_file(Array_View<Token> tokens, String name, const Type_Info *info, char *data, s64 num_of_elements = 1, int tab_count = 0) {
+inline bool deserialize_fmt_text(Array_View<Token> &tokens, String name, const Type_Info *info, char *data, s64 num_of_elements = 1, int tab_count = 0) {
 	if (tokens.count == 0)
 		return false;
 
-	Token_Walker w;
+	Parse_State w;
 	w.start = tokens.data;
 	w.current = tokens.data;
 	w.end = tokens.data + tokens.count;
 
-	return deserialize_from_file(&w, name, info, data, num_of_elements, tab_count);
+	return deserialize_fmt_text(&w, name, info, data, num_of_elements, tab_count);
 }
