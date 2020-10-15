@@ -1,7 +1,5 @@
 #pragma once
 
-#define STB_IMAGE_IMPLEMENTATION
-
 #include "modules/core/reflection.h"
 #include "modules/core/karma.h"
 #include "modules/core/systems.h"
