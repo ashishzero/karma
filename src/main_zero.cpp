@@ -171,12 +171,6 @@ int karma_user_zero() {
 
 	auto player = manager_add_entity(&manager, Player);
 
-	save_work.data = player;
-	save_work.file = "temp/player.txt";
-	save_work.info = reflect_info<Player>();
-	async_add_work(queue, test_deserialize, &save_work);
-	async_flush_work(queue);
-
 	Entity_Handle player_id = player->handle;
 
 	Vec2 quad_position = vec2(1);
@@ -246,6 +240,12 @@ int karma_user_zero() {
 		unit_circle_cos[i] = cosf(theta);
 		unit_circle_sin[i] = sinf(theta);
 	}
+
+	save_work.data = manager_find(manager, player_id);
+	save_work.file = "temp/player.txt";
+	save_work.info = reflect_info<Player>();
+	async_add_work(queue, test_deserialize, &save_work);
+	async_flush_work(queue);
 
 	while (running) {
 		Dev_TimedFrameBegin();

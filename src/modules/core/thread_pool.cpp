@@ -1,5 +1,6 @@
 #include "thread_pool.h"
 #include "systems.h"
+#include "intrinsics.h"
 
 struct Work_Queue {
 	struct Entry {
@@ -69,7 +70,7 @@ bool async_add_work(Work_Queue *queue, Work_Procedure proc, void *param) {
 	do {
 		check_write_index = queue->write_index;
 		next_write_index = (check_write_index + 1) % WORK_QUEUE_MAX_ENTRY_COUNT;
-		if (next_write_index == queue->read_index) {
+		if (next_write_index == queue->read_index || queue->work_count >= (WORK_QUEUE_MAX_ENTRY_COUNT - 1)) {
 			return false;
 		}
 		write_index = system_interlocked_compare_exchange(&queue->write_index, next_write_index, check_write_index);
@@ -85,21 +86,26 @@ bool async_add_work(Work_Queue *queue, Work_Procedure proc, void *param) {
 	return true;
 }
 
+inline void iasync_do_work(Work_Queue *queue) {
+	s32 check_read_index = queue->read_index;
+	if (check_read_index == queue->write_index) return;
+	s32 new_read_index = (check_read_index + 1) % WORK_QUEUE_MAX_ENTRY_COUNT;
+	s32 read_index = system_interlocked_compare_exchange(&queue->read_index, new_read_index, check_read_index);
+	if (read_index == check_read_index) {
+		Work_Queue::Entry *entry = queue->entries + read_index;
+		entry->proc(entry->param);
+		system_interlocked_decrement(&queue->work_count);
+	}
+}
+
 void async_flush_work(Work_Queue *queue) {
 	while (queue->work_count) {
-		s32 check_read_index = queue->read_index;
-		s32 new_read_index = (check_read_index + 1) % WORK_QUEUE_MAX_ENTRY_COUNT;
-		s32 read_index = system_interlocked_compare_exchange(&queue->read_index, new_read_index, check_read_index);
-		if (read_index == check_read_index) {
-			Work_Queue::Entry entry = queue->entries[read_index];
-			system_interlocked_decrement(&queue->work_count);
-			entry.proc(entry.param);
-		}
+		iasync_do_work(queue);
 	}
 }
 
 int worker_thread() {
-	Work_Queue *queue = nullptr;
+	Work_Queue *queue, *q;
 	u32 q_index = 0;
 
 	auto work_queues = async.work_queues;
@@ -107,23 +113,15 @@ int worker_thread() {
 	while (true) {
 		queue = nullptr;
 		for (q_index = 0; q_index < MAX_WORK_QUEUE; ++q_index) {
-			if (work_queues[q_index].work_count) {
-				queue = work_queues + q_index;
+			q = work_queues + q_index;
+			if (q->work_count && q->read_index != q->write_index) {
+				queue = q;
 				break;
 			}
 		}
 
-		if (queue) {
-			if (queue->work_count) {
-				s32 check_read_index = queue->read_index;
-				s32 new_read_index = (check_read_index + 1) % WORK_QUEUE_MAX_ENTRY_COUNT;
-				s32 read_index = system_interlocked_compare_exchange(&queue->read_index, new_read_index, check_read_index);
-				if (read_index == check_read_index) {
-					Work_Queue::Entry entry = queue->entries[read_index];
-					system_interlocked_decrement(&queue->work_count);
-					entry.proc(entry.param);
-				}
-			}
+		if (queue && queue->work_count) {
+			iasync_do_work(queue);
 		} else {
 			system_wait_semaphore(async.semaphore, WAIT_INFINITE);
 		}
