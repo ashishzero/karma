@@ -629,7 +629,7 @@ Array_View<Token> tokenize(String string, Tokenization_Status *status) {
 //
 //
 
-void serialize_fmt_text(Ostream *out, String name, const Type_Info *info, char *data, s64 num_of_elements, s32 tab_count, bool is_array) {
+void iserialize_fmt_text(Ostream *out, String name, const Type_Info *info, char *data, s64 num_of_elements, s32 tab_count, bool is_array) {
 	if (name.count) {
 		ostream_write_formatted(out, "%*s", tab_count, "");
 		ostream_write_buffer(out, name.data, name.count);
@@ -824,7 +824,7 @@ void serialize_fmt_text(Ostream *out, String name, const Type_Info *info, char *
 		for (s64 i = 0; i < num_of_elements; ++i) {
 			ostream_write_formatted(out, "[N] : ");
 			ostream_write_formatted(out, "{ %zd, [ ", count);
-			serialize_fmt_text(out, "", elem_type_info, data + i * elem_type_info->size * count, count, tab_count + 3, true);
+			iserialize_fmt_text(out, "", elem_type_info, data + i * elem_type_info->size * count, count, tab_count + 3, true);
 			ostream_write_formatted(out, " ] }\n");
 		}
 		if (num_of_elements > 1) {
@@ -844,7 +844,7 @@ void serialize_fmt_text(Ostream *out, String name, const Type_Info *info, char *
 
 			ostream_write_formatted(out, "[..] : ");
 			ostream_write_formatted(out, "{ %zd, [ ", count);
-			serialize_fmt_text(out, "", ((Type_Info_Dynamic_Array *)info)->type, array->data, count, tab_count + 3, true);
+			iserialize_fmt_text(out, "", ((Type_Info_Dynamic_Array *)info)->type, array->data, count, tab_count + 3, true);
 			ostream_write_formatted(out, " ] }\n");
 		}
 		if (num_of_elements > 1) {
@@ -865,7 +865,7 @@ void serialize_fmt_text(Ostream *out, String name, const Type_Info *info, char *
 
 			ostream_write_formatted(out, "[] : ");
 			ostream_write_formatted(out, "{ %zd, [ ", count);
-			serialize_fmt_text(out, "", elem_type_info, view->data, count, tab_count + 3, true);
+			iserialize_fmt_text(out, "", elem_type_info, view->data, count, tab_count + 3, true);
 			ostream_write_formatted(out, " ] }\n");
 		}
 		if (num_of_elements > 1) {
@@ -877,11 +877,29 @@ void serialize_fmt_text(Ostream *out, String name, const Type_Info *info, char *
 	}
 }
 
+void serialize_fmt_text(Ostream *out, String name, const Type_Info *info, char *data, s64 num_of_elements, bool is_array) {
+	iserialize_fmt_text(out, name, info, data, num_of_elements, 0, is_array);
+}
+
 struct Parse_State {
 	Token *start;
 	Token *end;
 	Token *current;
+	Deserialize_Error_Info *error;
 };
+
+inline void parsing_error(Parse_State *w, Token_Kind kind) {
+	w->error->token = *(w->current - 1);
+	w->error->expected = kind;
+	memset(w->error->string, 0, sizeof(w->error->string));
+}
+
+inline void parsing_error(Parse_State *w, String string) {
+	w->error->token = *(w->current - 1);
+	w->error->expected = Token_Kind_IDENTIFIER;
+	memcpy(w->error->string, string.data, minimum(string.count, sizeof(w->error->string) - 1));
+	w->error->string[minimum(string.count, sizeof(w->error->string))] = 0;
+}
 
 inline bool parsing(Parse_State *w) {
 	return w->current < w->end;
@@ -899,6 +917,7 @@ inline bool parse_require_token(Parse_State *w, String string) {
 	auto t = parse_next(w);
 	if (t && t->kind == Token_Kind_IDENTIFIER && string_match(string, t->content))
 		return true;
+	parsing_error(w, string);
 	return false;
 }
 
@@ -909,6 +928,7 @@ inline bool parse_require_integer(Parse_State *w, T *d) {
 		*d = (T)t->value.integer;
 		return true;
 	}
+	parsing_error(w, Token_Kind_INTEGER_LITERAL);
 	return false;
 }
 
@@ -925,6 +945,7 @@ inline bool parse_require_real(Parse_State *w, T *d) {
 			return true;
 		}
 	}
+	parsing_error(w, Token_Kind_REAL_LITERAL);
 	return false;
 }
 
@@ -932,6 +953,7 @@ inline bool parse_require_token(Parse_State *w, Token_Kind kind) {
 	auto t = parse_next(w);
 	if (t && t->kind == kind)
 		return true;
+	parsing_error(w, kind);
 	return false;
 }
 
@@ -941,6 +963,7 @@ inline bool parse_require_string(Parse_State *w, String *d) {
 		*d = t->value.string;
 		return true;
 	}
+	parsing_error(w, Token_Kind_DQ_STRING);
 	return false;
 }
 
@@ -979,7 +1002,7 @@ inline bool parse_char_array(Parse_State *w, s64 num_of_elements, char *data) {
 	return true;
 }
 
-bool deserialize_fmt_text(Parse_State *w, String name, const Type_Info *info, char *data, s64 num_of_elements, s32 tab_count) {
+bool ideserialize_fmt_text(Parse_State *w, String name, const Type_Info *info, char *data, s64 num_of_elements) {
 	if (name.count) {
 		if (!parse_require_token(w, name) || !parse_require_token(w, Token_Kind_COLON)) {
 			return false;
@@ -1083,7 +1106,7 @@ bool deserialize_fmt_text(Parse_State *w, String name, const Type_Info *info, ch
 		auto ptr_info = (Type_Info_Pointer *)info;
 		for (s64 i = 0; i < num_of_elements; ++i) {
 			(*(ptrsize *)(data + i * sizeof(ptrsize))) = (ptrsize)memory_allocate(ptr_info->pointer_to->size);
-			if (!deserialize_fmt_text(w, "", ptr_info->pointer_to, (char *)(*(ptrsize *)(data + i * sizeof(ptrsize))), 1, tab_count))
+			if (!ideserialize_fmt_text(w, "", ptr_info->pointer_to, (char *)(*(ptrsize *)(data + i * sizeof(ptrsize))), 1))
 				return false;
 
 		}
@@ -1101,7 +1124,7 @@ bool deserialize_fmt_text(Parse_State *w, String name, const Type_Info *info, ch
 	{
 		auto enum_info = (Type_Info_Enum *)info;
 		for (s64 i = 0; i < num_of_elements; ++i) {
-			if (!deserialize_fmt_text(w, "", enum_info->item_type, data + i * enum_info->size, 1, tab_count))
+			if (!ideserialize_fmt_text(w, "", enum_info->item_type, data + i * enum_info->size, 1))
 				return false;
 		}
 		if (num_of_elements > 1) {
@@ -1122,7 +1145,7 @@ bool deserialize_fmt_text(Parse_State *w, String name, const Type_Info *info, ch
 			if (struct_info->base) {
 				if (!parse_require_token(w, Token_Kind_PERIOD))
 					return false;
-				if (!deserialize_fmt_text(w, "base", struct_info->base, data + j * struct_info->size, 1, tab_count + 3))
+				if (!ideserialize_fmt_text(w, "base", struct_info->base, data + j * struct_info->size, 1))
 					return false;
 			}
 			for (int i = 0; i < struct_info->member_count; ++i) {
@@ -1135,7 +1158,7 @@ bool deserialize_fmt_text(Parse_State *w, String name, const Type_Info *info, ch
 					}
 				}
 				if (!no_serialize)
-					if (!deserialize_fmt_text(w, mem->name, mem->info, data + j * struct_info->size + mem->offset, 1, tab_count + 3))
+					if (!ideserialize_fmt_text(w, mem->name, mem->info, data + j * struct_info->size + mem->offset, 1))
 						return false;
 			}
 			if (!parse_require_token(w, Token_Kind_CLOSE_CURLY_BRACKET) || !parse_require_token(w, Token_Kind_COMMA)) {
@@ -1166,7 +1189,7 @@ bool deserialize_fmt_text(Parse_State *w, String name, const Type_Info *info, ch
 				if (write) {
 					if (!parse_require_token(w, Token_Kind_OPEN_CURLY_BRACKET))
 						return false;
-					if (!deserialize_fmt_text(w, mem->name, mem->info, data + k * union_info->size, 1, tab_count + 3))
+					if (!ideserialize_fmt_text(w, mem->name, mem->info, data + k * union_info->size, 1))
 						return false;
 					if (!parse_require_token(w, Token_Kind_CLOSE_CURLY_BRACKET) || !parse_require_token(w, Token_Kind_COMMA)) {
 						return false;
@@ -1177,7 +1200,7 @@ bool deserialize_fmt_text(Parse_State *w, String name, const Type_Info *info, ch
 			if (!write) {
 				if (!parse_require_token(w, Token_Kind_OPEN_CURLY_BRACKET))
 					return false;
-				if (!deserialize_fmt_text(w, union_info->members->name, union_info->members->info, k * union_info->size + data, 1, tab_count + 3))
+				if (!ideserialize_fmt_text(w, union_info->members->name, union_info->members->info, k * union_info->size + data, 1))
 					return false;
 				if (!parse_require_token(w, Token_Kind_CLOSE_CURLY_BRACKET) || !parse_require_token(w, Token_Kind_COMMA)) {
 					return false;
@@ -1218,7 +1241,7 @@ bool deserialize_fmt_text(Parse_State *w, String name, const Type_Info *info, ch
 				!parse_require_token(w, Token_Kind_OPEN_SQUARE_BRACKET))
 				return false;
 
-			if (!deserialize_fmt_text(w, "", elem_type_info, data + i * elem_type_info->size * count, count, tab_count + 3))
+			if (!ideserialize_fmt_text(w, "", elem_type_info, data + i * elem_type_info->size * count, count))
 				return false;
 		}
 		if (num_of_elements > 1) {
@@ -1283,7 +1306,7 @@ bool deserialize_fmt_text(Parse_State *w, String name, const Type_Info *info, ch
 			array->capacity = count;
 			array->count = count;
 			array->data = (char *)memory_reallocate(array->data, array->capacity * ((Type_Info_Dynamic_Array *)info)->type->size, array->allocator);
-			if (!deserialize_fmt_text(w, "", ((Type_Info_Dynamic_Array *)info)->type, array->data, count, tab_count + 3))
+			if (!ideserialize_fmt_text(w, "", ((Type_Info_Dynamic_Array *)info)->type, array->data, count))
 				return false;
 		}
 		if (num_of_elements > 1) {
@@ -1321,7 +1344,7 @@ bool deserialize_fmt_text(Parse_State *w, String name, const Type_Info *info, ch
 
 			view->count = count;
 			view->data = (char *)memory_allocate(view->count * ((Type_Info_Array_View *)info)->type->size);
-			if (!deserialize_fmt_text(w, "", ((Type_Info_Array_View *)info)->type, view->data, count, tab_count + 3))
+			if (!ideserialize_fmt_text(w, "", ((Type_Info_Array_View *)info)->type, view->data, count))
 				return false;
 		}
 		if (num_of_elements > 1) {
@@ -1336,7 +1359,7 @@ bool deserialize_fmt_text(Parse_State *w, String name, const Type_Info *info, ch
 	return true;
 }
 
-bool deserialize_fmt_text(Array_View<Token> &tokens, String name, const Type_Info *info, char *data, s64 num_of_elements, s32 tab_count) {
+bool deserialize_fmt_text(Array_View<Token> &tokens, String name, const Type_Info *info, char *data, s64 num_of_elements, Deserialize_Error_Info *error) {
 	if (tokens.count == 0)
 		return false;
 
@@ -1344,6 +1367,7 @@ bool deserialize_fmt_text(Array_View<Token> &tokens, String name, const Type_Inf
 	w.start = tokens.data;
 	w.current = tokens.data;
 	w.end = tokens.data + tokens.count;
+	w.error = error;
 
-	return deserialize_fmt_text(&w, name, info, data, num_of_elements, tab_count);
+	return ideserialize_fmt_text(&w, name, info, data, num_of_elements);
 }

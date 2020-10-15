@@ -85,8 +85,10 @@ void test_deserialize(void *param) {
 		return;
 	}
 
-	if (!deserialize_fmt_text(tokens, "test", work->info, (char *)work->data)) {
-		system_log(LOG_ERROR, "Deserialization", "Deserialization Failed: %s", work->file);
+	Deserialize_Error_Info error;
+	if (!deserialize_fmt_text(tokens, "test", work->info, (char *)work->data, 1, &error)) {
+		system_log(LOG_ERROR, "Deserialization", "Deserialization Failed: %s, Expected: %s (%zd, %zd)", 
+			work->file, enum_string(error.expected).data, error.token.row, error.token.column);
 		return;
 	}
 
