@@ -66,6 +66,13 @@ void test_serialize(void *param) {
 void test_deserialize(void *param) {
 	Async_Serialize *work = (Async_Serialize *)param;
 
+	Player *player = (Player *)work->data;
+
+	player->position = vec2(-0.2f, 0);
+	player->size = vec2(0.5f);
+	player->color = vec4(1);
+	player->velocity = vec2(0);
+
 	auto allocator = context.allocator;
 	context.allocator = work->allocator;
 	defer{
@@ -164,10 +171,12 @@ int karma_user_zero() {
 
 	auto player = manager_add_entity(&manager, Player);
 
-	player->position = vec2(-0.2f, 0);
-	player->size = vec2(0.5f);
-	player->color = vec4(1);
-	player->velocity = vec2(0);
+	save_work.data = player;
+	save_work.file = "temp/player.txt";
+	save_work.info = reflect_info<Player>();
+	async_add_work(queue, test_deserialize, &save_work);
+	async_flush_work(queue);
+
 	Entity_Handle player_id = player->handle;
 
 	Vec2 quad_position = vec2(1);
@@ -471,11 +480,11 @@ int karma_user_zero() {
 			player_quad.positions[2] = player->position + 0.5f * vec2( player->size.x,  player->size.y);
 			player_quad.positions[3] = player->position + 0.5f * vec2( player->size.x, -player->size.y);
 
-			if (test_quad_vs_quad(player_quad, quad_mesh.quad)) {
-				player->color = vec4(1, 0, 0);
-			} else {
-				player->color = vec4(1, 1, 1);
-			}
+			//if (test_quad_vs_quad(player_quad, quad_mesh.quad)) {
+			//	player->color = vec4(1, 0, 0);
+			//} else {
+			//	player->color = vec4(1, 1, 1);
+			//}
 
 			player->position += dt * player->velocity;
 #endif
