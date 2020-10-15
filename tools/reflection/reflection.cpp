@@ -1,8 +1,8 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include "modules/core/stream.cpp"
 #include "modules/core/length_string.cpp"
-#include "modules/core/tokenizer.cpp"
-#include "modules/core/karma_newdelete.cpp"
+#include "modules/core/utility.cpp"
+#include "modules/core/karma_shared.cpp"
 #include "modules/core/karma_crt_impl.hpp"
 
 #include <clang-c/Index.h>

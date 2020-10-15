@@ -175,6 +175,12 @@ inline void runtime_assert(bool exp) {
 #define mega_bytes(n) (kilo_bytes(n) * 1024u)
 #define giga_bytes(n) (mega_bytes(n) * 1024u)
 
+#define sgn(n)					((r32)(0 < (n)) - (r32)((n) < 0))
+#define minimum(a, b)			(((a) < (b)) ? (a) : (b))
+#define maximum(a, b)			(((a) > (b)) ? (a) : (b))
+#define mmclamp(min, max, v)    minimum(max, maximum(min, v))
+#define clamp01(v)				mmclamp(0.0f, 1.0f, v)
+
 // ease of use
 typedef int8_t  s8;
 typedef int16_t s16;

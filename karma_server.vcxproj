@@ -270,11 +270,11 @@ popd
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\modules\core\karma_newdelete.cpp" />
+    <ClCompile Include="src\modules\core\karma_shared.cpp" />
     <ClCompile Include="src\modules\core\length_string.cpp" />
     <ClCompile Include="src\modules\core\lin_maths.cpp" />
     <ClCompile Include="src\modules\core\stream.cpp" />
-    <ClCompile Include="src\modules\core\tokenizer.cpp" />
+    <ClCompile Include="src\modules\core\utility.cpp" />
     <ClCompile Include="src\modules\core\unicode.cpp" />
     <ClCompile Include="src\modules\core\windows\systems_windows.cpp" />
     <ClCompile Include="src\modules\pcg\pcg_basic.c" />
@@ -296,7 +296,6 @@ popd
     <ClInclude Include="src\modules\core\stb_truetype.h" />
     <ClInclude Include="src\modules\core\stream.h" />
     <ClInclude Include="src\modules\core\systems.h" />
-    <ClInclude Include="src\modules\core\tokenizer.h" />
     <ClInclude Include="src\modules\core\unicode.h" />
     <ClInclude Include="src\modules\core\utility.h" />
     <ClInclude Include="src\modules\core\windows\resource.h" />

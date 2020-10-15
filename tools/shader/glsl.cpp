@@ -1,13 +1,13 @@
 #include "shader.h"
 
-#include "modules/core/tokenizer.cpp"
+#include "modules/core/utility.cpp"
 #include "modules/core/reflection.h"
 #include "modules/core/stream.h"
-#include ".generated/tokenizer.typeinfo"
+#include ".generated/utility.typeinfo"
 
 Token parser_expect_token_kind(Array_View<Token> tokens, s64 index, Token_Kind kind, int *error_count, const char *file) {
 	if (index < tokens.count) {
-		auto token = tokens[index];
+		const auto &token = tokens[index];
 		if (token.kind != kind) {
 			*error_count += 1;
 			report_error("GLSL", "Parsing error: %s (%zu, %zu): Expected %s but found %s", file, token.row, token.column, enum_string(kind).data, enum_string(token.kind).data);

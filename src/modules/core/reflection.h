@@ -210,7 +210,8 @@ struct Type_Info_Union : public Type_Info {
 	ptrsize             member_count;
 	const Union_Member *members;
 
-	inline Type_Info_Union() {
+	inline Type_Info_Union() :
+	member_count(0), members(0) {
 	}
 	inline Type_Info_Union(ptrsize sz, String n, ptrsize mem_n, const Union_Member *mems) :
 		Type_Info(Type_Id_UNION, sz, n) {

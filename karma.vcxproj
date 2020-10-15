@@ -280,12 +280,7 @@ popd
     <ClCompile Include="src\main_pujan.cpp" />
     <ClCompile Include="src\main_shankar.cpp" />
     <ClCompile Include="src\modules\core\thread_pool.cpp" />
-    <ClCompile Include="src\modules\core\tokenizer.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Developer|x64'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug-Fast|x64'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="src\modules\core\utility.cpp" />
     <ClCompile Include="src\modules\imgui\dev.cpp" />
     <ClCompile Include="src\modules\core\directx\gfx_d3d11.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
@@ -324,7 +319,7 @@ popd
     </ClCompile>
     <ClCompile Include="src\modules\core\stream.cpp" />
     <ClCompile Include="src\modules\pcg\pcg_basic.c" />
-    <ClCompile Include="src\modules\core\karma_newdelete.cpp">
+    <ClCompile Include="src\modules\core\karma_shared.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug-Fast|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
@@ -389,7 +384,6 @@ popd
     <ClInclude Include="src\modules\core\opengl\glad\include\KHR\khrplatform.h" />
     <ClInclude Include="src\modules\core\lin_maths.h" />
     <ClInclude Include="src\modules\core\lin_maths_types.h" />
-    <ClInclude Include="src\modules\core\tokenizer.h" />
     <ClInclude Include="src\modules\pcg\pcg_basic.h" />
     <ClInclude Include="src\modules\core\karma.h" />
     <ClInclude Include="src\modules\core\karma_crt_impl.hpp" />

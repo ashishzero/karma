@@ -257,10 +257,6 @@ struct Event {
 		Controller_Button_Event		controller_button;
 		Controller_Axis_Event		controller_axis;
 	};
-
-	inline Event() {
-		type = Event_Type_NONE;
-	}
 };
 
 struct Controller {

@@ -253,8 +253,6 @@ inline void serialize_to_file(Ostream *out, String name, const Type_Info *info, 
 	}
 }
 
-#include "tokenizer.h"
-
 struct Token_Walker {
 	Token *start;
 	Token *end;

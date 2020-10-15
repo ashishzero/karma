@@ -12,7 +12,6 @@
     <ClCompile Include="src\modules\core\opengl\glad\src\glad.c" />
     <ClCompile Include="src\modules\core\opengl\gfx_opengl.cpp" />
     <ClCompile Include="src\modules\core\windows\systems_windows.cpp" />
-    <ClCompile Include="src\modules\core\karma_newdelete.cpp" />
     <ClCompile Include="src\modules\core\length_string.cpp" />
     <ClCompile Include="src\modules\core\lin_maths.cpp" />
     <ClCompile Include="src\modules\core\stream.cpp" />
@@ -36,7 +35,8 @@
     <ClCompile Include="src\main_shankar.cpp" />
     <ClCompile Include="src\main_pujan.cpp" />
     <ClCompile Include="src\modules\core\thread_pool.cpp" />
-    <ClCompile Include="src\modules\core\tokenizer.cpp" />
+    <ClCompile Include="src\modules\core\utility.cpp" />
+    <ClCompile Include="src\modules\core\karma_shared.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\modules\core\directx\dx_error.h" />
@@ -58,7 +58,6 @@
     <ClInclude Include="src\modules\core\stb_truetype.h" />
     <ClInclude Include="src\modules\core\stream.h" />
     <ClInclude Include="src\modules\core\systems.h" />
-    <ClInclude Include="src\modules\core\tokenizer.h" />
     <ClInclude Include="src\modules\core\unicode.h" />
     <ClInclude Include="src\modules\core\utility.h" />
     <ClInclude Include="src\modules\imgui\imconfig.h" />

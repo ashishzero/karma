@@ -3,12 +3,7 @@
 
 #define to_radians(deg)			((deg) * (MATH_PI / 180.0f))
 #define to_degrees(rad)			((rad) * (180.0f / MATH_PI_INVERSE))
-#define sgn(n)					((r32)(0 < (n)) - (r32)((n) < 0))
-#define minimum(a, b)			(((a) < (b)) ? (a) : (b))
-#define maximum(a, b)			(((a) > (b)) ? (a) : (b))
-#define mmclamp(min, max, v)    minimum(max, maximum(min, v))
 #define real_equals(a, b, tol)	(fabsf((a) - (b)) < (tol))
-#define clamp01(v)				mmclamp(0.0f, 1.0f, v)
 
 inline r32 map(r32 from_x1, r32 from_x2, r32 to_x1, r32 to_x2, r32 x) {
 	return (to_x2 - to_x1) / (from_x2 - from_x1) * (x - from_x1) + to_x1;
