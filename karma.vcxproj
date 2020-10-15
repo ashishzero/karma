@@ -349,7 +349,6 @@ popd
     <ClInclude Include="src\asset.h" />
     <ClInclude Include="src\audio.h" />
     <ClInclude Include="src\modules\core\thread_pool.h" />
-    <ClInclude Include="src\modules\core\serialize.h" />
     <ClInclude Include="src\modules\imgui\dev.h" />
     <ClInclude Include="src\modules\core\directx\dx_error.h" />
     <ClInclude Include="src\editor.h" />

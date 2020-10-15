@@ -1,6 +1,8 @@
 #pragma once
 #include "karma.h"
+#include "reflection.h"
 #include "length_string.h"
+#include "stream.h"
 
 #define swap_by_exchange(a, b, t) (t = a, a = b, b = t)
 
@@ -270,3 +272,5 @@ Array_View<Token> tokenize(String string, Tokenization_Status *status);
 //
 //
 
+void serialize_fmt_text(Ostream *out, String name, const Type_Info *info, char *data, s64 num_of_elements = 1, s32 tab_count = 0, bool is_array = false);
+bool deserialize_fmt_text(Array_View<Token> &tokens, String name, const Type_Info *info, char *data, s64 num_of_elements = 1, s32 tab_count = 0);

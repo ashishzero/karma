@@ -77,7 +77,6 @@
     <ClInclude Include="src\shaders\gfx_shaders.h" />
     <ClInclude Include="src\modules\gfx\renderer.h" />
     <ClInclude Include="src\modules\imgui\dev.h" />
-    <ClInclude Include="src\modules\core\serialize.h" />
     <ClInclude Include="src\asset_loader.h" />
     <ClInclude Include="src\asset.h" />
     <ClInclude Include="src\modules\core\thread_pool.h" />

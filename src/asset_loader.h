@@ -5,7 +5,6 @@
 #include "modules/core/systems.h"
 #include "modules/core/lin_maths.h"
 #include "modules/core/utility.h"
-#include "modules/core/serialize.h"
 #include "asset.h"
 #include ".generated/asset.typeinfo"
 

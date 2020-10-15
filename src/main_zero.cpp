@@ -9,7 +9,6 @@
 #include "modules/imgui/dev.h"
 #include "modules/gfx/renderer.h"
 #include "modules/core/thread_pool.h"
-#include "modules/core/serialize.h"
 
 #include "entity.h"
 
