@@ -49,7 +49,7 @@ bool is_hex_numeral(u32 codepoint);
 bool is_oct_numeral(u32 codepoint);
 bool is_binary_numeral(u32 codepoint);
 bool parse_integer(const String string, s64 *out);
-bool parse_real(const String string, r64 *out, bool *found_period, bool *found_exponential);
+bool parse_real(const String string, r64 *out);
 
 enum Token_Kind {
 	Token_Kind_NONE = 0,
