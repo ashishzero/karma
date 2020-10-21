@@ -1640,7 +1640,7 @@ r32 signed_area(Vec3 a, Vec3 b, Vec3 c) {
 }
 
 bool triangle_is_cw(Vec2 a, Vec2 b, Vec2 c) {
-	return vec2_determinant(b - a, c - a) > 0.0f;
+	return vec2_determinant(b - a, c - a) < 0.0f;
 }
 
 Vec2 corner_point(const Mm_Rect &b, u32 n) {

@@ -140,6 +140,25 @@ int karma_user_zero() {
 	u64 frequency = system_get_frequency();
 	u64 counter = system_get_counter();
 
+	Circle circle;
+	circle.center = vec2(0);
+	circle.radius = 1;
+
+	static Vec2 points[] = {
+		vec2(-8, 5), vec2(-2, 5), vec2(-1, -1), vec2(-4, -5), vec2(-13, -2)
+	};
+
+	Polygon polygon;
+	polygon.first_index = 0;
+	polygon.vertices = points;
+	polygon.vertex_count = static_count(points);
+
+	Mm_Rect rect;
+	rect.min = vec2(4, -4);
+	rect.max = vec2(9, 3);
+
+	Vec4 rect_color = vec4(1, 0, 0 ), poly_color = vec4(1, 0, 0);
+
 	Player_Controller controller = {};
 
 	while (running) {
@@ -220,9 +239,52 @@ int karma_user_zero() {
 		Dev_TimedBlockBegin(Simulation);
 
 
+		Gjk_Simplex2d simplex;
+
 		while (accumulator_t >= fixed_dt) {
 			Dev_TimedScope(SimulationFrame);
 
+			
+			r32 len = sqrtf(controller.x * controller.x + controller.y * controller.y);
+			Vec2 dir;
+			if (len) {
+				dir.x = controller.x / len;
+				dir.y = controller.y / len;
+			}
+			else {
+				dir = vec2(0);
+			}
+
+			const float force = 10;
+			const float drag = 5;
+			
+			dir *= force;
+			dir *= powf(0.5f, drag * dt);
+
+
+			auto circle_new_center = circle.center + dt * dir;
+			
+			if (test_point_inside_convex_polygon(circle_new_center, polygon.vertices, polygon.vertex_count)) {
+				circle_new_center = circle.center;
+			}
+
+			if (test_point_inside_rect(circle_new_center, rect)) {
+				circle_new_center = circle.center;
+			}
+
+			circle.center = circle_new_center;
+
+			if (gjk(rect, circle, &simplex)) {
+				rect_color = vec4(0, 1, 1, 1);
+			} else {
+				rect_color = vec4(1, 0, 0);
+			}
+
+			if (gjk(polygon, circle, &simplex)) {
+				poly_color = vec4(0, 1, 1, 1);
+			} else {
+				poly_color = vec4(1, 0, 0);
+			}
 
 			accumulator_t -= fixed_dt;
 		}
@@ -259,7 +321,13 @@ int karma_user_zero() {
 
 		im2d_begin(view);
 
-		im2d_circle(vec2(0), 2.5f, vec4(1, 0, 1, 1));
+		for (int i = 0; i < polygon.vertex_count; ++i) {
+			im2d_line(polygon.vertices[i], polygon.vertices[(i + 1) % polygon.vertex_count], poly_color, 0.02f);
+		}
+
+		im2d_rect_outline(rect.min, rect.max - rect.min, rect_color, 0.02f);
+
+		im2d_circle(circle.center, circle.radius, vec4(0, 1, 0, 1));
 
 		im2d_end();
 
