@@ -11,6 +11,7 @@
 #include "asset_loader.h"
 
 int karma_user_atish() {
+
 	r32    framebuffer_w = 1280;
 	r32    framebuffer_h = 720;
 	Handle platform = system_create_window(u8"Karma", 1280, 720, System_Window_Show_NORMAL);
