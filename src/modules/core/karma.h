@@ -448,7 +448,7 @@ inline void * thread_get_argument() {
 }
 
 inline void *temporary_allocator_proc(Allocation_Type type, ptrsize size, const void *ptr, void *user_ptr) {
-	Temporary_Memory *temp = (Temporary_Memory *)&context.temp_memory;
+	Temporary_Memory *temp = &context.temp_memory;
 
 	if (type == Allocation_Type_NEW) {
 		ptrsize padding = (MEMORY_ALIGNMENT - ((ptrsize)temp->ptr % MEMORY_ALIGNMENT)) % MEMORY_ALIGNMENT;
@@ -511,19 +511,19 @@ inline void pop_temporary_allocator(Push_Allocator &mark) {
 		pop_temporary_allocator(CONCAT(push_allocator__, CURRENT_LINE));      \
 	}
 
-inline u8 *get_temporary_allocator_point() {
+inline u8 *begin_temporary_allocation() {
 	return context.temp_memory.ptr;
 }
 
-inline void set_temporary_allocator_point(u8 *ptr) {
+inline void end_temporary_allocation(u8 *ptr) {
 	assert(ptr >= context.temp_memory.base && ptr <= context.temp_memory.base + context.temp_memory.capacity);
 	context.temp_memory.ptr = ptr;
 }
 
-#define scoped_temporary_allocation()                                                     \
-	auto CONCAT(scope_temp_allocation__, CURRENT_LINE) = get_temporary_allocator_point(); \
-	defer {                                                                               \
-		set_temporary_allocator_point(CONCAT(scope_temp_allocation__, CURRENT_LINE));     \
+#define scoped_temporary_allocation()                                                  \
+	auto CONCAT(scope_temp_allocation__, CURRENT_LINE) = begin_temporary_allocation(); \
+	defer {                                                                            \
+		end_temporary_allocation(CONCAT(scope_temp_allocation__, CURRENT_LINE));       \
 	}
 
 inline void reset_temporary_memory() {

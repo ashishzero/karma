@@ -93,9 +93,10 @@ inline void iasync_do_work(Work_Queue *queue) {
 	s32 read_index = system_interlocked_compare_exchange(&queue->read_index, new_read_index, check_read_index);
 	if (read_index == check_read_index) {
 		Work_Queue::Entry *entry = queue->entries + read_index;
-		reset_temporary_memory();
+		auto temp = begin_temporary_allocation();
 		entry->proc(entry->param);
 		system_interlocked_decrement(&queue->work_count);
+		end_temporary_allocation(temp);
 	}
 }
 
