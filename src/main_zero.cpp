@@ -140,9 +140,12 @@ int karma_user_zero() {
 	u64 frequency = system_get_frequency();
 	u64 counter = system_get_counter();
 
-	Circle circle;
-	circle.center = vec2(0);
-	circle.radius = 1;
+	Circle player;
+	player.center = vec2(0);
+	player.radius = 1;
+
+	auto player_color = vec4(1);
+	auto player_velocity = vec2(0);
 
 	static Vec2 points[] = {
 		vec2(-8, 5), vec2(-2, 5), vec2(-1, -1), vec2(-4, -5), vec2(-13, -2)
@@ -249,8 +252,14 @@ int karma_user_zero() {
 		Array<Collision_Manifold> manifolds;
 		manifolds.allocator = TEMPORARY_ALLOCATOR;
 
+		Vec2 player_force;
 		while (accumulator_t >= fixed_dt) {
 			Dev_TimedScope(SimulationFrame);
+
+			const r32 gravity = 10;
+			const r32 drag = 5;
+
+			player_force = vec2(0);
 
 			r32 len = sqrtf(controller.x * controller.x + controller.y * controller.y);
 			Vec2 dir;
@@ -262,36 +271,38 @@ int karma_user_zero() {
 				dir = vec2(0);
 			}
 
-			const float force = 10;
-			const float drag = 5;
-			
-			dir *= force;
-			dir *= powf(0.5f, drag * dt);
+			const float force = 50;
 
-			auto circle_new_center = circle.center + dt * dir;
-			
-			circle.center = circle_new_center;
+			player_force = force * dir;
+			//player->force.y -= gravity;
+
+			player_velocity += dt * player_force;
+			player_velocity *= powf(0.5f, drag * dt);
+
+			auto new_player_position = player.center + dt * player_velocity;
+
+			player.center = new_player_position;
 
 			Vec2 norm; r32 dist;
-			if (epa(rect, circle, &norm, &dist)) {
+			if (epa(rect, player, &norm, &dist)) {
 				array_add(&manifolds, Collision_Manifold{ norm, dist });
-				circle.center += norm * dist;
+				player.center += norm * dist;
 				rect_color = vec4(0, 1, 1, 1);
 			} else {
 				rect_color = vec4(1, 0, 0);
 			}
 
-			if (epa(polygon, circle, &norm, &dist)) {
+			if (epa(polygon, player, &norm, &dist)) {
 				array_add(&manifolds, Collision_Manifold{ norm, dist });
-				circle.center += norm * dist;
+				player.center += norm * dist;
 				poly_color = vec4(0, 1, 1, 1);
 			} else {
 				poly_color = vec4(1, 0, 0);
 			}
 			
-			if (epa(shape, circle, &norm, &dist)) {
+			if (epa(shape, player, &norm, &dist)) {
 				array_add(&manifolds, Collision_Manifold{ norm, dist });
-				circle.center += norm * dist;
+				player.center += norm * dist;
 				shape_color = vec4(0, 1, 1, 1);
 			} else {
 				shape_color = vec4(1, 0, 0);
@@ -339,10 +350,10 @@ int karma_user_zero() {
 		im2d_rect_outline(rect.min, rect.max - rect.min, rect_color, 0.02f);
 		im2d_circle_outline(shape.center, shape.radius, shape_color, 0.02f);
 
-		im2d_circle(circle.center, circle.radius, vec4(0, 1, 0, 1));
+		im2d_circle(player.center, player.radius, player_color);
 
 		for (auto &manifold : manifolds) {
-			im2d_line(circle.center, circle.center + manifold.penetration_depth * manifold.normal, 2 * vec4(1, 1, 0), 0.05f);
+			im2d_line(player.center, player.center + manifold.penetration_depth * manifold.normal, 2 * vec4(1, 1, 0), 0.05f);
 		}
 
 		im2d_end();
