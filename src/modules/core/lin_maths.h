@@ -898,6 +898,9 @@ Vec2 support(const Polygon &p, Vec2 dir);
 Vec2 support(const Capsule2d &c, Vec2 dir);
 
 Vec2 support(const Circle &a, const Circle &b, Vec2 dir);
+Vec2 support(const Circle &a, const Capsule2d &b, Vec2 dir);
+Vec2 support(const Capsule2d &a, const Circle &b, Vec2 dir);
+Vec2 support(const Capsule2d &a, const Capsule2d &b, Vec2 dir);
 Vec2 support(const Mm_Rect &a, const Mm_Rect &b, Vec2 dir);
 
 template <typename ShapeA, typename ShapeB>

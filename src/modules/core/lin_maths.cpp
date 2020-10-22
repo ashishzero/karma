@@ -2724,6 +2724,58 @@ Vec2 support(const Circle &a, const Circle &b, Vec2 dir) {
 	return a.center - b.center + n * (a.radius + b.radius);
 }
 
+Vec2 support(const Circle &a, const Capsule2d &b, Vec2 dir) {
+	Vec2 n = vec2_normalize(dir);
+	Vec2 s = a.center;
+	r32 da, db;
+
+	da = vec2_dot(b.a, dir);
+	db = vec2_dot(b.b, dir);
+	if (da > db)
+		s -= b.a;
+	else
+		s -= b.b;
+
+	return s + n * (a.radius + b.radius);
+}
+
+Vec2 support(const Capsule2d &a, const Circle &b, Vec2 dir) {
+	Vec2 n = vec2_normalize(dir);
+	Vec2 s;
+	r32 da, db;
+
+	da = vec2_dot(a.a, dir);
+	db = vec2_dot(a.b, dir);
+	if (da > db)
+		s = a.a;
+	else
+		s = a.b;
+
+	return s - b.center + n * (a.radius + b.radius);
+}
+
+Vec2 support(const Capsule2d &a, const Capsule2d &b, Vec2 dir) {
+	Vec2 n = vec2_normalize(dir);
+	Vec2 s;
+	r32 da, db;
+
+	da = vec2_dot(a.a, dir);
+	db = vec2_dot(a.b, dir);
+	if (da > db)
+		s = a.a;
+	else
+		s = a.b;
+	
+	da = vec2_dot(b.a, -dir);
+	db = vec2_dot(b.b, -dir);
+	if (da > db)
+		s -= b.a;
+	else
+		s -= b.b;
+
+	return s + n * (a.radius + b.radius);
+}
+
 Vec2 support(const Mm_Rect &a, const Mm_Rect &b, Vec2 dir) {
 	Vec2 pa, pb;
 	if (dir.x >= 0.0f) {
