@@ -127,7 +127,7 @@ int karma_user_zero() {
 	r32 aspect_ratio = framebuffer_w / framebuffer_h;
 	const r32 speed_factor = 1;
 
-	r32 const fixed_dt = 1.0f / 30.0f;
+	r32 const fixed_dt = 1.0f / 60.0f;
 	r32       dt = fixed_dt * speed_factor;
 	r32       game_dt = fixed_dt * speed_factor;
 	r32       real_dt = fixed_dt;
@@ -149,7 +149,6 @@ int karma_user_zero() {
 	};
 
 	Polygon polygon;
-	polygon.first_index = 0;
 	polygon.vertices = points;
 	polygon.vertex_count = static_count(points);
 
@@ -157,7 +156,11 @@ int karma_user_zero() {
 	rect.min = vec2(4, -4);
 	rect.max = vec2(9, 3);
 
-	Vec4 rect_color = vec4(1, 0, 0 ), poly_color = vec4(1, 0, 0);
+	Circle shape;
+	shape.center = vec2(5);
+	shape.radius = 1.23f;
+
+	Vec4 rect_color = vec4(1, 0, 0 ), poly_color = vec4(1, 0, 0), shape_color = vec4(1, 0, 0);
 
 	Player_Controller controller = {};
 
@@ -238,13 +241,17 @@ int karma_user_zero() {
 
 		Dev_TimedBlockBegin(Simulation);
 
+		struct Collision_Manifold {
+			Vec2 normal;
+			r32 penetration_depth;
+		};
 
-		Gjk_Simplex2d simplex;
+		Array<Collision_Manifold> manifolds;
+		manifolds.allocator = TEMPORARY_ALLOCATOR;
 
 		while (accumulator_t >= fixed_dt) {
 			Dev_TimedScope(SimulationFrame);
 
-			
 			r32 len = sqrtf(controller.x * controller.x + controller.y * controller.y);
 			Vec2 dir;
 			if (len) {
@@ -261,29 +268,30 @@ int karma_user_zero() {
 			dir *= force;
 			dir *= powf(0.5f, drag * dt);
 
-
 			auto circle_new_center = circle.center + dt * dir;
 			
-			if (test_point_inside_convex_polygon(circle_new_center, polygon.vertices, polygon.vertex_count)) {
-				circle_new_center = circle.center;
-			}
-
-			if (test_point_inside_rect(circle_new_center, rect)) {
-				circle_new_center = circle.center;
-			}
-
 			circle.center = circle_new_center;
 
-			if (gjk(rect, circle, &simplex)) {
+			Vec2 norm; r32 dist;
+			if (epa(rect, circle, &norm, &dist)) {
+				array_add(&manifolds, Collision_Manifold{ norm, dist });
 				rect_color = vec4(0, 1, 1, 1);
 			} else {
 				rect_color = vec4(1, 0, 0);
 			}
 
-			if (gjk(polygon, circle, &simplex)) {
+			if (epa(polygon, circle, &norm, &dist)) {
+				array_add(&manifolds, Collision_Manifold{ norm, dist });
 				poly_color = vec4(0, 1, 1, 1);
 			} else {
 				poly_color = vec4(1, 0, 0);
+			}
+			
+			if (epa(shape, circle, &norm, &dist)) {
+				array_add(&manifolds, Collision_Manifold{ norm, dist });
+				shape_color = vec4(0, 1, 1, 1);
+			} else {
+				shape_color = vec4(1, 0, 0);
 			}
 
 			accumulator_t -= fixed_dt;
@@ -326,8 +334,13 @@ int karma_user_zero() {
 		}
 
 		im2d_rect_outline(rect.min, rect.max - rect.min, rect_color, 0.02f);
+		im2d_circle_outline(shape.center, shape.radius, shape_color, 0.02f);
 
 		im2d_circle(circle.center, circle.radius, vec4(0, 1, 0, 1));
+
+		for (auto &manifold : manifolds) {
+			im2d_line(circle.center, circle.center + manifold.penetration_depth * manifold.normal, 2 * vec4(1, 1, 0), 0.05f);
+		}
 
 		im2d_end();
 

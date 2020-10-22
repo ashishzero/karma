@@ -170,6 +170,19 @@ Vec3 vec3_cross(Vec3 a, Vec3 b) {
 	return res;
 }
 
+Vec2 vec2_triple_product(Vec2 a, Vec2 b, Vec2 c) {
+	r32 det = vec2_determinant(a, b);
+	Vec2 res;
+	res.x = -c.y * det;
+	res.y = c.x * det;
+	return res;
+}
+
+Vec3 vec3_triple_product(Vec3 a, Vec3 b, Vec3 c) {
+	return vec3_cross(vec3_cross(a, b), c);
+}
+
+
 //
 //
 //
@@ -2666,9 +2679,7 @@ Vec2 support(const Mm_Rect &m, Vec2 dir) {
 }
 
 Vec2 support(const Polygon &shape, Vec2 dir) {
-	assert(shape.first_index < shape.vertex_count);
-
-	s32 index = shape.first_index;
+	s32 index = 0;
 	r32 p = vec2_dot(dir, shape.vertices[index]);
 
 	s32 adj_index;
@@ -2694,74 +2705,59 @@ Vec2 support(const Polygon &shape, Vec2 dir) {
 	return shape.vertices[index];
 }
 
-Vec2 support(const Circle &a, const Circle &b, Vec2 dir, Vec2 *pa, Vec2 *pb) {
+Vec2 support(const Circle &a, const Circle &b, Vec2 dir) {
 	Vec2 n = vec2_normalize(dir);
-	*pa = a.center + n * a.radius;
-	*pb = b.center - n * b.radius;
-	return *pa - *pb;
+	return a.center - b.center + n * (a.radius + b.radius);
 }
 
-Vec2 support(const Mm_Rect &a, const Mm_Rect &b, Vec2 dir, Vec2 *pa, Vec2 *pb) {
+Vec2 support(const Mm_Rect &a, const Mm_Rect &b, Vec2 dir) {
+	Vec2 pa, pb;
 	if (dir.x >= 0.0f) {
-		pa->x = a.max.x;
-		pb->x = b.min.x;
+		pa.x = a.max.x;
+		pb.x = b.min.x;
 	} else {
-		pa->x = a.min.x;
-		pb->x = b.max.x;
+		pa.x = a.min.x;
+		pb.x = b.max.x;
 	}
 	if (dir.y >= 0.0f) {
-		pa->y = a.max.y;
-		pb->y = b.min.y;
+		pa.y = a.max.y;
+		pb.y = b.min.y;
 	} else {
-		pa->y = a.min.y;
-		pb->y = b.max.y;
+		pa.y = a.min.y;
+		pb.y = b.max.y;
 	}
-	return *pa - *pb;
+	return pa - pb;
 }
 
-Vec2 support(const Circle &a, const Mm_Rect &b, Vec2 dir, Vec2 *pa, Vec2 *pb) {
-	*pa = support(a, dir);
-	*pb = support(b, -dir);
-	return *pa - *pb;
+Vec2 support(const Circle &a, const Mm_Rect &b, Vec2 dir) {
+	return support(a, dir) - support(b, -dir);
 }
 
-Vec2 support(const Mm_Rect &a, const Circle &b, Vec2 dir, Vec2 *pa, Vec2 *pb) {
-	*pa = support(a, dir);
-	*pb = support(b, -dir);
-	return *pa - *pb;
+Vec2 support(const Mm_Rect &a, const Circle &b, Vec2 dir) {
+	return support(a, dir) - support(b, -dir);
 }
 
-Vec2 support(const Polygon &a, const Polygon &b, Vec2 dir, Vec2 *pa, Vec2 *pb) {
-	*pa = support(a, dir);
-	*pb = support(b, -dir);
-	return *pa - *pb;
+Vec2 support(const Polygon &a, const Polygon &b, Vec2 dir) {
+	return support(a, dir) - support(b, -dir);
 }
 
-Vec2 support(const Polygon &p, const Circle &c, Vec2 dir, Vec2 *pa, Vec2 *pb) {
-	*pa = support(p, dir);
-	*pb = support(c, -dir);
-	return *pa - *pb;
+Vec2 support(const Polygon &p, const Circle &c, Vec2 dir) {
+	return support(p, dir) - support(c, -dir);
 }
 
-Vec2 support(const Circle &c, const Polygon &p, Vec2 dir, Vec2 *pa, Vec2 *pb) {
-	*pa = support(c, dir);
-	*pb = support(p, -dir);
-	return *pa - *pb;
+Vec2 support(const Circle &c, const Polygon &p, Vec2 dir) {
+	return support(c, dir) - support(p, -dir);
 }
 
-Vec2 support(const Polygon &p, const Mm_Rect &m, Vec2 dir, Vec2 *pa, Vec2 *pb) {
-	*pa = support(p, dir);
-	*pb = support(m, -dir);
-	return *pa - *pb;
+Vec2 support(const Polygon &p, const Mm_Rect &m, Vec2 dir) {
+	return support(p, dir) - support(m, -dir);
 }
 
-Vec2 support(const Mm_Rect &m, const Polygon &p, Vec2 dir, Vec2 *pa, Vec2 *pb) {
-	*pa = support(m, dir);
-	*pb = support(p, -dir);
-	return *pa - *pb;
+Vec2 support(const Mm_Rect &m, const Polygon &p, Vec2 dir) {
+	return support(m, dir) - support(p, -dir);
 }
 
-bool next_simplex(Gjk_Simplex2d * const simplex, Vec2 *dir, s32 *n) {
+bool next_simplex(Simplex2d * const simplex, Vec2 *dir, s32 *n) {
 	switch (*n) {
 	case 2: {
 		// a = simplex[1]
@@ -2775,8 +2771,6 @@ bool next_simplex(Gjk_Simplex2d * const simplex, Vec2 *dir, s32 *n) {
 		} else {
 			*dir = ao;
 			simplex->p[0] = simplex->p[1];
-			simplex->a[0] = simplex->a[1];
-			simplex->b[0] = simplex->b[1];
 			*n = 1;
 		}
 	} break;
@@ -2797,12 +2791,7 @@ bool next_simplex(Gjk_Simplex2d * const simplex, Vec2 *dir, s32 *n) {
 				dir->y = ac.x * det;
 
 				simplex->p[1] = simplex->p[0];
-				simplex->a[1] = simplex->a[0];
-				simplex->b[1] = simplex->b[0];
-
 				simplex->p[0] = simplex->p[2];
-				simplex->a[0] = simplex->a[2];
-				simplex->b[0] = simplex->b[2];
 
 				*n = 2;
 			} else {
@@ -2811,14 +2800,10 @@ bool next_simplex(Gjk_Simplex2d * const simplex, Vec2 *dir, s32 *n) {
 					dir->x = -ab.y * det;
 					dir->y = ab.x * det;
 					simplex->p[0] = simplex->p[2];
-					simplex->a[0] = simplex->a[2];
-					simplex->b[0] = simplex->b[2];
 					*n = 2;
 				} else {
 					*dir = -simplex->p[2];
 					simplex->p[0] = simplex->p[2];
-					simplex->a[0] = simplex->a[2];
-					simplex->b[0] = simplex->b[2];
 					*n = 1;
 				}
 			}
@@ -2829,14 +2814,10 @@ bool next_simplex(Gjk_Simplex2d * const simplex, Vec2 *dir, s32 *n) {
 					dir->x = -ab.y * det;
 					dir->y = ab.x * det;
 					simplex->p[0] = simplex->p[2];
-					simplex->a[0] = simplex->a[2];
-					simplex->b[0] = simplex->b[2];
 					*n = 2;
 				} else {
 					*dir = -simplex->p[2];
 					simplex->p[0] = simplex->p[2];
-					simplex->a[0] = simplex->a[2];
-					simplex->b[0] = simplex->b[2];
 					*n = 1;
 				}
 			} else {
@@ -2845,92 +2826,33 @@ bool next_simplex(Gjk_Simplex2d * const simplex, Vec2 *dir, s32 *n) {
 			}
 		}
 	} break;
+
+	invalid_default_case();
 	}
 
 	return false;
 }
 
-//
-//
-//
+Nearest_Edge2d closest_edge_origin_polygon(const Polygon &polygon) {
+	Nearest_Edge2d edge;
+	edge.distance = MAX_FLOAT;
 
-bool ray_vs_aabb(Vec2 origin, Vec2 direction, const Mm_Rect &rect, Ray_Hit *hit) {
-	Vec2 i_direction;
-	i_direction.x = 1.0f / direction.x;
-	i_direction.y = 1.0f / direction.y;
-	Vec2 near_t = vec2_hadamard(rect.min - origin, i_direction);
-	Vec2 far_t = vec2_hadamard(rect.max - origin, i_direction);
+	for (s32 p_index = 0; p_index < polygon.vertex_count; ++p_index) {
+		s32 q_index = ((p_index + 1) == polygon.vertex_count) ? 0 : p_index + 1;
+		
+		auto a = polygon.vertices[p_index];
+		auto b = polygon.vertices[q_index];
+		auto e = b - a;
 
-	r32 temp;
-
-	if (near_t.x > far_t.x) {
-		temp = near_t.x;
-		near_t.x = far_t.x;
-		far_t.x = temp;
-	}
-	if (near_t.y > far_t.y) {
-		temp = near_t.y;
-		near_t.y = far_t.y;
-		far_t.y = temp;
-	}
-
-	if (near_t.x > far_t.y || near_t.y > far_t.x) {
-		// No intersection
-		return false;
-	}
-
-	r32 hit_near_t = maximum(near_t.x, near_t.y);
-	r32 hit_far_t = minimum(far_t.x, far_t.y);
-
-	if (hit_far_t < 0) {
-		// Collision in negative direction
-		return false;
-	}
-
-	hit->point = origin + hit_near_t * direction;
-
-	if (near_t.x > near_t.y) {
-		hit->normal = vec2(-sgn(direction.x), 0);
-	}
-	else if (near_t.x < near_t.y) {
-		hit->normal = vec2(0, -sgn(direction.y));
-	}
-	else {
-		constexpr r32 root_two = 1.4142135623730950488016887242097f;
-		hit->normal = vec2(-sgn(direction.x) * root_two, -sgn(direction.y) * root_two);
-	}
-
-	hit->t = hit_near_t;
-
-	return true;
-}
-
-bool ray_vs_line(Vec2 p1, Vec2 q1, Vec2 p2, Vec2 q2, Ray_Hit *hit) {
-	r32 dx1 = p1.x - q1.x;
-	r32 dy1 = p1.y - q1.y;
-	r32 dx2 = p2.x - q2.x;
-	r32 dy2 = p2.y - q2.y;
-
-	r32 d = dx1 * dy2 - dy1 * dx2;
-
-	if (d) {
-		r32 n2 = -dx1 * (p1.y - p2.y) + dy1 * (p1.x - p2.x);
-		r32 u = n2 / d;
-
-		if (u >= 0 && u <= 1) {
-			r32 n = (p1.x - p2.x) * dy2 - (p1.y - p2.y) * dx2;
-			hit->t = n / d;
-
-			hit->point.x = p2.x - u * dx2;
-			hit->point.y = p2.y - u * dy2;
-
-			Vec2 normal;
-			normal.x = dy2;
-			normal.y = -dx2;
-			hit->normal = vec2_normalize(normal);
-			return true;
+		Vec2 n = vec2_normalize(vec2_triple_product(e, a, e));
+		
+		r32 d = vec2_dot(n, a);
+		if (d < edge.distance) {
+			edge.distance = d;
+			edge.normal = n;
+			edge.index = q_index;
 		}
 	}
 
-	return false;
+	return edge;
 }

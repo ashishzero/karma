@@ -534,6 +534,10 @@ inline void *tallocate(ptrsize size) {
 	return temporary_allocator_proc(Allocation_Type_NEW, size, 0, 0);
 }
 
+inline void *treallocate(void *ptr, ptrsize size) {
+	return temporary_allocator_proc(Allocation_Type_RESIZE, size, ptr, 0);
+}
+
 inline void *memory_allocate(ptrsize size, Allocator allocator = context.allocator) {
 	return allocator.proc(Allocation_Type_NEW, size, 0, allocator.data);
 }

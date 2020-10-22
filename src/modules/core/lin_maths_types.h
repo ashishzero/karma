@@ -456,27 +456,14 @@ struct Ray2d {
 struct Polygon {
 	Vec2 *vertices;
 	s32 vertex_count;
-	s32 first_index;
 };
 
-struct Gjk_Simplex2d {
-	Vec2 p[3];
-	Vec2 a[3];
-	Vec2 b[3];
+struct Simplex2d {
+	Vec2 *p;
 };
 
-struct Gjk_Manifold2d {
-	Vec2 point;
-	r32 dist2;
-};
-
-//
-//
-//
-
-// TODO: Remove this
-struct Ray_Hit {
-	Vec2 point;
+struct Nearest_Edge2d {
 	Vec2 normal;
-	r32 t;
+	r32 distance;
+	s32 index;
 };

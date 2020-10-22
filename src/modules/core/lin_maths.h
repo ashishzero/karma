@@ -416,6 +416,9 @@ r32 vec4_dot(Vec4 a, Vec4 b);
 r32 vec2_determinant(Vec2 a, Vec2 b);
 Vec3 vec2_cross(Vec2 a, Vec2 b);
 Vec3 vec3_cross(Vec3 a, Vec3 b);
+Vec2 vec2_triple_product(Vec2 a, Vec2 b, Vec2 c);
+Vec3 vec3_triple_product(Vec3 a, Vec3 b, Vec3 c);
+
 
 //
 //
@@ -892,33 +895,37 @@ bool dynamic_mm_rect_vs_mm_rect(const Mm_Rect &a, const Mm_Rect &b, Vec2 va, Vec
 Vec2 support(const Circle &c, Vec2 dir);
 Vec2 support(const Mm_Rect &m, Vec2 dir);
 Vec2 support(const Polygon &p, Vec2 dir);
-Vec2 support(const Circle &a, const Circle &b, Vec2 dir, Vec2 *pa, Vec2 *pb);
-Vec2 support(const Mm_Rect &a, const Mm_Rect &b, Vec2 dir, Vec2 *pa, Vec2 *pb);
-Vec2 support(const Circle &a, const Mm_Rect &b, Vec2 dir, Vec2 *pa, Vec2 *pb);
-Vec2 support(const Mm_Rect &a, const Circle &b, Vec2 dir, Vec2 *pa, Vec2 *pb);
-Vec2 support(const Polygon &a, const Polygon &b, Vec2 dir, Vec2 *pa, Vec2 *pb);
-Vec2 support(const Polygon &p, const Circle &c, Vec2 dir, Vec2 *pa, Vec2 *pb);
-Vec2 support(const Circle &c, const Polygon &p, Vec2 dir, Vec2 *pa, Vec2 *pb);
-Vec2 support(const Polygon &p, const Mm_Rect &m, Vec2 dir, Vec2 *pa, Vec2 *pb);
-Vec2 support(const Mm_Rect &m, const Polygon &p, Vec2 dir, Vec2 *pa, Vec2 *pb);
+Vec2 support(const Circle &a, const Circle &b, Vec2 dir);
+Vec2 support(const Mm_Rect &a, const Mm_Rect &b, Vec2 dir);
+Vec2 support(const Circle &a, const Mm_Rect &b, Vec2 dir);
+Vec2 support(const Mm_Rect &a, const Circle &b, Vec2 dir);
+Vec2 support(const Polygon &a, const Polygon &b, Vec2 dir);
+Vec2 support(const Polygon &p, const Circle &c, Vec2 dir);
+Vec2 support(const Circle &c, const Polygon &p, Vec2 dir);
+Vec2 support(const Polygon &p, const Mm_Rect &m, Vec2 dir);
+Vec2 support(const Mm_Rect &m, const Polygon &p, Vec2 dir);
 
-bool next_simplex(Gjk_Simplex2d *const simplex, Vec2 *dir, s32 *n);
+bool next_simplex(Simplex2d *const simplex, Vec2 *dir, s32 *n);
 
 template <typename ShapeA, typename ShapeB>
-bool gjk(const ShapeA &sa, const ShapeB &sb, Gjk_Simplex2d *simplex) {
+bool gjk(const ShapeA &sa, const ShapeB &sb) {
+	Simplex2d simplex;
+	Vec2 simplex_points[3];
+	simplex.p = simplex_points;
+
 	Vec2 dir = vec2(0, 1);
-	simplex->p[0] = support(sa, sb, dir, &simplex->a[0], &simplex->b[0]);
-	dir = -simplex->p[0];
+	simplex.p[0] = support(sa, sb, dir);
+	dir = -simplex.p[0];
 	s32 n = 1;
 
 	Vec2 a;
 	while (true) {
-		a = support(sa, sb, dir, &simplex->a[n], &simplex->b[n]);
+		a = support(sa, sb, dir);
 		if (vec2_dot(a, dir) < 0.0f) return false; // no intersection
-		simplex->p[n] = a;
+		simplex.p[n] = a;
 		n += 1;
 
-		if (next_simplex(simplex, &dir, &n)) {
+		if (next_simplex(&simplex, &dir, &n)) {
 			return true;
 		}
 	}
@@ -926,82 +933,58 @@ bool gjk(const ShapeA &sa, const ShapeB &sb, Gjk_Simplex2d *simplex) {
 	return false;
 }
 
+Nearest_Edge2d closest_edge_origin_polygon(const Polygon &polygon);
+
+constexpr r32 EPA_TOLERANCE = 0.00001f;
 template <typename ShapeA, typename ShapeB>
-bool gjk(const ShapeA &sa, const ShapeB &sb, Gjk_Simplex2d *simplex, Gjk_Manifold2d *manifold) {
+bool epa(const ShapeA &sa, const ShapeB &sb, Vec2 *normal, r32 *penetration_depth) {
+	Simplex2d simplex;
+	s32 count = 1;
+	s32 allocated = 8;
+	simplex.p = (Vec2 *)tallocate(sizeof(Vec2) * allocated);
+	
 	Vec2 dir = vec2(0, 1);
+	simplex.p[0] = support(sa, sb, dir);
+	dir = -simplex.p[0];
 
-	simplex->p[0] = support(sa, sb,  dir, &simplex->a[0], &simplex->b[0]);
-	simplex->p[1] = support(sa, sb, -dir, &simplex->a[1], &simplex->b[1]);
+	bool collision = false;
 
-	manifold->point = closest_point_origin_segment(simplex->p[0], simplex->p[1]);
-	manifold->dist2 = vec2_dot(manifold->point, manifold->point);
-
-	Vec2 point, new_point;
-	r32 dist2, new_dist2;
-	s32 remove_index;
+	Vec2 a;
 	while (true) {
-		dir = -manifold->point;
-		if (vec2_null(dir)) return false; // Just touches
+		a = support(sa, sb, dir);
+		if (vec2_dot(a, dir) < 0.0f) return false; // no intersection
+		simplex.p[count] = a;
+		count += 1;
 
-		simplex->p[2] = support(sa, sb, dir, &simplex->a[2], &simplex->b[2]);
-
-		if (simplex->p[0] == simplex->p[2] || simplex->p[1] == simplex->p[2])
-			return false;
-
-		new_point = closest_point_origin_segment(simplex->p[0], simplex->p[2]);
-		new_dist2 = vec2_dot(new_point, new_point);
-		if (new_dist2 < manifold->dist2) {
-			point = new_point;
-			dist2 = new_dist2;
-			remove_index = 1;
-		} else {
-			point = manifold->point;
-			dist2 = manifold->dist2;
-		}
-
-		new_point = closest_point_origin_segment(simplex->p[1], simplex->p[2]);
-		new_dist2 = vec2_dot(new_point, new_point);
-		if (new_dist2 < dist2) {
-			point = new_point;
-			dist2 = new_dist2;
-			remove_index = 0;
-		}
-
-		if (manifold->dist2 - dist2 < (EPSILON_FLOAT * EPSILON_FLOAT)) {
-			manifold->point = point;
-			manifold->dist2 = dist2;
+		if (next_simplex(&simplex, &dir, &count)) {
+			collision = true;
 			break;
 		}
+	}
+	
+	if (!collision) return false;
 
-		manifold->point = point;
-		manifold->dist2 = dist2;
+	while (true) {
+		Nearest_Edge2d e = closest_edge_origin_polygon(Polygon { simplex.p, count });
 
-		simplex->p[remove_index] = simplex->p[2];
-		simplex->a[remove_index] = simplex->a[2];
-		simplex->b[remove_index] = simplex->b[2];
+		Vec2 p = support(sa, sb, e.normal);
+
+		r32 d = vec2_dot(p, e.normal);
+		if (d - e.distance < EPA_TOLERANCE) {
+			*normal = e.normal;
+			*penetration_depth = d;
+			break;
+		} else {
+			if (count == allocated) {
+				allocated *= 2;
+				simplex.p = (Vec2 *)treallocate(simplex.p, sizeof(Vec2) * allocated);
+			}
+
+			memmove(simplex.p + e.index + 1, simplex.p + e.index, sizeof(Vec2) * (count - e.index));
+			simplex.p[e.index] = p;
+			count += 1;
+		}
 	}
 
-	return test_origin_inside_triangle(simplex->p[0], simplex->p[1], simplex->p[2]);
+	return true;
 }
-
-inline void manifold_points(Gjk_Simplex2d &simplex, Gjk_Manifold2d &manifold, Vec2 *a, Vec2 *b) {
-	auto bary = barycentric(simplex.p[0], simplex.p[1], simplex.p[2], manifold.point);
-	*a = bary.x * simplex.a[0] + bary.y * simplex.a[1] + bary.z * simplex.a[2];
-	*b = bary.x * simplex.b[0] + bary.y * simplex.b[1] + bary.z * simplex.b[2];
-}
-
-inline Vec2 manifold_normal(Gjk_Manifold2d &manifold) {
-	return vec2_normalize(-manifold.point);
-}
-
-inline r32 manifold_penetration(Gjk_Manifold2d &manifold) {
-	return sqrtf(manifold.dist2);
-}
-
-//
-//
-//
-
-// TODO: Remove these
-bool ray_vs_aabb(Vec2 origin, Vec2 direction, const Mm_Rect &rect, Ray_Hit *hit);
-bool ray_vs_line(Vec2 p1, Vec2 q1, Vec2 p2, Vec2 q2, Ray_Hit *t);
