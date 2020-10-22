@@ -275,6 +275,7 @@ int karma_user_zero() {
 			Vec2 norm; r32 dist;
 			if (epa(rect, circle, &norm, &dist)) {
 				array_add(&manifolds, Collision_Manifold{ norm, dist });
+				circle.center += norm * dist;
 				rect_color = vec4(0, 1, 1, 1);
 			} else {
 				rect_color = vec4(1, 0, 0);
@@ -282,6 +283,7 @@ int karma_user_zero() {
 
 			if (epa(polygon, circle, &norm, &dist)) {
 				array_add(&manifolds, Collision_Manifold{ norm, dist });
+				circle.center += norm * dist;
 				poly_color = vec4(0, 1, 1, 1);
 			} else {
 				poly_color = vec4(1, 0, 0);
@@ -289,6 +291,7 @@ int karma_user_zero() {
 			
 			if (epa(shape, circle, &norm, &dist)) {
 				array_add(&manifolds, Collision_Manifold{ norm, dist });
+				circle.center += norm * dist;
 				shape_color = vec4(0, 1, 1, 1);
 			} else {
 				shape_color = vec4(1, 0, 0);

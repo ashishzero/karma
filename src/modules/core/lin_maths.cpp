@@ -2844,7 +2844,7 @@ Nearest_Edge2d closest_edge_origin_polygon(const Polygon &polygon) {
 		auto b = polygon.vertices[q_index];
 		auto e = b - a;
 
-		Vec2 n = vec2_normalize(vec2_triple_product(e, a, e));
+		Vec2 n = vec2_normalize_check(vec2_triple_product(e, a, e));
 		
 		r32 d = vec2_dot(n, a);
 		if (d < edge.distance) {

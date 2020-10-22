@@ -966,6 +966,7 @@ bool epa(const ShapeA &sa, const ShapeB &sb, Vec2 *normal, r32 *penetration_dept
 
 	while (true) {
 		Nearest_Edge2d e = closest_edge_origin_polygon(Polygon { simplex.p, count });
+		if (vec2_null(e.normal)) return false;
 
 		Vec2 p = support(sa, sb, e.normal);
 
