@@ -58,7 +58,10 @@ Array_View<asset_info> prepare_asset()
 	}
 
 	fseek(fp_asset_data, 0, SEEK_END);
-	if (!deserialize_fmt_text(asset_table_tokens, "asset_table", reflect_info<Array<asset_info>>(), (char *)&asset_table, 1, 0)) {
+
+	Deserialize_Error_Info error;
+
+	if (!deserialize_fmt_text(asset_table_tokens, "asset_table", reflect_info<Array<asset_info>>(), (char *)&asset_table, 1, &error)) {
 		printf("Failed to deserialize\n");
 		exit(0);
 	}

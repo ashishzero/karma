@@ -144,6 +144,7 @@
     <Library Include="libclang.lib" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="extern.cpp" />
     <ClCompile Include="reflection.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
