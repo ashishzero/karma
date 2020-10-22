@@ -442,12 +442,6 @@ struct Capsule2d {
 	r32 radius;
 };
 
-struct Lozenge {
-	Vec2 a;
-	Vec2 u[2];
-	r32 radius;
-};
-
 struct Ray2d {
 	Vec2 origin;
 	Vec2 dir;

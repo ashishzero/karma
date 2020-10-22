@@ -2678,6 +2678,20 @@ Vec2 support(const Mm_Rect &m, Vec2 dir) {
 	return vec2(dir.x >= 0.0f ? m.max.x : m.min.x, dir.y >= 0.0f ? m.max.y : m.min.y);
 }
 
+Vec2 support(const Capsule2d &c, Vec2 dir) {
+	Vec2 n = vec2_normalize(dir);
+	Vec2 s;
+
+	r32 da = vec2_dot(c.a, dir);
+	r32 db = vec2_dot(c.b, dir);
+	if (da > db)
+		s = c.a;
+	else
+		s = c.b;
+
+	return s + c.radius * n;
+}
+
 Vec2 support(const Polygon &shape, Vec2 dir) {
 	s32 index = 0;
 	r32 p = vec2_dot(dir, shape.vertices[index]);
@@ -2727,34 +2741,6 @@ Vec2 support(const Mm_Rect &a, const Mm_Rect &b, Vec2 dir) {
 		pb.y = b.max.y;
 	}
 	return pa - pb;
-}
-
-Vec2 support(const Circle &a, const Mm_Rect &b, Vec2 dir) {
-	return support(a, dir) - support(b, -dir);
-}
-
-Vec2 support(const Mm_Rect &a, const Circle &b, Vec2 dir) {
-	return support(a, dir) - support(b, -dir);
-}
-
-Vec2 support(const Polygon &a, const Polygon &b, Vec2 dir) {
-	return support(a, dir) - support(b, -dir);
-}
-
-Vec2 support(const Polygon &p, const Circle &c, Vec2 dir) {
-	return support(p, dir) - support(c, -dir);
-}
-
-Vec2 support(const Circle &c, const Polygon &p, Vec2 dir) {
-	return support(c, dir) - support(p, -dir);
-}
-
-Vec2 support(const Polygon &p, const Mm_Rect &m, Vec2 dir) {
-	return support(p, dir) - support(m, -dir);
-}
-
-Vec2 support(const Mm_Rect &m, const Polygon &p, Vec2 dir) {
-	return support(m, dir) - support(p, -dir);
 }
 
 bool next_simplex(Simplex2d * const simplex, Vec2 *dir, s32 *n) {

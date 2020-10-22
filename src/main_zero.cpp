@@ -127,7 +127,7 @@ int karma_user_zero() {
 	r32 aspect_ratio = framebuffer_w / framebuffer_h;
 	const r32 speed_factor = 1;
 
-	r32 const fixed_dt = 1.0f / 60.0f;
+	r32 const fixed_dt = 1.0f / 30.0f;
 	r32       dt = fixed_dt * speed_factor;
 	r32       game_dt = fixed_dt * speed_factor;
 	r32       real_dt = fixed_dt;
@@ -159,11 +159,16 @@ int karma_user_zero() {
 	rect.min = vec2(4, -4);
 	rect.max = vec2(9, 3);
 
-	Circle shape;
-	shape.center = vec2(5);
-	shape.radius = 1.23f;
+	Circle circle;
+	circle.center = vec2(5);
+	circle.radius = 1.23f;
 
-	Vec4 rect_color = vec4(1, 0, 0 ), poly_color = vec4(1, 0, 0), shape_color = vec4(1, 0, 0);
+	Capsule2d capsule;
+	capsule.a = vec2(-3, -8);
+	capsule.b = vec2(1, -2);
+	capsule.radius = 1;
+
+	Vec4 rect_color = vec4(1, 0, 0 ), poly_color = vec4(1, 0, 0), circle_color = vec4(1, 0, 0), capsule_color = vec4(1, 0, 0);
 
 	Player_Controller controller = {};
 
@@ -300,12 +305,20 @@ int karma_user_zero() {
 				poly_color = vec4(1, 0, 0);
 			}
 			
-			if (epa(shape, player, &norm, &dist)) {
+			if (epa(circle, player, &norm, &dist)) {
 				array_add(&manifolds, Collision_Manifold{ norm, dist });
 				player.center += norm * dist;
-				shape_color = vec4(0, 1, 1, 1);
+				circle_color = vec4(0, 1, 1, 1);
 			} else {
-				shape_color = vec4(1, 0, 0);
+				circle_color = vec4(1, 0, 0);
+			}
+			
+			if (epa(capsule, player, &norm, &dist)) {
+				array_add(&manifolds, Collision_Manifold{ norm, dist });
+				player.center += norm * dist;
+				capsule_color = vec4(0, 1, 1, 1);
+			} else {
+				capsule_color = vec4(1, 0, 0);
 			}
 
 			accumulator_t -= fixed_dt;
@@ -348,7 +361,15 @@ int karma_user_zero() {
 		}
 
 		im2d_rect_outline(rect.min, rect.max - rect.min, rect_color, 0.02f);
-		im2d_circle_outline(shape.center, shape.radius, shape_color, 0.02f);
+		im2d_circle_outline(circle.center, circle.radius, circle_color, 0.02f);
+
+		Vec2 capsule_dir = capsule.b - capsule.a;
+		Vec2 capsule_norm = vec2_normalize(vec2(-capsule_dir.y, capsule_dir.x)) * capsule.radius;
+
+		im2d_circle_outline(capsule.a, capsule.radius, capsule_color, 0.02f);
+		im2d_circle_outline(capsule.b, capsule.radius, capsule_color, 0.02f);
+		im2d_line(capsule.a + capsule_norm, capsule.b + capsule_norm, capsule_color, 0.02f);
+		im2d_line(capsule.a - capsule_norm, capsule.b - capsule_norm, capsule_color, 0.02f);
 
 		im2d_circle(player.center, player.radius, player_color);
 

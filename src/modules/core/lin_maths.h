@@ -895,15 +895,15 @@ bool dynamic_mm_rect_vs_mm_rect(const Mm_Rect &a, const Mm_Rect &b, Vec2 va, Vec
 Vec2 support(const Circle &c, Vec2 dir);
 Vec2 support(const Mm_Rect &m, Vec2 dir);
 Vec2 support(const Polygon &p, Vec2 dir);
+Vec2 support(const Capsule2d &c, Vec2 dir);
+
 Vec2 support(const Circle &a, const Circle &b, Vec2 dir);
 Vec2 support(const Mm_Rect &a, const Mm_Rect &b, Vec2 dir);
-Vec2 support(const Circle &a, const Mm_Rect &b, Vec2 dir);
-Vec2 support(const Mm_Rect &a, const Circle &b, Vec2 dir);
-Vec2 support(const Polygon &a, const Polygon &b, Vec2 dir);
-Vec2 support(const Polygon &p, const Circle &c, Vec2 dir);
-Vec2 support(const Circle &c, const Polygon &p, Vec2 dir);
-Vec2 support(const Polygon &p, const Mm_Rect &m, Vec2 dir);
-Vec2 support(const Mm_Rect &m, const Polygon &p, Vec2 dir);
+
+template <typename ShapeA, typename ShapeB>
+inline Vec2 support(const ShapeA &a, const ShapeB &b, Vec2 dir) {
+	return support(a, dir) - support(b, -dir);
+}
 
 bool next_simplex(Simplex2d *const simplex, Vec2 *dir, s32 *n);
 
