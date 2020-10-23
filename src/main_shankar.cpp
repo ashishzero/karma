@@ -3,7 +3,7 @@
 #define SOCKET_BUFFER_SIZE kilo_bytes(1)
 
 int karma_user_shankar() {
-	Socket_Address to = socket_address_local(9999);
+	Ip_Endpoint to = ip_endpoint_local(9999);
 
 	auto socket = system_net_open_udp_client();
 
@@ -56,7 +56,7 @@ int karma_user_shankar() {
 				break;
 			}
 
-			Socket_Address from;
+			Ip_Endpoint from;
 			int bytes_received = system_net_receive_from(socket, buffer, SOCKET_BUFFER_SIZE, &from);
 
 			if (bytes_received < 0) {

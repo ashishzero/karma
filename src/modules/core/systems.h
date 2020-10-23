@@ -476,27 +476,27 @@ void system_audio_pause();
 typedef void * Socket;
 const Socket SOCKET_INVALID = (Socket)MAX_UINT64;
 
-struct Socket_Address {
+struct Ip_Endpoint {
 	u32 address;
 	u16 port;
 };
 
-inline Socket_Address socket_address(u8 a, u8 b, u8 c, u8 d, u16 port) {
-	Socket_Address sock_addr;
-	sock_addr.address = (( a << 24 ) | ( b << 16 ) | ( c << 8  ) | d);
-	sock_addr.port = port;
-	return sock_addr;
+inline Ip_Endpoint ip_endpoint(u8 a, u8 b, u8 c, u8 d, u16 port) {
+	Ip_Endpoint endpoint;
+	endpoint.address = (( a << 24 ) | ( b << 16 ) | ( c << 8  ) | d);
+	endpoint.port = port;
+	return endpoint;
 }
 
-inline Socket_Address socket_address_local(u16 port) {
-	return socket_address(127, 0, 0, 1, port);
+inline Ip_Endpoint ip_endpoint_local(u16 port) {
+	return ip_endpoint(127, 0, 0, 1, port);
 }
 
 bool system_net_set_socket_nonblocking(Socket sock);
-Socket system_net_open_udp_server(Socket_Address address);
+Socket system_net_open_udp_server(const Ip_Endpoint &address);
 Socket system_net_open_udp_client();
-s32 system_net_send_to(Socket sock, void * buffer, s32 length, Socket_Address address);
-s32 system_net_receive_from(Socket sock, void * packet_buffer, s32 max_packet_size, Socket_Address *address);
+s32 system_net_send_to(Socket sock, void * buffer, s32 length, const Ip_Endpoint &address);
+s32 system_net_receive_from(Socket sock, void * packet_buffer, s32 max_packet_size, Ip_Endpoint *address);
 void system_net_close_socket(Socket sock);
 
 const Array_View<Event> system_poll_events(int poll_count = 1);
