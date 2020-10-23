@@ -908,6 +908,14 @@ inline Vec2 support(const ShapeA &a, const ShapeB &b, Vec2 dir) {
 	return support(a, dir) - support(b, -dir);
 }
 
+template <typename ShapeA, typename ShapeB>
+inline Vec2 support_dynamic(const ShapeA &a, const ShapeB &b, Vec2 relative_dv_of_b_wrt_a, Vec2 dir) {
+	Vec2 s = support(a, b, dir);
+	if (vec2_dot(relative_dv_of_b_wrt_a, dir) > 0.0f)
+		s -= relative_dv_of_b_wrt_a;
+	return s;
+}
+
 bool next_simplex(Simplex2d *const simplex, Vec2 *dir, s32 *n);
 
 template <typename ShapeA, typename ShapeB>
@@ -954,6 +962,7 @@ bool epa(const ShapeA &sa, const ShapeB &sb, Vec2 *normal, r32 *penetration_dept
 
 	Vec2 a;
 	while (true) {
+		if (vec2_null(dir)) return false;
 		a = support(sa, sb, dir);
 		if (vec2_dot(a, dir) < 0.0f) return false; // no intersection
 		simplex.p[count] = a;

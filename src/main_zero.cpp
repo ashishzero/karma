@@ -127,7 +127,7 @@ int karma_user_zero() {
 	r32 aspect_ratio = framebuffer_w / framebuffer_h;
 	const r32 speed_factor = 1;
 
-	r32 const fixed_dt = 1.0f / 30.0f;
+	r32 const fixed_dt = 1.0f / 60.0f;
 	r32       dt = fixed_dt * speed_factor;
 	r32       game_dt = fixed_dt * speed_factor;
 	r32       real_dt = fixed_dt;
@@ -276,7 +276,7 @@ int karma_user_zero() {
 				dir = vec2(0);
 			}
 
-			const float force = 50;
+			const float force = 100;
 
 			player_force = force * dir;
 			//player->force.y -= gravity;
@@ -284,42 +284,55 @@ int karma_user_zero() {
 			player_velocity += dt * player_force;
 			player_velocity *= powf(0.5f, drag * dt);
 
-			auto new_player_position = player.center + dt * player_velocity;
+			//Vec2 velocity_t = dt * player_velocity;
 
-			player.center = new_player_position;
+			Capsule2d player_capsule;
+			player_capsule.radius = player.radius;
+			player_capsule.a = player.center;
 
-			Vec2 norm; r32 dist;
-			if (epa(rect, player, &norm, &dist)) {
+			Vec2 norm; r32 dist, v_t;
+
+			player_capsule.b = player.center + dt * player_velocity;
+			if (epa(capsule, player_capsule, &norm, &dist)) {
 				array_add(&manifolds, Collision_Manifold{ norm, dist });
-				player.center += norm * dist;
+				v_t = dist / dt * sgn(vec2_dot(norm, player_velocity));
+				player_velocity -= v_t * norm;
+				capsule_color = vec4(0, 1, 1, 1);
+			} else {
+				capsule_color = vec4(1, 0, 0);
+			}
+
+			player_capsule.b = player.center + dt * player_velocity;
+			if (epa(rect, player_capsule, &norm, &dist)) {
+				array_add(&manifolds, Collision_Manifold{ norm, dist });
+				v_t = dist / dt * sgn(vec2_dot(norm, player_velocity));
+				player_velocity -= v_t * norm;
 				rect_color = vec4(0, 1, 1, 1);
 			} else {
 				rect_color = vec4(1, 0, 0);
 			}
 
-			if (epa(polygon, player, &norm, &dist)) {
+			player_capsule.b = player.center + dt * player_velocity;
+			if (epa(polygon, player_capsule, &norm, &dist)) {
 				array_add(&manifolds, Collision_Manifold{ norm, dist });
-				player.center += norm * dist;
+				v_t = dist / dt * sgn(vec2_dot(norm, player_velocity));
+				player_velocity -= v_t * norm;
 				poly_color = vec4(0, 1, 1, 1);
 			} else {
 				poly_color = vec4(1, 0, 0);
 			}
 			
-			if (epa(circle, player, &norm, &dist)) {
+			player_capsule.b = player.center + dt * player_velocity;
+			if (epa(circle, player_capsule, &norm, &dist)) {
 				array_add(&manifolds, Collision_Manifold{ norm, dist });
-				player.center += norm * dist;
+				v_t = dist / dt * sgn(vec2_dot(norm, player_velocity));
+				player_velocity -= v_t * norm;
 				circle_color = vec4(0, 1, 1, 1);
 			} else {
 				circle_color = vec4(1, 0, 0);
 			}
-			
-			if (epa(capsule, player, &norm, &dist)) {
-				array_add(&manifolds, Collision_Manifold{ norm, dist });
-				player.center += norm * dist;
-				capsule_color = vec4(0, 1, 1, 1);
-			} else {
-				capsule_color = vec4(1, 0, 0);
-			}
+
+			player.center += dt * player_velocity;
 
 			accumulator_t -= fixed_dt;
 		}
@@ -372,8 +385,10 @@ int karma_user_zero() {
 		im2d_line(capsule.a - capsule_norm, capsule.b - capsule_norm, capsule_color, 0.02f);
 
 		im2d_circle(player.center, player.radius, player_color);
+		im2d_line(player.center, player.center + player_velocity, vec4(0, 1.5f, 0), 0.02f);
 
 		for (auto &manifold : manifolds) {
+			im2d_line(player.center, player.center + manifold.normal, 1.5f * vec4(1, 0, 0), 0.05f);
 			im2d_line(player.center, player.center + manifold.penetration_depth * manifold.normal, 2 * vec4(1, 1, 0), 0.05f);
 		}
 
@@ -395,6 +410,12 @@ int karma_user_zero() {
 			Dev_RenderFrame();
 		}
 #endif
+
+		ImGui::Begin("Player");
+		ImGui::DragFloat2("Position", player.center.m, 0.01f);
+		ImGui::DragFloat("Radius", &player.radius, 0.01f);
+		ImGui::DragFloat2("Velocity", player_velocity.m, 0.01f);
+		ImGui::End();
 
 #if defined(BUILD_IMGUI)
 		{
