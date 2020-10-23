@@ -286,14 +286,9 @@ int karma_user_zero() {
 
 			//Vec2 velocity_t = dt * player_velocity;
 
-			Capsule2d player_capsule;
-			player_capsule.radius = player.radius;
-			player_capsule.a = player.center;
-
 			Vec2 norm; r32 dist, v_t;
 
-			player_capsule.b = player.center + dt * player_velocity;
-			if (epa(capsule, player_capsule, &norm, &dist)) {
+			if (epa_dynamic(capsule, player, dt * player_velocity, &norm, &dist)) {
 				array_add(&manifolds, Collision_Manifold{ norm, dist });
 				v_t = dist / dt * sgn(vec2_dot(norm, player_velocity));
 				player_velocity -= v_t * norm;
@@ -302,8 +297,7 @@ int karma_user_zero() {
 				capsule_color = vec4(1, 0, 0);
 			}
 
-			player_capsule.b = player.center + dt * player_velocity;
-			if (epa(rect, player_capsule, &norm, &dist)) {
+			if (epa_dynamic(rect, player, dt * player_velocity, &norm, &dist)) {
 				array_add(&manifolds, Collision_Manifold{ norm, dist });
 				v_t = dist / dt * sgn(vec2_dot(norm, player_velocity));
 				player_velocity -= v_t * norm;
@@ -312,8 +306,7 @@ int karma_user_zero() {
 				rect_color = vec4(1, 0, 0);
 			}
 
-			player_capsule.b = player.center + dt * player_velocity;
-			if (epa(polygon, player_capsule, &norm, &dist)) {
+			if (epa_dynamic(polygon, player, dt * player_velocity, &norm, &dist)) {
 				array_add(&manifolds, Collision_Manifold{ norm, dist });
 				v_t = dist / dt * sgn(vec2_dot(norm, player_velocity));
 				player_velocity -= v_t * norm;
@@ -322,8 +315,7 @@ int karma_user_zero() {
 				poly_color = vec4(1, 0, 0);
 			}
 			
-			player_capsule.b = player.center + dt * player_velocity;
-			if (epa(circle, player_capsule, &norm, &dist)) {
+			if (epa_dynamic(circle, player, dt * player_velocity, &norm, &dist)) {
 				array_add(&manifolds, Collision_Manifold{ norm, dist });
 				v_t = dist / dt * sgn(vec2_dot(norm, player_velocity));
 				player_velocity -= v_t * norm;
