@@ -61,7 +61,7 @@ Array_View<asset_info> prepare_asset()
 
 	Deserialize_Error_Info error;
 
-	if (!deserialize_fmt_text(asset_table_tokens, "asset_table", reflect_info<Array<asset_info>>(), (char *)&asset_table, 1, &error)) {
+	if (!deserialize_fmt_text(asset_table_tokens, "asset_table", reflect_info<Array<asset_info>>(), (char *)&asset_table, &error)) {
 		printf("Failed to deserialize\n");
 		exit(0);
 	}
@@ -117,7 +117,7 @@ Array_View<asset_info> prepare_asset()
 	}
 	System_File asset_table_file;
 	Ostream out;
-	serialize_fmt_text(&out, "asset_table", reflect_info<Array<asset_info>>(), (char*)&asset_table, 1, true);
+	serialize_fmt_text(&out, "asset_table", reflect_info<Array<asset_info>>(), (char*)&asset_table);
 	if (system_open_file("temp/asset_table.txt", File_Operation_NEW, &asset_table_file)) {
 		ostream_build_out_file(&out, &asset_table_file);
 		system_close_file(&asset_table_file);

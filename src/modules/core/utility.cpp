@@ -629,254 +629,220 @@ Array_View<Token> tokenize(String string, Tokenization_Status *status) {
 //
 //
 
-void iserialize_fmt_text(Ostream *out, String name, const Type_Info *info, char *data, s64 num_of_elements, bool is_array, const char *tab_count) {
-	if (name.count) {
-		ostream_write_formatted(out, "%*s", tab_count, "");
-		ostream_write_buffer(out, name.data, name.count);
-		ostream_write_formatted(out, " : ");
-	}
-
-	switch (info->id) {
-	case Type_Id_S8: {
-		for (s64 i = 0; i < num_of_elements; ++i) {
-			ostream_write_formatted(out, "%d, ", (int)*(s8 *)(data + i * sizeof(s8)));
+template <typename Type, typename Cast>
+void serialize_text_basic(Ostream *out, Type *data, s64 count, const char *fmt) {
+	if (count == -1) {
+		ostream_write_formatted(out, fmt, (Cast)*data);
+	} else {
+		ostream_write_formatted(out, "[ ");
+		for (s64 i = 0; i < count - 1; ++i) {
+			ostream_write_formatted(out, fmt, (Cast)*data);
+			ostream_write_formatted(out, ", ");
+			data += i;
 		}
-		if (!is_array) ostream_write_formatted(out, "\n");
-	} break;
-
-	case Type_Id_S16:
-	{
-		for (s64 i = 0; i < num_of_elements; ++i) {
-			ostream_write_formatted(out, "%d, ", (int)*(s16 *)(data + i * sizeof(s16)));
-		}
-		if (!is_array)
-			ostream_write_formatted(out, "\n");
-	}
-	break;
-	case Type_Id_S32:
-	{
-		for (s64 i = 0; i < num_of_elements; ++i) {
-			ostream_write_formatted(out, "%d, ", *(s32 *)(data + i * sizeof(s32)));
-		}
-		if (!is_array)
-			ostream_write_formatted(out, "\n");
-	}
-	break;
-	case Type_Id_S64:
-	{
-		for (s64 i = 0; i < num_of_elements; ++i) {
-			ostream_write_formatted(out, "%zd, ", *(s64 *)(data + sizeof(s64)));
-		}
-		if (!is_array)
-			ostream_write_formatted(out, "\n");
-	}
-	break;
-	case Type_Id_U8:
-		for (s64 i = 0; i < num_of_elements; ++i) {
-			ostream_write_formatted(out, "%u, ", (u32) * (u8 *)(data + i * sizeof(u8)));
-		}
-		if (!is_array)
-			ostream_write_formatted(out, "\n");
-		break;
-	case Type_Id_U16:
-		for (s64 i = 0; i < num_of_elements; ++i) {
-			ostream_write_formatted(out, "%u, ", (u32) * (u16 *)(data + i * sizeof(u16)));
-		}
-		if (!is_array)
-			ostream_write_formatted(out, "\n");
-		break;
-	case Type_Id_U32:
-		for (s64 i = 0; i < num_of_elements; ++i) {
-			ostream_write_formatted(out, "%u, ", (u32) * (u32 *)(data + i * sizeof(u32)));
-		}
-		if (!is_array)
-			ostream_write_formatted(out, "\n");
-		break;
-	case Type_Id_U64:
-		for (s64 i = 0; i < num_of_elements; ++i) {
-			ostream_write_formatted(out, "%zu, ", *(u64 *)(data + i * sizeof(u64)));
-		}
-		if (!is_array)
-			ostream_write_formatted(out, "\n");
-		break;
-	case Type_Id_R32:
-		for (s64 i = 0; i < num_of_elements; ++i) {
-			ostream_write_formatted(out, "%f, ", *(r32 *)(data + i * sizeof(r32)));
-		}
-		if (!is_array)
-			ostream_write_formatted(out, "\n");
-		break;
-	case Type_Id_R64:
-		for (s64 i = 0; i < num_of_elements; ++i) {
-			ostream_write_formatted(out, "%lf, ", *(r64 *)(data + i * sizeof(r64)));
-		}
-		if (!is_array)
-			ostream_write_formatted(out, "\n");
-		break;
-	case Type_Id_CHAR:
-		for (s64 i = 0; i < num_of_elements; ++i) {
-			ostream_write_formatted(out, "%d, ", (s32) * (char *)(data + i * sizeof(char)));
-		}
-		if (!is_array)
-			ostream_write_formatted(out, "\n");
-		break;
-	case Type_Id_VOID:// invalid_path();
-	{
-		invalid_code_path();
-	}
-	break;
-	case Type_Id_POINTER:// deference 
-	{
-		auto ptr_info = (Type_Info_Pointer *)info;
-		for (s64 i = 0; i < num_of_elements; ++i) {
-			iserialize_fmt_text(out, "", ptr_info->pointer_to, (char *)(*(ptrsize *)(data + i * sizeof(ptrsize))), 1, false, tab_count);
-		}
-	}
-	break;
-	case Type_Id_FUNCTION:// skip
-		break;
-	case Type_Id_ENUM:// s64 
-	{
-		auto enum_info = (Type_Info_Enum *)info;
-		for (s64 i = 0; i < num_of_elements; ++i) {
-			iserialize_fmt_text(out, "", enum_info->item_type, data + i * enum_info->size, 1, false, tab_count);
-		}
-	}
-	break;
-	case Type_Id_STRUCT:
-	{
-		auto struct_info = (Type_Info_Struct *)info;
-		//TODO  : need optimization
-		for (s64 j = 0; j < num_of_elements; ++j) {
-			ostream_write_formatted(out, "%*s", tab_count, "");
-			ostream_write_formatted(out, "{\n");
-			if (struct_info->base) {
-				iserialize_fmt_text(out, ".base", struct_info->base, data + j * struct_info->size, 1, false, tab_count + 3);
-			}
-			for (int i = 0; i < struct_info->member_count; ++i) {
-				auto mem = struct_info->members + i;
-				bool no_serialize = false;
-				for (u64 k = 0; k < mem->attribute_count; ++k) {
-					if (string_match(mem->attributes[k], "no-serialize")) {
-						no_serialize = true;
-						break;
-					}
-				}
-				if (!no_serialize)
-					iserialize_fmt_text(out, mem->name, mem->info, data + j * struct_info->size + mem->offset, 1, false, tab_count + 3);
-			}
-			ostream_write_formatted(out, "%*s", tab_count, "");
-			ostream_write_formatted(out, "},\n");
-		}
-	}
-	break;
-	case Type_Id_UNION:
-	{
-		auto union_info = (Type_Info_Union *)info;
-		for (s64 k = 0; k < num_of_elements; ++k) {
-			bool write = false;
-			for (int j = 0; j < union_info->member_count; ++j) {
-				auto mem = union_info->members + j;
-				for (u64 i = 0; i < mem->attribute_count; ++i) {
-					if (string_match(mem->attributes[i], "write")) {
-						write = true;
-						break;
-					}
-				}
-				if (write) {
-					ostream_write_formatted(out, "{\n");
-					iserialize_fmt_text(out, mem->name, mem->info, data + k * union_info->size, 1, false, tab_count + 3);
-					ostream_write_formatted(out, "%*s", tab_count, "");
-					ostream_write_formatted(out, "},\n");
-					break;
-				}
-			}
-			if (!write) {
-				ostream_write_formatted(out, "{\n");
-				iserialize_fmt_text(out, union_info->members->name, union_info->members->info, k * union_info->size + data, 1, false, tab_count + 3);
-				ostream_write_formatted(out, "%*s", tab_count, "");
-				ostream_write_formatted(out, "},\n");
-			}
-		}
-	}
-	break;
-	case Type_Id_STRING:
-	{
-		for (s64 i = 0; i < num_of_elements; ++i) {
-			String *string_data = (String *)(data + i * sizeof(String));
-			ostream_write_formatted(out, "\"");
-			ostream_write_buffer(out, string_data->data, string_data->count);
-			ostream_write_formatted(out, "\"");
-		};
-		if (!is_array)
-			ostream_write_formatted(out, "\n");
-	}
-	break;
-	case Type_Id_STATIC_ARRAY:
-	{
-		if (num_of_elements > 1)
-			ostream_write_formatted(out, "{ %zd, [ ", num_of_elements);
-
-		s64 count = ((Type_Info_Static_Array *)info)->count;
-		const Type_Info *elem_type_info = ((Type_Info_Static_Array *)info)->type;
-
-		for (s64 i = 0; i < num_of_elements; ++i) {
-			ostream_write_formatted(out, "[N] : ");
-			ostream_write_formatted(out, "{ %zd, [ ", count);
-			iserialize_fmt_text(out, "", elem_type_info, data + i * elem_type_info->size * count, count, true, tab_count + 3);
-			ostream_write_formatted(out, " ] },\n");
-		}
-		if (num_of_elements > 1) {
-			ostream_write_formatted(out, "%*s", tab_count, "");
-			ostream_write_formatted(out, " ] },\n");
-		}
-	}
-	break;
-	case Type_Id_DYNAMIC_ARRAY:
-	{
-		if (num_of_elements > 1)
-			ostream_write_formatted(out, "{ %zd, [ ", num_of_elements);
-
-		for (s64 i = 0; i < num_of_elements; ++i) {
-			Array<char> *array = (Array<char> *)(data + i * sizeof(Array<char>));
-			s64 count = array->count;
-
-			ostream_write_formatted(out, "[..] : ");
-			ostream_write_formatted(out, "{ %zd, [ ", count);
-			iserialize_fmt_text(out, "", ((Type_Info_Dynamic_Array *)info)->type, array->data, count, true, tab_count + 3);
-			ostream_write_formatted(out, " ] },\n");
-		}
-		if (num_of_elements > 1) {
-			ostream_write_formatted(out, "%*s", tab_count, "");
-			ostream_write_formatted(out, " ] },\n");
-		}
-	}
-	break;
-	case Type_Id_ARRAY_VIEW:
-	{
-		if (num_of_elements > 1)
-			ostream_write_formatted(out, "{ %zd, [ ", num_of_elements);
-
-		const Type_Info *elem_type_info = ((Type_Info_Array_View *)info)->type;
-		for (s64 i = 0; i < num_of_elements; ++i) {
-			Array_View<char> *view = (Array_View<char> *)(data + i * sizeof(Array_View<char>));
-			s64 count = view->count;
-
-			ostream_write_formatted(out, "[] : ");
-			ostream_write_formatted(out, "{ %zd, [ ", count);
-			iserialize_fmt_text(out, "", elem_type_info, view->data, count, true, tab_count + 3);
-			ostream_write_formatted(out, " ] },\n");
-		}
-		if (num_of_elements > 1) {
-			ostream_write_formatted(out, "%*s", tab_count, "");
-			ostream_write_formatted(out, " ] },\n");
-		}
-	} break;
+		ostream_write_formatted(out, fmt, (Cast)*data);
+		ostream_write_formatted(out, " ]");
 	}
 }
 
-void serialize_fmt_text(Ostream *out, String name, const Type_Info *info, char *data, s64 num_of_elements, bool is_array) {
-	iserialize_fmt_text(out, name, info, data, num_of_elements, is_array, 0);
+void serialize_text_basic(Ostream *out, String *string, s64 count) {
+	if (count == -1) {
+		ostream_write_formatted(out, "\"");
+		ostream_write_buffer(out, string->data, string->count);
+		ostream_write_formatted(out, "\"");
+	} else {
+		ostream_write_formatted(out, "[ ");
+		for (s64 i = 0; i < count - 1; ++i) {
+			ostream_write_formatted(out, "\"");
+			ostream_write_buffer(out, string->data, string->count);
+			ostream_write_formatted(out, "\"");
+			ostream_write_formatted(out, ", ");
+			string += i;
+		}
+		ostream_write_formatted(out, "\"");
+		ostream_write_buffer(out, string->data, string->count);
+		ostream_write_formatted(out, "\"");
+		ostream_write_formatted(out, " ]");
+	}
+}
+
+void serialize_fmt_text(Ostream *out, String name, const Type_Info *info, char *data, s64 array_count, int tab_count);
+
+void serialize_text_pointer(Ostream *out, const Type_Info_Pointer *info, char *data, int tab_count) {
+	serialize_fmt_text(out, "", info->pointer_to, (char *)(*(ptrsize *)data), -1, tab_count);
+}
+
+void serialize_text_enum(Ostream *out, const Type_Info_Enum *info, char *data, int tab_count) {
+	serialize_fmt_text(out, "", info->item_type, data, -1, tab_count);
+}
+
+void serialize_text_struct(Ostream *out, const Type_Info_Struct *info, char *data, int tab_count) {
+	if (info->base) {
+		serialize_fmt_text(out, "", info->base, data, -1, tab_count);
+	}
+
+	for (ptrsize mem_index = 0; mem_index < info->member_count; ++mem_index) {
+		auto mem = info->members + mem_index;
+		bool no_serialize = false;
+
+		for (ptrsize attr_index = 0; attr_index < mem->attribute_count; ++attr_index) {
+			if (string_match(mem->attributes[attr_index], "no-serialize")) {
+				no_serialize = true;
+				break;
+			}
+		}
+
+		if (!no_serialize) {
+			if (string_match(mem->name, "anonymous")) {
+				serialize_fmt_text(out, "", mem->info, data + mem->offset, -1, tab_count);
+			} else {
+				ostream_write_formatted(out, "\n");
+				serialize_fmt_text(out, mem->name, mem->info, data + mem->offset, -1, tab_count);
+			}
+		}
+	}
+}
+
+void serialize_text_union(Ostream *out, const Type_Info_Union *info, char *data, int tab_count) {
+	if (info->member_count == 0) return;
+
+	const Union_Member *write_mem = nullptr;
+
+	for (ptrsize mem_index = 0; mem_index < info->member_count; ++mem_index) {
+		auto mem = info->members + mem_index;
+		for (u64 i = 0; i < mem->attribute_count; ++i) {
+			if (string_match(mem->attributes[i], "write")) {
+				write_mem = mem;
+				break;
+			}
+		}
+
+		if (write_mem) break;
+	}
+
+	if (!write_mem)
+		write_mem = info->members;
+
+	if (string_match(write_mem->name, "anonymous")) {
+		serialize_fmt_text(out, "", write_mem->info, data, -1, tab_count);
+	} else {
+		ostream_write_formatted(out, "\n");
+		serialize_fmt_text(out, write_mem->name, write_mem->info, data, -1, tab_count);
+	}
+}
+
+void serialize_text_static_array(Ostream *out, const Type_Info_Static_Array *info, char *data, int tab_count) {
+	serialize_fmt_text(out, "", info->type, data, info->count, tab_count);
+}
+
+void serialize_text_dynamic_array(Ostream *out, const Type_Info_Dynamic_Array *info, char *data, int tab_count) {
+	Array<char> *array = (Array<char> *)data;
+	ostream_write_formatted(out, "{ %zd, ", array->count);
+	serialize_fmt_text(out, "", info->type, array->data, array->count, tab_count);
+	ostream_write_formatted(out, " }");
+}
+
+void serialize_text_array_view(Ostream *out, const Type_Info_Array_View *info, char *data, int tab_count) {
+	Array_View<char> *array = (Array_View<char> *)data;
+	ostream_write_formatted(out, "{ %zd, ", array->count);
+	serialize_fmt_text(out, "", info->type, array->data, array->count, tab_count);
+	ostream_write_formatted(out, " }");
+}
+
+template <typename Cast_Info, typename Proc>
+void serialize_text_recursive(Proc proc, Ostream *out, const Type_Info *info, char *data, s64 array_count, int tab_count) {
+	if (array_count == -1) {
+		proc(out, (Cast_Info *)info, data, tab_count);
+	} else {
+		ostream_write_formatted(out, "[ ");
+		for (s64 i = 0; i < array_count - 1; ++i) {
+			proc(out, (Cast_Info *)info, data, tab_count);
+			ostream_write_formatted(out, ", ");
+			data += info->size;
+		}
+		proc(out, (Cast_Info *)info, data, tab_count);
+		ostream_write_formatted(out, " ]");
+	}
+}
+
+void serialize_fmt_text(Ostream *out, String name, const Type_Info *info, char *data, s64 array_count, int tab_count) {
+	if (name.count) {
+		ostream_write_formatted(out, "%*s", tab_count, "");
+		ostream_write_buffer(out, name.data, name.count);
+		ostream_write_formatted(out, ": ");
+		tab_count += 3;
+	}
+
+	switch (info->id) {
+	case Type_Id_S8 :  serialize_text_basic<s8 , s32>  (out,  (s8   *)data, array_count, "%d");  break;
+	case Type_Id_S16:  serialize_text_basic<s16, s32>  (out,  (s16  *)data, array_count, "%d");  break;
+	case Type_Id_S32:  serialize_text_basic<s32, s32>  (out,  (s32  *)data, array_count, "%d");  break;
+	case Type_Id_S64:  serialize_text_basic<s64, s64>  (out,  (s64  *)data, array_count, "%zd"); break;
+	case Type_Id_U8 :  serialize_text_basic<u8 , u32>  (out,  (u8   *)data, array_count, "%u");  break;
+	case Type_Id_U16:  serialize_text_basic<u16, u32>  (out,  (u16  *)data, array_count, "%u");  break;
+	case Type_Id_U32:  serialize_text_basic<u32, u32>  (out,  (u32  *)data, array_count, "%u");  break;
+	case Type_Id_U64:  serialize_text_basic<u64, s64>  (out,  (u64  *)data, array_count, "%zu"); break;
+	case Type_Id_R32:  serialize_text_basic<r32, r32>  (out,  (r32  *)data, array_count, "%f");  break;
+	case Type_Id_R64:  serialize_text_basic<r64, r64>  (out,  (r64  *)data, array_count, "%lf"); break;
+	case Type_Id_CHAR: serialize_text_basic<char, s32> (out,  (char *)data, array_count, "%d");  break;
+
+	case Type_Id_STRING: serialize_text_basic(out, (String *)data, array_count); break;
+
+	case Type_Id_VOID: invalid_code_path(); break;
+	case Type_Id_FUNCTION: break;
+
+	case Type_Id_POINTER: {
+		serialize_text_recursive<Type_Info_Pointer>(serialize_text_pointer, out, info, data, array_count, tab_count);
+	} break;
+
+	case Type_Id_ENUM: {
+		serialize_text_recursive<Type_Info_Enum>(serialize_text_enum, out, info, data, array_count, tab_count);
+	} break;
+
+	case Type_Id_STRUCT: {
+		serialize_text_recursive<Type_Info_Struct>(serialize_text_struct, out, info, data, array_count, tab_count);
+	} break;
+
+	case Type_Id_UNION: {
+		serialize_text_recursive<Type_Info_Union>(serialize_text_union, out, info, data, array_count, tab_count);
+	} break;
+
+	case Type_Id_STATIC_ARRAY: {
+		serialize_text_recursive<Type_Info_Static_Array>(serialize_text_static_array, out, info, data, array_count, tab_count);
+	} break;
+
+	case Type_Id_DYNAMIC_ARRAY: {
+		serialize_text_recursive<Type_Info_Dynamic_Array>(serialize_text_dynamic_array, out, info, data, array_count, tab_count);
+	} break;
+
+	case Type_Id_ARRAY_VIEW: {
+		serialize_text_recursive<Type_Info_Array_View>(serialize_text_array_view, out, info, data, array_count, tab_count);
+	} break;
+
+	invalid_default_case();
+
+	}
+
+	static const Type_Id IDS_NO_NEWLINES[] = {
+		Type_Id_ENUM,
+		Type_Id_POINTER,
+	};
+
+	bool add_new_line = true;
+	for (ptrsize index = 0; index < static_count(IDS_NO_NEWLINES); ++index) {
+		if (IDS_NO_NEWLINES[index] == info->id) {
+			add_new_line = false;
+			break;
+		}
+	}
+
+	if (add_new_line) {
+		//ostream_write_formatted(out, "\n");
+	}
+}
+
+void serialize_fmt_text(Ostream *out, String name, const Type_Info *info, char *data) {
+	serialize_fmt_text(out, name, info, data, -1, 0);
 }
 
 struct Parse_State {
@@ -911,6 +877,14 @@ inline Token *parse_next(Parse_State *w) {
 	return nullptr;
 }
 
+inline bool parse_require_token(Parse_State *w, Token_Kind kind) {
+	auto t = parse_next(w);
+	if (t && t->kind == kind)
+		return true;
+	parsing_error(w, kind);
+	return false;
+}
+
 inline bool parse_require_token(Parse_State *w, String string) {
 	auto t = parse_next(w);
 	if (t && t->kind == Token_Kind_IDENTIFIER && string_match(string, t->content))
@@ -920,7 +894,7 @@ inline bool parse_require_token(Parse_State *w, String string) {
 }
 
 template <typename T>
-inline bool parse_require_integer(Parse_State *w, T *d) {
+inline bool parse_require_integral(Parse_State *w, T *d) {
 	auto t = parse_next(w);
 	if (t && t->kind == Token_Kind_INTEGER_LITERAL) {
 		*d = (T)t->value.integer;
@@ -947,14 +921,6 @@ inline bool parse_require_real(Parse_State *w, T *d) {
 	return false;
 }
 
-inline bool parse_require_token(Parse_State *w, Token_Kind kind) {
-	auto t = parse_next(w);
-	if (t && t->kind == kind)
-		return true;
-	parsing_error(w, kind);
-	return false;
-}
-
 inline bool parse_require_string(Parse_State *w, String *d) {
 	auto t = parse_next(w);
 	if (t && t->kind == Token_Kind_DQ_STRING) {
@@ -965,44 +931,147 @@ inline bool parse_require_string(Parse_State *w, String *d) {
 	return false;
 }
 
-template <typename T>
-inline bool parse_integer_array(Parse_State *w, s64 num_of_elements, T *data) {
-	for (s64 i = 0; i < num_of_elements; ++i) {
-		if (!parse_require_integer<T>(w, data + i) ||
-			!parse_require_token(w, Token_Kind_COMMA)) {
-			return false;
+template <typename Type, typename Proc>
+bool parse_basic_array(Proc proc, Parse_State *w, Type *data, s64 count) {
+	if (count == -1) {
+		return proc(w, data);
+	} else {
+		if (parse_require_token(w, Token_Kind_OPEN_SQUARE_BRACKET)) {
+			for (s64 i = 0; i < count - 1; ++i) {
+				if (!proc(w, data) ||
+					!parse_require_token(w, Token_Kind_COMMA)) {
+					return false;
+				}
+				data += 1;
+			}
+			return proc(w, data) && parse_require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET);
 		}
 	}
-	if (num_of_elements > 1) {
-		if (!parse_require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET) ||
-			!parse_require_token(w, Token_Kind_CLOSE_CURLY_BRACKET) ||
-			!parse_require_token(w, Token_Kind_COMMA)) {
+	return false;
+}
+
+bool deserialize_fmt_text(Parse_State *w, String name, const Type_Info *info, char *data, s64 array_count);
+
+bool parse_pointer(Parse_State *w, const Type_Info_Pointer *info, char *data) {
+	(*(ptrsize *)(data)) = (ptrsize)memory_allocate(info->pointer_to->size);
+	return deserialize_fmt_text(w, "", info->pointer_to, (char *)(*(ptrsize *)(data)), -1);
+}
+
+bool parse_enum(Parse_State *w, const Type_Info_Enum *info, char *data) {
+	return deserialize_fmt_text(w, "", info->item_type, data, -1);
+}
+
+bool parse_struct(Parse_State *w, const Type_Info_Struct *info, char *data) {
+	if (info->base) {
+		if (!deserialize_fmt_text(w, "", info->base, data, -1))
 			return false;
+	}
+
+	for (ptrsize mem_index = 0; mem_index < info->member_count; ++mem_index) {
+		auto mem = info->members + mem_index;
+		bool no_serialize = false;
+		for (u64 k = 0; k < mem->attribute_count; ++k) {
+			if (string_match(mem->attributes[k], "no-serialize")) {
+				no_serialize = true;
+				break;
+			}
+		}
+		if (!no_serialize) {
+			if (string_match(mem->name, "anonymous")) {
+				if (!deserialize_fmt_text(w, "", mem->info, data + mem->offset, -1))
+					return false;
+			} else {
+				if (!deserialize_fmt_text(w, mem->name, mem->info, data + mem->offset, -1))
+					return false;
+			}
 		}
 	}
+
 	return true;
 }
 
-inline bool parse_char_array(Parse_State *w, s64 num_of_elements, char *data) {
-	s32 temp;
-	for (s64 i = 0; i < num_of_elements; ++i) {
-		if (!parse_require_integer<s32>(w, &temp) ||
-			!parse_require_token(w, Token_Kind_COMMA)) {
-			return false;
+bool parse_union(Parse_State *w, const Type_Info_Union *info, char *data) {
+	const Union_Member *parse_mem = nullptr;
+	for (int mem_index = 0; mem_index < info->member_count; ++mem_index) {
+		auto mem = info->members + mem_index;
+		for (u64 i = 0; i < mem->attribute_count; ++i) {
+			if (string_match(mem->attributes[i], "write")) {
+				parse_mem = mem;
+				break;
+			}
 		}
-		*(data + i) = temp;
+
+		if (parse_mem) break;
 	}
-	if (num_of_elements > 1) {
-		if (!parse_require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET) ||
-			!parse_require_token(w, Token_Kind_CLOSE_CURLY_BRACKET) ||
-			!parse_require_token(w, Token_Kind_COMMA)) {
-			return false;
-		}
+
+	if (!parse_mem) {
+		parse_mem = info->members;
 	}
+
+	if (string_match(parse_mem->name, "anonymous")) {
+		return deserialize_fmt_text(w, "", parse_mem->info, data, -1);
+	} else {
+		return deserialize_fmt_text(w, parse_mem->name, parse_mem->info, data, -1);
+	}
+
 	return true;
 }
 
-bool ideserialize_fmt_text(Parse_State *w, String name, const Type_Info *info, char *data, s64 num_of_elements) {
+bool parse_static_array(Parse_State *w, const Type_Info_Static_Array *info, char *data) {
+	return deserialize_fmt_text(w, "", info->type, data, info->count);
+}
+
+bool parse_dynamic_array(Parse_State *w, const Type_Info_Dynamic_Array *info, char *data) {
+	Array<char> *array = (Array<char> *)data;
+	*array = Array<char>(context.allocator);
+	array->data = nullptr;
+
+	if (!parse_require_token(w, Token_Kind_OPEN_CURLY_BRACKET) ||
+		!parse_require_integral<s64>(w, &array->count) ||
+		!parse_require_token(w, Token_Kind_COMMA)) {
+		return false;
+	}
+
+	array->capacity = array->count;
+	array->data = (char *)memory_reallocate(array->data, array->capacity * info->type->size, array->allocator);
+
+	return deserialize_fmt_text(w, "", info->type, array->data, array->count) && parse_require_token(w, Token_Kind_CLOSE_CURLY_BRACKET);
+}
+
+bool parse_array_view(Parse_State *w, const Type_Info_Array_View *info, char *data) {
+	Array_View<char> *array = (Array_View<char> *)data;
+	array->data = nullptr;
+
+	if (!parse_require_token(w, Token_Kind_OPEN_CURLY_BRACKET) ||
+		!parse_require_integral<s64>(w, &array->count) ||
+		!parse_require_token(w, Token_Kind_COMMA)) {
+		return false;
+	}
+	array->data = (char *)memory_reallocate(array->data, array->count * info->type->size);
+
+	return deserialize_fmt_text(w, "", info->type, array->data, array->count) && parse_require_token(w, Token_Kind_CLOSE_CURLY_BRACKET);
+}
+
+template <typename Cast_Info, typename Proc>
+bool parse_recursive_array(Proc proc, Parse_State *w, const Type_Info *info, char *data, s64 array_count) {
+	if (array_count == -1) {
+		return proc(w, (const Cast_Info *)info, data);
+	} else {
+		if (parse_require_token(w, Token_Kind_OPEN_SQUARE_BRACKET)) {
+			for (s64 i = 0; i < array_count - 1; ++i) {
+				if (!proc(w, (const Cast_Info *)info, data) ||
+					!parse_require_token(w, Token_Kind_COMMA)) {
+					return false;
+				}
+				data += 1;
+			}
+			return proc(w, (const Cast_Info *)info, data) && parse_require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET);
+		}
+	}
+	return false;
+}
+
+bool deserialize_fmt_text(Parse_State *w, String name, const Type_Info *info, char *data, s64 array_count) {
 	if (name.count) {
 		if (!parse_require_token(w, name) || !parse_require_token(w, Token_Kind_COLON)) {
 			return false;
@@ -1010,366 +1079,62 @@ bool ideserialize_fmt_text(Parse_State *w, String name, const Type_Info *info, c
 	}
 
 	switch (info->id) {
-	case Type_Id_S8:
-	{
-		if (!parse_integer_array<s8>(w, num_of_elements, (s8 *)data))
+	case Type_Id_S8:  if (!parse_basic_array<s8 >(parse_require_integral<s8 >, w, (s8  *)data, array_count)) return false; break;
+	case Type_Id_S16: if (!parse_basic_array<s16>(parse_require_integral<s16>, w, (s16 *)data, array_count)) return false; break;
+	case Type_Id_S32: if (!parse_basic_array<s32>(parse_require_integral<s32>, w, (s32 *)data, array_count)) return false; break;
+	case Type_Id_S64: if (!parse_basic_array<s64>(parse_require_integral<s64>, w, (s64 *)data, array_count)) return false; break;
+	case Type_Id_U8:  if (!parse_basic_array<u8 >(parse_require_integral<u8 >, w, (u8  *)data, array_count)) return false; break;
+	case Type_Id_U16: if (!parse_basic_array<u16>(parse_require_integral<u16>, w, (u16 *)data, array_count)) return false; break;
+	case Type_Id_U32: if (!parse_basic_array<u32>(parse_require_integral<u32>, w, (u32 *)data, array_count)) return false; break;
+	case Type_Id_U64: if (!parse_basic_array<u64>(parse_require_integral<u64>, w, (u64 *)data, array_count)) return false; break;
+	case Type_Id_R32: if (!parse_basic_array<r32>(parse_require_real<r32>, w, (r32 *)data, array_count)) return false; break;
+	case Type_Id_R64: if (!parse_basic_array<r64>(parse_require_real<r64>, w, (r64 *)data, array_count)) return false; break;
+	case Type_Id_CHAR: if (!parse_basic_array<char>(parse_require_integral<char>, w, (char *)data, array_count)) return false; break;
+	case Type_Id_STRING: if (!parse_basic_array(parse_require_string, w, (String *)data, array_count)) return false; break;
+
+	case Type_Id_VOID: invalid_code_path(); break;
+	case Type_Id_FUNCTION: break;
+
+	case Type_Id_POINTER: {
+		if (!parse_recursive_array<Type_Info_Pointer>(parse_pointer, w, info, data, array_count))
 			return false;
-	}
-	break;
-	case Type_Id_S16:
-	{
-		if (!parse_integer_array<s16>(w, num_of_elements, (s16 *)data))
+	} break;
+
+	case Type_Id_ENUM: {
+		if (!parse_recursive_array<Type_Info_Enum>(parse_enum, w, info, data, array_count))
 			return false;
-	}
-	break;
-	case Type_Id_S32:
-	{
-		if (!parse_integer_array<s32>(w, num_of_elements, (s32 *)data))
+	} break;
+
+	case Type_Id_STRUCT: {
+		if (!parse_recursive_array<Type_Info_Struct>(parse_struct, w, info, data, array_count))
 			return false;
-	}
-	break;
-	case Type_Id_S64:
-	{
-		if (!parse_integer_array<s64>(w, num_of_elements, (s64 *)data))
+	} break;
+
+	case Type_Id_UNION: {
+		if (!parse_recursive_array<Type_Info_Union>(parse_union, w, info, data, array_count))
 			return false;
-	}
-	break;
-	case Type_Id_U8:
-	{
-		if (!parse_integer_array<u8>(w, num_of_elements, (u8 *)data))
+	} break;
+
+	case Type_Id_STATIC_ARRAY: {
+		if (!parse_recursive_array<Type_Info_Static_Array>(parse_static_array, w, info, data, array_count))
 			return false;
-	}
-	break;
-	case Type_Id_U16:
-	{
-		if (!parse_integer_array<u16>(w, num_of_elements, (u16 *)data))
+	} break;
+
+	case Type_Id_DYNAMIC_ARRAY: {
+		if (!parse_recursive_array<Type_Info_Dynamic_Array>(parse_dynamic_array, w, info, data, array_count))
 			return false;
-	}
-	break;
-	case Type_Id_U32:
-	{
-		if (!parse_integer_array<u32>(w, num_of_elements, (u32 *)data))
+	} break;
+
+	case Type_Id_ARRAY_VIEW: {
+		if (!parse_recursive_array<Type_Info_Array_View>(parse_array_view, w, info, data, array_count))
 			return false;
-	}
-	break;
-	case Type_Id_U64:
-	{
-		if (!parse_integer_array<u64>(w, num_of_elements, (u64 *)data))
-			return false;
-	}
-	break;
-	case Type_Id_R32:
-	{
-		for (s64 i = 0; i < num_of_elements; ++i) {
-			if (!parse_require_real<r32>(w, (r32 *)data + i) ||
-				!parse_require_token(w, Token_Kind_COMMA)) {
-				return false;
-			}
-		}
-		if (num_of_elements > 1) {
-			if (!parse_require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET) ||
-				!parse_require_token(w, Token_Kind_CLOSE_CURLY_BRACKET) ||
-				!parse_require_token(w, Token_Kind_COMMA)) {
-				return false;
-			}
-		}
-	}
-	break;
-	case Type_Id_R64:
-	{
-		for (s64 i = 0; i < num_of_elements; ++i) {
-			if (!parse_require_real<r32>(w, (r32 *)data + i) ||
-				!parse_require_token(w, Token_Kind_COMMA)) {
-				return false;
-			}
-		}
-		if (num_of_elements > 1) {
-			if (!parse_require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET) ||
-				!parse_require_token(w, Token_Kind_CLOSE_CURLY_BRACKET) ||
-				!parse_require_token(w, Token_Kind_COMMA)) {
-				return false;
-			}
-		}
-	}
-	break;
-	case Type_Id_CHAR:
-	{
-		if (!parse_char_array(w, num_of_elements, (char *)data))
-			return false;
-	}
-	break;
-	case Type_Id_VOID:// invalid_path();
-	{
-		invalid_code_path();
-	}
-	break;
-	case Type_Id_POINTER:// deference 
-	{
-		auto ptr_info = (Type_Info_Pointer *)info;
-		for (s64 i = 0; i < num_of_elements; ++i) {
-			(*(ptrsize *)(data + i * sizeof(ptrsize))) = (ptrsize)memory_allocate(ptr_info->pointer_to->size);
-			if (!ideserialize_fmt_text(w, "", ptr_info->pointer_to, (char *)(*(ptrsize *)(data + i * sizeof(ptrsize))), 1))
-				return false;
-
-		}
-		if (num_of_elements > 1) {
-			if (!parse_require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET) ||
-				!parse_require_token(w, Token_Kind_CLOSE_CURLY_BRACKET) ||
-				!parse_require_token(w, Token_Kind_COMMA)) {
-				return false;
-			}
-		}
-	}
-	break;
-	case Type_Id_FUNCTION:// skip
-		break;
-	case Type_Id_ENUM:// s64 
-	{
-		auto enum_info = (Type_Info_Enum *)info;
-		for (s64 i = 0; i < num_of_elements; ++i) {
-			if (!ideserialize_fmt_text(w, "", enum_info->item_type, data + i * enum_info->size, 1))
-				return false;
-		}
-		if (num_of_elements > 1) {
-			if (!parse_require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET) ||
-				!parse_require_token(w, Token_Kind_CLOSE_CURLY_BRACKET) ||
-				!parse_require_token(w, Token_Kind_COMMA)) {
-				return false;
-			}
-		}
-	}
-	break;
-	case Type_Id_STRUCT:
-	{
-		auto struct_info = (Type_Info_Struct *)info;
-		//TODO  : need optimization
-		for (s64 j = 0; j < num_of_elements; ++j) {
-			if (!parse_require_token(w, Token_Kind_OPEN_CURLY_BRACKET))
-				return false;
-			if (struct_info->base) {
-				if (!parse_require_token(w, Token_Kind_PERIOD))
-					return false;
-				if (!ideserialize_fmt_text(w, "base", struct_info->base, data + j * struct_info->size, 1))
-					return false;
-			}
-			for (int i = 0; i < struct_info->member_count; ++i) {
-				auto mem = struct_info->members + i;
-				bool no_serialize = false;
-				for (u64 k = 0; k < mem->attribute_count; ++k) {
-					if (string_match(mem->attributes[k], "no-serialize")) {
-						no_serialize = true;
-						break;
-					}
-				}
-				if (!no_serialize)
-					if (!ideserialize_fmt_text(w, mem->name, mem->info, data + j * struct_info->size + mem->offset, 1))
-						return false;
-			}
-			if (!parse_require_token(w, Token_Kind_CLOSE_CURLY_BRACKET) || !parse_require_token(w, Token_Kind_COMMA)) {
-				return false;
-			}
-		}
-		if (num_of_elements > 1) {
-			if (!parse_require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET) ||
-				!parse_require_token(w, Token_Kind_CLOSE_CURLY_BRACKET) ||
-				!parse_require_token(w, Token_Kind_COMMA)) {
-				return false;
-			}
-		}
-	}
-	break;
-	case Type_Id_UNION:
-	{
-		auto union_info = (Type_Info_Union *)info;
-		for (s64 k = 0; k < num_of_elements; ++k) {
-			bool write = false;
-			for (int j = 0; j < union_info->member_count; ++j) {
-				auto mem = union_info->members + j;
-				for (u64 i = 0; i < mem->attribute_count; ++i) {
-					if (string_match(mem->attributes[i], "write")) {
-						write = true;
-						break;
-					}
-				}
-				if (write) {
-					if (!parse_require_token(w, Token_Kind_OPEN_CURLY_BRACKET))
-						return false;
-					if (!ideserialize_fmt_text(w, mem->name, mem->info, data + k * union_info->size, 1))
-						return false;
-					if (!parse_require_token(w, Token_Kind_CLOSE_CURLY_BRACKET) || !parse_require_token(w, Token_Kind_COMMA)) {
-						return false;
-					}
-					break;
-				}
-			}
-			if (!write) {
-				if (!parse_require_token(w, Token_Kind_OPEN_CURLY_BRACKET))
-					return false;
-				if (!ideserialize_fmt_text(w, union_info->members->name, union_info->members->info, k * union_info->size + data, 1))
-					return false;
-				if (!parse_require_token(w, Token_Kind_CLOSE_CURLY_BRACKET) || !parse_require_token(w, Token_Kind_COMMA)) {
-					return false;
-				}
-			}
-		}
-		if (num_of_elements > 1) {
-			if (!parse_require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET) ||
-				!parse_require_token(w, Token_Kind_CLOSE_CURLY_BRACKET) ||
-				!parse_require_token(w, Token_Kind_COMMA)) {
-				return false;
-			}
-		}
-	}
-	break;
-	case Type_Id_STATIC_ARRAY:
-	{
-		if (num_of_elements > 1) {
-			if (!parse_require_token(w, Token_Kind_OPEN_CURLY_BRACKET) ||
-				!parse_require_integer<s64>(w, &num_of_elements) ||
-				!parse_require_token(w, Token_Kind_COMMA) ||
-				!parse_require_token(w, Token_Kind_OPEN_SQUARE_BRACKET))
-				return false;
-		}
-
-		const Type_Info *elem_type_info = ((Type_Info_Static_Array *)info)->type;
-		s64 count = ((Type_Info_Static_Array *)info)->count;
-		for (s64 i = 0; i < num_of_elements; ++i) {
-			if (!parse_require_token(w, Token_Kind_OPEN_SQUARE_BRACKET) ||
-				!parse_require_token(w, "N") ||
-				!parse_require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET) ||
-				!parse_require_token(w, Token_Kind_COLON)) {
-				return false;
-			}
-
-			if (!parse_require_token(w, Token_Kind_OPEN_CURLY_BRACKET) ||
-				!parse_require_integer<s64>(w, &count) ||
-				!parse_require_token(w, Token_Kind_COMMA) ||
-				!parse_require_token(w, Token_Kind_OPEN_SQUARE_BRACKET))
-				return false;
-
-			if (!ideserialize_fmt_text(w, "", elem_type_info, data + i * elem_type_info->size * count, count))
-				return false;
-		}
-		if (num_of_elements > 1) {
-			if (!parse_require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET) ||
-				!parse_require_token(w, Token_Kind_CLOSE_CURLY_BRACKET) ||
-				!parse_require_token(w, Token_Kind_COMMA)) {
-				return false;
-			}
-		}
-	}
-	break;
-	case Type_Id_STRING:
-	{
-		{
-			for (s64 i = 0; i < num_of_elements; ++i) {
-				String *string_data = (String *)(data + i * sizeof(String));
-				String temp;
-				if (!parse_require_string(w, &temp) || !parse_require_token(w, Token_Kind_COMMA))
-					return false;
-				string_data->count = temp.count;
-				string_data->data = new u8[string_data->count];
-				memcpy(string_data->data, temp.data, string_data->count);
-			}
-			if (num_of_elements > 1) {
-				if (!parse_require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET) ||
-					!parse_require_token(w, Token_Kind_CLOSE_CURLY_BRACKET) ||
-					!parse_require_token(w, Token_Kind_COMMA)) {
-					return false;
-				}
-			}
-		}
-	}
-	break;
-	case Type_Id_DYNAMIC_ARRAY:
-	{
-		if (num_of_elements > 1) {
-			if (!parse_require_token(w, Token_Kind_OPEN_CURLY_BRACKET) ||
-				!parse_require_integer<s64>(w, &num_of_elements) ||
-				!parse_require_token(w, Token_Kind_COMMA) ||
-				!parse_require_token(w, Token_Kind_OPEN_SQUARE_BRACKET))
-				return false;
-		}
-
-		s64 count;
-		for (s64 i = 0; i < num_of_elements; ++i) {
-			Array<char> *array = (Array<char> *)(data + i * sizeof(Array<char>));
-			*array = Array<char>();
-			array->data = nullptr;
-
-			if (!parse_require_token(w, Token_Kind_OPEN_SQUARE_BRACKET) ||
-				!parse_require_token(w, Token_Kind_PERIOD) ||
-				!parse_require_token(w, Token_Kind_PERIOD) ||
-				!parse_require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET) ||
-				!parse_require_token(w, Token_Kind_COLON)) {
-				return false;
-			}
-
-			if (!parse_require_token(w, Token_Kind_OPEN_CURLY_BRACKET) ||
-				!parse_require_integer<s64>(w, &count) ||
-				!parse_require_token(w, Token_Kind_COMMA) ||
-				!parse_require_token(w, Token_Kind_OPEN_SQUARE_BRACKET))
-				return false;
-
-			array->capacity = count;
-			array->count = count;
-			array->data = (char *)memory_reallocate(array->data, array->capacity * ((Type_Info_Dynamic_Array *)info)->type->size, array->allocator);
-			if (!ideserialize_fmt_text(w, "", ((Type_Info_Dynamic_Array *)info)->type, array->data, count))
-				return false;
-		}
-		if (num_of_elements > 1) {
-			if (!parse_require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET) ||
-				!parse_require_token(w, Token_Kind_CLOSE_CURLY_BRACKET) ||
-				!parse_require_token(w, Token_Kind_COMMA)) {
-				return false;
-			}
-		}
-	}
-	break;
-	case Type_Id_ARRAY_VIEW:
-	{
-		if (num_of_elements > 1) {
-			if (!parse_require_token(w, Token_Kind_OPEN_CURLY_BRACKET) ||
-				!parse_require_integer<s64>(w, &num_of_elements) ||
-				!parse_require_token(w, Token_Kind_COMMA) ||
-				!parse_require_token(w, Token_Kind_OPEN_SQUARE_BRACKET))
-				return false;
-		}
-
-		s64 count;
-		for (s64 i = 0; i < num_of_elements; ++i) {
-			Array_View<char> *view = (Array_View<char> *)(data + i * sizeof(Array_View<char>));
-
-			if (!parse_require_token(w, Token_Kind_OPEN_SQUARE_BRACKET) ||
-				!parse_require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET) ||
-				!parse_require_token(w, Token_Kind_COLON))
-				return false;
-
-			if (!parse_require_token(w, Token_Kind_OPEN_CURLY_BRACKET) ||
-				!parse_require_integer<s64>(w, &count) ||
-				!parse_require_token(w, Token_Kind_COMMA) ||
-				!parse_require_token(w, Token_Kind_OPEN_SQUARE_BRACKET))
-				return false;
-
-			view->count = count;
-			view->data = (char *)memory_allocate(view->count * ((Type_Info_Array_View *)info)->type->size);
-			if (!ideserialize_fmt_text(w, "", ((Type_Info_Array_View *)info)->type, view->data, count))
-				return false;
-		}
-		if (num_of_elements > 1) {
-			if (!parse_require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET) ||
-				!parse_require_token(w, Token_Kind_CLOSE_CURLY_BRACKET) ||
-				!parse_require_token(w, Token_Kind_COMMA)) {
-				return false;
-			}
-		}
 	} break;
 	}
 
 	return true;
 }
 
-bool deserialize_fmt_text(Array_View<Token> &tokens, String name, const Type_Info *info, char *data, s64 num_of_elements, Deserialize_Error_Info *error) {
+bool deserialize_fmt_text(Array_View<Token> &tokens, String name, const Type_Info *info, char *data, Deserialize_Error_Info *error) {
 	if (tokens.count == 0)
 		return false;
 
@@ -1379,5 +1144,5 @@ bool deserialize_fmt_text(Array_View<Token> &tokens, String name, const Type_Inf
 	w.end = tokens.data + tokens.count;
 	w.error = error;
 
-	return ideserialize_fmt_text(&w, name, info, data, num_of_elements);
+	return deserialize_fmt_text(&w, name, info, data, -1);
 }

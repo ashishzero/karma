@@ -26,7 +26,6 @@
     <ClCompile Include="src\modules\pcg\pcg_basic.c" />
     <ClCompile Include="src\audio.cpp" />
     <ClCompile Include="src\editor.cpp" />
-    <ClCompile Include="src\entity.cpp" />
     <ClCompile Include="src\modules\gfx\renderer.cpp" />
     <ClCompile Include="src\modules\imgui\dev.cpp" />
     <ClCompile Include="src\first.cpp" />

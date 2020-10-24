@@ -976,7 +976,7 @@ bool system_open_file(const String path, File_Operation options, System_File *fi
 	auto     length = path.count + 1;
 	wchar_t *wpath = (wchar_t *)tallocate(length * sizeof(wchar_t));
 	MultiByteToWideChar(CP_UTF8, 0, (char *)path.data, (int)path.count, wpath, (int)length);
-	wpath[length] = 0;
+	wpath[length - 1] = 0;
 
 	auto handle = CreateFileW(wpath, access, FILE_SHARE_WRITE | FILE_SHARE_READ, 0, creation, FILE_ATTRIBUTE_NORMAL, 0);
 	if (handle == INVALID_HANDLE_VALUE) {

@@ -278,5 +278,5 @@ struct Deserialize_Error_Info {
 	char string[512];
 };
 
-void serialize_fmt_text(Ostream *out, String name, const Type_Info *info, char *data, s64 num_of_elements = 1, bool is_array = false);
-bool deserialize_fmt_text(Array_View<Token> &tokens, String name, const Type_Info *info, char *data, s64 num_of_elements, Deserialize_Error_Info *error);
+void serialize_fmt_text(Ostream *out, String name, const Type_Info *info, char *data);
+bool deserialize_fmt_text(Array_View<Token> &tokens, String name, const Type_Info *info, char *data, Deserialize_Error_Info *error);

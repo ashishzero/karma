@@ -603,9 +603,8 @@ struct Array {
 		allocator = context.allocator;
 	}
 
-	inline Array(Allocator_Proc proc, void *data = 0) {
-		allocator.proc = proc;
-		allocator.data = data;
+	inline Array(Allocator _allocator) {
+		allocator = _allocator;
 	}
 
 	inline operator Array_View<T>() {
@@ -701,7 +700,7 @@ void array_add(Array<T> *a, const T &d) {
 template <typename T>
 void array_append(Array<T> *a, const T *ptr, s64 count) {
 	if (a->count == a->capacity) {
-		s64 n = capacity_grow(a->capacity, count);
+		s64 n = array_get_grow_capacity(a->capacity, count);
 		array_resize(a, n);
 	}
 	for (s64 i = 0; i < count; ++i)
@@ -717,11 +716,6 @@ void array_append(Array<T> *a, const T *begin, const T *end) {
 template <typename T>
 void array_append(Array<T> *a, const Array_View<T> &v) {
 	array_append(a, v->data, v->count);
-}
-
-template <typename T, typename... Args>
-void array_append(Array<T> *a, const Args &... args) {
-	array_append(a, args...);
 }
 
 template <typename T, typename... Args>

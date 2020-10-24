@@ -19,91 +19,6 @@ struct Player_Controller {
 	r32 x, y;
 };
 
-struct Sorted_Colliders {
-	Entity_Handle handle;
-	r32 distance;
-};
-
-struct Quad_Mesh {
-	Quad quad;
-	Vec2 vertices[4];
-};
-
-void test_print(void *param) {
-	const char *string = (const char *)param;
-	system_log(LOG_INFO, "Task", "ThreadId:%5zu %s. ", context.id, string);
-}
-
-struct Async_Serialize {
-	const Type_Info *info;
-	void *data;
-	const char *file;
-	Allocator allocator;
-};
-
-void test_serialize(void *param) {
-	Async_Serialize *work = (Async_Serialize *)param;
-	
-	Ostream out;
-	out.allocator = work->allocator;
-	serialize_fmt_text(&out, "test", work->info, (char *)work->data);
-	
-	defer{
-		ostream_free(&out);
-	};
-
-	System_File file;
-	if (!system_open_file(String(work->file, strlen(work->file)), File_Operation_NEW, &file)) {
-		system_log(LOG_ERROR, "Serialize", "File: %s could not be opened!", work->file);
-		return;
-	}
-	ostream_build_out_file(&out, &file);
-	system_close_file(&file);
-
-	system_log(LOG_INFO, "Serialization", "Written file: %s", work->file);
-}
-
-void test_deserialize(void *param) {
-	Async_Serialize *work = (Async_Serialize *)param;
-
-	Player *player = (Player *)work->data;
-
-	player->position = vec2(-0.2f, 0);
-	player->size = vec2(0.5f);
-	player->color = vec4(1);
-	player->velocity = vec2(0);
-
-	auto allocator = context.allocator;
-	context.allocator = work->allocator;
-	defer{
-		context.allocator = allocator;
-	};
-
-	String content = system_read_entire_file(String(work->file, strlen(work->file)));
-	if (!content.count) {
-		system_log(LOG_ERROR, "Deserialize", "File: %s could not be opened!", work->file);
-		return;
-	}
-
-	Tokenization_Status status;
-	auto tokens = tokenize(content, &status);
-	if (status.result != Tokenization_Result_SUCCESS) {
-		system_log(LOG_ERROR, "Deserialize", "File: %s could not be tokenized [%zd, %zd]", status.row, status.column);
-		return;
-	}
-
-	Deserialize_Error_Info error;
-	if (!deserialize_fmt_text(tokens, "test", work->info, (char *)work->data, 1, &error)) {
-		system_log(LOG_ERROR, "Deserialization", "Deserialization Failed: %s, Expected: %s (%zd, %zd)", 
-			work->file, enum_string(error.expected).data, error.token.row, error.token.column);
-		return;
-	}
-
-	memory_free(tokens.data);
-	memory_free(content.data);
-	system_log(LOG_INFO, "Deserialization", "Loaded from file: %s", work->file);
-}
-
 int karma_user_zero() {
 
 #ifdef INIT_THREAD_POOL
@@ -140,13 +55,14 @@ int karma_user_zero() {
 	u64 frequency = system_get_frequency();
 	u64 counter = system_get_counter();
 
-	Circle player;
-	player.center = vec2(0);
-	player.radius = 1;
-
-	auto player_color = vec4(1);
-	auto player_velocity = vec2(0);
-
+	Player player;
+	player.position = vec2(0);
+	player.collider.center = player.position;
+	player.collider.radius = 1;
+	player.color = vec4(1);
+	player.velocity = vec2(0);
+	player.force = vec2(0);
+	
 	static Vec2 points[] = {
 		vec2(-8, 5), vec2(-2, 5), vec2(-1, -1), vec2(-4, -5), vec2(-13, -2)
 	};
@@ -154,6 +70,8 @@ int karma_user_zero() {
 	Polygon polygon;
 	polygon.vertices = points;
 	polygon.vertex_count = static_count(points);
+
+	array_append(&player.points, polygon.vertices, polygon.vertex_count);
 
 	Mm_Rect rect;
 	rect.min = vec2(4, -4);
@@ -281,50 +199,54 @@ int karma_user_zero() {
 			player_force = force * dir;
 			//player->force.y -= gravity;
 
-			player_velocity += dt * player_force;
-			player_velocity *= powf(0.5f, drag * dt);
+			player.velocity += dt * player_force;
+			player.velocity *= powf(0.5f, drag * dt);
 
 			//Vec2 velocity_t = dt * player_velocity;
 
 			Vec2 norm; r32 dist, v_t;
 
-			if (epa_dynamic(capsule, player, dt * player_velocity, &norm, &dist)) {
+			player.collider.center = player.position;
+			if (epa_dynamic(capsule, player.collider, dt * player.velocity, &norm, &dist)) {
 				array_add(&manifolds, Collision_Manifold{ norm, dist });
-				v_t = dist / dt * sgn(vec2_dot(norm, player_velocity));
-				player_velocity -= v_t * norm;
+				v_t = dist / dt * sgn(vec2_dot(norm, player.velocity));
+				player.velocity -= v_t * norm;
 				capsule_color = vec4(0, 1, 1, 1);
 			} else {
 				capsule_color = vec4(1, 0, 0);
 			}
 
-			if (epa_dynamic(rect, player, dt * player_velocity, &norm, &dist)) {
+			player.collider.center = player.position;
+			if (epa_dynamic(rect, player.collider, dt * player.velocity, &norm, &dist)) {
 				array_add(&manifolds, Collision_Manifold{ norm, dist });
-				v_t = dist / dt * sgn(vec2_dot(norm, player_velocity));
-				player_velocity -= v_t * norm;
+				v_t = dist / dt * sgn(vec2_dot(norm, player.velocity));
+				player.velocity -= v_t * norm;
 				rect_color = vec4(0, 1, 1, 1);
 			} else {
 				rect_color = vec4(1, 0, 0);
 			}
 
-			if (epa_dynamic(polygon, player, dt * player_velocity, &norm, &dist)) {
+			player.collider.center = player.position;
+			if (epa_dynamic(polygon, player.collider, dt * player.velocity, &norm, &dist)) {
 				array_add(&manifolds, Collision_Manifold{ norm, dist });
-				v_t = dist / dt * sgn(vec2_dot(norm, player_velocity));
-				player_velocity -= v_t * norm;
+				v_t = dist / dt * sgn(vec2_dot(norm, player.velocity));
+				player.velocity -= v_t * norm;
 				poly_color = vec4(0, 1, 1, 1);
 			} else {
 				poly_color = vec4(1, 0, 0);
 			}
 			
-			if (epa_dynamic(circle, player, dt * player_velocity, &norm, &dist)) {
+			player.collider.center = player.position;
+			if (epa_dynamic(circle, player.collider, dt * player.velocity, &norm, &dist)) {
 				array_add(&manifolds, Collision_Manifold{ norm, dist });
-				v_t = dist / dt * sgn(vec2_dot(norm, player_velocity));
-				player_velocity -= v_t * norm;
+				v_t = dist / dt * sgn(vec2_dot(norm, player.velocity));
+				player.velocity -= v_t * norm;
 				circle_color = vec4(0, 1, 1, 1);
 			} else {
 				circle_color = vec4(1, 0, 0);
 			}
 
-			player.center += dt * player_velocity;
+			player.position += dt * player.velocity;
 
 			accumulator_t -= fixed_dt;
 		}
@@ -376,12 +298,12 @@ int karma_user_zero() {
 		im2d_line(capsule.a + capsule_norm, capsule.b + capsule_norm, capsule_color, 0.02f);
 		im2d_line(capsule.a - capsule_norm, capsule.b - capsule_norm, capsule_color, 0.02f);
 
-		im2d_circle(player.center, player.radius, player_color);
-		im2d_line(player.center, player.center + player_velocity, vec4(0, 1.5f, 0), 0.02f);
+		im2d_circle(player.position, player.collider.radius, player.color);
+		im2d_line(player.position, player.position + player.velocity, vec4(0, 1.5f, 0), 0.02f);
 
 		for (auto &manifold : manifolds) {
-			im2d_line(player.center, player.center + manifold.normal, 1.5f * vec4(1, 0, 0), 0.05f);
-			im2d_line(player.center, player.center + manifold.penetration_depth * manifold.normal, 2 * vec4(1, 1, 0), 0.05f);
+			im2d_line(player.position, player.position + manifold.normal, 1.5f * vec4(1, 0, 0), 0.05f);
+			im2d_line(player.position, player.position + manifold.penetration_depth * manifold.normal, 2 * vec4(1, 1, 0), 0.05f);
 		}
 
 		im2d_end();
@@ -404,9 +326,35 @@ int karma_user_zero() {
 #endif
 
 		ImGui::Begin("Player");
-		ImGui::DragFloat2("Position", player.center.m, 0.01f);
-		ImGui::DragFloat("Radius", &player.radius, 0.01f);
-		ImGui::DragFloat2("Velocity", player_velocity.m, 0.01f);
+		editor_draw(player);
+
+		if (ImGui::Button("Save")) {
+			Ostream out;
+			serialize_fmt_text(&out, "Player", reflect_info(player), (char *)&player);
+			System_File file;
+			if (system_open_file("temp/player.karma", File_Operation_NEW, &file)) {
+				ostream_build_out_file(&out, &file);
+			}
+			system_close_file(&file);
+			ostream_free(&out);
+		}
+
+		if (ImGui::Button("Load")) {
+			Tokenization_Status status;
+			auto content = system_read_entire_file("temp/player.karma");
+			auto tokens = tokenize(content, &status);
+			if (status.result == Tokenization_Result_SUCCESS) {
+				Deserialize_Error_Info error;
+				if (!deserialize_fmt_text(tokens, "Player", reflect_info(player), (char *)&player, &error))
+					system_log(LOG_ERROR, "Load", "Failed to load player");
+			}
+			else {
+				system_log(LOG_ERROR, "Load", "Failed to load player");
+			}
+			memory_free(tokens.data);
+			memory_free(content.data);
+		}
+
 		ImGui::End();
 
 #if defined(BUILD_IMGUI)

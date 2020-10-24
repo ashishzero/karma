@@ -2,13 +2,13 @@
 #include "modules/core/reflection.h"
 
 struct Editor_Attribute {
-	u32 flags;
-	r32 speed;
-	r32 min;
-	r32 max;
+	u32 flags = 0;
+	r32 speed = 0.01f;
+	r32 min = 0.0f;
+	r32 max = 0.0f;
 };
 
-void editor_draw(const Type_Info *base_info, char * data, Editor_Attribute &attr, const char * name);
+void editor_draw(const Type_Info *base_info, char * data, Editor_Attribute attr, const char * name);
 
 template <typename T>
 inline void editor_draw(T& d) {
