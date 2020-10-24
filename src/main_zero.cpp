@@ -71,8 +71,6 @@ int karma_user_zero() {
 	polygon.vertices = points;
 	polygon.vertex_count = static_count(points);
 
-	array_append(&player.points, polygon.vertices, polygon.vertex_count);
-
 	Mm_Rect rect;
 	rect.min = vec2(4, -4);
 	rect.max = vec2(9, 3);

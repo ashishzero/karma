@@ -11,7 +11,4 @@ struct Player : public Entity {
 	attribute("read-only")	Vec2 velocity;
 	attribute("read-only")	Vec2 force;
 	attribute("speed:0.01", "min:0.0", "max:5.0") Circle collider;
-	Vec2 temp[2] = { {0, 1}, {2, 3} };
-	String name = "Player1";
-	Array<Vec2> points;
 };
