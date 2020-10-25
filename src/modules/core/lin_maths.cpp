@@ -2178,7 +2178,7 @@ bool test_mmrect_vs_mmrect(const Mm_Rect &a, const Mm_Rect &b) {
 	return true;
 }
 
-bool test_point_inside_capsule(Vec2 p, const Capsule2d &c) {
+bool test_point_inside_capsule(Vec2 p, const Capsule &c) {
 	r32 dst2 = point_to_segment_length2(p, c.a, c.b);
 	return dst2 <= c.radius * c.radius;
 }
@@ -2274,7 +2274,7 @@ bool test_quad_vs_quad(const Quad &a, const Quad &b) {
 	return true;
 }
 
-bool test_circle_vs_capsule(const Circle &circle, const Capsule2d &capsule) {
+bool test_circle_vs_capsule(const Circle &circle, const Capsule &capsule) {
 	r32 dst2 = point_to_segment_length2(circle.center, capsule.a, capsule.b);
 	r32 radius = circle.radius + capsule.radius;
 	return dst2 <= radius *radius;
@@ -2285,7 +2285,7 @@ bool test_segment_vs_circle(Vec2 a, Vec2 b, const Circle &c) {
 	return dist2 <= c.radius * c.radius;
 }
 
-bool test_capsule_vs_capsule(const Capsule2d &capsule1, const Capsule2d &capsule2) {
+bool test_capsule_vs_capsule(const Capsule &capsule1, const Capsule &capsule2) {
 	r32 s, t;
 	Vec2 c1, c2;
 	r32 dist2 = closest_point_segment_segment(capsule1.a, capsule1.b, capsule2.a, capsule2.b, &s, &t, &c1, &c2);
@@ -2678,7 +2678,7 @@ Vec2 support(const Mm_Rect &m, Vec2 dir) {
 	return vec2(dir.x >= 0.0f ? m.max.x : m.min.x, dir.y >= 0.0f ? m.max.y : m.min.y);
 }
 
-Vec2 support(const Capsule2d &c, Vec2 dir) {
+Vec2 support(const Capsule &c, Vec2 dir) {
 	Vec2 n = vec2_normalize(dir);
 	Vec2 s;
 
@@ -2724,7 +2724,7 @@ Vec2 support(const Circle &a, const Circle &b, Vec2 dir) {
 	return a.center - b.center + n * (a.radius + b.radius);
 }
 
-Vec2 support(const Circle &a, const Capsule2d &b, Vec2 dir) {
+Vec2 support(const Circle &a, const Capsule &b, Vec2 dir) {
 	Vec2 n = vec2_normalize(dir);
 	Vec2 s = a.center;
 	r32 da, db;
@@ -2739,7 +2739,7 @@ Vec2 support(const Circle &a, const Capsule2d &b, Vec2 dir) {
 	return s + n * (a.radius + b.radius);
 }
 
-Vec2 support(const Capsule2d &a, const Circle &b, Vec2 dir) {
+Vec2 support(const Capsule &a, const Circle &b, Vec2 dir) {
 	Vec2 n = vec2_normalize(dir);
 	Vec2 s;
 	r32 da, db;
@@ -2754,7 +2754,7 @@ Vec2 support(const Capsule2d &a, const Circle &b, Vec2 dir) {
 	return s - b.center + n * (a.radius + b.radius);
 }
 
-Vec2 support(const Capsule2d &a, const Capsule2d &b, Vec2 dir) {
+Vec2 support(const Capsule &a, const Capsule &b, Vec2 dir) {
 	Vec2 n = vec2_normalize(dir);
 	Vec2 s;
 	r32 da, db;
@@ -2795,20 +2795,20 @@ Vec2 support(const Mm_Rect &a, const Mm_Rect &b, Vec2 dir) {
 	return pa - pb;
 }
 
-bool next_simplex(Simplex2d * const simplex, Vec2 *dir, s32 *n) {
+bool next_simplex(Vec2 *simplex, Vec2 *dir, u32 *n) {
 	switch (*n) {
 	case 2: {
 		// a = simplex[1]
 		// b = simplex[0]
-		Vec2 ab = simplex->p[0] - simplex->p[1];
-		Vec2 ao = -simplex->p[1];
+		Vec2 ab = simplex[0] - simplex[1];
+		Vec2 ao = -simplex[1];
 		if (vec2_dot(ao, ab) > 0.0f) {
-			r32 det = vec2_determinant(simplex->p[1], simplex->p[0]);
+			r32 det = vec2_determinant(simplex[1], simplex[0]);
 			dir->x = -ab.y * det;
 			dir->y = ab.x * det;
 		} else {
 			*dir = ao;
-			simplex->p[0] = simplex->p[1];
+			simplex[0] = simplex[1];
 			*n = 1;
 		}
 	} break;
@@ -2817,45 +2817,45 @@ bool next_simplex(Simplex2d * const simplex, Vec2 *dir, s32 *n) {
 		// a = simplex[2]
 		// b = simplex[1]
 		// c = simplex[0]
-		Vec2 ab = simplex->p[1] - simplex->p[2];
-		Vec2 ac = simplex->p[0] - simplex->p[2];
-		Vec2 ao = -simplex->p[2];
+		Vec2 ab = simplex[1] - simplex[2];
+		Vec2 ac = simplex[0] - simplex[2];
+		Vec2 ao = -simplex[2];
 		r32 abc = vec2_determinant(ab, ac);
 
 		if (vec2_dot(vec2(-ac.y * abc, ac.x * abc), ao) > 0.0f) {
 			if (vec2_dot(ac, ao) > 0.0f) {
-				r32 det = vec2_determinant(simplex->p[2], simplex->p[0]);
+				r32 det = vec2_determinant(simplex[2], simplex[0]);
 				dir->x = -ac.y * det;
 				dir->y = ac.x * det;
 
-				simplex->p[1] = simplex->p[0];
-				simplex->p[0] = simplex->p[2];
+				simplex[1] = simplex[0];
+				simplex[0] = simplex[2];
 
 				*n = 2;
 			} else {
 				if (vec2_dot(ab, ao) > 0.0f) {
-					r32 det = vec2_determinant(simplex->p[2], simplex->p[1]);
+					r32 det = vec2_determinant(simplex[2], simplex[1]);
 					dir->x = -ab.y * det;
 					dir->y = ab.x * det;
-					simplex->p[0] = simplex->p[2];
+					simplex[0] = simplex[2];
 					*n = 2;
 				} else {
-					*dir = -simplex->p[2];
-					simplex->p[0] = simplex->p[2];
+					*dir = -simplex[2];
+					simplex[0] = simplex[2];
 					*n = 1;
 				}
 			}
 		} else {
 			if (vec2_dot(vec2(ab.y * abc, -ab.x * abc), ao) > 0.0f) {
 				if (vec2_dot(ab, ao) > 0.0f) {
-					r32 det = vec2_determinant(simplex->p[2], simplex->p[1]);
+					r32 det = vec2_determinant(simplex[2], simplex[1]);
 					dir->x = -ab.y * det;
 					dir->y = ab.x * det;
-					simplex->p[0] = simplex->p[2];
+					simplex[0] = simplex[2];
 					*n = 2;
 				} else {
-					*dir = -simplex->p[2];
-					simplex->p[0] = simplex->p[2];
+					*dir = -simplex[2];
+					simplex[0] = simplex[2];
 					*n = 1;
 				}
 			} else {
@@ -2875,8 +2875,8 @@ Nearest_Edge2d closest_edge_origin_polygon(const Polygon &polygon) {
 	Nearest_Edge2d edge;
 	edge.distance = MAX_FLOAT;
 
-	for (s32 p_index = 0; p_index < polygon.vertex_count; ++p_index) {
-		s32 q_index = ((p_index + 1) == polygon.vertex_count) ? 0 : p_index + 1;
+	for (u32 p_index = 0; p_index < polygon.vertex_count; ++p_index) {
+		u32 q_index = ((p_index + 1) == polygon.vertex_count) ? 0 : p_index + 1;
 		
 		auto a = polygon.vertices[p_index];
 		auto b = polygon.vertices[q_index];

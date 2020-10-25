@@ -436,7 +436,7 @@ inline Quad quad(Vec2 a, Vec2 b, Vec2 c, Vec2 d, Vec2 n1, Vec2 n2, Vec2 n3, Vec2
 	return quad;
 }
 
-struct Capsule2d {
+struct Capsule {
 	Vec2 a;
 	Vec2 b;
 	r32 radius;
@@ -448,12 +448,8 @@ struct Ray2d {
 };
 
 struct Polygon {
-	Vec2 *vertices;
-	s32 vertex_count;
-};
-
-struct Simplex2d {
-	Vec2 *p;
+	u32 vertex_count;
+	Vec2 vertices[3];
 };
 
 struct Nearest_Edge2d {

@@ -62,31 +62,50 @@ int karma_user_zero() {
 	player.color = vec4(1);
 	player.velocity = vec2(0);
 	player.force = vec2(0);
-	
-	static Vec2 points[] = {
-		vec2(-8, 5), vec2(-2, 5), vec2(-1, -1), vec2(-4, -5), vec2(-13, -2)
-	};
 
-	Polygon polygon;
-	polygon.vertices = points;
-	polygon.vertex_count = static_count(points);
+	Collider colliders[4];
+	Vec4 collider_colors[4];
+	memset(collider_colors, 1, sizeof(collider_colors));
+	{
+		colliders[0].type = Collider_Mm_Rect;
+		colliders[1].type = Collider_Circle;
+		colliders[2].type = Collider_Capsule;
+		colliders[3].type = Collider_Polygon;
 
-	Mm_Rect rect;
-	rect.min = vec2(4, -4);
-	rect.max = vec2(9, 3);
+		Vec2 points[] = {
+			vec2(-8, 5), vec2(-2, 5), vec2(-1, -1), vec2(-4, -5), vec2(-13, -2)
+		};
 
-	Circle circle;
-	circle.center = vec2(5);
-	circle.radius = 1.23f;
+		assert(static_count(points) >= 3);
 
-	Capsule2d capsule;
-	capsule.a = vec2(-3, -8);
-	capsule.b = vec2(1, -2);
-	capsule.radius = 1;
+		colliders[0].handle = new Mm_Rect;
+		colliders[1].handle = new Circle;
+		colliders[2].handle = new Capsule;
+		colliders[3].handle = memory_allocate(sizeof(Polygon) + (static_count(points) - 3) * sizeof(Vec2));
 
-	Vec4 rect_color = vec4(1, 0, 0 ), poly_color = vec4(1, 0, 0), circle_color = vec4(1, 0, 0), capsule_color = vec4(1, 0, 0);
+		Mm_Rect *rect = collider_get(colliders[0], Mm_Rect);
+		rect->min = vec2(4, -4);
+		rect->max = vec2(9, 3);
+
+		Circle *circle = collider_get(colliders[1], Circle);
+		circle->center = vec2(5);
+		circle->radius = 1.23f;
+
+		Capsule *capsule = collider_get(colliders[2], Capsule);
+		capsule->a = vec2(-3, -8);
+		capsule->b = vec2(1, -2);
+		capsule->radius = 1;
+
+		Polygon *polygon = collider_get(colliders[3], Polygon);
+		polygon->vertex_count = static_count(points);
+		memcpy(colliders[3].polygon->vertices, points, sizeof(points));
+	}
 
 	Player_Controller controller = {};
+
+	Camera camera;
+	camera.position = vec2(0);
+	camera.distance = 0.0f;
 
 	while (running) {
 		Dev_TimedFrameBegin();
@@ -192,7 +211,7 @@ int karma_user_zero() {
 				dir = vec2(0);
 			}
 
-			const float force = 100;
+			const float force = 20;
 
 			player_force = force * dir;
 			//player->force.y -= gravity;
@@ -204,54 +223,56 @@ int karma_user_zero() {
 
 			Vec2 norm; r32 dist, v_t;
 
-			player.collider.center = player.position;
-			if (epa_dynamic(capsule, player.collider, dt * player.velocity, &norm, &dist)) {
-				array_add(&manifolds, Collision_Manifold{ norm, dist });
-				v_t = dist / dt * sgn(vec2_dot(norm, player.velocity));
-				player.velocity -= v_t * norm;
-				capsule_color = vec4(0, 1, 1, 1);
-			} else {
-				capsule_color = vec4(1, 0, 0);
-			}
+			int collider_index = 0;
+			for (auto &c : colliders) {
+				player.collider.center = player.position;
+				
+				bool collision;
 
-			player.collider.center = player.position;
-			if (epa_dynamic(rect, player.collider, dt * player.velocity, &norm, &dist)) {
-				array_add(&manifolds, Collision_Manifold{ norm, dist });
-				v_t = dist / dt * sgn(vec2_dot(norm, player.velocity));
-				player.velocity -= v_t * norm;
-				rect_color = vec4(0, 1, 1, 1);
-			} else {
-				rect_color = vec4(1, 0, 0);
-			}
+				switch (c.type) {
+				case Collider_Mm_Rect:
+					collision = epa_dynamic(*c.mm_rect, player.collider, dt * player.velocity, &norm, &dist);
+					break;
 
-			player.collider.center = player.position;
-			if (epa_dynamic(polygon, player.collider, dt * player.velocity, &norm, &dist)) {
-				array_add(&manifolds, Collision_Manifold{ norm, dist });
-				v_t = dist / dt * sgn(vec2_dot(norm, player.velocity));
-				player.velocity -= v_t * norm;
-				poly_color = vec4(0, 1, 1, 1);
-			} else {
-				poly_color = vec4(1, 0, 0);
-			}
-			
-			player.collider.center = player.position;
-			if (epa_dynamic(circle, player.collider, dt * player.velocity, &norm, &dist)) {
-				array_add(&manifolds, Collision_Manifold{ norm, dist });
-				v_t = dist / dt * sgn(vec2_dot(norm, player.velocity));
-				player.velocity -= v_t * norm;
-				circle_color = vec4(0, 1, 1, 1);
-			} else {
-				circle_color = vec4(1, 0, 0);
+				case Collider_Circle:
+					collision = epa_dynamic(*c.circle, player.collider, dt * player.velocity, &norm, &dist);
+					break;
+
+				case Collider_Polygon:
+					collision = epa_dynamic(*c.polygon, player.collider, dt * player.velocity, &norm, &dist);
+					break;
+
+				case Collider_Capsule:
+					collision = epa_dynamic(*c.capsule, player.collider, dt * player.velocity, &norm, &dist);
+					break;
+
+				invalid_default_case();
+				};
+
+				if (collision) {
+					array_add(&manifolds, Collision_Manifold{ norm, dist });
+					v_t = dist / dt * sgn(vec2_dot(norm, player.velocity));
+					player.velocity -= v_t * norm;
+					collider_colors[collider_index] = vec4(0, 1, 1, 1);
+				}
+				else {
+					collider_colors[collider_index] = vec4(1, 0, 0, 1);
+				}
+
+				collider_index += 1;
 			}
 
 			player.position += dt * player.velocity;
+
+			r32 camera_follow_speed = 0.977f;
+			camera.position = lerp(camera.position, player.position, 1.0f - powf(1.0f - camera_follow_speed, dt));
 
 			accumulator_t -= fixed_dt;
 		}
 
 		ImGui_UpdateFrame(real_dt);
 
-		r32 view_height = 10.0f;
+		r32 view_height = 5.0f;
 		r32 view_width = aspect_ratio * view_height;
 
 		auto view = orthographic_view(-view_width, view_width, view_height, -view_height);
@@ -279,22 +300,48 @@ int karma_user_zero() {
 		gfx_begin_drawing(Framebuffer_Type_HDR, Clear_ALL, vec4(0.0f));
 		gfx_viewport(0, 0, window_w, window_h);
 
-		im2d_begin(view);
+		r32 scale = powf(0.5f, camera.distance);
+		Mat4 transform = mat4_scalar(scale, scale, 1.0f) * mat4_translation(vec3(-camera.position, 0.0f));
 
-		for (int i = 0; i < polygon.vertex_count; ++i) {
-			im2d_line(polygon.vertices[i], polygon.vertices[(i + 1) % polygon.vertex_count], poly_color, 0.02f);
+		im2d_begin(view, transform);
+
+		int collider_index = 0;
+		for (auto &c : colliders) {
+			auto color = collider_colors[collider_index];
+			switch (c.type) {
+			case Collider_Circle: {
+				auto circle = collider_get(c, Circle);
+				im2d_circle_outline(circle->center, circle->radius, color, 0.02f);
+			} break;
+
+			case Collider_Polygon: {
+				auto polygon = collider_get(c, Polygon);
+				for (u32 i = 0; i < polygon->vertex_count; ++i) {
+					im2d_line(polygon->vertices[i], polygon->vertices[(i + 1) % polygon->vertex_count], color, 0.02f);
+				}
+			} break;
+
+			case Collider_Mm_Rect: {
+				auto rect = collider_get(c, Mm_Rect);
+				im2d_rect_outline(rect->min, rect->max - rect->min, color, 0.02f);
+			} break;
+
+			case Collider_Capsule: {
+				auto capsule = collider_get(c, Capsule);
+				Vec2 capsule_dir = capsule->b - capsule->a;
+				Vec2 capsule_norm = vec2_normalize(vec2(-capsule_dir.y, capsule_dir.x)) * capsule->radius;
+
+				im2d_circle_outline(capsule->a, capsule->radius, color, 0.02f);
+				im2d_circle_outline(capsule->b, capsule->radius, color, 0.02f);
+				im2d_line(capsule->a + capsule_norm, capsule->b + capsule_norm, color, 0.02f);
+				im2d_line(capsule->a - capsule_norm, capsule->b - capsule_norm, color, 0.02f);
+			} break;
+
+			invalid_default_case();
+
+			}
+			collider_index += 1;
 		}
-
-		im2d_rect_outline(rect.min, rect.max - rect.min, rect_color, 0.02f);
-		im2d_circle_outline(circle.center, circle.radius, circle_color, 0.02f);
-
-		Vec2 capsule_dir = capsule.b - capsule.a;
-		Vec2 capsule_norm = vec2_normalize(vec2(-capsule_dir.y, capsule_dir.x)) * capsule.radius;
-
-		im2d_circle_outline(capsule.a, capsule.radius, capsule_color, 0.02f);
-		im2d_circle_outline(capsule.b, capsule.radius, capsule_color, 0.02f);
-		im2d_line(capsule.a + capsule_norm, capsule.b + capsule_norm, capsule_color, 0.02f);
-		im2d_line(capsule.a - capsule_norm, capsule.b - capsule_norm, capsule_color, 0.02f);
 
 		im2d_circle(player.position, player.collider.radius, player.color);
 		im2d_line(player.position, player.position + player.velocity, vec4(0, 1.5f, 0), 0.02f);
@@ -325,7 +372,7 @@ int karma_user_zero() {
 
 		ImGui::Begin("Player");
 		editor_draw(player);
-
+		
 		if (ImGui::Button("Save")) {
 			Ostream out;
 			serialize_fmt_text(&out, "Player", reflect_info(player), (char *)&player);
@@ -355,6 +402,10 @@ int karma_user_zero() {
 			memory_free(content.data);
 		}
 
+		ImGui::End();
+
+		ImGui::Begin("Camera");
+		editor_draw(camera);
 		ImGui::End();
 
 #if defined(BUILD_IMGUI)

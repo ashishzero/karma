@@ -858,7 +858,7 @@ Aabb2d update_aabb(const Aabb2d &a, r32 rot, Vec2 t);
 bool test_point_inside_rect(Vec2 point, const Mm_Rect &rect);
 bool test_point_inside_aabb(Vec2 point, const Aabb2d &aabb);
 bool test_point_inside_circle(Vec2 p, const Circle &c);
-bool test_point_inside_capsule(Vec2 p, const Capsule2d &c);
+bool test_point_inside_capsule(Vec2 p, const Capsule &c);
 bool test_point_inside_triangle(Vec2 p, Vec2 a, Vec2 b, Vec2 c);
 bool test_origin_inside_triangle(Vec2 a, Vec2 b, Vec2 c);
 bool test_point_inside_convex_polygon(Vec2 p, Vec2 *v, s32 n);
@@ -867,7 +867,7 @@ bool test_mmrect_vs_mmrect(const Mm_Rect &a, const Mm_Rect &b);
 bool test_aabb_vs_aabb(const Aabb2d &a, const Aabb2d &b);
 bool test_circle_vs_circle(const Circle &a, const Circle &b);
 bool test_quad_vs_quad(const Quad &a, const Quad &b);
-bool test_circle_vs_capsule(const Circle& circle, const Capsule2d& capsule);
+bool test_circle_vs_capsule(const Circle& circle, const Capsule& capsule);
 bool test_segment_vs_circle(Vec2 a, Vec2 b, const Circle &c);
 bool test_circle_vs_aabb(const Circle &c, const Aabb2d &b);
 bool test_ray_vs_circle(const Ray2d &ray, const Circle &circle);
@@ -895,12 +895,12 @@ bool dynamic_mm_rect_vs_mm_rect(const Mm_Rect &a, const Mm_Rect &b, Vec2 va, Vec
 Vec2 support(const Circle &c, Vec2 dir);
 Vec2 support(const Mm_Rect &m, Vec2 dir);
 Vec2 support(const Polygon &p, Vec2 dir);
-Vec2 support(const Capsule2d &c, Vec2 dir);
+Vec2 support(const Capsule &c, Vec2 dir);
 
 Vec2 support(const Circle &a, const Circle &b, Vec2 dir);
-Vec2 support(const Circle &a, const Capsule2d &b, Vec2 dir);
-Vec2 support(const Capsule2d &a, const Circle &b, Vec2 dir);
-Vec2 support(const Capsule2d &a, const Capsule2d &b, Vec2 dir);
+Vec2 support(const Circle &a, const Capsule &b, Vec2 dir);
+Vec2 support(const Capsule &a, const Circle &b, Vec2 dir);
+Vec2 support(const Capsule &a, const Capsule &b, Vec2 dir);
 Vec2 support(const Mm_Rect &a, const Mm_Rect &b, Vec2 dir);
 
 template <typename ShapeA, typename ShapeB>
@@ -916,26 +916,24 @@ inline Vec2 support_dynamic(const ShapeA &a, const ShapeB &b, Vec2 relative_dp_o
 	return s;
 }
 
-bool next_simplex(Simplex2d *const simplex, Vec2 *dir, s32 *n);
+bool next_simplex(Vec2 *simplex, Vec2 *dir, u32 *n);
 
 Nearest_Edge2d closest_edge_origin_polygon(const Polygon &polygon);
 
 template <typename ShapeA, typename ShapeB>
 bool gjk(const ShapeA &sa, const ShapeB &sb) {
-	Simplex2d simplex;
-	Vec2 simplex_points[3];
-	simplex.p = simplex_points;
+	Vec2 simplex[3];
 
 	Vec2 dir = vec2(0, 1);
-	simplex.p[0] = support(sa, sb, dir);
-	dir = -simplex.p[0];
+	simplex[0] = support(sa, sb, dir);
+	dir = -simplex[0];
 	s32 n = 1;
 
 	Vec2 a;
 	while (true) {
 		a = support(sa, sb, dir);
 		if (vec2_dot(a, dir) < 0.0f) return false; // no intersection
-		simplex.p[n] = a;
+		simplex[n] = a;
 		n += 1;
 
 		if (next_simplex(&simplex, &dir, &n)) {
@@ -948,20 +946,18 @@ bool gjk(const ShapeA &sa, const ShapeB &sb) {
 
 template <typename ShapeA, typename ShapeB>
 bool gjk_dynamic(const ShapeA &sa, const ShapeB &sb, Vec2 relative_dp_of_b_wrt_a) {
-	Simplex2d simplex;
-	Vec2 simplex_points[3];
-	simplex.p = simplex_points;
+	Vec2 simplex[3];
 
 	Vec2 dir = vec2(0, 1);
-	simplex.p[0] = support_dynamic(sa, sb, relative_dp_of_b_wrt_a, dir);
-	dir = -simplex.p[0];
+	simplex[0] = support_dynamic(sa, sb, relative_dp_of_b_wrt_a, dir);
+	dir = -simplex[0];
 	s32 n = 1;
 
 	Vec2 a;
 	while (true) {
 		a = support_dynamic(sa, sb, relative_dp_of_b_wrt_a, dir);
 		if (vec2_dot(a, dir) < 0.0f) return false; // no intersection
-		simplex.p[n] = a;
+		simplex[n] = a;
 		n += 1;
 
 		if (next_simplex(&simplex, &dir, &n)) {
@@ -976,14 +972,13 @@ constexpr r32 EPA_TOLERANCE = 0.00001f;
 
 template <typename ShapeA, typename ShapeB>
 bool epa(const ShapeA &sa, const ShapeB &sb, Vec2 *normal, r32 *penetration_depth) {
-	Simplex2d simplex;
-	s32 count = 1;
-	s32 allocated = 8;
-	simplex.p = (Vec2 *)tallocate(sizeof(Vec2) * allocated);
-	
+	u32 allocated = 8;
+	Polygon *simplex = (Polygon *)tallocate(sizeof(Polygon) + sizeof(Vec2) * (allocated - 3));
+	simplex->vertex_count = 1;
+
 	Vec2 dir = vec2(0, 1);
-	simplex.p[0] = support(sa, sb, dir);
-	dir = -simplex.p[0];
+	simplex->vertices[0] = support_dynamic(sa, sb, relative_dp_of_b_wrt_a, dir);
+	dir = -simplex->vertices[0];
 
 	bool collision = false;
 
@@ -992,10 +987,10 @@ bool epa(const ShapeA &sa, const ShapeB &sb, Vec2 *normal, r32 *penetration_dept
 		if (vec2_null(dir)) return false;
 		a = support(sa, sb, dir);
 		if (vec2_dot(a, dir) < 0.0f) return false; // no intersection
-		simplex.p[count] = a;
-		count += 1;
+		simplex->vertices[simplex->vertex_count] = a;
+		simplex->vertex_count += 1;
 
-		if (next_simplex(&simplex, &dir, &count)) {
+		if (next_simplex(simplex->vertices, &dir, &count)) {
 			collision = true;
 			break;
 		}
@@ -1004,7 +999,7 @@ bool epa(const ShapeA &sa, const ShapeB &sb, Vec2 *normal, r32 *penetration_dept
 	if (!collision) return false;
 
 	while (true) {
-		Nearest_Edge2d e = closest_edge_origin_polygon(Polygon { simplex.p, count });
+		Nearest_Edge2d e = closest_edge_origin_polygon(*simplex);
 		if (vec2_null(e.normal)) return false;
 
 		Vec2 p = support(sa, sb, e.normal);
@@ -1015,14 +1010,14 @@ bool epa(const ShapeA &sa, const ShapeB &sb, Vec2 *normal, r32 *penetration_dept
 			*penetration_depth = d;
 			break;
 		} else {
-			if (count == allocated) {
+			if (simplex->vertex_count == allocated) {
 				allocated *= 2;
-				simplex.p = (Vec2 *)treallocate(simplex.p, sizeof(Vec2) * allocated);
+				simplex = (Polygon *)treallocate(simplex, sizeof(Polygon) + sizeof(Vec2) * (allocated - 3));
 			}
 
-			memmove(simplex.p + e.index + 1, simplex.p + e.index, sizeof(Vec2) * (count - e.index));
-			simplex.p[e.index] = p;
-			count += 1;
+			memmove(simplex->vertices + e.index + 1, simplex->vertices + e.index, sizeof(Vec2) * (simplex->vertex_count - e.index));
+			simplex->vertices[e.index] = p;
+			simplex->vertex_count += 1;
 		}
 	}
 
@@ -1031,14 +1026,13 @@ bool epa(const ShapeA &sa, const ShapeB &sb, Vec2 *normal, r32 *penetration_dept
 
 template <typename ShapeA, typename ShapeB>
 bool epa_dynamic(const ShapeA &sa, const ShapeB &sb, Vec2 relative_dp_of_b_wrt_a, Vec2 *normal, r32 *penetration_depth) {
-	Simplex2d simplex;
-	s32 count = 1;
-	s32 allocated = 8;
-	simplex.p = (Vec2 *)tallocate(sizeof(Vec2) * allocated);
+	u32 allocated = 8;
+	Polygon *simplex = (Polygon *)tallocate(sizeof(Polygon) + sizeof(Vec2) * (allocated - 3));
+	simplex->vertex_count = 1;
 
 	Vec2 dir = vec2(0, 1);
-	simplex.p[0] = support_dynamic(sa, sb, relative_dp_of_b_wrt_a, dir);
-	dir = -simplex.p[0];
+	simplex->vertices[0] = support_dynamic(sa, sb, relative_dp_of_b_wrt_a, dir);
+	dir = -simplex->vertices[0];
 
 	bool collision = false;
 
@@ -1047,10 +1041,10 @@ bool epa_dynamic(const ShapeA &sa, const ShapeB &sb, Vec2 relative_dp_of_b_wrt_a
 		if (vec2_null(dir)) return false;
 		a = support_dynamic(sa, sb, relative_dp_of_b_wrt_a, dir);
 		if (vec2_dot(a, dir) < 0.0f) return false; // no intersection
-		simplex.p[count] = a;
-		count += 1;
+		simplex->vertices[simplex->vertex_count] = a;
+		simplex->vertex_count += 1;
 
-		if (next_simplex(&simplex, &dir, &count)) {
+		if (next_simplex(simplex->vertices, &dir, &simplex->vertex_count)) {
 			collision = true;
 			break;
 		}
@@ -1059,7 +1053,7 @@ bool epa_dynamic(const ShapeA &sa, const ShapeB &sb, Vec2 relative_dp_of_b_wrt_a
 	if (!collision) return false;
 
 	while (true) {
-		Nearest_Edge2d e = closest_edge_origin_polygon(Polygon{ simplex.p, count });
+		Nearest_Edge2d e = closest_edge_origin_polygon(*simplex);
 		if (vec2_null(e.normal)) return false;
 
 		Vec2 p = support_dynamic(sa, sb, relative_dp_of_b_wrt_a, e.normal);
@@ -1069,16 +1063,15 @@ bool epa_dynamic(const ShapeA &sa, const ShapeB &sb, Vec2 relative_dp_of_b_wrt_a
 			*normal = e.normal;
 			*penetration_depth = d;
 			break;
-		}
-		else {
-			if (count == allocated) {
+		} else {
+			if (simplex->vertex_count == allocated) {
 				allocated *= 2;
-				simplex.p = (Vec2 *)treallocate(simplex.p, sizeof(Vec2) * allocated);
+				simplex = (Polygon *)treallocate(simplex, sizeof(Polygon) + sizeof(Vec2) * (allocated - 3));
 			}
 
-			memmove(simplex.p + e.index + 1, simplex.p + e.index, sizeof(Vec2) * (count - e.index));
-			simplex.p[e.index] = p;
-			count += 1;
+			memmove(simplex->vertices + e.index + 1, simplex->vertices + e.index, sizeof(Vec2) * (simplex->vertex_count - e.index));
+			simplex->vertices[e.index] = p;
+			simplex->vertex_count += 1;
 		}
 	}
 
