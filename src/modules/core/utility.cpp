@@ -711,7 +711,7 @@ void serialize_text_union(Ostream *out, const Type_Info_Union *info, char *data,
 	for (ptrsize mem_index = 0; mem_index < info->member_count; ++mem_index) {
 		auto mem = info->members + mem_index;
 		for (u64 i = 0; i < mem->attribute_count; ++i) {
-			if (string_match(mem->attributes[i], "write")) {
+			if (string_match(mem->attributes[i], "use")) {
 				write_mem = mem;
 				break;
 			}
@@ -988,7 +988,7 @@ bool parse_union(Deserialize_State *w, const Type_Info_Union *info, char *data) 
 	for (int mem_index = 0; mem_index < info->member_count; ++mem_index) {
 		auto mem = info->members + mem_index;
 		for (u64 i = 0; i < mem->attribute_count; ++i) {
-			if (string_match(mem->attributes[i], "write")) {
+			if (string_match(mem->attributes[i], "use")) {
 				parse_mem = mem;
 				break;
 			}

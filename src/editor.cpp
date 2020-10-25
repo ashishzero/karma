@@ -33,7 +33,7 @@ void editor_get_flags_from_attribute(const String *attrs, s64 count, Editor_Attr
 		else if (string_starts_with(attrs[index], "max:")) {
 			sscanf(string_cstr(attrs[index]), "max:%f", &out->max);
 		}
-		else if (string_match(attrs[index], "display")) {
+		else if (string_match(attrs[index], "use")) {
 			out->flags |= EDITOR_FLAG_UNION_DISPLAY;
 		}
 	}
@@ -46,6 +46,7 @@ static const ptrsize TYPE_UID_U64 = (ptrsize)reflect_info<u64>();
 static const ptrsize TYPE_UID_VEC2 = (ptrsize)reflect_info<Vec2>();
 static const ptrsize TYPE_UID_VEC3 = (ptrsize)reflect_info<Vec3>();
 static const ptrsize TYPE_UID_VEC4 = (ptrsize)reflect_info<Vec4>();
+static const ptrsize TYPE_UID_VPTR = (ptrsize)reflect_info<void>();
 
 static inline void editor_display_fundamentals(ptrsize mem_type_uid, const char *name, void *data) {
 	if (mem_type_uid == TYPE_UID_R32) {
@@ -68,6 +69,10 @@ static inline void editor_display_fundamentals(ptrsize mem_type_uid, const char 
 		ImGui::Text("%s : %u", name, *val);
 	}
 	else if (mem_type_uid == TYPE_UID_U64) {
+		u64 *val = (u64 *)data;
+		ImGui::Text("%s : #%zx", name, *val);
+	}
+	else if (mem_type_uid == TYPE_UID_VPTR) {
 		u64 *val = (u64 *)data;
 		ImGui::Text("%s : #%zx", name, *val);
 	}
@@ -143,7 +148,7 @@ void editor_draw(const Type_Info *base_info, char *data, Editor_Attribute attr, 
 	switch (base_info->id) {
 	case Type_Id_POINTER: {
 		auto info = (Type_Info_Pointer *)base_info;
-		editor_draw(info->pointer_to, (char *)(*(ptrsize *)data), attr, string_cstr(info->pointer_to->name));
+		editor_draw(info->pointer_to, (char *)(*(ptrsize *)data), attr, name);
 	} break;
 
 		// ignored

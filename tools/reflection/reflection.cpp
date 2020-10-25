@@ -118,7 +118,21 @@ void reflection_of_attrs(Ostream *stream, CXCursor cursor) {
 		[](CXCursor cursor, CXCursor parent, CXClientData stream) -> CXChildVisitResult {
 			if (clang_getCursorKind(cursor) == CXCursor_AnnotateAttr) {
 				auto attrs = clang_getCursorSpelling(cursor);
-				ostream_write_formatted((Ostream *)stream, "\t\t\t%s\n", clang_getCString(attrs));
+				const char *value = clang_getCString(attrs);
+				ostream_write_formatted((Ostream *)stream, "\t\t\t\"");
+				String next_string = "\", \"";
+				while (*value) {
+					if (*value != ',') {
+						ostream_write_buffer((Ostream *)stream, value, 1);
+						value += 1;
+					} else {
+						ostream_write_buffer((Ostream *)stream, next_string.data, next_string.count);
+						value += 1;
+						while (*value && *value == ' ')
+							value += 1;
+					}
+				}
+				ostream_write_formatted((Ostream *)stream, "\"\n");
 				clang_disposeString(attrs);
 			}
 			return CXChildVisit_Continue;

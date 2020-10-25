@@ -927,7 +927,7 @@ bool gjk(const ShapeA &sa, const ShapeB &sb) {
 	Vec2 dir = vec2(0, 1);
 	simplex[0] = support(sa, sb, dir);
 	dir = -simplex[0];
-	s32 n = 1;
+	u32 n = 1;
 
 	Vec2 a;
 	while (true) {
@@ -936,7 +936,7 @@ bool gjk(const ShapeA &sa, const ShapeB &sb) {
 		simplex[n] = a;
 		n += 1;
 
-		if (next_simplex(&simplex, &dir, &n)) {
+		if (next_simplex(simplex, &dir, &n)) {
 			return true;
 		}
 	}
@@ -951,7 +951,7 @@ bool gjk_dynamic(const ShapeA &sa, const ShapeB &sb, Vec2 relative_dp_of_b_wrt_a
 	Vec2 dir = vec2(0, 1);
 	simplex[0] = support_dynamic(sa, sb, relative_dp_of_b_wrt_a, dir);
 	dir = -simplex[0];
-	s32 n = 1;
+	u32 n = 1;
 
 	Vec2 a;
 	while (true) {
@@ -960,7 +960,7 @@ bool gjk_dynamic(const ShapeA &sa, const ShapeB &sb, Vec2 relative_dp_of_b_wrt_a
 		simplex[n] = a;
 		n += 1;
 
-		if (next_simplex(&simplex, &dir, &n)) {
+		if (next_simplex(simplex, &dir, &n)) {
 			return true;
 		}
 	}
@@ -977,7 +977,7 @@ bool epa(const ShapeA &sa, const ShapeB &sb, Vec2 *normal, r32 *penetration_dept
 	simplex->vertex_count = 1;
 
 	Vec2 dir = vec2(0, 1);
-	simplex->vertices[0] = support_dynamic(sa, sb, relative_dp_of_b_wrt_a, dir);
+	simplex->vertices[0] = support_dynamic(sa, sb, dir);
 	dir = -simplex->vertices[0];
 
 	bool collision = false;
@@ -990,7 +990,7 @@ bool epa(const ShapeA &sa, const ShapeB &sb, Vec2 *normal, r32 *penetration_dept
 		simplex->vertices[simplex->vertex_count] = a;
 		simplex->vertex_count += 1;
 
-		if (next_simplex(simplex->vertices, &dir, &count)) {
+		if (next_simplex(simplex->vertices, &dir, &simplex->vertex_count)) {
 			collision = true;
 			break;
 		}

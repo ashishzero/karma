@@ -406,6 +406,7 @@ int karma_user_zero() {
 
 		ImGui::Begin("Camera");
 		editor_draw(camera);
+		editor_draw(colliders[3]);
 		ImGui::End();
 
 #if defined(BUILD_IMGUI)
