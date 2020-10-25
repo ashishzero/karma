@@ -845,31 +845,24 @@ void serialize_fmt_text(Ostream *out, String name, const Type_Info *info, char *
 	serialize_fmt_text(out, name, info, data, -1, 0);
 }
 
-struct Parse_State {
-	Token *start;
-	Token *end;
-	Token *current;
-	Deserialize_Error_Info *error;
-};
-
-inline void parsing_error(Parse_State *w, Token_Kind kind) {
-	w->error->token = *(w->current - 1);
-	w->error->expected = kind;
-	memset(w->error->string, 0, sizeof(w->error->string));
+inline void parsing_error(Deserialize_State *w, Token_Kind kind) {
+	w->error.token = *(w->current - 1);
+	w->error.expected = kind;
+	memset(w->error.string, 0, sizeof(w->error.string));
 }
 
-inline void parsing_error(Parse_State *w, String string) {
-	w->error->token = *(w->current - 1);
-	w->error->expected = Token_Kind_IDENTIFIER;
-	memcpy(w->error->string, string.data, minimum(string.count, sizeof(w->error->string) - 1));
-	w->error->string[minimum(string.count, sizeof(w->error->string))] = 0;
+inline void parsing_error(Deserialize_State *w, String string) {
+	w->error.token = *(w->current - 1);
+	w->error.expected = Token_Kind_IDENTIFIER;
+	memcpy(w->error.string, string.data, minimum(string.count, sizeof(w->error.string) - 1));
+	w->error.string[minimum(string.count, sizeof(w->error.string))] = 0;
 }
 
-inline bool parsing(Parse_State *w) {
+inline bool parsing(Deserialize_State *w) {
 	return w->current < w->end;
 }
 
-inline Token *parse_next(Parse_State *w) {
+inline Token *parse_next(Deserialize_State *w) {
 	if (parsing(w)) {
 		w->current += 1;
 		return w->current - 1;
@@ -877,7 +870,7 @@ inline Token *parse_next(Parse_State *w) {
 	return nullptr;
 }
 
-inline bool parse_require_token(Parse_State *w, Token_Kind kind) {
+inline bool parse_require_token(Deserialize_State *w, Token_Kind kind) {
 	auto t = parse_next(w);
 	if (t && t->kind == kind)
 		return true;
@@ -885,7 +878,7 @@ inline bool parse_require_token(Parse_State *w, Token_Kind kind) {
 	return false;
 }
 
-inline bool parse_require_token(Parse_State *w, String string) {
+inline bool parse_require_token(Deserialize_State *w, String string) {
 	auto t = parse_next(w);
 	if (t && t->kind == Token_Kind_IDENTIFIER && string_match(string, t->content))
 		return true;
@@ -894,7 +887,7 @@ inline bool parse_require_token(Parse_State *w, String string) {
 }
 
 template <typename T>
-inline bool parse_require_integral(Parse_State *w, T *d) {
+inline bool parse_require_integral(Deserialize_State *w, T *d) {
 	auto t = parse_next(w);
 	if (t && t->kind == Token_Kind_INTEGER_LITERAL) {
 		*d = (T)t->value.integer;
@@ -905,7 +898,7 @@ inline bool parse_require_integral(Parse_State *w, T *d) {
 }
 
 template <typename T>
-inline bool parse_require_real(Parse_State *w, T *d) {
+inline bool parse_require_real(Deserialize_State *w, T *d) {
 	auto t = parse_next(w);
 	if (t) {
 		if (t->kind == Token_Kind_INTEGER_LITERAL) {
@@ -921,7 +914,7 @@ inline bool parse_require_real(Parse_State *w, T *d) {
 	return false;
 }
 
-inline bool parse_require_string(Parse_State *w, String *d) {
+inline bool parse_require_string(Deserialize_State *w, String *d) {
 	auto t = parse_next(w);
 	if (t && t->kind == Token_Kind_DQ_STRING) {
 		*d = t->value.string;
@@ -932,7 +925,7 @@ inline bool parse_require_string(Parse_State *w, String *d) {
 }
 
 template <typename Type, typename Proc>
-bool parse_basic_array(Proc proc, Parse_State *w, Type *data, s64 count) {
+bool parse_basic_array(Proc proc, Deserialize_State *w, Type *data, s64 count) {
 	if (count == -1) {
 		return proc(w, data);
 	} else {
@@ -950,18 +943,18 @@ bool parse_basic_array(Proc proc, Parse_State *w, Type *data, s64 count) {
 	return false;
 }
 
-bool deserialize_fmt_text(Parse_State *w, String name, const Type_Info *info, char *data, s64 array_count);
+bool deserialize_fmt_text(Deserialize_State *w, String name, const Type_Info *info, char *data, s64 array_count);
 
-bool parse_pointer(Parse_State *w, const Type_Info_Pointer *info, char *data) {
+bool parse_pointer(Deserialize_State *w, const Type_Info_Pointer *info, char *data) {
 	(*(ptrsize *)(data)) = (ptrsize)memory_allocate(info->pointer_to->size);
 	return deserialize_fmt_text(w, "", info->pointer_to, (char *)(*(ptrsize *)(data)), -1);
 }
 
-bool parse_enum(Parse_State *w, const Type_Info_Enum *info, char *data) {
+bool parse_enum(Deserialize_State *w, const Type_Info_Enum *info, char *data) {
 	return deserialize_fmt_text(w, "", info->item_type, data, -1);
 }
 
-bool parse_struct(Parse_State *w, const Type_Info_Struct *info, char *data) {
+bool parse_struct(Deserialize_State *w, const Type_Info_Struct *info, char *data) {
 	if (info->base) {
 		if (!deserialize_fmt_text(w, "", info->base, data, -1))
 			return false;
@@ -990,7 +983,7 @@ bool parse_struct(Parse_State *w, const Type_Info_Struct *info, char *data) {
 	return true;
 }
 
-bool parse_union(Parse_State *w, const Type_Info_Union *info, char *data) {
+bool parse_union(Deserialize_State *w, const Type_Info_Union *info, char *data) {
 	const Union_Member *parse_mem = nullptr;
 	for (int mem_index = 0; mem_index < info->member_count; ++mem_index) {
 		auto mem = info->members + mem_index;
@@ -1017,11 +1010,11 @@ bool parse_union(Parse_State *w, const Type_Info_Union *info, char *data) {
 	return true;
 }
 
-bool parse_static_array(Parse_State *w, const Type_Info_Static_Array *info, char *data) {
+bool parse_static_array(Deserialize_State *w, const Type_Info_Static_Array *info, char *data) {
 	return deserialize_fmt_text(w, "", info->type, data, info->count);
 }
 
-bool parse_dynamic_array(Parse_State *w, const Type_Info_Dynamic_Array *info, char *data) {
+bool parse_dynamic_array(Deserialize_State *w, const Type_Info_Dynamic_Array *info, char *data) {
 	Array<char> *array = (Array<char> *)data;
 	*array = Array<char>(context.allocator);
 	array->data = nullptr;
@@ -1038,7 +1031,7 @@ bool parse_dynamic_array(Parse_State *w, const Type_Info_Dynamic_Array *info, ch
 	return deserialize_fmt_text(w, "", info->type, array->data, array->count) && parse_require_token(w, Token_Kind_CLOSE_CURLY_BRACKET);
 }
 
-bool parse_array_view(Parse_State *w, const Type_Info_Array_View *info, char *data) {
+bool parse_array_view(Deserialize_State *w, const Type_Info_Array_View *info, char *data) {
 	Array_View<char> *array = (Array_View<char> *)data;
 	array->data = nullptr;
 
@@ -1053,7 +1046,7 @@ bool parse_array_view(Parse_State *w, const Type_Info_Array_View *info, char *da
 }
 
 template <typename Cast_Info, typename Proc>
-bool parse_recursive_array(Proc proc, Parse_State *w, const Type_Info *info, char *data, s64 array_count) {
+bool parse_recursive_array(Proc proc, Deserialize_State *w, const Type_Info *info, char *data, s64 array_count) {
 	if (array_count == -1) {
 		return proc(w, (const Cast_Info *)info, data);
 	} else {
@@ -1071,7 +1064,7 @@ bool parse_recursive_array(Proc proc, Parse_State *w, const Type_Info *info, cha
 	return false;
 }
 
-bool deserialize_fmt_text(Parse_State *w, String name, const Type_Info *info, char *data, s64 array_count) {
+bool deserialize_fmt_text(Deserialize_State *w, String name, const Type_Info *info, char *data, s64 array_count) {
 	if (name.count) {
 		if (!parse_require_token(w, name) || !parse_require_token(w, Token_Kind_COLON)) {
 			return false;
@@ -1134,15 +1127,6 @@ bool deserialize_fmt_text(Parse_State *w, String name, const Type_Info *info, ch
 	return true;
 }
 
-bool deserialize_fmt_text(Array_View<Token> &tokens, String name, const Type_Info *info, char *data, Deserialize_Error_Info *error) {
-	if (tokens.count == 0)
-		return false;
-
-	Parse_State w;
-	w.start = tokens.data;
-	w.current = tokens.data;
-	w.end = tokens.data + tokens.count;
-	w.error = error;
-
-	return deserialize_fmt_text(&w, name, info, data, -1);
+bool deserialize_fmt_text(Deserialize_State *w, String name, const Type_Info *info, char *data) {
+	return deserialize_fmt_text(w, name, info, data, -1);
 }

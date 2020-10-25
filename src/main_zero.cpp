@@ -343,8 +343,10 @@ int karma_user_zero() {
 			auto tokens = tokenize(content, &status);
 			if (status.result == Tokenization_Result_SUCCESS) {
 				Deserialize_Error_Info error;
-				if (!deserialize_fmt_text(tokens, "Player", reflect_info(player), (char *)&player, &error))
+				auto state = deserialize_begin(tokens);
+				if (!deserialize_fmt_text(&state, "Player", reflect_info(player), (char *)&player))
 					system_log(LOG_ERROR, "Load", "Failed to load player");
+				deserialize_end(&state);
 			}
 			else {
 				system_log(LOG_ERROR, "Load", "Failed to load player");

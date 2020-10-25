@@ -272,11 +272,28 @@ Array_View<Token> tokenize(String string, Tokenization_Status *status);
 //
 //
 
+void serialize_fmt_text(Ostream *out, String name, const Type_Info *info, char *data);
+
 struct Deserialize_Error_Info {
 	Token token;
 	Token_Kind expected;
 	char string[512];
 };
-
-void serialize_fmt_text(Ostream *out, String name, const Type_Info *info, char *data);
-bool deserialize_fmt_text(Array_View<Token> &tokens, String name, const Type_Info *info, char *data, Deserialize_Error_Info *error);
+struct Deserialize_State {
+	Token *start;
+	Token *end;
+	Token *current;
+	Deserialize_Error_Info error;
+};
+inline Deserialize_State deserialize_begin(Array_View<Token> &tokens) {
+	Deserialize_State state;
+	state.start = tokens.data;
+	state.current = state.start;
+	state.end = tokens.data + tokens.count;
+	memset(&state.error, 0, sizeof(state.error));
+	return state;
+}
+inline bool deserialize_end(Deserialize_State *state) {
+	return state->current == state->end;
+}
+bool deserialize_fmt_text(Deserialize_State *s, String name, const Type_Info *info, char *data);
