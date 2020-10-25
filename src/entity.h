@@ -35,7 +35,7 @@ struct Player : public Entity {
 	attribute(color)		Vec4 color;
 	attribute(read-only)	Vec2 velocity;
 	attribute(read-only)	Vec2 force;
-	attribute(min:0.0, max:5.0) Circle collider;
+	attribute(read-only)	Collider collider;
 };
 
 struct Camera {

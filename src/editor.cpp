@@ -73,8 +73,8 @@ static inline void editor_display_fundamentals(ptrsize mem_type_uid, const char 
 		ImGui::Text("%s : #%zx", name, *val);
 	}
 	else if (mem_type_uid == TYPE_UID_VPTR) {
-		u64 *val = (u64 *)data;
-		ImGui::Text("%s : #%zx", name, *val);
+		u64 val = (u64 )data;
+		ImGui::Text("%s : #%zx", name, val);
 	}
 }
 

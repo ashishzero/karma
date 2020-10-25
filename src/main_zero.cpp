@@ -57,8 +57,10 @@ int karma_user_zero() {
 
 	Player player;
 	player.position = vec2(0);
-	player.collider.center = player.position;
-	player.collider.radius = 1;
+	player.collider.type = Collider_Circle;
+	player.collider.circle = new Circle;
+	player.collider.circle->center = player.position;
+	player.collider.circle->radius = 0.67f;
 	player.color = vec4(1);
 	player.velocity = vec2(0);
 	player.force = vec2(0);
@@ -225,25 +227,25 @@ int karma_user_zero() {
 
 			int collider_index = 0;
 			for (auto &c : colliders) {
-				player.collider.center = player.position;
+				player.collider.circle->center = player.position;
 				
 				bool collision;
 
 				switch (c.type) {
 				case Collider_Mm_Rect:
-					collision = epa_dynamic(*c.mm_rect, player.collider, dt * player.velocity, &norm, &dist);
+					collision = epa_dynamic(*c.mm_rect, *player.collider.circle, dt * player.velocity, &norm, &dist);
 					break;
 
 				case Collider_Circle:
-					collision = epa_dynamic(*c.circle, player.collider, dt * player.velocity, &norm, &dist);
+					collision = epa_dynamic(*c.circle, *player.collider.circle, dt * player.velocity, &norm, &dist);
 					break;
 
 				case Collider_Polygon:
-					collision = epa_dynamic(*c.polygon, player.collider, dt * player.velocity, &norm, &dist);
+					collision = epa_dynamic(*c.polygon, *player.collider.circle, dt * player.velocity, &norm, &dist);
 					break;
 
 				case Collider_Capsule:
-					collision = epa_dynamic(*c.capsule, player.collider, dt * player.velocity, &norm, &dist);
+					collision = epa_dynamic(*c.capsule, *player.collider.circle, dt * player.velocity, &norm, &dist);
 					break;
 
 				invalid_default_case();
@@ -343,7 +345,7 @@ int karma_user_zero() {
 			collider_index += 1;
 		}
 
-		im2d_circle(player.position, player.collider.radius, player.color);
+		im2d_circle(player.position, player.collider.circle->radius, player.color);
 		im2d_line(player.position, player.position + player.velocity, vec4(0, 1.5f, 0), 0.02f);
 
 		for (auto &manifold : manifolds) {
@@ -373,6 +375,7 @@ int karma_user_zero() {
 		ImGui::Begin("Player");
 		editor_draw(player);
 		
+#if 0
 		if (ImGui::Button("Save")) {
 			Ostream out;
 			serialize_fmt_text(&out, "Player", reflect_info(player), (char *)&player);
@@ -401,12 +404,12 @@ int karma_user_zero() {
 			memory_free(tokens.data);
 			memory_free(content.data);
 		}
+#endif
 
 		ImGui::End();
 
 		ImGui::Begin("Camera");
 		editor_draw(camera);
-		editor_draw(colliders[3]);
 		ImGui::End();
 
 #if defined(BUILD_IMGUI)
