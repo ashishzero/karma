@@ -19,6 +19,44 @@ struct Player_Controller {
 	r32 x, y;
 };
 
+#define collider_combine_type(a, b) (((a) & 0xffff) | (((b) & 0xffff) << 16))
+
+bool collider_vs_collider_dynamic(Collider &a, Collider &b, Vec2 dp, Vec2 *normal, r32 *penetration) {
+	u32 type = collider_combine_type(a.type, b.type);
+
+#define dispatch(type_a, type_b)										    \
+		case collider_combine_type(Collider_##type_a, Collider_##type_b):   \
+			return epa_dynamic(*collider_get(a, type_a), *collider_get(b, type_b), dp, normal, penetration)
+
+	switch (type) {
+		dispatch(Circle, Circle);
+		dispatch(Circle, Mm_Rect);
+		dispatch(Circle, Polygon);
+		dispatch(Circle, Capsule);
+
+		dispatch(Mm_Rect, Circle);
+		dispatch(Mm_Rect, Mm_Rect);
+		dispatch(Mm_Rect, Polygon);
+		dispatch(Mm_Rect, Capsule);
+
+		dispatch(Polygon, Circle);
+		dispatch(Polygon, Mm_Rect);
+		dispatch(Polygon, Polygon);
+		dispatch(Polygon, Capsule);
+
+		dispatch(Capsule, Circle);
+		dispatch(Capsule, Mm_Rect);
+		dispatch(Capsule, Polygon);
+		dispatch(Capsule, Capsule);
+
+		invalid_default_case();
+	}
+
+#undef dispatch
+
+	return false;
+}
+
 int karma_user_zero() {
 
 #ifdef INIT_THREAD_POOL
@@ -57,13 +95,16 @@ int karma_user_zero() {
 
 	Player player;
 	player.position = vec2(0);
-	player.collider.type = Collider_Circle;
-	player.collider.circle = new Circle;
-	player.collider.circle->center = player.position;
-	player.collider.circle->radius = 0.67f;
 	player.color = vec4(1);
 	player.velocity = vec2(0);
 	player.force = vec2(0);
+	player.collider.type = Collider_Circle;
+	player.collider.handle = new Circle;
+	{
+		auto circle = collider_get(player.collider, Circle);
+		circle->center = player.position;
+		circle->radius = 0.67f;
+	}
 
 	Collider colliders[4];
 	Vec4 collider_colors[4];
@@ -100,7 +141,7 @@ int karma_user_zero() {
 
 		Polygon *polygon = collider_get(colliders[3], Polygon);
 		polygon->vertex_count = static_count(points);
-		memcpy(colliders[3].polygon->vertices, points, sizeof(points));
+		memcpy(collider_get(colliders[3], Polygon)->vertices, points, sizeof(points));
 	}
 
 	Player_Controller controller = {};
@@ -227,40 +268,15 @@ int karma_user_zero() {
 
 			int collider_index = 0;
 			for (auto &c : colliders) {
-				player.collider.circle->center = player.position;
-				
-				bool collision;
-
-				switch (c.type) {
-				case Collider_Mm_Rect:
-					collision = epa_dynamic(*c.mm_rect, *player.collider.circle, dt * player.velocity, &norm, &dist);
-					break;
-
-				case Collider_Circle:
-					collision = epa_dynamic(*c.circle, *player.collider.circle, dt * player.velocity, &norm, &dist);
-					break;
-
-				case Collider_Polygon:
-					collision = epa_dynamic(*c.polygon, *player.collider.circle, dt * player.velocity, &norm, &dist);
-					break;
-
-				case Collider_Capsule:
-					collision = epa_dynamic(*c.capsule, *player.collider.circle, dt * player.velocity, &norm, &dist);
-					break;
-
-				invalid_default_case();
-				};
-
-				if (collision) {
+				collider_get(player.collider, Circle)->center = player.position;
+				if (collider_vs_collider_dynamic(c, player.collider, dt * player.velocity, &norm, &dist)) {
 					array_add(&manifolds, Collision_Manifold{ norm, dist });
 					v_t = dist / dt * sgn(vec2_dot(norm, player.velocity));
 					player.velocity -= v_t * norm;
 					collider_colors[collider_index] = vec4(0, 1, 1, 1);
-				}
-				else {
+				} else {
 					collider_colors[collider_index] = vec4(1, 0, 0, 1);
 				}
-
 				collider_index += 1;
 			}
 
@@ -345,7 +361,7 @@ int karma_user_zero() {
 			collider_index += 1;
 		}
 
-		im2d_circle(player.position, player.collider.circle->radius, player.color);
+		im2d_circle(player.position, collider_get(player.collider, Circle)->radius, player.color);
 		im2d_line(player.position, player.position + player.velocity, vec4(0, 1.5f, 0), 0.02f);
 
 		for (auto &manifold : manifolds) {

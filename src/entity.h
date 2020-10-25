@@ -10,14 +10,7 @@ enum Collider_Type : u32 {
 };
 
 struct Collider {
-	union {
-		attribute(use, read-only, min:2) void *handle;
-		Circle *circle;
-		Mm_Rect *mm_rect;
-		Polygon *polygon;
-		Capsule *capsule;
-	};
-
+	attribute(use, read-only) void *handle;
 	attribute(read-only) Collider_Type type;
 };
 
@@ -25,7 +18,7 @@ inline void *collider_get_handle(Collider &collider, Collider_Type type) {
 	assert(type == collider.type);
 	return collider.handle;
 }
-#define collider_get(collider, type) (type *)collider_get_handle(collider, Collider_##type)
+#define collider_get(collider, type) ((type *)collider_get_handle(collider, Collider_##type))
 
 struct Entity {
 	attribute(speed:0.01) Vec2 position;
