@@ -24,6 +24,10 @@
 #	endif
 #endif
 
+#if defined(BUILD_DEBUG) || defined(BUILD_DEBUG_FAST) || defined(BUILD_DEVELOPER)
+#define ENABLE_DEVELOPER_OPTIONS
+#endif
+
 // Architecture identification
 #if defined(__amd64__) || defined(__amd64) || defined(__x86_64__) || defined(__x86_64) || defined(_M_AMD64) || defined(_M_X64)
 #	define ARCHITECTURE_AMD64

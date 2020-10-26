@@ -17,11 +17,11 @@ struct Collider {
 	attribute(read-only) Collider_Type type;
 };
 
-inline void *collider_get_handle(Collider &collider, Collider_Type type) {
-	assert(type == collider.type);
-	return collider.handle;
+inline void *collider_get_handle(Collider *collider, Collider_Type type) {
+	assert(type == collider->type);
+	return collider->handle;
 }
-#define collider_get(collider, type) ((type *)collider_get_handle(collider, Collider_##type))
+#define collider_get_shape(collider, type) ((type *)collider_get_handle(collider, Collider_##type))
 
 enum Entity_Type {
 	Entity_Player,
