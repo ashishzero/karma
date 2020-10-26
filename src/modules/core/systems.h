@@ -546,6 +546,7 @@ struct Builder {
 	Builder_Flags flags; // TODO: Use this in system_windows.cpp
 };
 
+Allocator system_default_heap_allocator();
 Allocator system_create_heap_allocator(Heap_Type type = Heap_Type_NO_SERIALIZE, ptrsize initial_size = 0, ptrsize maximum_size = 0);
 void system_destroy_heap_allocator(Allocator allocator);
 void *system_virtual_alloc(void *address, ptrsize size, Vitual_Memory_Flags flags);

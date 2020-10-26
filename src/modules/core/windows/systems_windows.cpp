@@ -2441,6 +2441,13 @@ void *system_heap_allocator_proc(Allocation_Type type, ptrsize size, const void 
 	return 0;
 }
 
+Allocator system_default_heap_allocator() {
+	Allocator allocator;
+	allocator.proc = system_heap_allocator_proc;
+	allocator.data = GetProcessHeap();
+	return allocator;
+}
+
 Allocator system_create_heap_allocator(Heap_Type type, ptrsize initial_size, ptrsize maximum_size) {
 	Allocator allocator;
 	allocator.proc = system_heap_allocator_proc;

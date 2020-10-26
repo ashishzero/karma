@@ -3,6 +3,7 @@
 #include "modules/core/reflection.h"
 
 enum Collider_Type : u32 {
+	Collider_Null,
 	Collider_Circle,
 	Collider_Mm_Rect,
 	Collider_Polygon,
@@ -20,18 +21,25 @@ inline void *collider_get_handle(Collider &collider, Collider_Type type) {
 }
 #define collider_get(collider, type) ((type *)collider_get_handle(collider, Collider_##type))
 
-struct Entity {
-	enum Type {
-		PLAYER,
-		STATIC_BODY
-	};
+enum Entity_Type {
+	Entity_Player,
+	Entity_Static_Body
+};
 
-	attribute(read-only)  u64  id;
-	attribute(read-only)  Type type;
+typedef u64 Entity_Id;
+
+struct Entity {
+	attribute(read-only)  Entity_Id id;
+	attribute(read-only)  Entity_Type type;
 						  Vec2 position;
 };
 
 typedef u32 Collider_Key;
+
+struct Collider_Group {
+	Collider_Key key;
+	u32 count;
+};
 
 struct Player : public Entity {
 	attribute(color)					Vec4 color;
@@ -43,8 +51,7 @@ struct Player : public Entity {
 
 struct Static_Body : public Entity {
 	attribute(color) Vec4 color;
-					 Collider_Key colliders;
-					 u32 collider_count;
+	Collider_Group collider_group;
 };
 
 struct Camera {

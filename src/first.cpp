@@ -27,7 +27,7 @@ int main() {
 
 Builder system_builder() {
 	Builder builder;
-	builder.allocator = system_create_heap_allocator();
+	builder.allocator = system_default_heap_allocator();
 	builder.entry = main;
 	builder.temporary_buffer_size = mega_bytes(128);
 	builder.flags = Builder_ALL;

@@ -42,6 +42,8 @@ void collider_translate(Capsule *capsule, Vec2 p) {
 }
 
 bool collider_vs_collider_dynamic(Collider &a, Collider &b, Vec2 dp, Vec2 *normal, r32 *penetration) {
+	if (a.type == Collider_Null || b.type == Collider_Null) return false;
+
 	u32 type = collider_combine_type(a.type, b.type);
 
 #define dispatch(type_a, type_b)										    \
@@ -95,7 +97,7 @@ u64 generate_unique_entity_id() {
 	return random_get(&series) | ((time(0) & 0xffffffff) << 32);
 }
 
-void entity_new(Entity *entity, Entity::Type type, Vec2 position) {
+void entity_new(Entity *entity, Entity_Type type, Vec2 position) {
 	entity->id = generate_unique_entity_id();
 	entity->type = type;
 	entity->position = position;
@@ -137,7 +139,7 @@ int karma_user_zero() {
 	World_Storage world;
 	Player *player = array_add(&world.by_type.player);
 	array_add(&world.entity, (Entity *)player);
-	entity_new(player, Entity::PLAYER, vec2(0));
+	entity_new(player, Entity_Player, vec2(0));
 	player->color = vec4(1);
 	player->velocity = vec2(0);
 	player->force = vec2(0);
@@ -162,11 +164,11 @@ int karma_user_zero() {
 		object = array_add(&world.by_type.static_body);
 		array_add(&world.entity, (Entity *)object);
 		object->id = generate_unique_entity_id();
-		object->type = Entity::STATIC_BODY;
+		object->type = Entity_Static_Body;
 		object->color = vec4(0, 1, 1);
 		object->position = vec2(-5.6f, 0.4f);
-		object->collider_count = 1;
-		object->colliders = (u32)world.collider.count;
+		object->collider_group.count = 1;
+		object->collider_group.key = (u32)world.collider.count;
 
 		collider = array_add(&world.collider);
 		collider->type = Collider_Polygon;
@@ -180,11 +182,11 @@ int karma_user_zero() {
 		object = array_add(&world.by_type.static_body);
 		array_add(&world.entity, (Entity *)object);
 		object->id = generate_unique_entity_id();
-		object->type = Entity::STATIC_BODY;
+		object->type = Entity_Static_Body;
 		object->color = vec4(0, 1, 1);
 		object->position = vec2(5);
-		object->collider_count = 1;
-		object->colliders = (u32)world.collider.count;
+		object->collider_group.count = 1;
+		object->collider_group.key = (u32)world.collider.count;
 
 		collider = array_add(&world.collider);
 		collider->type = Collider_Circle;
@@ -198,11 +200,11 @@ int karma_user_zero() {
 		object = array_add(&world.by_type.static_body);
 		array_add(&world.entity, (Entity *)object);
 		object->id = generate_unique_entity_id();
-		object->type = Entity::STATIC_BODY;
+		object->type = Entity_Static_Body;
 		object->color = vec4(0, 1, 1);
 		object->position = vec2(6.5f, -0.5f);
-		object->collider_count = 1;
-		object->colliders = (u32)world.collider.count;
+		object->collider_group.count = 1;
+		object->collider_group.key = (u32)world.collider.count;
 
 		collider = array_add(&world.collider);
 		collider->type = Collider_Mm_Rect;
@@ -216,11 +218,11 @@ int karma_user_zero() {
 		object = array_add(&world.by_type.static_body);
 		array_add(&world.entity, (Entity *)object);
 		object->id = generate_unique_entity_id();
-		object->type = Entity::STATIC_BODY;
+		object->type = Entity_Static_Body;
 		object->color = vec4(0, 1, 1);
 		object->position = vec2(-1, -5);
-		object->collider_count = 2;
-		object->colliders = (u32)world.collider.count;
+		object->collider_group.count = 2;
+		object->collider_group.key = (u32)world.collider.count;
 
 		collider = array_add(&world.collider);
 		collider->type = Collider_Capsule;
@@ -379,8 +381,8 @@ int karma_user_zero() {
 
 			auto &player_collider = world.collider[player->transformed_collider];
 			for (auto &o : world.by_type.static_body) {
-				for (u32 index = 0; index < o.collider_count; ++index) {
-					auto &c = world.collider[o.colliders + index];
+				for (u32 index = 0; index < o.collider_group.count; ++index) {
+					auto &c = world.collider[o.collider_group.key + index];
 					if (collider_vs_collider_dynamic(c, player_collider, dt * player->velocity, &norm, &dist)) {
 						array_add(&manifolds, Collision_Manifold{ norm, dist });
 						v_t = dist / dt * sgn(vec2_dot(norm, player->velocity));
@@ -435,8 +437,8 @@ int karma_user_zero() {
 
 		for (auto &o : world.by_type.static_body) {
 				auto color = o.color;
-			for (u32 index = 0; index < o.collider_count; ++index) {
-				auto &c = world.collider[o.colliders + index];
+			for (u32 index = 0; index < o.collider_group.count; ++index) {
+				auto &c = world.collider[o.collider_group.key + index];
 				switch (c.type) {
 				case Collider_Circle: {
 					auto circle = collider_get(c, Circle);

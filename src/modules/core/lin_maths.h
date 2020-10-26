@@ -944,6 +944,10 @@ bool gjk(const ShapeA &sa, const ShapeB &sb) {
 	return false;
 }
 
+template <typename Shape> inline bool gjk(const Shape &s, const Null &n) { return false; }
+template <typename Shape> inline bool gjk(const Null &n, const Shape &s) { return false; }
+inline bool gjk(const Null &n, const Null &s) { return false; }
+
 template <typename ShapeA, typename ShapeB>
 bool gjk_dynamic(const ShapeA &sa, const ShapeB &sb, Vec2 relative_dp_of_b_wrt_a) {
 	Vec2 simplex[3];
@@ -965,6 +969,13 @@ bool gjk_dynamic(const ShapeA &sa, const ShapeB &sb, Vec2 relative_dp_of_b_wrt_a
 		}
 	}
 
+	return false;
+}
+
+template <typename Shape> inline bool gjk_dynamic(const Shape &s, const Null &n, Vec2 relative_dp_of_b_wrt_a) { return false; }
+template <typename Shape> inline bool gjk_dynamic(const Null &n, const Shape &s, Vec2 relative_dp_of_b_wrt_a) { return false; }
+
+inline bool gjk_dynamic(const Null &n, const Null &s, Vec2 relative_dp_of_b_wrt_a) {
 	return false;
 }
 
@@ -1024,6 +1035,10 @@ bool epa(const ShapeA &sa, const ShapeB &sb, Vec2 *normal, r32 *penetration_dept
 	return true;
 }
 
+template <typename Shape> inline bool epa(const Shape &s, const Null &n, Vec2 *normal, r32 *penetration_depth) { return false; }
+template <typename Shape> inline bool epa(const Null &s, const Shape &n, Vec2 *normal, r32 *penetration_depth) { return false; }
+inline bool epa(const Null &s, const Null &n, Vec2 *normal, r32 *penetration_depth) { return false; }
+
 template <typename ShapeA, typename ShapeB>
 bool epa_dynamic(const ShapeA &sa, const ShapeB &sb, Vec2 relative_dp_of_b_wrt_a, Vec2 *normal, r32 *penetration_depth) {
 	u32 allocated = 8;
@@ -1077,3 +1092,7 @@ bool epa_dynamic(const ShapeA &sa, const ShapeB &sb, Vec2 relative_dp_of_b_wrt_a
 
 	return true;
 }
+
+template <typename Shape> inline bool epa_dynamic(const Shape &s, const Null &n, Vec2 relative_dp_of_b_wrt_a, Vec2 *normal, r32 *penetration_depth) { return false; }
+template <typename Shape> inline bool epa_dynamic(const Null &n, const Shape &s, Vec2 relative_dp_of_b_wrt_a, Vec2 *normal, r32 *penetration_depth) { return false; }
+inline bool epa_dynamic(const Null &n, const Null &s, Vec2 relative_dp_of_b_wrt_a, Vec2 *normal, r32 *penetration_depth) { return false; }
