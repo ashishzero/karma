@@ -118,6 +118,7 @@ int karma_user_zero() {
 
 	Player player;
 	player.id = entity_id;
+	player.type = Entity::PLAYER;
 	player.position = vec2(0);
 	player.color = vec4(1);
 	player.velocity = vec2(0);
@@ -140,6 +141,7 @@ int karma_user_zero() {
 		colliders.count = colliders.capacity;
 
 		objects[0].id = entity_id;
+		objects[0].type = Entity::STATIC_BODY;
 		objects[0].color = vec4(0, 1, 1);
 		objects[0].position = vec2(-5.6f, 0.4f);
 		objects[0].collider.count = 1;
@@ -154,6 +156,7 @@ int karma_user_zero() {
 		collider_translate(polygon, objects[0].position);
 
 		objects[1].id = entity_id;
+		objects[1].type = Entity::STATIC_BODY;
 		objects[1].color = vec4(0, 1, 1);
 		objects[1].position = vec2(5);
 		objects[1].collider.count = 1;
@@ -168,6 +171,7 @@ int karma_user_zero() {
 		collider_translate(circle, objects[1].position);
 
 		objects[2].id = entity_id;
+		objects[2].type = Entity::STATIC_BODY;
 		objects[2].color = vec4(0, 1, 1);
 		objects[2].position = vec2(6.5f, -0.5f);
 		objects[2].collider.count = 1;
@@ -182,6 +186,7 @@ int karma_user_zero() {
 		collider_translate(rect, objects[2].position);
 
 		objects[3].id = entity_id;
+		objects[3].type = Entity::STATIC_BODY;
 		objects[3].color = vec4(0, 1, 1);
 		objects[3].position = vec2(-1, -5);
 		objects[3].collider.count = 2;

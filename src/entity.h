@@ -21,7 +21,13 @@ inline void *collider_get_handle(Collider &collider, Collider_Type type) {
 #define collider_get(collider, type) ((type *)collider_get_handle(collider, Collider_##type))
 
 struct Entity {
+	enum Type {
+		PLAYER,
+		STATIC_BODY
+	};
+
 	attribute(read-only)  u64  id;
+						  Type type;
 						  Vec2 position;
 };
 
