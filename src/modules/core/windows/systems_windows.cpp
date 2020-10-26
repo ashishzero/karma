@@ -2448,6 +2448,10 @@ Allocator system_create_heap_allocator(Heap_Type type, ptrsize initial_size, ptr
 	return allocator;
 }
 
+void system_destroy_heap_allocator(Allocator allocator) {
+	HeapDestroy(allocator.data);
+}
+
 void *system_virtual_alloc(void *address, ptrsize size, Vitual_Memory_Flags flags) {
 	DWORD allocation_type = 0;
 	if (flags & Virtual_Memory_COMMIT) allocation_type |= MEM_COMMIT;

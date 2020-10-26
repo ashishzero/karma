@@ -85,6 +85,8 @@ struct Entity_By_Type {
 struct World { // TODO: Call this something better
 	Array<Entity *> entity;
 	Entity_By_Type by_type;
+	Array<Collider> collider;
+
 };
 
 #include <time.h>
