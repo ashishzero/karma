@@ -86,7 +86,6 @@ struct World { // TODO: Call this something better
 	Array<Entity *> entity;
 	Entity_By_Type by_type;
 	Array<Collider> collider;
-
 };
 
 #include <time.h>
@@ -143,10 +142,12 @@ int karma_user_zero() {
 	player->force = vec2(0);
 	player->collider.center = vec2(0);
 	player->collider.radius = 0.55f;
-	player->transformed_collider.type = Collider_Circle;
-	player->transformed_collider.handle = new Circle;
+	player->transformed_collider = (Collider_Key)world.collider.count;
+	
+	auto transformed_collider = array_add(&world.collider);
+	transformed_collider->type = Collider_Circle;
+	transformed_collider->handle = new Circle;
 
-	Array<Collider> colliders;
 	{
 		Vec2 points[] = {
 			vec2(-2.4f, 4.6f), vec2(3.6f, 4.6f), vec2(4.6f, -1.4f), vec2(1.6f, -5.4f), vec2(-7.4f, -2.4f)
@@ -154,10 +155,8 @@ int karma_user_zero() {
 
 		assert(static_count(points) >= 3);
 
-		array_resize(&colliders, 5);
-		colliders.count = colliders.capacity;
-
 		Static_Body *object;
+		Collider *collider;
 
 		object = array_add(&world.by_type.static_body);
 		array_add(&world.entity, (Entity *)object);
@@ -165,13 +164,14 @@ int karma_user_zero() {
 		object->type = Entity::STATIC_BODY;
 		object->color = vec4(0, 1, 1);
 		object->position = vec2(-5.6f, 0.4f);
-		object->collider.count = 1;
-		object->collider.data = colliders.data + 0;
-		
-		colliders[0].type = Collider_Polygon;
-		colliders[0].handle = memory_allocate(sizeof(Polygon) + (static_count(points) - 3) * sizeof(Vec2));
+		object->collider_count = 1;
+		object->colliders = (u32)world.collider.count;
 
-		Polygon *polygon = collider_get(colliders[0], Polygon);
+		collider = array_add(&world.collider);
+		collider->type = Collider_Polygon;
+		collider->handle = memory_allocate(sizeof(Polygon) + (static_count(points) - 3) * sizeof(Vec2));
+
+		Polygon *polygon = collider_get(*collider, Polygon);
 		polygon->vertex_count = static_count(points);
 		memcpy(polygon->vertices, points, sizeof(points));
 		collider_translate(polygon, object->position);
@@ -182,13 +182,14 @@ int karma_user_zero() {
 		object->type = Entity::STATIC_BODY;
 		object->color = vec4(0, 1, 1);
 		object->position = vec2(5);
-		object->collider.count = 1;
-		object->collider.data = colliders.data + 1;
+		object->collider_count = 1;
+		object->colliders = (u32)world.collider.count;
 
-		colliders[1].type = Collider_Circle;
-		colliders[1].handle = new Circle;
+		collider = array_add(&world.collider);
+		collider->type = Collider_Circle;
+		collider->handle = new Circle;
 
-		Circle *circle = collider_get(colliders[1], Circle);
+		Circle *circle = collider_get(*collider, Circle);
 		circle->center = vec2(0);
 		circle->radius = 1.23f;
 		collider_translate(circle, object->position);
@@ -199,13 +200,14 @@ int karma_user_zero() {
 		object->type = Entity::STATIC_BODY;
 		object->color = vec4(0, 1, 1);
 		object->position = vec2(6.5f, -0.5f);
-		object->collider.count = 1;
-		object->collider.data = colliders.data + 2;
+		object->collider_count = 1;
+		object->colliders = (u32)world.collider.count;
 
-		colliders[2].type = Collider_Mm_Rect;
-		colliders[2].handle = new Mm_Rect;
+		collider = array_add(&world.collider);
+		collider->type = Collider_Mm_Rect;
+		collider->handle = new Mm_Rect;
 
-		Mm_Rect *rect = collider_get(colliders[2], Mm_Rect);
+		Mm_Rect *rect = collider_get(*collider, Mm_Rect);
 		rect->min = vec2(-2.5f, -3.5f);
 		rect->max = vec2(2.5f, 3.5f);
 		collider_translate(rect, object->position);
@@ -216,22 +218,24 @@ int karma_user_zero() {
 		object->type = Entity::STATIC_BODY;
 		object->color = vec4(0, 1, 1);
 		object->position = vec2(-1, -5);
-		object->collider.count = 2;
-		object->collider.data = colliders.data + 3;
+		object->collider_count = 2;
+		object->colliders = (u32)world.collider.count;
 
-		colliders[3].type = Collider_Capsule;
-		colliders[3].handle = new Capsule;
+		collider = array_add(&world.collider);
+		collider->type = Collider_Capsule;
+		collider->handle = new Capsule;
 		
-		colliders[4].type = Collider_Circle;
-		colliders[4].handle = new Circle;
-
-		Capsule *capsule = collider_get(colliders[3], Capsule);
+		Capsule *capsule = collider_get(*collider, Capsule);
 		capsule->a = vec2(-2, -3);
 		capsule->b = vec2(2, 3);
 		capsule->radius = 1;
 		collider_translate(capsule, object->position);
 
-		circle = collider_get(colliders[4], Circle);
+		collider = array_add(&world.collider);
+		collider->type = Collider_Circle;
+		collider->handle = new Circle;
+
+		circle = collider_get(*collider, Circle);
 		circle->center = vec2(1, -1);
 		circle->radius = 1;
 		collider_translate(circle, object->position);
@@ -364,17 +368,19 @@ int karma_user_zero() {
 
 			Vec2 norm; r32 dist, v_t;
 
-			auto player_collider = collider_get(player->transformed_collider, Circle);
-			player_collider->center = player->position + player->collider.center;
-			player_collider->radius = player->collider.radius;
+			auto circle = collider_get(world.collider[player->transformed_collider], Circle);
+			circle->center = player->position + player->collider.center;
+			circle->radius = player->collider.radius;
 
 			for (auto &o : world.by_type.static_body) {
 				o.color = vec4(1, 0, 0, 1);
 			}
 
+			auto &player_collider = world.collider[player->transformed_collider];
 			for (auto &o : world.by_type.static_body) {
-				for (auto &c : o.collider) {
-					if (collider_vs_collider_dynamic(c, player->transformed_collider, dt * player->velocity, &norm, &dist)) {
+				for (u32 index = 0; index < o.collider_count; ++index) {
+					auto &c = world.collider[o.colliders + index];
+					if (collider_vs_collider_dynamic(c, player_collider, dt * player->velocity, &norm, &dist)) {
 						array_add(&manifolds, Collision_Manifold{ norm, dist });
 						v_t = dist / dt * sgn(vec2_dot(norm, player->velocity));
 						player->velocity -= v_t * norm;
@@ -427,8 +433,9 @@ int karma_user_zero() {
 		im2d_begin(view, transform);
 
 		for (auto &o : world.by_type.static_body) {
-			auto color = o.color;
-			for (auto &c : o.collider) {
+				auto color = o.color;
+			for (u32 index = 0; index < o.collider_count; ++index) {
+				auto &c = world.collider[o.colliders + index];
 				switch (c.type) {
 				case Collider_Circle: {
 					auto circle = collider_get(c, Circle);
@@ -464,7 +471,7 @@ int karma_user_zero() {
 			}
 		}
 
-		im2d_circle(player->position, collider_get(player->transformed_collider, Circle)->radius, player->color);
+		im2d_circle(player->position, collider_get(world.collider[player->transformed_collider], Circle)->radius, player->color);
 		im2d_line(player->position, player->position + player->velocity, vec4(0, 1.5f, 0), 0.02f);
 
 		for (auto &manifold : manifolds) {

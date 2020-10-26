@@ -31,17 +31,20 @@ struct Entity {
 						  Vec2 position;
 };
 
+typedef u32 Collider_Key;
+
 struct Player : public Entity {
 	attribute(color)					Vec4 color;
 	attribute(min:0, max:5)				Circle collider;
 	attribute(read-only)				Vec2 velocity;
 	attribute(read-only)				Vec2 force;
-	attribute(no-display, no-serialize)	Collider transformed_collider;
+	attribute(no-display, no-serialize)	Collider_Key transformed_collider;
 };
 
 struct Static_Body : public Entity {
-	attribute(color)	 Vec4 color;
-	Array_View<Collider> collider;
+	attribute(color) Vec4 color;
+					 Collider_Key colliders;
+					 u32 collider_count;
 };
 
 struct Camera {
