@@ -94,20 +94,27 @@ struct Entity_By_Type {
 	Array<Static_Body> static_body;
 };
 
-struct World_Storage {
+struct Scene {
 	Entity_By_Type by_type;
 	Array<Collider> collider;
 	Allocator collider_allocator;
+	Random_Series entity_id_series;
 };
 
-#include <time.h>
-u64 generate_unique_entity_id() {
-	static Random_Series series = random_init(context.id, system_get_counter());
-	return random_get(&series) | ((time(0) & 0xffffffff) << 32);
+Scene scene_create() {
+	Scene scene;
+	scene.collider_allocator = context.allocator;
+	scene.entity_id_series = random_init(context.id, system_get_counter());
+	return scene;
 }
 
-void entity_new(Entity *entity, Entity_Type type, Vec2 position) {
-	entity->id = generate_unique_entity_id();
+#include <time.h>
+u64 generate_unique_entity_id(Scene *scene) {
+	return random_get(&scene->entity_id_series) | ((time(0) & 0xffffffff) << 32);
+}
+
+void entity_new(Scene *scene, Entity *entity, Entity_Type type, Vec2 position) {
+	entity->id = generate_unique_entity_id(scene);
 	entity->type = type;
 	entity->position = position;
 }
@@ -147,19 +154,19 @@ int karma_user_zero() {
 
 	r32 window_w = 0, window_h = 0;
 
-	World_Storage world;
-	Player *player = array_add(&world.by_type.player);
-	entity_new(player, Entity_Player, vec2(0));
+	Scene scene = scene_create();
+	Player *player = array_add(&scene.by_type.player);
+	entity_new(&scene, player, Entity_Player, vec2(0));
 	player->color = vec4(1);
 	player->velocity = vec2(0);
 	player->force = vec2(0);
 	player->collider.center = vec2(0);
 	player->collider.radius = 0.55f;
-	player->transformed_collider = (Collider_Key)world.collider.count;
+	player->transformed_collider = (Collider_Key)scene.collider.count;
 	
-	auto transformed_collider = array_add(&world.collider);
+	auto transformed_collider = array_add(&scene.collider);
 	transformed_collider->type = Collider_Circle;
-	transformed_collider->handle = new Circle;
+	transformed_collider->handle = memory_allocate(sizeof(Circle), scene.collider_allocator);
 
 	{
 		Vec2 points[] = {
@@ -171,68 +178,68 @@ int karma_user_zero() {
 		Static_Body *object;
 		Collider *collider;
 
-		object = array_add(&world.by_type.static_body);
-		object->id = generate_unique_entity_id();
+		object = array_add(&scene.by_type.static_body);
+		object->id = generate_unique_entity_id(&scene);
 		object->type = Entity_Static_Body;
 		object->color = vec4(0, 1, 1);
 		object->position = vec2(-5.6f, 0.4f);
 		object->collider_group.count = 1;
-		object->collider_group.key = (u32)world.collider.count;
+		object->collider_group.key = (u32)scene.collider.count;
 
-		collider = array_add(&world.collider);
+		collider = array_add(&scene.collider);
 		collider->type = Collider_Polygon;
-		collider->handle = memory_allocate(sizeof(Polygon) + (static_count(points) - 3) * sizeof(Vec2));
+		collider->handle = memory_allocate(sizeof(Polygon) + (static_count(points) - 3) * sizeof(Vec2), scene.collider_allocator);
 
 		Polygon *polygon = collider_get(*collider, Polygon);
 		polygon->vertex_count = static_count(points);
 		memcpy(polygon->vertices, points, sizeof(points));
 		collider_translate(polygon, object->position);
 
-		object = array_add(&world.by_type.static_body);
-		object->id = generate_unique_entity_id();
+		object = array_add(&scene.by_type.static_body);
+		object->id = generate_unique_entity_id(&scene);
 		object->type = Entity_Static_Body;
 		object->color = vec4(0, 1, 1);
 		object->position = vec2(5);
 		object->collider_group.count = 1;
-		object->collider_group.key = (u32)world.collider.count;
+		object->collider_group.key = (u32)scene.collider.count;
 
-		collider = array_add(&world.collider);
+		collider = array_add(&scene.collider);
 		collider->type = Collider_Circle;
-		collider->handle = new Circle;
+		collider->handle = memory_allocate(sizeof(Circle), scene.collider_allocator);
 
 		Circle *circle = collider_get(*collider, Circle);
 		circle->center = vec2(0);
 		circle->radius = 1.23f;
 		collider_translate(circle, object->position);
 
-		object = array_add(&world.by_type.static_body);
-		object->id = generate_unique_entity_id();
+		object = array_add(&scene.by_type.static_body);
+		object->id = generate_unique_entity_id(&scene);
 		object->type = Entity_Static_Body;
 		object->color = vec4(0, 1, 1);
 		object->position = vec2(6.5f, -0.5f);
 		object->collider_group.count = 1;
-		object->collider_group.key = (u32)world.collider.count;
+		object->collider_group.key = (u32)scene.collider.count;
 
-		collider = array_add(&world.collider);
+		collider = array_add(&scene.collider);
 		collider->type = Collider_Mm_Rect;
-		collider->handle = new Mm_Rect;
+		collider->handle = memory_allocate(sizeof(Mm_Rect), scene.collider_allocator);
 
 		Mm_Rect *rect = collider_get(*collider, Mm_Rect);
 		rect->min = vec2(-2.5f, -3.5f);
 		rect->max = vec2(2.5f, 3.5f);
 		collider_translate(rect, object->position);
 
-		object = array_add(&world.by_type.static_body);
-		object->id = generate_unique_entity_id();
+		object = array_add(&scene.by_type.static_body);
+		object->id = generate_unique_entity_id(&scene);
 		object->type = Entity_Static_Body;
 		object->color = vec4(0, 1, 1);
 		object->position = vec2(-1, -5);
 		object->collider_group.count = 2;
-		object->collider_group.key = (u32)world.collider.count;
+		object->collider_group.key = (u32)scene.collider.count;
 
-		collider = array_add(&world.collider);
+		collider = array_add(&scene.collider);
 		collider->type = Collider_Capsule;
-		collider->handle = new Capsule;
+		collider->handle = memory_allocate(sizeof(Capsule), scene.collider_allocator);
 		
 		Capsule *capsule = collider_get(*collider, Capsule);
 		capsule->a = vec2(-2, -3);
@@ -240,9 +247,9 @@ int karma_user_zero() {
 		capsule->radius = 1;
 		collider_translate(capsule, object->position);
 
-		collider = array_add(&world.collider);
+		collider = array_add(&scene.collider);
 		collider->type = Collider_Circle;
-		collider->handle = new Circle;
+		collider->handle = memory_allocate(sizeof(Circle), scene.collider_allocator);
 
 		circle = collider_get(*collider, Circle);
 		circle->center = vec2(1, -1);
@@ -332,7 +339,7 @@ int karma_user_zero() {
 
 		}
 
-		player = &world.by_type.player[0]; // Only one player exists for now
+		player = &scene.by_type.player[0]; // Only one player exists for now
 
 		Dev_TimedBlockEnd(EventHandling);
 
@@ -377,18 +384,18 @@ int karma_user_zero() {
 
 			Vec2 norm; r32 dist, v_t;
 
-			auto circle = collider_get(world.collider[player->transformed_collider], Circle);
+			auto circle = collider_get(scene.collider[player->transformed_collider], Circle);
 			circle->center = player->position + player->collider.center;
 			circle->radius = player->collider.radius;
 
-			for (auto &o : world.by_type.static_body) {
+			for (auto &o : scene.by_type.static_body) {
 				o.color = vec4(1, 0, 0, 1);
 			}
 
-			auto &player_collider = world.collider[player->transformed_collider];
-			for (auto &o : world.by_type.static_body) {
+			auto &player_collider = scene.collider[player->transformed_collider];
+			for (auto &o : scene.by_type.static_body) {
 				for (u32 index = 0; index < o.collider_group.count; ++index) {
-					auto &c = world.collider[o.collider_group.key + index];
+					auto &c = scene.collider[o.collider_group.key + index];
 					if (collider_vs_collider_dynamic(c, player_collider, dt * player->velocity, &norm, &dist)) {
 						array_add(&manifolds, Collision_Manifold{ norm, dist });
 						v_t = dist / dt * sgn(vec2_dot(norm, player->velocity));
@@ -441,10 +448,10 @@ int karma_user_zero() {
 
 		im2d_begin(view, transform);
 
-		for (auto &o : world.by_type.static_body) {
+		for (auto &o : scene.by_type.static_body) {
 				auto color = o.color;
 			for (u32 index = 0; index < o.collider_group.count; ++index) {
-				auto &c = world.collider[o.collider_group.key + index];
+				auto &c = scene.collider[o.collider_group.key + index];
 				switch (c.type) {
 				case Collider_Circle: {
 					auto circle = collider_get(c, Circle);
@@ -480,7 +487,7 @@ int karma_user_zero() {
 			}
 		}
 
-		im2d_circle(player->position, collider_get(world.collider[player->transformed_collider], Circle)->radius, player->color);
+		im2d_circle(player->position, collider_get(scene.collider[player->transformed_collider], Circle)->radius, player->color);
 		im2d_line(player->position, player->position + player->velocity, vec4(0, 1.5f, 0), 0.02f);
 
 		for (auto &manifold : manifolds) {
