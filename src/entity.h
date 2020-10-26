@@ -7,7 +7,9 @@ enum Collider_Type : u32 {
 	Collider_Circle,
 	Collider_Mm_Rect,
 	Collider_Polygon,
-	Collider_Capsule
+	Collider_Capsule,
+
+	Collider_Count
 };
 
 struct Collider {

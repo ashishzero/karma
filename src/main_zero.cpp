@@ -41,42 +41,52 @@ void collider_translate(Capsule *capsule, Vec2 p) {
 	capsule->b += p;
 }
 
-bool collider_vs_collider_dynamic(Collider &a, Collider &b, Vec2 dp, Vec2 *normal, r32 *penetration) {
-	if (a.type == Collider_Null || b.type == Collider_Null) return false;
+typedef bool(*Collision_Resolver)(Collider &a, Collider &b, Vec2 dp, Vec2 *normal, r32 *penetration);
+static Collision_Resolver COLLISION_RESOLVERS[Collider_Count][Collider_Count];
 
-	u32 type = collider_combine_type(a.type, b.type);
-
-#define dispatch(type_a, type_b)										    \
-		case collider_combine_type(Collider_##type_a, Collider_##type_b):   \
-			return epa_dynamic(*collider_get(a, type_a), *collider_get(b, type_b), dp, normal, penetration)
-
-	switch (type) {
-		dispatch(Circle, Circle);
-		dispatch(Circle, Mm_Rect);
-		dispatch(Circle, Polygon);
-		dispatch(Circle, Capsule);
-
-		dispatch(Mm_Rect, Circle);
-		dispatch(Mm_Rect, Mm_Rect);
-		dispatch(Mm_Rect, Polygon);
-		dispatch(Mm_Rect, Capsule);
-
-		dispatch(Polygon, Circle);
-		dispatch(Polygon, Mm_Rect);
-		dispatch(Polygon, Polygon);
-		dispatch(Polygon, Capsule);
-
-		dispatch(Capsule, Circle);
-		dispatch(Capsule, Mm_Rect);
-		dispatch(Capsule, Polygon);
-		dispatch(Capsule, Capsule);
-
-		invalid_default_case();
-	}
-
-#undef dispatch
-
+bool null_collision_resolver(Collider &a, Collider &b, Vec2 dp, Vec2 *normal, r32 *penetration) {
 	return false;
+}
+
+template <typename ShapeA, typename ShapeB>
+bool shapes_collision_resolver(Collider &a, Collider &b, Vec2 dp, Vec2 *normal, r32 *penetration) {
+	return epa_dynamic(*(ShapeA *)a.handle, *(ShapeB *)b.handle, dp, normal, penetration);
+}
+
+void collision_resover_init() {
+	COLLISION_RESOLVERS[Collider_Null][Collider_Null]    = null_collision_resolver;
+	COLLISION_RESOLVERS[Collider_Null][Collider_Circle]  = null_collision_resolver;
+	COLLISION_RESOLVERS[Collider_Null][Collider_Mm_Rect] = null_collision_resolver;
+	COLLISION_RESOLVERS[Collider_Null][Collider_Capsule] = null_collision_resolver;
+	COLLISION_RESOLVERS[Collider_Null][Collider_Polygon] = null_collision_resolver;
+
+	COLLISION_RESOLVERS[Collider_Circle][Collider_Null]    = null_collision_resolver;
+	COLLISION_RESOLVERS[Collider_Circle][Collider_Circle]  = shapes_collision_resolver<Circle, Circle>;
+	COLLISION_RESOLVERS[Collider_Circle][Collider_Mm_Rect] = shapes_collision_resolver<Circle, Mm_Rect>;
+	COLLISION_RESOLVERS[Collider_Circle][Collider_Capsule] = shapes_collision_resolver<Circle, Capsule>;
+	COLLISION_RESOLVERS[Collider_Circle][Collider_Polygon] = shapes_collision_resolver<Circle, Polygon>;
+
+	COLLISION_RESOLVERS[Collider_Mm_Rect][Collider_Null]    = null_collision_resolver;
+	COLLISION_RESOLVERS[Collider_Mm_Rect][Collider_Circle]  = shapes_collision_resolver<Mm_Rect, Circle>;
+	COLLISION_RESOLVERS[Collider_Mm_Rect][Collider_Mm_Rect] = shapes_collision_resolver<Mm_Rect, Mm_Rect>;
+	COLLISION_RESOLVERS[Collider_Mm_Rect][Collider_Capsule] = shapes_collision_resolver<Mm_Rect, Capsule>;
+	COLLISION_RESOLVERS[Collider_Mm_Rect][Collider_Polygon] = shapes_collision_resolver<Mm_Rect, Polygon>;
+
+	COLLISION_RESOLVERS[Collider_Capsule][Collider_Null]    = null_collision_resolver;
+	COLLISION_RESOLVERS[Collider_Capsule][Collider_Circle]  = shapes_collision_resolver<Capsule, Circle>;
+	COLLISION_RESOLVERS[Collider_Capsule][Collider_Mm_Rect] = shapes_collision_resolver<Capsule, Mm_Rect>;
+	COLLISION_RESOLVERS[Collider_Capsule][Collider_Capsule] = shapes_collision_resolver<Capsule, Capsule>;
+	COLLISION_RESOLVERS[Collider_Capsule][Collider_Polygon] = shapes_collision_resolver<Capsule, Polygon>;
+
+	COLLISION_RESOLVERS[Collider_Polygon][Collider_Null]    = null_collision_resolver;
+	COLLISION_RESOLVERS[Collider_Polygon][Collider_Circle]  = shapes_collision_resolver<Polygon, Circle>;
+	COLLISION_RESOLVERS[Collider_Polygon][Collider_Mm_Rect] = shapes_collision_resolver<Polygon, Mm_Rect>;
+	COLLISION_RESOLVERS[Collider_Polygon][Collider_Capsule] = shapes_collision_resolver<Polygon, Capsule>;
+	COLLISION_RESOLVERS[Collider_Polygon][Collider_Polygon] = shapes_collision_resolver<Polygon, Polygon>;
+}
+
+bool collider_vs_collider_dynamic(Collider &a, Collider &b, Vec2 dp, Vec2 *normal, r32 *penetration) {
+	return COLLISION_RESOLVERS[a.type][b.type](a, b, dp, normal, penetration);
 }
 
 struct Entity_By_Type {
@@ -85,7 +95,6 @@ struct Entity_By_Type {
 };
 
 struct World_Storage {
-	Array<Entity *> entity;
 	Entity_By_Type by_type;
 	Array<Collider> collider;
 	Allocator collider_allocator;
@@ -104,6 +113,8 @@ void entity_new(Entity *entity, Entity_Type type, Vec2 position) {
 }
 
 int karma_user_zero() {
+
+	collision_resover_init();
 
 #ifdef INIT_THREAD_POOL
 	if (!async_initialize(2, mega_bytes(32), context.allocator)) {
@@ -138,7 +149,6 @@ int karma_user_zero() {
 
 	World_Storage world;
 	Player *player = array_add(&world.by_type.player);
-	array_add(&world.entity, (Entity *)player);
 	entity_new(player, Entity_Player, vec2(0));
 	player->color = vec4(1);
 	player->velocity = vec2(0);
@@ -162,7 +172,6 @@ int karma_user_zero() {
 		Collider *collider;
 
 		object = array_add(&world.by_type.static_body);
-		array_add(&world.entity, (Entity *)object);
 		object->id = generate_unique_entity_id();
 		object->type = Entity_Static_Body;
 		object->color = vec4(0, 1, 1);
@@ -180,7 +189,6 @@ int karma_user_zero() {
 		collider_translate(polygon, object->position);
 
 		object = array_add(&world.by_type.static_body);
-		array_add(&world.entity, (Entity *)object);
 		object->id = generate_unique_entity_id();
 		object->type = Entity_Static_Body;
 		object->color = vec4(0, 1, 1);
@@ -198,7 +206,6 @@ int karma_user_zero() {
 		collider_translate(circle, object->position);
 
 		object = array_add(&world.by_type.static_body);
-		array_add(&world.entity, (Entity *)object);
 		object->id = generate_unique_entity_id();
 		object->type = Entity_Static_Body;
 		object->color = vec4(0, 1, 1);
@@ -216,7 +223,6 @@ int karma_user_zero() {
 		collider_translate(rect, object->position);
 
 		object = array_add(&world.by_type.static_body);
-		array_add(&world.entity, (Entity *)object);
 		object->id = generate_unique_entity_id();
 		object->type = Entity_Static_Body;
 		object->color = vec4(0, 1, 1);

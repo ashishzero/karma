@@ -452,10 +452,6 @@ struct Polygon {
 	Vec2 vertices[3];
 };
 
-struct Null {
-	u32 _placeholder;
-};
-
 struct Nearest_Edge2d {
 	Vec2 normal;
 	r32 distance;
