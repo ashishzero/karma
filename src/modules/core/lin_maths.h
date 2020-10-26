@@ -469,9 +469,9 @@ r32 vec3_signed_angle_between_normalize(Vec3 a, Vec3 b, Vec3 n);
 //
 //
 
-inline bool vec2_null(Vec2 a) { return a.x == 0 && a.y == 0; }
-inline bool vec3_null(Vec3 a) { return a.x == 0 && a.y == 0 && a.z == 0; }
-inline bool vec4_null(Vec4 a) { return a.x == 0 && a.y == 0 && a.z == 0 && a.w == 0; }
+inline bool vec2_null(Vec2 a) { return fabsf(a.x) < EPSILON_FLOAT && fabsf(a.y) < EPSILON_FLOAT; }
+inline bool vec3_null(Vec3 a) { return fabsf(a.x) < EPSILON_FLOAT && fabsf(a.y) < EPSILON_FLOAT && fabsf(a.z) < EPSILON_FLOAT; }
+inline bool vec4_null(Vec4 a) { return fabsf(a.x) < EPSILON_FLOAT && fabsf(a.y) < EPSILON_FLOAT && fabsf(a.z) < EPSILON_FLOAT && fabsf(a.w) < EPSILON_FLOAT; }
 
 bool vec2_equals(Vec2 a, Vec2 b, r32 tolerance = MATH_R32_EQUALS_DEFAULT_TOLERANCE);
 bool vec3_equals(Vec3 a, Vec3 b, r32 tolerance = MATH_R32_EQUALS_DEFAULT_TOLERANCE);

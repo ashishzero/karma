@@ -12,9 +12,17 @@ enum Collider_Type : u32 {
 	Collider_Count
 };
 
+#if defined(ENABLE_DEVELOPER_OPTIONS)
+constexpr u32 COLLIDER_FLAG_BIT_TOUCHED = bit(0);
+#endif
+
 struct Collider {
 	attribute(use, read-only) void *handle;
 	attribute(read-only) Collider_Type type;
+
+#if defined(ENABLE_DEVELOPER_OPTIONS)
+	attribute(no-display, no-serialize) u32 flags;
+#endif
 };
 
 inline void *collider_get_handle(Collider *collider, Collider_Type type) {
@@ -46,6 +54,7 @@ struct Collider_Group {
 };
 
 struct Player : public Entity {
+	attribute(min:0, max : 5)			r32 radius;
 	attribute(color)					Vec4 color;
 	attribute(min:0, max:5)				Circle collider;
 	attribute(read-only)				Vec2 velocity;

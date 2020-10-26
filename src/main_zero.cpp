@@ -150,6 +150,7 @@ void scene_new_entity(Scene *scene, Entity *entity, Vec2 position) {
 	switch (entity->type) {
 	case Entity_Player: {
 		auto player = (Player *)entity;
+		player->radius = 1;
 		player->color = vec4(1);
 		player->collider.center = vec2(0);
 		player->collider.radius = 1;
@@ -454,9 +455,11 @@ int karma_user_zero() {
 			circle->center = player->position + player->collider.center;
 			circle->radius = player->collider.radius;
 
-			for (auto &o : scene.by_type.static_body) {
-				o.color = vec4(1, 0, 0, 1);
+#if defined(ENABLE_DEVELOPER_OPTIONS)
+			for (auto &c : scene.collider) {
+				c.flags = 0;
 			}
+#endif
 
 			auto &player_collider = scene.collider[player->transformed_collider];
 			for (auto &o : scene.by_type.static_body) {
@@ -467,6 +470,9 @@ int karma_user_zero() {
 						v_t = dist / dt * sgn(vec2_dot(norm, player->velocity));
 						player->velocity -= v_t * norm;
 						o.color = vec4(0, 1, 1, 1);
+#if defined(ENABLE_DEVELOPER_OPTIONS)
+						c->flags |= COLLIDER_FLAG_BIT_TOUCHED;
+#endif
 					}
 				}
 			}
@@ -514,52 +520,55 @@ int karma_user_zero() {
 
 		im2d_begin(view, transform);
 
-		for (auto &o : scene.by_type.static_body) {
-				auto color = o.color;
-			for (u32 index = 0; index < o.collider_group.count; ++index) {
-				auto c = scene_collider_ref(&scene, o.collider_group.key + index);
-				switch (c->type) {
-				case Collider_Circle: {
-					auto circle = collider_get_shape(c, Circle);
-					im2d_circle_outline(circle->center, circle->radius, color, 0.02f);
-				} break;
-
-				case Collider_Polygon: {
-					auto polygon = collider_get_shape(c, Polygon);
-					for (u32 i = 0; i < polygon->vertex_count; ++i) {
-						im2d_line(polygon->vertices[i], polygon->vertices[(i + 1) % polygon->vertex_count], color, 0.02f);
-					}
-				} break;
-
-				case Collider_Mm_Rect: {
-					auto rect = collider_get_shape(c, Mm_Rect);
-					im2d_rect_outline(rect->min, rect->max - rect->min, color, 0.02f);
-				} break;
-
-				case Collider_Capsule: {
-					auto capsule = collider_get_shape(c, Capsule);
-					Vec2 capsule_dir = capsule->b - capsule->a;
-					Vec2 capsule_norm = vec2_normalize(vec2(-capsule_dir.y, capsule_dir.x)) * capsule->radius;
-
-					im2d_circle_outline(capsule->a, capsule->radius, color, 0.02f);
-					im2d_circle_outline(capsule->b, capsule->radius, color, 0.02f);
-					im2d_line(capsule->a + capsule_norm, capsule->b + capsule_norm, color, 0.02f);
-					im2d_line(capsule->a - capsule_norm, capsule->b - capsule_norm, color, 0.02f);
-				} break;
-
-					invalid_default_case();
-
-				}
-			}
-		}
-
-		im2d_circle(player->position, collider_get_shape(scene_collider_ref(&scene, player->transformed_collider), Circle)->radius, player->color);
+		im2d_circle(player->position, player->radius, player->color);
 		im2d_line(player->position, player->position + player->velocity, vec4(0, 1.5f, 0), 0.02f);
 
 		for (auto &manifold : manifolds) {
 			im2d_line(player->position, player->position + manifold.normal, 1.5f * vec4(1, 0, 0), 0.05f);
 			im2d_line(player->position, player->position + manifold.penetration_depth * manifold.normal, 2 * vec4(1, 1, 0), 0.05f);
 		}
+
+#if defined(ENABLE_DEVELOPER_OPTIONS)
+		for (auto &c : scene.collider) {
+			auto color = (c.flags & COLLIDER_FLAG_BIT_TOUCHED) ? vec4(0, 1, 1) : vec4(1, 0, 0);
+			switch (c.type) {
+			case Collider_Null: {
+
+			} break;
+
+			case Collider_Circle: {
+				auto circle = collider_get_shape(&c, Circle);
+				im2d_circle_outline(circle->center, circle->radius, color, 0.02f);
+			} break;
+
+			case Collider_Polygon: {
+				auto polygon = collider_get_shape(&c, Polygon);
+				for (u32 i = 0; i < polygon->vertex_count; ++i) {
+					im2d_line(polygon->vertices[i], polygon->vertices[(i + 1) % polygon->vertex_count], color, 0.02f);
+				}
+			} break;
+
+			case Collider_Mm_Rect: {
+				auto rect = collider_get_shape(&c, Mm_Rect);
+				im2d_rect_outline(rect->min, rect->max - rect->min, color, 0.02f);
+			} break;
+
+			case Collider_Capsule: {
+				auto capsule = collider_get_shape(&c, Capsule);
+				Vec2 capsule_dir = capsule->b - capsule->a;
+				Vec2 capsule_norm = vec2_normalize(vec2(-capsule_dir.y, capsule_dir.x)) * capsule->radius;
+
+				im2d_circle_outline(capsule->a, capsule->radius, color, 0.02f);
+				im2d_circle_outline(capsule->b, capsule->radius, color, 0.02f);
+				im2d_line(capsule->a + capsule_norm, capsule->b + capsule_norm, color, 0.02f);
+				im2d_line(capsule->a - capsule_norm, capsule->b - capsule_norm, color, 0.02f);
+			} break;
+
+				invalid_default_case();
+
+			}
+		}
+#endif
 
 		im2d_end();
 
