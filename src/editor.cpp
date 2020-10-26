@@ -70,7 +70,7 @@ static inline void editor_display_fundamentals(ptrsize mem_type_uid, const char 
 	}
 	else if (mem_type_uid == TYPE_UID_U64) {
 		u64 *val = (u64 *)data;
-		ImGui::Text("%s : #%zx", name, *val);
+		ImGui::Text("%s : #%016zx", name, *val);
 	}
 	else if (mem_type_uid == TYPE_UID_VPTR) {
 		u64 val = (u64 )data;
