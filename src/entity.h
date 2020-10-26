@@ -33,6 +33,11 @@ struct Player : public Entity {
 	attribute(no-display, no-serialize)	Collider transformed_collider;
 };
 
+struct Static_Body : public Entity {
+	attribute(color) Vec4 color;
+	Collider collider;
+};
+
 struct Camera {
 	Vec2 position;
 	r32 distance;

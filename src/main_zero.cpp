@@ -22,6 +22,25 @@ struct Player_Controller {
 
 #define collider_combine_type(a, b) (((a) & 0xffff) | (((b) & 0xffff) << 16))
 
+void collider_translate(Circle *circle, Vec2 p) {
+	circle->center += p;
+}
+
+void collider_translate(Polygon *polygon, Vec2 p) {
+	for (u32 index = 0; index < polygon->vertex_count; ++index)
+		polygon->vertices[index] += p;
+}
+
+void collider_translate(Mm_Rect *mm_rect, Vec2 p) {
+	mm_rect->min += p;
+	mm_rect->max += p;
+}
+
+void collider_translate(Capsule *capsule, Vec2 p) {
+	capsule->a += p;
+	capsule->b += p;
+}
+
 bool collider_vs_collider_dynamic(Collider &a, Collider &b, Vec2 dp, Vec2 *normal, r32 *penetration) {
 	u32 type = collider_combine_type(a.type, b.type);
 
@@ -95,8 +114,10 @@ int karma_user_zero() {
 
 	Random_Series entity_id_series = random_init(system_get_counter(), system_get_counter());
 
+#define entity_id random_get(&entity_id_series) | ((time(0) & 0xffffffff) << 32)
+
 	Player player;
-	player.id = random_get() | ((time(0) & 0xffffffff) << 32);
+	player.id = entity_id;
 	player.position = vec2(0);
 	player.color = vec4(1);
 	player.velocity = vec2(0);
@@ -105,43 +126,59 @@ int karma_user_zero() {
 	player.collider.radius = 0.55f;
 	player.transformed_collider.type = Collider_Circle;
 	player.transformed_collider.handle = new Circle;
-	
-	Collider colliders[4];
-	Vec4 collider_colors[4];
-	memset(collider_colors, 1, sizeof(collider_colors));
-	{
-		colliders[0].type = Collider_Mm_Rect;
-		colliders[1].type = Collider_Circle;
-		colliders[2].type = Collider_Capsule;
-		colliders[3].type = Collider_Polygon;
 
+	Static_Body objects[4];
+	{
 		Vec2 points[] = {
-			vec2(-8, 5), vec2(-2, 5), vec2(-1, -1), vec2(-4, -5), vec2(-13, -2)
+			vec2(-2.4f, 4.6f), vec2(3.6f, 4.6f), vec2(4.6f, -1.4f), vec2(1.6f, -5.4f), vec2(-7.4f, -2.4f)
 		};
 
 		assert(static_count(points) >= 3);
 
-		colliders[0].handle = new Mm_Rect;
-		colliders[1].handle = new Circle;
-		colliders[2].handle = new Capsule;
-		colliders[3].handle = memory_allocate(sizeof(Polygon) + (static_count(points) - 3) * sizeof(Vec2));
+		objects[0].id = entity_id;
+		objects[0].color = vec4(0, 1, 1);
+		objects[0].position = vec2(-5.6f, 0.4f);
+		objects[0].collider.type = Collider_Polygon;
+		objects[0].collider.handle = memory_allocate(sizeof(Polygon) + (static_count(points) - 3) * sizeof(Vec2));
 
-		Mm_Rect *rect = collider_get(colliders[0], Mm_Rect);
-		rect->min = vec2(4, -4);
-		rect->max = vec2(9, 3);
-
-		Circle *circle = collider_get(colliders[1], Circle);
-		circle->center = vec2(5);
-		circle->radius = 1.23f;
-
-		Capsule *capsule = collider_get(colliders[2], Capsule);
-		capsule->a = vec2(-3, -8);
-		capsule->b = vec2(1, -2);
-		capsule->radius = 1;
-
-		Polygon *polygon = collider_get(colliders[3], Polygon);
+		Polygon *polygon = collider_get(objects[0].collider, Polygon);
 		polygon->vertex_count = static_count(points);
-		memcpy(collider_get(colliders[3], Polygon)->vertices, points, sizeof(points));
+		memcpy(polygon->vertices, points, sizeof(points));
+		collider_translate(polygon, objects[0].position);
+
+		objects[1].id = entity_id;
+		objects[1].color = vec4(0, 1, 1);
+		objects[1].position = vec2(5);
+		objects[1].collider.type = Collider_Circle;
+		objects[1].collider.handle = new Circle;
+
+		Circle *circle = collider_get(objects[1].collider, Circle);
+		circle->center = vec2(0);
+		circle->radius = 1.23f;
+		collider_translate(circle, objects[1].position);
+
+		objects[2].id = entity_id;
+		objects[2].color = vec4(0, 1, 1);
+		objects[2].position = vec2(6.5f, -0.5f);
+		objects[2].collider.type = Collider_Mm_Rect;
+		objects[2].collider.handle = new Mm_Rect;
+
+		Mm_Rect *rect = collider_get(objects[2].collider, Mm_Rect);
+		rect->min = vec2(-2.5f, -3.5f);
+		rect->max = vec2(2.5f, 3.5f);
+		collider_translate(rect, objects[2].position);
+
+		objects[3].id = entity_id;
+		objects[3].color = vec4(0, 1, 1);
+		objects[3].position = vec2(-1, -5);
+		objects[3].collider.type = Collider_Capsule;
+		objects[3].collider.handle = new Capsule;
+
+		Capsule *capsule = collider_get(objects[3].collider, Capsule);
+		capsule->a = vec2(-2, -3);
+		capsule->b = vec2(2, 3);
+		capsule->radius = 1;
+		collider_translate(capsule, objects[3].position);
 	}
 
 	Player_Controller controller = {};
@@ -273,17 +310,15 @@ int karma_user_zero() {
 			player_collider->center = player.position + player.collider.center;
 			player_collider->radius = player.collider.radius;
 
-			int collider_index = 0;
-			for (auto &c : colliders) {
-				if (collider_vs_collider_dynamic(c, player.transformed_collider, dt * player.velocity, &norm, &dist)) {
+			for (auto &o : objects) {
+				if (collider_vs_collider_dynamic(o.collider, player.transformed_collider, dt * player.velocity, &norm, &dist)) {
 					array_add(&manifolds, Collision_Manifold{ norm, dist });
 					v_t = dist / dt * sgn(vec2_dot(norm, player.velocity));
 					player.velocity -= v_t * norm;
-					collider_colors[collider_index] = vec4(0, 1, 1, 1);
+					o.color = vec4(0, 1, 1, 1);
 				} else {
-					collider_colors[collider_index] = vec4(1, 0, 0, 1);
+					o.color = vec4(1, 0, 0, 1);
 				}
-				collider_index += 1;
 			}
 
 			player.position += dt * player.velocity;
@@ -329,29 +364,28 @@ int karma_user_zero() {
 
 		im2d_begin(view, transform);
 
-		int collider_index = 0;
-		for (auto &c : colliders) {
-			auto color = collider_colors[collider_index];
-			switch (c.type) {
+		for (auto &o : objects) {
+			auto color = o.color;
+			switch (o.collider.type) {
 			case Collider_Circle: {
-				auto circle = collider_get(c, Circle);
+				auto circle = collider_get(o.collider, Circle);
 				im2d_circle_outline(circle->center, circle->radius, color, 0.02f);
 			} break;
 
 			case Collider_Polygon: {
-				auto polygon = collider_get(c, Polygon);
+				auto polygon = collider_get(o.collider, Polygon);
 				for (u32 i = 0; i < polygon->vertex_count; ++i) {
 					im2d_line(polygon->vertices[i], polygon->vertices[(i + 1) % polygon->vertex_count], color, 0.02f);
 				}
 			} break;
 
 			case Collider_Mm_Rect: {
-				auto rect = collider_get(c, Mm_Rect);
+				auto rect = collider_get(o.collider, Mm_Rect);
 				im2d_rect_outline(rect->min, rect->max - rect->min, color, 0.02f);
 			} break;
 
 			case Collider_Capsule: {
-				auto capsule = collider_get(c, Capsule);
+				auto capsule = collider_get(o.collider, Capsule);
 				Vec2 capsule_dir = capsule->b - capsule->a;
 				Vec2 capsule_norm = vec2_normalize(vec2(-capsule_dir.y, capsule_dir.x)) * capsule->radius;
 
@@ -364,7 +398,6 @@ int karma_user_zero() {
 			invalid_default_case();
 
 			}
-			collider_index += 1;
 		}
 
 		im2d_circle(player.position, collider_get(player.transformed_collider, Circle)->radius, player.color);
