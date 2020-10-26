@@ -9,6 +9,7 @@
 #include "modules/imgui/dev.h"
 #include "modules/gfx/renderer.h"
 #include "modules/core/thread_pool.h"
+#include "modules/core/random.h"
 
 #include "entity.h"
 
@@ -57,6 +58,8 @@ bool collider_vs_collider_dynamic(Collider &a, Collider &b, Vec2 dp, Vec2 *norma
 	return false;
 }
 
+#include <time.h>
+
 int karma_user_zero() {
 
 #ifdef INIT_THREAD_POOL
@@ -90,10 +93,10 @@ int karma_user_zero() {
 
 	r32 window_w = 0, window_h = 0;
 
-	u64 frequency = system_get_frequency();
-	u64 counter = system_get_counter();
+	Random_Series entity_id_series = random_init(system_get_counter(), system_get_counter());
 
 	Player player;
+	player.id = random_get() | ((time(0) & 0xffffffff) << 32);
 	player.position = vec2(0);
 	player.color = vec4(1);
 	player.velocity = vec2(0);
@@ -146,6 +149,9 @@ int karma_user_zero() {
 	Camera camera;
 	camera.position = vec2(0);
 	camera.distance = 0.0f;
+
+	u64 frequency = system_get_frequency();
+	u64 counter = system_get_counter();
 
 	while (running) {
 		Dev_TimedFrameBegin();

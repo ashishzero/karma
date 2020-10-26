@@ -21,7 +21,8 @@ inline void *collider_get_handle(Collider &collider, Collider_Type type) {
 #define collider_get(collider, type) ((type *)collider_get_handle(collider, Collider_##type))
 
 struct Entity {
-	attribute(speed:0.01) Vec2 position;
+	attribute(read-only)  u64  id;
+						  Vec2 position;
 };
 
 struct Player : public Entity {
