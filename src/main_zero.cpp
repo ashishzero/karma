@@ -167,6 +167,42 @@ void scene_new_entity(Scene *scene, Entity *entity, Vec2 position) {
 	}
 }
 
+Collider_Key scene_create_collider(Scene *scene) {
+	Collider_Key key = (Collider_Key)scene->collider.count;
+	Collider *collider = array_add(&scene->collider);
+	memset(collider, 0, sizeof(*collider));
+	return key;
+}
+
+void scene_destroy_collider(Scene *scene, Collider_Key key) {
+	// TODO: Remove from array as well
+	Collider &collider = scene->collider[key];
+	memory_free(collider.handle, scene->collider_allocator);
+}
+
+struct Collider_Attachment {
+	u32 polygon_n;
+};
+
+void *scene_attach_collider_type(Scene *scene, Collider_Key key, Collider_Type type, Collider_Attachment *attachment) {
+	Collider &collider = scene->collider[key];
+	collider.type = type;
+	if (collider.handle) scene_destroy_collider(scene, key);
+
+	switch (type) {
+	case Collider_Null: collider.handle = nullptr; break;
+	case Collider_Circle: collider.handle = memory_allocate(sizeof(Circle)); break;
+	case Collider_Mm_Rect: collider.handle = memory_allocate(sizeof(Mm_Rect)); break;
+	case Collider_Capsule: collider.handle = memory_allocate(sizeof(Capsule)); break;
+	case Collider_Polygon: collider.handle = memory_allocate(sizeof(Polygon) + sizeof(Vec2) * (attachment->polygon_n - 3)); break;
+
+		invalid_default_case();
+	};
+
+	return collider.handle;
+}
+#define scene_attach_collider(scene, key, type, attachment) (type *)scene_attach_collider_type(scene, key, Collider_##type, attachment)
+
 int karma_user_zero() {
 
 	collision_resover_init();
@@ -205,11 +241,8 @@ int karma_user_zero() {
 	Scene scene = scene_create();
 	Player *player = scene_add_player(&scene);
 	scene_new_entity(&scene, player, vec2(0));
-	player->transformed_collider = (Collider_Key)scene.collider.count;
-	
-	auto transformed_collider = array_add(&scene.collider);
-	transformed_collider->type = Collider_Circle;
-	transformed_collider->handle = memory_allocate(sizeof(Circle), scene.collider_allocator);
+	player->transformed_collider = scene_create_collider(&scene);
+	scene_attach_collider(&scene, player->transformed_collider, Circle, 0);
 
 	{
 		Vec2 points[] = {
