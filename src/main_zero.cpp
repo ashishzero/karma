@@ -89,6 +89,8 @@ bool collider_vs_collider_dynamic(Collider &a, Collider &b, Vec2 dp, Vec2 *norma
 	return COLLISION_RESOLVERS[a.type][b.type](a, b, dp, normal, penetration);
 }
 
+#include <time.h>
+
 struct Entity_By_Type {
 	Array<Player> player;
 	Array<Static_Body> static_body;
@@ -105,18 +107,64 @@ Scene scene_create() {
 	Scene scene;
 	scene.collider_allocator = context.allocator;
 	scene.entity_id_series = random_init(context.id, system_get_counter());
+	Collider *null_collider = array_add(&scene.collider);
+	null_collider->type = Collider_Null;
+	null_collider->handle = nullptr;
 	return scene;
 }
 
-#include <time.h>
-u64 generate_unique_entity_id(Scene *scene) {
+struct Scene_Ensure {
+	u32 entity_count[Entity_Count];
+	u32 collider_count;
+};
+
+void scene_ensure_slots(Scene *scene, const Scene_Ensure &info) {
+	if (info.entity_count[Entity_Player])
+		array_resize(&scene->by_type.player, info.entity_count[Entity_Player]);
+	if (info.entity_count[Entity_Static_Body])
+		array_resize(&scene->by_type.static_body, info.entity_count[Entity_Static_Body]);
+	if (info.collider_count)
+		array_resize(&scene->collider, info.collider_count);
+}
+
+Player *scene_add_player(Scene *scene) {
+	Player *player = array_add(&scene->by_type.player);
+	player->type = Entity_Player;
+	return player;
+}
+
+Static_Body *scene_add_static_body(Scene *scene) {
+	Static_Body *body = array_add(&scene->by_type.static_body);
+	body->type = Entity_Static_Body;
+	return body;
+}
+
+u64 scene_generate_unique_entity_id(Scene *scene) {
 	return random_get(&scene->entity_id_series) | ((time(0) & 0xffffffff) << 32);
 }
 
-void entity_new(Scene *scene, Entity *entity, Entity_Type type, Vec2 position) {
-	entity->id = generate_unique_entity_id(scene);
-	entity->type = type;
+void scene_new_entity(Scene *scene, Entity *entity, Vec2 position) {
+	entity->id = scene_generate_unique_entity_id(scene);
 	entity->position = position;
+
+	switch (entity->type) {
+	case Entity_Player: {
+		auto player = (Player *)entity;
+		player->color = vec4(1);
+		player->collider.center = vec2(0);
+		player->collider.radius = 1;
+		player->velocity = vec2(0);
+		player->force = vec2(0);
+		player->transformed_collider = 0;
+	} break;
+
+	case Entity_Static_Body: {
+		auto body = (Static_Body *)entity;
+		body->color = vec4(1);
+		body->collider_group.count = 0;
+		body->collider_group.key = 0;
+	} break;
+	}
 }
 
 int karma_user_zero() {
@@ -155,13 +203,8 @@ int karma_user_zero() {
 	r32 window_w = 0, window_h = 0;
 
 	Scene scene = scene_create();
-	Player *player = array_add(&scene.by_type.player);
-	entity_new(&scene, player, Entity_Player, vec2(0));
-	player->color = vec4(1);
-	player->velocity = vec2(0);
-	player->force = vec2(0);
-	player->collider.center = vec2(0);
-	player->collider.radius = 0.55f;
+	Player *player = scene_add_player(&scene);
+	scene_new_entity(&scene, player, vec2(0));
 	player->transformed_collider = (Collider_Key)scene.collider.count;
 	
 	auto transformed_collider = array_add(&scene.collider);
@@ -178,11 +221,9 @@ int karma_user_zero() {
 		Static_Body *object;
 		Collider *collider;
 
-		object = array_add(&scene.by_type.static_body);
-		object->id = generate_unique_entity_id(&scene);
-		object->type = Entity_Static_Body;
+		object = scene_add_static_body(&scene);
+		scene_new_entity(&scene, object, vec2(-5.6f, 0.4f));
 		object->color = vec4(0, 1, 1);
-		object->position = vec2(-5.6f, 0.4f);
 		object->collider_group.count = 1;
 		object->collider_group.key = (u32)scene.collider.count;
 
@@ -195,11 +236,9 @@ int karma_user_zero() {
 		memcpy(polygon->vertices, points, sizeof(points));
 		collider_translate(polygon, object->position);
 
-		object = array_add(&scene.by_type.static_body);
-		object->id = generate_unique_entity_id(&scene);
-		object->type = Entity_Static_Body;
+		object = scene_add_static_body(&scene);
+		scene_new_entity(&scene, object, vec2(5));
 		object->color = vec4(0, 1, 1);
-		object->position = vec2(5);
 		object->collider_group.count = 1;
 		object->collider_group.key = (u32)scene.collider.count;
 
@@ -212,11 +251,9 @@ int karma_user_zero() {
 		circle->radius = 1.23f;
 		collider_translate(circle, object->position);
 
-		object = array_add(&scene.by_type.static_body);
-		object->id = generate_unique_entity_id(&scene);
-		object->type = Entity_Static_Body;
+		object = scene_add_static_body(&scene);
+		scene_new_entity(&scene, object, vec2(6.5f, -0.5f));
 		object->color = vec4(0, 1, 1);
-		object->position = vec2(6.5f, -0.5f);
 		object->collider_group.count = 1;
 		object->collider_group.key = (u32)scene.collider.count;
 
@@ -229,11 +266,9 @@ int karma_user_zero() {
 		rect->max = vec2(2.5f, 3.5f);
 		collider_translate(rect, object->position);
 
-		object = array_add(&scene.by_type.static_body);
-		object->id = generate_unique_entity_id(&scene);
-		object->type = Entity_Static_Body;
+		object = scene_add_static_body(&scene);
+		scene_new_entity(&scene, object, vec2(-1, -5));
 		object->color = vec4(0, 1, 1);
-		object->position = vec2(-1, -5);
 		object->collider_group.count = 2;
 		object->collider_group.key = (u32)scene.collider.count;
 

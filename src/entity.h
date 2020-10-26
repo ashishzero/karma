@@ -25,7 +25,9 @@ inline void *collider_get_handle(Collider &collider, Collider_Type type) {
 
 enum Entity_Type {
 	Entity_Player,
-	Entity_Static_Body
+	Entity_Static_Body,
+
+	Entity_Count
 };
 
 typedef u64 Entity_Id;
