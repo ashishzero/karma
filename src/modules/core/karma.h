@@ -753,7 +753,7 @@ void array_insert(Array<T> *a, s64 index, const T &v) {
 	assert(index < a->count);
 	T t = a->data[index];
 	array_add(a, t);
-	array->data[index] = v;
+	a->data[index] = v;
 }
 
 template <typename T>
@@ -761,7 +761,7 @@ T *array_insert(Array<T> *a, s64 index) {
 	assert(index < a->count);
 	T t = a->data[index];
 	array_add(a, t);
-	return array->data + index;
+	return a->data + index;
 }
 
 template <typename T>

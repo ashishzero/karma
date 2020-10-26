@@ -187,15 +187,17 @@ struct Struct_Member {
 };
 
 struct Type_Info_Struct : public Type_Info {
+	ptrsize					   attribute_count;
+	const String *			   attributes;
 	ptrsize                    member_count;
 	const Struct_Member *const members;
 	const Type_Info *const     base;
 
 	inline Type_Info_Struct() :
-		member_count(0), members(0), base(0) {
+		attribute_count(0), attributes(0), member_count(0), members(0), base(0) {
 	}
-	inline Type_Info_Struct(ptrsize sz, String n, ptrsize mem_n, const Struct_Member *const mems, const Type_Info *b = 0) :
-		Type_Info(Type_Id_STRUCT, sz, n), member_count(mem_n), members(mems), base(b) {
+	inline Type_Info_Struct(ptrsize sz, String n, ptrsize attr_n, const String *attrs, ptrsize mem_n, const Struct_Member *const mems, const Type_Info *b = 0) :
+		Type_Info(Type_Id_STRUCT, sz, n), attribute_count(attr_n), attributes(attrs), member_count(mem_n), members(mems), base(b) {
 	}
 };
 
@@ -207,16 +209,16 @@ struct Union_Member {
 };
 
 struct Type_Info_Union : public Type_Info {
+	ptrsize				attribute_count;
+	const String		*attributes;
 	ptrsize             member_count;
 	const Union_Member *members;
 
 	inline Type_Info_Union() :
-	member_count(0), members(0) {
+		attribute_count(0), attributes(0), member_count(0), members(0) {
 	}
-	inline Type_Info_Union(ptrsize sz, String n, ptrsize mem_n, const Union_Member *mems) :
-		Type_Info(Type_Id_UNION, sz, n) {
-		member_count = mem_n;
-		members      = mems;
+	inline Type_Info_Union(ptrsize sz, String n, ptrsize attr_n, const String *attrs, ptrsize mem_n, const Union_Member *mems) :
+		Type_Info(Type_Id_UNION, sz, n), attribute_count(attr_n), attributes(attrs), member_count(mem_n), members(mems) {
 	}
 };
 

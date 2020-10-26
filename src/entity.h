@@ -67,7 +67,7 @@ struct Static_Body : public Entity {
 	Collider_Group collider_group;
 };
 
-struct Camera {
+struct attribute(camera) Camera {
 	Vec2 position;
 	r32 distance;
 };
