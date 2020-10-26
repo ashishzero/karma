@@ -54,9 +54,9 @@ struct Collider_Group {
 };
 
 struct Player : public Entity {
-	attribute(min:0, max : 5)			r32 radius;
+	attribute(min:0, max : 5)			r32 rradius;
 	attribute(color)					Vec4 color;
-	attribute(min:0, max:5)				Circle collider;
+										Circle collider;
 	attribute(read-only)				Vec2 velocity;
 	attribute(read-only)				Vec2 force;
 	attribute(no-display, no-serialize)	Collider_Key transformed_collider;

@@ -150,7 +150,7 @@ void scene_new_entity(Scene *scene, Entity *entity, Vec2 position) {
 	switch (entity->type) {
 	case Entity_Player: {
 		auto player = (Player *)entity;
-		player->radius = 1;
+		player->rradius = 1;
 		player->color = vec4(1);
 		player->collider.center = vec2(0);
 		player->collider.radius = 1;
@@ -520,7 +520,7 @@ int karma_user_zero() {
 
 		im2d_begin(view, transform);
 
-		im2d_circle(player->position, player->radius, player->color);
+		im2d_circle(player->position, player->rradius, player->color);
 		im2d_line(player->position, player->position + player->velocity, vec4(0, 1.5f, 0), 0.02f);
 
 		for (auto &manifold : manifolds) {

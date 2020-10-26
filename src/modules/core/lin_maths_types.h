@@ -1,5 +1,6 @@
 #pragma once
 #include "karma.h"
+#include "reflection.h"
 
 constexpr r32 MATH_PI                           = 3.1415926535f;
 constexpr r32 MATH_PI_INVERSE                   = 1.0f / MATH_PI;
@@ -415,7 +416,7 @@ inline Aabb2d aabb2d(Vec2 center, r32 a, r32 b) {
 
 struct Circle {
 	Vec2 center;
-	r32 radius;
+	attribute(min:0, max:INFINITY) r32 radius;
 };
 
 struct Quad {
