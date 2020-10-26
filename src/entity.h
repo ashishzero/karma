@@ -34,8 +34,8 @@ struct Player : public Entity {
 };
 
 struct Static_Body : public Entity {
-	attribute(color) Vec4 color;
-	Collider collider;
+	attribute(color)	 Vec4 color;
+	Array_View<Collider> collider;
 };
 
 struct Camera {
