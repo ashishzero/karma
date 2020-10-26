@@ -82,10 +82,11 @@ struct Entity_By_Type {
 	Array<Static_Body> static_body;
 };
 
-struct World { // TODO: Call this something better
+struct World_Storage {
 	Array<Entity *> entity;
 	Entity_By_Type by_type;
 	Array<Collider> collider;
+	Allocator collider_allocator;
 };
 
 #include <time.h>
@@ -133,7 +134,7 @@ int karma_user_zero() {
 
 	r32 window_w = 0, window_h = 0;
 
-	World world;
+	World_Storage world;
 	Player *player = array_add(&world.by_type.player);
 	array_add(&world.entity, (Entity *)player);
 	entity_new(player, Entity::PLAYER, vec2(0));

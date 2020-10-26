@@ -699,13 +699,14 @@ void array_add(Array<T> *a, const T &d) {
 
 template <typename T>
 void array_append(Array<T> *a, const T *ptr, s64 count) {
-	if (a->count == a->capacity) {
+	s64 new_count = a->count + count;
+	if (new_count > a->capacity) {
 		s64 n = array_get_grow_capacity(a->capacity, count);
 		array_resize(a, n);
 	}
 	for (s64 i = 0; i < count; ++i)
 		a->data[i + a->count] = ptr[i];
-	a->count += count;
+	a->count = new_count;
 }
 
 template <typename T>
@@ -716,6 +717,63 @@ void array_append(Array<T> *a, const T *begin, const T *end) {
 template <typename T>
 void array_append(Array<T> *a, const Array_View<T> &v) {
 	array_append(a, v->data, v->count);
+}
+
+template <typename T>
+T *array_addn(Array<T> *a, s32 count) {
+	s64 new_count = a->count + count;
+	if (new_count > a->capacity) {
+		s64 n = array_get_grow_capacity(a->capacity, count);
+		array_resize(a, n);
+	}
+	T *ptr = a->data + a->count;
+	a->count = new_count;
+	return ptr;
+}
+
+template <typename T>
+T *array_find(Array<T> *a, const T &v) {
+	T *res = nullptr;
+	for (s64 index = 0; index < a->count; ++index) {
+		auto elem = a->data + index;
+		if (*elem == v) {
+			res = elem;
+			break;
+		}
+	}
+	return res;
+}
+
+template <typename T>
+void array_insert(Array<T> *a, s64 index, const T &v) {
+	assert(index < a->count);
+	T t = a->data[index];
+	array_add(a, t);
+	array->data[index] = v;
+}
+
+template <typename T>
+T *array_insert(Array<T> *a, s64 index) {
+	assert(index < a->count);
+	T t = a->data[index];
+	array_add(a, t);
+	return array->data + index;
+}
+
+template <typename T>
+void array_insert_seq(Array<T> *a, s64 index, const T &v) {
+	assert(index < a->count);
+	array_add(a);
+	memmove(a->data + index + 1, a->data + index, (a->count - index) * sizeof(T));
+	a->data[index] = v;
+}
+
+template <typename T>
+T *array_insert_seq(Array<T> *a, s64 index) {
+	assert(index < a->count);
+	array_add(a);
+	memmove(a->data + index + 1, a->data + index, (a->count - index) * sizeof(T));
+	return a->data + index;
 }
 
 template <typename T, typename... Args>
