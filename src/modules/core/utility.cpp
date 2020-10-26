@@ -63,13 +63,82 @@ bool is_binary_numeral(u32 codepoint) {
 	return codepoint == '0' || codepoint == '1';
 }
 
-bool parse_integer(const String string, s64 *out) {
+bool parse_unsigned_integer(const String string, u64 *out) {
+	if (!string.count) return false;
+
+	s64 index = 0;
+	s32 base = 10;
+
+	if (string[index] == '0') {
+		index += 1;
+
+		if (index < string.count) {
+			switch (string[index]) {
+			case 'x':
+				index += 1;
+				base = 16;
+				break;
+			case 'h':
+				index += 1;
+				base = 16;
+				break;
+			case 'd':
+				index += 1;
+				base = 10;
+				break;
+			case 'o':
+				index += 1;
+				base = 8;
+				break;
+			case 'b':
+				index += 1;
+				base = 2;
+				break;
+			}
+		}
+	}
+
+	u64 value = 0;
+	u8 code;
+	for (; index < string.count; index += 1) {
+		code = string[index];
+
+		if (is_numeral(code)) {
+			if ((base == 10 || base == 16) ||
+				(is_oct_numeral(code) && base == 8) ||
+				(is_binary_numeral(code) && base == 2))
+				value = value * base + (code - '0');
+			else
+				break;
+		}
+		else if (base == 16) {
+			if (code >= 'a' && code <= 'f') {
+				value = value * base + (code - 'a') + 10;
+			}
+			else if (code >= 'A' && code <= 'F') {
+				value = value * base + (code - 'A') + 10;
+			}
+			else {
+				break;
+			}
+		}
+		else {
+			break;
+		}
+	}
+
+	*out = value;
+	return index >= string.count;
+}
+
+bool parse_integer(const String string, s64 *out, bool *is_signed) {
 	if (!string.count) return false;
 
 	s64 index = 0;
 
 	u8  code = string[index];
 	s64 sign = code == '-' ? -1 : 1;
+	*is_signed = (sign == -1);
 	if (code == '-' || code == '+') index += 1;
 
 	if (index >= string.count) return false;
@@ -139,13 +208,14 @@ bool parse_integer(const String string, s64 *out) {
 	return index >= string.count;
 }
 
-bool parse_real(const String string, r64 *out) {
+bool parse_real(const String string, r64 *out, bool *is_signed) {
 	if (!string.count) return false;
 
 	s64 index = 0;
 
 	u8  code = string[index];
 	r64 sign = code == '-' ? -1 : 1;
+	*is_signed = (code == '-');
 	if (code == '-' || code == '+') index += 1;
 
 	bool invalid_num = (index >= string.count);
@@ -567,22 +637,28 @@ Token tokenizer_next_token(Tokenizer_State *tokenizer) {
 		if (count) {
 			r64 rval;
 			s64 ival;
-			if (parse_integer(token.content, &ival)) {
+			u64 uval;
+			bool is_signed;
+			if (parse_integer(token.content, &ival, &is_signed)) {
 				token.kind = Token_Kind_INTEGER_LITERAL;
-				token.value = ival;
+				if (is_signed)
+					uval = (u64)ival;
+				else
+					parse_unsigned_integer(token.content, &uval);
+				token.value = Value(ival, uval, is_signed);
 			}
-			else if (parse_real(token.content, &rval)) {
+			else if (parse_real(token.content, &rval, &is_signed)) {
 				token.kind = Token_Kind_REAL_LITERAL;
-				token.value = rval;
+				token.value = Value(rval, is_signed);
 			}
 			else {
 				if (string_match(token.content, "true")) {
 					token.kind = Token_Kind_INTEGER_LITERAL;
-					token.value = (s64)1;
+					token.value = Value(1, 1, false);
 				}
 				else if (string_match(token.content, "false")) {
 					token.kind = Token_Kind_INTEGER_LITERAL;
-					token.value = (s64)0;
+					token.value = Value(0, 0, false);
 				}
 				else {
 					token.kind = Token_Kind_IDENTIFIER;
@@ -887,10 +963,19 @@ inline bool parse_require_token(Deserialize_State *w, String string) {
 }
 
 template <typename T>
-inline bool parse_require_integral(Deserialize_State *w, T *d) {
+inline bool parse_require_integral(Deserialize_State *w, T *d, bool is_signed) {
 	auto t = parse_next(w);
 	if (t && t->kind == Token_Kind_INTEGER_LITERAL) {
-		*d = (T)t->value.integer;
+		if (is_signed) {
+			*d = (T)t->value.integer;
+		} else {
+			if (!t->value.is_signed) {
+				*d = (T)t->value.uinteger;
+			} else {
+				parsing_error(w, Token_Kind_INTEGER_LITERAL);
+				return false;
+			}
+		}
 		return true;
 	}
 	parsing_error(w, Token_Kind_INTEGER_LITERAL);
@@ -924,20 +1009,20 @@ inline bool parse_require_string(Deserialize_State *w, String *d) {
 	return false;
 }
 
-template <typename Type, typename Proc>
-bool parse_basic_array(Proc proc, Deserialize_State *w, Type *data, s64 count) {
+template <typename Type, typename Proc, typename ...ExtraParams>
+bool parse_basic_array(Proc proc, Deserialize_State *w, Type *data, s64 count, ExtraParams... params) {
 	if (count == -1) {
-		return proc(w, data);
+		return proc(w, data, params...);
 	} else {
 		if (parse_require_token(w, Token_Kind_OPEN_SQUARE_BRACKET)) {
 			for (s64 i = 0; i < count - 1; ++i) {
-				if (!proc(w, data) ||
+				if (!proc(w, data, params...) ||
 					!parse_require_token(w, Token_Kind_COMMA)) {
 					return false;
 				}
 				data += 1;
 			}
-			return proc(w, data) && parse_require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET);
+			return proc(w, data, params...) && parse_require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET);
 		}
 	}
 	return false;
@@ -1020,7 +1105,7 @@ bool parse_dynamic_array(Deserialize_State *w, const Type_Info_Dynamic_Array *in
 	array->data = nullptr;
 
 	if (!parse_require_token(w, Token_Kind_OPEN_CURLY_BRACKET) ||
-		!parse_require_integral<s64>(w, &array->count) ||
+		!parse_require_integral<s64>(w, &array->count, true) ||
 		!parse_require_token(w, Token_Kind_COMMA)) {
 		return false;
 	}
@@ -1036,7 +1121,7 @@ bool parse_array_view(Deserialize_State *w, const Type_Info_Array_View *info, ch
 	array->data = nullptr;
 
 	if (!parse_require_token(w, Token_Kind_OPEN_CURLY_BRACKET) ||
-		!parse_require_integral<s64>(w, &array->count) ||
+		!parse_require_integral<s64>(w, &array->count, true) ||
 		!parse_require_token(w, Token_Kind_COMMA)) {
 		return false;
 	}
@@ -1072,17 +1157,17 @@ bool deserialize_fmt_text(Deserialize_State *w, String name, const Type_Info *in
 	}
 
 	switch (info->id) {
-	case Type_Id_S8:  if (!parse_basic_array<s8 >(parse_require_integral<s8 >, w, (s8  *)data, array_count)) return false; break;
-	case Type_Id_S16: if (!parse_basic_array<s16>(parse_require_integral<s16>, w, (s16 *)data, array_count)) return false; break;
-	case Type_Id_S32: if (!parse_basic_array<s32>(parse_require_integral<s32>, w, (s32 *)data, array_count)) return false; break;
-	case Type_Id_S64: if (!parse_basic_array<s64>(parse_require_integral<s64>, w, (s64 *)data, array_count)) return false; break;
-	case Type_Id_U8:  if (!parse_basic_array<u8 >(parse_require_integral<u8 >, w, (u8  *)data, array_count)) return false; break;
-	case Type_Id_U16: if (!parse_basic_array<u16>(parse_require_integral<u16>, w, (u16 *)data, array_count)) return false; break;
-	case Type_Id_U32: if (!parse_basic_array<u32>(parse_require_integral<u32>, w, (u32 *)data, array_count)) return false; break;
-	case Type_Id_U64: if (!parse_basic_array<u64>(parse_require_integral<u64>, w, (u64 *)data, array_count)) return false; break;
+	case Type_Id_S8:  if (!parse_basic_array<s8 >(parse_require_integral<s8 >, w, (s8  *)data, array_count, true)) return false; break;
+	case Type_Id_S16: if (!parse_basic_array<s16>(parse_require_integral<s16>, w, (s16 *)data, array_count, true)) return false; break;
+	case Type_Id_S32: if (!parse_basic_array<s32>(parse_require_integral<s32>, w, (s32 *)data, array_count, true)) return false; break;
+	case Type_Id_S64: if (!parse_basic_array<s64>(parse_require_integral<s64>, w, (s64 *)data, array_count, true)) return false; break;
+	case Type_Id_U8:  if (!parse_basic_array<u8 >(parse_require_integral<u8 >, w, (u8  *)data, array_count, false)) return false; break;
+	case Type_Id_U16: if (!parse_basic_array<u16>(parse_require_integral<u16>, w, (u16 *)data, array_count, false)) return false; break;
+	case Type_Id_U32: if (!parse_basic_array<u32>(parse_require_integral<u32>, w, (u32 *)data, array_count, false)) return false; break;
+	case Type_Id_U64: if (!parse_basic_array<u64>(parse_require_integral<u64>, w, (u64 *)data, array_count, false)) return false; break;
 	case Type_Id_R32: if (!parse_basic_array<r32>(parse_require_real<r32>, w, (r32 *)data, array_count)) return false; break;
 	case Type_Id_R64: if (!parse_basic_array<r64>(parse_require_real<r64>, w, (r64 *)data, array_count)) return false; break;
-	case Type_Id_CHAR: if (!parse_basic_array<char>(parse_require_integral<char>, w, (char *)data, array_count)) return false; break;
+	case Type_Id_CHAR: if (!parse_basic_array<char>(parse_require_integral<char>, w, (char *)data, array_count, true)) return false; break;
 	case Type_Id_STRING: if (!parse_basic_array(parse_require_string, w, (String *)data, array_count)) return false; break;
 
 	case Type_Id_VOID: invalid_code_path(); break;

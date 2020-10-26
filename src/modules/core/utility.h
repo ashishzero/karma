@@ -139,8 +139,10 @@ enum Value_Kind {
 struct Value {
 	Value_Kind kind;
 
+	bool			is_signed;
 	r64             real;
 	s64             integer;
+	u64				uinteger;
 	Utf32_Codepoint codepoint;
 	String          string;
 
@@ -148,14 +150,17 @@ struct Value {
 		kind = Value_Kind_NONE;
 	}
 
-	inline Value(r64 data) {
+	inline Value(r64 data, bool _signed) {
 		kind = Value_Kind_REAL;
+		is_signed = _signed;
 		real = data;
 	}
 
-	inline Value(s64 data) {
+	inline Value(s64 data, u64 udata, bool _signed) {
 		kind = Value_Kind_INTEGER;
+		is_signed = _signed;
 		integer = data;
+		uinteger = udata;
 	}
 
 	inline Value(Utf32_Codepoint data) {
@@ -173,8 +178,9 @@ bool is_numeral(u32 codepoint);
 bool is_hex_numeral(u32 codepoint);
 bool is_oct_numeral(u32 codepoint);
 bool is_binary_numeral(u32 codepoint);
-bool parse_integer(const String string, s64 *out);
-bool parse_real(const String string, r64 *out);
+bool parse_integer(const String string, s64 *out, bool *is_signed);
+bool parse_unsigned_integer(const String string, u64 *out);
+bool parse_real(const String string, r64 *out, bool *is_signed);
 
 enum Token_Kind {
 	Token_Kind_NONE = 0,
