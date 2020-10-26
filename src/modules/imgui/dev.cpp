@@ -401,7 +401,7 @@ void draw_audio_visualizer() {
 
 void dev_render_frame() {
 	if (should_present) {
-		ImGui::Begin("Debug Information");
+		ImGui::Begin("Debug Information", &should_present);
 
 		Vec2 cursor = ImGui::GetIO().MousePos;
 

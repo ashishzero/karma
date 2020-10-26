@@ -82,7 +82,7 @@ struct Entity_By_Type {
 	Array<Static_Body> static_body;
 };
 
-struct World {
+struct World { // TODO: Call this something better
 	Array<Entity *> entity;
 	Entity_By_Type by_type;
 };
