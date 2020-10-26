@@ -77,7 +77,22 @@ bool collider_vs_collider_dynamic(Collider &a, Collider &b, Vec2 dp, Vec2 *norma
 	return false;
 }
 
+struct Entity_By_Type {
+	Array<Player> player;
+	Array<Static_Body> static_body;
+};
+
+struct World {
+	Array<Entity *> entity;
+	Entity_By_Type by_type;
+};
+
 #include <time.h>
+u64 generate_unique_entity_id() {
+	static Random_Series series = random_init(context.id, system_get_counter());
+	return random_get(&series) | ((time(0) & 0xffffffff) << 32);
+}
+
 
 int karma_user_zero() {
 
@@ -112,12 +127,8 @@ int karma_user_zero() {
 
 	r32 window_w = 0, window_h = 0;
 
-	Random_Series entity_id_series = random_init(system_get_counter(), system_get_counter());
-
-#define entity_id random_get(&entity_id_series) | ((time(0) & 0xffffffff) << 32)
-
 	Player player;
-	player.id = entity_id;
+	player.id = generate_unique_entity_id();
 	player.type = Entity::PLAYER;
 	player.position = vec2(0);
 	player.color = vec4(1);
@@ -140,7 +151,7 @@ int karma_user_zero() {
 		array_resize(&colliders, 5);
 		colliders.count = colliders.capacity;
 
-		objects[0].id = entity_id;
+		objects[0].id = generate_unique_entity_id();
 		objects[0].type = Entity::STATIC_BODY;
 		objects[0].color = vec4(0, 1, 1);
 		objects[0].position = vec2(-5.6f, 0.4f);
@@ -155,7 +166,7 @@ int karma_user_zero() {
 		memcpy(polygon->vertices, points, sizeof(points));
 		collider_translate(polygon, objects[0].position);
 
-		objects[1].id = entity_id;
+		objects[1].id = generate_unique_entity_id();
 		objects[1].type = Entity::STATIC_BODY;
 		objects[1].color = vec4(0, 1, 1);
 		objects[1].position = vec2(5);
@@ -170,7 +181,7 @@ int karma_user_zero() {
 		circle->radius = 1.23f;
 		collider_translate(circle, objects[1].position);
 
-		objects[2].id = entity_id;
+		objects[2].id = generate_unique_entity_id();
 		objects[2].type = Entity::STATIC_BODY;
 		objects[2].color = vec4(0, 1, 1);
 		objects[2].position = vec2(6.5f, -0.5f);
@@ -185,7 +196,7 @@ int karma_user_zero() {
 		rect->max = vec2(2.5f, 3.5f);
 		collider_translate(rect, objects[2].position);
 
-		objects[3].id = entity_id;
+		objects[3].id = generate_unique_entity_id();
 		objects[3].type = Entity::STATIC_BODY;
 		objects[3].color = vec4(0, 1, 1);
 		objects[3].position = vec2(-1, -5);

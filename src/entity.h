@@ -27,7 +27,7 @@ struct Entity {
 	};
 
 	attribute(read-only)  u64  id;
-						  Type type;
+	attribute(read-only)  Type type;
 						  Vec2 position;
 };
 
