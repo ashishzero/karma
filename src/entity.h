@@ -2,6 +2,10 @@
 #include "modules/core/lin_maths.h"
 #include "modules/core/reflection.h"
 
+struct Null {
+	u32 _placeholder;
+};
+
 enum Collider_Type : u32 {
 	Collider_Null,
 	Collider_Circle,
@@ -49,8 +53,8 @@ struct Entity {
 typedef u32 Collider_Key;
 
 struct Collider_Group {
-	Collider_Key key;
 	u32 count;
+	Collider_Key key;
 };
 
 struct Player : public Entity {
@@ -63,8 +67,8 @@ struct Player : public Entity {
 };
 
 struct Static_Body : public Entity {
-	attribute(color) Vec4 color;
-	Collider_Group collider_group;
+	attribute(color)			Vec4 color;
+	attribute(no-serialize)		Collider_Group collider_group;
 };
 
 struct Camera {

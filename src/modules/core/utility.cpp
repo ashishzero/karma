@@ -1144,7 +1144,7 @@ bool parse_dynamic_array(Deserialize_State *w, const Type_Info_Dynamic_Array *in
 	}
 
 	array->capacity = array->count;
-	array->data = (char *)memory_reallocate(array->data, array->capacity * info->type->size, array->allocator);
+	array->data = (char *)memory_allocate(array->capacity * info->type->size, array->allocator);
 
 	return deserialize_fmt_text(w, "", info->type, array->data, array->count) && parse_require_token(w, Token_Kind_CLOSE_CURLY_BRACKET);
 }
@@ -1158,7 +1158,7 @@ bool parse_array_view(Deserialize_State *w, const Type_Info_Array_View *info, ch
 		!parse_require_token(w, Token_Kind_COMMA)) {
 		return false;
 	}
-	array->data = (char *)memory_reallocate(array->data, array->count * info->type->size);
+	array->data = (char *)memory_allocate(array->count * info->type->size);
 
 	return deserialize_fmt_text(w, "", info->type, array->data, array->count) && parse_require_token(w, Token_Kind_CLOSE_CURLY_BRACKET);
 }
@@ -1175,7 +1175,7 @@ bool parse_recursive_array(Proc proc, Deserialize_State *w, const Type_Info *inf
 					!parse_require_token(w, Token_Kind_COMMA)) {
 					return false;
 				}
-				data += 1;
+				data += info->size;
 			}
 			return proc(w, (const Cast_Info *)info, data) && parse_require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET);
 		}

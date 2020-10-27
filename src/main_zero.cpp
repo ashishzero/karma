@@ -101,15 +101,17 @@ struct Scene {
 	Array<Collider> collider;
 	Allocator collider_allocator;
 	Random_Series entity_id_series;
+	Null null_collider;
 };
 
 Scene scene_create() {
 	Scene scene;
 	scene.collider_allocator = context.allocator;
 	scene.entity_id_series = random_init(context.id, system_get_counter());
+	scene.null_collider._placeholder = 0;
 	Collider *null_collider = array_add(&scene.collider);
 	null_collider->type = Collider_Null;
-	null_collider->handle = nullptr;
+	null_collider->handle = &scene.null_collider;
 	return scene;
 }
 
@@ -171,7 +173,8 @@ void scene_new_entity(Scene *scene, Entity *entity, Vec2 position) {
 Collider_Key scene_create_collider(Scene *scene) {
 	Collider_Key key = (Collider_Key)scene->collider.count;
 	Collider *collider = array_add(&scene->collider);
-	memset(collider, 0, sizeof(*collider));
+	collider->type = Collider_Null;
+	collider->handle = &scene->null_collider;
 	return key;
 }
 
@@ -180,38 +183,50 @@ Collider_Group scene_create_collider_group(Scene *scene, u32 count) {
 	group.count = count;
 	group.key = (Collider_Key)scene->collider.count;
 	Collider *collider = array_addn(&scene->collider, group.count);
-	memset(collider, 0, sizeof(*collider) * group.count);
+	for (u32 index = 0; index < group.count; ++index, ++collider) {
+		collider->type = Collider_Null;
+		collider->handle = &scene->null_collider;
+	}
 	return group;
-}
-
-void scene_destroy_collider(Scene *scene, Collider_Key key) {
-	// TODO: Remove from array as well
-	Collider &collider = scene->collider[key];
-	memory_free(collider.handle, scene->collider_allocator);
-}
-
-void scene_destroy_collider_group(Scene *scene, Collider_Group &group) {
-	// TODO: Remove from array as well
-	Collider *collider = &scene->collider[group.key];
-	for (u32 index = 0; index < group.count; ++index, ++collider)
-		memory_free(collider->handle, scene->collider_allocator);
-}
-
-Collider *scene_collider_ref(Scene *scene, Collider_Key key) {
-	return &scene->collider[key];
 }
 
 struct Collider_Attachment {
 	u32 polygon_n;
 };
 
+void *scene_attach_collider_type(Scene *scene, Collider_Key key, Collider_Type type, Collider_Attachment *attachment);
+
+void scene_destroy_collider(Scene *scene, Collider_Key *key) {
+	// TODO: Remove key from array
+	scene_attach_collider_type(scene, *key, Collider_Null, 0);
+	*key = 0;
+}
+
+void scene_destroy_collider_group(Scene *scene, Collider_Group *group) {
+	Collider_Key key = group->key;
+	for (u32 index = 0; index < group->count; ++index) {
+		// TODO: Remove key from array
+		scene_attach_collider_type(scene, key + index, Collider_Null, 0);
+	}
+	group->count = 0;
+	group->key = 0;
+}
+
+Collider *scene_collider_ref(Scene *scene, Collider_Key key) {
+	return &scene->collider[key];
+}
+
 void *scene_attach_collider_type(Scene *scene, Collider_Key key, Collider_Type type, Collider_Attachment *attachment) {
 	Collider &collider = scene->collider[key];
+
+	if (collider.type != Collider_Null) {
+		memory_free(collider.handle);
+	}
+
 	collider.type = type;
-	if (collider.handle) scene_destroy_collider(scene, key);
 
 	switch (type) {
-	case Collider_Null: collider.handle = nullptr; break;
+	case Collider_Null: collider.handle = &scene->null_collider; break;
 	case Collider_Circle: collider.handle = memory_allocate(sizeof(Circle)); break;
 	case Collider_Mm_Rect: collider.handle = memory_allocate(sizeof(Mm_Rect)); break;
 	case Collider_Capsule: collider.handle = memory_allocate(sizeof(Capsule)); break;
@@ -224,13 +239,61 @@ void *scene_attach_collider_type(Scene *scene, Collider_Key key, Collider_Type t
 }
 #define scene_attach_collider(scene, key, type, attachment) (type *)scene_attach_collider_type(scene, key, Collider_##type, attachment)
 
-void serialize_entity(Entity *entity, Ostream *out) {
+void serialize_collider(Scene *scene, Collider &collider, Ostream *out) {
+	switch (collider.type) {
+	case Collider_Null: {
+		serialize_fmt_text(out, "collider_data", reflect_info<Null>(), (char *)collider.handle);
+	} break;
+
+	case Collider_Circle: {
+		serialize_fmt_text(out, "collider_data", reflect_info<Circle>(), (char *)collider.handle);
+	} break;
+
+	case Collider_Mm_Rect: {
+		serialize_fmt_text(out, "collider_data", reflect_info<Mm_Rect>(), (char *)collider.handle);
+	} break;
+
+	case Collider_Capsule: {
+		serialize_fmt_text(out, "collider_data", reflect_info<Capsule>(), (char *)collider.handle);
+	} break;
+
+	case Collider_Polygon: {
+		Polygon *polygon = collider_get_shape(&collider, Polygon);
+		Array_View<Vec2> points;
+		points.count = polygon->vertex_count;
+		points.data = polygon->vertices;
+		serialize_fmt_text(out, "collider_data", reflect_info(points), (char *)&points);
+	} break;
+
+		invalid_default_case();
+	}
+}
+
+void serialize_collider_group(Scene *scene, Collider_Group &group, Ostream *out) {
+	serialize_fmt_text(out, "collider_group_count", reflect_info(group.count), (char *)&group.count);
+	serialize_fmt_text_next(out);
+
+	for (u32 index = 0; index < group.count; ++index) {
+		auto collider = scene_collider_ref(scene, group.key + index);	
+		serialize_fmt_text(out, "collider_type", reflect_info<Collider_Type>(), (char *)&collider->type);
+		serialize_fmt_text_next(out);
+		serialize_collider(scene, *collider, out);
+	}
+}
+
+void serialize_entity(Scene *scene, Entity *entity, Ostream *out) {
 	serialize_fmt_text(out, "type", reflect_info<Entity_Type>(), (char *)&entity->type);
 	serialize_fmt_text_next(out);
 
 	switch (entity->type) {
 		case Entity_Player: {
-			serialize_fmt_text(out, "entity", reflect_info<Player>(), (char *)entity);
+			serialize_fmt_text(out, "player", reflect_info<Player>(), (char *)entity);
+		} break;
+
+		case Entity_Static_Body: {
+			serialize_fmt_text(out, "static_body", reflect_info<Static_Body>(), (char *)entity);
+			serialize_fmt_text_next(out);
+			serialize_collider_group(scene, ((Static_Body *)entity)->collider_group, out);
 		} break;
 
 		invalid_default_case();
@@ -238,13 +301,88 @@ void serialize_entity(Entity *entity, Ostream *out) {
 
 }
 
-bool deserialize_entity(Entity *entity, Deserialize_State *state) {
+bool deserialize_collider(Scene *scene, Collider_Type type, Collider_Key key, Deserialize_State *state) {
+	bool result = false;
+
+	switch (type) {
+	case Collider_Null: {
+		auto collider = scene_attach_collider(scene, key, Null, 0);
+		Null temp; // we don't need to get value for null collider
+		result = deserialize_fmt_text(state, "collider_data", reflect_info<Null>(), (char *)&temp);
+	} break;
+
+	case Collider_Circle: {
+		auto collider = scene_attach_collider(scene, key, Circle, 0);
+		result = deserialize_fmt_text(state, "collider_data", reflect_info<Circle>(), (char *)collider);
+	} break;
+
+	case Collider_Mm_Rect: {
+		auto collider = scene_attach_collider(scene, key, Mm_Rect, 0);
+		result = deserialize_fmt_text(state, "collider_data", reflect_info<Mm_Rect>(), (char *)collider);
+	} break;
+
+	case Collider_Capsule: {
+		auto collider = scene_attach_collider(scene, key, Capsule, 0);
+		result = deserialize_fmt_text(state, "collider_data", reflect_info<Capsule>(), (char *)collider);
+	} break;
+
+	case Collider_Polygon: {
+		Array_View<Vec2> points;
+		
+		scoped_temporary_allocation();
+		auto mark = push_temporary_allocator();
+		result = deserialize_fmt_text(state, "collider_data", reflect_info(points), (char *)&points);
+		pop_temporary_allocator(mark);
+
+		if (!result) break;
+
+		Collider_Attachment attachment;
+		attachment.polygon_n = (u32)points.count;
+		auto collider = scene_attach_collider(scene, key, Polygon, &attachment);
+		collider->vertex_count = (u32)points.count;
+		memcpy(collider->vertices, points.data, sizeof(Vec2) * points.count);
+	} break;
+
+		invalid_default_case();
+	}
+
+	return result;
+}
+
+bool deserialize_collider_group(Scene *scene, Collider_Group *group, Deserialize_State *state) {
+	u32 count;
+	if (!deserialize_fmt_text(state, "collider_group_count", reflect_info(count), (char *)&count))
+		return false;
+
+	*group = scene_create_collider_group(scene, count);
+	Collider_Type type;
+
+	for (u32 index = 0; index < group->count; ++index) {
+		if (!deserialize_fmt_text(state, "collider_type", reflect_info<Collider_Type>(), (char *)&type))
+			return false;
+		if (!deserialize_collider(scene, type, group->key + index, state))
+			return false;
+	}
+	return true;
+}
+
+bool deserialize_entity(Scene *scene, Entity *entity, Deserialize_State *state) {
 	bool result = deserialize_fmt_text(state, "type", reflect_info<Entity_Type>(), (char *)&entity->type);
 	if (!result) return false;
 
 	switch (entity->type) {
 		case Entity_Player: {
-			result = deserialize_fmt_text(state, "entity", reflect_info<Player>(), (char *)entity);
+			result = deserialize_fmt_text(state, "player", reflect_info<Player>(), (char *)entity);
+			auto player = (Player *)entity;
+			player->transformed_collider = scene_create_collider(scene);
+			scene_attach_collider(scene, player->transformed_collider, Circle, 0);
+		} break;
+
+		case Entity_Static_Body: {
+			if (!deserialize_fmt_text(state, "static_body", reflect_info<Static_Body>(), (char *)entity))
+				return false;
+			Collider_Group *group = &((Static_Body *)entity)->collider_group;
+			result = deserialize_collider_group(scene, group, state);
 		} break;
 
 		invalid_default_case();
@@ -306,6 +444,7 @@ int karma_user_zero() {
 
 		object = scene_add_static_body(&scene);
 		scene_new_entity(&scene, object, vec2(-5.6f, 0.4f));
+		object->id = 6888174093586976255;
 		object->color = vec4(0, 1, 1);
 		object->collider_group = scene_create_collider_group(&scene, 1);
 
@@ -625,7 +764,7 @@ int karma_user_zero() {
 #if 1
 		if (ImGui::Button("Save")) {
 			Ostream out;
-			serialize_entity(player, &out);
+			serialize_entity(&scene, player, &out);
 			System_File file;
 			if (system_open_file(tprintf("temp/%zu.entity", player->id), File_Operation_NEW, &file)) {
 				ostream_build_out_file(&out, &file);
@@ -635,6 +774,8 @@ int karma_user_zero() {
 		}
 
 		if (ImGui::Button("Load")) {
+			scene_destroy_collider(&scene, &player->transformed_collider);
+
 			Tokenization_Status status;
 			auto content = system_read_entire_file(tprintf("temp/%zu.entity", player->id));
 			auto tokens = tokenize(content, &status);
@@ -642,7 +783,7 @@ int karma_user_zero() {
 				Deserialize_Error_Info error;
 				auto state = deserialize_begin(tokens);
 				
-				if (!deserialize_entity(player, &state)) {
+				if (!deserialize_entity(&scene, player, &state)) {
 					system_log(LOG_ERROR, "Load", "Failed to load player: %s [%zd:%zd]. Expected: %s, Got: %s", 
 						state.error.string, state.error.token.row, state.error.token.column, 
 						enum_string(state.error.expected).data, enum_string(state.error.token.kind).data);
@@ -660,8 +801,45 @@ int karma_user_zero() {
 
 		ImGui::End();
 
-		ImGui::Begin("Camera");
-		editor_draw(camera);
+		ImGui::Begin("Static Body");
+		editor_draw(scene.by_type.static_body[0]);
+		
+		if (ImGui::Button("Save Static Body")) {
+			Ostream out;
+			serialize_entity(&scene, &scene.by_type.static_body[0], &out);
+			System_File file;
+			if (system_open_file(tprintf("temp/%zu.entity", scene.by_type.static_body[0].id), File_Operation_NEW, &file)) {
+				ostream_build_out_file(&out, &file);
+			}
+			system_close_file(&file);
+			ostream_free(&out);
+		}
+
+		if (ImGui::Button("Load Static Body")) {
+			scene_destroy_collider_group(&scene, &scene.by_type.static_body[0].collider_group);
+
+			Tokenization_Status status;
+			auto content = system_read_entire_file(tprintf("temp/%zu.entity", scene.by_type.static_body[0].id));
+			auto tokens = tokenize(content, &status);
+			if (status.result == Tokenization_Result_SUCCESS) {
+				Deserialize_Error_Info error;
+				auto state = deserialize_begin(tokens);
+
+				if (!deserialize_entity(&scene, &scene.by_type.static_body[0], &state)) {
+					system_log(LOG_ERROR, "Load", "Failed to load static body: %s [%zd:%zd]. Expected: %s, Got: %s",
+						state.error.string, state.error.token.row, state.error.token.column,
+						enum_string(state.error.expected).data, enum_string(state.error.token.kind).data);
+				}
+
+				deserialize_end(&state);
+			}
+			else {
+				system_log(LOG_ERROR, "Load", "Failed to load static body");
+			}
+			memory_free(tokens.data);
+			memory_free(content.data);
+		}
+		
 		ImGui::End();
 
 #if defined(BUILD_IMGUI)
