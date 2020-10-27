@@ -271,10 +271,10 @@ void serialize_collider(Scene *scene, Collider &collider, Ostream *out) {
 
 void serialize_collider_group(Scene *scene, Collider_Group &group, Ostream *out) {
 	serialize_fmt_text(out, "collider_group_count", reflect_info(group.count), (char *)&group.count);
-	serialize_fmt_text_next(out);
 
 	for (u32 index = 0; index < group.count; ++index) {
 		auto collider = scene_collider_ref(scene, group.key + index);	
+		serialize_fmt_text_next(out);
 		serialize_fmt_text(out, "collider_type", reflect_info<Collider_Type>(), (char *)&collider->type);
 		serialize_fmt_text_next(out);
 		serialize_collider(scene, *collider, out);
@@ -571,6 +571,13 @@ int karma_user_zero() {
 					controller.y = -value;
 					break;
 				}
+			}
+
+			if (event.type & Event_Type_CONTROLLER_AXIS) {
+				if (event.controller_axis.symbol == Controller_Axis_LTHUMB_X)
+					controller.x = event.controller_axis.value;
+				else if (event.controller_axis.symbol == Controller_Axis_LTHUMB_Y)
+					controller.y = event.controller_axis.value;
 			}
 
 		}
