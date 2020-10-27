@@ -1086,7 +1086,7 @@ bool parse_struct(Deserialize_State *w, const Type_Info_Struct *info, char *data
 			}
 		}
 
-		if (!no_serialize && mem_version <= parsing_verion && parsing_verion <= mem_version_deprecated) {
+		if (!no_serialize && mem_version <= parsing_verion) {
 			if (string_match(mem->name, "anonymous")) {
 				if (!deserialize_fmt_text(w, "", mem->info, data + mem->offset, -1))
 					return false;
