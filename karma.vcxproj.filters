@@ -37,6 +37,7 @@
     <ClCompile Include="src\modules\core\utility.cpp" />
     <ClCompile Include="src\modules\core\karma_shared.cpp" />
     <ClCompile Include="src\modules\core\stb.cpp" />
+    <ClCompile Include="src\scene.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\modules\core\directx\dx_error.h" />
@@ -81,6 +82,8 @@
     <ClInclude Include="src\asset.h" />
     <ClInclude Include="src\modules\core\thread_pool.h" />
     <ClInclude Include="src\modules\core\stb_rect_pack.h" />
+    <ClInclude Include="src\scene.h" />
+    <ClInclude Include="src\colliders.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitattributes" />

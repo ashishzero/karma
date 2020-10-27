@@ -4,7 +4,7 @@ rem Generate reflection data
 rem The generated file should be output in the directory *.generated* in the source directory
 rem The header file is given entension *.typeinfo*
 
-tools\reflection\reflection.exe include: 'src/' build: 'src/modules/core/utility.h' build: 'src/entity.h' output: 'src/.generated/reflection.typeinfo'
+tools\reflection\reflection.exe include: 'src/' build: 'src/entity.h' output: 'src/.generated/entity.typeinfo'
 tools\reflection\reflection.exe include: 'src/' build: 'src/modules/core/lin_maths_types.h' output: 'src/.generated/lin_maths_types.typeinfo'
 tools\reflection\reflection.exe include: 'src/' build: 'src/modules/core/utility.h' output: 'src/.generated/utility.typeinfo'
 tools\reflection\reflection.exe include: 'src/' build: 'src/asset.h' output: 'src/.generated/asset.typeinfo'
