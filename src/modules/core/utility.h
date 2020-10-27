@@ -279,6 +279,7 @@ Array_View<Token> tokenize(String string, Tokenization_Status *status);
 //
 
 void serialize_fmt_text(Ostream *out, String name, const Type_Info *info, char *data);
+void serialize_fmt_text_next(Ostream *out);
 
 struct Deserialize_Error_Info {
 	Token token;

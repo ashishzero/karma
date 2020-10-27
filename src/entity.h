@@ -41,9 +41,9 @@ enum Entity_Type {
 typedef u64 Entity_Id;
 
 struct Entity {
-	attribute(read-only)  Entity_Id id;
-	attribute(read-only)  Entity_Type type;
-						  Vec2 position;
+	attribute(read-only)				Entity_Id id;
+	attribute(read-only, no-serialize)  Entity_Type type;
+										Vec2 position;
 };
 
 typedef u32 Collider_Key;
@@ -67,7 +67,7 @@ struct Static_Body : public Entity {
 	Collider_Group collider_group;
 };
 
-struct attribute(camera) Camera {
+struct Camera {
 	Vec2 position;
 	r32 distance;
 };

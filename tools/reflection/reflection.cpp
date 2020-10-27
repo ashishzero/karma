@@ -657,6 +657,10 @@ void reflection_of_templated_struct(Ostream *stream, CXCursor cursor, Array_View
 }
 
 struct Output_Info {
+	Array<String> reflected_enum_names;
+	Array<String> reflected_struct_names;
+	Array<String> reflected_union_names;
+
 	Ostream reflected_enum;
 	Ostream reflected_struct;
 };
@@ -862,6 +866,14 @@ void ast_visit_tempalted_struct(CXCursor cursor) {
 	if (base) clang_disposeString(base_spelling);
 }
 
+bool ast_name_present_in_array(Array_View<String> names, const String name) {
+	for (auto &n : names) {
+		if (string_match(n, name))
+			return true;
+	}
+	return false;
+}
+
 CXChildVisitResult ast_visitor(CXCursor cursor, CXCursor parent, CXClientData client_data) {
 	auto kind = clang_getCursorKind(cursor);
 	auto out  = (Output_Info *)context.data;
@@ -871,29 +883,39 @@ CXChildVisitResult ast_visitor(CXCursor cursor, CXCursor parent, CXClientData cl
 	// Ignore declarations
 	if (!clang_isCursorDefinition(cursor)) return CXChildVisit_Continue;
 
+	auto spelling = clang_getCursorSpelling(cursor);
+	const char *name = clang_getCString(spelling);
+	defer{
+		clang_disposeString(spelling);
+	};
+
 	switch (kind) {
 		case CXCursor_EnumDecl: {
-			ast_visit_enum(cursor);
-
-			return CXChildVisit_Continue;
+			if (!ast_name_present_in_array(out->reflected_enum_names, String(name, (s64)strlen(name)))) {
+				ast_visit_enum(cursor);
+				array_add(&out->reflected_enum_names, mprintf("%s", name));
+			}
 		} break;
 
 		case CXCursor_StructDecl: {
-			ast_visit_struct(cursor);
-
-			return CXChildVisit_Continue;
+			if (!ast_name_present_in_array(out->reflected_struct_names, String(name, (s64)strlen(name)))) {
+				ast_visit_struct(cursor);
+				array_add(&out->reflected_struct_names, mprintf("%s", name));
+			}
 		} break;
 
 		case CXCursor_UnionDecl: {
-			ast_visit_union(cursor);
-
-			return CXChildVisit_Continue;
+			if (!ast_name_present_in_array(out->reflected_union_names, String(name, (s64)strlen(name)))) {
+				ast_visit_union(cursor);
+				array_add(&out->reflected_union_names, mprintf("%s", name));
+			}
 		} break;
 
 		case CXCursor_ClassTemplate: {
-			ast_visit_tempalted_struct(cursor);
-
-			return CXChildVisit_Continue;
+			if (!ast_name_present_in_array(out->reflected_struct_names, String(name, (s64)strlen(name)))) {
+				ast_visit_tempalted_struct(cursor);
+				array_add(&out->reflected_struct_names, mprintf("%s", name));
+			}
 		} break;
 
 		default: {

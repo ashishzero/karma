@@ -709,7 +709,8 @@ template <typename Type, typename Cast>
 void serialize_text_basic(Ostream *out, Type *data, s64 count, const char *fmt) {
 	if (count == -1) {
 		ostream_write_formatted(out, fmt, (Cast)*data);
-	} else {
+	}
+	else {
 		ostream_write_formatted(out, "[ ");
 		for (s64 i = 0; i < count - 1; ++i) {
 			ostream_write_formatted(out, fmt, (Cast)*data);
@@ -726,7 +727,8 @@ void serialize_text_basic(Ostream *out, String *string, s64 count) {
 		ostream_write_formatted(out, "\"");
 		ostream_write_buffer(out, string->data, string->count);
 		ostream_write_formatted(out, "\"");
-	} else {
+	}
+	else {
 		ostream_write_formatted(out, "[ ");
 		for (s64 i = 0; i < count - 1; ++i) {
 			ostream_write_formatted(out, "\"");
@@ -755,23 +757,47 @@ void serialize_text_enum(Ostream *out, const Type_Info_Enum *info, char *data, i
 void serialize_text_struct(Ostream *out, const Type_Info_Struct *info, char *data, int tab_count) {
 	if (info->base) {
 		serialize_fmt_text(out, "", info->base, data, -1, tab_count);
+		ostream_write_formatted(out, "\n");
+		ostream_write_formatted(out, "%*s", tab_count, "");
 	}
+
+	u32 version = 0;
+
+	for (ptrsize attr_index = 0; attr_index < info->attribute_count; ++attr_index) {
+		const String &attr = info->attributes[attr_index];
+		if (string_starts_with(attr, "v:")) {
+			u64 num;
+			if (parse_unsigned_integer(string_substring(attr, 2, attr.count - 2), &num)) {
+				version = (u32)num;
+			}
+		}
+	}
+
+	ostream_write_formatted(out, "#%u", version);
 
 	for (ptrsize mem_index = 0; mem_index < info->member_count; ++mem_index) {
 		auto mem = info->members + mem_index;
+
 		bool no_serialize = false;
+		u32 mem_version = 0;
+		u32 mem_version_deprecated = MAX_UINT32;
 
 		for (ptrsize attr_index = 0; attr_index < mem->attribute_count; ++attr_index) {
 			if (string_match(mem->attributes[attr_index], "no-serialize")) {
 				no_serialize = true;
 				break;
+			} else if (string_starts_with(mem->attributes[attr_index], "v:")) {
+				sscanf(string_cstr(mem->attributes[attr_index]), "v:%u-%u", &mem_version, &mem_version_deprecated);
 			}
 		}
 
-		if (!no_serialize) {
+		assert(mem_version <= version); // Incremented member version but not struct version
+
+		if (!no_serialize && version <= mem_version_deprecated) {
 			if (string_match(mem->name, "anonymous")) {
 				serialize_fmt_text(out, "", mem->info, data + mem->offset, -1, tab_count);
-			} else {
+			}
+			else {
 				ostream_write_formatted(out, "\n");
 				serialize_fmt_text(out, mem->name, mem->info, data + mem->offset, -1, tab_count);
 			}
@@ -801,7 +827,8 @@ void serialize_text_union(Ostream *out, const Type_Info_Union *info, char *data,
 
 	if (string_match(write_mem->name, "anonymous")) {
 		serialize_fmt_text(out, "", write_mem->info, data, -1, tab_count);
-	} else {
+	}
+	else {
 		ostream_write_formatted(out, "\n");
 		serialize_fmt_text(out, write_mem->name, write_mem->info, data, -1, tab_count);
 	}
@@ -829,7 +856,8 @@ template <typename Cast_Info, typename Proc>
 void serialize_text_recursive(Proc proc, Ostream *out, const Type_Info *info, char *data, s64 array_count, int tab_count) {
 	if (array_count == -1) {
 		proc(out, (Cast_Info *)info, data, tab_count);
-	} else {
+	}
+	else {
 		ostream_write_formatted(out, "[ ");
 		for (s64 i = 0; i < array_count - 1; ++i) {
 			proc(out, (Cast_Info *)info, data, tab_count);
@@ -850,17 +878,17 @@ void serialize_fmt_text(Ostream *out, String name, const Type_Info *info, char *
 	}
 
 	switch (info->id) {
-	case Type_Id_S8 :  serialize_text_basic<s8 , s32>  (out,  (s8   *)data, array_count, "%d");  break;
-	case Type_Id_S16:  serialize_text_basic<s16, s32>  (out,  (s16  *)data, array_count, "%d");  break;
-	case Type_Id_S32:  serialize_text_basic<s32, s32>  (out,  (s32  *)data, array_count, "%d");  break;
-	case Type_Id_S64:  serialize_text_basic<s64, s64>  (out,  (s64  *)data, array_count, "%zd"); break;
-	case Type_Id_U8 :  serialize_text_basic<u8 , u32>  (out,  (u8   *)data, array_count, "%u");  break;
-	case Type_Id_U16:  serialize_text_basic<u16, u32>  (out,  (u16  *)data, array_count, "%u");  break;
-	case Type_Id_U32:  serialize_text_basic<u32, u32>  (out,  (u32  *)data, array_count, "%u");  break;
-	case Type_Id_U64:  serialize_text_basic<u64, s64>  (out,  (u64  *)data, array_count, "%zu"); break;
-	case Type_Id_R32:  serialize_text_basic<r32, r32>  (out,  (r32  *)data, array_count, "%f");  break;
-	case Type_Id_R64:  serialize_text_basic<r64, r64>  (out,  (r64  *)data, array_count, "%lf"); break;
-	case Type_Id_CHAR: serialize_text_basic<char, s32> (out,  (char *)data, array_count, "%d");  break;
+	case Type_Id_S8:  serialize_text_basic<s8, s32>(out, (s8 *)data, array_count, "%d");  break;
+	case Type_Id_S16:  serialize_text_basic<s16, s32>(out, (s16 *)data, array_count, "%d");  break;
+	case Type_Id_S32:  serialize_text_basic<s32, s32>(out, (s32 *)data, array_count, "%d");  break;
+	case Type_Id_S64:  serialize_text_basic<s64, s64>(out, (s64 *)data, array_count, "%zd"); break;
+	case Type_Id_U8:  serialize_text_basic<u8, u32>(out, (u8 *)data, array_count, "%u");  break;
+	case Type_Id_U16:  serialize_text_basic<u16, u32>(out, (u16 *)data, array_count, "%u");  break;
+	case Type_Id_U32:  serialize_text_basic<u32, u32>(out, (u32 *)data, array_count, "%u");  break;
+	case Type_Id_U64:  serialize_text_basic<u64, s64>(out, (u64 *)data, array_count, "%zu"); break;
+	case Type_Id_R32:  serialize_text_basic<r32, r32>(out, (r32 *)data, array_count, "%f");  break;
+	case Type_Id_R64:  serialize_text_basic<r64, r64>(out, (r64 *)data, array_count, "%lf"); break;
+	case Type_Id_CHAR: serialize_text_basic<char, s32>(out, (char *)data, array_count, "%d");  break;
 
 	case Type_Id_STRING: serialize_text_basic(out, (String *)data, array_count); break;
 
@@ -895,30 +923,17 @@ void serialize_fmt_text(Ostream *out, String name, const Type_Info *info, char *
 		serialize_text_recursive<Type_Info_Array_View>(serialize_text_array_view, out, info, data, array_count, tab_count);
 	} break;
 
-	invalid_default_case();
+		invalid_default_case();
 
-	}
-
-	static const Type_Id IDS_NO_NEWLINES[] = {
-		Type_Id_ENUM,
-		Type_Id_POINTER,
-	};
-
-	bool add_new_line = true;
-	for (ptrsize index = 0; index < static_count(IDS_NO_NEWLINES); ++index) {
-		if (IDS_NO_NEWLINES[index] == info->id) {
-			add_new_line = false;
-			break;
-		}
-	}
-
-	if (add_new_line) {
-		//ostream_write_formatted(out, "\n");
 	}
 }
 
 void serialize_fmt_text(Ostream *out, String name, const Type_Info *info, char *data) {
 	serialize_fmt_text(out, name, info, data, -1, 0);
+}
+
+void serialize_fmt_text_next(Ostream *out) {
+	ostream_write_formatted(out, "\n");
 }
 
 inline void parsing_error(Deserialize_State *w, Token_Kind kind) {
@@ -968,10 +983,12 @@ inline bool parse_require_integral(Deserialize_State *w, T *d, bool is_signed) {
 	if (t && t->kind == Token_Kind_INTEGER_LITERAL) {
 		if (is_signed) {
 			*d = (T)t->value.integer;
-		} else {
+		}
+		else {
 			if (!t->value.is_signed) {
 				*d = (T)t->value.uinteger;
-			} else {
+			}
+			else {
 				parsing_error(w, Token_Kind_INTEGER_LITERAL);
 				return false;
 			}
@@ -1013,7 +1030,8 @@ template <typename Type, typename Proc, typename ...ExtraParams>
 bool parse_basic_array(Proc proc, Deserialize_State *w, Type *data, s64 count, ExtraParams... params) {
 	if (count == -1) {
 		return proc(w, data, params...);
-	} else {
+	}
+	else {
 		if (parse_require_token(w, Token_Kind_OPEN_SQUARE_BRACKET)) {
 			for (s64 i = 0; i < count - 1; ++i) {
 				if (!proc(w, data, params...) ||
@@ -1045,16 +1063,30 @@ bool parse_struct(Deserialize_State *w, const Type_Info_Struct *info, char *data
 			return false;
 	}
 
+	u32 parsing_verion = 0;
+
+	if (!parse_require_token(w, Token_Kind_HASH) ||
+		!parse_require_integral<u32>(w, &parsing_verion, false)) {
+		return false;
+	}
+
 	for (ptrsize mem_index = 0; mem_index < info->member_count; ++mem_index) {
 		auto mem = info->members + mem_index;
+		
 		bool no_serialize = false;
+		u32 mem_version = 0;
+		u32 mem_version_deprecated = MAX_UINT32;
+
 		for (u64 k = 0; k < mem->attribute_count; ++k) {
 			if (string_match(mem->attributes[k], "no-serialize")) {
 				no_serialize = true;
 				break;
+			} else if (string_starts_with(mem->attributes[k], "v:")) {
+				sscanf(string_cstr(mem->attributes[k]), "v:%u-%u", &mem_version, &mem_version_deprecated);
 			}
 		}
-		if (!no_serialize) {
+
+		if (!no_serialize && mem_version <= parsing_verion && parsing_verion <= mem_version_deprecated) {
 			if (string_match(mem->name, "anonymous")) {
 				if (!deserialize_fmt_text(w, "", mem->info, data + mem->offset, -1))
 					return false;
@@ -1088,7 +1120,8 @@ bool parse_union(Deserialize_State *w, const Type_Info_Union *info, char *data) 
 
 	if (string_match(parse_mem->name, "anonymous")) {
 		return deserialize_fmt_text(w, "", parse_mem->info, data, -1);
-	} else {
+	}
+	else {
 		return deserialize_fmt_text(w, parse_mem->name, parse_mem->info, data, -1);
 	}
 
@@ -1134,7 +1167,8 @@ template <typename Cast_Info, typename Proc>
 bool parse_recursive_array(Proc proc, Deserialize_State *w, const Type_Info *info, char *data, s64 array_count) {
 	if (array_count == -1) {
 		return proc(w, (const Cast_Info *)info, data);
-	} else {
+	}
+	else {
 		if (parse_require_token(w, Token_Kind_OPEN_SQUARE_BRACKET)) {
 			for (s64 i = 0; i < array_count - 1; ++i) {
 				if (!proc(w, (const Cast_Info *)info, data) ||
@@ -1157,11 +1191,11 @@ bool deserialize_fmt_text(Deserialize_State *w, String name, const Type_Info *in
 	}
 
 	switch (info->id) {
-	case Type_Id_S8:  if (!parse_basic_array<s8 >(parse_require_integral<s8 >, w, (s8  *)data, array_count, true)) return false; break;
+	case Type_Id_S8:  if (!parse_basic_array<s8 >(parse_require_integral<s8 >, w, (s8 *)data, array_count, true)) return false; break;
 	case Type_Id_S16: if (!parse_basic_array<s16>(parse_require_integral<s16>, w, (s16 *)data, array_count, true)) return false; break;
 	case Type_Id_S32: if (!parse_basic_array<s32>(parse_require_integral<s32>, w, (s32 *)data, array_count, true)) return false; break;
 	case Type_Id_S64: if (!parse_basic_array<s64>(parse_require_integral<s64>, w, (s64 *)data, array_count, true)) return false; break;
-	case Type_Id_U8:  if (!parse_basic_array<u8 >(parse_require_integral<u8 >, w, (u8  *)data, array_count, false)) return false; break;
+	case Type_Id_U8:  if (!parse_basic_array<u8 >(parse_require_integral<u8 >, w, (u8 *)data, array_count, false)) return false; break;
 	case Type_Id_U16: if (!parse_basic_array<u16>(parse_require_integral<u16>, w, (u16 *)data, array_count, false)) return false; break;
 	case Type_Id_U32: if (!parse_basic_array<u32>(parse_require_integral<u32>, w, (u32 *)data, array_count, false)) return false; break;
 	case Type_Id_U64: if (!parse_basic_array<u64>(parse_require_integral<u64>, w, (u64 *)data, array_count, false)) return false; break;

@@ -13,7 +13,7 @@
 
 #include "entity.h"
 
-#include ".generated/entity.typeinfo"
+#include ".generated/reflection.typeinfo"
 #include "editor.h"
 
 struct Player_Controller {
@@ -224,6 +224,35 @@ void *scene_attach_collider_type(Scene *scene, Collider_Key key, Collider_Type t
 }
 #define scene_attach_collider(scene, key, type, attachment) (type *)scene_attach_collider_type(scene, key, Collider_##type, attachment)
 
+void serialize_entity(Entity *entity, Ostream *out) {
+	serialize_fmt_text(out, "type", reflect_info<Entity_Type>(), (char *)&entity->type);
+	serialize_fmt_text_next(out);
+
+	switch (entity->type) {
+		case Entity_Player: {
+			serialize_fmt_text(out, "entity", reflect_info<Player>(), (char *)entity);
+		} break;
+
+		invalid_default_case();
+	}
+
+}
+
+bool deserialize_entity(Entity *entity, Deserialize_State *state) {
+	bool result = deserialize_fmt_text(state, "type", reflect_info<Entity_Type>(), (char *)&entity->type);
+	if (!result) return false;
+
+	switch (entity->type) {
+		case Entity_Player: {
+			result = deserialize_fmt_text(state, "entity", reflect_info<Player>(), (char *)entity);
+		} break;
+
+		invalid_default_case();
+	}
+
+	return result;
+}
+
 int karma_user_zero() {
 
 	collision_resover_init();
@@ -262,6 +291,7 @@ int karma_user_zero() {
 	Scene scene = scene_create();
 	Player *player = scene_add_player(&scene);
 	scene_new_entity(&scene, player, vec2(0));
+	player->id = 6888115871281690331; // HACK: hardcoded
 	player->transformed_collider = scene_create_collider(&scene);
 	scene_attach_collider(&scene, player->transformed_collider, Circle, 0);
 
@@ -595,9 +625,9 @@ int karma_user_zero() {
 #if 1
 		if (ImGui::Button("Save")) {
 			Ostream out;
-			serialize_fmt_text(&out, "Player", reflect_info<Player>(), (char *)player);
+			serialize_entity(player, &out);
 			System_File file;
-			if (system_open_file("temp/player.karma", File_Operation_NEW, &file)) {
+			if (system_open_file(tprintf("temp/%zu.entity", player->id), File_Operation_NEW, &file)) {
 				ostream_build_out_file(&out, &file);
 			}
 			system_close_file(&file);
@@ -606,13 +636,18 @@ int karma_user_zero() {
 
 		if (ImGui::Button("Load")) {
 			Tokenization_Status status;
-			auto content = system_read_entire_file("temp/player.karma");
+			auto content = system_read_entire_file(tprintf("temp/%zu.entity", player->id));
 			auto tokens = tokenize(content, &status);
 			if (status.result == Tokenization_Result_SUCCESS) {
 				Deserialize_Error_Info error;
 				auto state = deserialize_begin(tokens);
-				if (!deserialize_fmt_text(&state, "Player", reflect_info<Player>(), (char *)player))
-					system_log(LOG_ERROR, "Load", "Failed to load player");
+				
+				if (!deserialize_entity(player, &state)) {
+					system_log(LOG_ERROR, "Load", "Failed to load player: %s [%zd:%zd]. Expected: %s, Got: %s", 
+						state.error.string, state.error.token.row, state.error.token.column, 
+						enum_string(state.error.expected).data, enum_string(state.error.token.kind).data);
+				}
+
 				deserialize_end(&state);
 			}
 			else {
