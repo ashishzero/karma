@@ -54,32 +54,32 @@ bool shapes_collision_resolver(Collider &a, Collider &b, Vec2 dp, Vec2 *normal, 
 }
 
 void collision_resover_init() {
-	COLLISION_RESOLVERS[Collider_Null][Collider_Null]    = null_collision_resolver;
-	COLLISION_RESOLVERS[Collider_Null][Collider_Circle]  = null_collision_resolver;
+	COLLISION_RESOLVERS[Collider_Null][Collider_Null] = null_collision_resolver;
+	COLLISION_RESOLVERS[Collider_Null][Collider_Circle] = null_collision_resolver;
 	COLLISION_RESOLVERS[Collider_Null][Collider_Mm_Rect] = null_collision_resolver;
 	COLLISION_RESOLVERS[Collider_Null][Collider_Capsule] = null_collision_resolver;
 	COLLISION_RESOLVERS[Collider_Null][Collider_Polygon] = null_collision_resolver;
 
-	COLLISION_RESOLVERS[Collider_Circle][Collider_Null]    = null_collision_resolver;
-	COLLISION_RESOLVERS[Collider_Circle][Collider_Circle]  = shapes_collision_resolver<Circle, Circle>;
+	COLLISION_RESOLVERS[Collider_Circle][Collider_Null] = null_collision_resolver;
+	COLLISION_RESOLVERS[Collider_Circle][Collider_Circle] = shapes_collision_resolver<Circle, Circle>;
 	COLLISION_RESOLVERS[Collider_Circle][Collider_Mm_Rect] = shapes_collision_resolver<Circle, Mm_Rect>;
 	COLLISION_RESOLVERS[Collider_Circle][Collider_Capsule] = shapes_collision_resolver<Circle, Capsule>;
 	COLLISION_RESOLVERS[Collider_Circle][Collider_Polygon] = shapes_collision_resolver<Circle, Polygon>;
 
-	COLLISION_RESOLVERS[Collider_Mm_Rect][Collider_Null]    = null_collision_resolver;
-	COLLISION_RESOLVERS[Collider_Mm_Rect][Collider_Circle]  = shapes_collision_resolver<Mm_Rect, Circle>;
+	COLLISION_RESOLVERS[Collider_Mm_Rect][Collider_Null] = null_collision_resolver;
+	COLLISION_RESOLVERS[Collider_Mm_Rect][Collider_Circle] = shapes_collision_resolver<Mm_Rect, Circle>;
 	COLLISION_RESOLVERS[Collider_Mm_Rect][Collider_Mm_Rect] = shapes_collision_resolver<Mm_Rect, Mm_Rect>;
 	COLLISION_RESOLVERS[Collider_Mm_Rect][Collider_Capsule] = shapes_collision_resolver<Mm_Rect, Capsule>;
 	COLLISION_RESOLVERS[Collider_Mm_Rect][Collider_Polygon] = shapes_collision_resolver<Mm_Rect, Polygon>;
 
-	COLLISION_RESOLVERS[Collider_Capsule][Collider_Null]    = null_collision_resolver;
-	COLLISION_RESOLVERS[Collider_Capsule][Collider_Circle]  = shapes_collision_resolver<Capsule, Circle>;
+	COLLISION_RESOLVERS[Collider_Capsule][Collider_Null] = null_collision_resolver;
+	COLLISION_RESOLVERS[Collider_Capsule][Collider_Circle] = shapes_collision_resolver<Capsule, Circle>;
 	COLLISION_RESOLVERS[Collider_Capsule][Collider_Mm_Rect] = shapes_collision_resolver<Capsule, Mm_Rect>;
 	COLLISION_RESOLVERS[Collider_Capsule][Collider_Capsule] = shapes_collision_resolver<Capsule, Capsule>;
 	COLLISION_RESOLVERS[Collider_Capsule][Collider_Polygon] = shapes_collision_resolver<Capsule, Polygon>;
 
-	COLLISION_RESOLVERS[Collider_Polygon][Collider_Null]    = null_collision_resolver;
-	COLLISION_RESOLVERS[Collider_Polygon][Collider_Circle]  = shapes_collision_resolver<Polygon, Circle>;
+	COLLISION_RESOLVERS[Collider_Polygon][Collider_Null] = null_collision_resolver;
+	COLLISION_RESOLVERS[Collider_Polygon][Collider_Circle] = shapes_collision_resolver<Polygon, Circle>;
 	COLLISION_RESOLVERS[Collider_Polygon][Collider_Mm_Rect] = shapes_collision_resolver<Polygon, Mm_Rect>;
 	COLLISION_RESOLVERS[Collider_Polygon][Collider_Capsule] = shapes_collision_resolver<Polygon, Capsule>;
 	COLLISION_RESOLVERS[Collider_Polygon][Collider_Polygon] = shapes_collision_resolver<Polygon, Polygon>;
@@ -96,28 +96,45 @@ struct Entity_By_Type {
 	Array<Static_Body> static_body;
 };
 
-struct Scene {
-	Entity_By_Type by_type;
-	Array<Collider> collider;
-	Allocator collider_allocator;
-	Random_Series entity_id_series;
-	Null null_collider;
+struct Collider_Node {
+	Collider_Node *prev;
+	Collider_Node *next;
+	Collider	   collider;
 };
 
-Scene scene_create() {
-	Scene scene;
-	scene.collider_allocator = context.allocator;
-	scene.entity_id_series = random_init(context.id, system_get_counter());
-	scene.null_collider._placeholder = 0;
-	Collider *null_collider = array_add(&scene.collider);
-	null_collider->type = Collider_Null;
-	null_collider->handle = &scene.null_collider;
-	return scene;
+struct Collider_List {
+	Collider_Node node;
+	Allocator allocator;
+	Null null_shape;
+};
+
+struct Scene {
+	Entity_By_Type	by_type;
+	Collider_List	colliders;
+	Allocator		collider_shape_allocator;
+	Random_Series	entity_id_series;
+};
+
+void scene_init(Scene *scene) {
+	scene->colliders.allocator = context.allocator;
+	scene->colliders.node.next = &scene->colliders.node;
+	scene->colliders.node.prev = &scene->colliders.node;
+	scene->colliders.null_shape._placeholder = 0;
+	scene->colliders.node.collider.flags = 0;
+	scene->colliders.node.collider.type = Collider_Null;
+	scene->colliders.node.collider.handle = &scene->colliders.null_shape;
+
+	scene->collider_shape_allocator = context.allocator;
+
+	scene->entity_id_series = random_init(context.id, system_get_counter());
+}
+
+Collider scene_null_collider(Scene *scene) {
+	return scene->colliders.node.collider;
 }
 
 struct Scene_Ensure {
 	u32 entity_count[Entity_Count];
-	u32 collider_count;
 };
 
 void scene_ensure_slots(Scene *scene, const Scene_Ensure &info) {
@@ -125,8 +142,6 @@ void scene_ensure_slots(Scene *scene, const Scene_Ensure &info) {
 		array_resize(&scene->by_type.player, info.entity_count[Entity_Player]);
 	if (info.entity_count[Entity_Static_Body])
 		array_resize(&scene->by_type.static_body, info.entity_count[Entity_Static_Body]);
-	if (info.collider_count)
-		array_resize(&scene->collider, info.collider_count);
 }
 
 Player *scene_add_player(Scene *scene) {
@@ -158,35 +173,44 @@ void scene_new_entity(Scene *scene, Entity *entity, Vec2 position) {
 		player->collider.radius = 1;
 		player->velocity = vec2(0);
 		player->force = vec2(0);
-		player->transformed_collider = 0;
+		player->transformed_collider.count = 0;
+		player->transformed_collider.handle = nullptr;
 	} break;
 
 	case Entity_Static_Body: {
 		auto body = (Static_Body *)entity;
 		body->color = vec4(1);
-		body->collider_group.count = 0;
-		body->collider_group.key = 0;
+		body->colliders.count = 0;
+		body->colliders.handle = nullptr;
 	} break;
 	}
 }
 
-Collider_Key scene_create_collider(Scene *scene) {
-	Collider_Key key = (Collider_Key)scene->collider.count;
-	Collider *collider = array_add(&scene->collider);
-	collider->type = Collider_Null;
-	collider->handle = &scene->null_collider;
-	return key;
-}
+Collider_Group scene_create_colliders(Scene *scene, u32 count) {
+	Collider_Node *node = new(scene->colliders.allocator) Collider_Node[count];
+	node->collider = scene->colliders.node.collider;
 
-Collider_Group scene_create_collider_group(Scene *scene, u32 count) {
+	node[0].prev = scene->colliders.node.prev;
+	for (u32 index = 1; index < count; ++index) {
+		node[index].prev = node + index - 1;
+	}
+
+	node[count - 1].next = &scene->colliders.node;
+	for (u32 index = 0; index < count - 1; ++index) {
+		node[index].next = node + index + 1;
+	}
+
+	scene->colliders.node.prev->next = node;
+	scene->colliders.node.prev = node + count - 1;
+
+	for (u32 index = 0; index < count; ++index) {
+		node[index].collider = scene_null_collider(scene);
+	}
+
 	Collider_Group group;
 	group.count = count;
-	group.key = (Collider_Key)scene->collider.count;
-	Collider *collider = array_addn(&scene->collider, group.count);
-	for (u32 index = 0; index < group.count; ++index, ++collider) {
-		collider->type = Collider_Null;
-		collider->handle = &scene->null_collider;
-	}
+	group.handle = node;
+
 	return group;
 }
 
@@ -194,30 +218,40 @@ struct Collider_Attachment {
 	u32 polygon_n;
 };
 
-void *scene_attach_collider_type(Scene *scene, Collider_Key key, Collider_Type type, Collider_Attachment *attachment);
+void *scene_attach_collider_type(Scene *scene, Collider_Node *node, Collider_Type type, Collider_Attachment *attachment);
 
-void scene_destroy_collider(Scene *scene, Collider_Key *key) {
-	// TODO: Remove key from array
-	scene_attach_collider_type(scene, *key, Collider_Null, 0);
-	*key = 0;
-}
+void scene_destroy_colliders(Scene *scene, Collider_Group *_group) {
+	struct internal_Collider_Group {
+		Collider_Node *nodes;
+		u32 count;
+	};
+	auto group = (internal_Collider_Group *)_group;
 
-void scene_destroy_collider_group(Scene *scene, Collider_Group *group) {
-	Collider_Key key = group->key;
+	Collider_Node *new_next = group->nodes[group->count - 1].next;
+	Collider_Node *new_prev = group->nodes[0].prev;
+	new_next->prev = new_prev;
+	new_prev->next = new_next;
+
+	Collider_Node *ptr = group->nodes;
 	for (u32 index = 0; index < group->count; ++index) {
-		// TODO: Remove key from array
-		scene_attach_collider_type(scene, key + index, Collider_Null, 0);
+		scene_attach_collider_type(scene, ptr, Collider_Null, 0);
+		ptr += 1;
 	}
+	memory_free(group->nodes, scene->colliders.allocator);
 	group->count = 0;
-	group->key = 0;
+	group->nodes = nullptr;
 }
 
-Collider *scene_collider_ref(Scene *scene, Collider_Key key) {
-	return &scene->collider[key];
+Collider_Node *collider_node(Collider_Handle handle, u32 index) {
+	return ((Collider_Node *)handle) + index;
 }
 
-void *scene_attach_collider_type(Scene *scene, Collider_Key key, Collider_Type type, Collider_Attachment *attachment) {
-	Collider &collider = scene->collider[key];
+Collider *scene_collider_ref(Scene *scene, Collider_Node *node) { // TODO: Remove Scene from here
+	return &node->collider;
+}
+
+void *scene_attach_collider_type(Scene *scene, Collider_Node *node, Collider_Type type, Collider_Attachment *attachment) {
+	Collider &collider = node->collider;
 
 	if (collider.type != Collider_Null) {
 		memory_free(collider.handle);
@@ -226,18 +260,32 @@ void *scene_attach_collider_type(Scene *scene, Collider_Key key, Collider_Type t
 	collider.type = type;
 
 	switch (type) {
-	case Collider_Null: collider.handle = &scene->null_collider; break;
-	case Collider_Circle: collider.handle = memory_allocate(sizeof(Circle), scene->collider_allocator); break;
-	case Collider_Mm_Rect: collider.handle = memory_allocate(sizeof(Mm_Rect), scene->collider_allocator); break;
-	case Collider_Capsule: collider.handle = memory_allocate(sizeof(Capsule), scene->collider_allocator); break;
-	case Collider_Polygon: collider.handle = memory_allocate(sizeof(Polygon) + sizeof(Vec2) * (attachment->polygon_n - 3), scene->collider_allocator); break;
+	case Collider_Null:
+		collider.handle = &scene->colliders.null_shape;
+		break;
+
+	case Collider_Circle:
+		collider.handle = memory_allocate(sizeof(Circle), scene->collider_shape_allocator);
+		break;
+
+	case Collider_Mm_Rect:
+		collider.handle = memory_allocate(sizeof(Mm_Rect), scene->collider_shape_allocator);
+		break;
+
+	case Collider_Capsule:
+		collider.handle = memory_allocate(sizeof(Capsule), scene->collider_shape_allocator);
+		break;
+
+	case Collider_Polygon:
+		collider.handle = memory_allocate(sizeof(Polygon) + sizeof(Vec2) * (attachment->polygon_n - 3), scene->collider_shape_allocator);
+		break;
 
 		invalid_default_case();
 	};
 
 	return collider.handle;
 }
-#define scene_attach_collider(scene, key, type, attachment) (type *)scene_attach_collider_type(scene, key, Collider_##type, attachment)
+#define scene_attach_collider(scene, node, type, attachment) (type *)scene_attach_collider_type(scene, node, Collider_##type, attachment)
 
 void serialize_collider(Scene *scene, Collider &collider, Ostream *out) {
 	switch (collider.type) {
@@ -273,7 +321,7 @@ void serialize_collider_group(Scene *scene, Collider_Group &group, Ostream *out)
 	serialize_fmt_text(out, "collider_group_count", reflect_info(group.count), (char *)&group.count);
 
 	for (u32 index = 0; index < group.count; ++index) {
-		auto collider = scene_collider_ref(scene, group.key + index);	
+		auto collider = scene_collider_ref(scene, collider_node(group.handle, index));
 		serialize_fmt_text_next(out);
 		serialize_fmt_text(out, "collider_type", reflect_info<Collider_Type>(), (char *)&collider->type);
 		serialize_fmt_text_next(out);
@@ -286,49 +334,49 @@ void serialize_entity(Scene *scene, Entity *entity, Ostream *out) {
 	serialize_fmt_text_next(out);
 
 	switch (entity->type) {
-		case Entity_Player: {
-			serialize_fmt_text(out, "player", reflect_info<Player>(), (char *)entity);
-		} break;
+	case Entity_Player: {
+		serialize_fmt_text(out, "player", reflect_info<Player>(), (char *)entity);
+	} break;
 
-		case Entity_Static_Body: {
-			serialize_fmt_text(out, "static_body", reflect_info<Static_Body>(), (char *)entity);
-			serialize_fmt_text_next(out);
-			serialize_collider_group(scene, ((Static_Body *)entity)->collider_group, out);
-		} break;
+	case Entity_Static_Body: {
+		serialize_fmt_text(out, "static_body", reflect_info<Static_Body>(), (char *)entity);
+		serialize_fmt_text_next(out);
+		serialize_collider_group(scene, ((Static_Body *)entity)->colliders, out);
+	} break;
 
 		invalid_default_case();
 	}
 
 }
 
-bool deserialize_collider(Scene *scene, Collider_Type type, Collider_Key key, Deserialize_State *state) {
+bool deserialize_collider(Scene *scene, Collider_Type type, Collider_Node *node, Deserialize_State *state) {
 	bool result = false;
 
 	switch (type) {
 	case Collider_Null: {
-		auto collider = scene_attach_collider(scene, key, Null, 0);
+		auto collider = scene_attach_collider(scene, node, Null, 0);
 		Null temp; // we don't need to get value for null collider
 		result = deserialize_fmt_text(state, "collider_data", reflect_info<Null>(), (char *)&temp);
 	} break;
 
 	case Collider_Circle: {
-		auto collider = scene_attach_collider(scene, key, Circle, 0);
+		auto collider = scene_attach_collider(scene, node, Circle, 0);
 		result = deserialize_fmt_text(state, "collider_data", reflect_info<Circle>(), (char *)collider);
 	} break;
 
 	case Collider_Mm_Rect: {
-		auto collider = scene_attach_collider(scene, key, Mm_Rect, 0);
+		auto collider = scene_attach_collider(scene, node, Mm_Rect, 0);
 		result = deserialize_fmt_text(state, "collider_data", reflect_info<Mm_Rect>(), (char *)collider);
 	} break;
 
 	case Collider_Capsule: {
-		auto collider = scene_attach_collider(scene, key, Capsule, 0);
+		auto collider = scene_attach_collider(scene, node, Capsule, 0);
 		result = deserialize_fmt_text(state, "collider_data", reflect_info<Capsule>(), (char *)collider);
 	} break;
 
 	case Collider_Polygon: {
 		Array_View<Vec2> points;
-		
+
 		scoped_temporary_allocation();
 		auto mark = push_temporary_allocator();
 		result = deserialize_fmt_text(state, "collider_data", reflect_info(points), (char *)&points);
@@ -338,7 +386,7 @@ bool deserialize_collider(Scene *scene, Collider_Type type, Collider_Key key, De
 
 		Collider_Attachment attachment;
 		attachment.polygon_n = (u32)points.count;
-		auto collider = scene_attach_collider(scene, key, Polygon, &attachment);
+		auto collider = scene_attach_collider(scene, node, Polygon, &attachment);
 		collider->vertex_count = (u32)points.count;
 		memcpy(collider->vertices, points.data, sizeof(Vec2) * points.count);
 	} break;
@@ -354,13 +402,13 @@ bool deserialize_collider_group(Scene *scene, Collider_Group *group, Deserialize
 	if (!deserialize_fmt_text(state, "collider_group_count", reflect_info(count), (char *)&count))
 		return false;
 
-	*group = scene_create_collider_group(scene, count);
+	*group = scene_create_colliders(scene, count);
 	Collider_Type type;
 
 	for (u32 index = 0; index < group->count; ++index) {
 		if (!deserialize_fmt_text(state, "collider_type", reflect_info<Collider_Type>(), (char *)&type))
 			return false;
-		if (!deserialize_collider(scene, type, group->key + index, state))
+		if (!deserialize_collider(scene, type, collider_node(group->handle, index), state))
 			return false;
 	}
 	return true;
@@ -371,19 +419,19 @@ bool deserialize_entity(Scene *scene, Entity *entity, Deserialize_State *state) 
 	if (!result) return false;
 
 	switch (entity->type) {
-		case Entity_Player: {
-			result = deserialize_fmt_text(state, "player", reflect_info<Player>(), (char *)entity);
-			auto player = (Player *)entity;
-			player->transformed_collider = scene_create_collider(scene);
-			scene_attach_collider(scene, player->transformed_collider, Circle, 0);
-		} break;
+	case Entity_Player: {
+		result = deserialize_fmt_text(state, "player", reflect_info<Player>(), (char *)entity);
+		auto player = (Player *)entity;
+		player->transformed_collider = scene_create_colliders(scene, 1);
+		scene_attach_collider(scene, collider_node(player->transformed_collider.handle, 0), Circle, 0);
+	} break;
 
-		case Entity_Static_Body: {
-			if (!deserialize_fmt_text(state, "static_body", reflect_info<Static_Body>(), (char *)entity))
-				return false;
-			Collider_Group *group = &((Static_Body *)entity)->collider_group;
-			result = deserialize_collider_group(scene, group, state);
-		} break;
+	case Entity_Static_Body: {
+		if (!deserialize_fmt_text(state, "static_body", reflect_info<Static_Body>(), (char *)entity))
+			return false;
+		Collider_Group *group = &((Static_Body *)entity)->colliders;
+		result = deserialize_collider_group(scene, group, state);
+	} break;
 
 		invalid_default_case();
 	}
@@ -426,12 +474,14 @@ int karma_user_zero() {
 
 	r32 window_w = 0, window_h = 0;
 
-	Scene scene = scene_create();
+	Scene scene;
+	scene_init(&scene);
+
 	Player *player = scene_add_player(&scene);
 	scene_new_entity(&scene, player, vec2(0));
 	player->id = 6888115871281690331; // HACK: hardcoded
-	player->transformed_collider = scene_create_collider(&scene);
-	scene_attach_collider(&scene, player->transformed_collider, Circle, 0);
+	player->transformed_collider = scene_create_colliders(&scene, 1);
+	scene_attach_collider(&scene, collider_node(player->transformed_collider.handle, 0), Circle, 0);
 
 	{
 		Vec2 points[] = {
@@ -446,12 +496,12 @@ int karma_user_zero() {
 		scene_new_entity(&scene, object, vec2(-5.6f, 0.4f));
 		object->id = 6888174093586976255;
 		object->color = vec4(0, 1, 1);
-		object->collider_group = scene_create_collider_group(&scene, 1);
+		object->colliders = scene_create_colliders(&scene, 1);
 
 		Collider_Attachment attachment;
 		attachment.polygon_n = static_count(points);
 
-		Polygon *polygon = scene_attach_collider(&scene, object->collider_group.key, Polygon, &attachment);
+		Polygon *polygon = scene_attach_collider(&scene, collider_node(object->colliders.handle, 0), Polygon, &attachment);
 		polygon->vertex_count = static_count(points);
 		memcpy(polygon->vertices, points, sizeof(points));
 		collider_translate(polygon, object->position);
@@ -459,9 +509,9 @@ int karma_user_zero() {
 		object = scene_add_static_body(&scene);
 		scene_new_entity(&scene, object, vec2(5));
 		object->color = vec4(0, 1, 1);
-		object->collider_group = scene_create_collider_group(&scene, 1);
+		object->colliders = scene_create_colliders(&scene, 1);
 
-		Circle *circle = scene_attach_collider(&scene, object->collider_group.key, Circle, 0);
+		Circle *circle = scene_attach_collider(&scene, collider_node(object->colliders.handle, 0), Circle, 0);
 		circle->center = vec2(0);
 		circle->radius = 1.23f;
 		collider_translate(circle, object->position);
@@ -469,9 +519,9 @@ int karma_user_zero() {
 		object = scene_add_static_body(&scene);
 		scene_new_entity(&scene, object, vec2(6.5f, -0.5f));
 		object->color = vec4(0, 1, 1);
-		object->collider_group = scene_create_collider_group(&scene, 1);
+		object->colliders = scene_create_colliders(&scene, 1);
 
-		Mm_Rect *rect = scene_attach_collider(&scene, object->collider_group.key, Mm_Rect, 0);
+		Mm_Rect *rect = scene_attach_collider(&scene, collider_node(object->colliders.handle, 0), Mm_Rect, 0);
 		rect->min = vec2(-2.5f, -3.5f);
 		rect->max = vec2(2.5f, 3.5f);
 		collider_translate(rect, object->position);
@@ -479,15 +529,15 @@ int karma_user_zero() {
 		object = scene_add_static_body(&scene);
 		scene_new_entity(&scene, object, vec2(-1, -5));
 		object->color = vec4(0, 1, 1);
-		object->collider_group = scene_create_collider_group(&scene, 2);
+		object->colliders = scene_create_colliders(&scene, 2);
 
-		Capsule *capsule = scene_attach_collider(&scene, object->collider_group.key + 0, Capsule, 0);
+		Capsule *capsule = scene_attach_collider(&scene, collider_node(object->colliders.handle, 0), Capsule, 0);
 		capsule->a = vec2(-2, -3);
 		capsule->b = vec2(2, 3);
 		capsule->radius = 1;
 		collider_translate(capsule, object->position);
 
-		circle = scene_attach_collider(&scene, object->collider_group.key + 1, Circle, 0);
+		circle = scene_attach_collider(&scene, collider_node(object->colliders.handle, 1), Circle, 0);
 		circle->center = vec2(1, -1);
 		circle->radius = 1;
 		collider_translate(circle, object->position);
@@ -627,28 +677,25 @@ int karma_user_zero() {
 
 			Vec2 norm; r32 dist, v_t;
 
-			auto circle = collider_get_shape(scene_collider_ref(&scene, player->transformed_collider), Circle);
+			auto circle = collider_get_shape(scene_collider_ref(&scene, collider_node(player->transformed_collider.handle, 0)), Circle);
 			circle->center = player->position + player->collider.center;
 			circle->radius = player->collider.radius;
 
-#if defined(ENABLE_DEVELOPER_OPTIONS)
-			for (auto &c : scene.collider) {
-				c.flags = 0;
-			}
-#endif
+			for (auto ptr = scene.colliders.node.next; ptr != &scene.colliders.node; ptr = ptr->next)
+				ptr->collider.flags = 0;
 
-			auto &player_collider = scene.collider[player->transformed_collider];
+			auto &player_collider = *scene_collider_ref(&scene, collider_node(player->transformed_collider.handle, 0));
+			player_collider.flags = 0;
 			for (auto &o : scene.by_type.static_body) {
-				for (u32 index = 0; index < o.collider_group.count; ++index) {
-					auto c = scene_collider_ref(&scene, o.collider_group.key + index);
+				for (u32 index = 0; index < o.colliders.count; ++index) {
+					auto c = scene_collider_ref(&scene, collider_node(o.colliders.handle, index));
 					if (collider_vs_collider_dynamic(*c, player_collider, dt * player->velocity, &norm, &dist)) {
 						array_add(&manifolds, Collision_Manifold{ norm, dist });
 						v_t = dist / dt * sgn(vec2_dot(norm, player->velocity));
 						player->velocity -= v_t * norm;
 						o.color = vec4(0, 1, 1, 1);
-#if defined(ENABLE_DEVELOPER_OPTIONS)
-						c->flags |= COLLIDER_FLAG_BIT_TOUCHED;
-#endif
+						c->flags |= Collider_Flag_Bit_TOUCHED;
+						player_collider.flags |= Collider_Flag_Bit_TOUCHED;
 					}
 				}
 			}
@@ -704,9 +751,9 @@ int karma_user_zero() {
 			im2d_line(player->position, player->position + manifold.penetration_depth * manifold.normal, 2 * vec4(1, 1, 0), 0.05f);
 		}
 
-#if defined(ENABLE_DEVELOPER_OPTIONS)
-		for (auto &c : scene.collider) {
-			auto color = (c.flags & COLLIDER_FLAG_BIT_TOUCHED) ? vec4(0, 1, 1) : vec4(1, 0, 0);
+		for (auto ptr = scene.colliders.node.next; ptr != &scene.colliders.node; ptr = ptr->next) {
+			auto &c = ptr->collider;
+			auto color = (c.flags & Collider_Flag_Bit_TOUCHED) ? vec4(0, 1, 1) : vec4(1, 0, 0);
 			switch (c.type) {
 			case Collider_Null: {
 
@@ -744,7 +791,6 @@ int karma_user_zero() {
 
 			}
 		}
-#endif
 
 		im2d_end();
 
@@ -766,8 +812,8 @@ int karma_user_zero() {
 #endif
 
 		ImGui::Begin("Player");
-		editor_draw(player);
-		
+		editor_draw(*player);
+
 #if 1
 		if (ImGui::Button("Save")) {
 			Ostream out;
@@ -781,7 +827,7 @@ int karma_user_zero() {
 		}
 
 		if (ImGui::Button("Load")) {
-			scene_destroy_collider(&scene, &player->transformed_collider);
+			scene_destroy_colliders(&scene, &player->transformed_collider);
 
 			Tokenization_Status status;
 			auto content = system_read_entire_file(tprintf("temp/%zu.entity", player->id));
@@ -789,10 +835,10 @@ int karma_user_zero() {
 			if (status.result == Tokenization_Result_SUCCESS) {
 				Deserialize_Error_Info error;
 				auto state = deserialize_begin(tokens);
-				
+
 				if (!deserialize_entity(&scene, player, &state)) {
-					system_log(LOG_ERROR, "Load", "Failed to load player: %s [%zd:%zd]. Expected: %s, Got: %s", 
-						state.error.string, state.error.token.row, state.error.token.column, 
+					system_log(LOG_ERROR, "Load", "Failed to load player: %s [%zd:%zd]. Expected: %s, Got: %s",
+						state.error.string, state.error.token.row, state.error.token.column,
 						enum_string(state.error.expected).data, enum_string(state.error.token.kind).data);
 				}
 
@@ -810,7 +856,7 @@ int karma_user_zero() {
 
 		ImGui::Begin("Static Body");
 		editor_draw(scene.by_type.static_body[0]);
-		
+
 		if (ImGui::Button("Save Static Body")) {
 			Ostream out;
 			serialize_entity(&scene, &scene.by_type.static_body[0], &out);
@@ -823,7 +869,7 @@ int karma_user_zero() {
 		}
 
 		if (ImGui::Button("Load Static Body")) {
-			scene_destroy_collider_group(&scene, &scene.by_type.static_body[0].collider_group);
+			scene_destroy_colliders(&scene, &scene.by_type.static_body[0].colliders);
 
 			Tokenization_Status status;
 			auto content = system_read_entire_file(tprintf("temp/%zu.entity", scene.by_type.static_body[0].id));
@@ -846,7 +892,7 @@ int karma_user_zero() {
 			memory_free(tokens.data);
 			memory_free(content.data);
 		}
-		
+
 		ImGui::End();
 
 #if defined(BUILD_IMGUI)

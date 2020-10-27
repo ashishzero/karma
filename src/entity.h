@@ -16,17 +16,16 @@ enum Collider_Type : u32 {
 	Collider_Count
 };
 
-#if defined(ENABLE_DEVELOPER_OPTIONS)
-constexpr u32 COLLIDER_FLAG_BIT_TOUCHED = bit(0);
-#endif
+typedef u32 Collider_Flags;
+
+enum Collider_Flag_Bit : Collider_Flags {
+	Collider_Flag_Bit_TOUCHED = bit(0),
+};
 
 struct Collider {
-	attribute(use, read-only) void *handle;
-	attribute(read-only) Collider_Type type;
-
-#if defined(ENABLE_DEVELOPER_OPTIONS)
-	attribute(no-display, no-serialize) u32 flags;
-#endif
+	attribute(use, read-only)			void *handle;
+	attribute(read-only)				Collider_Type type;
+	attribute(no-display, no-serialize) Collider_Flags flags;
 };
 
 inline void *collider_get_handle(Collider *collider, Collider_Type type) {
@@ -34,6 +33,17 @@ inline void *collider_get_handle(Collider *collider, Collider_Type type) {
 	return collider->handle;
 }
 #define collider_get_shape(collider, type) ((type *)collider_get_handle(collider, Collider_##type))
+
+typedef void* Collider_Handle;
+
+struct Collider_Group {
+	Collider_Handle handle;
+	u32 count;
+};
+
+//
+//
+//
 
 enum Entity_Type {
 	Entity_Player,
@@ -45,16 +55,9 @@ enum Entity_Type {
 typedef u64 Entity_Id;
 
 struct Entity {
-	attribute(read-only)				Entity_Id id;
-	attribute(read-only, no-serialize)  Entity_Type type;
-										Vec2 position;
-};
-
-typedef u32 Collider_Key;
-
-struct Collider_Group {
-	u32 count;
-	Collider_Key key;
+	attribute(read - only)				Entity_Id id;
+	attribute(read - only, no - serialize)  Entity_Type type;
+	Vec2 position;
 };
 
 struct Player : public Entity {
@@ -63,12 +66,12 @@ struct Player : public Entity {
 										Circle collider;
 	attribute(read-only)				Vec2 velocity;
 	attribute(read-only)				Vec2 force;
-	attribute(no-display, no-serialize)	Collider_Key transformed_collider;
+	attribute(no-display, no-serialize)	Collider_Group transformed_collider;
 };
 
 struct Static_Body : public Entity {
-	attribute(color)			Vec4 color;
-	attribute(no-serialize)		Collider_Group collider_group;
+	attribute(color)						Vec4 color;
+	attribute(no-display, no-serialize)		Collider_Group colliders;
 };
 
 struct Camera {

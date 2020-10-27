@@ -555,9 +555,13 @@ inline void memory_free(const void *ptr, Allocator allocator = context.allocator
 }
 
 void *operator new(ptrsize size, Allocator allocator);
+void *operator new[](ptrsize size, Allocator allocator);
 void *operator new(ptrsize size);
+void *operator new[](ptrsize size);
 void  operator delete(void *ptr, Allocator allocator);
+void  operator delete[](void *ptr, Allocator allocator);
 void  operator delete(void *ptr) noexcept;
+void  operator delete[](void *ptr) noexcept;
 
 #define tnew new(TEMPORARY_ALLOCATOR)
 
