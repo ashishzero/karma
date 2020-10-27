@@ -1,4 +1,5 @@
 #define _CRT_SECURE_NO_WARNINGS
+
 #include "modules/core/stream.cpp"
 #include "modules/core/karma_shared.cpp"
 #include "modules/core/length_string.cpp"

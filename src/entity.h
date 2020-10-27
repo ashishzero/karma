@@ -60,7 +60,7 @@ struct Entity {
 	Vec2 position;
 };
 
-struct Player : public Entity {
+struct attribute(v:2) Player : public Entity {
 	attribute(min:0, max : 5)			r32 rradius;
 	attribute(color)					Vec4 color;
 										Circle collider;

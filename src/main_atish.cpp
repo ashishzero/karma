@@ -10,7 +10,47 @@
 #include "modules/core/stb_image.h"
 #include "asset_loader.h"
 
+#include "modules/core/thread_pool.h"
+
+Work_Queue* async_queue(u32 index);
+
+
+bool async_add_work(Work_Queue* queue, Work_Procedure proc, void* param);
+void async_flush_work(Work_Queue* queue);
+
+void time_consume(void* x)
+{
+	const char* temp = (char*)x;
+
+	system_log(LOG_INFO, "TEST", "%u, %s",(u32)context.id,temp);
+
+}
+
 int karma_user_atish() {
+
+	if (!async_initialize(2, mega_bytes(32), context.allocator)) {
+		system_fatal_error("Thread could not be created");
+	}
+
+	system_thread_sleep(2000);
+
+	auto high = async_queue(0);
+	auto low = async_queue(1);
+
+	async_add_work(low, time_consume, "low1");
+	async_add_work(low, time_consume, "low2");
+	async_add_work(low, time_consume, "low3");
+	async_add_work(low, time_consume, "low4");
+	async_add_work(low, time_consume, "low5");
+
+	async_flush_work(low);
+
+	async_add_work(high, time_consume, "high1");
+	async_add_work(high, time_consume, "high2");
+	async_add_work(high, time_consume, "high3");
+	async_add_work(high, time_consume, "high4");
+	async_add_work(high, time_consume, "high5");
+
 
 	r32    framebuffer_w = 1280;
 	r32    framebuffer_h = 720;

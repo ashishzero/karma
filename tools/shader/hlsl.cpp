@@ -1,3 +1,5 @@
+#define _CRT_SECURE_NO_WARNINGS
+
 #include "modules/core/karma.h"
 #include "modules/core/length_string.h"
 #include "shader.h"
