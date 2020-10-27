@@ -123,7 +123,8 @@ void reflection_of_attrs(Ostream *stream, CXCursor cursor) {
 				String next_string = "\", \"";
 				while (*value) {
 					if (*value != ',') {
-						ostream_write_buffer((Ostream *)stream, value, 1);
+						if (*value != ' ' && *value != '\t')
+							ostream_write_buffer((Ostream *)stream, value, 1);
 						value += 1;
 					} else {
 						ostream_write_buffer((Ostream *)stream, next_string.data, next_string.count);

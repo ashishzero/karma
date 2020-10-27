@@ -783,7 +783,7 @@ void serialize_text_struct(Ostream *out, const Type_Info_Struct *info, char *dat
 		u32 mem_version_deprecated = MAX_UINT32;
 
 		for (ptrsize attr_index = 0; attr_index < mem->attribute_count; ++attr_index) {
-			if (string_match(mem->attributes[attr_index], "no-serialize")) {
+			if (string_match(mem->attributes[attr_index], "no_serialize")) {
 				no_serialize = true;
 				break;
 			} else if (string_starts_with(mem->attributes[attr_index], "v:")) {
@@ -1078,7 +1078,7 @@ bool parse_struct(Deserialize_State *w, const Type_Info_Struct *info, char *data
 		u32 mem_version_deprecated = MAX_UINT32;
 
 		for (u64 k = 0; k < mem->attribute_count; ++k) {
-			if (string_match(mem->attributes[k], "no-serialize")) {
+			if (string_match(mem->attributes[k], "no_serialize")) {
 				no_serialize = true;
 				break;
 			} else if (string_starts_with(mem->attributes[k], "v:")) {

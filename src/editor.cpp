@@ -14,11 +14,11 @@ void editor_get_flags_from_attribute(const String *attrs, s64 count, Editor_Attr
 	out->flags = 0;
 
 	for (s64 index = 0; index < count; ++index) {
-		if (string_match(attrs[index], "no-display")) {
+		if (string_match(attrs[index], "no_display")) {
 			out->flags |= EDITOR_FLAG_NO_DISPLAY;
 			break; // If we are not displaying, than we don't need other attributes
 		}
-		else if (string_match(attrs[index], "read-only")) {
+		else if (string_match(attrs[index], "read_only")) {
 			out->flags |= EDITOR_FLAG_READ_ONLY;
 		}
 		else if (string_match(attrs[index], "color")) {
