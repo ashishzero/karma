@@ -749,6 +749,20 @@ T *array_find(Array<T> *a, const T &v) {
 }
 
 template <typename T>
+void array_remove(Array<T> *a, s64 index) {
+	assert(index < a->count);
+	a->data[index] = a->data[a->count - 1];
+	a->count -= 1;
+}
+
+template <typename T>
+void array_remove_seq(Array<T> *a, s64 index) {
+	assert(index < a->count);
+	memmove(a->data + index, a->data + index + 1, (a->count - index - 1) * sizeof(T));
+	a->count -= 1;
+}
+
+template <typename T>
 void array_insert(Array<T> *a, s64 index, const T &v) {
 	assert(index < a->count);
 	T t = a->data[index];
