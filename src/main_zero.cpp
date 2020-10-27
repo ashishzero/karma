@@ -227,10 +227,10 @@ void *scene_attach_collider_type(Scene *scene, Collider_Key key, Collider_Type t
 
 	switch (type) {
 	case Collider_Null: collider.handle = &scene->null_collider; break;
-	case Collider_Circle: collider.handle = memory_allocate(sizeof(Circle)); break;
-	case Collider_Mm_Rect: collider.handle = memory_allocate(sizeof(Mm_Rect)); break;
-	case Collider_Capsule: collider.handle = memory_allocate(sizeof(Capsule)); break;
-	case Collider_Polygon: collider.handle = memory_allocate(sizeof(Polygon) + sizeof(Vec2) * (attachment->polygon_n - 3)); break;
+	case Collider_Circle: collider.handle = memory_allocate(sizeof(Circle), scene->collider_allocator); break;
+	case Collider_Mm_Rect: collider.handle = memory_allocate(sizeof(Mm_Rect), scene->collider_allocator); break;
+	case Collider_Capsule: collider.handle = memory_allocate(sizeof(Capsule), scene->collider_allocator); break;
+	case Collider_Polygon: collider.handle = memory_allocate(sizeof(Polygon) + sizeof(Vec2) * (attachment->polygon_n - 3), scene->collider_allocator); break;
 
 		invalid_default_case();
 	};
