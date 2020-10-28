@@ -918,15 +918,19 @@ inline Vec2 support(const ShapeA &a, const ShapeB &b, Vec2 dir, Vec2 dp) {
 }
 
 template <typename ShapeA, typename ShapeB>
-inline Vec2 support(const ShapeA &a, const ShapeB &b, Vec2 dir, const Mat3 &ta, const Mat3 &tb) {
-	Vec2 p = mat3_vec2_mul(ta, support(a, dir));
-	Vec2 q = mat3_vec2_mul(tb, support(b, -dir));
+inline Vec2 support(const ShapeA &a, const ShapeB &b, Vec2 dir, const Mat3 &ta, const Mat3 &tb, const Mat2 &tdira, const Mat2 &tdirb) {
+	Vec2 p = support(a, mat2_vec2_mul(tdira, dir));
+	p = mat3_vec2_mul(ta, p);
+
+	Vec2 q = support(b, mat2_vec2_mul(tdirb, -dir));
+	q = mat3_vec2_mul(tb, q);
+
 	return p - q;
 }
 
 template <typename ShapeA, typename ShapeB>
-inline Vec2 support(const ShapeA &a, const ShapeB &b, Vec2 dir, const Mat3 &ta, const Mat3 &tb, Vec2 dp) {
-	Vec2 s = support(a, b, dir, ta, tb);
+inline Vec2 support(const ShapeA &a, const ShapeB &b, Vec2 dir, const Mat3 &ta, const Mat3 &tb, const Mat2 &tdira, const Mat2 &tdirb, Vec2 dp) {
+	Vec2 s = support(a, b, dir, ta, tb, tdira, tdirb);
 	if (vec2_dot(dp, dir) <= 0.0f)
 		s -= dp;
 	return s;

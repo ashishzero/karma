@@ -17,28 +17,21 @@ struct Circular_Linked_List {
 };
 
 template <typename T>
-typename Circular_Linked_List<T>::Node *circular_linked_list_add(Circular_Linked_List<T> *list, u32 count = 1) {
-	auto node = new(list->allocator)Circular_Linked_List<T>::Node[count];
+typename Circular_Linked_List<T>::Node *circular_linked_list_add(Circular_Linked_List<T> *list) {
+	auto node = new(list->allocator)Circular_Linked_List<T>::Node;
 
 	node[0].prev = list->node.prev;
-	for (u32 index = 1; index < count; ++index) {
-		node[index].prev = node + index - 1;
-	}
-
-	node[count - 1].next = &list->node;
-	for (u32 index = 0; index < count - 1; ++index) {
-		node[index].next = node + index + 1;
-	}
+	node[0].next = &list->node;
 
 	list->node.prev->next = node;
-	list->node.prev = node + count - 1;
+	list->node.prev = node;
 
 	return node;
 }
 
 template <typename T>
-void circular_linked_list_remove(Circular_Linked_List<T> *list, typename Circular_Linked_List<T>::Node *nodes, u32 count = 1) {
-	auto new_next = nodes[count - 1].next;
+void circular_linked_list_remove(Circular_Linked_List<T> *list, typename Circular_Linked_List<T>::Node *nodes) {
+	auto new_next = nodes[0].next;
 	auto new_prev = nodes[0].prev;
 	new_next->prev = new_prev;
 	new_prev->next = new_next;
@@ -46,15 +39,20 @@ void circular_linked_list_remove(Circular_Linked_List<T> *list, typename Circula
 	memory_free(nodes, list->allocator);
 }
 
-using Collider_List		= Circular_Linked_List<Collider>;
-using Collider_Node		= Circular_Linked_List<Collider>::Node;
-using Rigid_Body_List	= Circular_Linked_List<Rigid_Body>;
+struct Collider_Reference {
+	Entity_Id	entity_id;
+	Collider	collider;
+};
 
-struct Collider_Raw {
-	Collider_Id id;
+struct Raw_Collider_Group {
+	Raw_Collider_Id id;
 	Collider *	colliders;
 	u32			colliders_count;
 };
+
+using Collider_List		= Circular_Linked_List<Collider_Group>;
+using Collider_Node		= Circular_Linked_List<Collider_Group>::Node;
+using Rigid_Body_List	= Circular_Linked_List<Rigid_Body>;
 
 struct Entity_By_Type {
 	Array<Player>		player;
@@ -66,17 +64,13 @@ struct Scene {
 	Entity_By_Type	by_type;
 	Rigid_Body_List rigid_bodies;
 	Collider_List	colliders;
-	Null			null_shape;
+	Collider		null_collider;
 	Allocator		collider_shape_allocator;
 
-	Array<Collider_Raw> raw_colliders;
-	Allocator			pool_allocator;
+	Array<Raw_Collider_Group>	raw_colliders;
+	Allocator					pool_allocator;
 
 	Random_Series	id_series;
-};
-
-struct Collider_Attachment {
-	u32 polygon_n;
 };
 
 //
@@ -86,22 +80,21 @@ struct Collider_Attachment {
 Scene *scene_create();
 void scene_destroy(Scene *scene);
 
-Collider_Raw *scene_find_collider(Scene *scene, Collider_Id id);
-Collider_Id scene_add_collider_group(Scene *scene, Array_View<Collider> &colliders);
-bool scene_remove_collider_group(Scene *scene, Collider_Id id);
+Raw_Collider_Group *scene_find_raw_collider_group(Scene *scene, Raw_Collider_Id id);
+Raw_Collider_Id scene_add_raw_collider_group(Scene *scene, Array_View<Collider> &colliders);
+bool scene_remove_raw_collider_group(Scene *scene, Raw_Collider_Id id);
 
 Player *scene_add_player(Scene *scene);
 Static_Body *scene_add_static_body(Scene *scene);
 
 void scene_generate_new_entity(Scene *scene, Entity *entity, Vec2 position);
 
-Collider_Node *collider_node(Collider_Handle handle, u32 index);
-Collider *collider_get(Scene *scene, Collider_Node *node);
+Collider *collider_get(Collider_Group *group, u32 index);
 
-Collider_Group scene_create_colliders(Scene *scene, Entity *entity, Collider_Id id, const Mat3 *initial_transform);
+Collider_Group *scene_create_colliders(Scene *scene, Entity *entity, Raw_Collider_Id id, const Mat3 &transform);
 void scene_destroy_colliders(Scene *scene, Collider_Group *group);
 
-Rigid_Body *scene_create_rigid_body(Scene *scene, Entity *entity, Collider_Id id, const Mat3 *initial_transform);
+Rigid_Body *scene_create_rigid_body(Scene *scene, Entity *entity, Raw_Collider_Id id);
 void scene_destroy_rigid_body(Scene *scene, Rigid_Body *rigid_body);
 
 //

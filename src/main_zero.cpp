@@ -19,16 +19,16 @@ struct Player_Controller {
 	r32 x, y;
 };
 
-typedef bool(*Collision_Resolver)(Collider &a, Collider &b, const Mat3 &ta, const Mat3 &tb, Vec2 dp, Vec2 *normal, r32 *penetration);
+typedef bool(*Collision_Resolver)(Collider &a, Collider &b, const Mat3 &ta, const Mat3 &tb, const Mat2 &tdira, const Mat2 &tdirb, Vec2 dp, Vec2 *normal, r32 *penetration);
 static Collision_Resolver COLLISION_RESOLVERS[Collider_Count][Collider_Count];
 
-bool null_collision_resolver(Collider &a, Collider &b, const Mat3 &ta, const Mat3 &tb, Vec2 dp, Vec2 *normal, r32 *penetration) {
+bool null_collision_resolver(Collider &a, Collider &b, const Mat3 &ta, const Mat3 &tb, const Mat2 &tdira, const Mat2 &tdirb, Vec2 dp, Vec2 *normal, r32 *penetration) {
 	return false;
 }
 
 template <typename ShapeA, typename ShapeB>
-bool shapes_collision_resolver(Collider &a, Collider &b, const Mat3 &ta, const Mat3 &tb, Vec2 dp, Vec2 *normal, r32 *penetration) {
-	return gjk_epa(*(ShapeA *)a.handle, *(ShapeB *)b.handle, normal, penetration, ta, tb, dp);
+bool shapes_collision_resolver(Collider &a, Collider &b, const Mat3 &ta, const Mat3 &tb, const Mat2 &tdira, const Mat2 &tdirb, Vec2 dp, Vec2 *normal, r32 *penetration) {
+	return gjk_epa(*(ShapeA *)a.handle, *(ShapeB *)b.handle, normal, penetration, ta, tb, tdira, tdirb, dp);
 }
 
 void collision_resover_init() {
@@ -64,7 +64,13 @@ void collision_resover_init() {
 }
 
 bool collider_vs_collider_dynamic(Collider &a, Collider &b, const Mat3 &ta, const Mat3 &tb, Vec2 dp, Vec2 *normal, r32 *penetration) {
-	return COLLISION_RESOLVERS[a.type][b.type](a, b, ta, tb, dp, normal, penetration);
+	Mat2 tdira, tdirb;
+	tdira.rows[0] = vec2(ta.m2[0][0], ta.m2[1][0]);
+	tdira.rows[1] = vec2(ta.m2[0][1], ta.m2[1][1]);
+
+	tdirb.rows[0] = vec2(tb.m2[0][0], tb.m2[1][0]);
+	tdirb.rows[1] = vec2(tb.m2[0][1], tb.m2[1][1]);
+	return COLLISION_RESOLVERS[a.type][b.type](a, b, ta, tb, tdira, tdirb, dp, normal, penetration);
 }
 
 int karma_user_zero() {
@@ -102,10 +108,19 @@ int karma_user_zero() {
 
 	r32 window_w = 0, window_h = 0;
 
+	r32 im_unit_circle_cos[IM_MAX_CIRCLE_SEGMENTS];
+	r32 im_unit_circle_sin[IM_MAX_CIRCLE_SEGMENTS];
+
+	for (int i = 0; i < IM_MAX_CIRCLE_SEGMENTS; ++i) {
+		r32 theta = ((r32)i / (r32)IM_MAX_CIRCLE_SEGMENTS) * MATH_PI * 2;
+		im_unit_circle_cos[i] = cosf(theta);
+		im_unit_circle_sin[i] = sinf(theta);
+	}
+
 	Scene *scene = scene_create();
 
 	Collider collider;
-	Collider_Id id;
+	Raw_Collider_Id id;
 
 	Circle circle;
 	circle.center = vec2(0);
@@ -113,12 +128,12 @@ int karma_user_zero() {
 	
 	collider.type = Collider_Circle;
 	collider.handle = &circle;
-	id = scene_add_collider_group(scene, Array_View(&collider, 1));
+	id = scene_add_raw_collider_group(scene, Array_View(&collider, 1));
 
 	Player *player = scene_add_player(scene);
-	scene_generate_new_entity(scene, player, vec2(0));
+	scene_generate_new_entity(scene, player, vec2(5));
 	player->collider_id = id;
-	player->rigid_body->colliders = scene_create_colliders(scene, player, player->collider_id, 0);
+	player->rigid_body->colliders = scene_create_colliders(scene, player, player->collider_id, mat3_identity());
 	
 	{
 		Static_Body *object;
@@ -135,27 +150,27 @@ int karma_user_zero() {
 			memcpy(polygon->vertices, points, sizeof(points));
 			collider.type = Collider_Polygon;
 			collider.handle = polygon;
-			id = scene_add_collider_group(scene, Array_View(&collider, 1));
+			id = scene_add_raw_collider_group(scene, Array_View(&collider, 1));
 
 			object = scene_add_static_body(scene);
 			scene_generate_new_entity(scene, object, vec2(-5.6f, 0.4f));
 			trans = mat3_translation(-5.6f, 0.4f);
-			object->id = id; 
-			object->colliders = scene_create_colliders(scene, object, id, &trans);
+			object->id = id;
+			object->colliders = scene_create_colliders(scene, object, id, trans);
 		}
 
 		{
 			circle.center = vec2(0);
-			circle.radius = 1.23f;
+			circle.radius = 0.6f;
 			collider.type = Collider_Circle;
 			collider.handle = &circle;
-			id = scene_add_collider_group(scene, Array_View(&collider, 1));
+			id = scene_add_raw_collider_group(scene, Array_View(&collider, 1));
 
 			object = scene_add_static_body(scene);
-			scene_generate_new_entity(scene, object, vec2(5));
-			trans = mat3_translation(5, 5);
+			scene_generate_new_entity(scene, object, vec2(1));
+			trans = mat3_translation(1, 1);
 			object->id = id; 
-			object->colliders = scene_create_colliders(scene, object, id, &trans);
+			object->colliders = scene_create_colliders(scene, object, id, trans);
 		}
 
 		{
@@ -164,13 +179,13 @@ int karma_user_zero() {
 			rect.max = vec2(2.5f, 3.5f);
 			collider.type = Collider_Mm_Rect;
 			collider.handle = &rect;
-			id = scene_add_collider_group(scene, Array_View(&collider, 1));
+			id = scene_add_raw_collider_group(scene, Array_View(&collider, 1));
 
 			object = scene_add_static_body(scene);
 			scene_generate_new_entity(scene, object, vec2(6.5f, -0.5f));
-			trans = mat3_translation(6.5f, -0.5f);
+			trans = mat3_translation(6.5f, -0.5f) * mat3_rotation(to_radians(10));
 			object->id = id; 
-			object->colliders = scene_create_colliders(scene, object, id, &trans);
+			object->colliders = scene_create_colliders(scene, object, id, trans);
 		}
 
 		{
@@ -188,13 +203,13 @@ int karma_user_zero() {
 			c[1].type = Collider_Capsule;
 			c[1].handle = &capsule;
 
-			id = scene_add_collider_group(scene, Array_View(c, static_count(c)));
+			id = scene_add_raw_collider_group(scene, Array_View(c, static_count(c)));
 
 			object = scene_add_static_body(scene);
 			scene_generate_new_entity(scene, object, vec2(-1, -5));
 			trans = mat3_translation(-1, -5);
 			object->id = id;
-			object->colliders = scene_create_colliders(scene, object, id, &trans);
+			object->colliders = scene_create_colliders(scene, object, id, trans);
 		}
 	}
 
@@ -304,7 +319,7 @@ int karma_user_zero() {
 			const r32 drag = 5;
 
 			player->rigid_body->force = vec2(0);
-			player->rigid_body->flags = 0;
+			player->rigid_body->colliders->flags = 0;
 
 			r32 len = sqrtf(controller.x * controller.x + controller.y * controller.y);
 			Vec2 dir;
@@ -328,29 +343,21 @@ int karma_user_zero() {
 
 			Vec2 norm; r32 dist, v_t;
 
-
-			auto circle = *collider_get_shape(collider_get(scene, collider_node(player->rigid_body->colliders.handle, 0)), Circle);
-			player->rigid_body->transform = mat3_translation(player->position) * mat3_scalar(player->radius, 1);
+			player->rigid_body->colliders->transform = mat3_translation(player->position) * mat3_scalar(player->radius, player->radius);
 			//collider_transform(&circle, player->rigid_body->transform);
 			//circle->center = player->position;
 			//circle->radius = player->radius;
 
-			Collider player_collider;
-			player_collider.type = Collider_Circle;
-			player_collider.handle = &circle;
-
-			auto identity_m = mat3_identity();
-
 			for (auto &o : scene->by_type.static_body) {
-				for (u32 index = 0; index < o.colliders.count; ++index) {
-					auto c = collider_get(scene, collider_node(o.colliders.handle, index));
-					if (collider_vs_collider_dynamic(*c, player_collider, identity_m, player->rigid_body->transform, dt * player->rigid_body->velocity, &norm, &dist)) {
+				o.colliders->flags = 0;
+				for (u32 index = 0; index < o.colliders->count; ++index) {
+					auto c = collider_get(o.colliders, index);
+					if (collider_vs_collider_dynamic(*c, *player->rigid_body->colliders->collider, o.colliders->transform, player->rigid_body->colliders->transform, dt * player->rigid_body->velocity, &norm, &dist)) {
 						array_add(&manifolds, Collision_Manifold{ norm, dist });
 						v_t = dist / dt * sgn(vec2_dot(norm, player->rigid_body->velocity));
 						player->rigid_body->velocity -= v_t * norm;
-						player->rigid_body->flags |= Collision_Bit_OCUURED;
-						o.color = vec4(0, 1, 1, 1);
-
+						player->rigid_body->colliders->flags |= Collision_Bit_OCUURED;
+						o.colliders->flags |= Collision_Bit_OCUURED;
 						//player->rigid_body->transform = mat3_translation(player->position);
 						//collider_transform(&circle, player->rigid_body->transform);
 					}
@@ -408,44 +415,61 @@ int karma_user_zero() {
 			im2d_line(player->position, player->position + manifold.penetration_depth * manifold.normal, 2 * vec4(1, 1, 0), 0.05f);
 		}
 
+		const auto &ta = player->rigid_body->colliders->transform;
+		const auto &tb = scene->by_type.static_body[2].colliders->transform;
+
+		const auto &sa = *collider_get_shape(player->rigid_body->colliders->collider, Circle);
+		const auto &sb = *collider_get_shape(scene->by_type.static_body[2].colliders->collider, Mm_Rect);
+
+		im2d_circle(vec2(0), 0.05f, vec4(1.2f, 1.2f, 1.2f));
+
 		for (auto ptr = scene->colliders.node.next; ptr != &scene->colliders.node; ptr = ptr->next) {
-			auto &c = ptr->data;
-			auto color = vec4(0, 1, 1);
-			switch (c.type) {
-			case Collider_Null: {
+			auto &group = ptr->data;
 
-			} break;
+			for (u32 index = 0; index < group.count; ++index) {
+				im2d_push_matrix(mat3_to_mat4(group.transform));
 
-			case Collider_Circle: {
-				auto circle = collider_get_shape(&c, Circle);
-				im2d_circle_outline(circle->center, circle->radius, color, 0.02f);
-			} break;
+				auto c = collider_get(&group, index);
+				auto color = (group.flags & Collision_Bit_OCUURED) ? vec4(1, 0, 0) : vec4(0, 1, 1);
 
-			case Collider_Polygon: {
-				auto polygon = collider_get_shape(&c, Polygon);
-				for (u32 i = 0; i < polygon->vertex_count; ++i) {
-					im2d_line(polygon->vertices[i], polygon->vertices[(i + 1) % polygon->vertex_count], color, 0.02f);
+				switch (c->type) {
+				case Collider_Null: {
+
+				} break;
+
+				case Collider_Circle: {
+					auto circle = collider_get_shape(c, Circle);
+					im2d_circle_outline(circle->center, circle->radius, color, 0.02f);
+				} break;
+
+				case Collider_Polygon: {
+					auto polygon = collider_get_shape(c, Polygon);
+					for (u32 i = 0; i < polygon->vertex_count; ++i) {
+						im2d_line(polygon->vertices[i], polygon->vertices[(i + 1) % polygon->vertex_count], color, 0.02f);
+					}
+				} break;
+
+				case Collider_Mm_Rect: {
+					auto rect = collider_get_shape(c, Mm_Rect);
+					im2d_rect_outline(rect->min, rect->max - rect->min, color, 0.02f);
+				} break;
+
+				case Collider_Capsule: {
+					auto capsule = collider_get_shape(c, Capsule);
+					Vec2 capsule_dir = capsule->b - capsule->a;
+					Vec2 capsule_norm = vec2_normalize(vec2(-capsule_dir.y, capsule_dir.x)) * capsule->radius;
+
+					im2d_circle_outline(capsule->a, capsule->radius, color, 0.02f);
+					im2d_circle_outline(capsule->b, capsule->radius, color, 0.02f);
+					im2d_line(capsule->a + capsule_norm, capsule->b + capsule_norm, color, 0.02f);
+					im2d_line(capsule->a - capsule_norm, capsule->b - capsule_norm, color, 0.02f);
+				} break;
+
+					invalid_default_case();
+
 				}
-			} break;
 
-			case Collider_Mm_Rect: {
-				auto rect = collider_get_shape(&c, Mm_Rect);
-				im2d_rect_outline(rect->min, rect->max - rect->min, color, 0.02f);
-			} break;
-
-			case Collider_Capsule: {
-				auto capsule = collider_get_shape(&c, Capsule);
-				Vec2 capsule_dir = capsule->b - capsule->a;
-				Vec2 capsule_norm = vec2_normalize(vec2(-capsule_dir.y, capsule_dir.x)) * capsule->radius;
-
-				im2d_circle_outline(capsule->a, capsule->radius, color, 0.02f);
-				im2d_circle_outline(capsule->b, capsule->radius, color, 0.02f);
-				im2d_line(capsule->a + capsule_norm, capsule->b + capsule_norm, color, 0.02f);
-				im2d_line(capsule->a - capsule_norm, capsule->b - capsule_norm, color, 0.02f);
-			} break;
-
-				invalid_default_case();
-
+				im2d_pop_matrix();
 			}
 		}
 
@@ -468,8 +492,11 @@ int karma_user_zero() {
 		}
 #endif
 
-		
 		editor_entity(player);
+		
+		ImGui::Begin("Camera");
+		editor_draw(scene->camera);
+		ImGui::End();
 
 		//ImGui::ShowDemoWindow();
 
