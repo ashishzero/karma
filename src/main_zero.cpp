@@ -102,72 +102,100 @@ int karma_user_zero() {
 
 	r32 window_w = 0, window_h = 0;
 
-	Scene *scene= scene_create();
+	Scene *scene = scene_create();
+
+	Collider collider;
+	Collider_Id id;
+
+	Circle circle;
+	circle.center = vec2(0);
+	circle.radius = 1;
+	
+	collider.type = Collider_Circle;
+	collider.handle = &circle;
+	id = scene_add_collider_group(scene, Array_View(&collider, 1));
 
 	Player *player = scene_add_player(scene);
 	scene_generate_new_entity(scene, player, vec2(0));
-	player->id = 6888115871281690331; // HACK: hardcoded
-	player->rigid_body = scene_create_rigid_body(scene, player, 1);
-	scene_attach_collider(scene, collider_node(player->rigid_body->colliders.handle, 0), Circle, 0);
-
+	player->collider_id = id;
+	player->rigid_body->colliders = scene_create_colliders(scene, player, player->collider_id, 0);
+	
 	{
-		Vec2 points[] = {
-			vec2(-2.4f, 4.6f), vec2(3.6f, 4.6f), vec2(4.6f, -1.4f), vec2(1.6f, -5.4f), vec2(-7.4f, -2.4f)
-		};
-
-		assert(static_count(points) >= 3);
-
 		Static_Body *object;
+		Mat3 trans;
 
-		object = scene_add_static_body(scene);
-		scene_generate_new_entity(scene, object, vec2(-5.6f, 0.4f));
-		object->id = 6888174093586976255; // HACK: hardcoded
-		object->color = vec4(0, 1, 1);
-		object->colliders = scene_create_colliders(scene, player, 1);
+		{
+			Vec2 points[] = {
+				vec2(-2.4f, 4.6f), vec2(3.6f, 4.6f), vec2(4.6f, -1.4f), vec2(1.6f, -5.4f), vec2(-7.4f, -2.4f)
+			};
+			assert(static_count(points) >= 3);
 
-		Collider_Attachment attachment;
-		attachment.polygon_n = static_count(points);
+			auto polygon = (Polygon *)tallocate(sizeof(Polygon) + sizeof(Vec2) * (static_count(points) - 3));
+			polygon->vertex_count = static_count(points);
+			memcpy(polygon->vertices, points, sizeof(points));
+			collider.type = Collider_Polygon;
+			collider.handle = polygon;
+			id = scene_add_collider_group(scene, Array_View(&collider, 1));
 
-		Polygon *polygon = scene_attach_collider(scene, collider_node(object->colliders.handle, 0), Polygon, &attachment);
-		polygon->vertex_count = static_count(points);
-		memcpy(polygon->vertices, points, sizeof(points));
-		collider_transform(polygon, mat3_translation(object->position));
+			object = scene_add_static_body(scene);
+			scene_generate_new_entity(scene, object, vec2(-5.6f, 0.4f));
+			trans = mat3_translation(-5.6f, 0.4f);
+			object->id = id; 
+			object->colliders = scene_create_colliders(scene, object, id, &trans);
+		}
 
-		object = scene_add_static_body(scene);
-		scene_generate_new_entity(scene, object, vec2(5));
-		object->color = vec4(0, 1, 1);
-		object->colliders = scene_create_colliders(scene, object, 1);
+		{
+			circle.center = vec2(0);
+			circle.radius = 1.23f;
+			collider.type = Collider_Circle;
+			collider.handle = &circle;
+			id = scene_add_collider_group(scene, Array_View(&collider, 1));
 
-		Circle *circle = scene_attach_collider(scene, collider_node(object->colliders.handle, 0), Circle, 0);
-		circle->center = vec2(0);
-		circle->radius = 1.23f;
-		collider_transform(circle, mat3_translation(object->position));
+			object = scene_add_static_body(scene);
+			scene_generate_new_entity(scene, object, vec2(5));
+			trans = mat3_translation(5, 5);
+			object->id = id; 
+			object->colliders = scene_create_colliders(scene, object, id, &trans);
+		}
 
-		object = scene_add_static_body(scene);
-		scene_generate_new_entity(scene, object, vec2(6.5f, -0.5f));
-		object->color = vec4(0, 1, 1);
-		object->colliders = scene_create_colliders(scene, object, 1);
+		{
+			Mm_Rect rect;
+			rect.min = vec2(-2.5f, -3.5f);
+			rect.max = vec2(2.5f, 3.5f);
+			collider.type = Collider_Mm_Rect;
+			collider.handle = &rect;
+			id = scene_add_collider_group(scene, Array_View(&collider, 1));
 
-		Mm_Rect *rect = scene_attach_collider(scene, collider_node(object->colliders.handle, 0), Mm_Rect, 0);
-		rect->min = vec2(-2.5f, -3.5f);
-		rect->max = vec2(2.5f, 3.5f);
-		collider_transform(rect, mat3_translation(object->position));
+			object = scene_add_static_body(scene);
+			scene_generate_new_entity(scene, object, vec2(6.5f, -0.5f));
+			trans = mat3_translation(6.5f, -0.5f);
+			object->id = id; 
+			object->colliders = scene_create_colliders(scene, object, id, &trans);
+		}
 
-		object = scene_add_static_body(scene);
-		scene_generate_new_entity(scene, object, vec2(-1, -5));
-		object->color = vec4(0, 1, 1);
-		object->colliders = scene_create_colliders(scene, object, 2);
+		{
+			circle.center = vec2(1, -1);
+			circle.radius = 1;
 
-		Capsule *capsule = scene_attach_collider(scene, collider_node(object->colliders.handle, 0), Capsule, 0);
-		capsule->a = vec2(-2, -3);
-		capsule->b = vec2(2, 3);
-		capsule->radius = 1;
-		collider_transform(capsule, mat3_translation(object->position));
+			Capsule capsule;
+			capsule.a = vec2(-2, -3);
+			capsule.b = vec2(2, 3);
+			capsule.radius = 1;
 
-		circle = scene_attach_collider(scene, collider_node(object->colliders.handle, 1), Circle, 0);
-		circle->center = vec2(1, -1);
-		circle->radius = 1;
-		collider_transform(circle, mat3_translation(object->position));
+			Collider c[2];
+			c[0].type = Collider_Circle;
+			c[0].handle = &circle;
+			c[1].type = Collider_Capsule;
+			c[1].handle = &capsule;
+
+			id = scene_add_collider_group(scene, Array_View(c, static_count(c)));
+
+			object = scene_add_static_body(scene);
+			scene_generate_new_entity(scene, object, vec2(-1, -5));
+			trans = mat3_translation(-1, -5);
+			object->id = id;
+			object->colliders = scene_create_colliders(scene, object, id, &trans);
+		}
 	}
 
 	Player_Controller controller = {};

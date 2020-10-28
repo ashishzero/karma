@@ -728,7 +728,7 @@ void array_append(Array<T> *a, const Array_View<T> &v) {
 }
 
 template <typename T>
-T *array_addn(Array<T> *a, s32 count) {
+T *array_addn(Array<T> *a, s64 count) {
 	s64 new_count = a->count + count;
 	if (new_count > a->capacity) {
 		s64 n = array_get_grow_capacity(a->capacity, count);
@@ -740,27 +740,24 @@ T *array_addn(Array<T> *a, s32 count) {
 }
 
 template <typename T>
-T *array_find(Array<T> *a, const T &v) {
-	T *res = nullptr;
+s64 array_find(Array<T> *a, const T &v) {
 	for (s64 index = 0; index < a->count; ++index) {
 		auto elem = a->data + index;
 		if (*elem == v) {
-			res = elem;
-			break;
+			return index;
 		}
 	}
-	return res;
+	return -1;
 }
 
 template <typename T, typename Search_Func, typename ...Args>
-T *array_find(Array<T> *a, Search_Func func, const Args& ...args) {
-	T *res = nullptr;
+s64 array_find(Array<T> *a, Search_Func func, const Args& ...args) {
 	for (s64 index = 0; index < a->count; ++index) {
 		if (func(a->data[index], args...)) {
-			break;
+			return index;
 		}
 	}
-	return res;
+	return -1;
 }
 
 template <typename T>

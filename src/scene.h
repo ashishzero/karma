@@ -55,6 +55,12 @@ using Collider_List		= Circular_Linked_List<Collider>;
 using Collider_Node		= Circular_Linked_List<Collider>::Node;
 using Rigid_Body_List	= Circular_Linked_List<Rigid_Body>;
 
+struct Collider_Raw {
+	Collider_Id id;
+	Collider *	colliders;
+	u32			colliders_count;
+};
+
 struct Scene {
 	Camera			camera;
 	Entity_By_Type	by_type;
@@ -62,7 +68,11 @@ struct Scene {
 	Collider_List	colliders;
 	Null			null_shape;
 	Allocator		collider_shape_allocator;
-	Random_Series	entity_id_series;
+
+	Array<Collider_Raw> raw_colliders;
+	Allocator			pool_allocator;
+
+	Random_Series	id_series;
 };
 
 struct Collider_Attachment {
@@ -76,23 +86,23 @@ struct Collider_Attachment {
 Scene *scene_create();
 void scene_destroy(Scene *scene);
 
+Collider_Raw *scene_find_collider(Scene *scene, Collider_Id id);
+Collider_Id scene_add_collider_group(Scene *scene, Array_View<Collider> &colliders);
+bool scene_remove_collider_group(Scene *scene, Collider_Id id);
+
 Player *scene_add_player(Scene *scene);
 Static_Body *scene_add_static_body(Scene *scene);
 
 void scene_generate_new_entity(Scene *scene, Entity *entity, Vec2 position);
 
-Collider scene_null_collider(Scene *scene);
 Collider_Node *collider_node(Collider_Handle handle, u32 index);
 Collider *collider_get(Scene *scene, Collider_Node *node);
 
-Collider_Group scene_create_colliders(Scene *scene, Entity *entity, u32 count);
+Collider_Group scene_create_colliders(Scene *scene, Entity *entity, Collider_Id id, const Mat3 *initial_transform);
 void scene_destroy_colliders(Scene *scene, Collider_Group *group);
 
-Rigid_Body *scene_create_rigid_body(Scene *scene, Entity *entity, u32 collider_count);
+Rigid_Body *scene_create_rigid_body(Scene *scene, Entity *entity, Collider_Id id, const Mat3 *initial_transform);
 void scene_destroy_rigid_body(Scene *scene, Rigid_Body *rigid_body);
-
-void *scene_attach_collider_type(Scene *scene, Collider_Node *node, Collider_Type type, Collider_Attachment *attachment);
-#define scene_attach_collider(scene, node, type, attachment) (type *)scene_attach_collider_type(scene, node, Collider_##type, attachment)
 
 //
 //

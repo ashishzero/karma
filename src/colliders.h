@@ -11,8 +11,8 @@ enum Collider_Type : u32 {
 	Collider_Null,
 	Collider_Circle,
 	Collider_Mm_Rect,
-	Collider_Polygon,
 	Collider_Capsule,
+	Collider_Polygon,
 
 	Collider_Count
 };

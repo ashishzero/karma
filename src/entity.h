@@ -4,6 +4,9 @@
 #include "modules/core/reflection.h"
 #include "colliders.h"
 
+typedef u64 Entity_Id;
+typedef u64 Collider_Id;
+
 enum Entity_Type {
 	Entity_Null,
 	Entity_Player,
@@ -11,8 +14,6 @@ enum Entity_Type {
 
 	Entity_Count
 };
-
-typedef u64 Entity_Id;
 
 struct Entity {
 	attribute(read_only)				Entity_Id id;
@@ -35,21 +36,24 @@ enum Collision_Flag_Bit : Collision_Flags {
 };
 
 struct Rigid_Body {
-	Vec2 velocity;
-	Vec2 force;
-	Collider_Group colliders;
-	Collision_Flags flags;
+							Vec2			velocity;
+							Vec2			force;
+							Mat3			transform;
+	attribute(no_display)	Collider_Group  colliders;
+							Collision_Flags flags;
 };
 
 struct Player : public Entity {
 	attribute(min:0, max:5)				r32 radius;
 	attribute(color)					Vec4 color;
 										r32 intensity;
+	attribute(read_only)				Collider_Id collider_id;
 	attribute(read_only, no_serialize)	Rigid_Body *rigid_body;
 };
 
 struct Static_Body : public Entity {
 	attribute(color)						Vec4 color;
+	attribute(read_only)					Collider_Id collider_id;
 	attribute(read_only, no_serialize)		Collider_Group colliders;
 };
 

@@ -25,13 +25,81 @@ Scene *scene_create() {
 
 	scene->collider_shape_allocator = context.allocator;
 
-	scene->entity_id_series = random_init(context.id, system_get_counter());
+	scene->id_series = random_init(context.id, system_get_counter());
+
+	scene->pool_allocator = context.allocator;
+
+	// Add a Null Collider
+	Collider_Raw null_collider;
+	null_collider.id = 0;
+	null_collider.colliders_count = 1;
+	null_collider.colliders = &scene->colliders.node.data;
+	array_add(&scene->raw_colliders, null_collider);
 
 	return scene;
 }
 
 void scene_destroy(Scene *scene) {
+	// TODO: Distroy other objects as well
 	memory_free(scene);
+}
+
+u64 iscene_generate_unique_id(Scene *scene) {
+	return random_get(&scene->id_series) | ((time(0) & 0xffffffff) << 32);
+}
+
+Collider_Raw *scene_find_collider(Scene *scene, Collider_Id id) {
+	auto res = array_find(&scene->raw_colliders, [](const Collider_Raw &col, Collider_Id id) {
+		return col.id == id;
+		}, id);
+	if (res >= 0)
+		return scene->raw_colliders.data + res;
+	return nullptr;
+}
+
+Collider_Id scene_add_collider_group(Scene *scene, Array_View<Collider> &colliders) {
+	Collider_Raw *raw = array_add(&scene->raw_colliders);
+
+	raw->id = iscene_generate_unique_id(scene);
+	raw->colliders_count = (u32)colliders.count;
+	raw->colliders = (Collider *)memory_allocate(sizeof(Collider) * raw->colliders_count, scene->pool_allocator);
+	
+	Collider *dst = raw->colliders;
+	ptrsize size = 0;
+	for (auto &src : colliders) {
+		switch (src.type) {
+		case Collider_Null: invalid_code_path(); break;
+		case Collider_Circle: size = sizeof(Circle); break;
+		case Collider_Mm_Rect: size = sizeof(Mm_Rect); break;
+		case Collider_Capsule: size = sizeof(Capsule); break;
+		case Collider_Polygon: size = sizeof(Polygon) + sizeof(Vec2) * ((Polygon *)src.handle)->vertex_count; break;
+
+		invalid_default_case();
+		}
+
+		dst->type = src.type;
+		dst->handle = memory_allocate(size, scene->pool_allocator);
+		memcpy(dst->handle, src.handle, size);
+
+		dst += 1;
+	}
+
+	return raw->id;
+}
+
+bool scene_remove_collider_group(Scene *scene, Collider_Id id) {
+	auto index = array_find(&scene->raw_colliders, [](const Collider_Raw &col, Collider_Id id) {
+		return col.id == id;
+		}, id);
+	if (index >= 0) {
+		auto c = &scene->raw_colliders[index];
+		for (u32 i = 0; i < c->colliders_count; ++i)
+			memory_free(c->colliders[i].handle);
+		memory_free(c->colliders);
+		array_remove(&scene->raw_colliders, index);
+		return true;
+	}
+	return false;
 }
 
 Player *scene_add_player(Scene *scene) {
@@ -46,12 +114,8 @@ Static_Body *scene_add_static_body(Scene *scene) {
 	return body;
 }
 
-u64 iscene_generate_unique_entity_id(Scene *scene) {
-	return random_get(&scene->entity_id_series) | ((time(0) & 0xffffffff) << 32);
-}
-
 void scene_generate_new_entity(Scene *scene, Entity *entity, Vec2 position) {
-	entity->id = iscene_generate_unique_entity_id(scene);
+	entity->id = iscene_generate_unique_id(scene);
 	entity->position = position;
 
 	switch (entity->type) {
@@ -60,20 +124,19 @@ void scene_generate_new_entity(Scene *scene, Entity *entity, Vec2 position) {
 		player->radius = 1;
 		player->color = vec4(1);
 		player->intensity = 1;
+		player->collider_id = 0;
+		Mat3 transform = mat3_translation(player->position);
+		player->rigid_body = scene_create_rigid_body(scene, entity, player->collider_id, &transform);
 	} break;
 
 	case Entity_Static_Body: {
 		auto body = (Static_Body *)entity;
 		body->color = vec4(1);
-		body->colliders.handle = nullptr;
-		body->colliders.entity_id = entity->id;
-		body->colliders.count = 0;
+		body->collider_id = 0;
+		Mat3 transform = mat3_translation(body->position);
+		body->colliders = scene_create_colliders(scene, entity, body->collider_id, &transform);
 	} break;
 	}
-}
-
-Collider scene_null_collider(Scene *scene) {
-	return scene->colliders.node.data;
 }
 
 Collider_Node *collider_node(Collider_Handle handle, u32 index) {
@@ -84,11 +147,52 @@ Collider *collider_get(Scene *scene, Collider_Node *node) {
 	return &node->data;
 }
 
-Collider_Group scene_create_colliders(Scene *scene, Entity *entity, u32 count) {
+Collider_Group scene_create_colliders(Scene *scene, Entity *entity, Collider_Id id, const Mat3 *initial_transform) {
+	auto raw = scene_find_collider(scene, id);
+	assert(raw); // TODO: Properly handle error!!
+
+	u32 count = raw->colliders_count;
 	Collider_Node *node = circular_linked_list_add(&scene->colliders, count);
 
-	for (u32 index = 0; index < count; ++index) {
-		node[index].data = scene_null_collider(scene);
+	Collider *src = raw->colliders;
+	Collider_Node *dst = node;
+	for (u32 index = 0; index < count; ++index, ++src, ++dst) {
+		dst->data.type = src->type;
+		
+		switch (dst->data.type) {
+		case Collider_Null: {
+			dst->data.handle = &scene->null_shape;
+		} break;
+
+		case Collider_Circle: {
+			dst->data.handle = memory_allocate(sizeof(Circle), scene->collider_shape_allocator);
+			memcpy(dst->data.handle, src->handle, sizeof(Circle));
+			if (initial_transform) collider_transform((Circle *)dst->data.handle, *initial_transform);
+		} break;
+
+		case Collider_Mm_Rect: {
+			dst->data.handle = memory_allocate(sizeof(Mm_Rect), scene->collider_shape_allocator);
+			memcpy(dst->data.handle, src->handle, sizeof(Mm_Rect));
+			if (initial_transform) collider_transform((Mm_Rect *)dst->data.handle, *initial_transform);
+		} break;
+
+		case Collider_Capsule: {
+			dst->data.handle = memory_allocate(sizeof(Capsule), scene->collider_shape_allocator);
+			memcpy(dst->data.handle, src->handle, sizeof(Capsule));
+			if (initial_transform) collider_transform((Capsule *)dst->data.handle, *initial_transform);
+		} break;
+
+		case Collider_Polygon: {
+			auto poly = (Polygon *)src->handle;
+			auto total_size = sizeof(Polygon) + sizeof(Vec2) * (poly->vertex_count - 3);
+			dst->data.handle = memory_allocate(total_size, scene->collider_shape_allocator);
+			memcpy(dst->data.handle, poly, total_size);
+			if (initial_transform) collider_transform((Polygon *)dst->data.handle, *initial_transform);
+		} break;
+
+			invalid_default_case();
+		};
+
 	}
 
 	Collider_Group group;
@@ -100,22 +204,27 @@ Collider_Group scene_create_colliders(Scene *scene, Entity *entity, u32 count) {
 }
 
 void scene_destroy_colliders(Scene *scene, Collider_Group *group) {
+	Collider_Node *ptr = (Collider_Node *)group->handle;
+	for (u32 index = 0; index < group->count; ++index, ++ptr) {
+		Collider &collider = ptr->data;
+		if (collider.type != Collider_Null) {
+			memory_free(collider.handle, scene->collider_shape_allocator);
+		}
+	}
+
 	circular_linked_list_remove(&scene->colliders, (Collider_Node *)group->handle, group->count);
 
-	Collider_Node *ptr = (Collider_Node *)group->handle;
-	for (u32 index = 0; index < group->count; ++index) {
-		scene_attach_collider_type(scene, ptr, Collider_Null, 0);
-		ptr += 1;
-	}
+	group->count = 0;
+	group->handle = nullptr;
 }
 
-Rigid_Body *scene_create_rigid_body(Scene *scene, Entity *entity, u32 collider_count) {
+Rigid_Body *scene_create_rigid_body(Scene *scene, Entity *entity, Collider_Id id, const Mat3 *initial_transform) {
 	auto node = circular_linked_list_add(&scene->rigid_bodies);
 	Rigid_Body *rigid_body = &node->data;
 	rigid_body->velocity = vec2(0);
 	rigid_body->force = vec2(0);
 	rigid_body->flags = 0;
-	rigid_body->colliders = scene_create_colliders(scene, entity, collider_count);
+	rigid_body->colliders = scene_create_colliders(scene, entity, id, initial_transform);
 	return rigid_body;
 }
 
@@ -125,45 +234,11 @@ void scene_destroy_rigid_body(Scene *scene, Rigid_Body *rigid_body) {
 	circular_linked_list_remove(&scene->rigid_bodies, node);
 }
 
-void *scene_attach_collider_type(Scene *scene, Collider_Node *node, Collider_Type type, Collider_Attachment *attachment) {
-	Collider &collider = node->data;
-
-	if (collider.type != Collider_Null) {
-		memory_free(collider.handle, scene->collider_shape_allocator);
-	}
-
-	collider.type = type;
-
-	switch (type) {
-	case Collider_Null:
-		collider.handle = &scene->null_shape;
-		break;
-
-	case Collider_Circle:
-		collider.handle = memory_allocate(sizeof(Circle), scene->collider_shape_allocator);
-		break;
-
-	case Collider_Mm_Rect:
-		collider.handle = memory_allocate(sizeof(Mm_Rect), scene->collider_shape_allocator);
-		break;
-
-	case Collider_Capsule:
-		collider.handle = memory_allocate(sizeof(Capsule), scene->collider_shape_allocator);
-		break;
-
-	case Collider_Polygon:
-		collider.handle = memory_allocate(sizeof(Polygon) + sizeof(Vec2) * (attachment->polygon_n - 3), scene->collider_shape_allocator);
-		break;
-
-		invalid_default_case();
-	};
-
-	return collider.handle;
-}
-
 //
 //
 //
+
+#if 0
 
 void serialize_collider(Scene *scene, Collider &collider, Ostream *out) {
 	switch (collider.type) {
@@ -316,3 +391,5 @@ bool deserialize_entity(Scene *scene, Entity *entity, Deserialize_State *state) 
 
 	return result;
 }
+
+#endif
