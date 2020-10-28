@@ -910,10 +910,25 @@ inline Vec2 support(const ShapeA &a, const ShapeB &b, Vec2 dir) {
 }
 
 template <typename ShapeA, typename ShapeB>
-inline Vec2 support_dynamic(const ShapeA &a, const ShapeB &b, Vec2 relative_dp_of_b_wrt_a, Vec2 dir) {
+inline Vec2 support(const ShapeA &a, const ShapeB &b, Vec2 dir, Vec2 dp) {
 	Vec2 s = support(a, b, dir);
-	if (vec2_dot(relative_dp_of_b_wrt_a, dir) <= 0.0f)
-		s -= relative_dp_of_b_wrt_a;
+	if (vec2_dot(dp, dir) <= 0.0f)
+		s -= dp;
+	return s;
+}
+
+template <typename ShapeA, typename ShapeB>
+inline Vec2 support(const ShapeA &a, const ShapeB &b, Vec2 dir, const Mat3 &ta, const Mat3 &tb) {
+	Vec2 p = mat3_vec2_mul(ta, support(a, dir));
+	Vec2 q = mat3_vec2_mul(tb, support(b, -dir));
+	return p - q;
+}
+
+template <typename ShapeA, typename ShapeB>
+inline Vec2 support(const ShapeA &a, const ShapeB &b, Vec2 dir, const Mat3 &ta, const Mat3 &tb, Vec2 dp) {
+	Vec2 s = support(a, b, dir, ta, tb);
+	if (vec2_dot(dp, dir) <= 0.0f)
+		s -= dp;
 	return s;
 }
 
@@ -921,42 +936,18 @@ bool next_simplex(Vec2 *simplex, Vec2 *dir, u32 *n);
 
 Nearest_Edge2d closest_edge_origin_polygon(const Polygon &polygon);
 
-template <typename ShapeA, typename ShapeB>
-bool gjk(const ShapeA &sa, const ShapeB &sb) {
+template <typename ShapeA, typename ShapeB, typename ...Args>
+bool gjk(const ShapeA &sa, const ShapeB &sb, const Args & ...args) {
 	Vec2 simplex[3];
 
 	Vec2 dir = vec2(0, 1);
-	simplex[0] = support(sa, sb, dir);
+	simplex[0] = support(sa, sb, dir, args...);
 	dir = -simplex[0];
 	u32 n = 1;
 
 	Vec2 a;
 	while (true) {
-		a = support(sa, sb, dir);
-		if (vec2_dot(a, dir) < 0.0f) return false; // no intersection
-		simplex[n] = a;
-		n += 1;
-
-		if (next_simplex(simplex, &dir, &n)) {
-			return true;
-		}
-	}
-
-	return false;
-}
-
-template <typename ShapeA, typename ShapeB>
-bool gjk_dynamic(const ShapeA &sa, const ShapeB &sb, Vec2 relative_dp_of_b_wrt_a) {
-	Vec2 simplex[3];
-
-	Vec2 dir = vec2(0, 1);
-	simplex[0] = support_dynamic(sa, sb, relative_dp_of_b_wrt_a, dir);
-	dir = -simplex[0];
-	u32 n = 1;
-
-	Vec2 a;
-	while (true) {
-		a = support_dynamic(sa, sb, relative_dp_of_b_wrt_a, dir);
+		a = support(sa, sb, dir, args...);
 		if (vec2_dot(a, dir) < 0.0f) return false; // no intersection
 		simplex[n] = a;
 		n += 1;
@@ -971,14 +962,14 @@ bool gjk_dynamic(const ShapeA &sa, const ShapeB &sb, Vec2 relative_dp_of_b_wrt_a
 
 constexpr r32 EPA_TOLERANCE = 0.00001f;
 
-template <typename ShapeA, typename ShapeB>
-bool epa(const ShapeA &sa, const ShapeB &sb, Vec2 *normal, r32 *penetration_depth) {
+template <typename ShapeA, typename ShapeB, typename ...Args>
+bool gjk_epa(const ShapeA &sa, const ShapeB &sb, Vec2 *normal, r32 *penetration_depth, const Args &...args) {
 	u32 allocated = 8;
 	Polygon *simplex = (Polygon *)tallocate(sizeof(Polygon) + sizeof(Vec2) * (allocated - 3));
 	simplex->vertex_count = 1;
 
 	Vec2 dir = vec2(0, 1);
-	simplex->vertices[0] = support_dynamic(sa, sb, dir);
+	simplex->vertices[0] = support(sa, sb, dir, args...);
 	dir = -simplex->vertices[0];
 
 	bool collision = false;
@@ -986,61 +977,7 @@ bool epa(const ShapeA &sa, const ShapeB &sb, Vec2 *normal, r32 *penetration_dept
 	Vec2 a;
 	while (true) {
 		if (vec2_null(dir)) return false;
-		a = support(sa, sb, dir);
-		if (vec2_dot(a, dir) < 0.0f) return false; // no intersection
-		simplex->vertices[simplex->vertex_count] = a;
-		simplex->vertex_count += 1;
-
-		if (next_simplex(simplex->vertices, &dir, &simplex->vertex_count)) {
-			collision = true;
-			break;
-		}
-	}
-	
-	if (!collision) return false;
-
-	while (true) {
-		Nearest_Edge2d e = closest_edge_origin_polygon(*simplex);
-		if (vec2_null(e.normal)) return false;
-
-		Vec2 p = support(sa, sb, e.normal);
-
-		r32 d = vec2_dot(p, e.normal);
-		if (d - e.distance < EPA_TOLERANCE) {
-			*normal = e.normal;
-			*penetration_depth = d;
-			break;
-		} else {
-			if (simplex->vertex_count == allocated) {
-				allocated *= 2;
-				simplex = (Polygon *)treallocate(simplex, sizeof(Polygon) + sizeof(Vec2) * (allocated - 3));
-			}
-
-			memmove(simplex->vertices + e.index + 1, simplex->vertices + e.index, sizeof(Vec2) * (simplex->vertex_count - e.index));
-			simplex->vertices[e.index] = p;
-			simplex->vertex_count += 1;
-		}
-	}
-
-	return true;
-}
-
-template <typename ShapeA, typename ShapeB>
-bool epa_dynamic(const ShapeA &sa, const ShapeB &sb, Vec2 relative_dp_of_b_wrt_a, Vec2 *normal, r32 *penetration_depth) {
-	u32 allocated = 8;
-	Polygon *simplex = (Polygon *)tallocate(sizeof(Polygon) + sizeof(Vec2) * (allocated - 3));
-	simplex->vertex_count = 1;
-
-	Vec2 dir = vec2(0, 1);
-	simplex->vertices[0] = support_dynamic(sa, sb, relative_dp_of_b_wrt_a, dir);
-	dir = -simplex->vertices[0];
-
-	bool collision = false;
-
-	Vec2 a;
-	while (true) {
-		if (vec2_null(dir)) return false;
-		a = support_dynamic(sa, sb, relative_dp_of_b_wrt_a, dir);
+		a = support(sa, sb, dir, args...);
 		if (vec2_dot(a, dir) < 0.0f) return false; // no intersection
 		simplex->vertices[simplex->vertex_count] = a;
 		simplex->vertex_count += 1;
@@ -1057,7 +994,7 @@ bool epa_dynamic(const ShapeA &sa, const ShapeB &sb, Vec2 relative_dp_of_b_wrt_a
 		Nearest_Edge2d e = closest_edge_origin_polygon(*simplex);
 		if (vec2_null(e.normal)) return false;
 
-		Vec2 p = support_dynamic(sa, sb, relative_dp_of_b_wrt_a, e.normal);
+		Vec2 p = support(sa, sb, e.normal, args...);
 
 		r32 d = vec2_dot(p, e.normal);
 		if (d - e.distance < EPA_TOLERANCE) {

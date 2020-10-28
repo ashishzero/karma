@@ -19,16 +19,16 @@ struct Player_Controller {
 	r32 x, y;
 };
 
-typedef bool(*Collision_Resolver)(Collider &a, Collider &b, Vec2 dp, Vec2 *normal, r32 *penetration);
+typedef bool(*Collision_Resolver)(Collider &a, Collider &b, const Mat3 &ta, const Mat3 &tb, Vec2 dp, Vec2 *normal, r32 *penetration);
 static Collision_Resolver COLLISION_RESOLVERS[Collider_Count][Collider_Count];
 
-bool null_collision_resolver(Collider &a, Collider &b, Vec2 dp, Vec2 *normal, r32 *penetration) {
+bool null_collision_resolver(Collider &a, Collider &b, const Mat3 &ta, const Mat3 &tb, Vec2 dp, Vec2 *normal, r32 *penetration) {
 	return false;
 }
 
 template <typename ShapeA, typename ShapeB>
-bool shapes_collision_resolver(Collider &a, Collider &b, Vec2 dp, Vec2 *normal, r32 *penetration) {
-	return epa_dynamic(*(ShapeA *)a.handle, *(ShapeB *)b.handle, dp, normal, penetration);
+bool shapes_collision_resolver(Collider &a, Collider &b, const Mat3 &ta, const Mat3 &tb, Vec2 dp, Vec2 *normal, r32 *penetration) {
+	return gjk_epa(*(ShapeA *)a.handle, *(ShapeB *)b.handle, normal, penetration, ta, tb, dp);
 }
 
 void collision_resover_init() {
@@ -63,8 +63,8 @@ void collision_resover_init() {
 	COLLISION_RESOLVERS[Collider_Polygon][Collider_Polygon] = shapes_collision_resolver<Polygon, Polygon>;
 }
 
-bool collider_vs_collider_dynamic(Collider &a, Collider &b, Vec2 dp, Vec2 *normal, r32 *penetration) {
-	return COLLISION_RESOLVERS[a.type][b.type](a, b, dp, normal, penetration);
+bool collider_vs_collider_dynamic(Collider &a, Collider &b, const Mat3 &ta, const Mat3 &tb, Vec2 dp, Vec2 *normal, r32 *penetration) {
+	return COLLISION_RESOLVERS[a.type][b.type](a, b, ta, tb, dp, normal, penetration);
 }
 
 int karma_user_zero() {
@@ -331,7 +331,7 @@ int karma_user_zero() {
 
 			auto circle = *collider_get_shape(collider_get(scene, collider_node(player->rigid_body->colliders.handle, 0)), Circle);
 			player->rigid_body->transform = mat3_translation(player->position) * mat3_scalar(player->radius, 1);
-			collider_transform(&circle, player->rigid_body->transform);
+			//collider_transform(&circle, player->rigid_body->transform);
 			//circle->center = player->position;
 			//circle->radius = player->radius;
 
@@ -339,10 +339,12 @@ int karma_user_zero() {
 			player_collider.type = Collider_Circle;
 			player_collider.handle = &circle;
 
+			auto identity_m = mat3_identity();
+
 			for (auto &o : scene->by_type.static_body) {
 				for (u32 index = 0; index < o.colliders.count; ++index) {
 					auto c = collider_get(scene, collider_node(o.colliders.handle, index));
-					if (collider_vs_collider_dynamic(*c, player_collider, dt * player->rigid_body->velocity, &norm, &dist)) {
+					if (collider_vs_collider_dynamic(*c, player_collider, identity_m, player->rigid_body->transform, dt * player->rigid_body->velocity, &norm, &dist)) {
 						array_add(&manifolds, Collision_Manifold{ norm, dist });
 						v_t = dist / dt * sgn(vec2_dot(norm, player->rigid_body->velocity));
 						player->rigid_body->velocity -= v_t * norm;
