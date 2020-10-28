@@ -148,7 +148,15 @@ void editor_draw(const Type_Info *base_info, char *data, Editor_Attribute attr, 
 	switch (base_info->id) {
 	case Type_Id_POINTER: {
 		auto info = (Type_Info_Pointer *)base_info;
-		editor_draw(info->pointer_to, (char *)(*(ptrsize *)data), attr, name);
+
+		if (editor_item_expands(info->pointer_to)) {
+			if (ImGui::CollapsingHeader(string_cstr(info->pointer_to->name))) {
+				editor_draw(info->pointer_to, (char *)(*(ptrsize *)data), attr, name);
+			}
+		}
+		else {
+			editor_draw(info->pointer_to, (char *)(*(ptrsize *)data), attr, name);
+		}
 	} break;
 
 		// ignored

@@ -350,7 +350,7 @@ int karma_user_zero() {
 
 			for (auto &o : scene->by_type.static_body) {
 				o.colliders->flags = 0;
-				for (u32 index = 0; index < o.colliders->count; ++index) {
+				for (u32 index = 0; index < o.colliders->count; ++index) {\
 					auto c = collider_get(o.colliders, index);
 					if (collider_vs_collider_dynamic(*c, *player->rigid_body->colliders->collider, o.colliders->transform, player->rigid_body->colliders->transform, dt * player->rigid_body->velocity, &norm, &dist)) {
 						array_add(&manifolds, Collision_Manifold{ norm, dist });

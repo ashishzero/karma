@@ -37,9 +37,9 @@ struct Collider_Group {
 };
 
 struct Rigid_Body {
-							Vec2			velocity;
-							Vec2			force;
-	attribute(no_display)	Collider_Group  *colliders;
+	Vec2			velocity;
+	Vec2			force;
+	Collider_Group  *colliders;
 };
 
 struct Player : public Entity {
@@ -47,7 +47,7 @@ struct Player : public Entity {
 	attribute(color)					Vec4 color;
 										r32 intensity;
 	attribute(read_only)				Raw_Collider_Id collider_id;
-	attribute(read_only, no_serialize)	Rigid_Body *rigid_body;
+	attribute(no_serialize)				Rigid_Body *rigid_body;
 };
 
 struct Static_Body : public Entity {
