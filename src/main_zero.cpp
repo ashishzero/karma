@@ -328,11 +328,17 @@ int karma_user_zero() {
 
 			Vec2 norm; r32 dist, v_t;
 
-			auto circle = collider_get_shape(collider_get(scene, collider_node(player->rigid_body->colliders.handle, 0)), Circle);
-			circle->center = player->position;
-			circle->radius = player->radius;
 
-			auto &player_collider = *collider_get(scene, collider_node(player->rigid_body->colliders.handle, 0));
+			auto circle = *collider_get_shape(collider_get(scene, collider_node(player->rigid_body->colliders.handle, 0)), Circle);
+			player->rigid_body->transform = mat3_translation(player->position) * mat3_scalar(player->radius, 1);
+			collider_transform(&circle, player->rigid_body->transform);
+			//circle->center = player->position;
+			//circle->radius = player->radius;
+
+			Collider player_collider;
+			player_collider.type = Collider_Circle;
+			player_collider.handle = &circle;
+
 			for (auto &o : scene->by_type.static_body) {
 				for (u32 index = 0; index < o.colliders.count; ++index) {
 					auto c = collider_get(scene, collider_node(o.colliders.handle, index));
@@ -342,6 +348,9 @@ int karma_user_zero() {
 						player->rigid_body->velocity -= v_t * norm;
 						player->rigid_body->flags |= Collision_Bit_OCUURED;
 						o.color = vec4(0, 1, 1, 1);
+
+						//player->rigid_body->transform = mat3_translation(player->position);
+						//collider_transform(&circle, player->rigid_body->transform);
 					}
 				}
 			}

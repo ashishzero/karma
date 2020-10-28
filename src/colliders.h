@@ -33,7 +33,9 @@ inline void *collider_get_handle(Collider *collider, Collider_Type type) {
 //
 
 inline void collider_transform(Circle *circle, const Mat3 &m) {
-	circle->center = mat3_vec2_mul(m, circle->center);
+	circle->center.x += m.rows[0].z;
+	circle->center.y += m.rows[1].z;
+	circle->radius *= m.m2[0][0] * m.m2[1][1] - m.m2[0][1] * m.m2[1][0];
 }
 
 inline void collider_transform(Polygon *polygon, const Mat3 &m) {

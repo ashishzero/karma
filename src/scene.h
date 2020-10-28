@@ -4,11 +4,6 @@
 #include "modules/core/random.h"
 #include "entity.h"
 
-struct Entity_By_Type {
-	Array<Player> player;
-	Array<Static_Body> static_body;
-};
-
 template <typename Node_Data_Type>
 struct Circular_Linked_List {
 	struct Node {
@@ -59,6 +54,11 @@ struct Collider_Raw {
 	Collider_Id id;
 	Collider *	colliders;
 	u32			colliders_count;
+};
+
+struct Entity_By_Type {
+	Array<Player>		player;
+	Array<Static_Body>	static_body;
 };
 
 struct Scene {
