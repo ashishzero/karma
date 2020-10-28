@@ -752,6 +752,17 @@ T *array_find(Array<T> *a, const T &v) {
 	return res;
 }
 
+template <typename T, typename Search_Func, typename ...Args>
+T *array_find(Array<T> *a, Search_Func func, const Args& ...args) {
+	T *res = nullptr;
+	for (s64 index = 0; index < a->count; ++index) {
+		if (func(a->data[index], args...)) {
+			break;
+		}
+	}
+	return res;
+}
+
 template <typename T>
 void array_remove(Array<T> *a, s64 index) {
 	assert(index < a->count);
