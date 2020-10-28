@@ -651,6 +651,14 @@ Vec3 mat3_vec3_mul(const Mat3 &mat, Vec3 vec) {
 	return res;
 }
 
+Vec2 mat3_vec2_mul(const Mat3 &mat, Vec2 v) {
+	Vec3 vec = vec3(v, 1);
+	Vec2 res;
+	res.m[0] = vec3_dot(vec, mat.rows[0]);
+	res.m[1] = vec3_dot(vec, mat.rows[1]);
+	return res;
+}
+
 Mat4 mat4_mul(const Mat4 &left, const Mat4 &right) {
 	Mat4 res;
 	Mat4 tras = mat4_transpose(right);

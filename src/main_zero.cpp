@@ -19,25 +19,6 @@ struct Player_Controller {
 	r32 x, y;
 };
 
-inline void collider_translate(Circle *circle, Vec2 p) {
-	circle->center += p;
-}
-
-inline void collider_translate(Polygon *polygon, Vec2 p) {
-	for (u32 index = 0; index < polygon->vertex_count; ++index)
-		polygon->vertices[index] += p;
-}
-
-inline void collider_translate(Mm_Rect *mm_rect, Vec2 p) {
-	mm_rect->min += p;
-	mm_rect->max += p;
-}
-
-inline void collider_translate(Capsule *capsule, Vec2 p) {
-	capsule->a += p;
-	capsule->b += p;
-}
-
 typedef bool(*Collision_Resolver)(Collider &a, Collider &b, Vec2 dp, Vec2 *normal, r32 *penetration);
 static Collision_Resolver COLLISION_RESOLVERS[Collider_Count][Collider_Count];
 
@@ -150,7 +131,7 @@ int karma_user_zero() {
 		Polygon *polygon = scene_attach_collider(scene, collider_node(object->colliders.handle, 0), Polygon, &attachment);
 		polygon->vertex_count = static_count(points);
 		memcpy(polygon->vertices, points, sizeof(points));
-		collider_translate(polygon, object->position);
+		collider_transform(polygon, mat3_translation(object->position));
 
 		object = scene_add_static_body(scene);
 		scene_generate_new_entity(scene, object, vec2(5));
@@ -160,7 +141,7 @@ int karma_user_zero() {
 		Circle *circle = scene_attach_collider(scene, collider_node(object->colliders.handle, 0), Circle, 0);
 		circle->center = vec2(0);
 		circle->radius = 1.23f;
-		collider_translate(circle, object->position);
+		collider_transform(circle, mat3_translation(object->position));
 
 		object = scene_add_static_body(scene);
 		scene_generate_new_entity(scene, object, vec2(6.5f, -0.5f));
@@ -170,7 +151,7 @@ int karma_user_zero() {
 		Mm_Rect *rect = scene_attach_collider(scene, collider_node(object->colliders.handle, 0), Mm_Rect, 0);
 		rect->min = vec2(-2.5f, -3.5f);
 		rect->max = vec2(2.5f, 3.5f);
-		collider_translate(rect, object->position);
+		collider_transform(rect, mat3_translation(object->position));
 
 		object = scene_add_static_body(scene);
 		scene_generate_new_entity(scene, object, vec2(-1, -5));
@@ -181,12 +162,12 @@ int karma_user_zero() {
 		capsule->a = vec2(-2, -3);
 		capsule->b = vec2(2, 3);
 		capsule->radius = 1;
-		collider_translate(capsule, object->position);
+		collider_transform(capsule, mat3_translation(object->position));
 
 		circle = scene_attach_collider(scene, collider_node(object->colliders.handle, 1), Circle, 0);
 		circle->center = vec2(1, -1);
 		circle->radius = 1;
-		collider_translate(circle, object->position);
+		collider_transform(circle, mat3_translation(object->position));
 	}
 
 	Player_Controller controller = {};

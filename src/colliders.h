@@ -41,3 +41,27 @@ struct Collider_Group {
 	Collider_Handle handle;
 	u32 count;
 };
+
+//
+//
+//
+
+inline void collider_transform(Circle *circle, const Mat3 &m) {
+	circle->center = mat3_vec2_mul(m, circle->center);
+}
+
+inline void collider_transform(Polygon *polygon, const Mat3 &m) {
+	Vec2 *vertex = polygon->vertices;
+	for (u32 index = 0; index < polygon->vertex_count; ++index, ++vertex)
+		*vertex = mat3_vec2_mul(m, *vertex);
+}
+
+inline void collider_transform(Mm_Rect *mm_rect, const Mat3 &m) {
+	mm_rect->min = mat3_vec2_mul(m, mm_rect->min);
+	mm_rect->max = mat3_vec2_mul(m, mm_rect->max);
+}
+
+inline void collider_transform(Capsule *capsule, const Mat3 &m) {
+	capsule->a = mat3_vec2_mul(m, capsule->a);
+	capsule->b = mat3_vec2_mul(m, capsule->b);
+}

@@ -505,6 +505,7 @@ Vec2 mat2_vec2_mul(const Mat2 &mat, Vec2 vec);
 
 Mat3 mat3_mul(const Mat3 &left, const Mat3 &right);
 Vec3 mat3_vec3_mul(const Mat3 &mat, Vec3 vec);
+Vec2 mat3_vec2_mul(const Mat3 &mat, Vec2 vec);
 
 Mat4 mat4_mul(const Mat4 &left, const Mat4 &right);
 Vec4 mat4_vec4_mul(const Mat4 &mat, Vec4 vec);
