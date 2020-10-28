@@ -134,7 +134,7 @@ void *scene_attach_collider_type(Scene *scene, Collider_Node *node, Collider_Typ
 	Collider &collider = node->collider;
 
 	if (collider.type != Collider_Null) {
-		memory_free(collider.handle);
+		memory_free(collider.handle, scene->collider_shape_allocator);
 	}
 
 	collider.type = type;
