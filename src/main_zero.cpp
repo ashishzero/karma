@@ -107,8 +107,8 @@ int karma_user_zero() {
 	Player *player = scene_add_player(scene);
 	scene_generate_new_entity(scene, player, vec2(0));
 	player->id = 6888115871281690331; // HACK: hardcoded
-	player->transformed_collider = scene_create_colliders(scene, 1);
-	scene_attach_collider(scene, collider_node(player->transformed_collider.handle, 0), Circle, 0);
+	player->rigid_body = scene_create_rigid_body(scene, player, 1);
+	scene_attach_collider(scene, collider_node(player->rigid_body->colliders.handle, 0), Circle, 0);
 
 	{
 		Vec2 points[] = {
@@ -123,7 +123,7 @@ int karma_user_zero() {
 		scene_generate_new_entity(scene, object, vec2(-5.6f, 0.4f));
 		object->id = 6888174093586976255; // HACK: hardcoded
 		object->color = vec4(0, 1, 1);
-		object->colliders = scene_create_colliders(scene, 1);
+		object->colliders = scene_create_colliders(scene, player, 1);
 
 		Collider_Attachment attachment;
 		attachment.polygon_n = static_count(points);
@@ -136,7 +136,7 @@ int karma_user_zero() {
 		object = scene_add_static_body(scene);
 		scene_generate_new_entity(scene, object, vec2(5));
 		object->color = vec4(0, 1, 1);
-		object->colliders = scene_create_colliders(scene, 1);
+		object->colliders = scene_create_colliders(scene, object, 1);
 
 		Circle *circle = scene_attach_collider(scene, collider_node(object->colliders.handle, 0), Circle, 0);
 		circle->center = vec2(0);
@@ -146,7 +146,7 @@ int karma_user_zero() {
 		object = scene_add_static_body(scene);
 		scene_generate_new_entity(scene, object, vec2(6.5f, -0.5f));
 		object->color = vec4(0, 1, 1);
-		object->colliders = scene_create_colliders(scene, 1);
+		object->colliders = scene_create_colliders(scene, object, 1);
 
 		Mm_Rect *rect = scene_attach_collider(scene, collider_node(object->colliders.handle, 0), Mm_Rect, 0);
 		rect->min = vec2(-2.5f, -3.5f);
@@ -156,7 +156,7 @@ int karma_user_zero() {
 		object = scene_add_static_body(scene);
 		scene_generate_new_entity(scene, object, vec2(-1, -5));
 		object->color = vec4(0, 1, 1);
-		object->colliders = scene_create_colliders(scene, 2);
+		object->colliders = scene_create_colliders(scene, object, 2);
 
 		Capsule *capsule = scene_attach_collider(scene, collider_node(object->colliders.handle, 0), Capsule, 0);
 		capsule->a = vec2(-2, -3);
@@ -171,10 +171,6 @@ int karma_user_zero() {
 	}
 
 	Player_Controller controller = {};
-
-	Camera camera;
-	camera.position = vec2(0);
-	camera.distance = 0.0f;
 
 	u64 frequency = system_get_frequency();
 	u64 counter = system_get_counter();
@@ -273,14 +269,14 @@ int karma_user_zero() {
 		Array<Collision_Manifold> manifolds;
 		manifolds.allocator = TEMPORARY_ALLOCATOR;
 
-		Vec2 player_force;
 		while (accumulator_t >= fixed_dt) {
 			Dev_TimedScope(SimulationFrame);
 
 			const r32 gravity = 10;
 			const r32 drag = 5;
 
-			player_force = vec2(0);
+			player->rigid_body->force = vec2(0);
+			player->rigid_body->flags = 0;
 
 			r32 len = sqrtf(controller.x * controller.x + controller.y * controller.y);
 			Vec2 dir;
@@ -294,43 +290,38 @@ int karma_user_zero() {
 
 			const float force = 20;
 
-			player_force = force * dir;
+			player->rigid_body->force = force * dir;
 			//player->force.y -= gravity;
 
-			player->velocity += dt * player_force;
-			player->velocity *= powf(0.5f, drag * dt);
+			player->rigid_body->velocity += dt * player->rigid_body->force;
+			player->rigid_body->velocity *= powf(0.5f, drag * dt);
 
 			//Vec2 velocity_t = dt * player_velocity;
 
 			Vec2 norm; r32 dist, v_t;
 
-			auto circle = collider_get_shape(collider_get(scene, collider_node(player->transformed_collider.handle, 0)), Circle);
-			circle->center = player->position + player->collider.center;
-			circle->radius = player->collider.radius;
+			auto circle = collider_get_shape(collider_get(scene, collider_node(player->rigid_body->colliders.handle, 0)), Circle);
+			circle->center = player->position;
+			circle->radius = player->radius;
 
-			for (auto ptr = scene->colliders.node.next; ptr != &scene->colliders.node; ptr = ptr->next)
-				ptr->collider.flags = 0;
-
-			auto &player_collider = *collider_get(scene, collider_node(player->transformed_collider.handle, 0));
-			player_collider.flags = 0;
+			auto &player_collider = *collider_get(scene, collider_node(player->rigid_body->colliders.handle, 0));
 			for (auto &o : scene->by_type.static_body) {
 				for (u32 index = 0; index < o.colliders.count; ++index) {
 					auto c = collider_get(scene, collider_node(o.colliders.handle, index));
-					if (collider_vs_collider_dynamic(*c, player_collider, dt * player->velocity, &norm, &dist)) {
+					if (collider_vs_collider_dynamic(*c, player_collider, dt * player->rigid_body->velocity, &norm, &dist)) {
 						array_add(&manifolds, Collision_Manifold{ norm, dist });
-						v_t = dist / dt * sgn(vec2_dot(norm, player->velocity));
-						player->velocity -= v_t * norm;
+						v_t = dist / dt * sgn(vec2_dot(norm, player->rigid_body->velocity));
+						player->rigid_body->velocity -= v_t * norm;
+						player->rigid_body->flags |= Collision_Bit_OCUURED;
 						o.color = vec4(0, 1, 1, 1);
-						c->flags |= Collider_Flag_Bit_TOUCHED;
-						player_collider.flags |= Collider_Flag_Bit_TOUCHED;
 					}
 				}
 			}
 
-			player->position += dt * player->velocity;
+			player->position += dt * player->rigid_body->velocity;
 
 			r32 camera_follow_speed = 0.977f;
-			camera.position = lerp(camera.position, player->position, 1.0f - powf(1.0f - camera_follow_speed, dt));
+			scene->camera.position = lerp(scene->camera.position, player->position, 1.0f - powf(1.0f - camera_follow_speed, dt));
 
 			accumulator_t -= fixed_dt;
 		}
@@ -365,13 +356,13 @@ int karma_user_zero() {
 		gfx_begin_drawing(Framebuffer_Type_HDR, Clear_ALL, vec4(0.0f));
 		gfx_viewport(0, 0, window_w, window_h);
 
-		r32 scale = powf(0.5f, camera.distance);
-		Mat4 transform = mat4_scalar(scale, scale, 1.0f) * mat4_translation(vec3(-camera.position, 0.0f));
+		r32 scale = powf(0.5f, scene->camera.distance);
+		Mat4 transform = mat4_scalar(scale, scale, 1.0f) * mat4_translation(vec3(-scene->camera.position, 0.0f));
 
 		im2d_begin(view, transform);
 
-		im2d_circle(player->position, player->rradius, player->color);
-		im2d_line(player->position, player->position + player->velocity, vec4(0, 1.5f, 0), 0.02f);
+		im2d_circle(player->position, player->radius, player->color * player->intensity);
+		im2d_line(player->position, player->position + player->rigid_body->velocity, vec4(0, 1.5f, 0), 0.02f);
 
 		for (auto &manifold : manifolds) {
 			im2d_line(player->position, player->position + manifold.normal, 1.5f * vec4(1, 0, 0), 0.05f);
@@ -379,8 +370,8 @@ int karma_user_zero() {
 		}
 
 		for (auto ptr = scene->colliders.node.next; ptr != &scene->colliders.node; ptr = ptr->next) {
-			auto &c = ptr->collider;
-			auto color = (c.flags & Collider_Flag_Bit_TOUCHED) ? vec4(0, 1, 1) : vec4(1, 0, 0);
+			auto &c = ptr->data;
+			auto color = vec4(0, 1, 1);
 			switch (c.type) {
 			case Collider_Null: {
 
@@ -438,87 +429,10 @@ int karma_user_zero() {
 		}
 #endif
 
-		ImGui::Begin("Player");
-		editor_draw(*player);
+		
+		editor_entity(player);
 
-#if 1
-		if (ImGui::Button("Save")) {
-			Ostream out;
-			serialize_entity(scene, player, &out);
-			System_File file;
-			if (system_open_file(tprintf("temp/%zu.entity", player->id), File_Operation_NEW, &file)) {
-				ostream_build_out_file(&out, &file);
-			}
-			system_close_file(&file);
-			ostream_free(&out);
-		}
-
-		if (ImGui::Button("Load")) {
-			scene_destroy_colliders(scene, &player->transformed_collider);
-
-			Tokenization_Status status;
-			auto content = system_read_entire_file(tprintf("temp/%zu.entity", player->id));
-			auto tokens = tokenize(content, &status);
-			if (status.result == Tokenization_Result_SUCCESS) {
-				Deserialize_Error_Info error;
-				auto state = deserialize_begin(tokens);
-
-				if (!deserialize_entity(scene, player, &state)) {
-					system_log(LOG_ERROR, "Load", "Failed to load player: %s [%zd:%zd]",
-						state.error.string, state.error.token.row, state.error.token.column);
-				}
-
-				deserialize_end(&state);
-			}
-			else {
-				system_log(LOG_ERROR, "Load", "Failed to load player");
-			}
-			memory_free(tokens.data);
-			memory_free(content.data);
-		}
-#endif
-
-		ImGui::End();
-
-		ImGui::Begin("Static Body");
-		editor_draw(scene->by_type.static_body[0]);
-
-		if (ImGui::Button("Save Static Body")) {
-			Ostream out;
-			serialize_entity(scene, &scene->by_type.static_body[0], &out);
-			System_File file;
-			if (system_open_file(tprintf("temp/%zu.entity", scene->by_type.static_body[0].id), File_Operation_NEW, &file)) {
-				ostream_build_out_file(&out, &file);
-			}
-			system_close_file(&file);
-			ostream_free(&out);
-		}
-
-		if (ImGui::Button("Load Static Body")) {
-			scene_destroy_colliders(scene, &scene->by_type.static_body[0].colliders);
-
-			Tokenization_Status status;
-			auto content = system_read_entire_file(tprintf("temp/%zu.entity", scene->by_type.static_body[0].id));
-			auto tokens = tokenize(content, &status);
-			if (status.result == Tokenization_Result_SUCCESS) {
-				Deserialize_Error_Info error;
-				auto state = deserialize_begin(tokens);
-
-				if (!deserialize_entity(scene, &scene->by_type.static_body[0], &state)) {
-					system_log(LOG_ERROR, "Load", "Failed to load static body: %s [%zd:%zd]",
-						state.error.string, state.error.token.row, state.error.token.column);
-				}
-
-				deserialize_end(&state);
-			}
-			else {
-				system_log(LOG_ERROR, "Load", "Failed to load static body");
-			}
-			memory_free(tokens.data);
-			memory_free(content.data);
-		}
-
-		ImGui::End();
+		//ImGui::ShowDemoWindow();
 
 #if defined(BUILD_IMGUI)
 		{

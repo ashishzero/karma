@@ -416,7 +416,7 @@ inline Aabb2d aabb2d(Vec2 center, r32 a, r32 b) {
 
 struct Circle {
 	Vec2 center;
-	attribute(min:0, max:INFINITY) r32 radius;
+	attribute(min:0) r32 radius;
 };
 
 struct Quad {

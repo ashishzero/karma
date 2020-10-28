@@ -1,5 +1,6 @@
 #pragma once
 #include "modules/core/reflection.h"
+#include "scene.h"
 
 struct Editor_Attribute {
 	u32 flags = 0;
@@ -15,3 +16,5 @@ inline void editor_draw(T& d) {
 	Editor_Attribute attr = {};
 	editor_draw(reflect_info<T>(), (char *)&d, attr, "Root");
 }
+
+void editor_entity(Entity *entity);

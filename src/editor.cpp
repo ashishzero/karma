@@ -1,9 +1,9 @@
 #include "modules/imgui/imgui.h"
 #include "modules/core/reflection.h"
 #include "modules/core/lin_maths_types.h"
-#include ".generated/lin_maths_types.typeinfo"
 
 #include "editor.h"
+#include ".generated/entity.typeinfo"
 
 constexpr u32 EDITOR_FLAG_NO_DISPLAY = bit(1);
 constexpr u32 EDITOR_FLAG_READ_ONLY = bit(2);
@@ -178,7 +178,9 @@ void editor_draw(const Type_Info *base_info, char *data, Editor_Attribute attr, 
 			else {
 				editor_draw(mem->info, data + mem->offset, attr, string_cstr(mem->name));
 			}
+
 		}
+
 	} break;
 
 	case Type_Id_UNION: {
@@ -253,4 +255,35 @@ void editor_draw(const Type_Info *base_info, char *data, Editor_Attribute attr, 
 		}
 	} break;
 	}
+
+}
+
+//
+//
+//
+
+void editor_entity(Entity *entity) {
+	static Entity null;
+	
+	if (entity == nullptr) {
+		entity = &null;
+	}
+
+	ImGui::Begin("Entity:", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
+
+	switch (entity->type) {
+		case Entity_Null: {
+			editor_draw(*entity);
+		} break;
+
+		case Entity_Player: {
+			editor_draw(*(Player *)entity);
+		} break;
+
+		case Entity_Static_Body: {
+			editor_draw(*(Static_Body *)entity);
+		} break;
+	}	
+
+	ImGui::End();
 }
