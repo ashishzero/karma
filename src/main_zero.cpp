@@ -121,19 +121,21 @@ int karma_user_zero() {
 	Collider collider;
 	Raw_Collider_Id id;
 
-	Circle circle;
-	circle.center = vec2(0);
-	circle.radius = 1;
-	
-	collider.type = Collider_Circle;
-	collider.handle = &circle;
-	id = scene_add_raw_collider_group(scene, Array_View(&collider, 1));
+	{
+		Circle circle;
+		circle.center = vec2(0);
+		circle.radius = 1;
+		
+		collider.type = Collider_Circle;
+		collider.handle = &circle;
+		id = scene_add_raw_collider_group(scene, Array_View(&collider, 1));
 
-	Player *player = scene_add_player(scene);
-	scene_generate_new_entity(scene, player, vec2(5));
-	player->collider_id = id;
-	player->rigid_body->colliders = scene_create_colliders(scene, player, player->collider_id, mat3_identity());
-	
+		Player *player = scene_add_player(scene);
+		scene_generate_new_entity(scene, player, vec2(5));
+		player->collider_id = id;
+		player->rigid_body->colliders = scene_create_colliders(scene, player, player->collider_id, mat3_identity());
+	}
+
 	{
 		Static_Body *object;
 		Mat3 trans;
@@ -159,6 +161,7 @@ int karma_user_zero() {
 		}
 
 		{
+			Circle circle;
 			circle.center = vec2(0);
 			circle.radius = 0.6f;
 			collider.type = Collider_Circle;
@@ -188,6 +191,7 @@ int karma_user_zero() {
 		}
 
 		{
+			Circle circle;
 			circle.center = vec2(1, -1);
 			circle.radius = 1;
 
@@ -297,7 +301,7 @@ int karma_user_zero() {
 
 		}
 
-		player = &scene->by_type.player[0]; // Only one player exists for now
+		auto primary_player = &scene->by_type.player[0]; // Only player must exists for now
 
 		Dev_TimedBlockEnd(EventHandling);
 
@@ -317,38 +321,38 @@ int karma_user_zero() {
 			const r32 gravity = 10;
 			const r32 drag = 5;
 
-			player->rigid_body->force = vec2(0);
-			player->rigid_body->colliders->flags = 0;
-
 			r32 len = sqrtf(controller.x * controller.x + controller.y * controller.y);
-			Vec2 dir;
+			Vec2 dir = vec2(0);
 			if (len) {
 				dir.x = controller.x / len;
 				dir.y = controller.y / len;
 			}
-			else {
-				dir = vec2(0);
+
+			const float movement_force = 20;
+			for (auto &player : scene->by_type.player) {
+				if (len) {
+					player.rigid_body->force = movement_force * dir;
+					set_bit(player.rigid_body->colliders->flags, Collision_Bit_MOTION);
+				}
+				player.rigid_body->colliders->transform = mat3_translation(player.position) * mat3_scalar(player.radius, player.radius);
 			}
-
-			const float force = 20;
-
-			player->rigid_body->force = force * dir;
-			player->rigid_body->colliders->transform = mat3_translation(player->position) * mat3_scalar(player->radius, player->radius);
 
 			Vec2 norm; r32 dist, v_t;
 
 			for (auto collider_node = scene->colliders.node.next; collider_node != &scene->colliders.node; collider_node = collider_node->next) {
-				collider_node->data.flags = 0;
+				clear_bit(collider_node->data.flags, Collision_Bit_OCUURED);
 			}
 
 			// TODO: Do broad phase collision detection
 			for (auto ptr = scene->rigid_bodies.node.next; ptr != &scene->rigid_bodies.node; ptr = ptr->next) {
 				auto &body = ptr->data;
+				if (!get_bit(body.colliders->flags, Collision_Bit_MOTION)) continue;
+
 				body.velocity += dt * body.force;
 				body.velocity *= powf(0.5f, drag * dt);
+				body.force = vec2(0);
 
 				Vec2 dp = body.velocity * dt;
-				body.colliders->flags = 0;
 				for (u32 b_collider_index = 0; b_collider_index < body.colliders->count; ++b_collider_index) {
 					auto b_collider = collider_get(body.colliders, b_collider_index);
 
@@ -369,12 +373,19 @@ int karma_user_zero() {
 					}
 				}
 
+				if (vec2_null(body.velocity)) {
+					body.velocity = vec2(0);
+					clear_bit(body.colliders->flags, Collision_Bit_MOTION);
+				}
+
 			}
 
-			player->position += dt * player->rigid_body->velocity;
+			for (auto &player : scene->by_type.player) {
+				player.position += dt * player.rigid_body->velocity;
+			}
 
 			r32 camera_follow_speed = 0.977f;
-			scene->camera.position = lerp(scene->camera.position, player->position, 1.0f - powf(1.0f - camera_follow_speed, dt));
+			scene->camera.position = lerp(scene->camera.position, primary_player->position, 1.0f - powf(1.0f - camera_follow_speed, dt));
 
 			accumulator_t -= fixed_dt;
 		}
@@ -414,19 +425,13 @@ int karma_user_zero() {
 
 		im2d_begin(view, transform);
 
-		im2d_circle(player->position, player->radius, player->color * player->intensity);
-		im2d_line(player->position, player->position + player->rigid_body->velocity, vec4(0, 1.5f, 0), 0.02f);
+		im2d_circle(primary_player->position, primary_player->radius, primary_player->color *primary_player->intensity);
+		im2d_line(primary_player->position, primary_player->position + primary_player->rigid_body->velocity, vec4(0, 1.5f, 0), 0.02f);
 
 		for (auto &manifold : manifolds) {
-			im2d_line(player->position, player->position + manifold.normal, 1.5f * vec4(1, 0, 0), 0.05f);
-			im2d_line(player->position, player->position + manifold.penetration_depth * manifold.normal, 2 * vec4(1, 1, 0), 0.05f);
+			im2d_line(primary_player->position, primary_player->position + manifold.normal, 1.5f * vec4(1, 0, 0), 0.05f);
+			im2d_line(primary_player->position, primary_player->position + manifold.penetration_depth * manifold.normal, 2 * vec4(1, 1, 0), 0.05f);
 		}
-
-		const auto &ta = player->rigid_body->colliders->transform;
-		const auto &tb = scene->by_type.static_body[2].colliders->transform;
-
-		const auto &sa = *collider_get_shape(player->rigid_body->colliders->collider, Circle);
-		const auto &sb = *collider_get_shape(scene->by_type.static_body[2].colliders->collider, Mm_Rect);
 
 		im2d_circle(vec2(0), 0.05f, vec4(1.2f, 1.2f, 1.2f));
 
@@ -499,7 +504,7 @@ int karma_user_zero() {
 		}
 #endif
 
-		editor_entity(player);
+		editor_entity(primary_player);
 		
 		ImGui::Begin("Camera", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
 		editor_draw(scene->camera);

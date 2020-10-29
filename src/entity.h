@@ -27,6 +27,7 @@ typedef u32 Collision_Flags;
 
 enum Collision_Flag_Bit : Collision_Flags {
 	Collision_Bit_OCUURED = bit(0),
+	Collision_Bit_MOTION  = bit(1),
 };
 
 struct Collider_Group {
