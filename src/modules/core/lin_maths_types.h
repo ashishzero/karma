@@ -458,3 +458,8 @@ struct Nearest_Edge2d {
 	r32 distance;
 	s32 index;
 };
+
+struct Collision_Manifold {
+	Vec2 normal;
+	r32 penetration;
+};

@@ -2894,8 +2894,8 @@ Nearest_Edge2d closest_edge_origin_polygon(const Polygon &polygon) {
 		
 		r32 d = vec2_dot(n, a);
 		if (d < edge.distance) {
-			edge.distance = d;
 			edge.normal = n;
+			edge.distance = d;
 			edge.index = q_index;
 		}
 	}

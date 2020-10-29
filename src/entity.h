@@ -22,8 +22,10 @@ struct Entity {
 };
 
 typedef void *Collider_Handle;
-
 typedef u32 Collision_Flags;
+
+struct Collider_Group;
+struct Rigid_Body;
 
 enum Collision_Flag_Bit : Collision_Flags {
 	Collision_Bit_OCUURED = bit(0),
@@ -33,7 +35,7 @@ enum Collision_Flag_Bit : Collision_Flags {
 struct Collider_Group {
 	Collider	*	collider;
 	Mat3			transform;
-	Entity_Id		entity_id;
+	Rigid_Body	*	rigid_body;
 	u32				count;
 	Collision_Flags flags;
 };
@@ -41,7 +43,7 @@ struct Collider_Group {
 struct Rigid_Body {
 	Vec2			velocity;
 	Vec2			force;
-	Collider_Group  *colliders;
+	void			*colliders;
 };
 
 struct Player : public Entity {

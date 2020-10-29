@@ -19,16 +19,16 @@ struct Player_Controller {
 	r32 x, y;
 };
 
-typedef bool(*Collision_Resolver)(Collider &a, Collider &b, const Mat3 &ta, const Mat3 &tb, const Mat2 &tdira, const Mat2 &tdirb, Vec2 dp, Vec2 *normal, r32 *penetration);
+typedef bool(*Collision_Resolver)(Collider &a, Collider &b, const Mat3 &ta, const Mat3 &tb, const Mat2 &tdira, const Mat2 &tdirb, Vec2 dp, Collision_Manifold *manifold);
 static Collision_Resolver COLLISION_RESOLVERS[Collider_Count][Collider_Count];
 
-bool null_collision_resolver(Collider &a, Collider &b, const Mat3 &ta, const Mat3 &tb, const Mat2 &tdira, const Mat2 &tdirb, Vec2 dp, Vec2 *normal, r32 *penetration) {
+bool null_collision_resolver(Collider &a, Collider &b, const Mat3 &ta, const Mat3 &tb, const Mat2 &tdira, const Mat2 &tdirb, Vec2 dp, Collision_Manifold *manifold) {
 	return false;
 }
 
 template <typename ShapeA, typename ShapeB>
-bool shapes_collision_resolver(Collider &a, Collider &b, const Mat3 &ta, const Mat3 &tb, const Mat2 &tdira, const Mat2 &tdirb, Vec2 dp, Vec2 *normal, r32 *penetration) {
-	return gjk_epa(*(ShapeA *)a.handle, *(ShapeB *)b.handle, normal, penetration, ta, tb, tdira, tdirb, dp);
+bool shapes_collision_resolver(Collider &a, Collider &b, const Mat3 &ta, const Mat3 &tb, const Mat2 &tdira, const Mat2 &tdirb, Vec2 dp, Collision_Manifold *manifold) {
+	return gjk_epa(*(ShapeA *)a.handle, *(ShapeB *)b.handle, manifold, ta, tb, tdira, tdirb, dp);
 }
 
 void collision_resover_init() {
@@ -63,14 +63,14 @@ void collision_resover_init() {
 	COLLISION_RESOLVERS[Collider_Polygon][Collider_Polygon] = shapes_collision_resolver<Polygon, Polygon>;
 }
 
-bool collider_vs_collider_dynamic(Collider &a, Collider &b, const Mat3 &ta, const Mat3 &tb, Vec2 dp, Vec2 *normal, r32 *penetration) {
+bool collider_vs_collider_dynamic(Collider &a, Collider &b, const Mat3 &ta, const Mat3 &tb, Vec2 dp, Collision_Manifold *manifold) {
 	Mat2 tdira, tdirb;
 	tdira.rows[0] = vec2(ta.m2[0][0], ta.m2[1][0]);
 	tdira.rows[1] = vec2(ta.m2[0][1], ta.m2[1][1]);
 
 	tdirb.rows[0] = vec2(tb.m2[0][0], tb.m2[1][0]);
 	tdirb.rows[1] = vec2(tb.m2[0][1], tb.m2[1][1]);
-	return COLLISION_RESOLVERS[a.type][b.type](a, b, ta, tb, tdira, tdirb, dp, normal, penetration);
+	return COLLISION_RESOLVERS[a.type][b.type](a, b, ta, tb, tdira, tdirb, dp, manifold);
 }
 
 int karma_user_zero() {
@@ -132,6 +132,17 @@ int karma_user_zero() {
 
 		Player *player = scene_add_player(scene);
 		scene_generate_new_entity(scene, player, vec2(5), id);
+
+		player = scene_add_player(scene);
+		scene_generate_new_entity(scene, player, vec2(-5, 8), id);
+
+		Mm_Rect rect;
+		rect.min = vec2(-1);
+		rect.max = vec2( 1);
+
+		collider.type = Collider_Mm_Rect;
+		collider.handle = &rect;
+		id = scene_add_raw_collider_group(scene, Array_View(&collider, 1));
 
 		player = scene_add_player(scene);
 		scene_generate_new_entity(scene, player, vec2(0, 5), id);
@@ -301,6 +312,8 @@ int karma_user_zero() {
 
 		Dev_TimedBlockBegin(Simulation);
 
+		static r32 movement_force = 20;
+
 		while (accumulator_t >= fixed_dt) {
 			Dev_TimedScope(SimulationFrame);
 
@@ -314,38 +327,38 @@ int karma_user_zero() {
 				dir.y = controller.y / len;
 			}
 
-			const float movement_force = 20;
 			if (len) {
 				primary_player->rigid_body->force = movement_force * dir;
-				set_bit(primary_player->rigid_body->colliders->flags, Collision_Bit_MOTION);
+				//set_bit(primary_player->rigid_body->colliders->flags, Collision_Bit_MOTION);
 			}
 
 			for (auto &player : scene->by_type.player) {
 				player.color = vec4(1);
-				player.rigid_body->colliders->transform = mat3_translation(player.position) * mat3_scalar(player.radius, player.radius);
+				Collider_Group *colliders = (Collider_Group *)player.rigid_body->colliders;
+				colliders->transform = mat3_translation(player.position) * mat3_scalar(player.radius, player.radius);
 			}
 
 			primary_player->color = vec4(0, 1, 1);
-
-			Vec2 norm; r32 dist, v_t;
 
 			for (auto collider_node = scene->colliders.node.next; collider_node != &scene->colliders.node; collider_node = collider_node->next) {
 				clear_bit(collider_node->data.flags, Collision_Bit_OCUURED);
 			}
 
 			// TODO: Do broad phase collision detection
+			for (auto a = scene->rigid_bodies.node.next; a != &scene->rigid_bodies.node; a = a->next) {
+				a->data.velocity += dt * a->data.force;
+				a->data.velocity *= powf(0.5f, drag * dt);
+				a->data.force = vec2(0);
+			}
 
+#if 0
 			// Dynamic collision resolution
 			for (auto a = scene->rigid_bodies.node.next; a != &scene->rigid_bodies.node; a = a->next) {
-				if (!get_bit(a->data.colliders->flags, Collision_Bit_MOTION)) continue;
-				
 				a->data.velocity += dt * a->data.force;
 				a->data.velocity *= powf(0.5f, drag * dt);
 				a->data.force = vec2(0);
 
-				for (auto b = scene->rigid_bodies.node.next; b != &scene->rigid_bodies.node; b = b->next) {
-					if (a == b) continue;
-
+				for (auto b = a->next; b != &scene->rigid_bodies.node; b = b->next) {
 					Rigid_Body &a_body = a->data;
 					Rigid_Body &b_body = b->data;
 
@@ -359,32 +372,99 @@ int karma_user_zero() {
 
 							if (collider_vs_collider_dynamic(*b_collider, *a_collider, 
 															 b_body.colliders->transform, a_body.colliders->transform, 
-															 dp, &norm, &dist)) {
-								v_t = dist / dt * sgn(vec2_dot(norm, relative_velocity));
-								v_t = 0.5f * v_t;
-								a_body.velocity -= v_t * norm;
-								b_body.velocity += v_t * norm;
+															 dp, &manifold)) {
+								v_t = manifold.penetration / dt * sgn(vec2_dot(manifold.normal, relative_velocity));
+
+								r32 t_a, t_b;
+								Vec2 vn, vt;
+
+								t_a =  0.5f * v_t;
+								t_b = -0.5f * v_t;
+
+								vn = t_a * manifold.normal;
+								vt = a_body.velocity - vn;
+								a_body.velocity = vt - vn;
+
+								vn = t_b * manifold.normal;
+								vt = b_body.velocity - vn;
+								b_body.velocity = vt - vn;
+
 								relative_velocity = a_body.velocity - b_body.velocity;
 								dp = dt * relative_velocity;
 								a_body.colliders->flags |= Collision_Bit_OCUURED;
-								b_body.colliders->flags |= (Collision_Bit_OCUURED | Collision_Bit_MOTION);
+								b_body.colliders->flags |= Collision_Bit_OCUURED; // | Collision_Bit_MOTION);
 							}
 						}
 					}
 
 				}
 
-				if (vec2_null(a->data.velocity)) {
-					a->data.velocity = vec2(0);
-					clear_bit(a->data.colliders->flags, Collision_Bit_MOTION);
-				}
+			}
+#endif
 
+			Vec2 dv, dp;
+			Collision_Manifold manifold;
+
+			for (auto a = scene->colliders.node.next; a != &scene->colliders.node; a = a->next) {
+				Collider_Group &a_group = a->data;
+				if (a_group.rigid_body == nullptr) continue;
+				for (auto b = scene->colliders.node.next; b != &scene->colliders.node; b = b->next) {
+					Collider_Group &b_group = b->data;
+					if (a == b) continue;
+
+					dv = a_group.rigid_body->velocity;
+					if (b_group.rigid_body)
+						dv -= b_group.rigid_body->velocity;
+
+					dp = dv * dt;
+
+					for (u32 b_index = 0; b_index < b_group.count; ++b_index) {
+						Collider &b_collider = *collider_get(&b_group, b_index);
+						for (u32 a_index = 0; a_index < a_group.count; ++a_index) {
+							Collider &a_collider = *collider_get(&a_group, a_index);
+
+							if (collider_vs_collider_dynamic(b_collider, a_collider,
+								b_group.transform, a_group.transform, dp, &manifold)) {
+
+								r32 collision_time = manifold.penetration / dt * sgn(vec2_dot(manifold.normal, dv));
+								Vec2 vn, vt;
+
+								if (b_group.rigid_body) {
+									r32 a_collision_time =  0.5f * collision_time;
+									r32 b_collision_time = -0.5f * collision_time;
+
+									vn = a_collision_time * manifold.normal;
+									vt = a_group.rigid_body->velocity - vn;
+									a_group.rigid_body->velocity = vt - vn;
+
+									vn = b_collision_time * manifold.normal;
+									vt = b_group.rigid_body->velocity - vn;
+									b_group.rigid_body->velocity = vt - vn;
+
+									dv = a_group.rigid_body->velocity - b_group.rigid_body->velocity;
+									dp = dv * dt;
+								} else {
+									vn = collision_time * manifold.normal;
+									vt = a_group.rigid_body->velocity - vn;
+									a_group.rigid_body->velocity = vt;
+
+									dv = a_group.rigid_body->velocity;
+									dp = dv * dt;
+								}
+
+								b_group.flags |= Collision_Bit_OCUURED;
+								a_group.flags |= Collision_Bit_OCUURED;
+							}
+						}
+					}
+				}
 			}
 
+#if 0
 			// Static collision resolution
 			for (auto ptr = scene->rigid_bodies.node.next; ptr != &scene->rigid_bodies.node; ptr = ptr->next) {
 				auto &body = ptr->data;
-				if (!get_bit(body.colliders->flags, Collision_Bit_MOTION)) continue;
+				//if (!get_bit(body.colliders->flags, Collision_Bit_MOTION)) continue;
 
 				Vec2 dp = body.velocity * dt;
 				for (u32 b_collider_index = 0; b_collider_index < body.colliders->count; ++b_collider_index) {
@@ -398,9 +478,11 @@ int karma_user_zero() {
 
 							if (collider_vs_collider_dynamic(*a_collider, *b_collider, 
 															 collider_node->data.transform, body.colliders->transform, 
-															 dp, &norm, &dist)) {
-								v_t = dist / dt * sgn(vec2_dot(norm, body.velocity));
-								body.velocity -= v_t * norm;
+															 dp, &manifold)) {
+								v_t = manifold.penetration / dt * sgn(vec2_dot(manifold.normal, body.velocity));
+								Vec2 vn = v_t * manifold.normal;
+								body.velocity -= vn;
+
 								dp = body.velocity * dt;
 								body.colliders->flags |= Collision_Bit_OCUURED;
 								collider_node->data.flags |= Collision_Bit_OCUURED;
@@ -408,7 +490,13 @@ int karma_user_zero() {
 						}
 					}
 				}
+
+				if (vec2_null(body.velocity)) {
+					body.velocity = vec2(0);
+					//clear_bit(body.colliders->flags, Collision_Bit_MOTION);
+				}
 			}
+#endif
 
 			for (auto &player : scene->by_type.player) {
 				player.position += dt * player.rigid_body->velocity;
@@ -534,6 +622,7 @@ int karma_user_zero() {
 		editor_entity(primary_player);
 		
 		ImGui::Begin("Camera", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
+		ImGui::DragFloat("Movement Force", &movement_force, 0.01f);
 		editor_draw(scene->camera);
 		ImGui::End();
 

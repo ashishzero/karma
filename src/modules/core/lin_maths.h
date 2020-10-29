@@ -967,7 +967,7 @@ bool gjk(const ShapeA &sa, const ShapeB &sb, const Args & ...args) {
 constexpr r32 EPA_TOLERANCE = 0.00001f;
 
 template <typename ShapeA, typename ShapeB, typename ...Args>
-bool gjk_epa(const ShapeA &sa, const ShapeB &sb, Vec2 *normal, r32 *penetration_depth, const Args &...args) {
+bool gjk_epa(const ShapeA &sa, const ShapeB &sb, Collision_Manifold *manifold, const Args &...args) {
 	u32 allocated = 8;
 	Polygon *simplex = (Polygon *)tallocate(sizeof(Polygon) + sizeof(Vec2) * (allocated - 3));
 	simplex->vertex_count = 1;
@@ -1002,8 +1002,8 @@ bool gjk_epa(const ShapeA &sa, const ShapeB &sb, Vec2 *normal, r32 *penetration_
 
 		r32 d = vec2_dot(p, e.normal);
 		if (d - e.distance < EPA_TOLERANCE) {
-			*normal = e.normal;
-			*penetration_depth = d;
+			manifold->normal = e.normal;
+			manifold->penetration = d;
 			break;
 		} else {
 			if (simplex->vertex_count == allocated) {

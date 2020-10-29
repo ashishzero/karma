@@ -91,7 +91,7 @@ void scene_generate_new_entity(Scene *scene, Entity *entity, Vec2 position, Raw_
 
 Collider *collider_get(Collider_Group *group, u32 index);
 
-Collider_Group *scene_create_colliders(Scene *scene, Entity *entity, Raw_Collider_Id id, const Mat3 &transform);
+Collider_Group *scene_create_colliders(Scene *scene, Rigid_Body *rigid_body, Raw_Collider_Id id, const Mat3 &transform);
 void scene_destroy_colliders(Scene *scene, Collider_Group *group);
 
 Rigid_Body *scene_create_rigid_body(Scene *scene, Entity *entity, Raw_Collider_Id id);
