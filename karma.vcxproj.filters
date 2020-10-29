@@ -83,7 +83,7 @@
     <ClInclude Include="src\modules\core\thread_pool.h" />
     <ClInclude Include="src\modules\core\stb_rect_pack.h" />
     <ClInclude Include="src\scene.h" />
-    <ClInclude Include="src\colliders.h" />
+    <ClInclude Include="src\modules\core\data_structures.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitattributes" />

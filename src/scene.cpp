@@ -10,33 +10,11 @@ Scene *scene_create() {
 	scene->camera.position = vec2(0);
 	scene->camera.distance = 0.0f;
 
-	scene->rigid_bodies.allocator = context.allocator;
-	scene->rigid_bodies.node.next = &scene->rigid_bodies.node;
-	scene->rigid_bodies.node.prev = &scene->rigid_bodies.node;
-	
-	scene->colliders.allocator = context.allocator;
-	scene->colliders.node.next = &scene->colliders.node;
-	scene->colliders.node.prev = &scene->colliders.node;
-
-	scene->null_collider.type = Collider_Null;
-	scene->null_collider.handle = nullptr;
-
-	scene->colliders.node.data.collider	= &scene->null_collider;
-	scene->colliders.node.data.count		= 0;
-	scene->colliders.node.data.transform	= mat3_identity();
-
-	scene->collider_shape_allocator = context.allocator;
-
-	scene->id_series = random_init(context.id, system_get_counter());
+	circular_linked_list_init(&scene->rigid_bodies, context.allocator);
 
 	scene->pool_allocator = context.allocator;
 
-	// Add a Null Collider
-	Raw_Collider_Group null_collider;
-	null_collider.id = 0;
-	null_collider.colliders_count = 1;
-	null_collider.colliders = scene->colliders.node.data.collider;
-	array_add(&scene->raw_colliders, null_collider);
+	scene->id_series = random_init(context.id, system_get_counter());
 
 	return scene;
 }
@@ -50,55 +28,53 @@ u64 iscene_generate_unique_id(Scene *scene) {
 	return random_get(&scene->id_series) | ((time(0) & 0xffffffff) << 32);
 }
 
-Raw_Collider_Group *scene_find_raw_collider_group(Scene *scene, Raw_Collider_Id id) {
-	auto res = array_find(&scene->raw_colliders, [](const Raw_Collider_Group &col, Raw_Collider_Id id) {
-		return col.id == id;
-		}, id);
-	if (res >= 0)
-		return scene->raw_colliders.data + res;
+Resource_Fixture *scene_find_resource_fixture(Scene *scene, Resource_Id id) {
+	auto res = array_find(&scene->resource_fixtures, [](const Resource_Fixture &f, Resource_Id id) { return f.id == id; }, id);
+	if (res >= 0) return scene->resource_fixtures.data + res;
 	return nullptr;
 }
 
-Raw_Collider_Id scene_add_raw_collider_group(Scene *scene, Array_View<Collider> &colliders) {
-	Raw_Collider_Group *raw = array_add(&scene->raw_colliders);
+Resource_Id scene_create_new_resource_fixture(Scene *scene, Fixture *fixtures, u32 fixture_count) {
+	Resource_Fixture *resource = array_add(&scene->resource_fixtures);
 
-	raw->id = iscene_generate_unique_id(scene);
-	raw->colliders_count = (u32)colliders.count;
-	raw->colliders = (Collider *)memory_allocate(sizeof(Collider) * raw->colliders_count, scene->pool_allocator);
-	
-	Collider *dst = raw->colliders;
+	resource->id = iscene_generate_unique_id(scene);
+	resource->fixture_count = fixture_count;
+	resource->fixtures = new (scene->pool_allocator) Fixture[resource->fixture_count];
+
+	Fixture *dst = resource->fixtures;
+	Fixture *src;
 	ptrsize size = 0;
-	for (auto &src : colliders) {
-		switch (src.type) {
-		case Collider_Null: invalid_code_path(); break;
-		case Collider_Circle: size = sizeof(Circle); break;
-		case Collider_Mm_Rect: size = sizeof(Mm_Rect); break;
-		case Collider_Capsule: size = sizeof(Capsule); break;
-		case Collider_Polygon: size = sizeof(Polygon) + sizeof(Vec2) * ((Polygon *)src.handle)->vertex_count; break;
+	for (u32 index = 0; index < fixture_count; ++index) {
+		src = fixtures + index;
 
-		invalid_default_case();
+		switch (src->type) {
+			case Fixture_Shape_Null:	invalid_code_path(); break;
+			case Fixture_Shape_Circle:	size = sizeof(Circle); break;
+			case Fixture_Shape_Mm_Rect: size = sizeof(Mm_Rect); break;
+			case Fixture_Shape_Capsule: size = sizeof(Capsule); break;
+			case Fixture_Shape_Polygon: size = sizeof(Polygon) + sizeof(Vec2) * ((Polygon *)src->handle)->vertex_count; break;
+
+			invalid_default_case();
 		}
 
-		dst->type = src.type;
+		dst->type = src->type;
 		dst->handle = memory_allocate(size, scene->pool_allocator);
-		memcpy(dst->handle, src.handle, size);
+		memcpy(dst->handle, src->handle, size);
 
 		dst += 1;
 	}
 
-	return raw->id;
+	return resource->id;
 }
 
-bool scene_remove_raw_collider_group(Scene *scene, Raw_Collider_Id id) {
-	auto index = array_find(&scene->raw_colliders, [](const Raw_Collider_Group &col, Raw_Collider_Id id) {
-		return col.id == id;
-		}, id);
+bool scene_delete_resource_fixture(Scene *scene, Resource_Id id) {
+	auto index = array_find(&scene->resource_fixtures, [](const Resource_Fixture &r, Resource_Id id) { return r.id == id; }, id);
 	if (index >= 0) {
-		auto c = &scene->raw_colliders[index];
-		for (u32 i = 0; i < c->colliders_count; ++i)
-			memory_free(c->colliders[i].handle);
-		memory_free(c->colliders);
-		array_remove(&scene->raw_colliders, index);
+		auto resource = &scene->resource_fixtures[index];
+		for (u32 i = 0; i < resource->fixture_count; ++i)
+			memory_free(resource->fixtures[i].handle);
+		memory_free(resource->fixtures);
+		array_remove(&scene->resource_fixtures, index);
 		return true;
 	}
 	return false;
@@ -116,120 +92,59 @@ Static_Body *scene_add_static_body(Scene *scene) {
 	return body;
 }
 
-void scene_generate_new_entity(Scene *scene, Entity *entity, Vec2 position, Raw_Collider_Id collider_id) {
-	entity->id = iscene_generate_unique_id(scene);
-	entity->position = position;
-
-	switch (entity->type) {
-	case Entity_Player: {
-		auto player = (Player *)entity;
-		player->radius = 1;
-		player->color = vec4(1);
-		player->intensity = 1;
-		player->collider_id = collider_id;
-		player->rigid_body = scene_create_rigid_body(scene, entity, player->collider_id);
-	} break;
-
-	case Entity_Static_Body: {
-		auto body = (Static_Body *)entity;
-		body->color = vec4(1);
-		body->collider_id = collider_id;
-		body->colliders = scene_create_colliders(scene, nullptr, body->collider_id, mat3_translation(entity->position));
-	} break;
-	}
-}
-
-Collider *collider_get(Collider_Group *group, u32 index) {
-	assert(index < group->count);
-	return group->collider + index;
-}
-
-void iscene_allocate_colliders(Scene *scene, Rigid_Body *rigid_body, Raw_Collider_Id id, const Mat3 &transform, Collider_Group *group) {
-	auto raw = scene_find_raw_collider_group(scene, id);
-	assert(raw); // TODO: Properly handle error!!
-
-	u32 count = raw->colliders_count;
-	group->collider = new(scene->collider_shape_allocator) Collider[count];
-	group->transform = transform;
-	group->rigid_body = rigid_body;
-	group->count = count;
-	group->flags = 0;
-
-	Collider *src = raw->colliders;
-	Collider *dst = group->collider;
-	for (u32 index = 0; index < count; ++index, ++src, ++dst) {
-		dst->type = src->type;
-
-		switch (dst->type) {
-		case Collider_Null: {
-			dst->handle = nullptr;
-		} break;
-
-		case Collider_Circle: {
-			dst->handle = memory_allocate(sizeof(Circle), scene->collider_shape_allocator);
-			memcpy(dst->handle, src->handle, sizeof(Circle));
-		} break;
-
-		case Collider_Mm_Rect: {
-			dst->handle = memory_allocate(sizeof(Mm_Rect), scene->collider_shape_allocator);
-			memcpy(dst->handle, src->handle, sizeof(Mm_Rect));
-		} break;
-
-		case Collider_Capsule: {
-			dst->handle = memory_allocate(sizeof(Capsule), scene->collider_shape_allocator);
-			memcpy(dst->handle, src->handle, sizeof(Capsule));
-		} break;
-
-		case Collider_Polygon: {
-			auto poly = (Polygon *)src->handle;
-			auto total_size = sizeof(Polygon) + sizeof(Vec2) * (poly->vertex_count - 3);
-			dst->handle = memory_allocate(total_size, scene->collider_shape_allocator);
-			memcpy(dst->handle, poly, total_size);
-		} break;
-
-			invalid_default_case();
-		};
-
-	}
-
-}
-
-void iscene_free_colliders(Scene *scene, Collider_Group *group) {
-	Collider *collider = group->collider;
-	auto ptr = collider;
-	for (u32 index = 0; index < group->count; ++index, ++ptr) {
-		if (ptr->type != Collider_Null) {
-			memory_free(ptr->handle, scene->collider_shape_allocator);
-		}
-	}
-	memory_free(collider, scene->collider_shape_allocator);
-}
-
-Collider_Group *scene_create_colliders(Scene *scene, Rigid_Body *rigid_body, Raw_Collider_Id id, const Mat3 &transform) {
-	Collider_Node *node = circular_linked_list_add(&scene->colliders);
-	iscene_allocate_colliders(scene, rigid_body, id, transform, &node->data);
-	return &node->data;
-}
-
-void scene_destroy_colliders(Scene *scene, Collider_Group *group) {
-	iscene_free_colliders(scene, group);
-	Collider_Node *node = (Collider_Node *)((char *)group - offsetof(Collider_Node, Collider_Node::data));
-	circular_linked_list_remove(&scene->colliders, node);
-}
-
-Rigid_Body *scene_create_rigid_body(Scene *scene, Entity *entity, Raw_Collider_Id id) {
+Rigid_Body *iscene_create_rigid_body(Scene *scene, Entity_Id entity_id, const Rigid_Body_Info &info) {
 	auto node = circular_linked_list_add(&scene->rigid_bodies);
 	Rigid_Body *rigid_body = &node->data;
+	rigid_body->type = info.type;
+	rigid_body->flags = 0;
 	rigid_body->velocity = vec2(0);
 	rigid_body->force = vec2(0);
-	rigid_body->colliders = scene_create_colliders(scene, rigid_body, id, mat3_identity());
+	rigid_body->xform = info.xform;
+	rigid_body->entity_id = entity_id;
+
+	if (info.fixture_id) {
+		Resource_Fixture *resource  = scene_find_resource_fixture(scene, info.fixture_id);
+		rigid_body->fixtures		= resource->fixtures;
+		rigid_body->fixture_count	= resource->fixture_count;
+	} else {
+		rigid_body->fixture_count	= 0;
+		rigid_body->fixtures		= 0;
+	}
+
 	return rigid_body;
 }
 
-void scene_destroy_rigid_body(Scene *scene, Rigid_Body *rigid_body) {
-	scene_destroy_colliders(scene, (Collider_Group *)rigid_body->colliders);
-	auto node = (Rigid_Body_List::Node *)((char *)rigid_body - offsetof(Rigid_Body_List::Node, Rigid_Body_List::Node::data));
+void iscene_destroy_rigid_body(Scene *scene, Rigid_Body *rigid_body) {
+	auto node = circular_linked_list_node_from_data(rigid_body);
 	circular_linked_list_remove(&scene->rigid_bodies, node);
+}
+
+Entity *scene_create_new_entity(Scene *scene, Entity_Type type, const Entity_Info &info) {
+	Entity *entity = nullptr;
+
+	Entity_Id id = iscene_generate_unique_id(scene);
+
+	switch (type) {
+		case Entity_Player: {
+			auto player = (Player *)scene_add_player(scene);
+			player->radius = 1;
+			player->color = vec4(1);
+			player->intensity = 1;
+			player->rigid_body = iscene_create_rigid_body(scene, id, info.rigid_body);
+			entity = player;
+		} break;
+
+		case Entity_Static_Body: {
+			auto body = (Static_Body *)scene_add_static_body(scene);
+			body->color = vec4(1);
+			body->rigid_body = iscene_create_rigid_body(scene, id, info.rigid_body);
+			entity = body;
+		} break;
+	}
+
+	entity->type = type;
+	entity->position = info.position;
+	return entity;
 }
 
 //

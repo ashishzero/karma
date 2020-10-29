@@ -349,7 +349,7 @@ popd
     <ClInclude Include="src\asset_loader.h" />
     <ClInclude Include="src\asset.h" />
     <ClInclude Include="src\audio.h" />
-    <ClInclude Include="src\colliders.h" />
+    <ClInclude Include="src\modules\core\data_structures.h" />
     <ClInclude Include="src\modules\core\stb_rect_pack.h" />
     <ClInclude Include="src\modules\core\thread_pool.h" />
     <ClInclude Include="src\modules\imgui\dev.h" />
