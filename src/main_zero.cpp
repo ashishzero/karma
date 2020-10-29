@@ -131,19 +131,14 @@ int karma_user_zero() {
 		id = scene_add_raw_collider_group(scene, Array_View(&collider, 1));
 
 		Player *player = scene_add_player(scene);
-		scene_generate_new_entity(scene, player, vec2(5));
-		player->collider_id = id;
-		player->rigid_body->colliders = scene_create_colliders(scene, player, player->collider_id, mat3_identity());
+		scene_generate_new_entity(scene, player, vec2(5), id);
 
 		player = scene_add_player(scene);
-		scene_generate_new_entity(scene, player, vec2(0, 5));
-		player->collider_id = id;
-		player->rigid_body->colliders = scene_create_colliders(scene, player, player->collider_id, mat3_identity());
+		scene_generate_new_entity(scene, player, vec2(0, 5), id);
 	}
 
 	{
 		Static_Body *object;
-		Mat3 trans;
 
 		{
 			Vec2 points[] = {
@@ -159,10 +154,7 @@ int karma_user_zero() {
 			id = scene_add_raw_collider_group(scene, Array_View(&collider, 1));
 
 			object = scene_add_static_body(scene);
-			scene_generate_new_entity(scene, object, vec2(-5.6f, 0.4f));
-			trans = mat3_translation(-5.6f, 0.4f);
-			object->id = id;
-			object->colliders = scene_create_colliders(scene, object, id, trans);
+			scene_generate_new_entity(scene, object, vec2(-5.6f, 0.4f), id);
 		}
 
 		{
@@ -174,10 +166,7 @@ int karma_user_zero() {
 			id = scene_add_raw_collider_group(scene, Array_View(&collider, 1));
 
 			object = scene_add_static_body(scene);
-			scene_generate_new_entity(scene, object, vec2(1));
-			trans = mat3_translation(1, 1);
-			object->id = id; 
-			object->colliders = scene_create_colliders(scene, object, id, trans);
+			scene_generate_new_entity(scene, object, vec2(1), id);
 		}
 
 		{
@@ -189,10 +178,7 @@ int karma_user_zero() {
 			id = scene_add_raw_collider_group(scene, Array_View(&collider, 1));
 
 			object = scene_add_static_body(scene);
-			scene_generate_new_entity(scene, object, vec2(6.5f, -0.5f));
-			trans = mat3_translation(6.5f, -0.5f) * mat3_rotation(to_radians(10));
-			object->id = id; 
-			object->colliders = scene_create_colliders(scene, object, id, trans);
+			scene_generate_new_entity(scene, object, vec2(6.5f, -0.5f), id);
 		}
 
 		{
@@ -214,10 +200,7 @@ int karma_user_zero() {
 			id = scene_add_raw_collider_group(scene, Array_View(c, static_count(c)));
 
 			object = scene_add_static_body(scene);
-			scene_generate_new_entity(scene, object, vec2(-1, -5));
-			trans = mat3_translation(-1, -5);
-			object->id = id;
-			object->colliders = scene_create_colliders(scene, object, id, trans);
+			scene_generate_new_entity(scene, object, vec2(-1, -5), id);
 		}
 	}
 
@@ -413,7 +396,9 @@ int karma_user_zero() {
 						for (u32 a_collider_index = 0; a_collider_index < collider_node->data.count; ++a_collider_index) {
 							auto a_collider = collider_get(&collider_node->data, a_collider_index);
 
-							if (collider_vs_collider_dynamic(*a_collider, *b_collider, collider_node->data.transform, body.colliders->transform, dp, &norm, &dist)) {
+							if (collider_vs_collider_dynamic(*a_collider, *b_collider, 
+															 collider_node->data.transform, body.colliders->transform, 
+															 dp, &norm, &dist)) {
 								v_t = dist / dt * sgn(vec2_dot(norm, body.velocity));
 								body.velocity -= v_t * norm;
 								dp = body.velocity * dt;

@@ -87,7 +87,7 @@ bool scene_remove_raw_collider_group(Scene *scene, Raw_Collider_Id id);
 Player *scene_add_player(Scene *scene);
 Static_Body *scene_add_static_body(Scene *scene);
 
-void scene_generate_new_entity(Scene *scene, Entity *entity, Vec2 position);
+void scene_generate_new_entity(Scene *scene, Entity *entity, Vec2 position, Raw_Collider_Id collider_id);
 
 Collider *collider_get(Collider_Group *group, u32 index);
 

@@ -21,7 +21,7 @@ Scene *scene_create() {
 	scene->null_collider.type = Collider_Null;
 	scene->null_collider.handle = nullptr;
 
-	scene->colliders.node.data.collider		= &scene->null_collider;
+	scene->colliders.node.data.collider	= &scene->null_collider;
 	scene->colliders.node.data.count		= 0;
 	scene->colliders.node.data.transform	= mat3_identity();
 
@@ -116,7 +116,7 @@ Static_Body *scene_add_static_body(Scene *scene) {
 	return body;
 }
 
-void scene_generate_new_entity(Scene *scene, Entity *entity, Vec2 position) {
+void scene_generate_new_entity(Scene *scene, Entity *entity, Vec2 position, Raw_Collider_Id collider_id) {
 	entity->id = iscene_generate_unique_id(scene);
 	entity->position = position;
 
@@ -126,14 +126,14 @@ void scene_generate_new_entity(Scene *scene, Entity *entity, Vec2 position) {
 		player->radius = 1;
 		player->color = vec4(1);
 		player->intensity = 1;
-		player->collider_id = 0;
+		player->collider_id = collider_id;
 		player->rigid_body = scene_create_rigid_body(scene, entity, player->collider_id);
 	} break;
 
 	case Entity_Static_Body: {
 		auto body = (Static_Body *)entity;
 		body->color = vec4(1);
-		body->collider_id = 0;
+		body->collider_id = collider_id;
 		body->colliders = scene_create_colliders(scene, entity, body->collider_id, mat3_translation(entity->position));
 	} break;
 	}
@@ -144,24 +144,22 @@ Collider *collider_get(Collider_Group *group, u32 index) {
 	return group->collider + index;
 }
 
-Collider_Group *scene_create_colliders(Scene *scene, Entity *entity, Raw_Collider_Id id, const Mat3 &transform) {
+void iscene_allocate_colliders(Scene *scene, Entity *entity, Raw_Collider_Id id, const Mat3 &transform, Collider_Group *group) {
 	auto raw = scene_find_raw_collider_group(scene, id);
 	assert(raw); // TODO: Properly handle error!!
 
-	Collider_Node *node = circular_linked_list_add(&scene->colliders);
-
 	u32 count = raw->colliders_count;
-	node->data.collider = new(scene->collider_shape_allocator) Collider[count];
-	node->data.transform = transform;
-	node->data.entity_id = entity->id;
-	node->data.count = count;
-	node->data.flags = 0;
+	group->collider = new(scene->collider_shape_allocator) Collider[count];
+	group->transform = transform;
+	group->entity_id = entity->id;
+	group->count = count;
+	group->flags = 0;
 
 	Collider *src = raw->colliders;
-	Collider *dst = node->data.collider;
+	Collider *dst = group->collider;
 	for (u32 index = 0; index < count; ++index, ++src, ++dst) {
 		dst->type = src->type;
-		
+
 		switch (dst->type) {
 		case Collider_Null: {
 			dst->handle = nullptr;
@@ -194,12 +192,10 @@ Collider_Group *scene_create_colliders(Scene *scene, Entity *entity, Raw_Collide
 
 	}
 
-	return &node->data;
 }
 
-void scene_destroy_colliders(Scene *scene, Collider_Group *group) {
-	Collider_Node *node = (Collider_Node *)((char *)group - offsetof(Collider_Node, Collider_Node::data));
-	Collider *collider = node->data.collider;
+void iscene_free_colliders(Scene *scene, Collider_Group *group) {
+	Collider *collider = group->collider;
 	auto ptr = collider;
 	for (u32 index = 0; index < group->count; ++index, ++ptr) {
 		if (ptr->type != Collider_Null) {
@@ -207,6 +203,17 @@ void scene_destroy_colliders(Scene *scene, Collider_Group *group) {
 		}
 	}
 	memory_free(collider, scene->collider_shape_allocator);
+}
+
+Collider_Group *scene_create_colliders(Scene *scene, Entity *entity, Raw_Collider_Id id, const Mat3 &transform) {
+	Collider_Node *node = circular_linked_list_add(&scene->colliders);
+	iscene_allocate_colliders(scene, entity, id, transform, &node->data);
+	return &node->data;
+}
+
+void scene_destroy_colliders(Scene *scene, Collider_Group *group) {
+	iscene_free_colliders(scene, group);
+	Collider_Node *node = (Collider_Node *)((char *)group - offsetof(Collider_Node, Collider_Node::data));
 	circular_linked_list_remove(&scene->colliders, node);
 }
 
@@ -215,7 +222,7 @@ Rigid_Body *scene_create_rigid_body(Scene *scene, Entity *entity, Raw_Collider_I
 	Rigid_Body *rigid_body = &node->data;
 	rigid_body->velocity = vec2(0);
 	rigid_body->force = vec2(0);
-	rigid_body->colliders = scene_create_colliders(scene, entity, id, mat3_translation(entity->position));
+	rigid_body->colliders = scene_create_colliders(scene, entity, id, mat3_identity());
 	return rigid_body;
 }
 
