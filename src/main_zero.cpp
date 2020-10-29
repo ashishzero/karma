@@ -74,7 +74,6 @@ bool collider_vs_collider_dynamic(Collider &a, Collider &b, const Mat3 &ta, cons
 }
 
 int karma_user_zero() {
-
 	collision_resover_init();
 
 #ifdef INIT_THREAD_POOL
@@ -494,11 +493,11 @@ int karma_user_zero() {
 
 		editor_entity(player);
 		
-		ImGui::Begin("Camera");
+		ImGui::Begin("Camera", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
 		editor_draw(scene->camera);
 		ImGui::End();
 
-		//ImGui::ShowDemoWindow();
+		ImGui::ShowDemoWindow();
 
 #if defined(BUILD_IMGUI)
 		{

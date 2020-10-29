@@ -190,7 +190,6 @@ typedef int8_t  s8;
 typedef int16_t s16;
 typedef int32_t s32;
 typedef int64_t s64;
-
 // int assumed as bool
 typedef int booli;
 
@@ -198,6 +197,7 @@ typedef uint8_t  u8;
 typedef uint16_t u16;
 typedef uint32_t u32;
 typedef uint64_t u64;
+typedef u32 uint;
 
 typedef size_t ptrsize;
 
@@ -454,45 +454,81 @@ inline void * thread_get_argument() {
 inline void *temporary_allocator_proc(Allocation_Type type, ptrsize size, const void *ptr, void *user_ptr) {
 	Temporary_Memory *temp = &context.temp_memory;
 
+	struct Temp_Header {
+		ptrsize size;
+	};
+
 	if (type == Allocation_Type_NEW) {
 		ptrsize padding = (MEMORY_ALIGNMENT - ((ptrsize)temp->ptr % MEMORY_ALIGNMENT)) % MEMORY_ALIGNMENT;
 
-		u8 *nxtptr = temp->ptr + size + padding;
+		u8 *nxtptr = temp->ptr + size + padding + sizeof(Temp_Header);
 		u8 *endptr = temp->base + temp->capacity;
 
 		if (nxtptr <= endptr) {
-			void *result = temp->ptr;
+			Temp_Header *result = (Temp_Header *)(temp->ptr + padding);
+			result->size = size;
 			temp->ptr    = nxtptr;
-			return result;
+			return result + 1;
 		}
 
-		return 0;
+		return nullptr;
 	} else if (type == Allocation_Type_RESIZE) {
+		Temp_Header *header = (Temp_Header *)ptr - 1;
+
+		u8 *nxtptr;
+		u8 *endptr = temp->base + temp->capacity;
+
+		// Move not required
+		if (ptr == (temp->ptr - header->size)) {
+			header->size = size;
+			nxtptr = (u8 *)ptr + header->size;
+			
+			if (nxtptr <= endptr) {
+				temp->ptr = nxtptr;
+				return (void *)ptr;
+			}
+
+			return nullptr;
+		}
+
+		// No reallocation required
+		if (size <= header->size) {
+			header->size = size;
+			return (void *)ptr;
+		}
+
+		// Move required
 		ptrsize padding = (MEMORY_ALIGNMENT - ((ptrsize)temp->ptr % MEMORY_ALIGNMENT)) % MEMORY_ALIGNMENT;
 
-		u8 *nxtptr = temp->ptr + size + padding;
-		u8 *endptr = temp->base + temp->capacity;
-
+		nxtptr = temp->ptr + size + padding + sizeof(Temp_Header);
+		
 		if (nxtptr <= endptr) {
-			memmove(temp->ptr, ptr, size);
-			void *result = temp->ptr;
+			Temp_Header *result = (Temp_Header *)(temp->ptr + padding);
+			memmove(result + 1, ptr, header->size);
+			result->size = size;
 			temp->ptr    = nxtptr;
-			return result;
+			return result + 1;
 		}
 
-		return 0;
+		return nullptr;
 	} else if (type == Allocation_Type_FREE) {
-		// do nothing
-		return 0;
+		Temp_Header *header = (Temp_Header *)ptr - 1;
+
+		// Can be popped
+		if (ptr == (temp->ptr - header->size)) {
+			temp->ptr = (u8 *)header;
+		}
+
+		return nullptr;
 	} else {
 		invalid_code_path();
 	}
 
-	return 0;
+	return nullptr;
 }
 
 inline void *null_allocator_proc(Allocation_Type type, ptrsize size, const void *ptr, void *user_ptr) {
-	return 0;
+	return nullptr;
 }
 
 constexpr Allocator TEMPORARY_ALLOCATOR = { temporary_allocator_proc, 0 };
@@ -542,6 +578,10 @@ inline void *treallocate(void *ptr, ptrsize size) {
 	return temporary_allocator_proc(Allocation_Type_RESIZE, size, ptr, 0);
 }
 
+inline void tfree(void *ptr) {
+	temporary_allocator_proc(Allocation_Type_FREE, 0, ptr, 0);
+}
+
 inline void *memory_allocate(ptrsize size, Allocator allocator = context.allocator) {
 	return allocator.proc(Allocation_Type_NEW, size, 0, allocator.data);
 }
@@ -564,6 +604,7 @@ void  operator delete(void *ptr) noexcept;
 void  operator delete[](void *ptr) noexcept;
 
 #define tnew new(TEMPORARY_ALLOCATOR)
+#define tdelete delete(TEMPORARY_ALLOCATOR)
 
 //
 //
