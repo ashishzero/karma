@@ -153,6 +153,7 @@ Collider_Group *scene_create_colliders(Scene *scene, Entity *entity, Raw_Collide
 	u32 count = raw->colliders_count;
 	node->data.collider = new(scene->collider_shape_allocator) Collider[count];
 	node->data.transform = transform;
+	node->data.entity_id = entity->id;
 	node->data.count = count;
 	node->data.flags = 0;
 

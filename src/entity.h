@@ -32,6 +32,7 @@ enum Collision_Flag_Bit : Collision_Flags {
 struct Collider_Group {
 	Collider	*	collider;
 	Mat3			transform;
+	Entity_Id		entity_id;
 	u32				count;
 	Collision_Flags flags;
 };

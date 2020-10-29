@@ -333,34 +333,42 @@ int karma_user_zero() {
 			const float force = 20;
 
 			player->rigid_body->force = force * dir;
-			//player->force.y -= gravity;
-
-			player->rigid_body->velocity += dt * player->rigid_body->force;
-			player->rigid_body->velocity *= powf(0.5f, drag * dt);
-
-			//Vec2 velocity_t = dt * player_velocity;
+			player->rigid_body->colliders->transform = mat3_translation(player->position) * mat3_scalar(player->radius, player->radius);
 
 			Vec2 norm; r32 dist, v_t;
 
-			player->rigid_body->colliders->transform = mat3_translation(player->position) * mat3_scalar(player->radius, player->radius);
-			//collider_transform(&circle, player->rigid_body->transform);
-			//circle->center = player->position;
-			//circle->radius = player->radius;
+			for (auto collider_node = scene->colliders.node.next; collider_node != &scene->colliders.node; collider_node = collider_node->next) {
+				collider_node->data.flags = 0;
+			}
 
-			for (auto &o : scene->by_type.static_body) {
-				o.colliders->flags = 0;
-				for (u32 index = 0; index < o.colliders->count; ++index) {\
-					auto c = collider_get(o.colliders, index);
-					if (collider_vs_collider_dynamic(*c, *player->rigid_body->colliders->collider, o.colliders->transform, player->rigid_body->colliders->transform, dt * player->rigid_body->velocity, &norm, &dist)) {
-						array_add(&manifolds, Collision_Manifold{ norm, dist });
-						v_t = dist / dt * sgn(vec2_dot(norm, player->rigid_body->velocity));
-						player->rigid_body->velocity -= v_t * norm;
-						player->rigid_body->colliders->flags |= Collision_Bit_OCUURED;
-						o.colliders->flags |= Collision_Bit_OCUURED;
-						//player->rigid_body->transform = mat3_translation(player->position);
-						//collider_transform(&circle, player->rigid_body->transform);
+			// TODO: Do broad phase collision detection
+			for (auto ptr = scene->rigid_bodies.node.next; ptr != &scene->rigid_bodies.node; ptr = ptr->next) {
+				auto &body = ptr->data;
+				body.velocity += dt * body.force;
+				body.velocity *= powf(0.5f, drag * dt);
+
+				Vec2 dp = body.velocity * dt;
+				body.colliders->flags = 0;
+				for (u32 b_collider_index = 0; b_collider_index < body.colliders->count; ++b_collider_index) {
+					auto b_collider = collider_get(body.colliders, b_collider_index);
+
+					for (auto collider_node = scene->colliders.node.next; collider_node != &scene->colliders.node; collider_node = collider_node->next) {
+						if (body.colliders->entity_id == collider_node->data.entity_id) continue;
+
+						for (u32 a_collider_index = 0; a_collider_index < collider_node->data.count; ++a_collider_index) {
+							auto a_collider = collider_get(&collider_node->data, a_collider_index);
+
+							if (collider_vs_collider_dynamic(*a_collider, *b_collider, collider_node->data.transform, body.colliders->transform, dp, &norm, &dist)) {
+								v_t = dist / dt * sgn(vec2_dot(norm, body.velocity));
+								body.velocity -= v_t * norm;
+								dp = body.velocity * dt;
+								body.colliders->flags |= Collision_Bit_OCUURED;
+								collider_node->data.flags |= Collision_Bit_OCUURED;
+							}
+						}
 					}
 				}
+
 			}
 
 			player->position += dt * player->rigid_body->velocity;
