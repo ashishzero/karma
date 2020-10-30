@@ -1148,6 +1148,17 @@ void im2d_bezier_cubic(Vec2 a, Vec2 b, Vec2 c, Vec2 d, Color4 color, r32 thickne
 	im2d_bezier_cubic(vec3(a, 1), vec3(b, 1), vec3(c, 1), vec3(d, 1), color, thickness, segments);
 }
 
+void im2d_polygon(const Polygon &polygon, r32 z, Color4 color) {
+	u32 triangle_count = polygon.vertex_count - 2;
+	for (u32 triangle_index = 0; triangle_index < triangle_count; ++triangle_index) {
+		im2d_triangle(vec3(polygon.vertices[0], z), vec3(polygon.vertices[triangle_index + 1], z), vec3(polygon.vertices[triangle_index + 2], z), color);
+	}
+}
+
+void im2d_polygon(const Polygon &polygon, Color4 color) {
+	im2d_polygon(polygon, 1, color);
+}
+
 void im2d_triangle_outline(Vec3 a, Vec3 b, Vec3 c, Color4 color, r32 thickness) {
 	im2d_line(a, b, color, thickness);
 	im2d_line(b, c, color, thickness);
@@ -1282,6 +1293,21 @@ void im2d_arc_outline(Vec3 position, r32 radius, r32 theta_a, r32 theta_b, Color
 
 void im2d_arc_outline(Vec2 position, r32 radius, r32 theta_a, r32 theta_b, Color4 color, bool closed, r32 thickness, int segments) {
 	im2d_arc_outline(vec3(position, 1), radius, radius, theta_a, theta_b, color, closed, thickness, segments);
+}
+
+void im2d_polygon_outline(const Polygon &polygon, r32 z, Color4 color, r32 thickness) {
+	const Vec2 *p, *q;
+	p = polygon.vertices;
+	for (u32 index = 0; index < polygon.vertex_count - 1; ++index) {
+		q = p + 1;
+		im2d_line(vec3(*p, z), vec3(*q, z), color, thickness);
+		p = q;
+	}
+	im2d_line(vec3(*polygon.vertices, z), vec3(*p, z), color, thickness);
+}
+
+void im2d_polygon_outline(const Polygon &polygon, Color4 color, r32 thickness) {
+	im2d_polygon_outline(polygon, 1, color, thickness);
 }
 
 void im2d_text(Vec3 position, r32 scale, Monospaced_Font_Info &font, const String string, Color4 color) {

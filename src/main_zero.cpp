@@ -70,7 +70,7 @@ bool collider_vs_collider_dynamic(Fixture &a, Fixture &b, const Mat3 &ta, const 
 
 	tdirb.rows[0] = vec2(tb.m2[0][0], tb.m2[1][0]);
 	tdirb.rows[1] = vec2(tb.m2[0][1], tb.m2[1][1]);
-	return COLLISION_RESOLVERS[a.type][b.type](a, b, ta, tb, tdira, tdirb, dp, manifold);
+	return COLLISION_RESOLVERS[a.shape][b.shape](a, b, ta, tb, tdira, tdirb, dp, manifold);
 }
 
 int karma_user_zero() {
@@ -119,7 +119,7 @@ int karma_user_zero() {
 	Scene *scene = scene_create();
 
 	scene->camera.id = 0;
-	scene->camera.type = Entity_Camera;
+	scene->camera.type = Entity_Type_Camera;
 
 	Fixture fixture;
 	Resource_Id id;
@@ -131,35 +131,35 @@ int karma_user_zero() {
 		circle.center = vec2(0);
 		circle.radius = 1;
 		
-		fixture.type = Fixture_Shape_Circle;
+		fixture.shape = Fixture_Shape_Circle;
 		fixture.handle = &circle;
 		id = scene_create_new_resource_fixture(scene, &fixture, 1);
 
 		info.position = vec2(5);
-		info.rigid_body.type = Rigid_Body_Dynamic;
+		info.rigid_body.type = Rigid_Body_Type_Dynamic;
 		info.rigid_body.fixture_id = id;
 		info.rigid_body.xform = mat3_identity();
 
-		scene_create_new_entity(scene, Entity_Player, info);
+		scene_create_new_entity(scene, Entity_Type_Player, info);
 
 		info.position = vec2(-5, 8);
-		scene_create_new_entity(scene, Entity_Player, info);
+		scene_create_new_entity(scene, Entity_Type_Player, info);
 
 		Mm_Rect rect;
 		rect.min = vec2(-1);
 		rect.max = vec2( 1);
 
-		fixture.type = Fixture_Shape_Mm_Rect;
+		fixture.shape = Fixture_Shape_Mm_Rect;
 		fixture.handle = &rect;
 		id = scene_create_new_resource_fixture(scene, &fixture, 1);
 
 		info.position = vec2(0, 5);
 		info.rigid_body.fixture_id = id;
-		scene_create_new_entity(scene, Entity_Player, info);
+		scene_create_new_entity(scene, Entity_Type_Player, info);
 	}
 
 	{
-		info.rigid_body.type = Rigid_Body_Static;
+		info.rigid_body.type = Rigid_Body_Type_Static;
 
 		{
 			Vec2 points[] = {
@@ -170,42 +170,42 @@ int karma_user_zero() {
 			auto polygon = (Polygon *)tallocate(sizeof(Polygon) + sizeof(Vec2) * (static_count(points) - 3));
 			polygon->vertex_count = static_count(points);
 			memcpy(polygon->vertices, points, sizeof(points));
-			fixture.type = Fixture_Shape_Polygon;
+			fixture.shape = Fixture_Shape_Polygon;
 			fixture.handle = polygon;
 			id = scene_create_new_resource_fixture(scene, &fixture, 1);
 
 			info.position = vec2(-5.6f, 0.4f);
 			info.rigid_body.xform = mat3_translation(info.position);
 			info.rigid_body.fixture_id = id;
-			scene_create_new_entity(scene, Entity_Static_Body, info);
+			scene_create_new_entity(scene, Entity_Type_Static_Body, info);
 		}
 
 		{
 			Circle circle;
 			circle.center = vec2(0);
 			circle.radius = 0.6f;
-			fixture.type = Fixture_Shape_Circle;
+			fixture.shape = Fixture_Shape_Circle;
 			fixture.handle = &circle;
 			id = scene_create_new_resource_fixture(scene, &fixture, 1);
 
 			info.position = vec2(1);
 			info.rigid_body.xform = mat3_translation(info.position);
 			info.rigid_body.fixture_id = id;
-			scene_create_new_entity(scene, Entity_Static_Body, info);
+			scene_create_new_entity(scene, Entity_Type_Static_Body, info);
 		}
 
 		{
 			Mm_Rect rect;
 			rect.min = vec2(-2.5f, -3.5f);
 			rect.max = vec2(2.5f, 3.5f);
-			fixture.type = Fixture_Shape_Mm_Rect;
+			fixture.shape = Fixture_Shape_Mm_Rect;
 			fixture.handle = &rect;
 			id = scene_create_new_resource_fixture(scene, &fixture, 1);
 
 			info.position = vec2(6.5f, -0.5f);
 			info.rigid_body.xform = mat3_translation(info.position);
 			info.rigid_body.fixture_id = id;
-			scene_create_new_entity(scene, Entity_Static_Body, info);
+			scene_create_new_entity(scene, Entity_Type_Static_Body, info);
 		}
 
 		{
@@ -219,9 +219,9 @@ int karma_user_zero() {
 			capsule.radius = 1;
 
 			Fixture f[2];
-			f[0].type = Fixture_Shape_Circle;
+			f[0].shape = Fixture_Shape_Circle;
 			f[0].handle = &circle;
-			f[1].type = Fixture_Shape_Capsule;
+			f[1].shape = Fixture_Shape_Capsule;
 			f[1].handle = &capsule;
 
 			id = scene_create_new_resource_fixture(scene, f, static_count(f));
@@ -229,7 +229,7 @@ int karma_user_zero() {
 			info.position = vec2(-1, -5);
 			info.rigid_body.xform = mat3_translation(info.position);
 			info.rigid_body.fixture_id = id;
-			scene_create_new_entity(scene, Entity_Static_Body, info);
+			scene_create_new_entity(scene, Entity_Type_Static_Body, info);
 		}
 	}
 
@@ -370,7 +370,7 @@ int karma_user_zero() {
 
 			for (auto a = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, a); a = iter_next<Rigid_Body>(a)) {
 				Rigid_Body &a_body = a->data;
-				if (a_body.type == Rigid_Body_Static) continue;
+				if (a_body.type == Rigid_Body_Type_Static) continue;
 				for (auto b = a->next; iter_continue(&scene->rigid_bodies, b); b = iter_next<Rigid_Body>(b)) {
 					if (a == b) continue;
 
@@ -389,7 +389,7 @@ int karma_user_zero() {
 								r32 collision_time = manifold.penetration / dt * sgn(vec2_dot(manifold.normal, dv));
 								Vec2 vn, vt;
 
-								if (b_body.type == Rigid_Body_Dynamic) {
+								if (b_body.type == Rigid_Body_Type_Dynamic) {
 									r32 a_collision_time =  0.5f * collision_time;
 									r32 b_collision_time = -0.5f * collision_time;
 
@@ -481,7 +481,7 @@ int karma_user_zero() {
 				auto f = rigid_body_get_fixture(&body, index);
 				auto color = (body.flags & Rigid_Body_COLLIDING) ? vec4(1, 0, 0) : vec4(0, 1, 1);
 
-				switch (f->type) {
+				switch (f->shape) {
 				case Fixture_Shape_Null: {
 
 				} break;
@@ -493,9 +493,7 @@ int karma_user_zero() {
 
 				case Fixture_Shape_Polygon: {
 					auto polygon = fixture_get_shape(f, Polygon);
-					for (u32 i = 0; i < polygon->vertex_count; ++i) {
-						im2d_line(polygon->vertices[i], polygon->vertices[(i + 1) % polygon->vertex_count], color, 0.02f);
-					}
+					im2d_polygon_outline(*polygon, color, 0.02f);
 				} break;
 
 				case Fixture_Shape_Mm_Rect: {

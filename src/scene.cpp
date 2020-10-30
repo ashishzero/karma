@@ -47,7 +47,7 @@ Resource_Id scene_create_new_resource_fixture(Scene *scene, Fixture *fixtures, u
 	for (u32 index = 0; index < fixture_count; ++index) {
 		src = fixtures + index;
 
-		switch (src->type) {
+		switch (src->shape) {
 			case Fixture_Shape_Null:	invalid_code_path(); break;
 			case Fixture_Shape_Circle:	size = sizeof(Circle); break;
 			case Fixture_Shape_Mm_Rect: size = sizeof(Mm_Rect); break;
@@ -57,7 +57,7 @@ Resource_Id scene_create_new_resource_fixture(Scene *scene, Fixture *fixtures, u
 			invalid_default_case();
 		}
 
-		dst->type = src->type;
+		dst->shape = src->shape;
 		dst->handle = memory_allocate(size, scene->pool_allocator);
 		memcpy(dst->handle, src->handle, size);
 
@@ -82,13 +82,13 @@ bool scene_delete_resource_fixture(Scene *scene, Resource_Id id) {
 
 Player *scene_add_player(Scene *scene) {
 	Player *player = array_add(&scene->by_type.player);
-	player->type = Entity_Player;
+	player->type = Entity_Type_Player;
 	return player;
 }
 
 Static_Body *scene_add_static_body(Scene *scene) {
 	Static_Body *body = array_add(&scene->by_type.static_body);
-	body->type = Entity_Static_Body;
+	body->type = Entity_Type_Static_Body;
 	return body;
 }
 
@@ -97,6 +97,7 @@ Rigid_Body *iscene_create_rigid_body(Scene *scene, Entity_Id entity_id, const Ri
 	Rigid_Body *rigid_body = &node->data;
 	rigid_body->type = info.type;
 	rigid_body->flags = 0;
+	rigid_body->imass = (info.type == Rigid_Body_Type_Dynamic) ? 1.0f : 0.0f;
 	rigid_body->velocity = vec2(0);
 	rigid_body->force = vec2(0);
 	rigid_body->xform = info.xform;
@@ -125,7 +126,7 @@ Entity *scene_create_new_entity(Scene *scene, Entity_Type type, const Entity_Inf
 	Entity_Id id = iscene_generate_unique_id(scene);
 
 	switch (type) {
-		case Entity_Player: {
+		case Entity_Type_Player: {
 			auto player = (Player *)scene_add_player(scene);
 			player->radius = 1;
 			player->color = vec4(1);
@@ -134,7 +135,7 @@ Entity *scene_create_new_entity(Scene *scene, Entity_Type type, const Entity_Inf
 			entity = player;
 		} break;
 
-		case Entity_Static_Body: {
+		case Entity_Type_Static_Body: {
 			auto body = (Static_Body *)scene_add_static_body(scene);
 			body->color = vec4(1);
 			body->rigid_body = iscene_create_rigid_body(scene, id, info.rigid_body);

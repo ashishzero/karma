@@ -5,7 +5,7 @@
 
 typedef u64 Entity_Id;
 
-enum Fixture_Shape_Type : u32 {
+enum Fixture_Shape : u32 {
 	Fixture_Shape_Null,
 	Fixture_Shape_Circle,
 	Fixture_Shape_Mm_Rect,
@@ -16,15 +16,15 @@ enum Fixture_Shape_Type : u32 {
 };
 
 struct Fixture {
-	Fixture_Shape_Type  type;
+	Fixture_Shape		shape;
 	void *				handle;
 };
 
 #define fixture_get_shape(fixture, type) ((type *)((fixture)->handle))
 
 enum Rigid_Body_Type : u16 {
-	Rigid_Body_Static,
-	Rigid_Body_Dynamic
+	Rigid_Body_Type_Static,
+	Rigid_Body_Type_Dynamic
 };
 
 typedef u16 Rigid_Body_Flags;
@@ -36,6 +36,7 @@ enum Rigid_Body_Flag_Bit : u16 {
 struct Rigid_Body {
 	Rigid_Body_Type		type;
 	Rigid_Body_Flags	flags;
+	r32					imass;
 	Vec2				velocity;
 	Vec2				force;
 	Mat3				xform;
@@ -45,12 +46,12 @@ struct Rigid_Body {
 };
 
 enum Entity_Type {
-	Entity_Null,
-	Entity_Camera,
-	Entity_Player,
-	Entity_Static_Body, // TODO: Rename this properly
+	Entity_Type_Null,
+	Entity_Type_Camera,
+	Entity_Type_Player,
+	Entity_Type_Static_Body, // TODO: Rename this properly
 
-	Entity_Count
+	Entity_Type_Count
 };
 
 struct Entity {

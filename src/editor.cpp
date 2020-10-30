@@ -280,15 +280,15 @@ void editor_entity(Entity *entity) {
 	ImGui::Begin("Entity:", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
 
 	switch (entity->type) {
-		case Entity_Null: {
+		case Entity_Type_Null: {
 			editor_draw(*entity);
 		} break;
 
-		case Entity_Player: {
+		case Entity_Type_Player: {
 			editor_draw(*(Player *)entity);
 		} break;
 
-		case Entity_Static_Body: {
+		case Entity_Type_Static_Body: {
 			editor_draw(*(Static_Body *)entity);
 		} break;
 	}	
