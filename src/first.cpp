@@ -16,7 +16,7 @@ int system_main() {
 		return karma_user_zero();
 	} else if (string_match(user, "atish")) {
 		return karma_user_atish();
-	} else if (string_match(user, "shankar")) {
+	} else if (string_match(user, "sankarg5")) {
 		return karma_user_shankar();
 	} else if (string_match(user, "leopujan")) {
 		return karma_user_pujan();
