@@ -1700,7 +1700,7 @@ r32 point_to_aabb2d_length2(Vec2 p, const Aabb2d &aabb) {
 	return point_to_mm_rect_length2(p, rect);
 }
 
-Vec2 closest_point_point_segment(Vec2 p, Vec2 a, Vec2 b, r32 *t) {
+Vec2 nearest_point_point_segment(Vec2 p, Vec2 a, Vec2 b, r32 *t) {
 	Vec2 ab = b - a;
 	*t = vec2_dot(p - a, ab) / vec2_dot(ab, ab);
 	if (*t < 0.0f) *t = 0.0f;
@@ -1708,12 +1708,12 @@ Vec2 closest_point_point_segment(Vec2 p, Vec2 a, Vec2 b, r32 *t) {
 	return a + (*t * ab);
 }
 
-Vec2 closest_point_point_segment(Vec2 p, Vec2 a, Vec2 b) {
+Vec2 nearest_point_point_segment(Vec2 p, Vec2 a, Vec2 b) {
 	r32 t;
-	return closest_point_point_segment(p, a, b, &t);
+	return nearest_point_point_segment(p, a, b, &t);
 }
 
-Vec2 closest_point_origin_segment(Vec2 a, Vec2 b, r32 *t) {
+Vec2 nearest_point_origin_segment(Vec2 a, Vec2 b, r32 *t) {
 	Vec2 ab = b - a;
 	*t = vec2_dot(-a, ab) / vec2_dot(ab, ab);
 	if (*t < 0.0f) *t = 0.0f;
@@ -1721,12 +1721,12 @@ Vec2 closest_point_origin_segment(Vec2 a, Vec2 b, r32 *t) {
 	return a + (*t * ab);
 }
 
-Vec2 closest_point_origin_segment(Vec2 a, Vec2 b) {
+Vec2 nearest_point_origin_segment(Vec2 a, Vec2 b) {
 	r32 t;
-	return closest_point_origin_segment(a, b, &t);
+	return nearest_point_origin_segment(a, b, &t);
 }
 
-Vec2 closest_point_point_mm_rect(Vec2 p, const Mm_Rect &rect) {
+Vec2 nearest_point_point_mm_rect(Vec2 p, const Mm_Rect &rect) {
 	Vec2 q;
 	for (s32 i = 0; i < 2; i++) {
 		r32 v = p.m[i];
@@ -1737,23 +1737,23 @@ Vec2 closest_point_point_mm_rect(Vec2 p, const Mm_Rect &rect) {
 	return q;
 }
 
-Vec2 closest_point_origin_mm_rect(const Mm_Rect &rect) {
-	return closest_point_point_mm_rect(vec2(0), rect);
+Vec2 nearest_point_origin_mm_rect(const Mm_Rect &rect) {
+	return nearest_point_point_mm_rect(vec2(0), rect);
 }
 
-Vec2 closest_point_point_aabb2d(Vec2 a, const Aabb2d &aabb) {
+Vec2 nearest_point_point_aabb2d(Vec2 a, const Aabb2d &aabb) {
 	Vec2 dim = vec2(aabb.radius[0], aabb.radius[1]);
 	Mm_Rect rect;
 	rect.min = aabb.center - dim;
 	rect.max = aabb.center + dim;
-	return closest_point_point_mm_rect(a, rect);
+	return nearest_point_point_mm_rect(a, rect);
 }
 
-Vec2 closest_point_point_aabb2d(const Aabb2d &aabb) {
-	return closest_point_point_aabb2d(vec2(0), aabb);
+Vec2 nearest_point_point_aabb2d(const Aabb2d &aabb) {
+	return nearest_point_point_aabb2d(vec2(0), aabb);
 }
 
-Vec2 closest_point_point_triangle(Vec2 p, Vec2 a, Vec2 b, Vec2 c) {
+Vec2 nearest_point_point_triangle(Vec2 p, Vec2 a, Vec2 b, Vec2 c) {
 	// Check if P in vertex region outside A
 	Vec2 ab = b - a;
 	Vec2 ac = c - a;
@@ -1802,7 +1802,7 @@ Vec2 closest_point_point_triangle(Vec2 p, Vec2 a, Vec2 b, Vec2 c) {
 	return a + ab * v + ac * w;
 }
 
-Vec2 closest_point_origin_triangle(Vec2 a, Vec2 b, Vec2 c) {
+Vec2 nearest_point_origin_triangle(Vec2 a, Vec2 b, Vec2 c) {
 	// Check if origin in vertex region outside A
 	Vec2 ab = b - a;
 	Vec2 ac = c - a;
@@ -1851,7 +1851,7 @@ Vec2 closest_point_origin_triangle(Vec2 a, Vec2 b, Vec2 c) {
 	return a + ab * v + ac * w;
 }
 
-r32 closest_point_segment_segment(Vec2 p1, Vec2 q1, Vec2 p2, Vec2 q2, r32 *s, r32 *t, Vec2 *c1, Vec2 *c2) {
+r32 nearest_point_segment_segment(Vec2 p1, Vec2 q1, Vec2 p2, Vec2 q2, r32 *s, r32 *t, Vec2 *c1, Vec2 *c2) {
 	Vec2 d1 = q1 - p1;
 	Vec2 d2 = q2 - p2;
 	Vec2 r = p1 - p2;
@@ -2296,7 +2296,7 @@ bool test_segment_vs_circle(Vec2 a, Vec2 b, const Circle &c) {
 bool test_capsule_vs_capsule(const Capsule &capsule1, const Capsule &capsule2) {
 	r32 s, t;
 	Vec2 c1, c2;
-	r32 dist2 = closest_point_segment_segment(capsule1.a, capsule1.b, capsule2.a, capsule2.b, &s, &t, &c1, &c2);
+	r32 dist2 = nearest_point_segment_segment(capsule1.a, capsule1.b, capsule2.a, capsule2.b, &s, &t, &c1, &c2);
 	r32 radius = capsule1.radius + capsule2.radius;
 	return dist2 <= radius * radius;
 }
@@ -2361,13 +2361,13 @@ bool segment_vs_segment(Vec2 a, Vec2 b, Vec2 c, Vec2 d, r32 *t, Vec2 *p) {
 }
 
 bool circle_vs_aabb(const Circle &c, Aabb2d &b, Vec2 *p) {
-	*p = closest_point_point_aabb2d(c.center, b);
+	*p = nearest_point_point_aabb2d(c.center, b);
 	Vec2 v = *p - c.center;
 	return vec2_dot(v, v) <= c.radius * c.radius;
 }
 
 bool circle_vs_triangle(const Circle &circle, Vec2 a, Vec2 b, Vec2 c, Vec2 *p) {
-	*p = closest_point_point_triangle(circle.center, a, b, c);
+	*p = nearest_point_point_triangle(circle.center, a, b, c);
 	Vec2 v = *p - circle.center;
 	return vec2_dot(v, v) <= circle.radius * circle.radius;
 }
@@ -2879,7 +2879,7 @@ bool next_simplex(Vec2 *simplex, Vec2 *dir, u32 *n) {
 	return false;
 }
 
-Nearest_Edge closest_edge_origin_polygon(const Vec2 *vertices, u32 vertex_count) {
+Nearest_Edge nearest_edge_origin_polygon(const Vec2 *vertices, u32 vertex_count) {
 	Nearest_Edge edge;
 	edge.distance = MAX_FLOAT;
 
@@ -2890,7 +2890,7 @@ Nearest_Edge closest_edge_origin_polygon(const Vec2 *vertices, u32 vertex_count)
 		auto b = vertices[q_index];
 		auto e = b - a;
 
-		Vec2 n = vec2_normalize(vec2_triple_product(e, a, e));
+		Vec2 n = vec2_normalize(vec2(-e.y, e.x));
 
 		r32 d = vec2_dot(n, a);
 		if (d < edge.distance) {
@@ -2984,7 +2984,7 @@ bool next_simplex_ex(Support_Ex *simplex, Vec2 *dir, u32 *n) {
 	return false;
 }
 
-Nearest_Edge_Ex closest_edge_origin_polygon_ex(const Support_Ex *vertices, u32 vertex_count) {
+Nearest_Edge_Ex nearest_edge_origin_polygon_ex(const Support_Ex *vertices, u32 vertex_count) {
 	Nearest_Edge_Ex edge;
 	edge.distance = MAX_FLOAT;
 
@@ -2995,7 +2995,7 @@ Nearest_Edge_Ex closest_edge_origin_polygon_ex(const Support_Ex *vertices, u32 v
 		auto b = vertices[q_index].p;
 		auto e = b - a;
 
-		Vec2 n = vec2_normalize(vec2_triple_product(e, a, e));
+		Vec2 n = vec2_normalize(vec2(-e.y, e.x));
 
 		r32 d = vec2_dot(n, a);
 		if (d < edge.distance) {

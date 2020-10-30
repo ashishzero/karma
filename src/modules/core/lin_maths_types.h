@@ -453,6 +453,12 @@ struct Polygon {
 	Vec2 vertices[3];
 };
 
+struct Nearest_Points {
+	Vec2 a;
+	Vec2 b;
+	r32 distance;
+};
+
 struct Nearest_Edge {
 	Vec2 normal;
 	r32 distance;
