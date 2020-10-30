@@ -908,6 +908,47 @@ bool isystem_write_file(Handle handle, void *ptr, ptrsize size) {
 	return true;
 }
 
+u64 isystem_get_file_size(Handle handle) {
+	LARGE_INTEGER size;
+	if (GetFileSizeEx(handle.hptr, &size)) {
+		return size.QuadPart;
+	}
+	return 0;
+}
+
+u64 isystem_get_file_creation_time(Handle handle) {
+	FILETIME t;
+	if (GetFileTime(handle.hptr, &t, nullptr, nullptr)) {
+		ULARGE_INTEGER r;
+		r.HighPart = t.dwHighDateTime;
+		r.LowPart = t.dwLowDateTime;
+		return r.QuadPart;
+	}
+	return 0;
+}
+
+u64 isystem_get_file_last_access_time(Handle handle) {
+	FILETIME t;
+	if (GetFileTime(handle.hptr, nullptr, &t, nullptr)) {
+		ULARGE_INTEGER r;
+		r.HighPart = t.dwHighDateTime;
+		r.LowPart = t.dwLowDateTime;
+		return r.QuadPart;
+	}
+	return 0;
+}
+
+u64 isystem_get_file_last_modified_time(Handle handle) {
+	FILETIME t;
+	if (GetFileTime(handle.hptr, nullptr, nullptr, &t)) {
+		ULARGE_INTEGER r;
+		r.HighPart = t.dwHighDateTime;
+		r.LowPart = t.dwLowDateTime;
+		return r.QuadPart;
+	}
+	return 0;
+}
+
 bool system_open_file(const String path, File_Operation options, System_File *file) {
 	DWORD access = 0;
 	DWORD creation = 0;
@@ -935,7 +976,7 @@ bool system_open_file(const String path, File_Operation options, System_File *fi
 	auto     length = path.count + 1;
 	wchar_t *wpath = (wchar_t *)tallocate(length * sizeof(wchar_t));
 	MultiByteToWideChar(CP_UTF8, 0, (char *)path.data, (int)path.count, wpath, (int)length);
-	wpath[length] = 0;
+	wpath[length - 1] = 0;
 
 	auto handle = CreateFileW(wpath, access, FILE_SHARE_WRITE | FILE_SHARE_READ, 0, creation, FILE_ATTRIBUTE_NORMAL, 0);
 	if (handle == INVALID_HANDLE_VALUE) {
@@ -948,6 +989,10 @@ bool system_open_file(const String path, File_Operation options, System_File *fi
 	file->handle.hptr = handle;
 	file->get_cursor = isystem_get_file_pointer;
 	file->set_cursor = isystem_set_file_pointer;
+	file->get_size = isystem_get_file_size;
+	file->get_creation_time = isystem_get_file_creation_time;
+	file->get_last_modified_time = isystem_get_file_last_modified_time;
+	file->get_last_access_time = isystem_get_file_last_access_time;
 
 	return true;
 }
@@ -962,7 +1007,7 @@ inline wchar_t *windows_get_file_extension(wchar_t *file) {
 		if (*file == L'.') return file;
 		file += 1;
 	}
-	return 0;
+	return L"";
 }
 
 u32 windows_find_files_count(const wchar_t *root_dir, int root_dir_len, const wchar_t *extension, bool recursive) {
@@ -993,7 +1038,7 @@ u32 windows_find_files_count(const wchar_t *root_dir, int root_dir_len, const wc
 				wcscat_s(next_dir, next_dir_len + 1, find_data.cFileName);
 				count += windows_find_files_count(next_dir, next_dir_len, extension, recursive);
 			}
-		} else if (wcscmp(windows_get_file_extension(find_data.cFileName), extension) == 0) {
+		} else if (wcscmp(extension, L"*") == 0 || wcscmp(windows_get_file_extension(find_data.cFileName), extension) == 0) {
 			count += 1;
 		}
 	} while (FindNextFileW(find, &find_data) != 0);
@@ -1031,7 +1076,7 @@ u32 windows_find_files_info(System_Find_File_Info *info, const System_Find_File_
 				count += next_count;
 				info += next_count;
 			}
-		} else if (wcscmp(windows_get_file_extension(find_data.cFileName), extension) == 0) {
+		} else if (wcscmp(extension, L"*") == 0 || wcscmp(windows_get_file_extension(find_data.cFileName), extension) == 0) {
 			int found_file_len = (int)wcslen(find_data.cFileName);
 			int found_full_file_len = root_dir_len + found_file_len + 1;
 			wchar_t *full_file_name = (wchar_t *)tallocate((found_full_file_len + 1) * sizeof(wchar_t));
@@ -1047,7 +1092,20 @@ u32 windows_find_files_info(System_Find_File_Info *info, const System_Find_File_
 			info->path.count = root_dir_len + 1;
 			info->name.data = (u8 *)utf_full_file_name + root_dir_len + 1;
 			info->name.count = found_file_len;
+
+			auto find_result = string_isearch_reverse(info->name, ".");
+			if (find_result.found) {
+				info->extension = string_substring(info->name, find_result.start_index, info->name.count - find_result.start_index);
+			} else {
+				info->extension = String(info->name.data + info->name.count, 0);
+			}
+
 			info->size = (find_data.nFileSizeHigh * ((u64)MAXDWORD + 1)) + find_data.nFileSizeLow;
+
+			ULARGE_INTEGER ul;
+			ul.HighPart = find_data.ftLastWriteTime.dwHighDateTime;
+			ul.LowPart = find_data.ftLastWriteTime.dwLowDateTime;
+			info->modified = ul.QuadPart;
 
 			count += 1;
 			info += 1;
@@ -1815,8 +1873,12 @@ static LRESULT CALLBACK win32_wnd_proc(HWND wnd, UINT msg, WPARAM wparam, LPARAM
 }
 
 String system_get_command_line() {
-	assert(context.proc == system_main);
-	return *((String *)context.data);
+	auto cmd_line = GetCommandLineW();
+	int      len = WideCharToMultiByte(CP_UTF8, 0, cmd_line, -1, 0, 0, 0, 0);
+	String   cmd_line_string;
+	cmd_line_string.data = new u8[len];
+	cmd_line_string.count = WideCharToMultiByte(CP_UTF8, 0, cmd_line, -1, (char *)cmd_line_string.data, len, 0, 0);
+	return cmd_line_string;
 }
 
 System_Info system_get_info() {
@@ -1970,15 +2032,6 @@ void system_audio_pause() {
 	windows_audio_client.client->Stop();
 }
 
-bool system_net_startup() {
-	WSADATA WsaData;
-	return WSAStartup(MAKEWORD(2, 2), &WsaData) == NO_ERROR;
-}
-
-void system_net_cleanup() {
-	WSACleanup();
-}
-
 bool system_net_set_socket_nonblocking(Socket sock) {
 	DWORD non_blockling = 1;
 	if (ioctlsocket((SOCKET)sock, FIONBIO, &non_blockling) != 0) {
@@ -1988,7 +2041,7 @@ bool system_net_set_socket_nonblocking(Socket sock) {
 	return true;
 }
 
-Socket system_net_open_udp_server(Socket_Address address) {
+Socket system_net_open_udp_server(const Ip_Endpoint &address) {
 	SOCKET win_sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (win_sock == INVALID_SOCKET) {
 		win32_check_for_error();
@@ -2023,7 +2076,7 @@ Socket system_net_open_udp_client() {
 	return result;
 }
 
-s32 system_net_send_to(Socket sock, void *buffer, s32 length, Socket_Address address) {
+s32 system_net_send_to(Socket sock, void *buffer, s32 length, const Ip_Endpoint &address) {
 	sockaddr_in sock_addr;
 	sock_addr.sin_family = AF_INET;
 	sock_addr.sin_addr.s_addr = htonl(address.address);
@@ -2031,7 +2084,7 @@ s32 system_net_send_to(Socket sock, void *buffer, s32 length, Socket_Address add
 	return sendto((SOCKET)sock, (const char *)buffer, length, 0, (sockaddr *)&sock_addr, sizeof(sockaddr_in));
 }
 
-s32 system_net_receive_from(Socket sock, void *packet_buffer, s32 max_packet_size, Socket_Address *address) {
+s32 system_net_receive_from(Socket sock, void *packet_buffer, s32 max_packet_size, Ip_Endpoint *address) {
 	sockaddr_in from;
 	int from_length = sizeof(from);
 	s32 bytes = recvfrom((SOCKET)sock, (char *)packet_buffer, max_packet_size, 0, (sockaddr *)&from, &from_length);
@@ -2361,7 +2414,7 @@ void system_display_critical_message(const String msg) {
 	MessageBoxW(window_handle, pool, L"Karma - Critical Error", MB_TOPMOST | MB_ICONWARNING | MB_OK);
 }
 
-void *system_allocator(Allocation_Type type, ptrsize size, const void *ptr, void *user_ptr) {
+void *system_heap_allocator_proc(Allocation_Type type, ptrsize size, const void *ptr, void *user_ptr) {
 	HANDLE heap = (HANDLE)user_ptr;
 
 	if (type == Allocation_Type_NEW) {
@@ -2386,6 +2439,24 @@ void *system_allocator(Allocation_Type type, ptrsize size, const void *ptr, void
 	}
 
 	return 0;
+}
+
+Allocator system_default_heap_allocator() {
+	Allocator allocator;
+	allocator.proc = system_heap_allocator_proc;
+	allocator.data = GetProcessHeap();
+	return allocator;
+}
+
+Allocator system_create_heap_allocator(Heap_Type type, ptrsize initial_size, ptrsize maximum_size) {
+	Allocator allocator;
+	allocator.proc = system_heap_allocator_proc;
+	allocator.data = HeapCreate(type == Heap_Type_NO_SERIALIZE ? HEAP_NO_SERIALIZE : 0, initial_size, maximum_size);
+	return allocator;
+}
+
+void system_destroy_heap_allocator(Allocator allocator) {
+	HeapDestroy(allocator.data);
 }
 
 void *system_virtual_alloc(void *address, ptrsize size, Vitual_Memory_Flags flags) {
@@ -2439,31 +2510,33 @@ void win32_initialize_xinput() {
 }
 
 DWORD WINAPI win_thread_proc(LPVOID param) {
-	Thread_Context *thread = (Thread_Context *)param;
-	context = *thread;
+	Thread_Context *thread = (Thread_Context *)((ptrsize)param);
+	memcpy(&context, thread, sizeof(context));
 
 	int result = thread->proc();
+
+	CloseHandle(context.handle.hptr);
 
 	return result;
 }
 
-bool system_thread_create(Thread_Proc proc, void *arg, Allocator allocator, ptrsize temporary_memory_size, String name, Thread_Context *thread) {
-	thread->proc = proc;
-	thread->data = arg;
-	thread->allocator = allocator;
+bool system_thread_create(const Builder &builder, String name, Allocator temporary_storage_allocator, Thread_Context *thread) {
+	thread->proc = builder.entry;
+	thread->data = builder.data;
+	thread->allocator = builder.allocator;
 
-	if (temporary_memory_size) {
-		void *ptr = memory_allocate(temporary_memory_size, thread->allocator);
+	if (builder.temporary_buffer_size) {
+		void *ptr = memory_allocate(builder.temporary_buffer_size, temporary_storage_allocator);
 		if (ptr == 0) {
 			win32_check_for_error();
 			system_fatal_error("Out of memory: Unable to allocate temporary storage memory!");
 		}
-		thread->temp_memory = Temporary_Memory(ptr, temporary_memory_size);
+		thread->temp_memory = Temporary_Memory(ptr, builder.temporary_buffer_size);
 	} else {
 		thread->temp_memory = Temporary_Memory(0, 0);
 	}
 
-	thread->handle.hptr = CreateThread(0, 0, win_thread_proc, &thread, CREATE_SUSPENDED, 0);
+	thread->handle.hptr = CreateThread(0, 0, win_thread_proc, thread, CREATE_SUSPENDED, 0);
 	if (thread->handle.hptr != NULL) {
 		if (name.count) {
 			wchar_t *desc = (wchar_t *)tallocate((name.count + 1) * sizeof(wchar_t));
@@ -2504,6 +2577,10 @@ void system_thread_exit(int exit_code) {
 	ExitThread(exit_code);
 }
 
+void system_thread_sleep(u32 millisecs) {
+	Sleep(millisecs);
+}
+
 Handle system_create_mutex() {
 	HANDLE mutex = CreateMutexA(NULL, FALSE, 0);
 	Handle result;
@@ -2530,6 +2607,44 @@ void system_unlock_mutex(Handle handle) {
 	ReleaseMutex(handle.hptr);
 }
 
+Handle system_create_semaphore(u32 initial_count, u32 maximum_count) {
+	HANDLE semaphore = CreateSemaphoreW(nullptr, initial_count, maximum_count, nullptr);
+	Handle handle;
+	handle.hptr = semaphore;
+	return handle;
+}
+
+void system_destroy_semaphore(Handle handle) {
+	CloseHandle(handle.hptr);
+}
+
+Wait_Result system_wait_semaphore(Handle handle, u32 millisecs) {
+	auto result = WaitForSingleObject(handle.hptr, millisecs);
+	switch (result) {
+	case WAIT_ABANDONED: return Wait_Result_ABANDONED;
+	case WAIT_OBJECT_0: return Wait_Result_SIGNALED;
+	case WAIT_TIMEOUT: return Wait_Result_TIMEOUT;
+	case WAIT_FAILED: return Wait_Result_FAILED;
+	}
+	return Wait_Result_SUCCESS;
+}
+
+bool system_signal_semaphore(Handle handle, u32 count) {
+	return ReleaseSemaphore(handle.hptr, count, nullptr);
+}
+
+s32 system_interlocked_increment(s32 volatile *addend) {
+	return InterlockedIncrement((long volatile *)addend);
+}
+
+s32 system_interlocked_decrement(s32 volatile *addend) {
+	return InterlockedDecrement((long volatile *)addend);
+}
+
+s32 system_interlocked_compare_exchange(s32 volatile *dest, s32 exchange, s32 comperand) {
+	return InterlockedCompareExchange((long volatile *)dest, exchange, comperand);
+}
+
 #if defined(SYSTEM_CONSOLE)
 int main() {
 	LPWSTR cmd_line = GetCommandLineW();
@@ -2544,51 +2659,65 @@ int __stdcall wWinMain(HINSTANCE instance, HINSTANCE prev_instance, LPWSTR cmd_l
 
 	DWORD task_index = 0;
 	HANDLE task_handle = AvSetMmThreadCharacteristicsW(L"Games", &task_index);
+	SetThreadDescription(GetCurrentThread(), L"Main");
+
+	Builder builder = system_builder();
 
 	win32_map_keys();
+	win32_initialize_xinput();
 
-	SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+	if (builder.flags & Builder_VIDEO) {
+		SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 
-	HRESULT res = CoInitializeEx(0, COINIT_MULTITHREADED | COINIT_DISABLE_OLE1DDE);
-	if (FAILED(res)) {
-		win32_check_for_error();
-		system_fatal_error("Failed to Initialize COM Objects");
+		HRESULT res = CoInitializeEx(0, COINIT_MULTITHREADED | COINIT_DISABLE_OLE1DDE);
+		if (FAILED(res)) {
+			win32_check_for_error();
+			system_fatal_error("Failed to Initialize COM Objects");
+		}
 	}
-
-	SetThreadDescription(GetCurrentThread(), L"Main");
 
 	context.handle.hptr = GetCurrentThread();
 	context.id = GetCurrentThreadId();
-	context.allocator.proc = system_allocator;
-	context.allocator.data = HeapCreate(HEAP_NO_SERIALIZE, 0, 0);
-	context.proc = system_main;
+	context.allocator = builder.allocator;
+	context.proc = builder.entry;
+	context.data = builder.data;
 
-	int      len = WideCharToMultiByte(CP_UTF8, 0, cmd_line, -1, 0, 0, 0, 0);
-	String   cmd_line_string;
-	cmd_line_string.data = new u8[len];
-	cmd_line_string.count = WideCharToMultiByte(CP_UTF8, 0, cmd_line, -1, (char *)cmd_line_string.data, len, 0, 0);
-	context.data = &cmd_line_string;
-
-	void *ptr = memory_allocate(static_cast<SIZE_T>(TEMPORARY_MEMORY_SIZE));
-	if (ptr == 0) {
-		win32_check_for_error();
-		system_fatal_error("Out of memory: Unable to allocate temporary storage memory!");
+	void *ptr = nullptr;
+	if (builder.temporary_buffer_size) {
+		ptr = memory_allocate(builder.temporary_buffer_size);
+		if (ptr == 0) {
+			win32_check_for_error();
+			system_fatal_error("Out of memory: Unable to allocate temporary storage memory!");
+		}
 	}
-	context.temp_memory = Temporary_Memory(ptr, static_cast<ptrsize>(TEMPORARY_MEMORY_SIZE));
+	context.temp_memory = Temporary_Memory(ptr, builder.temporary_buffer_size);
 
-	if (!windows_audio_client.Initialize()) {
-		system_log(LOG_WARNING, "Windows", "Audio could not be initialized");
+	if (builder.flags & Builder_NETWORK) {
+		WSADATA WsaData;
+		if (WSAStartup(MAKEWORD(2, 2), &WsaData) != NO_ERROR) {
+			system_log(LOG_WARNING, "Windows", "Network could not be initialized");
+		}
 	}
 
-	win32_initialize_xinput();
+	if (builder.flags & Builder_AUDIO) {
+		if (!windows_audio_client.Initialize()) {
+			system_log(LOG_WARNING, "Windows", "Audio could not be initialized");
+		}
+	}
 
-	int result = system_main();
+	int result = context.proc();
 
-	windows_audio_client.StopThread();
+	if (builder.flags & Builder_NETWORK) {
+		WSACleanup();
+	}
 
-	HeapDestroy(context.allocator.data);
+	if (builder.flags & Builder_AUDIO) {
+		windows_audio_client.StopThread();
+	}
 
-	CoUninitialize();
+	if (builder.flags & Builder_VIDEO) {
+		CoUninitialize();
+	}
 
 	return result;
 }
@@ -2596,12 +2725,6 @@ int __stdcall wWinMain(HINSTANCE instance, HINSTANCE prev_instance, LPWSTR cmd_l
 void system_log(int type, const char *title, ANALYSE_PRINTF_FORMAT_STRING(const char *fmt), ...) {
 	char    pool[STB_SPRINTF_MIN];
 	wchar_t msg[STB_SPRINTF_MIN + 1];
-
-	struct Ctx {
-		wchar_t *wbuf;
-		HANDLE   handle;
-	};
-	Ctx ctx;
 
 	HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
 	if (handle != INVALID_HANDLE_VALUE) {
@@ -2615,28 +2738,12 @@ void system_log(int type, const char *title, ANALYSE_PRINTF_FORMAT_STRING(const 
 		DWORD written = 0;
 
 		int len = stbsp_snprintf(pool, STB_SPRINTF_MIN, "[%s] - ", title);
-		MultiByteToWideChar(CP_UTF8, 0, pool, -1, msg, sizeof(wchar_t) * (STB_SPRINTF_MIN));
-		WriteConsoleW(handle, msg, len, &written, 0);
-		OutputDebugStringW(msg);
-
-		ctx.wbuf = msg;
-		ctx.handle = handle;
-
 		va_list ap;
 		va_start(ap, fmt);
-		stbsp_vsprintfcb([](char const *buf, void *user, int len) -> char * {
-			auto *ctx = (Ctx *)user;
-			MultiByteToWideChar(CP_UTF8, 0, buf, len, ctx->wbuf, sizeof(wchar_t) * (STB_SPRINTF_MIN));
-			ctx->wbuf[len] = 0;
-			DWORD written = 0;
-			WriteConsoleW(ctx->handle, ctx->wbuf, len, &written, 0);
-			OutputDebugStringW(ctx->wbuf);
-			return (char *)buf;
-		},
-			&ctx, pool, fmt, ap);
+		len += stbsp_vsnprintf(pool + len, STB_SPRINTF_MIN, fmt, ap);
 		va_end(ap);
+		len += stbsp_snprintf(pool + len, STB_SPRINTF_MIN, "\n");
 
-		len = stbsp_snprintf(pool, STB_SPRINTF_MIN, "\n");
 		MultiByteToWideChar(CP_UTF8, 0, pool, -1, msg, sizeof(wchar_t) * (STB_SPRINTF_MIN));
 		WriteConsoleW(handle, msg, len, &written, 0);
 		OutputDebugStringW(msg);

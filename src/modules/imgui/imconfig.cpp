@@ -11,7 +11,6 @@ static bool               mouse_pressed[3];
 static Cursor_Kind        mouse_cursor[ImGuiMouseCursor_COUNT];
 static ImGuiDockNodeFlags dockspace_flags;
 ImGuiWindowFlags          dockspace_main_window_flags;
-static ImFont *			  icon_font;
 
 void ImGui::Initialize() {
 	IMGUI_CHECKVERSION();
@@ -53,79 +52,76 @@ void ImGui::Initialize() {
 	config.OversampleV = 2;
 	config.PixelSnapH  = true;
 
-	ImFontGlyphRangesBuilder builder;
-	builder.AddChar(0xe911);
-	builder.AddChar(0xe922);
-	builder.AddChar(0xe950);
-	builder.AddChar(0xea15);
-	builder.AddChar(0xea16);
-	ImVector<ImWchar> ranges;
-	builder.BuildRanges(&ranges);          
-
 	io.Fonts->AddFontFromFileTTF("dev/GeneraleStation-Regular.otf", 14, &config);
-	icon_font  = io.Fonts->AddFontFromFileTTF("dev/icomoon.ttf", 14, &config, ranges.Data);
 	io.Fonts->Build();
 
-	auto &style             = ImGui::GetStyle();
-	style.ChildRounding     = 0;
-	style.PopupRounding     = 0;
-	style.ScrollbarRounding = 0;
-	style.TabRounding       = 0;
-	style.WindowRounding    = 0;
-	style.WindowBorderSize  = 1;
-	style.FrameBorderSize   = 0;
+	ImGuiStyle *style = &ImGui::GetStyle();
+	ImVec4 *colors = style->Colors;
 
-	style.FrameRounding = 0;
-	style.GrabRounding  = 0;
+	style->ChildRounding     = 0;
+	style->PopupRounding     = 0;
+	style->ScrollbarRounding = 0;
+	style->TabRounding       = 0;
+	style->WindowRounding    = 0;
+	style->WindowBorderSize  = 1;
+	style->FrameBorderSize   = 0;
+	
+	style->FrameRounding = 0;
+	style->GrabRounding  = 0;
 
-	ImVec4 *colors                         = style.Colors;
-	colors[ImGuiCol_Text]                  = srgb_to_linear(vec4(0.95f, 0.96f, 0.98f, 1.00f));
-	colors[ImGuiCol_TextDisabled]          = srgb_to_linear(vec4(0.36f, 0.42f, 0.47f, 1.00f));
-	colors[ImGuiCol_WindowBg]              = srgb_to_linear(vec4(0.11f, 0.15f, 0.17f, 1.00f));
-	colors[ImGuiCol_PopupBg]               = srgb_to_linear(vec4(0.08f, 0.08f, 0.08f, 0.94f));
-	colors[ImGuiCol_Border]                = srgb_to_linear(vec4(0.08f, 0.10f, 0.12f, 1.00f));
-	colors[ImGuiCol_BorderShadow]          = srgb_to_linear(vec4(0.00f, 0.00f, 0.00f, 0.00f));
-	colors[ImGuiCol_FrameBg]               = srgb_to_linear(vec4(0.20f, 0.25f, 0.29f, 1.00f));
-	colors[ImGuiCol_FrameBgHovered]        = srgb_to_linear(vec4(0.12f, 0.20f, 0.28f, 1.00f));
-	colors[ImGuiCol_FrameBgActive]         = srgb_to_linear(vec4(0.09f, 0.12f, 0.14f, 1.00f));
-	colors[ImGuiCol_TitleBg]               = srgb_to_linear(vec4(0.09f, 0.12f, 0.14f, 0.65f));
-	colors[ImGuiCol_TitleBgActive]         = srgb_to_linear(vec4(0.08f, 0.10f, 0.12f, 1.00f));
-	colors[ImGuiCol_TitleBgCollapsed]      = srgb_to_linear(vec4(0.00f, 0.00f, 0.00f, 0.90f));
-	colors[ImGuiCol_MenuBarBg]             = srgb_to_linear(vec4(0.15f, 0.18f, 0.22f, 1.00f));
-	colors[ImGuiCol_ScrollbarBg]           = srgb_to_linear(vec4(0.02f, 0.02f, 0.02f, 0.39f));
-	colors[ImGuiCol_ScrollbarGrab]         = srgb_to_linear(vec4(0.20f, 0.25f, 0.29f, 1.00f));
-	colors[ImGuiCol_ScrollbarGrabHovered]  = srgb_to_linear(vec4(0.18f, 0.22f, 0.25f, 1.00f));
-	colors[ImGuiCol_ScrollbarGrabActive]   = srgb_to_linear(vec4(0.09f, 0.21f, 0.31f, 1.00f));
-	colors[ImGuiCol_CheckMark]             = srgb_to_linear(vec4(0.28f, 0.56f, 1.00f, 1.00f));
-	colors[ImGuiCol_SliderGrab]            = srgb_to_linear(vec4(0.28f, 0.56f, 1.00f, 1.00f));
-	colors[ImGuiCol_SliderGrabActive]      = srgb_to_linear(vec4(0.37f, 0.61f, 1.00f, 1.00f));
-	colors[ImGuiCol_Button]                = srgb_to_linear(vec4(0.20f, 0.25f, 0.29f, 1.00f));
-	colors[ImGuiCol_ButtonHovered]         = srgb_to_linear(vec4(0.28f, 0.56f, 1.00f, 1.00f));
-	colors[ImGuiCol_ButtonActive]          = srgb_to_linear(vec4(0.06f, 0.53f, 0.98f, 1.00f));
-	colors[ImGuiCol_Header]                = srgb_to_linear(vec4(0.20f, 0.25f, 0.29f, 0.85f));
-	colors[ImGuiCol_HeaderHovered]         = srgb_to_linear(vec4(0.26f, 0.59f, 0.98f, 0.90f));
-	colors[ImGuiCol_HeaderActive]          = srgb_to_linear(vec4(0.26f, 0.59f, 0.98f, 1.00f));
-	colors[ImGuiCol_Separator]             = srgb_to_linear(vec4(0.20f, 0.25f, 0.29f, 1.00f));
-	colors[ImGuiCol_SeparatorHovered]      = srgb_to_linear(vec4(0.10f, 0.40f, 0.75f, 0.78f));
-	colors[ImGuiCol_SeparatorActive]       = srgb_to_linear(vec4(0.10f, 0.40f, 0.75f, 1.00f));
-	colors[ImGuiCol_ResizeGrip]            = srgb_to_linear(vec4(0.26f, 0.59f, 0.98f, 0.25f));
-	colors[ImGuiCol_ResizeGripHovered]     = srgb_to_linear(vec4(0.26f, 0.59f, 0.98f, 0.67f));
-	colors[ImGuiCol_ResizeGripActive]      = srgb_to_linear(vec4(0.26f, 0.59f, 0.98f, 0.95f));
-	colors[ImGuiCol_Tab]                   = srgb_to_linear(vec4(0.11f, 0.15f, 0.17f, 1.00f));
-	colors[ImGuiCol_TabHovered]            = srgb_to_linear(vec4(0.26f, 0.59f, 0.98f, 0.80f));
-	colors[ImGuiCol_TabActive]             = srgb_to_linear(vec4(0.20f, 0.25f, 0.29f, 1.00f));
-	colors[ImGuiCol_TabUnfocused]          = srgb_to_linear(vec4(0.11f, 0.15f, 0.17f, 1.00f));
-	colors[ImGuiCol_TabUnfocusedActive]    = srgb_to_linear(vec4(0.11f, 0.15f, 0.17f, 1.00f));
-	colors[ImGuiCol_PlotLines]             = srgb_to_linear(vec4(0.61f, 0.61f, 0.61f, 1.00f));
-	colors[ImGuiCol_PlotLinesHovered]      = srgb_to_linear(vec4(1.00f, 0.43f, 0.35f, 1.00f));
-	colors[ImGuiCol_PlotHistogram]         = srgb_to_linear(vec4(0.90f, 0.70f, 0.00f, 1.00f));
-	colors[ImGuiCol_PlotHistogramHovered]  = srgb_to_linear(vec4(1.00f, 0.60f, 0.00f, 1.00f));
-	colors[ImGuiCol_TextSelectedBg]        = srgb_to_linear(vec4(0.26f, 0.59f, 0.98f, 0.35f));
-	colors[ImGuiCol_DragDropTarget]        = srgb_to_linear(vec4(1.00f, 1.00f, 0.00f, 0.90f));
-	colors[ImGuiCol_NavHighlight]          = srgb_to_linear(vec4(0.26f, 0.59f, 0.98f, 1.00f));
+	colors[ImGuiCol_Text] = srgb_to_linear(vec4(1.00f, 1.00f, 1.00f, 1.00f));
+	colors[ImGuiCol_TextDisabled] = srgb_to_linear(vec4(0.50f, 0.50f, 0.50f, 1.00f));
+	colors[ImGuiCol_WindowBg] = srgb_to_linear(vec4(0.06f, 0.05f, 0.07f, 1.00f));
+	colors[ImGuiCol_PopupBg] = srgb_to_linear(vec4(0.07f, 0.07f, 0.09f, 1.00f));
+	colors[ImGuiCol_ChildBg] = srgb_to_linear(vec4(0.00f, 0.00f, 0.00f, 0.00f));
+
+	colors[ImGuiCol_Border] = srgb_to_linear(vec4(0.80f, 0.80f, 0.83f, 0.88f));
+	colors[ImGuiCol_BorderShadow] = srgb_to_linear(vec4(0.92f, 0.91f, 0.88f, 0.00f));
+	colors[ImGuiCol_FrameBg] = srgb_to_linear(vec4(0.10f, 0.09f, 0.12f, 1.00f));
+	colors[ImGuiCol_FrameBgHovered] = srgb_to_linear(vec4(0.24f, 0.23f, 0.29f, 1.00f));
+	colors[ImGuiCol_FrameBgActive] = srgb_to_linear(vec4(0.56f, 0.56f, 0.58f, 1.00f));
+	colors[ImGuiCol_TitleBg] = srgb_to_linear(vec4(0.10f, 0.09f, 0.12f, 1.00f));
+	colors[ImGuiCol_TitleBgCollapsed] = srgb_to_linear(vec4(0.10f, 0.09f, 0.12f, 0.75f));
+	colors[ImGuiCol_TitleBgActive] = srgb_to_linear(vec4(0.07f, 0.07f, 0.09f, 1.00f));
+	colors[ImGuiCol_MenuBarBg] = srgb_to_linear(vec4(0.10f, 0.09f, 0.12f, 1.00f));
+	colors[ImGuiCol_ScrollbarBg] = srgb_to_linear(vec4(0.10f, 0.09f, 0.12f, 1.00f));
+	colors[ImGuiCol_ScrollbarGrab] = srgb_to_linear(vec4(0.80f, 0.80f, 0.83f, 0.31f));
+	colors[ImGuiCol_ScrollbarGrabHovered] = srgb_to_linear(vec4(0.56f, 0.56f, 0.58f, 1.00f));
+	colors[ImGuiCol_ScrollbarGrabActive] = srgb_to_linear(vec4(0.06f, 0.05f, 0.07f, 1.00f));
+	colors[ImGuiCol_CheckMark] = srgb_to_linear(vec4(0.80f, 0.80f, 0.83f, 0.31f));
+	colors[ImGuiCol_SliderGrab] = srgb_to_linear(vec4(0.80f, 0.80f, 0.83f, 0.31f));
+	colors[ImGuiCol_SliderGrabActive] = srgb_to_linear(vec4(0.06f, 0.05f, 0.07f, 1.00f));
+	colors[ImGuiCol_Button] = srgb_to_linear(vec4(0.10f, 0.09f, 0.12f, 1.00f));
+	colors[ImGuiCol_ButtonHovered] = srgb_to_linear(vec4(0.24f, 0.23f, 0.29f, 1.00f));
+	colors[ImGuiCol_ButtonActive] = srgb_to_linear(vec4(0.56f, 0.56f, 0.58f, 1.00f));
+	colors[ImGuiCol_Header] = srgb_to_linear(vec4(0.10f, 0.09f, 0.12f, 1.00f));
+	colors[ImGuiCol_HeaderHovered] = srgb_to_linear(vec4(0.56f, 0.56f, 0.58f, 1.00f));
+	colors[ImGuiCol_HeaderActive] = srgb_to_linear(vec4(0.06f, 0.05f, 0.07f, 1.00f));
+	colors[ImGuiCol_ResizeGrip] = srgb_to_linear(vec4(0.00f, 0.00f, 0.00f, 0.00f));
+	colors[ImGuiCol_ResizeGripHovered] = srgb_to_linear(vec4(0.56f, 0.56f, 0.58f, 1.00f));
+	colors[ImGuiCol_ResizeGripActive] = srgb_to_linear(vec4(0.06f, 0.05f, 0.07f, 1.00f));
+	colors[ImGuiCol_PlotLines] = srgb_to_linear(vec4(0.40f, 0.39f, 0.38f, 0.63f));
+	colors[ImGuiCol_PlotLinesHovered] = srgb_to_linear(vec4(0.25f, 1.00f, 0.00f, 1.00f));
+	colors[ImGuiCol_PlotHistogram] = srgb_to_linear(vec4(0.40f, 0.39f, 0.38f, 0.63f));
+	colors[ImGuiCol_PlotHistogramHovered] = srgb_to_linear(vec4(0.25f, 1.00f, 0.00f, 1.00f));
+	colors[ImGuiCol_TextSelectedBg] = srgb_to_linear(vec4(0.25f, 1.00f, 0.00f, 0.43f));
+	colors[ImGuiCol_DragDropTarget] = srgb_to_linear(vec4(1.00f, 1.00f, 0.00f, 0.90f));
+	colors[ImGuiCol_NavHighlight] = srgb_to_linear(vec4(0.26f, 0.59f, 0.98f, 1.00f));
 	colors[ImGuiCol_NavWindowingHighlight] = srgb_to_linear(vec4(1.00f, 1.00f, 1.00f, 0.70f));
-	colors[ImGuiCol_NavWindowingDimBg]     = srgb_to_linear(vec4(0.80f, 0.80f, 0.80f, 0.20f));
-	colors[ImGuiCol_ModalWindowDimBg]      = srgb_to_linear(vec4(0.80f, 0.80f, 0.80f, 0.35f));
+	colors[ImGuiCol_NavWindowingDimBg] = srgb_to_linear(vec4(0.80f, 0.80f, 0.80f, 0.20f));
+	colors[ImGuiCol_ModalWindowDimBg] = srgb_to_linear(vec4(0.80f, 0.80f, 0.80f, 0.35f));
+
+	colors[ImGuiCol_Separator] = colors[ImGuiCol_Border];
+	colors[ImGuiCol_SeparatorHovered] = srgb_to_linear(vec4(0.10f, 0.40f, 0.75f, 0.78f));
+	colors[ImGuiCol_SeparatorActive] = srgb_to_linear(vec4(0.10f, 0.40f, 0.75f, 1.00f));
+
+	colors[ImGuiCol_Tab] = lerp(colors[ImGuiCol_Header], colors[ImGuiCol_TitleBgActive], 0.80f);
+	colors[ImGuiCol_TabHovered] = colors[ImGuiCol_HeaderHovered];
+	colors[ImGuiCol_TabActive] = lerp(colors[ImGuiCol_HeaderActive], colors[ImGuiCol_TitleBgActive], 0.60f);
+	colors[ImGuiCol_TabUnfocused] = lerp(colors[ImGuiCol_Tab], colors[ImGuiCol_TitleBg], 0.80f);
+	colors[ImGuiCol_TabUnfocusedActive] = lerp(colors[ImGuiCol_TabActive], colors[ImGuiCol_TitleBg], 0.40f);
+	colors[ImGuiCol_DockingPreview] = srgb_to_linear(vec4(1.5f, 1.0f, 1.0f, 1.0f));
+	colors[ImGuiCol_DockingEmptyBg] = srgb_to_linear(vec4(1.5f, 1.0f, 1.0f, 1.00f));
 
 	// Keyboard mapping. ImGui will use those indices to peek into the io.KeysDown[] array.
 	io.KeyMap[ImGuiKey_Tab]        = Key_TAB;
@@ -327,12 +323,4 @@ void ImGui::RenderFrame() {
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 	else if (backend == Render_Backend_DIRECTX11)
 		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-}
-
-void ImGui::BeginIconFont() {
-	ImGui::PushFont(icon_font);
-}
-
-void ImGui::EndIconFont() {
-	ImGui::PopFont();
 }

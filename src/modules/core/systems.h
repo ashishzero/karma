@@ -257,10 +257,6 @@ struct Event {
 		Controller_Button_Event		controller_button;
 		Controller_Axis_Event		controller_axis;
 	};
-
-	inline Event() {
-		type = Event_Type_NONE;
-	}
 };
 
 struct Controller {
@@ -274,7 +270,9 @@ struct Controller {
 struct System_Find_File_Info {
 	String path;
 	String name;
+	String extension;
 	u64    size;
+	u64	   modified;
 };
 
 enum File_Operation {
@@ -294,6 +292,10 @@ typedef ptrsize (*System_Get_File_Pointer)(Handle handle);
 typedef bool (*System_Set_File_Pointer)(Handle handle, ptrsize position, File_Position start_position);
 typedef bool (*System_Read_File)(Handle handle, ptrsize size, u8 *buffer);
 typedef bool (*System_Write_File)(Handle handle, void *buffer, ptrsize size);
+typedef u64 (*System_Get_File_Size)(Handle handle);
+typedef u64 (*System_Get_Creation_Time)(Handle handle);
+typedef u64 (*System_Get_Last_Modified_Time)(Handle handle);
+typedef u64 (*System_Get_Last_Access_Time)(Handle handle);
 
 struct System_File {
 	Handle handle = {};
@@ -303,6 +305,11 @@ struct System_File {
 
 	System_Read_File  read  = 0;
 	System_Write_File write = 0;
+
+	System_Get_File_Size get_size = 0;
+	System_Get_Creation_Time get_creation_time = 0;
+	System_Get_Last_Modified_Time get_last_modified_time = 0;
+	System_Get_Last_Access_Time get_last_access_time = 0;
 };
 
 enum System_Window_Show {
@@ -469,29 +476,27 @@ void system_audio_pause();
 typedef void * Socket;
 const Socket SOCKET_INVALID = (Socket)MAX_UINT64;
 
-struct Socket_Address {
+struct Ip_Endpoint {
 	u32 address;
 	u16 port;
 };
 
-inline Socket_Address socket_address(u8 a, u8 b, u8 c, u8 d, u16 port) {
-	Socket_Address sock_addr;
-	sock_addr.address = (( a << 24 ) | ( b << 16 ) | ( c << 8  ) | d);
-	sock_addr.port = port;
-	return sock_addr;
+inline Ip_Endpoint ip_endpoint(u8 a, u8 b, u8 c, u8 d, u16 port) {
+	Ip_Endpoint endpoint;
+	endpoint.address = (( a << 24 ) | ( b << 16 ) | ( c << 8  ) | d);
+	endpoint.port = port;
+	return endpoint;
 }
 
-inline Socket_Address socket_address_local(u16 port) {
-	return socket_address(127, 0, 0, 1, port);
+inline Ip_Endpoint ip_endpoint_local(u16 port) {
+	return ip_endpoint(127, 0, 0, 1, port);
 }
 
-bool system_net_startup();
-void system_net_cleanup();
 bool system_net_set_socket_nonblocking(Socket sock);
-Socket system_net_open_udp_server(Socket_Address address);
+Socket system_net_open_udp_server(const Ip_Endpoint &address);
 Socket system_net_open_udp_client();
-s32 system_net_send_to(Socket sock, void * buffer, s32 length, Socket_Address address);
-s32 system_net_receive_from(Socket sock, void * packet_buffer, s32 max_packet_size, Socket_Address *address);
+s32 system_net_send_to(Socket sock, void * buffer, s32 length, const Ip_Endpoint &address);
+s32 system_net_receive_from(Socket sock, void * packet_buffer, s32 max_packet_size, Ip_Endpoint *address);
 void system_net_close_socket(Socket sock);
 
 const Array_View<Event> system_poll_events(int poll_count = 1);
@@ -519,22 +524,56 @@ u64 system_get_frequency();
 void system_fatal_error(const String msg);
 void system_display_critical_message(const String msg);
 
-void *system_allocator(Allocation_Type type, ptrsize size, void *ptr, void *user_ptr);
+enum Heap_Type {
+	Heap_Type_NO_SERIALIZE,
+	Heap_Type_SERIALIZE,
+};
+
+typedef u32 Builder_Flags;
+enum Builder_Flag_Bit : Builder_Flags {
+	Builder_NONE	= 0,
+	Builder_VIDEO	= bit(0),
+	Builder_AUDIO	= bit(1),
+	Builder_NETWORK	= bit(1),
+	Builder_ALL		= Builder_VIDEO | Builder_AUDIO | Builder_NETWORK
+};
+
+struct Builder {
+	Allocator allocator;
+	Thread_Proc entry;
+	ptrsize temporary_buffer_size;
+	void *data;
+	Builder_Flags flags; // TODO: Use this in system_windows.cpp
+};
+
+Allocator system_default_heap_allocator();
+Allocator system_create_heap_allocator(Heap_Type type = Heap_Type_NO_SERIALIZE, ptrsize initial_size = 0, ptrsize maximum_size = 0);
+void system_destroy_heap_allocator(Allocator allocator);
 void *system_virtual_alloc(void *address, ptrsize size, Vitual_Memory_Flags flags);
 void  system_virtual_free(void *ptr, ptrsize size, Vitual_Memory_Flags flags);
 
-bool		system_thread_create(Thread_Proc proc, void *arg, Allocator allocator, ptrsize temporary_memory_size, String name, Thread_Context *thread);
+bool		system_thread_create(const Builder &builder, String name, Allocator temp_storage_allocator, Thread_Context *thread);
 void        system_thread_run(Thread_Context &thread);
 Thread_Wait system_thread_wait(Thread_Context &thread, u32 millisecs);
 void        system_thread_terminate(Thread_Context &thread, int exit_code);
 void        system_thread_exit(int exit_code);
+void		system_thread_sleep(u32 millisecs);
 
 Handle      system_create_mutex();
 void        system_destory_mutex(Handle handle);
 Wait_Result system_lock_mutex(Handle handle, u32 millisecs);
 void        system_unlock_mutex(Handle handle);
 
-int system_main();
+Handle		system_create_semaphore(u32 initial_count, u32 maximum_count);
+void		system_destroy_semaphore(Handle handle);
+Wait_Result system_wait_semaphore(Handle handle, u32 millisecs);
+bool		system_signal_semaphore(Handle handle, u32 count = 1);
+
+s32 system_interlocked_increment(s32 volatile *addend);
+s32 system_interlocked_decrement(s32 volatile *addend);
+s32 system_interlocked_compare_exchange(s32 volatile *dest, s32 exchange, s32 comperand);
+
+Builder system_builder();
 
 void system_log(int type, const char *title, ANALYSE_PRINTF_FORMAT_STRING(const char *fmt), ...) ANALYSE_PRINTF_FORMAT(3, 4);
 

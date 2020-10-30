@@ -150,6 +150,18 @@ r32 vec4_dot(Vec4 a, Vec4 b) {
 //
 //
 
+r32 vec2_determinant(Vec2 a, Vec2 b) {
+	return (a.x * b.y) - (a.y * b.x);
+}
+
+Vec3 vec2_cross(Vec2 a, Vec2 b) {
+	Vec3 res;
+	res.x = 0;
+	res.y = 0;
+	res.z = (a.x * b.y) - (a.y * b.x);
+	return res;
+}
+
 Vec3 vec3_cross(Vec3 a, Vec3 b) {
 	Vec3 res;
 	res.x = (a.y * b.z) - (a.z * b.y);
@@ -157,6 +169,19 @@ Vec3 vec3_cross(Vec3 a, Vec3 b) {
 	res.z = (a.x * b.y) - (a.y * b.x);
 	return res;
 }
+
+Vec2 vec2_triple_product(Vec2 a, Vec2 b, Vec2 c) {
+	r32 det = vec2_determinant(a, b);
+	Vec2 res;
+	res.x = -c.y * det;
+	res.y = c.x * det;
+	return res;
+}
+
+Vec3 vec3_triple_product(Vec3 a, Vec3 b, Vec3 c) {
+	return vec3_cross(vec3_cross(a, b), c);
+}
+
 
 //
 //
@@ -326,12 +351,54 @@ r32 mm_height(Mm_Rect m) {
 //
 //
 
+Mat2 mat2_identity() {
+	Mat2 m;
+	m.rows[0] = vec2(1.0f, 0.0f);
+	m.rows[1] = vec2(0.0f, 1.0f);
+	return m;
+}
+
+r32 mat2_det(const Mat2 &mat) {
+	return mat.m2[0][0] * mat.m2[1][1] - mat.m2[0][1] * mat.m2[1][0];
+}
+
+Mat2 mat2_inverse(const Mat2 &mat) {
+	r32 det = mat.m2[0][0] * mat.m2[1][1] - mat.m2[0][1] * mat.m2[1][0];
+	det /= det;
+	Mat2 res;
+	res.m2[0][0] = mat.m2[1][1];
+	res.m2[0][1] = -mat.m2[0][1];
+	res.m2[1][0] = -mat.m2[1][0];
+	res.m2[1][1] = mat.m2[0][0];
+	res.m[0] *= det;
+	res.m[1] *= det;
+	res.m[2] *= det;
+	res.m[3] *= det;
+	return res;
+}
+
+Mat2 mat2_transpose(const Mat2 &m) {
+	Mat2 t;
+	t.m2[0][0] = m.m2[0][0];
+	t.m2[0][1] = m.m2[1][0];
+	t.m2[1][0] = m.m2[0][1];
+	t.m2[1][1] = m.m2[1][1];
+	return t;
+}
+
 Mat3 mat3_identity() {
 	Mat3 m;
 	m.rows[0] = vec3(1.0f, 0.0f, 0.0f);
 	m.rows[1] = vec3(0.0f, 1.0f, 0.0f);
 	m.rows[2] = vec3(0.0f, 0.0f, 1.0f);
 	return m;
+}
+
+r32 mat3_det(const Mat3 &mat) {
+	r32 det = mat.m2[0][0] * (mat.m2[1][1] * mat.m2[2][2] - mat.m2[2][1] * mat.m2[1][2]) +
+		mat.m2[0][1] * (mat.m2[1][2] * mat.m2[2][0] - mat.m2[1][0] * mat.m2[2][2]) +
+		mat.m2[0][2] * (mat.m2[1][0] * mat.m2[2][1] - mat.m2[2][0] * mat.m2[1][1]);
+	return det;
 }
 
 Mat3 mat3_inverse(const Mat3 &mat) {
@@ -348,7 +415,7 @@ Mat3 mat3_inverse(const Mat3 &mat) {
 
 	r32 det = mat.m2[0][0] * result.m2[0][0] + mat.m2[0][1] * result.m2[1][0] + mat.m2[0][2] * result.m2[2][0];
 	det /= det;
-	for (int i = 0; i < 3; i++)
+	for (s32 i = 0; i < 3; i++)
 		result.rows[i] = result.rows[i] * det;
 	return result;
 }
@@ -368,6 +435,39 @@ Mat4 mat4_identity() {
 	m.rows[2] = vec4(0.0f, 0.0f, 1.0f, 0.0f);
 	m.rows[3] = vec4(0.0f, 0.0f, 0.0f, 1.0f);
 	return m;
+}
+
+r32 mat4_det(const Mat4 &mat) {
+	r32 m0 = mat.m[5] * mat.m[10] * mat.m[15] -
+		mat.m[5] * mat.m[11] * mat.m[14] -
+		mat.m[9] * mat.m[6] * mat.m[15] +
+		mat.m[9] * mat.m[7] * mat.m[14] +
+		mat.m[13] * mat.m[6] * mat.m[11] -
+		mat.m[13] * mat.m[7] * mat.m[10];
+
+	r32 m4 = -mat.m[4] * mat.m[10] * mat.m[15] +
+		mat.m[4] * mat.m[11] * mat.m[14] +
+		mat.m[8] * mat.m[6] * mat.m[15] -
+		mat.m[8] * mat.m[7] * mat.m[14] -
+		mat.m[12] * mat.m[6] * mat.m[11] +
+		mat.m[12] * mat.m[7] * mat.m[10];
+
+	r32 m8 = mat.m[4] * mat.m[9] * mat.m[15] -
+		mat.m[4] * mat.m[11] * mat.m[13] -
+		mat.m[8] * mat.m[5] * mat.m[15] +
+		mat.m[8] * mat.m[7] * mat.m[13] +
+		mat.m[12] * mat.m[5] * mat.m[11] -
+		mat.m[12] * mat.m[7] * mat.m[9];
+
+	r32 m12 = -mat.m[4] * mat.m[9] * mat.m[14] +
+		mat.m[4] * mat.m[10] * mat.m[13] +
+		mat.m[8] * mat.m[5] * mat.m[14] -
+		mat.m[8] * mat.m[6] * mat.m[13] -
+		mat.m[12] * mat.m[5] * mat.m[10] +
+		mat.m[12] * mat.m[6] * mat.m[9];
+
+	r32 det = mat.m[0] * m0 + mat.m[1] * m4 + mat.m[2] * m8 + mat.m[3] * m12;
+	return det;
 }
 
 Mat4 mat4_inverse(const Mat4 &mat) {
@@ -486,8 +586,8 @@ Mat4 mat4_inverse(const Mat4 &mat) {
 		mat.m[8] * mat.m[2] * mat.m[5];
 
 	r32 det = mat.m[0] * result.m[0] + mat.m[1] * result.m[4] + mat.m[2] * result.m[8] + mat.m[3] * result.m[12];
-	det     = 1.0f / det;
-	for (int i = 0; i < 4; i++)
+	det = 1.0f / det;
+	for (s32 i = 0; i < 4; i++)
 		result.rows[i] = result.rows[i] * det;
 	return result;
 }
@@ -504,6 +604,25 @@ Mat4 mat4_transpose(const Mat4 &m) {
 //
 //
 //
+
+Mat2 mat2_mul(const Mat2 &left, const Mat2 &right) {
+	Mat2 res;
+	Mat2 tras = mat2_transpose(right);
+
+	res.m2[0][0] = vec2_dot(left.rows[0], tras.rows[0]);
+	res.m2[0][1] = vec2_dot(left.rows[0], tras.rows[1]);
+	res.m2[1][0] = vec2_dot(left.rows[1], tras.rows[0]);
+	res.m2[1][1] = vec2_dot(left.rows[1], tras.rows[1]);
+
+	return res;
+}
+
+Vec2 mat2_vec2_mul(const Mat2 &mat, Vec2 vec) {
+	Vec2 res;
+	res.m[0] = vec2_dot(vec, mat.rows[0]);
+	res.m[1] = vec2_dot(vec, mat.rows[1]);
+	return res;
+}
 
 Mat3 mat3_mul(const Mat3 &left, const Mat3 &right) {
 	Mat3 res;
@@ -529,6 +648,14 @@ Vec3 mat3_vec3_mul(const Mat3 &mat, Vec3 vec) {
 	res.m[0] = vec3_dot(vec, mat.rows[0]);
 	res.m[1] = vec3_dot(vec, mat.rows[1]);
 	res.m[2] = vec3_dot(vec, mat.rows[2]);
+	return res;
+}
+
+Vec2 mat3_vec2_mul(const Mat3 &mat, Vec2 v, r32 h) {
+	Vec3 vec = vec3(v, h);
+	Vec2 res;
+	res.m[0] = vec3_dot(vec, mat.rows[0]);
+	res.m[1] = vec3_dot(vec, mat.rows[1]);
 	return res;
 }
 
@@ -572,6 +699,31 @@ Vec4 mat4_vec4_mul(const Mat4 &mat, Vec4 vec) {
 //
 //
 
+Mat2 mat2_scalar(r32 x, r32 y) {
+	Mat2 m;
+	m.rows[0] = vec2(x, 0.0f);
+	m.rows[1] = vec2(0.0f, y);
+	return m;
+
+}
+
+Mat2 mat2_scalar(Vec2 s) {
+	Mat2 m;
+	m.rows[0] = vec2(s.x, 0.0f);
+	m.rows[1] = vec2(0.0f, s.y);
+	return m;
+}
+
+Mat2 mat2_rotation(r32 angle) {
+	r32 c = cosf(angle);
+	r32 s = sinf(angle);
+
+	Mat2 mat;
+	mat.rows[0] = vec2(c, -s);
+	mat.rows[1] = vec2(s, c);
+	return mat;
+}
+
 Mat3 mat3_scalar(r32 S_1, r32 S_2) {
 	Mat3 m;
 	m.rows[0] = vec3(S_1, 0.0f, 0.0f);
@@ -598,8 +750,8 @@ Mat3 mat3_translation(Vec2 t) {
 
 Mat3 mat3_rotation(r32 angle) {
 	Mat3 m;
-	r32  c    = cosf(angle);
-	r32  s    = sinf(angle);
+	r32  c = cosf(angle);
+	r32  s = sinf(angle);
 	m.rows[0] = vec3(c, -s, 0.0f);
 	m.rows[1] = vec3(s, c, 0.0f);
 	m.rows[2] = vec3(0.0f, 0.0f, 1.0f);
@@ -607,7 +759,7 @@ Mat3 mat3_rotation(r32 angle) {
 }
 
 Mat3 mat3_lookat(Vec2 from, Vec2 to, Vec2 forward) {
-	Vec2 dir       = vec2_normalize(to - from);
+	Vec2 dir = vec2_normalize(to - from);
 	r32  cos_theta = vec2_dot(dir, forward);
 	r32  sin_theta = sqrtf(1.0f - cos_theta * cos_theta);
 
@@ -849,8 +1001,8 @@ Quat quat_mul(Quat q1, Quat q2) {
 }
 
 Vec3 quat_rotate(Quat q, Vec3 v) {
-	Quat p   = quat(v.x, v.y, v.z, 0);
-	Quat qc  = quat_conjugate(q);
+	Quat p = quat(v.x, v.y, v.z, 0);
+	Quat qc = quat_conjugate(q);
 	Quat res = (q * p * qc);
 	return vec3(res.x, res.y, res.z);
 }
@@ -871,15 +1023,16 @@ Quat quat_angle_axis_normalize(Vec3 axis, r32 angle) {
 void quat_get_angle_axis(Quat q, r32 *angle, Vec3 *axis) {
 	r32 len = sqrtf(q.i * q.i + q.j * q.j + q.k * q.k);
 	if (len) {
-		*angle  = 2.0f * atan2f(len, q.real);
-		len     = 1.0f / len;
+		*angle = 2.0f * atan2f(len, q.real);
+		len = 1.0f / len;
 		axis->x = q.i * len;
 		axis->y = q.j * len;
 		axis->z = q.k * len;
-	} else {
+	}
+	else {
 		// degenerate case, unit quaternion
 		*angle = 0;
-		*axis  = WORLD_FORWARD;
+		*axis = WORLD_FORWARD;
 	}
 }
 
@@ -902,29 +1055,32 @@ Quat quat_mat4(const Mat4 &m) {
 	r32  trace = m.m2[0][0] + m.m2[1][1] + m.m2[2][2];
 	if (trace > 0.0f) {
 		r32 s = 0.5f / sqrtf(trace + 1.0f);
-		q.w   = 0.25f / s;
-		q.x   = (m.m2[2][1] - m.m2[1][2]) * s;
-		q.y   = (m.m2[0][2] - m.m2[2][0]) * s;
-		q.z   = (m.m2[1][0] - m.m2[0][1]) * s;
-	} else {
+		q.w = 0.25f / s;
+		q.x = (m.m2[2][1] - m.m2[1][2]) * s;
+		q.y = (m.m2[0][2] - m.m2[2][0]) * s;
+		q.z = (m.m2[1][0] - m.m2[0][1]) * s;
+	}
+	else {
 		if (m.m2[0][0] > m.m2[1][1] && m.m2[0][0] > m.m2[2][2]) {
 			r32 s = 2.0f * sqrtf(1.0f + m.m2[0][0] - m.m2[1][1] - m.m2[2][2]);
-			q.w   = (m.m2[2][1] - m.m2[1][2]) / s;
-			q.x   = 0.25f * s;
-			q.y   = (m.m2[0][1] + m.m2[1][0]) / s;
-			q.z   = (m.m2[0][2] + m.m2[2][0]) / s;
-		} else if (m.m2[1][1] > m.m2[2][2]) {
+			q.w = (m.m2[2][1] - m.m2[1][2]) / s;
+			q.x = 0.25f * s;
+			q.y = (m.m2[0][1] + m.m2[1][0]) / s;
+			q.z = (m.m2[0][2] + m.m2[2][0]) / s;
+		}
+		else if (m.m2[1][1] > m.m2[2][2]) {
 			r32 s = 2.0f * sqrtf(1.0f + m.m2[1][1] - m.m2[0][0] - m.m2[2][2]);
-			q.w   = (m.m2[0][2] - m.m2[2][0]) / s;
-			q.x   = (m.m2[0][1] + m.m2[1][0]) / s;
-			q.y   = 0.25f * s;
-			q.z   = (m.m2[1][2] + m.m2[2][1]) / s;
-		} else {
+			q.w = (m.m2[0][2] - m.m2[2][0]) / s;
+			q.x = (m.m2[0][1] + m.m2[1][0]) / s;
+			q.y = 0.25f * s;
+			q.z = (m.m2[1][2] + m.m2[2][1]) / s;
+		}
+		else {
 			r32 s = 2.0f * sqrtf(1.0f + m.m2[2][2] - m.m2[0][0] - m.m2[1][1]);
-			q.w   = (m.m2[1][0] - m.m2[0][1]) / s;
-			q.x   = (m.m2[0][2] + m.m2[2][0]) / s;
-			q.y   = (m.m2[1][2] + m.m2[2][1]) / s;
-			q.z   = 0.25f * s;
+			q.w = (m.m2[1][0] - m.m2[0][1]) / s;
+			q.x = (m.m2[0][2] + m.m2[2][0]) / s;
+			q.y = (m.m2[1][2] + m.m2[2][1]) / s;
+			q.z = 0.25f * s;
 		}
 	}
 	return quat_normalize(q);
@@ -1030,30 +1186,32 @@ Vec3 quat_get_euler_angles(Quat q) {
 
 	r32 sinr_cosp = 2.0f * (q.w * q.x + q.y * q.z);
 	r32 cosr_cosp = 1.0f - 2.0f * (q.x * q.x + q.y * q.y);
-	angles.z      = atan2f(sinr_cosp, cosr_cosp);
+	angles.z = atan2f(sinr_cosp, cosr_cosp);
 
 	r32 sinp = 2.0f * (q.w * q.y - q.z * q.x);
 	if (fabsf(sinp) >= 1.0f) {
 		// use 90 degrees if out of range
 		angles.x = copysignf(MATH_PI / 2, sinp);
-	} else {
+	}
+	else {
 		angles.x = asinf(sinp);
 	}
 
 	r32 siny_cosp = 2.0f * (q.w * q.z + q.x * q.y);
 	r32 cosy_cosp = 1.0f - 2.0f * (q.y * q.y + q.z * q.z);
-	angles.y      = atan2f(siny_cosp, cosy_cosp);
+	angles.y = atan2f(siny_cosp, cosy_cosp);
 
 	return angles;
 }
 
 Quat quat_between(Vec3 from, Vec3 to) {
 	Quat q;
-	q.v4.w   = 1.0f + vec3_dot(from, to);
+	q.v4.w = 1.0f + vec3_dot(from, to);
 
 	if (q.real) {
 		q.v4.xyz = vec3_cross(from, to);
-	} else {
+	}
+	else {
 		q.v4.xyz = fabsf(from.x) > fabsf(from.z) ? vec3(-from.y, from.x, 0.f) : vec3(0.f, -from.z, from.y);
 	}
 
@@ -1062,7 +1220,7 @@ Quat quat_between(Vec3 from, Vec3 to) {
 
 Quat quat_between(Quat a, Quat b) {
 	Quat t = quat_conjugate(a);
-	t      = t * (1.0f / quat_dot(t, t));
+	t = t * (1.0f / quat_dot(t, t));
 	return quat_mul(t, b);
 }
 
@@ -1094,7 +1252,7 @@ Color3 linear_to_srgb(Color3 color) {
 Color4 linear_to_srgb(Color4 color) {
 	Color4 res;
 	res.xyz = linear_to_srgb(color.xyz);
-	res.w   = color.w;
+	res.w = color.w;
 	return res;
 }
 
@@ -1110,7 +1268,7 @@ Color3 linear_to_srgb(Color3 color, r32 gamma) {
 Color4 linear_to_srgb(Color4 color, r32 gamma) {
 	Color4 res;
 	res.xyz = linear_to_srgb(color.xyz, gamma);
-	res.w   = color.w;
+	res.w = color.w;
 	return res;
 }
 
@@ -1125,7 +1283,7 @@ Color3 srgb_to_linear(Color3 color) {
 Color4 srgb_to_linear(Color4 color) {
 	Color4 res;
 	res.xyz = srgb_to_linear(color.xyz);
-	res.w   = color.w;
+	res.w = color.w;
 	return res;
 }
 
@@ -1140,7 +1298,7 @@ Color3 srgb_to_linear(Color3 color, r32 gamma) {
 Color4 srgb_to_linear(Color4 color, r32 gamma) {
 	Color4 res;
 	res.xyz = srgb_to_linear(color.xyz, gamma);
-	res.w   = color.w;
+	res.w = color.w;
 	return res;
 }
 
@@ -1154,18 +1312,18 @@ Colorh color4_to_hex(Color4 v) {
 
 Color4 hex_to_color4(Colorh c) {
 	r32 div = 1.0f / 255.0f;
-	r32 r   = static_cast<r32>(c.r) * div;
-	r32 g   = static_cast<r32>(c.g) * div;
-	r32 b   = static_cast<r32>(c.b) * div;
-	r32 a   = static_cast<r32>(c.a) * div;
+	r32 r = static_cast<r32>(c.r) * div;
+	r32 g = static_cast<r32>(c.g) * div;
+	r32 b = static_cast<r32>(c.b) * div;
+	r32 a = static_cast<r32>(c.a) * div;
 	return vec4(r, g, b, a);
 }
 
 Color3 hex_to_color3(Colorh c) {
 	r32 div = 1.0f / 255.0f;
-	r32 r   = static_cast<r32>(c.r) * div;
-	r32 g   = static_cast<r32>(c.g) * div;
-	r32 b   = static_cast<r32>(c.b) * div;
+	r32 r = static_cast<r32>(c.r) * div;
+	r32 g = static_cast<r32>(c.g) * div;
+	r32 b = static_cast<r32>(c.b) * div;
 	return vec3(r, g, b);
 }
 
@@ -1183,21 +1341,21 @@ Color3 hsv_to_rgb(Color3 col) {
 		return res;
 	}
 
-	h       = fmodf(h, 1.0f) / (60.0f / 360.0f);
-	int   i = (int)h;
+	h = fmodf(h, 1.0f) / (60.0f / 360.0f);
+	s32   i = (int)h;
 	float f = h - (float)i;
 	float p = v * (1.0f - s);
 	float q = v * (1.0f - s * f);
 	float t = v * (1.0f - s * (1.0f - f));
 
 	switch (i) {
-		case 0: res = vec3(v, t, p); break;
-		case 1: res = vec3(q, v, p); break;
-		case 2: res = vec3(p, v, t); break;
-		case 3: res = vec3(p, q, v); break;
-		case 4: res = vec3(t, p, v); break;
-		case 5:
-		default: res = vec3(v, p, q); break;
+	case 0: res = vec3(v, t, p); break;
+	case 1: res = vec3(q, v, p); break;
+	case 2: res = vec3(p, v, t); break;
+	case 3: res = vec3(p, q, v); break;
+	case 4: res = vec3(t, p, v); break;
+	case 5:
+	default: res = vec3(v, p, q); break;
 	}
 
 	return res;
@@ -1212,22 +1370,22 @@ Color3 rgb_to_hsv(Color3 c) {
 	r32 k = 0.f;
 	if (g < b) {
 		auto t = b;
-		b      = g;
-		g      = t;
-		k      = -1.f;
+		b = g;
+		g = t;
+		k = -1.f;
 	}
 	if (r < g) {
 		auto t = g;
-		g      = r;
-		r      = t;
-		k      = -2.f / 6.f - k;
+		g = r;
+		r = t;
+		k = -2.f / 6.f - k;
 	}
 
 	Color3 res;
 	r32    chroma = r - (g < b ? g : b);
-	res.x         = fabsf(k + (g - b) / (6.f * chroma + 1e-20f));
-	res.y         = chroma / (r + 1e-20f);
-	res.z         = r;
+	res.x = fabsf(k + (g - b) / (6.f * chroma + 1e-20f));
+	res.y = chroma / (r + 1e-20f);
+	res.z = r;
 	return res;
 }
 
@@ -1290,7 +1448,7 @@ Quat slerp(Quat from, Quat to, r32 t) {
 
 	// use shorter path
 	if (dot < 0.0f) {
-		to  = -to;
+		to = -to;
 		dot = -dot;
 	}
 
@@ -1299,9 +1457,9 @@ Quat slerp(Quat from, Quat to, r32 t) {
 		return result;
 	}
 
-	r32 theta_0     = acosf(dot);
-	r32 theta       = theta_0 * t;
-	r32 sin_theta   = sinf(theta);
+	r32 theta_0 = acosf(dot);
+	r32 theta = theta_0 * t;
+	r32 sin_theta = sinf(theta);
 	r32 sin_theta_0 = sinf(theta_0);
 
 	r32 s0 = cosf(theta) - dot * sin_theta / sin_theta_0;
@@ -1437,8 +1595,8 @@ Vec2 rotate_around(Vec2 point, Vec2 center, r32 angle) {
 	r32  s = sinf(angle);
 	Vec2 res;
 	Vec2 p = point - center;
-	res.x  = p.x * c - p.y * s;
-	res.y  = p.x * s + p.y * c;
+	res.x = p.x * c - p.y * s;
+	res.y = p.x * s + p.y * c;
 	res += center;
 	return res;
 }
@@ -1449,7 +1607,7 @@ Quat rotate_toward(Quat from, Quat to, r32 max_angle) {
 
 		// use shorter path
 		if (dot < 0.0f) {
-			to  = -to;
+			to = -to;
 			dot = -dot;
 		}
 
@@ -1461,16 +1619,17 @@ Quat rotate_toward(Quat from, Quat to, r32 max_angle) {
 
 		r32 t = max_angle / theta_0;
 
-		theta_0			= max_angle;
-		r32 theta       = theta_0 * t;
-		r32 sin_theta   = sinf(theta);
+		theta_0 = max_angle;
+		r32 theta = theta_0 * t;
+		r32 sin_theta = sinf(theta);
 		r32 sin_theta_0 = sinf(theta_0);
 
 		r32 s0 = cosf(theta) - dot * sin_theta / sin_theta_0;
 		r32 s1 = sin_theta / sin_theta_0;
 
 		return (s0 * from) + (s1 * to);
-	} else {
+	}
+	else {
 		return from;
 	}
 }
@@ -1479,37 +1638,638 @@ Quat rotate_toward(Quat from, Quat to, r32 max_angle) {
 //
 //
 
-bool point_inside_rect(Vec2 point, Mm_Rect rect) {
+inline float signed_area_double(r32 x1, r32 y1, r32 x2, r32 y2, r32 x3, r32 y3) {
+	return (x1 - x2) * (y2 - y3) - (x2 - x3) * (y1 - y2);
+}
+
+inline r32 signed_area_double(Vec2 a, Vec2 b, Vec2 c) {
+	return ((a.x - b.x) * (b.y - c.y) - (b.x - c.x) * (a.y - b.y));
+}
+
+r32 signed_area(Vec2 a, Vec2 b, Vec2 c) {
+	return 0.5f * signed_area_double(a, b, c);
+}
+
+r32 signed_area(Vec3 a, Vec3 b, Vec3 c) {
+	r32 px = signed_area_double(a.y, a.z, b.y, b.z, c.y, c.z);
+	r32 py = signed_area_double(a.z, a.x, b.z, b.x, c.z, c.x);
+	r32 pz = signed_area_double(a.x, a.y, b.x, b.y, c.x, c.y);
+	px *= px;
+	py *= py;
+	pz *= pz;
+	return 0.5f * sqrtf(px + py + pz);
+}
+
+bool triangle_is_cw(Vec2 a, Vec2 b, Vec2 c) {
+	return vec2_determinant(b - a, c - a) < 0.0f;
+}
+
+Vec2 corner_point(const Mm_Rect &b, u32 n) {
+	Vec2 p;
+	p.x = ((n & 1) ? b.max.x : b.min.x);
+	p.y = ((n & 2) ? b.max.y : b.min.y);
+	return p;
+}
+
+r32 point_to_segment_length2(Vec2 p, Vec2 a, Vec2 b) {
+	Vec2 ab = b - a, ap = p - a, bp = p - b;
+	r32 e = vec2_dot(ap, ab);
+	// Handle cases where p projects outside ab
+	if (e <= 0.0f) return vec2_dot(ap, ap);
+	r32 f = vec2_dot(ab, ab);
+	if (e >= f) return vec2_dot(bp, bp);
+	// Handle cases where p projects onto ab
+	return vec2_dot(ap, ap) - e * e / f;
+}
+
+r32 point_to_mm_rect_length2(Vec2 p, const Mm_Rect &rect) {
+	r32 dist2 = 0;
+	for (s32 i = 0; i < 2; i++) {
+		r32 v = p.m[i];
+		if (v < rect.min.m[i]) dist2 += (rect.min.m[i] - v) * (rect.min.m[i] - v);
+		if (v > rect.max.m[i]) dist2 += (v - rect.max.m[i]) * (v - rect.max.m[i]);
+	}
+	return dist2;
+}
+
+r32 point_to_aabb2d_length2(Vec2 p, const Aabb2d &aabb) {
+	Vec2 dim = vec2(aabb.radius[0], aabb.radius[1]);
+	Mm_Rect rect;
+	rect.min = aabb.center - dim;
+	rect.max = aabb.center + dim;
+	return point_to_mm_rect_length2(p, rect);
+}
+
+Vec2 nearest_point_point_segment(Vec2 p, Vec2 a, Vec2 b, r32 *t) {
+	Vec2 ab = b - a;
+	*t = vec2_dot(p - a, ab) / vec2_dot(ab, ab);
+	if (*t < 0.0f) *t = 0.0f;
+	if (*t > 1.0f) *t = 1.0f;
+	return a + (*t * ab);
+}
+
+Vec2 nearest_point_point_segment(Vec2 p, Vec2 a, Vec2 b) {
+	r32 t;
+	return nearest_point_point_segment(p, a, b, &t);
+}
+
+Vec2 nearest_point_origin_segment(Vec2 a, Vec2 b, r32 *t) {
+	Vec2 ab = b - a;
+	r32 len = vec2_dot(ab, ab);
+	if (len > EPSILON_FLOAT) {
+		*t = vec2_dot(-a, ab) / len;
+		if (*t < 0.0f) *t = 0.0f;
+		if (*t > 1.0f) *t = 1.0f;
+		return a + (*t * ab);
+	}
+	*t = 0;
+	return a;
+}
+
+Vec2 nearest_point_origin_segment(Vec2 a, Vec2 b) {
+	r32 t;
+	return nearest_point_origin_segment(a, b, &t);
+}
+
+Vec2 nearest_point_point_mm_rect(Vec2 p, const Mm_Rect &rect) {
+	Vec2 q;
+	for (s32 i = 0; i < 2; i++) {
+		r32 v = p.m[i];
+		v = maximum(v, rect.min.m[i]);
+		v = minimum(v, rect.max.m[i]);
+		q.m[i] = v;
+	}
+	return q;
+}
+
+Vec2 nearest_point_origin_mm_rect(const Mm_Rect &rect) {
+	return nearest_point_point_mm_rect(vec2(0), rect);
+}
+
+Vec2 nearest_point_point_aabb2d(Vec2 a, const Aabb2d &aabb) {
+	Vec2 dim = vec2(aabb.radius[0], aabb.radius[1]);
+	Mm_Rect rect;
+	rect.min = aabb.center - dim;
+	rect.max = aabb.center + dim;
+	return nearest_point_point_mm_rect(a, rect);
+}
+
+Vec2 nearest_point_point_aabb2d(const Aabb2d &aabb) {
+	return nearest_point_point_aabb2d(vec2(0), aabb);
+}
+
+Vec2 nearest_point_point_triangle(Vec2 p, Vec2 a, Vec2 b, Vec2 c) {
+	// Check if P in vertex region outside A
+	Vec2 ab = b - a;
+	Vec2 ac = c - a;
+	Vec2 ap = p - a;
+	r32 d1 = vec2_dot(ab, ap);
+	r32 d2 = vec2_dot(ac, ap);
+	if (d1 <= 0.0f && d2 <= 0.0f) return a; // barycentric coordinates (1,0,0)
+
+	// Check if P in vertex region outside B
+	Vec2 bp = p - b;
+	r32 d3 = vec2_dot(ab, bp);
+	r32 d4 = vec2_dot(ac, bp);
+	if (d3 >= 0.0f && d4 <= d3) return b; // barycentric coordinates (0,1,0)
+
+	// Check if P in edge region of AB, if so return projection of P onto AB
+	r32 vc = d1 * d4 - d3 * d2;
+	if (vc <= 0.0f && d1 >= 0.0f && d3 <= 0.0f) {
+		r32 v = d1 / (d1 - d3);
+		return a + v * ab; // barycentric coordinates (1-v,v,0)
+	}
+
+	// Check if P in vertex region outside C
+	Vec2 cp = p - c;
+	r32 d5 = vec2_dot(ab, cp);
+	r32 d6 = vec2_dot(ac, cp);
+	if (d6 >= 0.0f && d5 <= d6) return c; // barycentric coordinates (0,0,1)
+
+	// Check if P in edge region of AC, if so return projection of P onto AC
+	r32 vb = d5 * d2 - d1 * d6;
+	if (vb <= 0.0f && d2 >= 0.0f && d6 <= 0.0f) {
+		r32 w = d2 / (d2 - d6);
+		return a + w * ac; // barycentric coordinates (1-w,0,w)
+	}
+
+	// Check if P in edge region of BC, if so return projection of P onto BC
+	r32 va = d3 * d6 - d5 * d4;
+	if (va <= 0.0f && (d4 - d3) >= 0.0f && (d5 - d6) >= 0.0f) {
+		r32 w = (d4 - d3) / ((d4 - d3) + (d5 - d6));
+		return b + w * (c - b); // barycentric coordinates (0,1-w,w)
+	}
+
+	// P inside face region
+	r32 denom = 1.0f / (va + vb + vc);
+	r32 v = vb * denom;
+	r32 w = vc * denom;
+	return a + ab * v + ac * w;
+}
+
+Vec2 nearest_point_origin_triangle(Vec2 a, Vec2 b, Vec2 c) {
+	// Check if origin in vertex region outside A
+	Vec2 ab = b - a;
+	Vec2 ac = c - a;
+	Vec2 ap = -a;
+	r32 d1 = vec2_dot(ab, ap);
+	r32 d2 = vec2_dot(ac, ap);
+	if (d1 <= 0.0f && d2 <= 0.0f) return a; // barycentric coordinates (1,0,0)
+
+	// Check if P in vertex region outside B
+	Vec2 bp = -b;
+	r32 d3 = vec2_dot(ab, bp);
+	r32 d4 = vec2_dot(ac, bp);
+	if (d3 >= 0.0f && d4 <= d3) return b; // barycentric coordinates (0,1,0)
+
+	// Check if P in edge region of AB, if so return projection of P onto AB
+	r32 vc = d1 * d4 - d3 * d2;
+	if (vc <= 0.0f && d1 >= 0.0f && d3 <= 0.0f) {
+		r32 v = d1 / (d1 - d3);
+		return a + v * ab; // barycentric coordinates (1-v,v,0)
+	}
+
+	// Check if P in vertex region outside C
+	Vec2 cp = -c;
+	r32 d5 = vec2_dot(ab, cp);
+	r32 d6 = vec2_dot(ac, cp);
+	if (d6 >= 0.0f && d5 <= d6) return c; // barycentric coordinates (0,0,1)
+
+	// Check if P in edge region of AC, if so return projection of P onto AC
+	r32 vb = d5 * d2 - d1 * d6;
+	if (vb <= 0.0f && d2 >= 0.0f && d6 <= 0.0f) {
+		r32 w = d2 / (d2 - d6);
+		return a + w * ac; // barycentric coordinates (1-w,0,w)
+	}
+
+	// Check if P in edge region of BC, if so return projection of P onto BC
+	r32 va = d3 * d6 - d5 * d4;
+	if (va <= 0.0f && (d4 - d3) >= 0.0f && (d5 - d6) >= 0.0f) {
+		r32 w = (d4 - d3) / ((d4 - d3) + (d5 - d6));
+		return b + w * (c - b); // barycentric coordinates (0,1-w,w)
+	}
+
+	// origin inside face region
+	r32 denom = 1.0f / (va + vb + vc);
+	r32 v = vb * denom;
+	r32 w = vc * denom;
+	return a + ab * v + ac * w;
+}
+
+r32 nearest_point_segment_segment(Vec2 p1, Vec2 q1, Vec2 p2, Vec2 q2, r32 *s, r32 *t, Vec2 *c1, Vec2 *c2) {
+	Vec2 d1 = q1 - p1;
+	Vec2 d2 = q2 - p2;
+	Vec2 r = p1 - p2;
+	r32 a = vec2_dot(d1, d1);
+	r32 e = vec2_dot(d2, d2);
+	r32 f = vec2_dot(d2, r);
+
+	// Check if either or both segments degenerate into points
+	if (a <= EPSILON_FLOAT && e <= EPSILON_FLOAT) {
+		// Both segments degenerate into points
+		*s = *t = 0.0f;
+		*c1 = p1;
+		*c2 = p2;
+		return vec2_dot(*c1 - *c2, *c1 - *c2);
+	}
+
+	if (a <= EPSILON_FLOAT) {
+		// First segment degenerates into a point
+		*s = 0.0f;
+		*t = f / e;
+		*t = clamp01(*t);
+	} else {
+		r32 c = vec2_dot(d1, r);
+		if (e <= EPSILON_FLOAT) {
+			// Second segment degenerates into a point
+			*t = 0.0f;
+			*s = clamp01(-c / a);
+		} else {
+			// The general nondegenerate case starts here
+			r32 b = vec2_dot(d1, d2);
+			r32 denom = a * e - b * b;
+			if (denom != 0.0f) {
+				*s = clamp01((b * f - c * e) / denom);
+			} else {
+				*s = 0.0f;
+			}
+
+			r32 tnom = b * *s + f;
+			if (tnom < 0.0f) {
+				*t = 0.0f;
+				*s = clamp01(-c / a);
+			} else if (tnom > e) {
+				*t = 1.0f;
+				*s = clamp01((b - c) / a);
+			} else {
+				*t = tnom / e;
+			}
+		}
+	}
+
+	*c1 = p1 + d1 * *s;
+	*c2 = p2 + d2 * *t;
+	return vec2_dot(*c1 - *c2, *c1 - *c2);
+}
+
+Vec3 barycentric(Vec2 a, Vec2 b, Vec2 c, Vec2 p) {
+	auto m = signed_area_double(a, b, c);
+
+	r32 nu = signed_area_double(p, b, c);
+	r32 nv = signed_area_double(a, p, c);
+	r32 ood = 1.0f / m;
+
+	Vec3 res;
+	res.x = nu * ood;
+	res.y = nv * ood;
+	res.z = 1.0f - res.x - res.y;
+
+	return res;
+}
+
+Vec3 barycentric(Vec3 a, Vec3 b, Vec3 c, Vec3 p) {
+	auto m = vec3_cross(b - a, c - a);
+
+	r32 nu, nv, ood;
+
+	// Absolute components for determining projection plane
+	r32 x = fabsf(m.x), y = fabsf(m.y), z = fabsf(m.z);
+
+	// Compute areas in plane of largest projection
+	if (x >= y && x >= z) {
+		// x is largest, project to the yz plane
+		nu = signed_area_double(p.y, p.z, b.y, b.z, c.y, c.z);
+		nv = signed_area_double(p.y, p.z, c.y, c.z, a.y, a.z);
+		ood = 1.0f / m.x;
+	}
+	else if (y >= x && y >= z) {
+		// y is largest, project to the xz plane
+		nu = signed_area_double(p.x, p.z, b.x, b.z, c.x, c.z);
+		nv = signed_area_double(p.x, p.z, c.x, c.z, a.x, a.z);
+		ood = 1.0f / -m.y;
+	}
+	else {
+		// z is largest, project to the xy plane
+		nu = signed_area_double(p.x, p.y, b.x, b.y, c.x, c.y);
+		nv = signed_area_double(p.x, p.y, c.x, c.y, a.x, a.y);
+		ood = 1.0f / m.z;
+	}
+
+	Vec3 res;
+	res.x = nu * ood;
+	res.y = nv * ood;
+	res.z = 1.0f - res.x - res.y;
+
+	return res;
+}
+
+bool is_quad_convex(Vec2 a, Vec2 b, Vec2 c, Vec2 d) {
+	auto bda = vec2_determinant(d - b, a - b);
+	auto bdc = vec2_determinant(d - b, c - b);
+	if ((bda * bdc) >= 0.0f) return false;
+	auto acd = vec2_determinant(c - a, d - a);
+	auto acb = vec2_determinant(c - a, b - a);
+	return (acd * acb) < 0.0f;
+}
+
+bool is_quad_convex(Vec3 a, Vec3 b, Vec3 c, Vec3 d) {
+	auto bda = vec3_cross(d - b, a - b);
+	auto bdc = vec3_cross(d - b, c - b);
+	if (vec3_dot(bda, bdc) >= 0.0f) return false;
+	auto acd = vec3_cross(c - a, d - a);
+	auto acb = vec3_cross(c - a, b - a);
+	return vec3_dot(acd, acb) < 0.0f;
+}
+
+Mm_Rect enclosing_mm_rect_mm_rect(const Mm_Rect &a0, const Mm_Rect &a1) {
+	Mm_Rect a;
+	for (s32 i = 0; i < 2; i++) {
+		a.min.m[i] = minimum(a0.min.m[i], a1.min.m[i]);
+		a.max.m[i] = maximum(a0.max.m[i], a1.max.m[i]);
+	}
+	return a;
+}
+
+Circle enclosing_circle_circle(const Circle &c0, const Circle &c1) {
+	Circle c;
+	// Compute the squared distance between the circle centers
+	Vec2 d = c1.center - c0.center;
+	r32 dist2 = vec2_dot(d, d);
+	r32 dr2 = c1.radius - c0.radius;
+	dr2 *= dr2;
+	if (dr2 >= dist2) {
+		// The circle with the larger radius encloses the other
+		// just set c to be the larger of the two spheres
+		if (c1.radius >= c0.radius)
+			c = c1;
+		else
+			c = c0;
+	} else {
+		// Spheres partially overlapping or disjoint
+		r32 dist = sqrtf(dist2);
+		c.radius = (dist + c0.radius + c1.radius) * 0.5f;
+		c.center = c0.center;
+		if (dist > EPSILON_FLOAT)
+			c.center += ((c.radius - c0.radius) / dist) * d;
+	}
+	return c;
+}
+
+Mm_Rect enclosing_mm_rect_circle(const Mm_Rect &r, const Circle &c) {
+	Mm_Rect b;
+	b.min.x = c.center.x - c.radius;
+	b.min.y = c.center.y - c.radius;
+	b.max.x = c.center.x + c.radius;
+	b.max.y = c.center.y + c.radius;
+	return enclosing_mm_rect_mm_rect(r, b);
+}
+
+s32 point_farthest_from_edge(Vec2 a, Vec2 b, Vec2 *p, s32 n) {
+	Vec2 e = b - a;
+	Vec2 eperp = vec2(-e.y, e.x);
+
+	s32 best_index = -1;
+	r32 max_value = -FLT_MAX, right_most_value = -FLT_MAX;
+
+	for (s32 i = 1; i < n; i++) {
+		r32 d = vec2_dot(p[i] - a, eperp);
+		r32 r = vec2_dot(p[i] - a, e);
+		if (d > max_value || (d == max_value && r > right_most_value)) {
+			best_index = i;
+			max_value = d;
+			right_most_value = r;
+		}
+	}
+
+	return best_index;
+}
+
+void extreme_points_alone_direction(Vec2 dir, Vec2 *pt, s32 n, s32 *min_index, s32 *max_index) {
+	r32 min_proj = FLT_MAX, max_proj = -FLT_MAX;
+
+	for (s32 i = 0; i < n; i++) {
+		auto proj = vec2_dot(pt[i], dir);
+
+		if (proj < min_proj) {
+			min_proj = proj;
+			*min_index = i;
+		}
+
+		if (proj > max_proj) {
+			max_proj = proj;
+			*max_index = i;
+		}
+	}
+}
+
+void most_seperated_points_on_aabb(Vec2 *pt, s32 n, s32 *min, s32 *max) {
+	s32 minx = 0, maxx = 0, miny = 0, maxy = 0;
+
+	for (s32 i = 1; i < n; i++) {
+		if (pt[i].x < pt[minx].x) minx = i;
+		if (pt[i].x > pt[maxx].x) maxx = i;
+		if (pt[i].y < pt[miny].y) miny = i;
+		if (pt[i].y > pt[maxy].y) maxy = i;
+	}
+
+	r32 dist2x = vec2_dot(pt[maxx] - pt[minx], pt[maxx] - pt[minx]);
+	r32 dist2y = vec2_dot(pt[maxy] - pt[miny], pt[maxy] - pt[miny]);
+
+	if (dist2y > dist2x) {
+		*max = maxy;
+		*min = miny;
+	}
+	else {
+		*min = minx;
+		*max = maxx;
+	}
+}
+
+Circle circle_from_distant_points(Vec2 *pt, s32 n) {
+	s32 min, max;
+	most_seperated_points_on_aabb(pt, n, &min, &max);
+	Circle c;
+	c.center = (pt[min] + pt[max]) * 0.5f;
+	c.radius = vec2_dot(pt[max] - c.center, pt[max] - c.center);
+	c.radius = sqrtf(c.radius);
+	return c;
+}
+
+r32 min_area_rect(Vec2 *pt, s32 num_pts, Vec2 *center, Vec2 u[2]) {
+	r32 min_area = FLT_MAX;
+
+	for (s32 i = 0, j = num_pts - 1; i < num_pts; j = i, i++) {
+		auto e0 = pt[i] - pt[j];
+		e0 /= vec2_length(e0);
+		auto e1 = vec2(-e0.y, e0.x);
+
+		r32 min0 = 0.0f, min1 = 0.0f, max0 = 0.0f, max1 = 0.0f;
+		for (s32 k = 0; k < num_pts; k++) {
+			Vec2 d = pt[k] - pt[j];
+			r32 dot = vec2_dot(d, e0);
+			if (dot < min0) min0 = dot;
+			if (dot > max0) max0 = dot;
+			dot = vec2_dot(d, e1);
+			if (dot < min1) min1 = dot;
+			if (dot > max1) max1 = dot;
+		}
+		r32 area = (max0 - min0) * (max1 - min1);
+
+		if (area < min_area) {
+			min_area = area;
+			*center = pt[j] + 0.5f * ((min0 + max0) * e0 + (min1 + max1) * e1);
+			u[0] = e0;
+			u[1] = e1;
+		}
+	}
+
+	return min_area;
+}
+
+Mm_Rect transform_mmrect(const Mm_Rect &a, const Mat2 &mat, Vec2 t) {
+	Mm_Rect b;
+	for (s32 i = 0; i < 2; i++) {
+		b.min.m[i] = b.max.m[i] = t.m[i];
+		for (s32 j = 0; j < 2; j++) {
+			r32 e = mat.m2[i][j] * a.min.m[j];
+			r32 f = mat.m2[i][j] * a.max.m[j];
+			if (e < f) {
+				b.min.m[i] += e;
+				b.max.m[i] += f;
+			}
+			else {
+				b.min.m[i] += f;
+				b.max.m[i] += e;
+			}
+		}
+	}
+	return b;
+}
+
+Mm_Rect transform_mmrect(const Mm_Rect &a, r32 rot, Vec2 t) {
+	return transform_mmrect(a, mat2_rotation(rot), t);
+}
+
+Aabb2d update_aabb(const Aabb2d &a, const Mat2 &mat, Vec2 t) {
+	Aabb2d b;
+	for (s32 i = 0; i < 2; i++) {
+		b.center.m[i] = t.m[i];
+		b.radius[i] = 0.0f;
+		for (s32 j = 0; j < 2; j++) {
+			b.center.m[i] += mat.m2[i][j] * a.center.m[j];
+			b.radius[i] += fabsf(mat.m2[i][j]) * a.radius[j];
+		}
+	}
+	return b;
+}
+
+Aabb2d update_aabb(const Aabb2d &a, r32 rot, Vec2 t) {
+	return update_aabb(a, mat2_rotation(rot), t);
+}
+
+bool test_point_inside_rect(Vec2 point, const Mm_Rect &rect) {
 	if (point.x < rect.min.x || point.y < rect.min.y) return false;
 	if (point.x > rect.max.x || point.y > rect.max.y) return false;
 	return true;
 }
 
-bool aabb_vs_aabb(const Mm_Rect &a, const Mm_Rect &b) {
+bool test_point_inside_aabb(Vec2 point, const Aabb2d &aabb) {
+	if (point.x < (aabb.center.x - aabb.radius[0]) || point.y < (aabb.center.y - aabb.radius[1])) return false;
+	if (point.x > (aabb.center.x + aabb.radius[0]) || point.y > (aabb.center.y + aabb.radius[1])) return false;
+	return true;
+}
+
+bool test_point_inside_circle(Vec2 p, const Circle &c) {
+	Vec2 d = c.center - p;
+	r32 dist2 = vec2_dot(d, d);
+	return dist2 < c.radius * c.radius;
+}
+
+bool test_mmrect_vs_mmrect(const Mm_Rect &a, const Mm_Rect &b) {
 	if (a.max.x < b.min.x || a.min.x > b.max.x) return false;
 	if (a.max.y < b.min.y || a.min.y > b.max.y) return false;
 	return true;
 }
 
-bool quad_vs_quad_sat(Quad &a, Quad &b) {
+bool test_point_inside_capsule(Vec2 p, const Capsule &c) {
+	r32 dst2 = point_to_segment_length2(p, c.a, c.b);
+	return dst2 <= c.radius * c.radius;
+}
+
+bool test_point_inside_triangle(Vec2 p, Vec2 a, Vec2 b, Vec2 c) {
+	a -= p; b -= p; c -= p;
+
+	r32 u = vec2_determinant(b, c);
+	r32 v = vec2_determinant(c, a);	
+	if ((u * v) < 0.0f) return false;
+
+	r32 w = vec2_determinant(a, b);
+	if ((u * w) < 0.0f) return false;
+
+	return true;
+}
+
+bool test_origin_inside_triangle(Vec2 a, Vec2 b, Vec2 c) {
+	r32 u = vec2_determinant(b, c);
+	r32 v = vec2_determinant(c, a);
+	if ((u * v) < 0.0f) return false;
+
+	r32 w = vec2_determinant(a, b);
+	if ((u * w) < 0.0f) return false;
+
+	return true;
+}
+
+bool test_point_inside_convex_polygon(Vec2 p, Vec2 *v, s32 n) {
+	// Do binary search over polygon vertices to find the fan triangle
+	// (v[0], v[low], v[high]) the pos32 p lies within the near sides of
+	s32 low = 0, high = n;
+	do {
+		s32 mid = (low + high) / 2;
+		if (triangle_is_cw(v[0], v[mid], p))
+			low = mid;
+		else
+			high = mid;
+	} while (low + 1 < high);
+	// If pos32 outside last (or first) edge, then it is not inside the n-gon
+	if (low == 0 || high == n) return 0;
+	// p is inside the polygon if it is left of
+	// the directed edge from v[low] to v[high]
+	return triangle_is_cw(v[low], v[high], p);
+}
+
+bool test_aabb_vs_aabb(const Aabb2d &a, const Aabb2d &b) {
+	if (fabsf(a.center.x - b.center.x) > (a.radius[0] + b.radius[0])) return false;
+	if (fabsf(a.center.y - b.center.y) > (a.radius[1] + b.radius[1])) return false;
+	return true;
+}
+
+bool test_circle_vs_circle(const Circle &a, const Circle &b) {
+	auto d = a.center - b.center;
+	r32 dist2 = vec2_dot(d, d);
+	r32 radius_sum = a.radius + b.radius;
+	return dist2 <= radius_sum * radius_sum;
+}
+
+bool test_quad_vs_quad(const Quad &a, const Quad &b) {
 	auto quad_a = &a;
 	auto quad_b = &b;
 
-	for (int quad_index = 0; quad_index < 2; ++quad_index) {
-		for (int edge_index = 0; edge_index < 4; ++edge_index) {
+	for (s32 quad_index = 0; quad_index < 2; ++quad_index) {
+		for (s32 edge_index = 0; edge_index < 4; ++edge_index) {
 			r32 min_proj_a = INFINITY, max_proj_a = -INFINITY;
 			r32 min_proj_b = INFINITY, max_proj_b = -INFINITY;
 
 			r32 dot;
 			Vec2 normal = quad_a->normals[edge_index];
 
-			for (int p_index = 0; p_index < 4; ++p_index) {
+			for (s32 p_index = 0; p_index < 4; ++p_index) {
 				dot = vec2_dot(normal, quad_a->positions[p_index]);
 				min_proj_a = minimum(min_proj_a, dot);
 				max_proj_a = maximum(max_proj_a, dot);
 			}
 
-			for (int p_index = 0; p_index < 4; ++p_index) {
+			for (s32 p_index = 0; p_index < 4; ++p_index) {
 				dot = vec2_dot(normal, quad_b->positions[p_index]);
 				min_proj_b = minimum(min_proj_b, dot);
 				max_proj_b = maximum(max_proj_b, dot);
@@ -1518,7 +2278,7 @@ bool quad_vs_quad_sat(Quad &a, Quad &b) {
 			if (!(max_proj_b >= min_proj_a && max_proj_a >= min_proj_b))
 				return false;
 		}
-		
+
 		auto temp = quad_a;
 		quad_a = quad_b;
 		quad_b = temp;
@@ -1527,56 +2287,97 @@ bool quad_vs_quad_sat(Quad &a, Quad &b) {
 	return true;
 }
 
-bool ray_vs_aabb(Vec2 origin, Vec2 direction, const Mm_Rect &rect, Ray_Hit *hit) {
-	Vec2 i_direction;
-	i_direction.x = 1.0f / direction.x;
-	i_direction.y = 1.0f / direction.y;
-	Vec2 near_t = vec2_hadamard(rect.min - origin, i_direction);
-	Vec2 far_t  = vec2_hadamard(rect.max - origin, i_direction);
+bool test_circle_vs_capsule(const Circle &circle, const Capsule &capsule) {
+	r32 dst2 = point_to_segment_length2(circle.center, capsule.a, capsule.b);
+	r32 radius = circle.radius + capsule.radius;
+	return dst2 <= radius *radius;
+}
 
-	r32 temp;
+bool test_segment_vs_circle(Vec2 a, Vec2 b, const Circle &c) {
+	r32 dist2 = point_to_segment_length2(c.center, a, b);
+	return dist2 <= c.radius * c.radius;
+}
 
-	if (near_t.x > far_t.x) {
-		temp = near_t.x;
-		near_t.x = far_t.x;
-		far_t.x = temp;
-	}
-	if (near_t.y > far_t.y) {
-		temp = near_t.y;
-		near_t.y = far_t.y;
-		far_t.y = temp;
-	}
+bool test_capsule_vs_capsule(const Capsule &capsule1, const Capsule &capsule2) {
+	r32 s, t;
+	Vec2 c1, c2;
+	r32 dist2 = nearest_point_segment_segment(capsule1.a, capsule1.b, capsule2.a, capsule2.b, &s, &t, &c1, &c2);
+	r32 radius = capsule1.radius + capsule2.radius;
+	return dist2 <= radius * radius;
+}
 
-	if (near_t.x > far_t.y || near_t.y > far_t.x) {
-		// No intersection
-		return false;
-	}
+bool test_circle_vs_aabb(const Circle &c, const Aabb2d &b) {
+	r32 dist2 = point_to_aabb2d_length2(c.center, b);
+	return dist2 <= c.radius * c.radius;
+}
 
-	r32 hit_near_t = maximum(near_t.x, near_t.y);
-	r32 hit_far_t  = minimum(far_t.x, far_t.y);
+bool test_ray_vs_circle(const Ray2d &ray, const Circle &circle) {
+	Vec2 m = ray.origin - circle.center;
+	r32 c = vec2_dot(m, m) - circle.radius * circle.radius;
+	if (c <= 0.0f) return true;
 
-	if (hit_far_t < 0) {
-		// Collision in negative direction
-		return false;
-	}
+	r32 b = vec2_dot(m, ray.dir);
+	// Early exit if ray origin outside sphere and ray pointing away from sphere
+	if (b > 0.0f) return false;
 
-	hit->point = origin + hit_near_t * direction;
+	r32 disc = b * b - c;
+	if (disc < 0.0f) return false;
+	return true;
+}
 
-	if (near_t.x > near_t.y) {
-		hit->normal = vec2(-sgn(direction.x), 0);
-	} else if (near_t.x < near_t.y) {
-		hit->normal = vec2(0, -sgn(direction.y));
-	} else {
-		constexpr r32 root_two = 1.4142135623730950488016887242097f;
-		hit->normal = vec2(-sgn(direction.x) * root_two, -sgn(direction.y) * root_two);
-	}
+bool test_segment_vs_mm_rect(Vec2 p0, Vec2 p1, const Mm_Rect &rect) {
+	Vec2 c = (rect.min + rect.max) * 0.5f;
+	Vec2 e = rect.max - c;
+	Vec2 m = (p0 + p1) * 0.5f;
+	Vec2 d = p1 - m;
 
-	hit->t = hit_near_t;
+	m = m - c;
+
+	r32 adx = fabsf(d.x); if (fabsf(m.x) > e.x + adx) return false;
+	r32 ady = fabsf(d.y); if (fabsf(m.y) > e.y + ady) return false;
+
+	// Add in an epsilon term to counteract arithmetic errors when segment is
+	// (near) parallel to a coordinate axis (see text for detail)
+	adx += EPSILON_FLOAT; ady += EPSILON_FLOAT;
+	if (fabsf(m.x * d.y - m.y * d.x) > e.x * ady + e.y * adx) return false;
 
 	return true;
 }
 
-bool ray_vs_line(Vec2 p1, Vec2 q1, Vec2 p2, Vec2 q2, Ray_Hit* hit) {
+bool segment_vs_segment(Vec2 a, Vec2 b, Vec2 c, Vec2 d, r32 *t, Vec2 *p) {
+	// Sign of areas correspond to which side of ab points c and d are
+	r32 a1 = signed_area_double(a, b, d);
+	r32 a2 = signed_area_double(a, b, c);
+
+	// If c and d are on different sides of ab, areas have different signs
+	if (a1 != 0.0f && a2 != 0.0f && a1 * a2 < 0.0f) {
+		// Compute signs for a and b with respect to segment cd
+		r32 a3 = signed_area_double(c, d, a);
+		r32 a4 = a3 + a2 - a1;
+		// Points a and b on different sides of cd if areas have different signs
+		if (a3 != 0.0f && a4 != 0.0f && a3 * a4 < 0.0f) {
+			*t = a3 / (a3 - a4);
+			*p = a + *t * (b - a);
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool circle_vs_aabb(const Circle &c, Aabb2d &b, Vec2 *p) {
+	*p = nearest_point_point_aabb2d(c.center, b);
+	Vec2 v = *p - c.center;
+	return vec2_dot(v, v) <= c.radius * c.radius;
+}
+
+bool circle_vs_triangle(const Circle &circle, Vec2 a, Vec2 b, Vec2 c, Vec2 *p) {
+	*p = nearest_point_point_triangle(circle.center, a, b, c);
+	Vec2 v = *p - circle.center;
+	return vec2_dot(v, v) <= circle.radius * circle.radius;
+}
+
+bool intersect_segment_ray(Vec2 p1, Vec2 q1, Vec2 p2, Vec2 q2, r32 *t, Vec2 *p) {
 	r32 dx1 = p1.x - q1.x;
 	r32 dy1 = p1.y - q1.y;
 	r32 dx2 = p2.x - q2.x;
@@ -1588,20 +2389,627 @@ bool ray_vs_line(Vec2 p1, Vec2 q1, Vec2 p2, Vec2 q2, Ray_Hit* hit) {
 		r32 n2 = -dx1 * (p1.y - p2.y) + dy1 * (p1.x - p2.x);
 		r32 u = n2 / d;
 
-		if (u >= 0 && u <= 1) {
-			r32 n = (p1.x - p2.x) * dy2 - (p1.y - p2.y) * dx2;
-			hit->t = n / d;
+		r32 n = (p1.x - p2.x) * dy2 - (p1.y - p2.y) * dx2;
+		*t = n / d;
 
-			hit->point.x = p2.x - u * dx2;
-			hit->point.y = p2.y - u * dy2;
-
-			Vec2 normal;
-			normal.x = dy2;
-			normal.y = -dx2;
-			hit->normal = vec2_normalize(normal);
+		if ((*t >= 0.0f && *t <= 1.0f) && u >= 0.0f) {
+			p->x = p1.x - (*t * dx1);
+			p->y = p1.y - (*t * dy1);
 			return true;
 		}
 	}
 
 	return false;
+}
+
+bool intersect_segment_ray(Vec2 p1, Vec2 q1, const Ray2d &ray, r32 *t, Vec2 *p) {
+	Vec2 p2 = ray.origin;
+	Vec2 q2 = ray.origin + ray.dir;
+	return intersect_segment_ray(p1, q1, p2, q2, t, p);
+}
+
+bool intersect_ray_ray(Vec2 p1, Vec2 q1, Vec2 p2, Vec2 q2, r32 *t, r32 *u, Vec2 *p) {
+	r32 dx1 = p1.x - q1.x;
+	r32 dy1 = p1.y - q1.y;
+	r32 dx2 = p2.x - q2.x;
+	r32 dy2 = p2.y - q2.y;
+
+	r32 d = dx1 * dy2 - dy1 * dx2;
+
+	if (d) {
+		r32 n2 = -dx1 * (p1.y - p2.y) + dy1 * (p1.x - p2.x);
+		*u = n2 / d;
+
+		r32 n = (p1.x - p2.x) * dy2 - (p1.y - p2.y) * dx2;
+		*t = n / d;
+
+		p->x = p2.x - (*u * dx2);
+		p->y = p2.y - (*u * dy2);
+		return true;
+	}
+
+	return false;
+}
+
+bool intersect_ray_ray(Vec2 p1, Vec2 q1, const Ray2d &b, r32 *t, r32 *u, Vec2 *p) {
+	Vec2 p2 = b.origin;
+	Vec2 q2 = b.origin + b.dir;
+	return intersect_ray_ray(p1, q1, p2, q2, t, u, p);
+}
+
+bool intersect_ray_ray(const Ray2d &a, const Ray2d &b, r32 *t, r32 *u, Vec2 *p) {
+	Vec2 p1 = a.origin;
+	Vec2 q1 = a.origin + a.dir;
+	Vec2 p2 = b.origin;
+	Vec2 q2 = b.origin + b.dir;
+	return intersect_ray_ray(p1, q1, p2, q2, t, u, p);
+}
+
+bool intersect_segment_segment(Vec2 p1, Vec2 q1, Vec2 p2, Vec2 q2, r32 *t, r32 *u, Vec2 *p) {
+	r32 dx1 = p1.x - q1.x;
+	r32 dy1 = p1.y - q1.y;
+	r32 dx2 = p2.x - q2.x;
+	r32 dy2 = p2.y - q2.y;
+
+	r32 d = dx1 * dy2 - dy1 * dx2;
+
+	if (d) {
+		r32 n2 = -dx1 * (p1.y - p2.y) + dy1 * (p1.x - p2.x);
+		*u = n2 / d;
+
+		if (*u >= 0.0f && *u <= 1.0f) {
+			r32 n = (p1.x - p2.x) * dy2 - (p1.y - p2.y) * dx2;
+			*t = n / d;
+			if (*t >= 0.0f && *t <= 1.0f) {
+				p->x = p2.x - (*u * dx2);
+				p->y = p2.y - (*u * dy2);
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+bool intersect_circle_ray(const Circle &circle, const Ray2d &ray, r32 *t, Vec2 *p) {
+	Vec2 m = ray.origin - circle.center;
+
+	r32 b = vec2_dot(m, ray.dir);
+	r32 c = vec2_dot(m, m) - circle.radius * circle.radius;
+
+	// Exit if ray’s origin outside circle (c > 0) and ray pointing away from circle (b > 0)
+	if (c > 0.0f && b > 0.0f) return false;
+
+	r32 discr = b * b - c;
+	if (discr < 0.0f) return false;
+
+	// Ray found to intersect circle, compute smallest t value of intersection
+	*t = -b - sqrtf(discr);
+
+	// If t is negative, ray started inside sphere so clamp t to zero
+	if (*t < 0.0f) *t = 0.0f;
+	*p = ray.origin + *t * ray.dir;
+	return true;
+}
+
+bool intersect_circle_segment(const Circle &circle, Vec2 p, Vec2 q, r32 *t) {
+	Vec2 m = p - circle.center;
+	Vec2 d = q - p;
+
+	r32 b = vec2_dot(m, d);
+	r32 c = vec2_dot(m, m) - circle.radius * circle.radius;
+
+	// Exit if ray’s origin outside circle (c > 0) and ray pointing away from circle (b > 0)
+	if (c > 0.0f && b > 0.0f) return false;
+
+	r32 a = vec2_dot(d, d);
+
+	r32 discr = b * b - a * c;
+	if (discr < 0.0f) return false;
+
+	// Ray found to intersect circle, compute smallest t value of intersection
+	*t = (-b - sqrtf(discr)) / a;
+	if (*t <0.0f || *t > 1.0f) return false;
+
+	return true;
+}
+
+bool intersect_mm_rect_ray(const Ray2d &ray, const Mm_Rect &rect, r32 *tmin, Vec2 *q) {
+	*tmin = 0.0f;
+	r32 tmax = FLT_MAX;
+
+	for (s32 i = 0; i < 2; i++) {
+		if (fabsf(ray.dir.m[i]) < EPSILON_FLOAT) {
+			// Ray is parallel to slab. No hit if origin not within slab
+			if (ray.origin.m[i] < rect.min.m[i] || ray.origin.m[i] > rect.max.m[i]) return false;
+		} else {
+			// Compute intersection t value of ray with near and far plane of slab
+			r32 ood = 1.0f / ray.dir.m[i];
+			r32 t1 = (rect.min.m[i] - ray.origin.m[i]) * ood;
+			r32 t2 = (rect.max.m[i] - ray.origin.m[i]) * ood;
+			// Make t1 be intersection with near plane, t2 with far plane
+			if (t1 > t2) {
+				auto temp = t1;
+				t1 = t2;
+				t2 = temp;
+			}
+			// Compute the intersection of slab intersection intervals
+			if (t1 > *tmin) *tmin = t1;
+			if (t2 > tmax) tmax = t2;
+			// Exit with no collision as soon as slab intersection becomes empty
+			if (*tmin > tmax) return false;
+		}
+	}
+
+	*q = ray.origin + ray.dir * *tmin;
+	return true;
+}
+
+bool intersect_mm_rect_segment(Vec2 a, Vec2 b, const Mm_Rect &rect, r32 *tmin, Vec2 *q) {
+	Ray2d ray = { a, b - a };
+	
+	*tmin = 0.0f;
+	r32 tmax = 1.0f;
+
+	for (s32 i = 0; i < 2; i++) {
+		if (fabsf(ray.dir.m[i]) < EPSILON_FLOAT) {
+			// Ray is parallel to slab. No hit if origin not within slab
+			if (ray.origin.m[i] < rect.min.m[i] || ray.origin.m[i] > rect.max.m[i]) return false;
+		}
+		else {
+			// Compute intersection t value of ray with near and far plane of slab
+			r32 ood = 1.0f / ray.dir.m[i];
+			r32 t1 = (rect.min.m[i] - ray.origin.m[i]) * ood;
+			r32 t2 = (rect.max.m[i] - ray.origin.m[i]) * ood;
+			// Make t1 be intersection with near plane, t2 with far plane
+			if (t1 > t2) {
+				auto temp = t1;
+				t1 = t2;
+				t2 = temp;
+			}
+			// Compute the intersection of slab intersection intervals
+			if (t1 > * tmin) *tmin = t1;
+			if (t2 > tmax) tmax = t2;
+			// Exit with no collision as soon as slab intersection becomes empty
+			if (*tmin > tmax) return false;
+		}
+	}
+
+	*q = ray.origin + ray.dir * *tmin;
+	return true;
+}
+
+bool dynamic_circle_vs_circle(const Circle &c0, const Circle &c1, Vec2 v0, Vec2 v1, r32 *t) {
+	Vec2 s = c1.center - c0.center;
+	Vec2 v = v1 - v0; // Relative motion of c1 with respect to stationary c0
+	r32 r = c1.radius + c0.radius;
+	r32 c = vec2_dot(s, s) - r * r;
+
+	if (c < 0.0f) {
+		// Spheres initially overlapping so exit directly
+		*t = 0.0f;
+		return true;
+	}
+
+	r32 a = vec2_dot(v, v);
+	if (a < EPSILON_FLOAT) return false; // Spheres not moving relative each other
+
+	r32 b = vec2_dot(v, s);
+	if (b >= 0.0f) return false; // Spheres not moving towards each other
+
+	r32 d = b * b - a * c;
+	if (d < 0.0f) return false; // No real-valued root, spheres do not intersect
+
+	*t = (-b - sqrtf(d)) / a;
+	return true;
+}
+
+bool dynamic_circle_vs_mm_rect(const Circle &c, Vec2 d, const Mm_Rect &b, r32 *t) {
+	// Compute the AABB resulting from expanding b by circle radius r
+	Mm_Rect e = b;
+	e.min.x -= c.radius; e.min.y -= c.radius;
+	e.max.x += c.radius; e.max.y += c.radius;
+
+	// Define line segment [p0, p1] specified by the circle movement
+	Vec2 p0 = c.center;
+	Vec2 p1 = c.center + d;
+
+	// Intersect ray against expanded AABB e. Exit with no intersection if ray
+	// misses e, else get intersection pos32 p and time t as result
+	Vec2 p;
+	if (!intersect_mm_rect_segment(p0, p1, e, t, &p)) {
+		return false;
+	}
+
+	// Compute which min and max faces of b the intersection pos32 p lies
+	// outside of. Note, u and v cannot have the same bits set and
+	// they must have at least one bit set among them
+	u32 u = 0, v = 0;
+	if (p.x < b.min.x) u |= 1;
+	if (p.x > b.max.x) v |= 1;
+	if (p.y < b.min.y) u |= 2;
+	if (p.y > b.max.y) v |= 2;
+
+	// ‘Or’ all set bits together into a bit mask (note: here u + v == u | v)
+	s32 m = u + v;
+
+	// If both 2 bits set (m == 3) then p is in a vertex region
+	if (m == 3) {
+		// Now check [p0, p1] against the circle in the vertex
+		Vec2 vertex = corner_point(b, v);
+		if (!intersect_circle_segment(Circle{ vertex, c.radius }, p0, p1, t)) return false;
+	}
+
+	return true;
+}
+
+bool dynamic_mm_rect_vs_mm_rect(const Mm_Rect &a, const Mm_Rect &b, Vec2 va, Vec2 vb, r32 *tfirst, r32 *tlast) {
+	// Exit early if 'a' and 'b' initially overlapping
+	if (test_mmrect_vs_mmrect(a, b)) {
+		*tfirst = *tlast = 0.0f;
+		return true;
+	}
+
+	// Use relative velocity; effectively treating 'a' as stationary
+	Vec2 v = vb - va;
+
+	// Initialize times of first and last contact
+	*tfirst = 0.0f;
+	*tlast  = 1.0f;
+
+	// For each axis, determine times of first and last contact, if any
+	for (s32 i = 0; i < 2; i++) {
+		if (v.m[i] < 0.0f) {
+			if (b.max.m[i] < a.min.m[i]) return false; // Nonintersecting and moving apart
+			if (a.max.m[i] < b.min.m[i]) 
+				*tfirst = maximum((a.max.m[i] - b.min.m[i]) / v.m[i], *tfirst);
+			if (b.max.m[i] > a.min.m[i]) 
+				*tlast = minimum((a.min.m[i] - b.max.m[i]) / v.m[i], *tlast);
+		}
+
+		if (v.m[i] > 0.0f) {
+			if (b.min.m[i] > a.max.m[i]) return false; // Nonintersecting and moving apart
+			if (b.max.m[i] < a.min.m[i]) 
+				*tfirst = maximum((a.min.m[i] - b.max.m[i]) / v.m[i], *tfirst);
+			if (a.max.m[i] > b.min.m[i]) 
+				*tlast = minimum((a.max.m[i] - b.min.m[i]) / v.m[i], *tlast);
+		}
+
+		// No overlap possible if time of first contact occurs after time of last contact
+		if (*tfirst > *tlast) return false;
+	}
+
+	return true;
+}
+
+Vec2 support(const Circle &c, Vec2 dir) {
+	Vec2 n = vec2_normalize(dir);
+	return c.center + n * c.radius;
+}
+
+Vec2 support(const Mm_Rect &m, Vec2 dir) {
+	return vec2(dir.x >= 0.0f ? m.max.x : m.min.x, dir.y >= 0.0f ? m.max.y : m.min.y);
+}
+
+Vec2 support(const Capsule &c, Vec2 dir) {
+	Vec2 n = vec2_normalize(dir);
+	Vec2 s;
+
+	r32 da = vec2_dot(c.a, dir);
+	r32 db = vec2_dot(c.b, dir);
+	if (da > db)
+		s = c.a;
+	else
+		s = c.b;
+
+	return s + c.radius * n;
+}
+
+Vec2 support(const Polygon &shape, Vec2 dir) {
+	s32 index = 0;
+	r32 p = vec2_dot(dir, shape.vertices[index]);
+
+	s32 adj_index;
+	r32 adj_p;
+	while (true) {
+		adj_index = (index + 1 == shape.vertex_count ? 0 : index + 1);
+		adj_p = vec2_dot(dir, shape.vertices[adj_index]);
+		if (adj_p > p) {
+			p = adj_p;
+			index = adj_index;
+		} else {
+			adj_index = (index - 1 == -1 ? shape.vertex_count - 1 : index - 1);
+			adj_p = vec2_dot(dir, shape.vertices[adj_index]);
+			if (adj_p > p) {
+				p = adj_p;
+				index = adj_index;
+			} else {
+				break;
+			}
+		}
+	}
+
+	return shape.vertices[index];
+}
+
+Vec2 support(const Circle &a, const Circle &b, Vec2 dir) {
+	Vec2 n = vec2_normalize(dir);
+	return a.center - b.center + n * (a.radius + b.radius);
+}
+
+Vec2 support(const Circle &a, const Capsule &b, Vec2 dir) {
+	Vec2 n = vec2_normalize(dir);
+	Vec2 s = a.center;
+	r32 da, db;
+
+	da = vec2_dot(b.a, dir);
+	db = vec2_dot(b.b, dir);
+	if (da > db)
+		s -= b.a;
+	else
+		s -= b.b;
+
+	return s + n * (a.radius + b.radius);
+}
+
+Vec2 support(const Capsule &a, const Circle &b, Vec2 dir) {
+	Vec2 n = vec2_normalize(dir);
+	Vec2 s;
+	r32 da, db;
+
+	da = vec2_dot(a.a, dir);
+	db = vec2_dot(a.b, dir);
+	if (da > db)
+		s = a.a;
+	else
+		s = a.b;
+
+	return s - b.center + n * (a.radius + b.radius);
+}
+
+Vec2 support(const Capsule &a, const Capsule &b, Vec2 dir) {
+	Vec2 n = vec2_normalize(dir);
+	Vec2 s;
+	r32 da, db;
+
+	da = vec2_dot(a.a, dir);
+	db = vec2_dot(a.b, dir);
+	if (da > db)
+		s = a.a;
+	else
+		s = a.b;
+	
+	da = vec2_dot(b.a, -dir);
+	db = vec2_dot(b.b, -dir);
+	if (da > db)
+		s -= b.a;
+	else
+		s -= b.b;
+
+	return s + n * (a.radius + b.radius);
+}
+
+Vec2 support(const Mm_Rect &a, const Mm_Rect &b, Vec2 dir) {
+	Vec2 pa, pb;
+	if (dir.x >= 0.0f) {
+		pa.x = a.max.x;
+		pb.x = b.min.x;
+	} else {
+		pa.x = a.min.x;
+		pb.x = b.max.x;
+	}
+	if (dir.y >= 0.0f) {
+		pa.y = a.max.y;
+		pb.y = b.min.y;
+	} else {
+		pa.y = a.min.y;
+		pb.y = b.max.y;
+	}
+	return pa - pb;
+}
+
+bool next_simplex(Vec2 *simplex, Vec2 *dir, u32 *n) {
+	switch (*n) {
+	case 2: {
+		// a = simplex[1]
+		// b = simplex[0]
+		Vec2 ab = simplex[0] - simplex[1];
+		Vec2 ao = -simplex[1];
+		if (vec2_dot(ao, ab) > 0.0f) {
+			r32 det = vec2_determinant(simplex[1], simplex[0]);
+			dir->x = -ab.y * det;
+			dir->y = ab.x * det;
+		} else {
+			*dir = ao;
+			simplex[0] = simplex[1];
+			*n = 1;
+		}
+	} break;
+
+	case 3: {
+		// a = simplex[2]
+		// b = simplex[1]
+		// c = simplex[0]
+		Vec2 ab = simplex[1] - simplex[2];
+		Vec2 ac = simplex[0] - simplex[2];
+		Vec2 ao = -simplex[2];
+		r32 abc = vec2_determinant(ab, ac);
+
+		if (vec2_dot(vec2(-ac.y * abc, ac.x * abc), ao) > 0.0f) {
+			if (vec2_dot(ac, ao) > 0.0f) {
+				r32 det = vec2_determinant(simplex[2], simplex[0]);
+				dir->x = -ac.y * det;
+				dir->y = ac.x * det;
+
+				simplex[1] = simplex[0];
+				simplex[0] = simplex[2];
+
+				*n = 2;
+			} else {
+				if (vec2_dot(ab, ao) > 0.0f) {
+					r32 det = vec2_determinant(simplex[2], simplex[1]);
+					dir->x = -ab.y * det;
+					dir->y = ab.x * det;
+					simplex[0] = simplex[2];
+					*n = 2;
+				} else {
+					*dir = -simplex[2];
+					simplex[0] = simplex[2];
+					*n = 1;
+				}
+			}
+		} else {
+			if (vec2_dot(vec2(ab.y * abc, -ab.x * abc), ao) > 0.0f) {
+				if (vec2_dot(ab, ao) > 0.0f) {
+					r32 det = vec2_determinant(simplex[2], simplex[1]);
+					dir->x = -ab.y * det;
+					dir->y = ab.x * det;
+					simplex[0] = simplex[2];
+					*n = 2;
+				} else {
+					*dir = -simplex[2];
+					simplex[0] = simplex[2];
+					*n = 1;
+				}
+			} else {
+				// point is inside the triangle
+				return true;
+			}
+		}
+	} break;
+
+	invalid_default_case();
+	}
+
+	return false;
+}
+
+Nearest_Edge nearest_edge_origin_polygon(const Vec2 *vertices, u32 vertex_count) {
+	Nearest_Edge edge;
+	edge.distance = MAX_FLOAT;
+
+	for (u32 p_index = 0; p_index < vertex_count; p_index += 1) {
+		u32 q_index = ((p_index + 1) == vertex_count) ? 0 : p_index + 1;
+
+		auto a = vertices[p_index];
+		auto b = vertices[q_index];
+		auto e = b - a;
+
+		Vec2 n = vec2_normalize(vec2(-e.y, e.x));
+
+		r32 d = vec2_dot(n, a);
+		if (d < edge.distance) {
+			edge.normal = n;
+			edge.distance = d;
+			edge.index = q_index;
+		}
+	}
+
+	return edge;
+}
+
+bool next_simplex_ex(Support_Ex *simplex, Vec2 *dir, u32 *n) {
+	switch (*n) {
+	case 2: {
+		// a = simplex[1]
+		// b = simplex[0]
+		Vec2 ab = simplex[0].p - simplex[1].p;
+		Vec2 ao = -simplex[1].p;
+		if (vec2_dot(ao, ab) > 0.0f) {
+			r32 det = vec2_determinant(simplex[1].p, simplex[0].p);
+			dir->x = -ab.y * det;
+			dir->y = ab.x * det;
+		}
+		else {
+			*dir = ao;
+			simplex[0] = simplex[1];
+			*n = 1;
+		}
+	} break;
+
+	case 3: {
+		// a = simplex[2]
+		// b = simplex[1]
+		// c = simplex[0]
+		Vec2 ab = simplex[1].p - simplex[2].p;
+		Vec2 ac = simplex[0].p - simplex[2].p;
+		Vec2 ao = -simplex[2].p;
+		r32 abc = vec2_determinant(ab, ac);
+
+		if (vec2_dot(vec2(-ac.y * abc, ac.x * abc), ao) > 0.0f) {
+			if (vec2_dot(ac, ao) > 0.0f) {
+				r32 det = vec2_determinant(simplex[2].p, simplex[0].p);
+				dir->x = -ac.y * det;
+				dir->y = ac.x * det;
+
+				simplex[1] = simplex[0];
+				simplex[0] = simplex[2];
+
+				*n = 2;
+			}
+			else {
+				if (vec2_dot(ab, ao) > 0.0f) {
+					r32 det = vec2_determinant(simplex[2].p, simplex[1].p);
+					dir->x = -ab.y * det;
+					dir->y = ab.x * det;
+					simplex[0] = simplex[2];
+					*n = 2;
+				}
+				else {
+					*dir = -simplex[2].p;
+					simplex[0] = simplex[2];
+					*n = 1;
+				}
+			}
+		}
+		else {
+			if (vec2_dot(vec2(ab.y * abc, -ab.x * abc), ao) > 0.0f) {
+				if (vec2_dot(ab, ao) > 0.0f) {
+					r32 det = vec2_determinant(simplex[2].p, simplex[1].p);
+					dir->x = -ab.y * det;
+					dir->y = ab.x * det;
+					simplex[0] = simplex[2];
+					*n = 2;
+				} else {
+					*dir = -simplex[2].p;
+					simplex[0] = simplex[2];
+					*n = 1;
+				}
+			}
+			else {
+				// point is inside the triangle
+				return true;
+			}
+		}
+	} break;
+
+		invalid_default_case();
+	}
+
+	return false;
+}
+
+Nearest_Edge_Ex nearest_edge_origin_polygon_ex(const Support_Ex *vertices, u32 vertex_count) {
+	Nearest_Edge_Ex edge;
+	edge.distance = MAX_FLOAT;
+
+	for (u32 p_index = 0; p_index < vertex_count; p_index += 1) {
+		u32 q_index = ((p_index + 1) == vertex_count) ? 0 : p_index + 1;
+
+		auto a = vertices[p_index].p;
+		auto b = vertices[q_index].p;
+		auto e = b - a;
+
+		Vec2 n = vec2_normalize(vec2(-e.y, e.x));
+
+		r32 d = vec2_dot(n, a);
+		if (d < edge.distance) {
+			edge.normal = n;
+			edge.distance = d;
+			edge.a_index = p_index;
+			edge.b_index = q_index;
+		}
+	}
+
+	return edge;
 }

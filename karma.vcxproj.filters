@@ -12,11 +12,9 @@
     <ClCompile Include="src\modules\core\opengl\glad\src\glad.c" />
     <ClCompile Include="src\modules\core\opengl\gfx_opengl.cpp" />
     <ClCompile Include="src\modules\core\windows\systems_windows.cpp" />
-    <ClCompile Include="src\modules\core\karma_newdelete.cpp" />
     <ClCompile Include="src\modules\core\length_string.cpp" />
     <ClCompile Include="src\modules\core\lin_maths.cpp" />
     <ClCompile Include="src\modules\core\stream.cpp" />
-    <ClCompile Include="src\modules\core\tokenizer.cpp" />
     <ClCompile Include="src\modules\core\unicode.cpp" />
     <ClCompile Include="src\modules\imgui\imconfig.cpp" />
     <ClCompile Include="src\modules\imgui\imgui.cpp" />
@@ -28,7 +26,6 @@
     <ClCompile Include="src\modules\pcg\pcg_basic.c" />
     <ClCompile Include="src\audio.cpp" />
     <ClCompile Include="src\editor.cpp" />
-    <ClCompile Include="src\entity.cpp" />
     <ClCompile Include="src\modules\gfx\renderer.cpp" />
     <ClCompile Include="src\modules\imgui\dev.cpp" />
     <ClCompile Include="src\first.cpp" />
@@ -36,6 +33,11 @@
     <ClCompile Include="src\main_atish.cpp" />
     <ClCompile Include="src\main_shankar.cpp" />
     <ClCompile Include="src\main_pujan.cpp" />
+    <ClCompile Include="src\modules\core\thread_pool.cpp" />
+    <ClCompile Include="src\modules\core\utility.cpp" />
+    <ClCompile Include="src\modules\core\karma_shared.cpp" />
+    <ClCompile Include="src\modules\core\stb.cpp" />
+    <ClCompile Include="src\scene.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\modules\core\directx\dx_error.h" />
@@ -57,7 +59,6 @@
     <ClInclude Include="src\modules\core\stb_truetype.h" />
     <ClInclude Include="src\modules\core\stream.h" />
     <ClInclude Include="src\modules\core\systems.h" />
-    <ClInclude Include="src\modules\core\tokenizer.h" />
     <ClInclude Include="src\modules\core\unicode.h" />
     <ClInclude Include="src\modules\core\utility.h" />
     <ClInclude Include="src\modules\imgui\imconfig.h" />
@@ -69,7 +70,6 @@
     <ClInclude Include="src\modules\imgui\imstb_textedit.h" />
     <ClInclude Include="src\modules\imgui\imstb_truetype.h" />
     <ClInclude Include="src\modules\pcg\pcg_basic.h" />
-    <ClInclude Include="src\atish.h" />
     <ClInclude Include="src\audio.h" />
     <ClInclude Include="src\editor.h" />
     <ClInclude Include="src\entity.h" />
@@ -78,7 +78,12 @@
     <ClInclude Include="src\shaders\gfx_shaders.h" />
     <ClInclude Include="src\modules\gfx\renderer.h" />
     <ClInclude Include="src\modules\imgui\dev.h" />
-    <ClInclude Include="src\modules\core\serialize.h" />
+    <ClInclude Include="src\asset_loader.h" />
+    <ClInclude Include="src\asset.h" />
+    <ClInclude Include="src\modules\core\thread_pool.h" />
+    <ClInclude Include="src\modules\core\stb_rect_pack.h" />
+    <ClInclude Include="src\scene.h" />
+    <ClInclude Include="src\modules\core\data_structures.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitattributes" />

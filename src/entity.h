@@ -1,98 +1,77 @@
 #pragma once
+
 #include "modules/core/lin_maths.h"
 #include "modules/core/reflection.h"
 
-enum Entity_Kind : u32 {
-	Entity_Invalid,
-	Entity_Player,
-	Entity_Line, // TODO: TEMPORARY
+typedef u64 Entity_Id;
+
+enum Fixture_Shape : u32 {
+	Fixture_Shape_Null,
+	Fixture_Shape_Circle,
+	Fixture_Shape_Mm_Rect,
+	Fixture_Shape_Capsule,
+	Fixture_Shape_Polygon,
+
+	Fixture_Shape_Count
 };
 
-union Entity_Handle {
-	struct {
-		u32 index;
-		Entity_Kind kind;
-	};
-	attribute("display") u64 id;
+struct Fixture {
+	Fixture_Shape		shape;
+	void *				handle;
 };
 
-static constexpr Entity_Handle INVALID_ENTITY_HANDLE = {};
+#define fixture_get_shape(fixture, type) ((type *)((fixture)->handle))
 
-inline bool operator ==(Entity_Handle a, Entity_Handle b) { return a.id == b.id; }
-inline bool operator !=(Entity_Handle a, Entity_Handle b) { return a.id != b.id; }
+enum Rigid_Body_Type : u16 {
+	Rigid_Body_Type_Static,
+	Rigid_Body_Type_Dynamic
+};
+
+typedef u16 Rigid_Body_Flags;
+
+enum Rigid_Body_Flag_Bit : u16 {
+	Rigid_Body_COLLIDING = bit(0),
+};
+
+struct Rigid_Body {
+	Rigid_Body_Type		type;
+	Rigid_Body_Flags	flags;
+	r32					imass;
+	Vec2				velocity;
+	Vec2				force;
+	Mat3				xform;
+	u32					fixture_count;
+	Fixture *			fixtures;
+	Entity_Id			entity_id;
+};
+
+enum Entity_Type {
+	Entity_Type_Null,
+	Entity_Type_Camera,
+	Entity_Type_Player,
+	Entity_Type_Obstacle,
+
+	Entity_Type_Count
+};
 
 struct Entity {
-	attribute("read-only") Entity_Handle	handle;
-	attribute("read-only") Entity_Kind		kind;
+	attribute(read_only)				Entity_Id	id;
+	attribute(read_only, no_serialize)  Entity_Type type;
+										Vec2 position;
+};
 
-	attribute("speed:0.01") Vec2 position;
+struct Camera : Entity {
+	r32 distance;
 };
 
 struct Player : public Entity {
-	attribute("speed:0.01") Vec2 size;
-	attribute("color") Vec4 color;
-	attribute("read-only") Vec2 velocity;
-	attribute("read-only") Vec2 force;
+	attribute(min:0, max:5)				r32 radius;
+	attribute(color)					Vec4 color;
+										r32 intensity;
+	attribute(no_serialize)				Rigid_Body *rigid_body;
 };
 
-struct Line : public Entity {
-	attribute("color") Vec4 color;
-	attribute("speed:0.01") Vec2 start;
-	attribute("speed:0.01") Vec2 end;
+struct Obstacle : public Entity {
+	attribute(color)		Vec4 color;
+	attribute(no_serialize) Rigid_Body *rigid_body;
 };
-
-
-////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////
-
-
-struct Entity_Manager {
-	struct Entity_By_Type {
-		Array<Player>   players;
-		Array<Line>		lines;
-	};
-
-	Array<Entity_Handle>	entities;
-	Entity_By_Type			by_type;
-};
-
-template <u32>
-inline Entity *entity_down_type(Entity_Manager &manager, Entity_Handle reference) {
-	return nullptr;
-}
-#define entity_down(manager, reference, entity) (entity *)entity_down_type<Entity_##entity>(manager, reference)
-
-template <>
-inline Entity *entity_down_type<Entity_Player>(Entity_Manager &manager, Entity_Handle reference) {
-	return manager.by_type.players.data + reference.index;
-}
-
-template <>
-inline Entity *entity_down_type<Entity_Line>(Entity_Manager &manager, Entity_Handle reference) {
-	return manager.by_type.lines.data + reference.index;
-}
-
-inline Entity *entity_get(Entity_Manager &manager, Entity_Handle reference) {
-	switch (reference.kind) {
-	case Entity_Player: return entity_down_type<Entity_Player>(manager, reference);
-	case Entity_Line: return entity_down_type<Entity_Line>(manager, reference);
-	}
-	return nullptr;
-}
-
-
-////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////
-
-
-Entity_Manager manager_create();
-
-Entity *manager_add_entity_kind(Entity_Manager *manager, Entity_Kind kind);
-#define manager_add_entity(manager, entity) (entity *)manager_add_entity_kind(manager, Entity_##entity)
-
-Player *manager_find_player(Entity_Manager &manager, Entity_Handle handle);
-Line *manager_find_line(Entity_Manager &manager, Entity_Handle handle);
-
-Entity *manager_find_entity(Entity_Manager &manager, Entity_Handle handle);

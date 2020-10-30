@@ -1,7 +1,9 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include "modules/core/stream.cpp"
+#include "modules/core/length_string.cpp"
+#include "modules/core/utility.cpp"
+#include "modules/core/karma_shared.cpp"
 #include "modules/core/karma_crt_impl.hpp"
-#include "modules/core/tokenizer.cpp"
 
 #include <clang-c/Index.h>
 
@@ -116,7 +118,22 @@ void reflection_of_attrs(Ostream *stream, CXCursor cursor) {
 		[](CXCursor cursor, CXCursor parent, CXClientData stream) -> CXChildVisitResult {
 			if (clang_getCursorKind(cursor) == CXCursor_AnnotateAttr) {
 				auto attrs = clang_getCursorSpelling(cursor);
-				ostream_write_formatted((Ostream *)stream, "\t\t\t%s\n", clang_getCString(attrs));
+				const char *value = clang_getCString(attrs);
+				ostream_write_formatted((Ostream *)stream, "\t\t\t\"");
+				String next_string = "\", \"";
+				while (*value) {
+					if (*value != ',') {
+						if (*value != ' ' && *value != '\t')
+							ostream_write_buffer((Ostream *)stream, value, 1);
+						value += 1;
+					} else {
+						ostream_write_buffer((Ostream *)stream, next_string.data, next_string.count);
+						value += 1;
+						while (*value && *value == ' ')
+							value += 1;
+					}
+				}
+				ostream_write_formatted((Ostream *)stream, "\"\n");
 				clang_disposeString(attrs);
 			}
 			return CXChildVisit_Continue;
@@ -146,58 +163,75 @@ void reflection_of_anonymous_struct(Ostream *stream, CXCursor cursor, const char
 
 	auto size = clang_Type_getSizeOf(clang_getCursorType(cursor));
 
-	if (members.count == 0) {
-		ostream_write_formatted(stream, "\t\tstatic const Type_Info_Struct _i_anonymous_struct_%d(%zd, \"%s::anonymous struct\", 0, 0, 0);\n",
-								type_index, size, name);
-		return;
+	bool parent_has_attrs = clang_Cursor_hasAttrs(cursor);
+	if (parent_has_attrs) {
+		reflection_of_attrs(stream, cursor);
 	}
 
-	Array<bool> has_attrs;
-	array_resize(&has_attrs, members.count);
-	defer {
-		array_free(&has_attrs);
-	};
+	if (members.count) {
 
-	for (s64 index = 0; index < members.count; ++index) {
-		if (clang_Cursor_hasAttrs(members[index])) {
-			array_add(&has_attrs, true);
-			reflection_of_attrs(stream, members[index]);
-		} else {
-			array_add(&has_attrs, false);
+		Array<bool> has_attrs;
+		array_resize(&has_attrs, members.count);
+		defer{
+			array_free(&has_attrs);
+		};
+
+		for (s64 index = 0; index < members.count; ++index) {
+			if (clang_Cursor_hasAttrs(members[index])) {
+				array_add(&has_attrs, true);
+				reflection_of_attrs(stream, members[index]);
+			}
+			else {
+				array_add(&has_attrs, false);
+			}
 		}
+
+		// We don't do recursions!
+
+		ostream_write_formatted(stream, "\t\tstatic const Struct_Member _anonymous_struct_members%d[] = {\n", type_index);
+
+		for (s64 index = 0; index < members.count; ++index) {
+			auto spelling = clang_getCursorSpelling(members[index]);
+			auto member = clang_getCString(spelling);
+
+			auto member_type = clang_getCursorType(members[index]);
+			auto type_spelling = clang_getTypeSpelling(member_type);
+			auto type_string = clang_getCString(type_spelling);
+
+			auto offset = clang_Cursor_getOffsetOfField(members[index]) / 8;
+			ostream_write_formatted(stream, "\t\t\t{ \"%s\", %zd, ", member, offset);
+
+			if (has_attrs[index]) {
+				ostream_write_formatted(stream, "static_count(attrs_%s), attrs_%s, ", member, member);
+			}
+			else {
+				ostream_write_formatted(stream, "0, 0, ");
+			}
+
+			ostream_write_formatted(stream, "Reflect<%s>::info() },\n", type_string);
+
+			clang_disposeString(type_spelling);
+			clang_disposeString(spelling);
+		}
+
+		ostream_write_formatted(stream, "\t\t};\n");
 	}
 
-	// We don't do recursions!
+	ostream_write_formatted(stream, "\t\tstatic const Type_Info_Struct _i_anonymous_struct_%d(%zd, \"%s::anonymous struct\", ", type_index, size, name);
 
-	ostream_write_formatted(stream, "\t\tstatic const Struct_Member _anonymous_struct_members%d[] = {\n", type_index);
-
-	for (s64 index = 0; index < members.count; ++index) {
-		auto spelling = clang_getCursorSpelling(members[index]);
-		auto member   = clang_getCString(spelling);
-
-		auto member_type   = clang_getCursorType(members[index]);
-		auto type_spelling = clang_getTypeSpelling(member_type);
-		auto type_string   = clang_getCString(type_spelling);
-
-		auto offset = clang_Cursor_getOffsetOfField(members[index]) / 8;
-		ostream_write_formatted(stream, "\t\t\t{ \"%s\", %zd, ", member, offset);
-
-		if (has_attrs[index]) {
-			ostream_write_formatted(stream, "static_count(attrs_%s), attrs_%s, ", member, member);
-		} else {
-			ostream_write_formatted(stream, "0, 0, ");
-		}
-
-		ostream_write_formatted(stream, "Reflect<%s>::info() },\n", type_string);
-
-		clang_disposeString(type_spelling);
+	if (parent_has_attrs) {
+		auto spelling = clang_getCursorSpelling(cursor);
+		const char *attr_name = clang_getCString(spelling);
+		ostream_write_formatted(stream, "static_count(attrs_%s), attrs_%s, ", attr_name, attr_name);
 		clang_disposeString(spelling);
+	} else {
+		ostream_write_formatted(stream, "0, 0, ");
 	}
 
-	ostream_write_formatted(stream, "\t\t};\n");
-
-	ostream_write_formatted(stream, "\t\tstatic const Type_Info_Struct _i_anonymous_struct_%d(%zd, \"%s::anonymous struct\", static_count(_anonymous_struct_members%d), _anonymous_struct_members%d, 0);\n",
-							type_index, size, name, type_index, type_index);
+	if (members.count)
+		ostream_write_formatted(stream, "static_count(_anonymous_struct_members%d), _anonymous_struct_members%d, 0);\n", type_index, type_index);
+	else
+		ostream_write_formatted(stream, "0, 0, 0);\n");	
 }
 
 void reflection_of_anonymous_union(Ostream *stream, CXCursor cursor, const char *name, int type_index) {
@@ -209,57 +243,75 @@ void reflection_of_anonymous_union(Ostream *stream, CXCursor cursor, const char 
 
 	auto size = clang_Type_getSizeOf(clang_getCursorType(cursor));
 
-	if (members.count == 0) {
-		ostream_write_formatted(stream, "\t\tstatic const Type_Info_Union _i_anonymous_union_%d(%zd, \"%s::anonymous union\", 0, 0);\n",
-								type_index, size, name);
-		return;
+	bool parent_has_attrs = clang_Cursor_hasAttrs(cursor);
+	if (parent_has_attrs) {
+		reflection_of_attrs(stream, cursor);
 	}
 
-	Array<bool> has_attrs;
-	array_resize(&has_attrs, members.count);
-	defer {
-		array_free(&has_attrs);
-	};
+	if (members.count) {
 
-	for (s64 index = 0; index < members.count; ++index) {
-		if (clang_Cursor_hasAttrs(members[index])) {
-			array_add(&has_attrs, true);
-			reflection_of_attrs(stream, members[index]);
-		} else {
-			array_add(&has_attrs, false);
+		Array<bool> has_attrs;
+		array_resize(&has_attrs, members.count);
+		defer{
+			array_free(&has_attrs);
+		};
+
+		for (s64 index = 0; index < members.count; ++index) {
+			if (clang_Cursor_hasAttrs(members[index])) {
+				array_add(&has_attrs, true);
+				reflection_of_attrs(stream, members[index]);
+			}
+			else {
+				array_add(&has_attrs, false);
+			}
 		}
+
+		// We don't do recursions!
+
+		ostream_write_formatted(stream, "\t\tstatic const Union_Member _anonymous_union_members_%d[] = {\n", type_index);
+
+		for (s64 index = 0; index < members.count; ++index) {
+			auto spelling = clang_getCursorSpelling(members[index]);
+			auto member = clang_getCString(spelling);
+
+			auto member_type = clang_getCursorType(members[index]);
+			auto type_spelling = clang_getTypeSpelling(member_type);
+			auto type_string = clang_getCString(type_spelling);
+
+			ostream_write_formatted(stream, "\t\t\t{ \"%s\", ", member);
+
+			if (has_attrs[index]) {
+				ostream_write_formatted(stream, "static_count(attrs_%s), attrs_%s, ", member, member);
+			}
+			else {
+				ostream_write_formatted(stream, "0, 0, ");
+			}
+
+			ostream_write_formatted(stream, "Reflect<%s>::info() },\n", type_string);
+
+			clang_disposeString(type_spelling);
+			clang_disposeString(spelling);
+		}
+
+		ostream_write_formatted(stream, "\t\t};\n");
 	}
 
-	// We don't do recursions!
+	ostream_write_formatted(stream, "\t\tstatic const Type_Info_Union _i_anonymous_union_%d(%zd, \"%s::anonymous union\", ", type_index, size, name);
 
-	ostream_write_formatted(stream, "\t\tstatic const Union_Member _anonymous_union_members_%d[] = {\n", type_index);
-
-	for (s64 index = 0; index < members.count; ++index) {
-		auto spelling = clang_getCursorSpelling(members[index]);
-		auto member   = clang_getCString(spelling);
-
-		auto member_type   = clang_getCursorType(members[index]);
-		auto type_spelling = clang_getTypeSpelling(member_type);
-		auto type_string   = clang_getCString(type_spelling);
-
-		ostream_write_formatted(stream, "\t\t\t{ \"%s\", ", member);
-
-		if (has_attrs[index]) {
-			ostream_write_formatted(stream, "static_count(attrs_%s), attrs_%s, ", member, member);
-		} else {
-			ostream_write_formatted(stream, "0, 0, ");
-		}
-
-		ostream_write_formatted(stream, "Reflect<%s>::info() },\n", type_string);
-
-		clang_disposeString(type_spelling);
+	if (parent_has_attrs) {
+		auto spelling = clang_getCursorSpelling(cursor);
+		const char *attr_name = clang_getCString(spelling);
+		ostream_write_formatted(stream, "static_count(attrs_%s), attrs_%s, ", attr_name, attr_name);
 		clang_disposeString(spelling);
 	}
+	else {
+		ostream_write_formatted(stream, "0, 0, ");
+	}
 
-	ostream_write_formatted(stream, "\t\t};\n");
-
-	ostream_write_formatted(stream, "\t\tstatic const Type_Info_Union _i_anonymous_union_%d(%zd, \"%s::anonymous union\", static_count(_anonymous_union_members_%d), _anonymous_union_members_%d);\n",
-							type_index, size, name, type_index, type_index);
+	if (members.count)
+		ostream_write_formatted(stream, "static_count(_anonymous_union_members_%d), _anonymous_union_members_%d);\n", type_index, type_index);
+	else
+		ostream_write_formatted(stream, "0, 0);\n");
 }
 
 void reflection_of_struct(Ostream *stream, CXCursor cursor, Array_View<CXCursor> members, const char *base) {
@@ -278,87 +330,94 @@ void reflection_of_struct(Ostream *stream, CXCursor cursor, Array_View<CXCursor>
 
 	ostream_write_formatted(stream, "\tstatic const Type_Info * const info() {\n");
 
-	if (members.count == 0) {
-		if (base == 0) {
-			ostream_write_formatted(stream, "\t\tstatic const Type_Info_Struct i(%zd, \"%s\", 0, 0, 0);\n", size, name);
-		} else {
-			ostream_write_formatted(stream, "\t\tstatic const Type_Info_Struct i(%zd, \"%s\", 0, 0, Reflect<%s>::info());\n", size, name, base);
-		}
-		ostream_write_formatted(stream, "\t\treturn &i;\n\t}\n};\n\n");
-		return;
+	bool parent_has_attrs = clang_Cursor_hasAttrs(cursor);
+	if (parent_has_attrs) {
+		reflection_of_attrs(stream, cursor);
 	}
 
-	Array<bool> has_attrs;
-	array_resize(&has_attrs, members.count);
-	defer {
-		array_free(&has_attrs);
-	};
+	if (members.count) {
 
-	for (s64 index = 0; index < members.count; ++index) {
-		if (clang_Cursor_isAnonymous(members[index])) {
-			if (clang_getCursorKind(members[index]) == CXCursor_StructDecl) {
-				reflection_of_anonymous_struct(stream, members[index], name, (int)index);
-			} else if (clang_getCursorKind(members[index]) == CXCursor_UnionDecl) {
-				reflection_of_anonymous_union(stream, members[index], name, (int)index);
+		Array<bool> has_attrs;
+		array_resize(&has_attrs, members.count);
+		defer{
+			array_free(&has_attrs);
+		};
+
+		for (s64 index = 0; index < members.count; ++index) {
+			if (clang_Cursor_isAnonymous(members[index])) {
+				if (clang_getCursorKind(members[index]) == CXCursor_StructDecl) {
+					reflection_of_anonymous_struct(stream, members[index], name, (int)index);
+				}
+				else if (clang_getCursorKind(members[index]) == CXCursor_UnionDecl) {
+					reflection_of_anonymous_union(stream, members[index], name, (int)index);
+				}
+			}
+
+			if (clang_Cursor_hasAttrs(members[index])) {
+				array_add(&has_attrs, true);
+				reflection_of_attrs(stream, members[index]);
+			}
+			else {
+				array_add(&has_attrs, false);
 			}
 		}
 
-		if (clang_Cursor_hasAttrs(members[index])) {
-			array_add(&has_attrs, true);
-			reflection_of_attrs(stream, members[index]);
-		} else {
-			array_add(&has_attrs, false);
-		}
-	}
+		ostream_write_formatted(stream, "\t\tstatic const Struct_Member struct_members[] = {\n");
 
-	ostream_write_formatted(stream, "\t\tstatic const Struct_Member struct_members[] = {\n");
+		for (s64 index = 0; index < members.count; ++index) {
+			auto is_anonymous = clang_Cursor_isAnonymous(members[index]);
 
-	for (s64 index = 0; index < members.count; ++index) {
-		auto is_anonymous = clang_Cursor_isAnonymous(members[index]);
+			auto spelling = clang_getCursorSpelling(members[index]);
+			auto member = clang_getCString(spelling);
+			if (is_anonymous) member = "anonymous";
 
-		auto spelling = clang_getCursorSpelling(members[index]);
-		auto member   = clang_getCString(spelling);
-		if (is_anonymous) member = "anonymous";
+			auto member_type = clang_getCursorType(members[index]);
+			auto type_spelling = clang_getTypeSpelling(member_type);
+			auto type_string = clang_getCString(type_spelling);
 
-		auto member_type   = clang_getCursorType(members[index]);
-		auto type_spelling = clang_getTypeSpelling(member_type);
-		auto type_string   = clang_getCString(type_spelling);
+			auto offset = clang_Cursor_getOffsetOfField(members[index]) / 8;
+			ostream_write_formatted(stream, "\t\t\t{ \"%s\", %zd, ", member, offset);
 
-		auto offset = clang_Cursor_getOffsetOfField(members[index]) / 8;
-		ostream_write_formatted(stream, "\t\t\t{ \"%s\", %zd, ", member, offset);
+			if (has_attrs[index]) {
+				ostream_write_formatted(stream, "static_count(attrs_%s), attrs_%s, ", member, member);
+			}
+			else {
+				ostream_write_formatted(stream, "0, 0, ");
+			}
 
-		if (has_attrs[index]) {
-			ostream_write_formatted(stream, "static_count(attrs_%s), attrs_%s, ", member, member);
-		} else {
-			ostream_write_formatted(stream, "0, 0, ");
-		}
+			if (!is_anonymous) {
+				ostream_write_formatted(stream, "Reflect<%s>::info() },\n", type_string);
+			}
+			else {
+				if (clang_getCursorKind(members[index]) == CXCursor_UnionDecl)
+					ostream_write_formatted(stream, "&_i_anonymous_union_%d },\n", (int)index);
+				else if (clang_getCursorKind(members[index]) == CXCursor_StructDecl)
+					ostream_write_formatted(stream, "&_i_anonymous_struct_%d },\n", (int)index);
+				else
+					ostream_write_formatted(stream, "&_i_anonymous_uknown_%d },\n", (int)index); // We never reach here
+			}
 
-		if (!is_anonymous) {
-			ostream_write_formatted(stream, "Reflect<%s>::info() },\n", type_string);
-		} else {
-			if (clang_getCursorKind(members[index]) == CXCursor_UnionDecl)
-				ostream_write_formatted(stream, "&_i_anonymous_union_%d },\n", (int)index);
-			else if (clang_getCursorKind(members[index]) == CXCursor_StructDecl)
-				ostream_write_formatted(stream, "&_i_anonymous_struct_%d },\n", (int)index);
-			else
-				ostream_write_formatted(stream, "&_i_anonymous_uknown_%d },\n", (int)index); // We never reach here
+			clang_disposeString(type_spelling);
+			clang_disposeString(spelling);
 		}
 
-		clang_disposeString(type_spelling);
-		clang_disposeString(spelling);
+		ostream_write_formatted(stream, "\t\t};\n");
 	}
 
-	ostream_write_formatted(stream, "\t\t};\n");
+	ostream_write_formatted(stream, "\t\tstatic const Type_Info_Struct i(%zd, \"%s\", ", size, name);
+	if (parent_has_attrs)
+		ostream_write_formatted(stream, "static_count(attrs_%s), attrs_%s, ", name, name);
+	else
+		ostream_write_formatted(stream, "0, 0, ");
+	if (members.count)
+		ostream_write_formatted(stream, "static_count(struct_members), struct_members, ");
+	else
+		ostream_write_formatted(stream, "0, 0, ");
+	if (base)
+		ostream_write_formatted(stream, "Reflect<%s>::info());\n", base);
+	else
+		ostream_write_formatted(stream, "0);\n");
 
-	if (base == 0) {
-		ostream_write_formatted(stream,
-								"\t\tstatic const Type_Info_Struct i(%zd, \"%s\", static_count(struct_members), struct_members, 0);\n",
-								size, name);
-	} else {
-		ostream_write_formatted(stream,
-								"\t\tstatic const Type_Info_Struct i(%zd, \"%s\", static_count(struct_members), struct_members, Reflect<%s>::info());\n",
-								size, name, base);
-	}
 	ostream_write_formatted(stream, "\t\treturn &i;\n\t}\n};\n\n");
 }
 
@@ -377,75 +436,90 @@ void reflection_of_union(Ostream *stream, CXCursor cursor, Array_View<CXCursor> 
 
 	ostream_write_formatted(stream, "\tstatic const Type_Info * const info() {\n");
 
-	if (members.count == 0) {
-		ostream_write_formatted(stream, "\t\tstatic const Type_Info_Union i(%zd, \"%s\", 0, 0);\n", size, name);
-		ostream_write_formatted(stream, "\t\treturn &i;\n\t}\n};\n\n");
-		return;
+	bool parent_has_attrs = clang_Cursor_hasAttrs(cursor);
+	if (parent_has_attrs) {
+		reflection_of_attrs(stream, cursor);
 	}
 
-	Array<bool> has_attrs;
-	array_resize(&has_attrs, members.count);
-	defer {
-		array_free(&has_attrs);
-	};
+	if (members.count) {
 
-	for (s64 index = 0; index < members.count; ++index) {
-		if (clang_Cursor_isAnonymous(members[index])) {
-			if (clang_getCursorKind(members[index]) == CXCursor_StructDecl) {
-				reflection_of_anonymous_struct(stream, members[index], name, (int)index);
-			} else if (clang_getCursorKind(members[index]) == CXCursor_UnionDecl) {
-				reflection_of_anonymous_union(stream, members[index], name, (int)index);
+		Array<bool> has_attrs;
+		array_resize(&has_attrs, members.count);
+		defer{
+			array_free(&has_attrs);
+		};
+
+		for (s64 index = 0; index < members.count; ++index) {
+			if (clang_Cursor_isAnonymous(members[index])) {
+				if (clang_getCursorKind(members[index]) == CXCursor_StructDecl) {
+					reflection_of_anonymous_struct(stream, members[index], name, (int)index);
+				}
+				else if (clang_getCursorKind(members[index]) == CXCursor_UnionDecl) {
+					reflection_of_anonymous_union(stream, members[index], name, (int)index);
+				}
+			}
+
+			if (clang_Cursor_hasAttrs(members[index])) {
+				array_add(&has_attrs, true);
+				reflection_of_attrs(stream, members[index]);
+			}
+			else {
+				array_add(&has_attrs, false);
 			}
 		}
 
-		if (clang_Cursor_hasAttrs(members[index])) {
-			array_add(&has_attrs, true);
-			reflection_of_attrs(stream, members[index]);
-		} else {
-			array_add(&has_attrs, false);
+		ostream_write_formatted(stream, "\t\tstatic const Union_Member union_members[] = {\n");
+
+		for (s64 index = 0; index < members.count; ++index) {
+			auto is_anonymous = clang_Cursor_isAnonymous(members[index]);
+
+			auto spelling = clang_getCursorSpelling(members[index]);
+			auto member = clang_getCString(spelling);
+			if (is_anonymous) member = "anonymous";
+
+			auto member_type = clang_getCursorType(members[index]);
+			auto type_spelling = clang_getTypeSpelling(member_type);
+			auto type_string = clang_getCString(type_spelling);
+
+			ostream_write_formatted(stream, "\t\t\t{ \"%s\", ", member);
+
+			if (has_attrs[index]) {
+				ostream_write_formatted(stream, "static_count(attrs_%s), attrs_%s, ", member, member);
+			}
+			else {
+				ostream_write_formatted(stream, "0, 0, ");
+			}
+
+			if (!is_anonymous) {
+				ostream_write_formatted(stream, "Reflect<%s>::info() },\n", type_string);
+			}
+			else {
+				if (clang_getCursorKind(members[index]) == CXCursor_UnionDecl)
+					ostream_write_formatted(stream, "&_i_anonymous_union_%d }, \n", (int)index);
+				else if (clang_getCursorKind(members[index]) == CXCursor_StructDecl)
+					ostream_write_formatted(stream, "&_i_anonymous_struct_%d }, \n", (int)index);
+				else
+					ostream_write_formatted(stream, "&_i_anonymous_uknown_%d }, \n", (int)index); // We never reach here
+			}
+
+			clang_disposeString(type_spelling);
+			clang_disposeString(spelling);
 		}
+
+		ostream_write_formatted(stream, "\t\t};\n");
 	}
 
-	ostream_write_formatted(stream, "\t\tstatic const Union_Member union_members[] = {\n");
 
-	for (s64 index = 0; index < members.count; ++index) {
-		auto is_anonymous = clang_Cursor_isAnonymous(members[index]);
+	ostream_write_formatted(stream, "\t\tstatic const Type_Info_Union i(%zd, \"%s\", ", size, name);
+	if (parent_has_attrs)
+		ostream_write_formatted(stream, "static_count(attrs_%s), attrs_%s, ", name, name);
+	else
+		ostream_write_formatted(stream, "0, 0, ");
+	if (members.count)
+		ostream_write_formatted(stream, "static_count(union_members), union_members);\n");
+	else
+		ostream_write_formatted(stream, "0, 0);\n");
 
-		auto spelling = clang_getCursorSpelling(members[index]);
-		auto member   = clang_getCString(spelling);
-		if (is_anonymous) member = "anonymous";
-
-		auto member_type   = clang_getCursorType(members[index]);
-		auto type_spelling = clang_getTypeSpelling(member_type);
-		auto type_string   = clang_getCString(type_spelling);
-
-		ostream_write_formatted(stream, "\t\t\t{ \"%s\", ", member);
-
-		if (has_attrs[index]) {
-			ostream_write_formatted(stream, "static_count(attrs_%s), attrs_%s, ", member, member);
-		} else {
-			ostream_write_formatted(stream, "0, 0, ");
-		}
-
-		if (!is_anonymous) {
-			ostream_write_formatted(stream, "Reflect<%s>::info() },\n", type_string);
-		} else {
-			if (clang_getCursorKind(members[index]) == CXCursor_UnionDecl)
-				ostream_write_formatted(stream, "&_i_anonymous_union_%d }, \n", (int)index);
-			else if (clang_getCursorKind(members[index]) == CXCursor_StructDecl)
-				ostream_write_formatted(stream, "&_i_anonymous_struct_%d }, \n", (int)index);
-			else
-				ostream_write_formatted(stream, "&_i_anonymous_uknown_%d }, \n", (int)index); // We never reach here
-		}
-
-		clang_disposeString(type_spelling);
-		clang_disposeString(spelling);
-	}
-
-	ostream_write_formatted(stream, "\t\t};\n");
-
-	ostream_write_formatted(stream,
-							"\t\tstatic const Type_Info_Union i(%zd, \"%s\", static_count(union_members), union_members);\n", size, name);
 	ostream_write_formatted(stream, "\t\treturn &i;\n\t}\n};\n\n");
 }
 
@@ -513,70 +587,81 @@ void reflection_of_templated_struct(Ostream *stream, CXCursor cursor, Array_View
 	ostream_write_formatted(stream, "\tstatic const Type_Info * const info() {\n");
 	ostream_write_formatted(stream, "\t\tusing Templated_Type = %s<%s>;\n", name, t_call);
 
-	if (members.count == 0) {
-		if (base == 0) {
-			ostream_write_formatted(stream, "\t\tstatic const Type_Info_Struct i(sizeof(Templated_Type), \"%s\", 0, 0, 0);\n", name);
-		} else {
-			ostream_write_formatted(stream, "\t\tstatic const Type_Info_Struct i(sizeof(Templated_Type), \"%s\", 0, 0, Reflect<%s>::info());\n", name, base);
-		}
-		ostream_write_formatted(stream, "\t\treturn &i;\n\t}\n};\n\n");
-		return;
+	bool parent_has_attrs = clang_Cursor_hasAttrs(cursor);
+	if (parent_has_attrs) {
+		reflection_of_attrs(stream, cursor);
 	}
 
-	Array<bool> has_attrs;
-	array_resize(&has_attrs, members.count);
-	defer {
-		array_free(&has_attrs);
-	};
+	if (members.count) {
+		Array<bool> has_attrs;
+		array_resize(&has_attrs, members.count);
+		defer{
+			array_free(&has_attrs);
+		};
 
-	for (s64 index = 0; index < members.count; ++index) {
-		if (clang_Cursor_hasAttrs(members[index])) {
-			array_add(&has_attrs, true);
-			reflection_of_attrs(stream, members[index]);
-		} else {
-			array_add(&has_attrs, false);
-		}
-	}
-
-	ostream_write_formatted(stream, "\t\tstatic const Struct_Member struct_members[] = {\n");
-
-	for (s64 index = 0; index < members.count; ++index) {
-		auto spelling = clang_getCursorSpelling(members[index]);
-		auto member   = clang_getCString(spelling);
-
-		auto member_type   = clang_getCursorType(members[index]);
-		auto type_spelling = clang_getTypeSpelling(member_type);
-		auto type_string   = clang_getCString(type_spelling);
-
-		ostream_write_formatted(stream, "\t\t\t{ \"%s\", offsetof(Templated_Type, %s), ", member, member);
-
-		if (has_attrs[index]) {
-			ostream_write_formatted(stream, "static_count(attrs_%s), attrs_%s, ", member, member);
-		} else {
-			ostream_write_formatted(stream, "0, 0, ");
+		for (s64 index = 0; index < members.count; ++index) {
+			if (clang_Cursor_hasAttrs(members[index])) {
+				array_add(&has_attrs, true);
+				reflection_of_attrs(stream, members[index]);
+			}
+			else {
+				array_add(&has_attrs, false);
+			}
 		}
 
-		ostream_write_formatted(stream, "Reflect<%s>::info() },\n", type_string);
+		ostream_write_formatted(stream, "\t\tstatic const Struct_Member struct_members[] = {\n");
 
-		clang_disposeString(type_spelling);
-		clang_disposeString(spelling);
+		for (s64 index = 0; index < members.count; ++index) {
+			auto spelling = clang_getCursorSpelling(members[index]);
+			auto member = clang_getCString(spelling);
+
+			auto member_type = clang_getCursorType(members[index]);
+			auto type_spelling = clang_getTypeSpelling(member_type);
+			auto type_string = clang_getCString(type_spelling);
+
+			ostream_write_formatted(stream, "\t\t\t{ \"%s\", offsetof(Templated_Type, %s), ", member, member);
+
+			if (has_attrs[index]) {
+				ostream_write_formatted(stream, "static_count(attrs_%s), attrs_%s, ", member, member);
+			}
+			else {
+				ostream_write_formatted(stream, "0, 0, ");
+			}
+
+			ostream_write_formatted(stream, "Reflect<%s>::info() },\n", type_string);
+
+			clang_disposeString(type_spelling);
+			clang_disposeString(spelling);
+		}
+
+		ostream_write_formatted(stream, "\t\t};\n");
 	}
 
-	ostream_write_formatted(stream, "\t\t};\n");
+	ostream_write_formatted(stream, "\t\tstatic const Type_Info_Struct i(sizeof(Templated_Type), \"%s<%s>\", ", name);
 
-	if (base == 0) {
-		ostream_write_formatted(stream,
-								"\t\tstatic const Type_Info_Struct i(sizeof(Templated_Type), \"%s<%s>\", static_count(struct_members), struct_members, 0);\n",
-								name, t_call);
-	} else {
-		ostream_write_formatted(stream,
-								"\t\tstatic const Type_Info_Struct i(sizeof(Templated_Type), \"%s<%s>\", static_count(struct_members), struct_members, Reflect<%s>::info());\n",
-								name, t_call, base);
-	}
+	if (parent_has_attrs)
+		ostream_write_formatted(stream, "static_count(attrs_%s), attrs_%s, ", name, name);
+	else
+		ostream_write_formatted(stream, "0, 0, ");
+
+	if (members.count)
+		ostream_write_formatted(stream, "static_count(struct_members), struct_members, ", t_call);
+	else
+		ostream_write_formatted(stream, "0, 0, ");
+
+	if (base)
+		ostream_write_formatted(stream, "Reflect< %s>::info());\n", base);
+	else
+		ostream_write_formatted(stream, "0);\n");
+
 	ostream_write_formatted(stream, "\t\treturn &i;\n\t}\n};\n\n");
 }
 
 struct Output_Info {
+	Array<String> reflected_enum_names;
+	Array<String> reflected_struct_names;
+	Array<String> reflected_union_names;
+
 	Ostream reflected_enum;
 	Ostream reflected_struct;
 };
@@ -782,6 +867,14 @@ void ast_visit_tempalted_struct(CXCursor cursor) {
 	if (base) clang_disposeString(base_spelling);
 }
 
+bool ast_name_present_in_array(Array_View<String> names, const String name) {
+	for (auto &n : names) {
+		if (string_match(n, name))
+			return true;
+	}
+	return false;
+}
+
 CXChildVisitResult ast_visitor(CXCursor cursor, CXCursor parent, CXClientData client_data) {
 	auto kind = clang_getCursorKind(cursor);
 	auto out  = (Output_Info *)context.data;
@@ -791,29 +884,39 @@ CXChildVisitResult ast_visitor(CXCursor cursor, CXCursor parent, CXClientData cl
 	// Ignore declarations
 	if (!clang_isCursorDefinition(cursor)) return CXChildVisit_Continue;
 
+	auto spelling = clang_getCursorSpelling(cursor);
+	const char *name = clang_getCString(spelling);
+	defer{
+		clang_disposeString(spelling);
+	};
+
 	switch (kind) {
 		case CXCursor_EnumDecl: {
-			ast_visit_enum(cursor);
-
-			return CXChildVisit_Continue;
+			if (!ast_name_present_in_array(out->reflected_enum_names, String(name, (s64)strlen(name)))) {
+				ast_visit_enum(cursor);
+				array_add(&out->reflected_enum_names, mprintf("%s", name));
+			}
 		} break;
 
 		case CXCursor_StructDecl: {
-			ast_visit_struct(cursor);
-
-			return CXChildVisit_Continue;
+			if (!ast_name_present_in_array(out->reflected_struct_names, String(name, (s64)strlen(name)))) {
+				ast_visit_struct(cursor);
+				array_add(&out->reflected_struct_names, mprintf("%s", name));
+			}
 		} break;
 
 		case CXCursor_UnionDecl: {
-			ast_visit_union(cursor);
-
-			return CXChildVisit_Continue;
+			if (!ast_name_present_in_array(out->reflected_union_names, String(name, (s64)strlen(name)))) {
+				ast_visit_union(cursor);
+				array_add(&out->reflected_union_names, mprintf("%s", name));
+			}
 		} break;
 
 		case CXCursor_ClassTemplate: {
-			ast_visit_tempalted_struct(cursor);
-
-			return CXChildVisit_Continue;
+			if (!ast_name_present_in_array(out->reflected_struct_names, String(name, (s64)strlen(name)))) {
+				ast_visit_tempalted_struct(cursor);
+				array_add(&out->reflected_struct_names, mprintf("%s", name));
+			}
 		} break;
 
 		default: {
@@ -990,7 +1093,7 @@ bool parse_command_line(String command_line, Array<char *> *options, Array<char 
 	return success;
 }
 
-int system_main() {
+int crt_main() {
 	Array<char *> options, files;
 	char *        out_file = 0;
 	if (!parse_command_line(get_command_line(), &options, &files, &out_file)) {

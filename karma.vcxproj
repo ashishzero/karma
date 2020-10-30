@@ -279,6 +279,9 @@ popd
     <ClCompile Include="src\main_atish.cpp" />
     <ClCompile Include="src\main_pujan.cpp" />
     <ClCompile Include="src\main_shankar.cpp" />
+    <ClCompile Include="src\modules\core\stb.cpp" />
+    <ClCompile Include="src\modules\core\thread_pool.cpp" />
+    <ClCompile Include="src\modules\core\utility.cpp" />
     <ClCompile Include="src\modules\imgui\dev.cpp" />
     <ClCompile Include="src\modules\core\directx\gfx_d3d11.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
@@ -287,7 +290,6 @@ popd
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Developer|x64'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="src\editor.cpp" />
-    <ClCompile Include="src\entity.cpp" />
     <ClCompile Include="src\modules\imgui\imgui_impl_dx11.cpp" />
     <ClCompile Include="src\modules\imgui\imconfig.cpp" />
     <ClCompile Include="src\modules\imgui\imgui.cpp" />
@@ -316,14 +318,8 @@ popd
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Developer|x64'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="src\modules\core\stream.cpp" />
-    <ClCompile Include="src\modules\core\tokenizer.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug-Fast|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Developer|x64'">true</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="src\modules\pcg\pcg_basic.c" />
-    <ClCompile Include="src\modules\core\karma_newdelete.cpp">
+    <ClCompile Include="src\modules\core\karma_shared.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug-Fast|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
@@ -347,15 +343,20 @@ popd
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Developer|x64'">false</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="src\scene.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\atish.h" />
+    <ClInclude Include="src\asset_loader.h" />
+    <ClInclude Include="src\asset.h" />
     <ClInclude Include="src\audio.h" />
-    <ClInclude Include="src\modules\core\serialize.h" />
+    <ClInclude Include="src\modules\core\data_structures.h" />
+    <ClInclude Include="src\modules\core\stb_rect_pack.h" />
+    <ClInclude Include="src\modules\core\thread_pool.h" />
     <ClInclude Include="src\modules\imgui\dev.h" />
     <ClInclude Include="src\modules\core\directx\dx_error.h" />
     <ClInclude Include="src\editor.h" />
     <ClInclude Include="src\entity.h" />
+    <ClInclude Include="src\scene.h" />
     <ClInclude Include="src\shaders\gfx_shaders.h" />
     <ClInclude Include="src\modules\imgui\imconfig.h" />
     <ClInclude Include="src\modules\imgui\imgui.h" />
@@ -386,7 +387,6 @@ popd
     <ClInclude Include="src\modules\core\opengl\glad\include\KHR\khrplatform.h" />
     <ClInclude Include="src\modules\core\lin_maths.h" />
     <ClInclude Include="src\modules\core\lin_maths_types.h" />
-    <ClInclude Include="src\modules\core\tokenizer.h" />
     <ClInclude Include="src\modules\pcg\pcg_basic.h" />
     <ClInclude Include="src\modules\core\karma.h" />
     <ClInclude Include="src\modules\core\karma_crt_impl.hpp" />

@@ -4,7 +4,6 @@
 #include "modules/core/stream.h"
 #include "modules/core/stb_sprintf.h"
 #include "modules/core/systems.h"
-#include "modules/core/intrinsics.h"
 
 #include "imgui.h"
 #include "dev.h"
@@ -31,9 +30,9 @@ enum Menu_Icon {
 };
 
 static const char *MENU_ICON_NAMES[] = {
-	"\xe9\x50",
-	"\xe9\x11",
-	"\xe9\x22",
+	u8"Frame Time",
+	u8"Audio",
+	u8"Profiler",
 };
 static_assert(Menu_COUNT == static_count(MENU_ICON_NAMES), "Update this!!");
 
@@ -105,37 +104,12 @@ struct Audio_Visualizer {
 	int	write_cursor;
 };
 
-static constexpr int NOTIFICATION_MAX_COUNT			= 10;
-static constexpr r32 NOTIFICATION_FADE_STAY_TIME	= 5;
-
-const Color4 NOTIFICATION_FONT_COLORS_IN[]= {
-	vec4(1.0f, 1.0f, 1.0f),
-	vec4(0.2f, 0.9f, 0.3f),
-	vec4(1.0f, 1.0f, 0.1f),
-	vec4(0.9f, 0.1f, 0.3f),
-};
-static_assert(static_count(NOTIFICATION_FONT_COLORS_IN) == Notification_Level_COUNT, "Notification color not specified for all notification levels");
-
-struct Notification {
-	char				msg[NOTIFICATION_MAX_LENGTH];
-	int					msg_length;
-	Notification_Level  level;
-	r32					t;
-};
-
-struct Notification_Handler {
-	Notification	notifications[NOTIFICATION_MAX_COUNT];
-	s64				write_index;
-	s64				read_index;
-};
 
 static Profiler				profiler;
 static Frame_Time_Recorder	frame_time_recorder;
 static Audio_Visualizer		audio_visualizer;
 static bool					should_present = true;
 static bool					menu_icons_value[Menu_COUNT];
-
-static Notification_Handler notification_handler;
 
 void dev_mode_enable() {
 	// NOTE: Allocated memory are not freed, because it doesn't matter, they will be freed by OS when app closes
@@ -158,7 +132,6 @@ void dev_mode_enable() {
 	for (int color_index = 0; color_index < PROFILER_MAX_PRESENTATION_COLORS; ++color_index) {
 		profiler.block_colors[color_index] = random_color3(0.9f, 0.3f);
 	}
-
 }
 
 void dev_audio_feedback(r32 *samples, u32 size_in_bytes, u32 channel_count, u32 zeroed_size) {
@@ -197,21 +170,6 @@ void dev_audio_feedback(r32 *samples, u32 size_in_bytes, u32 channel_count, u32 
 	}
 }
 
-void dev_notify_level(Notification_Level level, ANALYSE_PRINTF_FORMAT_STRING(const char *fmt), ...) {
-	Notification *notification = notification_handler.notifications + (notification_handler.write_index % NOTIFICATION_MAX_COUNT);
-	intrin_InterlockedIncrement64(&notification_handler.write_index);
-	if ((notification_handler.write_index % NOTIFICATION_MAX_COUNT) == (notification_handler.read_index % NOTIFICATION_MAX_COUNT))
-		intrin_InterlockedIncrement64(&notification_handler.read_index);
-	
-	va_list ap;
-	va_start(ap, fmt);
-	notification->msg_length = stbsp_vsnprintf(notification->msg, NOTIFICATION_MAX_LENGTH, fmt, ap);
-	va_end(ap);
-
-	notification->level = level;
-	notification->t = NOTIFICATION_FADE_STAY_TIME;
-}
-
 bool dev_get_presentation_state() {
 	return should_present;
 }
@@ -243,8 +201,6 @@ void draw_header_and_buttons() {
 
 	ImGui::TextColored(vec4(1, 1, 0), "FrameTime: %.3fms", frame_time_recorder.stablilized);
 
-	ImGui::BeginIconFont();
-
 	Vec4 color;
 	for (int cindex = 0; cindex < Menu_COUNT; ++cindex) {
 		color = menu_icons_value[cindex] ? MENU_ITEMS_COLORS[cindex] : vec4(1, 1, 1);
@@ -255,8 +211,6 @@ void draw_header_and_buttons() {
 		}
 		ImGui::PopStyleColor();
 	}
-
-	ImGui::EndIconFont();
 }
 
 void draw_frame_time_graph() {
@@ -309,7 +263,7 @@ void draw_profiler_timelines_rects(Record *record, int color_index, r32 inv_cycl
 
 		draw_list->AddText(text_draw_pos, 0xffffffff, (char *)record->name.data, (char *)record->name.data + char_draw_count);
 
-		if (point_inside_rect(cursor, mm_rect(min_rect, max_rect))) {
+		if (test_point_inside_rect(cursor, mm_rect(min_rect, max_rect))) {
 			*hovered_record = record;
 		}
 
@@ -405,17 +359,15 @@ Record *draw_profiler(Vec2 cursor) {
 	ImGui::TextColored(vec4(1, 1, 0), "Profiler");
 	ImGui::SameLine();
 
-	ImGui::BeginIconFont();
 	if (profiler.next_recording) {
-		if (ImGui::Button(u8"\xea\x16")) {
+		if (ImGui::Button(u8"Pause")) {
 			profiler.next_recording = false;
 		}
 	} else {
-		if (ImGui::Button(u8"\xea\x15")) {
+		if (ImGui::Button(u8"Resume")) {
 			profiler.next_recording = true;
 		}
 	}
-	ImGui::EndIconFont();
 
 	auto p = ImGui::GetCursorScreenPos();
 
@@ -447,39 +399,9 @@ void draw_audio_visualizer() {
 	}
 }
 
-void draw_notifications() {
-	r32 dt = ImGui::GetIO().DeltaTime;
-
-	constexpr r32 DISTANCE = 10.0f;
-
-	if (notification_handler.read_index < notification_handler.write_index) {
-		ImGuiViewport* viewport = ImGui::GetMainViewport();
-		ImVec2 work_area_pos = viewport->GetWorkPos();
-		ImVec2 work_area_size = viewport->GetWorkSize();
-		ImVec2 window_pos = ImVec2(work_area_pos.x + work_area_size.x * 0.5f, work_area_pos.y + DISTANCE);
-		ImVec2 window_pos_pivot = ImVec2(0.0f, 0.0f);
-		ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, window_pos_pivot);
-		ImGui::SetNextWindowViewport(viewport->ID);
-
-		ImGuiWindowFlags flags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
-		if (ImGui::Begin("Notifications window", nullptr, flags)) {
-			for (s64 index = notification_handler.read_index; index != notification_handler.write_index; ++index) {
-				auto &notification = notification_handler.notifications[index % NOTIFICATION_MAX_COUNT];
-				if (notification.t > 0.0f) {
-					ImGui::TextColored(NOTIFICATION_FONT_COLORS_IN[notification.level], notification.msg);
-					notification.t -= dt;
-				} else {
-					intrin_InterlockedIncrement64(&notification_handler.read_index);
-				}
-			}
-			ImGui::End();
-		}
-	}
-}
-
 void dev_render_frame() {
 	if (should_present) {
-		ImGui::Begin("Debug Information");
+		ImGui::Begin("Debug Information", &should_present);
 
 		Vec2 cursor = ImGui::GetIO().MousePos;
 
@@ -513,10 +435,7 @@ void dev_render_frame() {
 		
 		ImGui::End();
 	}
-
-	draw_notifications();
 }
-
 
 void dev_profiler_timed_frame_begin() {
 	if (profiler.recording) {

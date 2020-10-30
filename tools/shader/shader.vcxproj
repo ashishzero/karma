@@ -127,6 +127,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="extern.cpp" />
     <ClCompile Include="glsl.cpp" />
     <ClCompile Include="hlsl.cpp" />
     <ClCompile Include="shader.cpp" />

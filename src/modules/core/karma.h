@@ -24,6 +24,10 @@
 #	endif
 #endif
 
+#if defined(BUILD_DEBUG) || defined(BUILD_DEBUG_FAST) || defined(BUILD_DEVELOPER)
+#define ENABLE_DEVELOPER_OPTIONS
+#endif
+
 // Architecture identification
 #if defined(__amd64__) || defined(__amd64) || defined(__x86_64__) || defined(__x86_64) || defined(_M_AMD64) || defined(_M_X64)
 #	define ARCHITECTURE_AMD64
@@ -175,12 +179,17 @@ inline void runtime_assert(bool exp) {
 #define mega_bytes(n) (kilo_bytes(n) * 1024u)
 #define giga_bytes(n) (mega_bytes(n) * 1024u)
 
+#define sgn(n)					((r32)(0 < (n)) - (r32)((n) < 0))
+#define minimum(a, b)			(((a) < (b)) ? (a) : (b))
+#define maximum(a, b)			(((a) > (b)) ? (a) : (b))
+#define mmclamp(min, max, v)    minimum(max, maximum(min, v))
+#define clamp01(v)				mmclamp(0.0f, 1.0f, v)
+
 // ease of use
 typedef int8_t  s8;
 typedef int16_t s16;
 typedef int32_t s32;
 typedef int64_t s64;
-
 // int assumed as bool
 typedef int booli;
 
@@ -188,6 +197,7 @@ typedef uint8_t  u8;
 typedef uint16_t u16;
 typedef uint32_t u32;
 typedef uint64_t u64;
+typedef u32 uint;
 
 typedef size_t ptrsize;
 
@@ -393,13 +403,7 @@ struct ExitScopeHelp {
 //
 //
 
-#ifndef DEFAULT_TEMPORARY_MEMORY_SIZE
-#	define DEFAULT_TEMPORARY_MEMORY_SIZE mega_bytes(128)
-#endif
-
 const ptrsize MEMORY_ALIGNMENT = sizeof(ptrsize);
-
-const ptrsize TEMPORARY_MEMORY_SIZE = DEFAULT_TEMPORARY_MEMORY_SIZE;
 
 enum Allocation_Type { Allocation_Type_NEW,
 					   Allocation_Type_RESIZE,
@@ -448,47 +452,83 @@ inline void * thread_get_argument() {
 }
 
 inline void *temporary_allocator_proc(Allocation_Type type, ptrsize size, const void *ptr, void *user_ptr) {
-	Temporary_Memory *temp = (Temporary_Memory *)&context.temp_memory;
+	Temporary_Memory *temp = &context.temp_memory;
+
+	struct Temp_Header {
+		ptrsize size;
+	};
 
 	if (type == Allocation_Type_NEW) {
 		ptrsize padding = (MEMORY_ALIGNMENT - ((ptrsize)temp->ptr % MEMORY_ALIGNMENT)) % MEMORY_ALIGNMENT;
 
-		u8 *nxtptr = temp->ptr + size + padding;
+		u8 *nxtptr = temp->ptr + size + padding + sizeof(Temp_Header);
 		u8 *endptr = temp->base + temp->capacity;
 
 		if (nxtptr <= endptr) {
-			void *result = temp->ptr;
+			Temp_Header *result = (Temp_Header *)(temp->ptr + padding);
+			result->size = size;
 			temp->ptr    = nxtptr;
-			return result;
+			return result + 1;
 		}
 
-		return 0;
+		return nullptr;
 	} else if (type == Allocation_Type_RESIZE) {
+		Temp_Header *header = (Temp_Header *)ptr - 1;
+
+		u8 *nxtptr;
+		u8 *endptr = temp->base + temp->capacity;
+
+		// Move not required
+		if (ptr == (temp->ptr - header->size)) {
+			header->size = size;
+			nxtptr = (u8 *)ptr + header->size;
+			
+			if (nxtptr <= endptr) {
+				temp->ptr = nxtptr;
+				return (void *)ptr;
+			}
+
+			return nullptr;
+		}
+
+		// No reallocation required
+		if (size <= header->size) {
+			header->size = size;
+			return (void *)ptr;
+		}
+
+		// Move required
 		ptrsize padding = (MEMORY_ALIGNMENT - ((ptrsize)temp->ptr % MEMORY_ALIGNMENT)) % MEMORY_ALIGNMENT;
 
-		u8 *nxtptr = temp->ptr + size + padding;
-		u8 *endptr = temp->base + temp->capacity;
-
+		nxtptr = temp->ptr + size + padding + sizeof(Temp_Header);
+		
 		if (nxtptr <= endptr) {
-			memmove(temp->ptr, ptr, size);
-			void *result = temp->ptr;
+			Temp_Header *result = (Temp_Header *)(temp->ptr + padding);
+			memmove(result + 1, ptr, header->size);
+			result->size = size;
 			temp->ptr    = nxtptr;
-			return result;
+			return result + 1;
 		}
 
-		return 0;
+		return nullptr;
 	} else if (type == Allocation_Type_FREE) {
-		// do nothing
-		return 0;
+		Temp_Header *header = (Temp_Header *)ptr - 1;
+
+		// Can be popped
+		if (ptr == (temp->ptr - header->size)) {
+			temp->ptr = (u8 *)header;
+		}
+
+		return nullptr;
 	} else {
 		invalid_code_path();
 	}
 
-	return 0;
+	return nullptr;
 }
 
 inline void *null_allocator_proc(Allocation_Type type, ptrsize size, const void *ptr, void *user_ptr) {
-	return 0;
+	return nullptr;
 }
 
 constexpr Allocator TEMPORARY_ALLOCATOR = { temporary_allocator_proc, 0 };
@@ -511,19 +551,19 @@ inline void pop_temporary_allocator(Push_Allocator &mark) {
 		pop_temporary_allocator(CONCAT(push_allocator__, CURRENT_LINE));      \
 	}
 
-inline u8 *get_temporary_allocator_point() {
+inline u8 *begin_temporary_allocation() {
 	return context.temp_memory.ptr;
 }
 
-inline void set_temporary_allocator_point(u8 *ptr) {
+inline void end_temporary_allocation(u8 *ptr) {
 	assert(ptr >= context.temp_memory.base && ptr <= context.temp_memory.base + context.temp_memory.capacity);
 	context.temp_memory.ptr = ptr;
 }
 
-#define scoped_temporary_allocation()                                                     \
-	auto CONCAT(scope_temp_allocation__, CURRENT_LINE) = get_temporary_allocator_point(); \
-	defer {                                                                               \
-		set_temporary_allocator_point(CONCAT(scope_temp_allocation__, CURRENT_LINE));     \
+#define scoped_temporary_allocation()                                                  \
+	auto CONCAT(scope_temp_allocation__, CURRENT_LINE) = begin_temporary_allocation(); \
+	defer {                                                                            \
+		end_temporary_allocation(CONCAT(scope_temp_allocation__, CURRENT_LINE));       \
 	}
 
 inline void reset_temporary_memory() {
@@ -532,6 +572,14 @@ inline void reset_temporary_memory() {
 
 inline void *tallocate(ptrsize size) {
 	return temporary_allocator_proc(Allocation_Type_NEW, size, 0, 0);
+}
+
+inline void *treallocate(void *ptr, ptrsize size) {
+	return temporary_allocator_proc(Allocation_Type_RESIZE, size, ptr, 0);
+}
+
+inline void tfree(void *ptr) {
+	temporary_allocator_proc(Allocation_Type_FREE, 0, ptr, 0);
 }
 
 inline void *memory_allocate(ptrsize size, Allocator allocator = context.allocator) {
@@ -547,11 +595,16 @@ inline void memory_free(const void *ptr, Allocator allocator = context.allocator
 }
 
 void *operator new(ptrsize size, Allocator allocator);
+void *operator new[](ptrsize size, Allocator allocator);
 void *operator new(ptrsize size);
+void *operator new[](ptrsize size);
 void  operator delete(void *ptr, Allocator allocator);
+void  operator delete[](void *ptr, Allocator allocator);
 void  operator delete(void *ptr) noexcept;
+void  operator delete[](void *ptr) noexcept;
 
 #define tnew new(TEMPORARY_ALLOCATOR)
+#define tdelete delete(TEMPORARY_ALLOCATOR)
 
 //
 //
@@ -599,9 +652,8 @@ struct Array {
 		allocator = context.allocator;
 	}
 
-	inline Array(Allocator_Proc proc, void *data = 0) {
-		allocator.proc = proc;
-		allocator.data = data;
+	inline Array(Allocator _allocator) {
+		allocator = _allocator;
 	}
 
 	inline operator Array_View<T>() {
@@ -696,13 +748,14 @@ void array_add(Array<T> *a, const T &d) {
 
 template <typename T>
 void array_append(Array<T> *a, const T *ptr, s64 count) {
-	if (a->count == a->capacity) {
-		s64 n = capacity_grow(a->capacity, count);
+	s64 new_count = a->count + count;
+	if (new_count > a->capacity) {
+		s64 n = array_get_grow_capacity(a->capacity, count);
 		array_resize(a, n);
 	}
 	for (s64 i = 0; i < count; ++i)
 		a->data[i + a->count] = ptr[i];
-	a->count += count;
+	a->count = new_count;
 }
 
 template <typename T>
@@ -715,9 +768,83 @@ void array_append(Array<T> *a, const Array_View<T> &v) {
 	array_append(a, v->data, v->count);
 }
 
-template <typename T, typename... Args>
-void array_append(Array<T> *a, const Args &... args) {
-	array_append(a, args...);
+template <typename T>
+T *array_addn(Array<T> *a, s64 count) {
+	s64 new_count = a->count + count;
+	if (new_count > a->capacity) {
+		s64 n = array_get_grow_capacity(a->capacity, count);
+		array_resize(a, n);
+	}
+	T *ptr = a->data + a->count;
+	a->count = new_count;
+	return ptr;
+}
+
+template <typename T>
+s64 array_find(Array<T> *a, const T &v) {
+	for (s64 index = 0; index < a->count; ++index) {
+		auto elem = a->data + index;
+		if (*elem == v) {
+			return index;
+		}
+	}
+	return -1;
+}
+
+template <typename T, typename Search_Func, typename ...Args>
+s64 array_find(Array<T> *a, Search_Func func, const Args& ...args) {
+	for (s64 index = 0; index < a->count; ++index) {
+		if (func(a->data[index], args...)) {
+			return index;
+		}
+	}
+	return -1;
+}
+
+template <typename T>
+void array_remove(Array<T> *a, s64 index) {
+	assert(index < a->count);
+	a->data[index] = a->data[a->count - 1];
+	a->count -= 1;
+}
+
+template <typename T>
+void array_remove_seq(Array<T> *a, s64 index) {
+	assert(index < a->count);
+	memmove(a->data + index, a->data + index + 1, (a->count - index - 1) * sizeof(T));
+	a->count -= 1;
+}
+
+template <typename T>
+void array_insert(Array<T> *a, s64 index, const T &v) {
+	assert(index < a->count);
+	T t = a->data[index];
+	array_add(a, t);
+	a->data[index] = v;
+}
+
+template <typename T>
+T *array_insert(Array<T> *a, s64 index) {
+	assert(index < a->count);
+	T t = a->data[index];
+	array_add(a, t);
+	return a->data + index;
+}
+
+template <typename T>
+void array_insert_seq(Array<T> *a, s64 index, const T &v) {
+	assert(index < a->count);
+	array_add(a);
+	memmove(a->data + index + 1, a->data + index, (a->count - index) * sizeof(T));
+	a->data[index] = v;
+}
+
+template <typename T>
+T *array_insert_seq(Array<T> *a, s64 index) {
+	assert(index < a->count);
+	array_add(a);
+	memmove(a->data + index + 1, a->data + index, (a->count - index) * sizeof(T));
+	return a->data + index;
 }
 
 template <typename T, typename... Args>

@@ -1,5 +1,6 @@
 #pragma once
 #include "karma.h"
+#include "reflection.h"
 
 constexpr r32 MATH_PI                           = 3.1415926535f;
 constexpr r32 MATH_PI_INVERSE                   = 1.0f / MATH_PI;
@@ -245,10 +246,10 @@ typedef Vec4 Color4;
 typedef Vec3 Color3;
 
 union Colorh {
+	u32 hex;
 	struct {
 		u8 r, g, b, a;
 	};
-	u32 hex;
 };
 
 inline Colorh colorh(u8 _r, u8 _g, u8 _b, u8 _a = 0xff) {
@@ -263,6 +264,26 @@ inline Colorh colorh(u32 color) {
 	Colorh c;
 	c.hex = color;
 	return c;
+}
+
+union Mat2 {
+	Vec2 rows[2];
+	r32  m[4];
+	r32  m2[2][2];
+};
+
+inline Mat2 mat2(Vec2 r0, Vec2 r1) {
+	Mat2 res;
+	res.rows[0] = r0;
+	res.rows[1] = r1;
+	return res;
+}
+
+inline Mat2 mat2(r32 x00, r32 x10, r32 x01, r32 x11) {
+	Mat2 res;
+	res.rows[0] = vec2(x00, x10);
+	res.rows[1] = vec2(x01, x11);
+	return res;
 }
 
 union Mat3 {
@@ -317,6 +338,7 @@ inline Mat4 mat4(r32 x00, r32 x10, r32 x20, r32 x30,
 }
 
 union Quat {
+	r32 m[4];
 	struct {
 		r32 x, y, z, w;
 	};
@@ -326,7 +348,6 @@ union Quat {
 	struct {
 		Vec4 v4;
 	};
-	r32 m[4];
 };
 
 inline Quat quat(r32 _b, r32 _c, r32 _d, r32 _a) {
@@ -375,36 +396,85 @@ struct Rect {
 	r32 w, h;
 };
 
-inline Rect rect(r32 _x, r32 _y, r32 _w, r32 _h) {
-	Rect r;
-	r.x = _x;
-	r.y = _y;
-	r.w = _w;
-	r.h = _h;
-	return r;
-}
-
 struct Rects {
 	s32 x, y;
 	s32 w, h;
 };
 
-inline Rects rects(s32 _x, s32 _y, s32 _w, s32 _h) {
-	Rects r;
-	r.x = _x;
-	r.y = _y;
-	r.w = _w;
-	r.h = _h;
-	return r;
+struct Aabb2d {
+	Vec2 center;
+	r32 radius[2];
+};
+
+inline Aabb2d aabb2d(Vec2 center, r32 a, r32 b) {
+	Aabb2d aabb;
+	aabb.center = center;
+	aabb.radius[0] = a;
+	aabb.radius[1] = b;
+	return aabb;
 }
+
+struct Circle {
+	Vec2 center;
+	attribute(min:0) r32 radius;
+};
 
 struct Quad {
 	Vec2 positions[4];
 	Vec2 normals[4];
 };
 
-struct Ray_Hit {
-	Vec2 point;
+inline Quad quad(Vec2 a, Vec2 b, Vec2 c, Vec2 d, Vec2 n1, Vec2 n2, Vec2 n3, Vec2 n4) {
+	Quad quad;
+	quad.positions[0] = a;
+	quad.positions[1] = b;
+	quad.positions[2] = c;
+	quad.positions[3] = d;
+	quad.normals[0] = n1;
+	quad.normals[1] = n2;
+	quad.normals[2] = n3;
+	quad.normals[3] = n4;
+	return quad;
+}
+
+struct Capsule {
+	Vec2 a;
+	Vec2 b;
+	r32 radius;
+};
+
+struct Ray2d {
+	Vec2 origin;
+	Vec2 dir;
+};
+
+struct Polygon {
+	u32 vertex_count;
+	Vec2 vertices[3];
+};
+
+struct Nearest_Points {
+	Vec2 a;
+	Vec2 b;
+	r32 distance;
+};
+
+struct Nearest_Edge {
 	Vec2 normal;
-	r32 t;
+	r32 distance;
+	u32 index;
+};
+
+struct Nearest_Edge_Ex {
+	Vec2 normal;
+	r32 distance;
+	u32 a_index;
+	u32 b_index;
+};
+
+struct Contact_Manifold {
+	Vec2 normal;
+	Vec2 tangent;
+	Vec2 contacts[2];
+	r32 penetration;
 };

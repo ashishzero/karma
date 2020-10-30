@@ -1,6 +1,5 @@
 
 #include "length_string.h"
-#define STB_SPRINTF_IMPLEMENTATION
 #include "stb_sprintf.h"
 
 s64 string_utf8_length(const String str) {

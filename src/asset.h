@@ -56,7 +56,7 @@ struct Hard_Block:public Base {
     String name="barud";
     Array<Vector2> placements;
     //Array_View<int> placements_2;
-    attribute("no-serialize") World* world;
+    attribute(no_serialize) World* world;
     Region* region=new Region(3,2);
 
     Hard_Block() : Base(Block_Type_HARD_BLOCK) {}

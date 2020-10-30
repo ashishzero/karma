@@ -1,5 +1,8 @@
 #define _CRT_SECURE_NO_WARNINGS
+
 #include "modules/core/stream.cpp"
+#include "modules/core/karma_shared.cpp"
+#include "modules/core/length_string.cpp"
 #include "modules/core/karma_crt_impl.hpp"
 #include "shaders/gfx_shaders.h"
 #include "shader.h"
@@ -116,7 +119,7 @@ void add_batch(Array<Shader_Batch> *batch, const char *name, const char *dx11, c
 	b->ps_define      = ps_define;
 }
 
-int system_main() {
+int crt_main() {
 	Array<Shader_Batch> batch;
 
 	add_batch(&batch, "run_tree/data/shaders/quad.kfx", "src/shaders/quad.hlsl", "src/shaders/quad.glsl");

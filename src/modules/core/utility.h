@@ -1,54 +1,8 @@
 #pragma once
 #include "karma.h"
-#include "lin_maths.h"
-#include <algorithm>
-
-inline u32 murmur3_32(const void *ptr, size_t len, u32 seed) {
-	const u8 *key = (u8 *)ptr;
-	u32       h   = seed;
-	u32       k;
-	/* Read in groups of 4. */
-	for (size_t i = len >> 2; i; i--) {
-		// Here is a source of differing results across endiannesses.
-		// A swap here has no effects on hash properties though.
-		k = *((u32 *)key);
-		key += sizeof(u32);
-
-		k *= 0xcc9e2d51;
-		k = (k << 15) | (k >> 17);
-		k *= 0x1b873593;
-
-		h ^= k;
-		h = (h << 13) | (h >> 19);
-		h = h * 5 + 0xe6546b64;
-	}
-	/* Read the rest. */
-	k = 0;
-	for (size_t i = len & 3; i; i--) {
-		k <<= 8;
-		k |= key[i - 1];
-	}
-	// A swap is *not* necessary here because the preceeding loop already
-	// places the low bytes in the low places according to whatever endianness
-	// we use. Swaps only apply when the memory is copied in a chunk.
-
-	k *= 0xcc9e2d51;
-	k = (k << 15) | (k >> 17);
-	k *= 0x1b873593;
-	h ^= k;
-	/* Finalize. */
-	h ^= len;
-	h ^= h >> 16;
-	h *= 0x85ebca6b;
-	h ^= h >> 13;
-	h *= 0xc2b2ae35;
-	h ^= h >> 16;
-	return h;
-}
-
-//
-//
-//
+#include "reflection.h"
+#include "length_string.h"
+#include "stream.h"
 
 #define swap_by_exchange(a, b, t) (t = a, a = b, b = t)
 
@@ -81,11 +35,6 @@ inline void sort_insert(Type *a, s64 n, Compare cmp) {
 	}
 }
 
-template <typename Type, typename Compare>
-void sort(Type *a, s64 n, Compare cmp) {
-	std::sort(a, a + n, cmp);
-}
-
 // NOTE: *left* is inclusive but *right* is exclusive
 template <typename T, typename Compare>
 void merge_buttom_up(T *src, s64 left, s64 mid, s64 right, T *dst, Compare comp) {
@@ -106,7 +55,7 @@ void sort_merge(T *src, T *aux, s64 n, Compare comp) {
 	T *t;
 	for (s64 width = 1; width < n; width = 2 * width) {
 		for (s64 i = 0; i < n; i = i + 2 * width) {
-			merge_buttom_up(src, i, min_value(i + width, n), min_value(i + 2 * width, n), aux, comp);
+			merge_buttom_up(src, i, minimum(i + width, n), minimum(i + 2 * width, n), aux, comp);
 		}
 		swap_by_exchange(src, aux, t);
 	}
@@ -168,3 +117,190 @@ void sort_heap(T *a, s64 n, Compare comp) {
 		heap_make(a, i, comp);
 	}
 }
+
+//
+//
+//
+
+u32 murmur3_32(const void *ptr, size_t len, u32 seed);
+
+//
+//
+//
+
+enum Value_Kind {
+	Value_Kind_NONE,
+	Value_Kind_REAL,
+	Value_Kind_INTEGER,
+	Value_Kind_CODEPOINT,
+	Value_Kind_STRING,
+};
+
+struct Value {
+	Value_Kind kind;
+
+	bool			is_signed;
+	r64             real;
+	s64             integer;
+	u64				uinteger;
+	Utf32_Codepoint codepoint;
+	String          string;
+
+	inline Value() {
+		kind = Value_Kind_NONE;
+	}
+
+	inline Value(r64 data, bool _signed) {
+		kind = Value_Kind_REAL;
+		is_signed = _signed;
+		real = data;
+	}
+
+	inline Value(s64 data, u64 udata, bool _signed) {
+		kind = Value_Kind_INTEGER;
+		is_signed = _signed;
+		integer = data;
+		uinteger = udata;
+	}
+
+	inline Value(Utf32_Codepoint data) {
+		kind = Value_Kind_CODEPOINT;
+		codepoint = data;
+	}
+
+	inline Value(String data) {
+		kind = Value_Kind_STRING;
+		string = data;
+	}
+};
+
+bool is_numeral(u32 codepoint);
+bool is_hex_numeral(u32 codepoint);
+bool is_oct_numeral(u32 codepoint);
+bool is_binary_numeral(u32 codepoint);
+bool parse_integer(const String string, s64 *out, bool *is_signed);
+bool parse_unsigned_integer(const String string, u64 *out);
+bool parse_real(const String string, r64 *out, bool *is_signed);
+
+enum Token_Kind {
+	Token_Kind_NONE = 0,
+
+	Token_Kind_AT,
+	Token_Kind_HASH,
+	Token_Kind_DOLLAR,
+	Token_Kind_OPEN_BRACKET,
+	Token_Kind_CLOSE_BRACKET,
+	Token_Kind_SLASH,
+	Token_Kind_OPEN_CURLY_BRACKET,
+	Token_Kind_CLOSE_CURLY_BRACKET,
+	Token_Kind_OPEN_SQUARE_BRACKET,
+	Token_Kind_CLOSE_SQUARE_BRACKET,
+	Token_Kind_COLON,
+	Token_Kind_SEMICOLON,
+	Token_Kind_COMMA,
+	Token_Kind_PERIOD,
+	Token_Kind_QUESTION_MARK,
+	Token_Kind_TILDE,
+	Token_Kind_BACK_TICK,
+
+	Token_Kind_EXCLAMATION,
+	Token_Kind_PERCENT,
+	Token_Kind_CARET,
+	Token_Kind_AMPERSAND,
+	Token_Kind_ASTRICK,
+	Token_Kind_PLUS,
+	Token_Kind_MINUS,
+	Token_Kind_EQUALS,
+	Token_Kind_UNDERSCORE,
+	Token_Kind_PIPE,
+	Token_Kind_BACK_SLASH,
+	Token_Kind_NULL,
+	Token_Kind_LESS_THAN,
+	Token_Kind_GREATER_THAN,
+
+	Token_Kind_COMPARE_EQUALS,
+	Token_Kind_COMPARE_NOT_EQUALS,
+	Token_Kind_COMPARE_LESS_THAN_EQUALS,
+	Token_Kind_COMPARE_GREATER_THAN_EQUALS,
+	Token_Kind_LOGICAL_AND,
+	Token_Kind_LOGICAL_OR,
+	Token_Kind_LEFT_SHIFT,
+	Token_Kind_RIGHT_SHIFT,
+	Token_Kind_PLUS_PLUS,
+	Token_Kind_MINUS_MINUS,
+	Token_Kind_PLUS_EQUALS,
+	Token_Kind_MINUS_EQUALS,
+	Token_Kind_MUL_EQUALS,
+	Token_Kind_DIV_EQUALS,
+	Token_Kind_MOD_EQUALS,
+	Token_Kind_AND_EQUALS,
+	Token_Kind_OR_EQUALS,
+	Token_Kind_XOR_EQUALS,
+	Token_Kind_DASH_ARROW,
+	Token_Kind_EQUAL_ARROW,
+	Token_Kind_DOUBLE_COLON,
+
+	Token_Kind_DQ_STRING,
+	Token_Kind_SQ_STRING,
+
+	Token_Kind_REAL_LITERAL,
+	Token_Kind_INTEGER_LITERAL,
+
+	Token_Kind_IDENTIFIER,
+
+	Token_Kind_END_OF_STREAM
+};
+
+struct Token {
+	Token_Kind kind;
+	String     content;
+	ptrsize    row;
+	ptrsize    column;
+	Value      value;
+};
+
+enum Tokenization_Result {
+	Tokenization_Result_SUCCESS,
+	Tokenization_Result_ERROR_COMMENT_BLOCK_NO_END,
+	Tokenization_Result_ERROR_NO_MATCHING_PARENTHESIS
+};
+
+struct Tokenization_Status {
+	Tokenization_Result result;
+	ptrsize             row;
+	ptrsize             column;
+	s64                 offset;
+};
+
+Array_View<Token> tokenize(String string, Tokenization_Status *status);
+
+//
+//
+//
+
+void serialize_fmt_text(Ostream *out, String name, const Type_Info *info, char *data);
+void serialize_fmt_text_next(Ostream *out);
+
+struct Deserialize_Error_Info {
+	Token token;
+	Token_Kind expected;
+	char string[512];
+};
+struct Deserialize_State {
+	Token *start;
+	Token *end;
+	Token *current;
+	Deserialize_Error_Info error;
+};
+inline Deserialize_State deserialize_begin(Array_View<Token> &tokens) {
+	Deserialize_State state;
+	state.start = tokens.data;
+	state.current = state.start;
+	state.end = tokens.data + tokens.count;
+	memset(&state.error, 0, sizeof(state.error));
+	return state;
+}
+inline bool deserialize_end(Deserialize_State *state) {
+	return state->current == state->end;
+}
+bool deserialize_fmt_text(Deserialize_State *s, String name, const Type_Info *info, char *data);

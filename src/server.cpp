@@ -5,6 +5,7 @@
 
 #define SOCKET_BUFFER_SIZE kilo_bytes(1)
 
+
 const r32 TURN_SPEED = 0.01f;	// how fast player turns
 const r32 ACCELERATION = 0.01f;
 const r32 MAX_SPEED = 1.0f;
@@ -30,12 +31,7 @@ enum  Server_Message : u8
 	STATE 		// tell client game state
 };
 
-struct IP_Endpoint
-{
-	u32 address;
-	u16 port;
-};
-bool operator==(const IP_Endpoint& a, const IP_Endpoint& b) { return a.address == b.address && a.port == b.port; }
+bool operator==(const Ip_Endpoint& a, const Ip_Endpoint& b) { return a.address == b.address && a.port == b.port; }
 
 struct Player_State
 {
@@ -57,9 +53,7 @@ static s32 time_since(LARGE_INTEGER t, LARGE_INTEGER frequency)
 
 
 int system_main() {	
-	system_net_startup();
-
-	Socket_Address address = socket_address_local(9999);
+	Ip_Endpoint address = ip_endpoint_local(9999);
 	Socket socket = system_net_open_udp_server(address);
 
 
@@ -81,7 +75,7 @@ int system_main() {
 
 
 	u8 buffer[SOCKET_BUFFER_SIZE];
-	IP_Endpoint client_endpoints[MAX_CLIENTS];
+	Ip_Endpoint client_endpoints[MAX_CLIENTS];
 	r32 time_since_heard_from_clients[MAX_CLIENTS];
 	Player_State client_objects[MAX_CLIENTS];
 	Player_Input client_inputs[MAX_CLIENTS];
@@ -103,7 +97,7 @@ int system_main() {
 		LARGE_INTEGER tick_start_time;
 		QueryPerformanceCounter(&tick_start_time);
 
-		Socket_Address from;
+		Ip_Endpoint from;
 		int bytes_received = system_net_receive_from(socket, buffer, SOCKET_BUFFER_SIZE, &from);
 
 
@@ -115,7 +109,7 @@ int system_main() {
 			printf("sth received\n");
 		}
 
-		IP_Endpoint from_endpoint;
+		Ip_Endpoint from_endpoint;
 		from_endpoint.address = from.address;
 		from_endpoint.port = (from.address & 0xff000000) >> 24;
 
@@ -309,7 +303,7 @@ int system_main() {
 
 		// send back to clients
 		int flags = 0;
-		Socket_Address to;
+		Ip_Endpoint to;
 		//to.sin_family = AF_INET;
 		//to.sin_port = htons(9999);
 		//int to_length = sizeof(to);
@@ -348,4 +342,13 @@ int system_main() {
 	}
 
 	return 0;
+}
+
+Builder system_builder() {
+	Builder builder;
+	builder.allocator = system_create_heap_allocator();
+	builder.entry = system_main;
+	builder.temporary_buffer_size = mega_bytes(128);
+	builder.flags = Builder_NETWORK;
+	return builder;
 }

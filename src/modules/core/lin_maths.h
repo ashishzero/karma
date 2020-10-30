@@ -3,12 +3,7 @@
 
 #define to_radians(deg)			((deg) * (MATH_PI / 180.0f))
 #define to_degrees(rad)			((rad) * (180.0f / MATH_PI_INVERSE))
-#define sgn(n)					((r32)(0 < (n)) - (r32)((n) < 0))
-#define minimum(a, b)			(((a) < (b)) ? (a) : (b))
-#define maximum(a, b)			(((a) > (b)) ? (a) : (b))
-#define mmclamp(min, max, v)    minimum(max, maximum(min, v))
 #define real_equals(a, b, tol)	(fabsf((a) - (b)) < (tol))
-#define clamp01(v)				mmclamp(0.0f, 1.0f, v)
 
 inline r32 map(r32 from_x1, r32 from_x2, r32 to_x1, r32 to_x2, r32 x) {
 	return (to_x2 - to_x1) / (from_x2 - from_x1) * (x - from_x1) + to_x1;
@@ -418,7 +413,12 @@ r32 vec4_dot(Vec4 a, Vec4 b);
 //
 //
 
+r32 vec2_determinant(Vec2 a, Vec2 b);
+Vec3 vec2_cross(Vec2 a, Vec2 b);
 Vec3 vec3_cross(Vec3 a, Vec3 b);
+Vec2 vec2_triple_product(Vec2 a, Vec2 b, Vec2 c);
+Vec3 vec3_triple_product(Vec3 a, Vec3 b, Vec3 c);
+
 
 //
 //
@@ -469,6 +469,10 @@ r32 vec3_signed_angle_between_normalize(Vec3 a, Vec3 b, Vec3 n);
 //
 //
 
+inline bool vec2_null(Vec2 a) { return fabsf(a.x) < EPSILON_FLOAT && fabsf(a.y) < EPSILON_FLOAT; }
+inline bool vec3_null(Vec3 a) { return fabsf(a.x) < EPSILON_FLOAT && fabsf(a.y) < EPSILON_FLOAT && fabsf(a.z) < EPSILON_FLOAT; }
+inline bool vec4_null(Vec4 a) { return fabsf(a.x) < EPSILON_FLOAT && fabsf(a.y) < EPSILON_FLOAT && fabsf(a.z) < EPSILON_FLOAT && fabsf(a.w) < EPSILON_FLOAT; }
+
 bool vec2_equals(Vec2 a, Vec2 b, r32 tolerance = MATH_R32_EQUALS_DEFAULT_TOLERANCE);
 bool vec3_equals(Vec3 a, Vec3 b, r32 tolerance = MATH_R32_EQUALS_DEFAULT_TOLERANCE);
 bool vec4_equals(Vec4 a, Vec4 b, r32 tolerance = MATH_R32_EQUALS_DEFAULT_TOLERANCE);
@@ -477,11 +481,18 @@ bool vec4_equals(Vec4 a, Vec4 b, r32 tolerance = MATH_R32_EQUALS_DEFAULT_TOLERAN
 //
 //
 
+Mat2 mat2_identity();
+r32 mat2_det(const Mat2 &mat);
+Mat2 mat2_inverse(const Mat2 &mat);
+Mat2 mat2_transpose(const Mat2 &m);
+
 Mat3 mat3_identity();
+r32 mat3_det(const Mat3 &mat);
 Mat3 mat3_inverse(const Mat3 &mat);
 Mat3 mat3_transpose(const Mat3 &m);
 
 Mat4 mat4_identity();
+r32 mat4_det(const Mat4 &mat);
 Mat4 mat4_inverse(const Mat4 &mat);
 Mat4 mat4_transpose(const Mat4 &m);
 
@@ -489,11 +500,26 @@ Mat4 mat4_transpose(const Mat4 &m);
 //
 //
 
+Mat2 mat2_mul(const Mat2 &left, const Mat2 &right);
+Vec2 mat2_vec2_mul(const Mat2 &mat, Vec2 vec);
+
 Mat3 mat3_mul(const Mat3 &left, const Mat3 &right);
 Vec3 mat3_vec3_mul(const Mat3 &mat, Vec3 vec);
+Vec2 mat3_vec2_mul(const Mat3 &mat, Vec2 vec, r32 h = 1);
 
 Mat4 mat4_mul(const Mat4 &left, const Mat4 &right);
 Vec4 mat4_vec4_mul(const Mat4 &mat, Vec4 vec);
+
+inline Mat2 operator*(const Mat2 &a, const Mat2 &b) {
+	return mat2_mul(a, b);
+}
+inline Mat2 &operator*=(Mat2 &t, Mat2 &o) {
+	t = mat2_mul(t, o);
+	return t;
+}
+inline Vec2 operator*(const Mat2 &m, Vec2 v) {
+	return mat2_vec2_mul(m, v);
+}
 
 inline Mat3 operator*(const Mat3 &a, const Mat3 &b) {
 	return mat3_mul(a, b);
@@ -520,6 +546,11 @@ inline Vec4 operator*(const Mat4 &m, Vec4 v) {
 //
 //
 //
+
+Mat2 mat2_scalar(r32 x, r32 y);
+Mat2 mat2_scalar(Vec2 s);
+
+Mat2 mat2_rotation(r32 angle);
 
 Mat3 mat3_scalar(r32 S_1, r32 S_2);
 Mat3 mat3_scalar(Vec2 s);
@@ -619,6 +650,37 @@ Quat quat_between(Quat a, Quat b);
 Quat quat_lookat(Vec3 from, Vec3 to, Vec3 world_forward = WORLD_FORWARD);
 
 bool quat_equals(Quat a, Quat b, r32 tolerance = MATH_R32_EQUALS_DEFAULT_TOLERANCE);
+
+//
+//
+//
+
+inline Quad quad_from_points(Vec2 a, Vec2 b, Vec2 c, Vec2 d) {
+	Quad quad;
+	quad.positions[0] = a;
+	quad.positions[1] = b;
+	quad.positions[2] = c;
+	quad.positions[3] = d;
+
+	auto n1 = vec2_normalize(b - a);
+	auto n2 = vec2_normalize(c - b);
+	auto n3 = vec2_normalize(d - c);
+	auto n4 = vec2_normalize(a - d);
+
+	quad.normals[0] = vec2(-n1.y, n1.x);
+	quad.normals[1] = vec2(-n2.y, n2.x);
+	quad.normals[2] = vec2(-n3.y, n3.x);
+	quad.normals[3] = vec2(-n4.y, n4.x);
+
+	return quad;
+}
+
+inline Ray2d ray_from_points(Vec2 a, Vec2 b) {
+	Ray2d ray;
+	ray.origin	= a;
+	ray.dir		= vec2_normalize(b - a);
+	return ray;
+}
 
 //
 //
@@ -747,10 +809,476 @@ inline T integrate_rk4(const T &x, r32 t, r32 h, Function f) {
 //
 //
 
-bool point_inside_rect(Vec2 point, Mm_Rect rect);
-bool aabb_vs_aabb(const Mm_Rect &a, const Mm_Rect &b);
+//
+// TODO: Testing all of these functions
+//
 
-bool quad_vs_quad_sat(Quad &a, Quad &qb);
+r32 signed_area(Vec2 a, Vec2 b, Vec2 c);
+r32 signed_area(Vec3 a, Vec3 b, Vec3 c);
+bool triangle_is_cw(Vec2 a, Vec2 b, Vec2 c);
+Vec2 corner_point(const Mm_Rect &b, u32 n); // n=00,01,10,11 for 4 different corners
 
-bool ray_vs_aabb(Vec2 origin, Vec2 direction, const Mm_Rect &rect, Ray_Hit *hit);
-bool ray_vs_line(Vec2 p1, Vec2 q1, Vec2 p2, Vec2 q2, Ray_Hit *t);
+r32 point_to_segment_length2(Vec2 p, Vec2 a, Vec2 b);
+r32 point_to_mm_rect_length2(Vec2 p, const Mm_Rect &rect);
+r32 point_to_aabb2d_length2(Vec2 p, const Aabb2d &aabb);
+
+Vec2 nearest_point_point_segment(Vec2 p, Vec2 a, Vec2 b, r32 *t);
+Vec2 nearest_point_point_segment(Vec2 p, Vec2 a, Vec2 b);
+Vec2 nearest_point_origin_segment(Vec2 a, Vec2 b, r32 *t);
+Vec2 nearest_point_origin_segment(Vec2 a, Vec2 b);
+Vec2 nearest_point_point_mm_rect(Vec2 a, const Mm_Rect &rect);
+Vec2 nearest_point_origin_mm_rect(const Mm_Rect &rect);
+Vec2 nearest_point_point_aabb2d(Vec2 a, const Aabb2d &aabb);
+Vec2 nearest_point_point_aabb2d(const Aabb2d &aabb);
+Vec2 nearest_point_point_triangle(Vec2 p, Vec2 a, Vec2 b, Vec2 c);
+Vec2 nearest_point_origin_triangle(Vec2 a, Vec2 b, Vec2 c);
+
+r32 nearest_point_segment_segment(Vec2 p1, Vec2 q1, Vec2 p2, Vec2 q2, r32 *s, r32 *t, Vec2 *c1, Vec2 *c2);
+
+Vec3 barycentric(Vec2 a, Vec2 b, Vec2 c, Vec2 p);
+Vec3 barycentric(Vec3 a, Vec3 b, Vec3 c, Vec3 p);
+
+bool is_quad_convex(Vec2 a, Vec2 b, Vec2 c, Vec2 d);
+bool is_quad_convex(Vec3 a, Vec3 b, Vec3 c, Vec3 d);
+
+Mm_Rect enclosing_mm_rect_mm_rect(const Mm_Rect &a0, const Mm_Rect &a1);
+Circle enclosing_circle_circle(const Circle &c0, const Circle &c1);
+Mm_Rect enclosing_mm_rect_circle(const Mm_Rect &r, const Circle &c);
+
+s32 point_farthest_from_edge(Vec2 a, Vec2 b, Vec2 *p, s32 n);
+void extreme_points_alone_direction(Vec2 dir, Vec2 *pt, s32 n, s32 *min_index, s32 *max_index);
+void most_seperated_points_on_aabb(Vec2 *pt, s32 n, s32 *min, s32 *max);
+Circle circle_from_distant_points(Vec2 *pt, s32 n);
+r32 min_area_rect(Vec2 *pt, s32 num_pts, Vec2 *center, Vec2 u[2]);
+
+Mm_Rect transform_mmrect(const Mm_Rect &a, const Mat2 &mat, Vec2 t);
+Mm_Rect transform_mmrect(const Mm_Rect &a, r32 rot, Vec2 t);
+Aabb2d update_aabb(const Aabb2d &a, const Mat2 &mat, Vec2 t);
+Aabb2d update_aabb(const Aabb2d &a, r32 rot, Vec2 t);
+
+bool test_point_inside_rect(Vec2 point, const Mm_Rect &rect);
+bool test_point_inside_aabb(Vec2 point, const Aabb2d &aabb);
+bool test_point_inside_circle(Vec2 p, const Circle &c);
+bool test_point_inside_capsule(Vec2 p, const Capsule &c);
+bool test_point_inside_triangle(Vec2 p, Vec2 a, Vec2 b, Vec2 c);
+bool test_origin_inside_triangle(Vec2 a, Vec2 b, Vec2 c);
+bool test_point_inside_convex_polygon(Vec2 p, Vec2 *v, s32 n);
+
+bool test_mmrect_vs_mmrect(const Mm_Rect &a, const Mm_Rect &b);
+bool test_aabb_vs_aabb(const Aabb2d &a, const Aabb2d &b);
+bool test_circle_vs_circle(const Circle &a, const Circle &b);
+bool test_quad_vs_quad(const Quad &a, const Quad &b);
+bool test_circle_vs_capsule(const Circle& circle, const Capsule& capsule);
+bool test_segment_vs_circle(Vec2 a, Vec2 b, const Circle &c);
+bool test_circle_vs_aabb(const Circle &c, const Aabb2d &b);
+bool test_ray_vs_circle(const Ray2d &ray, const Circle &circle);
+bool test_segment_vs_mm_rect(Vec2 p0, Vec2 p1, const Mm_Rect &rect);
+
+bool segment_vs_segment(Vec2 a, Vec2 b, Vec2 c, Vec2 d, r32 *t, Vec2 *p);
+bool circle_vs_aabb(const Circle &c, Aabb2d &b, Vec2 *p);
+bool circle_vs_triangle(const Circle &circle, Vec2 a, Vec2 b, Vec2 c, Vec2 *p);
+
+bool intersect_segment_ray(Vec2 p1, Vec2 p2, Vec2 q1, Vec2 q2, r32 *t, Vec2 *p);
+bool intersect_segment_ray(Vec2 p1, Vec2 q1, const Ray2d &ray, r32 *t, Vec2 *p);
+bool intersect_ray_ray(Vec2 p1, Vec2 q1, Vec2 p2, Vec2 q2, r32 *t, r32 *u, Vec2 *p);
+bool intersect_ray_ray(Vec2 p1, Vec2 q1, const Ray2d &b, r32 *t, r32 *u, Vec2 *p);
+bool intersect_ray_ray(const Ray2d &a, const Ray2d &b, r32 *t, r32 *u, Vec2 *p);
+bool intersect_segment_segment(Vec2 p1, Vec2 q1, Vec2 p2, Vec2 q2, r32 *t, r32 *u, Vec2 *p);
+bool intersect_circle_ray(const Circle &circle, const Ray2d &ray, r32 *t, Vec2 *p); // |ray.dir|=1
+bool intersect_circle_segment(const Circle &circle, Vec2 p, Vec2 q, r32 *t);
+bool intersect_mm_rect_ray(const Ray2d &ray, const Mm_Rect &rect, r32 *tmin, Vec2 *q);
+bool intersect_mm_rect_segment(Vec2 a, Vec2 b, const Mm_Rect &rect, r32 *tmin, Vec2 *q);
+
+bool dynamic_circle_vs_circle(const Circle &c0, const Circle &c1, Vec2 v0, Vec2 v1, r32 *t);
+bool dynamic_circle_vs_mm_rect(const Circle &c, Vec2 d, const Mm_Rect &b, r32 *t);
+bool dynamic_mm_rect_vs_mm_rect(const Mm_Rect &a, const Mm_Rect &b, Vec2 va, Vec2 vb, r32 *tfirst, r32 *tlast);
+
+Vec2 support(const Circle &c, Vec2 dir);
+Vec2 support(const Mm_Rect &m, Vec2 dir);
+Vec2 support(const Polygon &p, Vec2 dir);
+Vec2 support(const Capsule &c, Vec2 dir);
+
+Vec2 support(const Circle &a, const Circle &b, Vec2 dir);
+Vec2 support(const Circle &a, const Capsule &b, Vec2 dir);
+Vec2 support(const Capsule &a, const Circle &b, Vec2 dir);
+Vec2 support(const Capsule &a, const Capsule &b, Vec2 dir);
+Vec2 support(const Mm_Rect &a, const Mm_Rect &b, Vec2 dir);
+
+template <typename ShapeA, typename ShapeB>
+inline Vec2 support(const ShapeA &a, const ShapeB &b, Vec2 dir) {
+	return support(a, dir) - support(b, -dir);
+}
+
+template <typename ShapeA, typename ShapeB>
+inline Vec2 support(const ShapeA &a, const ShapeB &b, Vec2 dir, Vec2 dp) {
+	Vec2 s = support(a, b, dir);
+	if (vec2_dot(dp, dir) <= 0.0f)
+		s -= dp;
+	return s;
+}
+
+template <typename ShapeA, typename ShapeB>
+inline Vec2 support(const ShapeA &a, const ShapeB &b, Vec2 dir, const Mat3 &ta, const Mat3 &tb, const Mat2 &tdira, const Mat2 &tdirb) {
+	Vec2 p = support(a, mat2_vec2_mul(tdira, dir));
+	p = mat3_vec2_mul(ta, p);
+
+	Vec2 q = support(b, mat2_vec2_mul(tdirb, -dir));
+	q = mat3_vec2_mul(tb, q);
+
+	return p - q;
+}
+
+template <typename ShapeA, typename ShapeB>
+inline Vec2 support(const ShapeA &a, const ShapeB &b, Vec2 dir, const Mat3 &ta, const Mat3 &tb, const Mat2 &tdira, const Mat2 &tdirb, Vec2 dp) {
+	Vec2 s = support(a, b, dir, ta, tb, tdira, tdirb);
+	if (vec2_dot(dp, dir) < 0.0f)
+		s -= dp;
+	return s;
+}
+
+struct Support_Ex {
+	Vec2 a;
+	Vec2 b;
+	Vec2 p;
+};
+
+template <typename ShapeA, typename ShapeB>
+inline Support_Ex support_ex(const ShapeA &a, const ShapeB &b, Vec2 dir, const Mat3 &ta, const Mat3 &tb, const Mat2 &tdira, const Mat2 &tdirb, Vec2 dp) {
+	Support_Ex s;
+	s.a = support(a, mat2_vec2_mul(tdira, dir));
+	s.a = mat3_vec2_mul(ta, s.a);
+
+	s.b = support(b, mat2_vec2_mul(tdirb, -dir));
+	s.b = mat3_vec2_mul(tb, s.b);
+
+	if (vec2_dot(dp, dir) < 0.0f)
+		s.b += dp;
+
+	s.p = s.a - s.b;
+	return s;
+}
+
+bool next_simplex(Vec2 *simplex, Vec2 *dir, u32 *n);
+Nearest_Edge nearest_edge_origin_polygon(const Vec2 *vertices, u32 vertex_count);
+
+bool next_simplex_ex(Support_Ex *simplex, Vec2 *dir, u32 *n);
+Nearest_Edge_Ex nearest_edge_origin_polygon_ex(const Support_Ex *vertices, u32 vertex_count);
+
+template <typename ShapeA, typename ShapeB, typename ...Args>
+bool gjk(const ShapeA &sa, const ShapeB &sb, const Args & ...args) {
+	Vec2 simplex[3];
+
+	Vec2 dir = vec2(0, 1);
+	simplex[0] = support(sa, sb, dir, args...);
+	dir = -simplex[0];
+	u32 n = 1;
+
+	Vec2 a;
+	while (true) {
+		if (vec2_null(dir)) return true;
+		a = support(sa, sb, dir, args...);
+		if (vec2_dot(a, dir) < 0.0f) return false; // no intersection
+		simplex[n] = a;
+		n += 1;
+
+		if (next_simplex(simplex, &dir, &n)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+constexpr r32 EPA_TOLERANCE = 0.00001f;
+
+struct Epa_Result {
+	Nearest_Edge_Ex nearest_edge;
+	r32				distance_from_origin;
+};
+
+template <typename ShapeA, typename ShapeB, typename ...Args>
+Epa_Result perform_epa(Support_Ex *simplex, u32 vertex_count, u32 allocated, const ShapeA &sa, const ShapeB &sb, const Args &...args) {
+	Epa_Result result;
+
+	Support_Ex s;
+	while (true) {
+		result.nearest_edge = nearest_edge_origin_polygon_ex(simplex, vertex_count);
+
+		s = support_ex(sa, sb, result.nearest_edge.normal, args...);
+
+		r32 d = vec2_dot(s.p, result.nearest_edge.normal);
+		if (d - result.nearest_edge.distance < EPA_TOLERANCE) {
+			result.distance_from_origin = d;
+			break;
+		} else {
+			if (vertex_count == allocated) {
+				allocated *= 2;
+				simplex = (Support_Ex *)treallocate(simplex, sizeof(Support_Ex) * allocated);
+			}
+
+			memmove(simplex + result.nearest_edge.b_index + 1, simplex + result.nearest_edge.b_index, sizeof(Support_Ex) * (vertex_count - result.nearest_edge.b_index));
+			simplex[result.nearest_edge.b_index] = s;
+			vertex_count += 1;
+		}
+	}
+
+	return result;
+}
+
+template <typename ShapeA, typename ShapeB, typename ...Args>
+void perform_gjk_nearest_points(Support_Ex *simplex, const ShapeA &sa, const ShapeB &sb, Nearest_Points *nearest_points, const Args &...args) {
+	Support_Ex c;
+	Vec2 p1, p2;
+
+	Vec2 d = nearest_point_origin_segment(simplex[0].p, simplex[1].p);
+	r32 dist = vec2_dot(d, d);
+	r32 min_dist = dist;
+
+	while (true) {
+		c = support_ex(sa, sb, -d, args...);
+
+		if (vec2_null(c.p - simplex[0].p) || vec2_null(c.p - simplex[1].p))
+			break;
+		
+		p1 = nearest_point_origin_segment(c.p, simplex[0].p);
+		p2 = nearest_point_origin_segment(c.p, simplex[1].p);
+
+		r32 p1_dist = vec2_dot(p1, p1);
+		r32 p2_dist = vec2_dot(p2, p2);
+
+		if (p1_dist < p2_dist) {
+			d = p1;
+			dist = p1_dist;
+			simplex[1] = c;
+		} else {
+			d = p2;
+			dist = p2_dist;
+			simplex[0] = c;
+		}
+
+		if (min_dist - dist < EPA_TOLERANCE)
+			break;
+		min_dist = dist;
+	}
+
+	r32 tx, ty;
+	tx = simplex[1].p.x - simplex[0].p.x;
+	ty = simplex[1].p.y - simplex[0].p.y;
+
+	if (fabsf(tx) > EPSILON_FLOAT) {
+		tx = (d.x - simplex[0].p.x) / tx;
+	}
+	else {
+		tx = 0;
+	}
+
+	if (fabsf(ty) > EPSILON_FLOAT) {
+		ty = (d.y - simplex[0].p.y) / ty;
+	}
+	else {
+		ty = 0;
+	}
+
+	nearest_points->a.x = simplex[0].a.x + tx * (simplex[1].a.x - simplex[0].a.x);
+	nearest_points->a.y = simplex[0].a.y + ty * (simplex[1].a.y - simplex[0].a.y);
+	nearest_points->b.x = simplex[0].b.x + tx * (simplex[1].b.x - simplex[0].b.x);
+	nearest_points->b.y = simplex[0].b.y + ty * (simplex[1].b.y - simplex[0].b.y);
+	nearest_points->distance = sqrtf(dist);
+}
+
+template <typename ShapeA, typename ShapeB, typename ...Args>
+void gjk_nearest_points(const ShapeA &sa, const ShapeB &sb, Nearest_Points *nearest_points, const Args &...args) {
+	Support_Ex simplex[2];
+
+	Vec2 dir = vec2(1, 1);
+	simplex[0] = support_ex(sa, sb,  dir, args...);
+	simplex[1] = support_ex(sa, sb, -dir, args...);
+
+	perform_gjk_nearest_points(simplex, sa, sb, nearest_points, args...);
+}
+
+template <typename ShapeA, typename ShapeB, typename ...Args>
+bool gjk_epa_nearest_points(const ShapeA &sa, const ShapeB &sb, Nearest_Points *nearest_points, const Args &...args) {
+	u32 allocated = 8;
+	Support_Ex *simplex = (Support_Ex *)tallocate(sizeof(Support_Ex) * allocated);
+	u32 vertex_count = 1;
+
+	Vec2 dir = vec2(1, 1);
+	simplex[0] = support_ex(sa, sb, dir, args...);
+	dir = -simplex[0].p;
+
+	bool collided = false;
+
+	Support_Ex s;
+	while (true) {
+		if (vec2_null(dir)) {
+			collided = true;
+			break;
+		}
+		s = support_ex(sa, sb, dir, args...);
+		if (vec2_dot(s.p, dir) < 0.0f) break; // no intersection
+		simplex[vertex_count] = s;
+		vertex_count += 1;
+
+		if (next_simplex_ex(simplex, &dir, &vertex_count)) {
+			collided = true;
+			break;
+		}
+	}
+
+	if (collided) {
+		Vec2 directions[] = {
+			{ -1, 1 }, { 0, -1 }, { 1, 0 }, { -1, 0 }, { 1, -1 }, { 0, 1 }, { -1, -1 }
+		};
+
+		// Check for degenerate polygon that is reduced to line
+		if (vertex_count == 3) {
+			if (vec2_null(simplex[2].p - simplex[0].p) || vec2_null(simplex[2].p - simplex[1].p)) {
+				vertex_count -= 1;
+			}
+			if (vec2_null(simplex[0].p - simplex[1].p)) {
+				simplex[1] = simplex[2];
+				vertex_count -= 1;
+			}
+		}
+
+		// Check for degenerate polygon that is reduced to point
+		if (vertex_count == 2) {
+			if (vec2_null(simplex[0].p - simplex[1].p)) {
+				vertex_count -= 1;
+			}
+		}
+
+		// Make 2 points for EPA
+		if (vertex_count == 1) {
+			for (u32 index = 0; index < static_count(directions); ++index) {
+				simplex[1] = support_ex(sa, sb, directions[index], args...);
+				if (!vec2_null(simplex[0].p - simplex[1].p)) break;
+			}
+			assert(!vec2_null(simplex[0].p - simplex[1].p));
+			vertex_count += 1;
+		}
+
+		Epa_Result e = perform_epa(simplex, vertex_count, allocated, sa, sb, args...);
+
+		Support_Ex &s0 = simplex[e.nearest_edge.a_index];
+		Support_Ex &s1 = simplex[e.nearest_edge.b_index];
+
+		Vec2 closest_point = e.distance_from_origin * e.nearest_edge.normal;
+
+		r32 tx, ty;
+		tx = s1.p.x - s0.p.x;
+		ty = s1.p.y - s0.p.y;
+
+		if (fabsf(tx) > EPSILON_FLOAT) {
+			tx = (closest_point.x - s0.p.x) / tx;
+		}
+		else {
+			tx = 0;
+		}
+
+		if (fabsf(ty) > EPSILON_FLOAT) {
+			ty = (closest_point.y - s0.p.y) / ty;
+		}
+		else {
+			ty = 0;
+		}
+
+		nearest_points->a.x = s0.a.x + tx * (s1.a.x - s0.a.x);
+		nearest_points->a.y = s0.a.y + ty * (s1.a.y - s0.a.y);
+		nearest_points->b.x = s0.b.x + tx * (s1.b.x - s0.b.x);
+		nearest_points->b.y = s0.b.y + ty * (s1.b.y - s0.b.y);
+		nearest_points->distance = e.distance_from_origin;
+	} else {
+		if (vertex_count == 1) {
+			simplex[1] = support_ex(sa, sb, vec2(-1, -1), args...);
+		}
+		perform_gjk_nearest_points(simplex, sa, sb, nearest_points, args...);
+	}
+
+	return collided;
+}
+
+template <typename ShapeA, typename ShapeB, typename ...Args>
+bool gjk_epa(const ShapeA &sa, const ShapeB &sb, Contact_Manifold *manifold, const Args &...args) {
+	u32 allocated = 8;
+	Support_Ex *simplex = (Support_Ex *)tallocate(sizeof(Support_Ex) * allocated);
+	u32 vertex_count = 1;
+
+	Vec2 dir = vec2(1, 1);
+	simplex[0] = support_ex(sa, sb, dir, args...);
+	dir = -simplex[0].p;
+
+	Support_Ex s;
+	while (true) {
+		if (vec2_null(dir)) break;
+		s = support_ex(sa, sb, dir, args...);
+		if (vec2_dot(s.p, dir) < 0.0f) return false; // no intersection
+		simplex[vertex_count] = s;
+		vertex_count += 1;
+
+		if (next_simplex_ex(simplex, &dir, &vertex_count)) {
+			break;
+		}
+	}
+
+	Vec2 directions[] = {
+		{ -1, 1 }, { 0, -1 }, { 1, 0 }, { -1, 0 }, { 1, -1 }, { 0, 1 }, { -1, -1 }
+	};
+
+	// Check for degenerate polygon that is reduced to line
+	if (vertex_count == 3) {
+		if (vec2_null(simplex[2].p - simplex[0].p) || vec2_null(simplex[2].p - simplex[1].p)) {
+			vertex_count -= 1;
+		}
+		if (vec2_null(simplex[0].p - simplex[1].p)) {
+			simplex[1] = simplex[2];
+			vertex_count -= 1;
+		}
+	}
+
+	// Make 2 points for EPA
+	if (vertex_count == 1) {
+		for (u32 index = 0; index < static_count(directions); ++index) {
+			simplex[1] = support_ex(sa, sb, directions[index], args...);
+			if (!vec2_null(simplex[0].p - simplex[1].p)) break;
+		}
+		assert(!vec2_null(simplex[0].p - simplex[1].p));
+		vertex_count += 1;
+	}
+
+	Epa_Result e = perform_epa(simplex, vertex_count, allocated, sa, sb, args...);
+
+	Support_Ex &s0 = simplex[e.nearest_edge.a_index];
+	Support_Ex &s1 = simplex[e.nearest_edge.b_index];
+
+	Vec2 closest_point = e.distance_from_origin * e.nearest_edge.normal;
+
+	r32 tx, ty;
+	tx = s1.p.x - s0.p.x;
+	ty = s1.p.y - s0.p.y;
+
+	if (fabsf(tx) > EPSILON_FLOAT) {
+		tx = (closest_point.x - s0.p.x) / tx;
+	}
+	else {
+		tx = 0;
+	}
+
+	if (fabsf(ty) > EPSILON_FLOAT) {
+		ty = (closest_point.y - s0.p.y) / ty;
+	}
+	else {
+		ty = 0;
+	}
+
+	manifold->normal = e.nearest_edge.normal;
+	manifold->tangent = vec2(-e.nearest_edge.normal.y, e.nearest_edge.normal.x);
+	manifold->contacts[0].x = s0.a.x + tx * (s1.a.x - s0.a.x);
+	manifold->contacts[0].y = s0.a.y + ty * (s1.a.y - s0.a.y);
+	manifold->contacts[1].x = s0.b.x + tx * (s1.b.x - s0.b.x);
+	manifold->contacts[1].y = s0.b.y + ty * (s1.b.y - s0.b.y);
+	manifold->penetration = e.distance_from_origin;
+
+	return true;
+}

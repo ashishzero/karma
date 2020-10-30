@@ -40,9 +40,7 @@ static s32 time_since(LARGE_INTEGER t, LARGE_INTEGER frequency)
 
 
 int karma_user_shankar() {
-	system_net_startup();
-
-	Socket_Address to = socket_address_local(9999);
+	Ip_Endpoint to = ip_endpoint_local(9999);
 
 	auto socket = system_net_open_udp_client();
 
@@ -96,11 +94,13 @@ int karma_user_shankar() {
 		LARGE_INTEGER tick_start_time;
 		QueryPerformanceCounter(&tick_start_time);
 
-			Socket_Address from;
+
+			Ip_Endpoint from;
 			int bytes_received = 1;
 
 			while (bytes_received) {
 				 bytes_received = system_net_receive_from(socket, buffer, SOCKET_BUFFER_SIZE, &from);
+
 
 				if (bytes_received < 0) {
 					//system_trace("Failed to receive data");
