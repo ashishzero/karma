@@ -86,10 +86,10 @@ Player *scene_add_player(Scene *scene) {
 	return player;
 }
 
-Static_Body *scene_add_static_body(Scene *scene) {
-	Static_Body *body = array_add(&scene->by_type.static_body);
-	body->type = Entity_Type_Static_Body;
-	return body;
+Obstacle *scene_add_obstacle(Scene *scene) {
+	Obstacle *obstacle = array_add(&scene->by_type.obstacle);
+	obstacle->type = Entity_Type_Obstacle;
+	return obstacle;
 }
 
 Rigid_Body *iscene_create_rigid_body(Scene *scene, Entity_Id entity_id, const Rigid_Body_Info &info) {
@@ -135,11 +135,11 @@ Entity *scene_create_new_entity(Scene *scene, Entity_Type type, const Entity_Inf
 			entity = player;
 		} break;
 
-		case Entity_Type_Static_Body: {
-			auto body = (Static_Body *)scene_add_static_body(scene);
-			body->color = vec4(1);
-			body->rigid_body = iscene_create_rigid_body(scene, id, info.rigid_body);
-			entity = body;
+		case Entity_Type_Obstacle: {
+			auto obstacle = (Obstacle *)scene_add_obstacle(scene);
+			obstacle->color = vec4(1);
+			obstacle->rigid_body = iscene_create_rigid_body(scene, id, info.rigid_body);
+			entity = obstacle;
 		} break;
 	}
 

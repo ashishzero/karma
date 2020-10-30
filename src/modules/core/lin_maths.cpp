@@ -2879,24 +2879,130 @@ bool next_simplex(Vec2 *simplex, Vec2 *dir, u32 *n) {
 	return false;
 }
 
-Nearest_Edge2d closest_edge_origin_polygon(const Polygon &polygon) {
-	Nearest_Edge2d edge;
+Nearest_Edge closest_edge_origin_polygon(const Vec2 *vertices, u32 vertex_count) {
+	Nearest_Edge edge;
 	edge.distance = MAX_FLOAT;
 
-	for (u32 p_index = 0; p_index < polygon.vertex_count; ++p_index) {
-		u32 q_index = ((p_index + 1) == polygon.vertex_count) ? 0 : p_index + 1;
-		
-		auto a = polygon.vertices[p_index];
-		auto b = polygon.vertices[q_index];
+	for (u32 p_index = 0; p_index < vertex_count; p_index += 1) {
+		u32 q_index = ((p_index + 1) == vertex_count) ? 0 : p_index + 1;
+
+		auto a = vertices[p_index];
+		auto b = vertices[q_index];
 		auto e = b - a;
 
 		Vec2 n = vec2_normalize_check(vec2_triple_product(e, a, e));
-		
+
 		r32 d = vec2_dot(n, a);
 		if (d < edge.distance) {
 			edge.normal = n;
 			edge.distance = d;
 			edge.index = q_index;
+		}
+	}
+
+	return edge;
+}
+
+bool next_simplex_ex(Support_Ex *simplex, Vec2 *dir, u32 *n) {
+	switch (*n) {
+	case 2: {
+		// a = simplex[1]
+		// b = simplex[0]
+		Vec2 ab = simplex[0].p - simplex[1].p;
+		Vec2 ao = -simplex[1].p;
+		if (vec2_dot(ao, ab) > 0.0f) {
+			r32 det = vec2_determinant(simplex[1].p, simplex[0].p);
+			dir->x = -ab.y * det;
+			dir->y = ab.x * det;
+		}
+		else {
+			*dir = ao;
+			simplex[0] = simplex[1];
+			*n = 1;
+		}
+	} break;
+
+	case 3: {
+		// a = simplex[2]
+		// b = simplex[1]
+		// c = simplex[0]
+		Vec2 ab = simplex[1].p - simplex[2].p;
+		Vec2 ac = simplex[0].p - simplex[2].p;
+		Vec2 ao = -simplex[2].p;
+		r32 abc = vec2_determinant(ab, ac);
+
+		if (vec2_dot(vec2(-ac.y * abc, ac.x * abc), ao) > 0.0f) {
+			if (vec2_dot(ac, ao) > 0.0f) {
+				r32 det = vec2_determinant(simplex[2].p, simplex[0].p);
+				dir->x = -ac.y * det;
+				dir->y = ac.x * det;
+
+				simplex[1] = simplex[0];
+				simplex[0] = simplex[2];
+
+				*n = 2;
+			}
+			else {
+				if (vec2_dot(ab, ao) > 0.0f) {
+					r32 det = vec2_determinant(simplex[2].p, simplex[1].p);
+					dir->x = -ab.y * det;
+					dir->y = ab.x * det;
+					simplex[0] = simplex[2];
+					*n = 2;
+				}
+				else {
+					*dir = -simplex[2].p;
+					simplex[0] = simplex[2];
+					*n = 1;
+				}
+			}
+		}
+		else {
+			if (vec2_dot(vec2(ab.y * abc, -ab.x * abc), ao) > 0.0f) {
+				if (vec2_dot(ab, ao) > 0.0f) {
+					r32 det = vec2_determinant(simplex[2].p, simplex[1].p);
+					dir->x = -ab.y * det;
+					dir->y = ab.x * det;
+					simplex[0] = simplex[2];
+					*n = 2;
+				} else {
+					*dir = -simplex[2].p;
+					simplex[0] = simplex[2];
+					*n = 1;
+				}
+			}
+			else {
+				// point is inside the triangle
+				return true;
+			}
+		}
+	} break;
+
+		invalid_default_case();
+	}
+
+	return false;
+}
+
+Nearest_Edge_Ex closest_edge_origin_polygon_ex(const Support_Ex *vertices, u32 vertex_count) {
+	Nearest_Edge_Ex edge;
+	edge.distance = MAX_FLOAT;
+
+	for (u32 p_index = 0; p_index < vertex_count; p_index += 1) {
+		u32 q_index = ((p_index + 1) == vertex_count) ? 0 : p_index + 1;
+
+		auto a = vertices[p_index].p;
+		auto b = vertices[q_index].p;
+		auto e = b - a;
+
+		Vec2 n = vec2_normalize_check(vec2_triple_product(e, a, e));
+
+		r32 d = vec2_dot(n, a);
+		if (d < edge.distance) {
+			edge.normal = n;
+			edge.distance = d;
+			edge.a_index = p_index;
+			edge.b_index = q_index;
 		}
 	}
 

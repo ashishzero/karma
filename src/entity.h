@@ -49,7 +49,7 @@ enum Entity_Type {
 	Entity_Type_Null,
 	Entity_Type_Camera,
 	Entity_Type_Player,
-	Entity_Type_Static_Body, // TODO: Rename this properly
+	Entity_Type_Obstacle,
 
 	Entity_Type_Count
 };
@@ -71,7 +71,7 @@ struct Player : public Entity {
 	attribute(no_serialize)				Rigid_Body *rigid_body;
 };
 
-struct Static_Body : public Entity {
+struct Obstacle : public Entity {
 	attribute(color)		Vec4 color;
 	attribute(no_serialize) Rigid_Body *rigid_body;
 };

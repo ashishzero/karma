@@ -453,13 +453,22 @@ struct Polygon {
 	Vec2 vertices[3];
 };
 
-struct Nearest_Edge2d {
+struct Nearest_Edge {
 	Vec2 normal;
 	r32 distance;
-	s32 index;
+	u32 index;
 };
 
-struct Collision_Manifold {
+struct Nearest_Edge_Ex {
 	Vec2 normal;
+	r32 distance;
+	u32 a_index;
+	u32 b_index;
+};
+
+struct Contact_Manifold {
+	Vec2 normal;
+	Vec2 tangent;
+	Vec2 contacts[2];
 	r32 penetration;
 };

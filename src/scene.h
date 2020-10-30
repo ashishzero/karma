@@ -16,7 +16,7 @@ using Rigid_Body_List = Circular_Linked_List<Rigid_Body>;
 
 struct Entity_By_Type {
 	Array<Player>		player;
-	Array<Static_Body>	static_body;
+	Array<Obstacle>		obstacle;
 };
 
 struct Scene {
@@ -41,7 +41,7 @@ Resource_Id scene_create_new_resource_fixture(Scene *scene, Fixture *fixtures, u
 bool scene_delete_resource_fixture(Scene *scene, Resource_Id id);
 
 Player *scene_add_player(Scene *scene);
-Static_Body *scene_add_static_body(Scene *scene);
+Obstacle *scene_add_obstacle(Scene *scene);
 
 inline Fixture *rigid_body_get_fixture(Rigid_Body *rigid_body, u32 index) {
 	assert(index < rigid_body->fixture_count);

@@ -288,8 +288,8 @@ void editor_entity(Entity *entity) {
 			editor_draw(*(Player *)entity);
 		} break;
 
-		case Entity_Type_Static_Body: {
-			editor_draw(*(Static_Body *)entity);
+		case Entity_Type_Obstacle: {
+			editor_draw(*(Obstacle *)entity);
 		} break;
 	}	
 

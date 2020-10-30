@@ -19,15 +19,15 @@ struct Player_Controller {
 	r32 x, y;
 };
 
-typedef bool(*Collision_Resolver)(Fixture &a, Fixture &b, const Mat3 &ta, const Mat3 &tb, const Mat2 &tdira, const Mat2 &tdirb, Vec2 dp, Collision_Manifold *manifold);
+typedef bool(*Collision_Resolver)(Fixture &a, Fixture &b, const Mat3 &ta, const Mat3 &tb, const Mat2 &tdira, const Mat2 &tdirb, Vec2 dp, Contact_Manifold *manifold);
 static Collision_Resolver COLLISION_RESOLVERS[Fixture_Shape_Count][Fixture_Shape_Count];
 
-bool null_collision_resolver(Fixture &a, Fixture &b, const Mat3 &ta, const Mat3 &tb, const Mat2 &tdira, const Mat2 &tdirb, Vec2 dp, Collision_Manifold *manifold) {
+bool null_collision_resolver(Fixture &a, Fixture &b, const Mat3 &ta, const Mat3 &tb, const Mat2 &tdira, const Mat2 &tdirb, Vec2 dp, Contact_Manifold *manifold) {
 	return false;
 }
 
 template <typename ShapeA, typename ShapeB>
-bool shapes_collision_resolver(Fixture &a, Fixture &b, const Mat3 &ta, const Mat3 &tb, const Mat2 &tdira, const Mat2 &tdirb, Vec2 dp, Collision_Manifold *manifold) {
+bool shapes_collision_resolver(Fixture &a, Fixture &b, const Mat3 &ta, const Mat3 &tb, const Mat2 &tdira, const Mat2 &tdirb, Vec2 dp, Contact_Manifold *manifold) {
 	return gjk_epa(*(ShapeA *)a.handle, *(ShapeB *)b.handle, manifold, ta, tb, tdira, tdirb, dp);
 }
 
@@ -63,7 +63,7 @@ void collision_resover_init() {
 	COLLISION_RESOLVERS[Fixture_Shape_Polygon][Fixture_Shape_Polygon] = shapes_collision_resolver<Polygon, Polygon>;
 }
 
-bool collider_vs_collider_dynamic(Fixture &a, Fixture &b, const Mat3 &ta, const Mat3 &tb, Vec2 dp, Collision_Manifold *manifold) {
+bool collider_vs_collider_dynamic(Fixture &a, Fixture &b, const Mat3 &ta, const Mat3 &tb, Vec2 dp, Contact_Manifold *manifold) {
 	Mat2 tdira, tdirb;
 	tdira.rows[0] = vec2(ta.m2[0][0], ta.m2[1][0]);
 	tdira.rows[1] = vec2(ta.m2[0][1], ta.m2[1][1]);
@@ -177,7 +177,7 @@ int karma_user_zero() {
 			info.position = vec2(-5.6f, 0.4f);
 			info.rigid_body.xform = mat3_translation(info.position);
 			info.rigid_body.fixture_id = id;
-			scene_create_new_entity(scene, Entity_Type_Static_Body, info);
+			scene_create_new_entity(scene, Entity_Type_Obstacle, info);
 		}
 
 		{
@@ -191,7 +191,7 @@ int karma_user_zero() {
 			info.position = vec2(1);
 			info.rigid_body.xform = mat3_translation(info.position);
 			info.rigid_body.fixture_id = id;
-			scene_create_new_entity(scene, Entity_Type_Static_Body, info);
+			scene_create_new_entity(scene, Entity_Type_Obstacle, info);
 		}
 
 		{
@@ -203,9 +203,9 @@ int karma_user_zero() {
 			id = scene_create_new_resource_fixture(scene, &fixture, 1);
 
 			info.position = vec2(6.5f, -0.5f);
-			info.rigid_body.xform = mat3_translation(info.position);
+			info.rigid_body.xform = mat3_translation(info.position) * mat3_rotation(to_radians(10));
 			info.rigid_body.fixture_id = id;
-			scene_create_new_entity(scene, Entity_Type_Static_Body, info);
+			scene_create_new_entity(scene, Entity_Type_Obstacle, info);
 		}
 
 		{
@@ -229,7 +229,7 @@ int karma_user_zero() {
 			info.position = vec2(-1, -5);
 			info.rigid_body.xform = mat3_translation(info.position);
 			info.rigid_body.fixture_id = id;
-			scene_create_new_entity(scene, Entity_Type_Static_Body, info);
+			scene_create_new_entity(scene, Entity_Type_Obstacle, info);
 		}
 	}
 
@@ -332,6 +332,9 @@ int karma_user_zero() {
 
 		static r32 movement_force = 20;
 
+		Array<Contact_Manifold> manifolds;
+		manifolds.allocator = TEMPORARY_ALLOCATOR;
+
 		while (accumulator_t >= fixed_dt) {
 			Dev_TimedScope(SimulationFrame);
 
@@ -366,14 +369,12 @@ int karma_user_zero() {
 			}
 
 			Vec2 dv, dp;
-			Collision_Manifold manifold;
+			Contact_Manifold manifold;
 
 			for (auto a = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, a); a = iter_next<Rigid_Body>(a)) {
 				Rigid_Body &a_body = a->data;
 				if (a_body.type == Rigid_Body_Type_Static) continue;
 				for (auto b = a->next; iter_continue(&scene->rigid_bodies, b); b = iter_next<Rigid_Body>(b)) {
-					if (a == b) continue;
-
 					Rigid_Body &b_body = b->data;
 
 					dv = a_body.velocity - b_body.velocity;
@@ -386,6 +387,7 @@ int karma_user_zero() {
 
 							if (collider_vs_collider_dynamic(b_collider, a_collider, b_body.xform, a_body.xform, dp, &manifold)) {
 
+#if 0
 								r32 collision_time = manifold.penetration / dt * sgn(vec2_dot(manifold.normal, dv));
 								Vec2 vn, vt;
 
@@ -411,6 +413,8 @@ int karma_user_zero() {
 									dv = a_body.velocity;
 									dp = dv * dt;
 								}
+#endif
+								array_add(&manifolds, manifold);
 
 								b_body.flags |= Rigid_Body_COLLIDING;
 								a_body.flags |= Rigid_Body_COLLIDING;
@@ -518,6 +522,14 @@ int karma_user_zero() {
 
 				im2d_pop_matrix();
 			}
+		}
+
+		for (auto &m : manifolds) {
+			im2d_line(m.contacts[1], m.contacts[1] + m.penetration * m.normal, vec4(1, 0, 1), 0.02f);
+			im2d_line(m.contacts[1], m.contacts[1] + m.tangent, vec4(1, 0, 1), 0.02f);
+
+			im2d_circle(m.contacts[0], 0.08f, vec4(1, 0, 1));
+			im2d_circle(m.contacts[1], 0.08f, vec4(1, 0, 1));
 		}
 
 		im2d_end();

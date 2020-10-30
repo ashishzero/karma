@@ -931,14 +931,38 @@ inline Vec2 support(const ShapeA &a, const ShapeB &b, Vec2 dir, const Mat3 &ta, 
 template <typename ShapeA, typename ShapeB>
 inline Vec2 support(const ShapeA &a, const ShapeB &b, Vec2 dir, const Mat3 &ta, const Mat3 &tb, const Mat2 &tdira, const Mat2 &tdirb, Vec2 dp) {
 	Vec2 s = support(a, b, dir, ta, tb, tdira, tdirb);
-	if (vec2_dot(dp, dir) <= 0.0f)
+	if (vec2_dot(dp, dir) < 0.0f)
 		s -= dp;
 	return s;
 }
 
-bool next_simplex(Vec2 *simplex, Vec2 *dir, u32 *n);
+struct Support_Ex {
+	Vec2 a;
+	Vec2 b;
+	Vec2 p;
+};
 
-Nearest_Edge2d closest_edge_origin_polygon(const Polygon &polygon);
+template <typename ShapeA, typename ShapeB>
+inline Support_Ex support_ex(const ShapeA &a, const ShapeB &b, Vec2 dir, const Mat3 &ta, const Mat3 &tb, const Mat2 &tdira, const Mat2 &tdirb, Vec2 dp) {
+	Support_Ex s;
+	s.a = support(a, mat2_vec2_mul(tdira, dir));
+	s.a = mat3_vec2_mul(ta, s.a);
+
+	s.b = support(b, mat2_vec2_mul(tdirb, -dir));
+	s.b = mat3_vec2_mul(tb, s.b);
+
+	if (vec2_dot(dp, dir) < 0.0f)
+		s.b += dp;
+
+	s.p = s.a - s.b;
+	return s;
+}
+
+bool next_simplex(Vec2 *simplex, Vec2 *dir, u32 *n);
+Nearest_Edge closest_edge_origin_polygon(const Vec2 *vertices, u32 vertex_count);
+
+bool next_simplex_ex(Support_Ex *simplex, Vec2 *dir, u32 *n);
+Nearest_Edge_Ex closest_edge_origin_polygon_ex(const Support_Ex *vertices, u32 vertex_count);
 
 template <typename ShapeA, typename ShapeB, typename ...Args>
 bool gjk(const ShapeA &sa, const ShapeB &sb, const Args & ...args) {
@@ -967,26 +991,26 @@ bool gjk(const ShapeA &sa, const ShapeB &sb, const Args & ...args) {
 constexpr r32 EPA_TOLERANCE = 0.000001f;
 
 template <typename ShapeA, typename ShapeB, typename ...Args>
-bool gjk_epa(const ShapeA &sa, const ShapeB &sb, Collision_Manifold *manifold, const Args &...args) {
+bool gjk_epa(const ShapeA &sa, const ShapeB &sb, Contact_Manifold *manifold, const Args &...args) {
 	u32 allocated = 8;
-	Polygon *simplex = (Polygon *)tallocate(sizeof(Polygon) + sizeof(Vec2) * (allocated - 3));
-	simplex->vertex_count = 1;
+	Support_Ex *simplex = (Support_Ex *)tallocate(sizeof(Support_Ex) * allocated);
+	u32 vertex_count = 1;
 
-	Vec2 dir = vec2(0, 1);
-	simplex->vertices[0] = support(sa, sb, dir, args...);
-	dir = -simplex->vertices[0];
+	Vec2 dir = vec2(1, 1);
+	simplex[0] = support_ex(sa, sb, dir, args...);
+	dir = -simplex[0].p;
 
 	bool collision = false;
 
-	Vec2 a;
+	Support_Ex s;
 	while (true) {
 		if (vec2_null(dir)) return false;
-		a = support(sa, sb, dir, args...);
-		if (vec2_dot(a, dir) < 0.0f) return false; // no intersection
-		simplex->vertices[simplex->vertex_count] = a;
-		simplex->vertex_count += 1;
+		s = support_ex(sa, sb, dir, args...);
+		if (vec2_dot(s.p, dir) < 0.0f) return false; // no intersection
+		simplex[vertex_count] = s;
+		vertex_count += 1;
 
-		if (next_simplex(simplex->vertices, &dir, &simplex->vertex_count)) {
+		if (next_simplex_ex(simplex, &dir, &vertex_count)) {
 			collision = true;
 			break;
 		}
@@ -995,25 +1019,60 @@ bool gjk_epa(const ShapeA &sa, const ShapeB &sb, Collision_Manifold *manifold, c
 	if (!collision) return false;
 
 	while (true) {
-		Nearest_Edge2d e = closest_edge_origin_polygon(*simplex);
+		Nearest_Edge_Ex e = closest_edge_origin_polygon_ex(simplex, vertex_count);
 		if (vec2_null(e.normal)) return false;
 
-		Vec2 p = support(sa, sb, e.normal, args...);
+		s = support_ex(sa, sb, e.normal, args...);
 
-		r32 d = vec2_dot(p, e.normal);
+		r32 d = vec2_dot(s.p, e.normal);
 		if (d - e.distance < EPA_TOLERANCE) {
-			manifold->normal = e.normal;
+			Support_Ex &s0 = simplex[e.a_index];
+			Support_Ex &s1 = simplex[e.b_index];
+
+			Vec2 closest_point = d * e.normal;
+
+			r32 tx, ty;
+			tx = s1.p.x - s0.p.x;
+			ty = s1.p.y - s0.p.y;
+
+			if (fabsf(tx) > EPSILON_FLOAT) {
+				tx = (closest_point.x - s0.p.x) / tx;
+			} else {
+				tx = 0;
+			}
+
+			if (fabsf(ty) > EPSILON_FLOAT) {
+				ty = (closest_point.y - s0.p.y) / ty;
+			} else {
+				ty = 0;
+			}
+
+			Vec2 axis;
+			if (fabsf(e.normal.x) > fabsf(e.normal.y)) {
+				axis.x = 0;
+				axis.y = 1;
+			} else {
+				axis.x = 1;
+				axis.y = 0;
+			}
+
+			manifold->normal  = e.normal;
+			manifold->tangent = vec2(-e.normal.y, e.normal.x);
+			manifold->contacts[0].x = s0.a.x + tx * (s1.a.x - s0.a.x);
+			manifold->contacts[0].y = s0.a.y + ty * (s1.a.y - s0.a.y);
+			manifold->contacts[1].x = s0.b.x + tx * (s1.b.x - s0.b.x);
+			manifold->contacts[1].y = s0.b.y + ty * (s1.b.y - s0.b.y);
 			manifold->penetration = d;
 			break;
 		} else {
-			if (simplex->vertex_count == allocated) {
+			if (vertex_count == allocated) {
 				allocated *= 2;
-				simplex = (Polygon *)treallocate(simplex, sizeof(Polygon) + sizeof(Vec2) * (allocated - 3));
+				simplex = (Support_Ex *)treallocate(simplex, sizeof(Support_Ex) * allocated);
 			}
 
-			memmove(simplex->vertices + e.index + 1, simplex->vertices + e.index, sizeof(Vec2) * (simplex->vertex_count - e.index));
-			simplex->vertices[e.index] = p;
-			simplex->vertex_count += 1;
+			memmove(simplex + e.b_index + 1, simplex + e.b_index, sizeof(Support_Ex) * (vertex_count - e.b_index));
+			simplex[e.b_index] = s;
+			vertex_count += 1;
 		}
 	}
 
