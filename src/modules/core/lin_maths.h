@@ -964,7 +964,7 @@ bool gjk(const ShapeA &sa, const ShapeB &sb, const Args & ...args) {
 	return false;
 }
 
-constexpr r32 EPA_TOLERANCE = 0.00001f;
+constexpr r32 EPA_TOLERANCE = 0.000001f;
 
 template <typename ShapeA, typename ShapeB, typename ...Args>
 bool gjk_epa(const ShapeA &sa, const ShapeB &sb, Collision_Manifold *manifold, const Args &...args) {
