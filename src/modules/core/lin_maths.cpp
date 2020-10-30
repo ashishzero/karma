@@ -2890,7 +2890,7 @@ Nearest_Edge closest_edge_origin_polygon(const Vec2 *vertices, u32 vertex_count)
 		auto b = vertices[q_index];
 		auto e = b - a;
 
-		Vec2 n = vec2_normalize_check(vec2_triple_product(e, a, e));
+		Vec2 n = vec2_normalize(vec2_triple_product(e, a, e));
 
 		r32 d = vec2_dot(n, a);
 		if (d < edge.distance) {
@@ -2995,7 +2995,7 @@ Nearest_Edge_Ex closest_edge_origin_polygon_ex(const Support_Ex *vertices, u32 v
 		auto b = vertices[q_index].p;
 		auto e = b - a;
 
-		Vec2 n = vec2_normalize_check(vec2_triple_product(e, a, e));
+		Vec2 n = vec2_normalize(vec2_triple_product(e, a, e));
 
 		r32 d = vec2_dot(n, a);
 		if (d < edge.distance) {

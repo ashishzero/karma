@@ -975,6 +975,7 @@ bool gjk(const ShapeA &sa, const ShapeB &sb, const Args & ...args) {
 
 	Vec2 a;
 	while (true) {
+		if (vec2_null(dir)) return true;
 		a = support(sa, sb, dir, args...);
 		if (vec2_dot(a, dir) < 0.0f) return false; // no intersection
 		simplex[n] = a;
@@ -1000,27 +1001,46 @@ bool gjk_epa(const ShapeA &sa, const ShapeB &sb, Contact_Manifold *manifold, con
 	simplex[0] = support_ex(sa, sb, dir, args...);
 	dir = -simplex[0].p;
 
-	bool collision = false;
-
 	Support_Ex s;
 	while (true) {
-		if (vec2_null(dir)) return false;
+		if (vec2_null(dir)) break;
 		s = support_ex(sa, sb, dir, args...);
 		if (vec2_dot(s.p, dir) < 0.0f) return false; // no intersection
 		simplex[vertex_count] = s;
 		vertex_count += 1;
 
 		if (next_simplex_ex(simplex, &dir, &vertex_count)) {
-			collision = true;
 			break;
 		}
 	}
 
-	if (!collision) return false;
+	Vec2 directions[] = {
+		{ -1, 1 }, { 0, -1 }, { 1, 0 }, { -1, 0 }, { 1, -1 }, { 0, 1 }, { -1, -1 }
+	};
+
+	// Check for degenerate polygon that is reduced to line
+	if (vertex_count == 3) {
+		if (vec2_null(simplex[2].p - simplex[0].p) || vec2_null(simplex[2].p - simplex[1].p)) {
+			vertex_count -= 1;
+		}
+		if (vec2_null(simplex[0].p - simplex[1].p)) {
+			simplex[1] = simplex[2];
+			vertex_count -= 1;
+		}
+	}
+
+	// Check for degenerate polygon that is reduced to point
+	if (vertex_count == 1) {
+		for (u32 index = 0; index < static_count(directions); ++index) {
+			simplex[1] = support_ex(sa, sb, directions[index], args...);
+			if (!vec2_null(simplex[1].p)) break;
+		}
+		assert(!vec2_null(simplex[1].p));
+		vertex_count += 1;
+	}
 
 	while (true) {
 		Nearest_Edge_Ex e = closest_edge_origin_polygon_ex(simplex, vertex_count);
-		if (vec2_null(e.normal)) return false;
 
 		s = support_ex(sa, sb, e.normal, args...);
 
@@ -1045,15 +1065,6 @@ bool gjk_epa(const ShapeA &sa, const ShapeB &sb, Contact_Manifold *manifold, con
 				ty = (closest_point.y - s0.p.y) / ty;
 			} else {
 				ty = 0;
-			}
-
-			Vec2 axis;
-			if (fabsf(e.normal.x) > fabsf(e.normal.y)) {
-				axis.x = 0;
-				axis.y = 1;
-			} else {
-				axis.x = 1;
-				axis.y = 0;
 			}
 
 			manifold->normal  = e.normal;
