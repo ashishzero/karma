@@ -991,6 +991,112 @@ bool gjk(const ShapeA &sa, const ShapeB &sb, const Args & ...args) {
 
 constexpr r32 EPA_TOLERANCE = 0.00001f;
 
+struct Epa_Result {
+	Nearest_Edge_Ex nearest_edge;
+	r32				distance_from_origin;
+};
+
+template <typename ShapeA, typename ShapeB, typename ...Args>
+Epa_Result perform_epa(Support_Ex *simplex, u32 vertex_count, u32 allocated, const ShapeA &sa, const ShapeB &sb, const Args &...args) {
+	Epa_Result result;
+
+	Support_Ex s;
+	while (true) {
+		result.nearest_edge = nearest_edge_origin_polygon_ex(simplex, vertex_count);
+
+		s = support_ex(sa, sb, result.nearest_edge.normal, args...);
+
+		r32 d = vec2_dot(s.p, result.nearest_edge.normal);
+		if (d - result.nearest_edge.distance < EPA_TOLERANCE) {
+			result.distance_from_origin = d;
+			break;
+		} else {
+			if (vertex_count == allocated) {
+				allocated *= 2;
+				simplex = (Support_Ex *)treallocate(simplex, sizeof(Support_Ex) * allocated);
+			}
+
+			memmove(simplex + result.nearest_edge.b_index + 1, simplex + result.nearest_edge.b_index, sizeof(Support_Ex) * (vertex_count - result.nearest_edge.b_index));
+			simplex[result.nearest_edge.b_index] = s;
+			vertex_count += 1;
+		}
+	}
+
+	return result;
+}
+
+template <typename ShapeA, typename ShapeB, typename ...Args>
+void perform_gjk_nearest_points(Support_Ex *simplex, const ShapeA &sa, const ShapeB &sb, Nearest_Points *nearest_points, const Args &...args) {
+	Support_Ex c;
+	Vec2 p1, p2;
+
+	Vec2 d = nearest_point_origin_segment(simplex[0].p, simplex[1].p);
+	r32 dist = vec2_dot(d, d);
+	r32 min_dist = dist;
+
+	while (true) {
+		c = support_ex(sa, sb, -d, args...);
+
+		if (vec2_null(c.p - simplex[0].p) || vec2_null(c.p - simplex[1].p))
+			break;
+		
+		p1 = nearest_point_origin_segment(c.p, simplex[0].p);
+		p2 = nearest_point_origin_segment(c.p, simplex[1].p);
+
+		r32 p1_dist = vec2_dot(p1, p1);
+		r32 p2_dist = vec2_dot(p2, p2);
+
+		if (p1_dist < p2_dist) {
+			d = p1;
+			dist = p1_dist;
+			simplex[1] = c;
+		} else {
+			d = p2;
+			dist = p2_dist;
+			simplex[0] = c;
+		}
+
+		if (min_dist - dist < EPA_TOLERANCE)
+			break;
+		min_dist = dist;
+	}
+
+	r32 tx, ty;
+	tx = simplex[1].p.x - simplex[0].p.x;
+	ty = simplex[1].p.y - simplex[0].p.y;
+
+	if (fabsf(tx) > EPSILON_FLOAT) {
+		tx = (d.x - simplex[0].p.x) / tx;
+	}
+	else {
+		tx = 0;
+	}
+
+	if (fabsf(ty) > EPSILON_FLOAT) {
+		ty = (d.y - simplex[0].p.y) / ty;
+	}
+	else {
+		ty = 0;
+	}
+
+	nearest_points->a.x = simplex[0].a.x + tx * (simplex[1].a.x - simplex[0].a.x);
+	nearest_points->a.y = simplex[0].a.y + ty * (simplex[1].a.y - simplex[0].a.y);
+	nearest_points->b.x = simplex[0].b.x + tx * (simplex[1].b.x - simplex[0].b.x);
+	nearest_points->b.y = simplex[0].b.y + ty * (simplex[1].b.y - simplex[0].b.y);
+	nearest_points->distance = sqrtf(dist);
+}
+
+template <typename ShapeA, typename ShapeB, typename ...Args>
+void gjk_nearest_points(const ShapeA &sa, const ShapeB &sb, Nearest_Points *nearest_points, const Args &...args) {
+	Support_Ex simplex[2];
+
+	Vec2 dir = vec2(1, 1);
+	simplex[0] = support_ex(sa, sb,  dir, args...);
+	simplex[1] = support_ex(sa, sb, -dir, args...);
+
+	perform_gjk_nearest_points(simplex, sa, sb, nearest_points, args...);
+}
+
 template <typename ShapeA, typename ShapeB, typename ...Args>
 bool gjk_epa_nearest_points(const ShapeA &sa, const ShapeB &sb, Nearest_Points *nearest_points, const Args &...args) {
 	u32 allocated = 8;
@@ -1020,92 +1126,74 @@ bool gjk_epa_nearest_points(const ShapeA &sa, const ShapeB &sb, Nearest_Points *
 		}
 	}
 
-	Vec2 directions[] = {
-		{ -1, 1 }, { 0, -1 }, { 1, 0 }, { -1, 0 }, { 1, -1 }, { 0, 1 }, { -1, -1 }
-	};
+	if (collided) {
+		Vec2 directions[] = {
+			{ -1, 1 }, { 0, -1 }, { 1, 0 }, { -1, 0 }, { 1, -1 }, { 0, 1 }, { -1, -1 }
+		};
 
-	// Check for degenerate polygon that is reduced to line
-	if (vertex_count == 3) {
-		if (vec2_null(simplex[2].p - simplex[0].p) || vec2_null(simplex[2].p - simplex[1].p)) {
-			vertex_count -= 1;
-		}
-		if (vec2_null(simplex[0].p - simplex[1].p)) {
-			simplex[1] = simplex[2];
-			vertex_count -= 1;
-		}
-	}
-
-	// Check for degenerate polygon that is reduced to point
-	if (vertex_count == 2) {
-		if (vec2_null(simplex[0].p - simplex[1].p)) {
-			vertex_count -= 1;
-		}
-	}
-
-	// Make 2 points for EPA
-	if (vertex_count == 1) {
-		for (u32 index = 0; index < static_count(directions); ++index) {
-			simplex[1] = support_ex(sa, sb, directions[index], args...);
-			if (!vec2_null(simplex[0].p - simplex[1].p)) break;
-		}
-		assert(!vec2_null(simplex[0].p - simplex[1].p));
-		vertex_count += 1;
-	}
-
-	// TODO: remove this
-	nearest_points->a.x = 0;
-	nearest_points->a.y = 0;
-	nearest_points->b.x = 0;
-	nearest_points->b.y = 0;
-	nearest_points->distance = 0;
-
-	while (true) {
-		Nearest_Edge_Ex e = nearest_edge_origin_polygon_ex(simplex, vertex_count);
-
-		s = support_ex(sa, sb, e.normal, args...);
-
-		r32 d = vec2_dot(s.p, e.normal);
-		if (d - e.distance < EPA_TOLERANCE) {
-			Support_Ex &s0 = simplex[e.a_index];
-			Support_Ex &s1 = simplex[e.b_index];
-
-			Vec2 closest_point = d * e.normal;
-
-			r32 tx, ty;
-			tx = s1.p.x - s0.p.x;
-			ty = s1.p.y - s0.p.y;
-
-			if (fabsf(tx) > EPSILON_FLOAT) {
-				tx = (closest_point.x - s0.p.x) / tx;
+		// Check for degenerate polygon that is reduced to line
+		if (vertex_count == 3) {
+			if (vec2_null(simplex[2].p - simplex[0].p) || vec2_null(simplex[2].p - simplex[1].p)) {
+				vertex_count -= 1;
 			}
-			else {
-				tx = 0;
+			if (vec2_null(simplex[0].p - simplex[1].p)) {
+				simplex[1] = simplex[2];
+				vertex_count -= 1;
 			}
-
-			if (fabsf(ty) > EPSILON_FLOAT) {
-				ty = (closest_point.y - s0.p.y) / ty;
-			}
-			else {
-				ty = 0;
-			}
-
-			nearest_points->a.x = s0.a.x + tx * (s1.a.x - s0.a.x);
-			nearest_points->a.y = s0.a.y + ty * (s1.a.y - s0.a.y);
-			nearest_points->b.x = s0.b.x + tx * (s1.b.x - s0.b.x);
-			nearest_points->b.y = s0.b.y + ty * (s1.b.y - s0.b.y);
-			nearest_points->distance = d;
-			break;
 		}
-		else {
-			if (vertex_count == allocated) {
-				allocated *= 2;
-				simplex = (Support_Ex *)treallocate(simplex, sizeof(Support_Ex) * allocated);
-			}
 
-			memmove(simplex + e.b_index + 1, simplex + e.b_index, sizeof(Support_Ex) * (vertex_count - e.b_index));
-			simplex[e.b_index] = s;
+		// Check for degenerate polygon that is reduced to point
+		if (vertex_count == 2) {
+			if (vec2_null(simplex[0].p - simplex[1].p)) {
+				vertex_count -= 1;
+			}
+		}
+
+		// Make 2 points for EPA
+		if (vertex_count == 1) {
+			for (u32 index = 0; index < static_count(directions); ++index) {
+				simplex[1] = support_ex(sa, sb, directions[index], args...);
+				if (!vec2_null(simplex[0].p - simplex[1].p)) break;
+			}
+			assert(!vec2_null(simplex[0].p - simplex[1].p));
 			vertex_count += 1;
 		}
+
+		Epa_Result e = perform_epa(simplex, vertex_count, allocated, sa, sb, args...);
+
+		Support_Ex &s0 = simplex[e.nearest_edge.a_index];
+		Support_Ex &s1 = simplex[e.nearest_edge.b_index];
+
+		Vec2 closest_point = e.distance_from_origin * e.nearest_edge.normal;
+
+		r32 tx, ty;
+		tx = s1.p.x - s0.p.x;
+		ty = s1.p.y - s0.p.y;
+
+		if (fabsf(tx) > EPSILON_FLOAT) {
+			tx = (closest_point.x - s0.p.x) / tx;
+		}
+		else {
+			tx = 0;
+		}
+
+		if (fabsf(ty) > EPSILON_FLOAT) {
+			ty = (closest_point.y - s0.p.y) / ty;
+		}
+		else {
+			ty = 0;
+		}
+
+		nearest_points->a.x = s0.a.x + tx * (s1.a.x - s0.a.x);
+		nearest_points->a.y = s0.a.y + ty * (s1.a.y - s0.a.y);
+		nearest_points->b.x = s0.b.x + tx * (s1.b.x - s0.b.x);
+		nearest_points->b.y = s0.b.y + ty * (s1.b.y - s0.b.y);
+		nearest_points->distance = e.distance_from_origin;
+	} else {
+		if (vertex_count == 1) {
+			simplex[1] = support_ex(sa, sb, vec2(-1, -1), args...);
+		}
+		perform_gjk_nearest_points(simplex, sa, sb, nearest_points, args...);
 	}
 
 	return collided;
@@ -1159,53 +1247,38 @@ bool gjk_epa(const ShapeA &sa, const ShapeB &sb, Contact_Manifold *manifold, con
 		vertex_count += 1;
 	}
 
-	while (true) {
-		Nearest_Edge_Ex e = nearest_edge_origin_polygon_ex(simplex, vertex_count);
+	Epa_Result e = perform_epa(simplex, vertex_count, allocated, sa, sb, args...);
 
-		s = support_ex(sa, sb, e.normal, args...);
+	Support_Ex &s0 = simplex[e.nearest_edge.a_index];
+	Support_Ex &s1 = simplex[e.nearest_edge.b_index];
 
-		r32 d = vec2_dot(s.p, e.normal);
-		if (d - e.distance < EPA_TOLERANCE) {
-			Support_Ex &s0 = simplex[e.a_index];
-			Support_Ex &s1 = simplex[e.b_index];
+	Vec2 closest_point = e.distance_from_origin * e.nearest_edge.normal;
 
-			Vec2 closest_point = d * e.normal;
+	r32 tx, ty;
+	tx = s1.p.x - s0.p.x;
+	ty = s1.p.y - s0.p.y;
 
-			r32 tx, ty;
-			tx = s1.p.x - s0.p.x;
-			ty = s1.p.y - s0.p.y;
-
-			if (fabsf(tx) > EPSILON_FLOAT) {
-				tx = (closest_point.x - s0.p.x) / tx;
-			} else {
-				tx = 0;
-			}
-
-			if (fabsf(ty) > EPSILON_FLOAT) {
-				ty = (closest_point.y - s0.p.y) / ty;
-			} else {
-				ty = 0;
-			}
-
-			manifold->normal  = e.normal;
-			manifold->tangent = vec2(-e.normal.y, e.normal.x);
-			manifold->contacts[0].x = s0.a.x + tx * (s1.a.x - s0.a.x);
-			manifold->contacts[0].y = s0.a.y + ty * (s1.a.y - s0.a.y);
-			manifold->contacts[1].x = s0.b.x + tx * (s1.b.x - s0.b.x);
-			manifold->contacts[1].y = s0.b.y + ty * (s1.b.y - s0.b.y);
-			manifold->penetration = d;
-			break;
-		} else {
-			if (vertex_count == allocated) {
-				allocated *= 2;
-				simplex = (Support_Ex *)treallocate(simplex, sizeof(Support_Ex) * allocated);
-			}
-
-			memmove(simplex + e.b_index + 1, simplex + e.b_index, sizeof(Support_Ex) * (vertex_count - e.b_index));
-			simplex[e.b_index] = s;
-			vertex_count += 1;
-		}
+	if (fabsf(tx) > EPSILON_FLOAT) {
+		tx = (closest_point.x - s0.p.x) / tx;
 	}
+	else {
+		tx = 0;
+	}
+
+	if (fabsf(ty) > EPSILON_FLOAT) {
+		ty = (closest_point.y - s0.p.y) / ty;
+	}
+	else {
+		ty = 0;
+	}
+
+	manifold->normal = e.nearest_edge.normal;
+	manifold->tangent = vec2(-e.nearest_edge.normal.y, e.nearest_edge.normal.x);
+	manifold->contacts[0].x = s0.a.x + tx * (s1.a.x - s0.a.x);
+	manifold->contacts[0].y = s0.a.y + ty * (s1.a.y - s0.a.y);
+	manifold->contacts[1].x = s0.b.x + tx * (s1.b.x - s0.b.x);
+	manifold->contacts[1].y = s0.b.y + ty * (s1.b.y - s0.b.y);
+	manifold->penetration = e.distance_from_origin;
 
 	return true;
 }
