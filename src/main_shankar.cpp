@@ -1,259 +1,777 @@
+#include "modules/core/reflection.h"
+#include "modules/core/karma.h"
 #include "modules/core/systems.h"
-#include <winsock2.h>
-//#include <time.h>
+#include "modules/core/reflection.h"
+#include "modules/core/lin_maths.h"
 #include "modules/core/utility.h"
-#pragma comment(lib, "Winmm.lib")
+#include "modules/imgui/imconfig.h"
+#include "modules/imgui/imgui.h"
+#include "modules/imgui/dev.h"
+#include "modules/gfx/renderer.h"
+#include "modules/core/thread_pool.h"
 
-#define SOCKET_BUFFER_SIZE kilo_bytes(1)
+#include "scene.h"
+#include "editor.h"
 
+#include ".generated/entity.typeinfo"
 
-enum  Client_Message : u8
-{
-	JOIN,		// tell server we're new here
-	LEAVE,		// tell server we're leaving
-	INPUTS 		// tell server our user input
+struct Player_Controller {
+	r32 x, y;
 };
 
-enum  Server_Message : u8
-{
-	JOIN_RESULT,// tell client they're accepted/rejected
-	STATE 		// tell client game state
-};
+typedef bool(*Collision_Resolver)(Fixture& a, Fixture& b, const Mat3& ta, const Mat3& tb, const Mat2& tdira, const Mat2& tdirb, Vec2 dp, Contact_Manifold* manifold);
+static Collision_Resolver COLLISION_RESOLVERS[Fixture_Shape_Count][Fixture_Shape_Count];
 
+typedef bool(*Nearest_Points_Finder)(Fixture& a, Fixture& b, const Mat3& ta, const Mat3& tb, const Mat2& tdira, const Mat2& tdirb, Vec2 dp, Nearest_Points* nearest_points);
+static Nearest_Points_Finder NEAREST_POINTS_FINDERS[Fixture_Shape_Count][Fixture_Shape_Count];
 
+typedef bool(*Collision_Detector)(Fixture& a, Fixture& b, const Mat3& ta, const Mat3& tb, const Mat2& tdira, const Mat2& tdirb, Vec2 dp);
+static Collision_Detector COLLISION_DETECTORS[Fixture_Shape_Count][Fixture_Shape_Count];
 
-struct Player_State
-{
-	r32 x, y, facing;
-};
-
-const u32	TICKS_PER_SECOND = 60;
-const r32	SECONDS_PER_TICK = 1.0f / s32(TICKS_PER_SECOND);
-
-static s32 time_since(LARGE_INTEGER t, LARGE_INTEGER frequency)
-{
-	LARGE_INTEGER now;
-	QueryPerformanceCounter(&now);
-
-	return s32(now.QuadPart - t.QuadPart) / s32(frequency.QuadPart);
+static bool null_collision_resolver(Fixture& a, Fixture& b, const Mat3& ta, const Mat3& tb, const Mat2& tdira, const Mat2& tdirb, Vec2 dp, Contact_Manifold* manifold) {
+	return false;
 }
 
+static bool null_nearest_points_finder(Fixture& a, Fixture& b, const Mat3& ta, const Mat3& tb, const Mat2& tdira, const Mat2& tdirb, Vec2 dp, Nearest_Points* nearest_points) {
+	nearest_points->a = vec2(INFINITY, INFINITY);
+	nearest_points->b = vec2(INFINITY, INFINITY);
+	nearest_points->distance = INFINITY;
+	return false;
+}
+
+static bool null_collision_detector(Fixture& a, Fixture& b, const Mat3& ta, const Mat3& tb, const Mat2& tdira, const Mat2& tdirb, Vec2 dp) {
+	return false;
+}
+
+template <typename ShapeA, typename ShapeB>
+static bool shapes_collision_resolver(Fixture& a, Fixture& b, const Mat3& ta, const Mat3& tb, const Mat2& tdira, const Mat2& tdirb, Vec2 dp, Contact_Manifold* manifold) {
+	return gjk_epa(*(ShapeA*)a.handle, *(ShapeB*)b.handle, manifold, ta, tb, tdira, tdirb, dp);
+}
+
+template <typename ShapeA, typename ShapeB>
+static bool shapes_nearest_points_finder(Fixture& a, Fixture& b, const Mat3& ta, const Mat3& tb, const Mat2& tdira, const Mat2& tdirb, Vec2 dp, Nearest_Points* nearest_points) {
+	return gjk_epa_nearest_points(*(ShapeA*)a.handle, *(ShapeB*)b.handle, nearest_points, ta, tb, tdira, tdirb, dp);
+}
+
+template <typename ShapeA, typename ShapeB>
+static bool shapes_collision_detector(Fixture& a, Fixture& b, const Mat3& ta, const Mat3& tb, const Mat2& tdira, const Mat2& tdirb, Vec2 dp) {
+	return gjk(*(ShapeA*)a.handle, *(ShapeB*)b.handle, ta, tb, tdira, tdirb, dp);
+}
+
+static void collision_resover_init() {
+	COLLISION_RESOLVERS[Fixture_Shape_Null][Fixture_Shape_Null] = null_collision_resolver;
+	COLLISION_RESOLVERS[Fixture_Shape_Null][Fixture_Shape_Circle] = null_collision_resolver;
+	COLLISION_RESOLVERS[Fixture_Shape_Null][Fixture_Shape_Mm_Rect] = null_collision_resolver;
+	COLLISION_RESOLVERS[Fixture_Shape_Null][Fixture_Shape_Capsule] = null_collision_resolver;
+	COLLISION_RESOLVERS[Fixture_Shape_Null][Fixture_Shape_Polygon] = null_collision_resolver;
+
+	COLLISION_RESOLVERS[Fixture_Shape_Circle][Fixture_Shape_Null] = null_collision_resolver;
+	COLLISION_RESOLVERS[Fixture_Shape_Circle][Fixture_Shape_Circle] = shapes_collision_resolver<Circle, Circle>;
+	COLLISION_RESOLVERS[Fixture_Shape_Circle][Fixture_Shape_Mm_Rect] = shapes_collision_resolver<Circle, Mm_Rect>;
+	COLLISION_RESOLVERS[Fixture_Shape_Circle][Fixture_Shape_Capsule] = shapes_collision_resolver<Circle, Capsule>;
+	COLLISION_RESOLVERS[Fixture_Shape_Circle][Fixture_Shape_Polygon] = shapes_collision_resolver<Circle, Polygon>;
+
+	COLLISION_RESOLVERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Null] = null_collision_resolver;
+	COLLISION_RESOLVERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Circle] = shapes_collision_resolver<Mm_Rect, Circle>;
+	COLLISION_RESOLVERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Mm_Rect] = shapes_collision_resolver<Mm_Rect, Mm_Rect>;
+	COLLISION_RESOLVERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Capsule] = shapes_collision_resolver<Mm_Rect, Capsule>;
+	COLLISION_RESOLVERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Polygon] = shapes_collision_resolver<Mm_Rect, Polygon>;
+
+	COLLISION_RESOLVERS[Fixture_Shape_Capsule][Fixture_Shape_Null] = null_collision_resolver;
+	COLLISION_RESOLVERS[Fixture_Shape_Capsule][Fixture_Shape_Circle] = shapes_collision_resolver<Capsule, Circle>;
+	COLLISION_RESOLVERS[Fixture_Shape_Capsule][Fixture_Shape_Mm_Rect] = shapes_collision_resolver<Capsule, Mm_Rect>;
+	COLLISION_RESOLVERS[Fixture_Shape_Capsule][Fixture_Shape_Capsule] = shapes_collision_resolver<Capsule, Capsule>;
+	COLLISION_RESOLVERS[Fixture_Shape_Capsule][Fixture_Shape_Polygon] = shapes_collision_resolver<Capsule, Polygon>;
+
+	COLLISION_RESOLVERS[Fixture_Shape_Polygon][Fixture_Shape_Null] = null_collision_resolver;
+	COLLISION_RESOLVERS[Fixture_Shape_Polygon][Fixture_Shape_Circle] = shapes_collision_resolver<Polygon, Circle>;
+	COLLISION_RESOLVERS[Fixture_Shape_Polygon][Fixture_Shape_Mm_Rect] = shapes_collision_resolver<Polygon, Mm_Rect>;
+	COLLISION_RESOLVERS[Fixture_Shape_Polygon][Fixture_Shape_Capsule] = shapes_collision_resolver<Polygon, Capsule>;
+	COLLISION_RESOLVERS[Fixture_Shape_Polygon][Fixture_Shape_Polygon] = shapes_collision_resolver<Polygon, Polygon>;
+
+	NEAREST_POINTS_FINDERS[Fixture_Shape_Null][Fixture_Shape_Null] = null_nearest_points_finder;
+	NEAREST_POINTS_FINDERS[Fixture_Shape_Null][Fixture_Shape_Circle] = null_nearest_points_finder;
+	NEAREST_POINTS_FINDERS[Fixture_Shape_Null][Fixture_Shape_Mm_Rect] = null_nearest_points_finder;
+	NEAREST_POINTS_FINDERS[Fixture_Shape_Null][Fixture_Shape_Capsule] = null_nearest_points_finder;
+	NEAREST_POINTS_FINDERS[Fixture_Shape_Null][Fixture_Shape_Polygon] = null_nearest_points_finder;
+
+	NEAREST_POINTS_FINDERS[Fixture_Shape_Circle][Fixture_Shape_Null] = null_nearest_points_finder;
+	NEAREST_POINTS_FINDERS[Fixture_Shape_Circle][Fixture_Shape_Circle] = shapes_nearest_points_finder<Circle, Circle>;
+	NEAREST_POINTS_FINDERS[Fixture_Shape_Circle][Fixture_Shape_Mm_Rect] = shapes_nearest_points_finder<Circle, Mm_Rect>;
+	NEAREST_POINTS_FINDERS[Fixture_Shape_Circle][Fixture_Shape_Capsule] = shapes_nearest_points_finder<Circle, Capsule>;
+	NEAREST_POINTS_FINDERS[Fixture_Shape_Circle][Fixture_Shape_Polygon] = shapes_nearest_points_finder<Circle, Polygon>;
+
+	NEAREST_POINTS_FINDERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Null] = null_nearest_points_finder;
+	NEAREST_POINTS_FINDERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Circle] = shapes_nearest_points_finder<Mm_Rect, Circle>;
+	NEAREST_POINTS_FINDERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Mm_Rect] = shapes_nearest_points_finder<Mm_Rect, Mm_Rect>;
+	NEAREST_POINTS_FINDERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Capsule] = shapes_nearest_points_finder<Mm_Rect, Capsule>;
+	NEAREST_POINTS_FINDERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Polygon] = shapes_nearest_points_finder<Mm_Rect, Polygon>;
+
+	NEAREST_POINTS_FINDERS[Fixture_Shape_Capsule][Fixture_Shape_Null] = null_nearest_points_finder;
+	NEAREST_POINTS_FINDERS[Fixture_Shape_Capsule][Fixture_Shape_Circle] = shapes_nearest_points_finder<Capsule, Circle>;
+	NEAREST_POINTS_FINDERS[Fixture_Shape_Capsule][Fixture_Shape_Mm_Rect] = shapes_nearest_points_finder<Capsule, Mm_Rect>;
+	NEAREST_POINTS_FINDERS[Fixture_Shape_Capsule][Fixture_Shape_Capsule] = shapes_nearest_points_finder<Capsule, Capsule>;
+	NEAREST_POINTS_FINDERS[Fixture_Shape_Capsule][Fixture_Shape_Polygon] = shapes_nearest_points_finder<Capsule, Polygon>;
+
+	NEAREST_POINTS_FINDERS[Fixture_Shape_Polygon][Fixture_Shape_Null] = null_nearest_points_finder;
+	NEAREST_POINTS_FINDERS[Fixture_Shape_Polygon][Fixture_Shape_Circle] = shapes_nearest_points_finder<Polygon, Circle>;
+	NEAREST_POINTS_FINDERS[Fixture_Shape_Polygon][Fixture_Shape_Mm_Rect] = shapes_nearest_points_finder<Polygon, Mm_Rect>;
+	NEAREST_POINTS_FINDERS[Fixture_Shape_Polygon][Fixture_Shape_Capsule] = shapes_nearest_points_finder<Polygon, Capsule>;
+	NEAREST_POINTS_FINDERS[Fixture_Shape_Polygon][Fixture_Shape_Polygon] = shapes_nearest_points_finder<Polygon, Polygon>;
+
+	COLLISION_DETECTORS[Fixture_Shape_Null][Fixture_Shape_Null] = null_collision_detector;
+	COLLISION_DETECTORS[Fixture_Shape_Null][Fixture_Shape_Circle] = null_collision_detector;
+	COLLISION_DETECTORS[Fixture_Shape_Null][Fixture_Shape_Mm_Rect] = null_collision_detector;
+	COLLISION_DETECTORS[Fixture_Shape_Null][Fixture_Shape_Capsule] = null_collision_detector;
+	COLLISION_DETECTORS[Fixture_Shape_Null][Fixture_Shape_Polygon] = null_collision_detector;
+
+	COLLISION_DETECTORS[Fixture_Shape_Circle][Fixture_Shape_Null] = null_collision_detector;
+	COLLISION_DETECTORS[Fixture_Shape_Circle][Fixture_Shape_Circle] = shapes_collision_detector<Circle, Circle>;
+	COLLISION_DETECTORS[Fixture_Shape_Circle][Fixture_Shape_Mm_Rect] = shapes_collision_detector<Circle, Mm_Rect>;
+	COLLISION_DETECTORS[Fixture_Shape_Circle][Fixture_Shape_Capsule] = shapes_collision_detector<Circle, Capsule>;
+	COLLISION_DETECTORS[Fixture_Shape_Circle][Fixture_Shape_Polygon] = shapes_collision_detector<Circle, Polygon>;
+
+	COLLISION_DETECTORS[Fixture_Shape_Mm_Rect][Fixture_Shape_Null] = null_collision_detector;
+	COLLISION_DETECTORS[Fixture_Shape_Mm_Rect][Fixture_Shape_Circle] = shapes_collision_detector<Mm_Rect, Circle>;
+	COLLISION_DETECTORS[Fixture_Shape_Mm_Rect][Fixture_Shape_Mm_Rect] = shapes_collision_detector<Mm_Rect, Mm_Rect>;
+	COLLISION_DETECTORS[Fixture_Shape_Mm_Rect][Fixture_Shape_Capsule] = shapes_collision_detector<Mm_Rect, Capsule>;
+	COLLISION_DETECTORS[Fixture_Shape_Mm_Rect][Fixture_Shape_Polygon] = shapes_collision_detector<Mm_Rect, Polygon>;
+
+	COLLISION_DETECTORS[Fixture_Shape_Capsule][Fixture_Shape_Null] = null_collision_detector;
+	COLLISION_DETECTORS[Fixture_Shape_Capsule][Fixture_Shape_Circle] = shapes_collision_detector<Capsule, Circle>;
+	COLLISION_DETECTORS[Fixture_Shape_Capsule][Fixture_Shape_Mm_Rect] = shapes_collision_detector<Capsule, Mm_Rect>;
+	COLLISION_DETECTORS[Fixture_Shape_Capsule][Fixture_Shape_Capsule] = shapes_collision_detector<Capsule, Capsule>;
+	COLLISION_DETECTORS[Fixture_Shape_Capsule][Fixture_Shape_Polygon] = shapes_collision_detector<Capsule, Polygon>;
+
+	COLLISION_DETECTORS[Fixture_Shape_Polygon][Fixture_Shape_Null] = null_collision_detector;
+	COLLISION_DETECTORS[Fixture_Shape_Polygon][Fixture_Shape_Circle] = shapes_collision_detector<Polygon, Circle>;
+	COLLISION_DETECTORS[Fixture_Shape_Polygon][Fixture_Shape_Mm_Rect] = shapes_collision_detector<Polygon, Mm_Rect>;
+	COLLISION_DETECTORS[Fixture_Shape_Polygon][Fixture_Shape_Capsule] = shapes_collision_detector<Polygon, Capsule>;
+	COLLISION_DETECTORS[Fixture_Shape_Polygon][Fixture_Shape_Polygon] = shapes_collision_detector<Polygon, Polygon>;
+}
+
+static bool collider_vs_collider_dynamic(Fixture& a, Fixture& b, const Mat3& ta, const Mat3& tb, Vec2 dp, Contact_Manifold* manifold) {
+	Mat2 tdira, tdirb;
+	tdira.rows[0] = vec2(ta.m2[0][0], ta.m2[1][0]);
+	tdira.rows[1] = vec2(ta.m2[0][1], ta.m2[1][1]);
+
+	tdirb.rows[0] = vec2(tb.m2[0][0], tb.m2[1][0]);
+	tdirb.rows[1] = vec2(tb.m2[0][1], tb.m2[1][1]);
+	return COLLISION_RESOLVERS[a.shape][b.shape](a, b, ta, tb, tdira, tdirb, dp, manifold);
+}
+
+static bool collider_collider_nearest_points(Fixture& a, Fixture& b, const Mat3& ta, const Mat3& tb, Vec2 dp, Nearest_Points* nearest_points) {
+	Mat2 tdira, tdirb;
+	tdira.rows[0] = vec2(ta.m2[0][0], ta.m2[1][0]);
+	tdira.rows[1] = vec2(ta.m2[0][1], ta.m2[1][1]);
+
+	tdirb.rows[0] = vec2(tb.m2[0][0], tb.m2[1][0]);
+	tdirb.rows[1] = vec2(tb.m2[0][1], tb.m2[1][1]);
+	return NEAREST_POINTS_FINDERS[a.shape][b.shape](a, b, ta, tb, tdira, tdirb, dp, nearest_points);
+}
+
+static bool test_collider_collider(Fixture& a, Fixture& b, const Mat3& ta, const Mat3& tb, Vec2 dp) {
+	Mat2 tdira, tdirb;
+	tdira.rows[0] = vec2(ta.m2[0][0], ta.m2[1][0]);
+	tdira.rows[1] = vec2(ta.m2[0][1], ta.m2[1][1]);
+
+	tdirb.rows[0] = vec2(tb.m2[0][0], tb.m2[1][0]);
+	tdirb.rows[1] = vec2(tb.m2[0][1], tb.m2[1][1]);
+	return COLLISION_DETECTORS[a.shape][b.shape](a, b, ta, tb, tdira, tdirb, dp);
+}
+
+// TODO: Rename collider into fixture
+
+static bool collider_vs_point_dynamic(Fixture& a, const Mat3& t, Vec2 point, r32 size, Contact_Manifold* manifold) {
+	Circle circle = { point, size };
+	Fixture b;
+	b.shape = Fixture_Shape_Circle;
+	b.handle = &circle;
+
+	Mat2 tdir;
+	tdir.rows[0] = vec2(t.m2[0][0], t.m2[1][0]);
+	tdir.rows[1] = vec2(t.m2[0][1], t.m2[1][1]);
+	return COLLISION_RESOLVERS[a.shape][b.shape](a, b, t, mat3_identity(), tdir, mat2_identity(), vec2(0), manifold);
+}
+
+static bool collider_point_nearest_points(Fixture& a, const Mat3& t, Vec2 point, r32 size, Nearest_Points* nearest_points) {
+	Circle circle = { point, size };
+	Fixture b;
+	b.shape = Fixture_Shape_Circle;
+	b.handle = &circle;
+
+	Mat2 tdir;
+	tdir.rows[0] = vec2(t.m2[0][0], t.m2[1][0]);
+	tdir.rows[1] = vec2(t.m2[0][1], t.m2[1][1]);
+	return NEAREST_POINTS_FINDERS[a.shape][b.shape](a, b, t, mat3_identity(), tdir, mat2_identity(), vec2(0), nearest_points);
+}
+
+static bool test_collider_point(Fixture& a, const Mat3& t, Vec2 point) {
+	Circle circle = { point, 0.0f };
+	Fixture b;
+	b.shape = Fixture_Shape_Circle;
+	b.handle = &circle;
+
+	Mat2 tdir;
+	tdir.rows[0] = vec2(t.m2[0][0], t.m2[1][0]);
+	tdir.rows[1] = vec2(t.m2[0][1], t.m2[1][1]);
+	return COLLISION_DETECTORS[a.shape][b.shape](a, b, t, mat3_identity(), tdir, mat2_identity(), vec2(0));
+}
 
 int karma_user_shankar() {
-	Ip_Endpoint to = ip_endpoint_local(9999);
+	collision_resover_init();
 
-	auto socket = system_net_open_udp_client();
-
-	if (socket != SOCKET_INVALID) {
-		int d = (to.address & 0x000000ff) >> 0;
-		int c = (to.address & 0x0000ff00) >> 8;
-		int b = (to.address & 0x00ff0000) >> 16;
-		int a = (to.address & 0xff000000) >> 24;
-		system_trace("Client Connected to: %d.%d.%d.%d:%d", a, b, c, d, to.port);
+#ifdef INIT_THREAD_POOL
+	if (!async_initialize(2, mega_bytes(32), context.allocator)) {
+		system_fatal_error("Thread could not be created");
 	}
+#endif
 
+	r32    framebuffer_w = 1280;
+	r32    framebuffer_h = 720;
+	Handle platform = system_create_window(u8"Karma", 1280, 720, System_Window_Show_NORMAL);
+	gfx_create_context(platform, Render_Backend_DIRECTX11, Vsync_ADAPTIVE, 2, (u32)framebuffer_w, (u32)framebuffer_h);
 
-	system_net_set_socket_nonblocking(socket);
+	ImGui_Initialize();
+	Dev_ModeEnable();
 
-	char buffer[SOCKET_BUFFER_SIZE];
-	u8 send_packet_id = 0;
-	s32 player_x = 0;
-	s32 player_y = 0;
+	Dev_SetPresentationState(false);
 
 	bool running = true;
 
+	r32 aspect_ratio = framebuffer_w / framebuffer_h;
+	const r32 speed_factor = 1;
 
-	Player_State objects;
-	u32 num_objects = 0;
-	u16 slot = 0xFFFF;
+	r32 const fixed_dt = 1.0f / 60.0f;
+	r32       dt = fixed_dt * speed_factor;
+	r32       game_dt = fixed_dt * speed_factor;
+	r32       real_dt = fixed_dt;
+	r32       game_t = 0.0f;
+	r32       real_t = 0.0f;
+	r32       accumulator_t = fixed_dt;
 
+	r32 window_w = 0, window_h = 0;
 
-	buffer[0] = (u8)Client_Message::JOIN;
-	bool fail = true;
+	r32 im_unit_circle_cos[IM_MAX_CIRCLE_SEGMENTS];
+	r32 im_unit_circle_sin[IM_MAX_CIRCLE_SEGMENTS];
 
-		if (system_net_send_to(socket, buffer, sizeof(buffer[0]), to)< 0)
+	for (int i = 0; i < IM_MAX_CIRCLE_SEGMENTS; ++i) {
+		r32 theta = ((r32)i / (r32)IM_MAX_CIRCLE_SEGMENTS) * MATH_PI * 2;
+		im_unit_circle_cos[i] = cosf(theta);
+		im_unit_circle_sin[i] = sinf(theta);
+	}
+
+	Scene* scene = scene_create();
+
+	scene->camera.id = 0;
+	scene->camera.type = Entity_Type_Camera;
+
+	Fixture fixture;
+	Resource_Id id;
+
+	Entity_Info info;
+
+	{
+		Circle circle;
+		circle.center = vec2(0);
+		circle.radius = 1;
+
+		fixture.shape = Fixture_Shape_Circle;
+		fixture.handle = &circle;
+		id = scene_create_new_resource_fixture(scene, &fixture, 1);
+
+		info.position = vec2(5);
+		info.rigid_body.type = Rigid_Body_Type_Dynamic;
+		info.rigid_body.fixture_id = id;
+		info.rigid_body.xform = mat3_identity();
+
+		scene_create_new_entity(scene, Entity_Type_Player, info);
+
+		info.position = vec2(-5, 8);
+		scene_create_new_entity(scene, Entity_Type_Player, info);
+
+		Mm_Rect rect;
+		rect.min = vec2(-1);
+		rect.max = vec2(1);
+
+		fixture.shape = Fixture_Shape_Mm_Rect;
+		fixture.handle = &rect;
+		id = scene_create_new_resource_fixture(scene, &fixture, 1);
+
+		info.position = vec2(0, 5);
+		info.rigid_body.fixture_id = id;
+		scene_create_new_entity(scene, Entity_Type_Player, info);
+	}
+
+	{
+		info.rigid_body.type = Rigid_Body_Type_Static;
+
 		{
-			system_trace("join message failed to send\n");
-			return 0;
+			Vec2 points[] = {
+				vec2(-2.4f, 4.6f), vec2(3.6f, 4.6f), vec2(4.6f, -1.4f), vec2(1.6f, -5.4f), vec2(-7.4f, -2.4f)
+			};
+			assert(static_count(points) >= 3);
+
+			auto polygon = (Polygon*)tallocate(sizeof(Polygon) + sizeof(Vec2) * (static_count(points) - 3));
+			polygon->vertex_count = static_count(points);
+			memcpy(polygon->vertices, points, sizeof(points));
+			fixture.shape = Fixture_Shape_Polygon;
+			fixture.handle = polygon;
+			id = scene_create_new_resource_fixture(scene, &fixture, 1);
+
+			info.position = vec2(-5.6f, 0.4f);
+			info.rigid_body.xform = mat3_translation(info.position);
+			info.rigid_body.fixture_id = id;
+			scene_create_new_entity(scene, Entity_Type_Obstacle, info);
 		}
-		else
+
 		{
-			system_trace("join message sent\n");
+			Circle circle;
+			circle.center = vec2(0);
+			circle.radius = 0.6f;
+			fixture.shape = Fixture_Shape_Circle;
+			fixture.handle = &circle;
+			id = scene_create_new_resource_fixture(scene, &fixture, 1);
+
+			info.position = vec2(1);
+			info.rigid_body.xform = mat3_translation(info.position);
+			info.rigid_body.fixture_id = id;
+			scene_create_new_entity(scene, Entity_Type_Obstacle, info);
 		}
 
-	//	Timing_Info timing_info = timing_info_create();
+		{
+			Mm_Rect rect;
+			rect.min = vec2(-2.5f, -3.5f);
+			rect.max = vec2(2.5f, 3.5f);
+			fixture.shape = Fixture_Shape_Mm_Rect;
+			fixture.handle = &rect;
+			id = scene_create_new_resource_fixture(scene, &fixture, 1);
 
-		UINT sleep_granularity_ms = 1;
-		bool sleep_granularity_was_set = timeBeginPeriod(sleep_granularity_ms) == TIMERR_NOERROR;  //bool 32
-		LARGE_INTEGER clock_frequency;
-		QueryPerformanceFrequency(&clock_frequency);
-		
+			info.position = vec2(6.5f, -0.5f);
+			info.rigid_body.xform = mat3_translation(info.position) * mat3_rotation(to_radians(10));
+			info.rigid_body.fixture_id = id;
+			scene_create_new_entity(scene, Entity_Type_Obstacle, info);
+		}
+
+		{
+			Circle circle;
+			circle.center = vec2(1, -1);
+			circle.radius = 1;
+
+			Capsule capsule;
+			capsule.a = vec2(-2, -3);
+			capsule.b = vec2(2, 3);
+			capsule.radius = 1;
+
+			Fixture f[2];
+			f[0].shape = Fixture_Shape_Circle;
+			f[0].handle = &circle;
+			f[1].shape = Fixture_Shape_Capsule;
+			f[1].handle = &capsule;
+
+			id = scene_create_new_resource_fixture(scene, f, static_count(f));
+
+			info.position = vec2(-1, -5);
+			info.rigid_body.xform = mat3_translation(info.position);
+			info.rigid_body.fixture_id = id;
+			scene_create_new_entity(scene, Entity_Type_Obstacle, info);
+		}
+	}
+
+	Player_Controller controller = {};
+
+	u64 frequency = system_get_frequency();
+	u64 counter = system_get_counter();
 
 	while (running) {
+		Dev_TimedFrameBegin();
 
-		LARGE_INTEGER tick_start_time;
-		QueryPerformanceCounter(&tick_start_time);
+		static u32 primary_player_index = 0;
+		auto primary_player = &scene->by_type.player[primary_player_index];
 
+		Dev_TimedBlockBegin(EventHandling);
+		auto events = system_poll_events();
+		for (s64 event_index = 0; event_index < events.count; ++event_index) {
+			Event& event = events[event_index];
 
-			Ip_Endpoint from;
-			int bytes_received = 1;
-
-			while (bytes_received) {
-				 bytes_received = system_net_receive_from(socket, buffer, SOCKET_BUFFER_SIZE, &from);
-
-
-				if (bytes_received < 0) {
-					//system_trace("Failed to receive data");
-					//bytes_received = 0;
-					break;
-				}
-				else
-				{
-					system_trace("%s", buffer);
-				}
-				system_trace("loop\n");
-
-				switch (buffer[0])
-				{
-				case Server_Message::JOIN_RESULT:
-				{
-					if (buffer[1])
-					{
-						memcpy(&slot, &buffer[2], sizeof(slot));
-					}
-					else
-					{
-						system_trace("server didn't let us in\n");
-					}
-				}
+			if (event.type & Event_Type_EXIT) {
+				running = false;
 				break;
+			}
 
-				case Server_Message::STATE:
-				{
-					num_objects = 0;
-					int  bytes_read = 1;
-					while (bytes_read < bytes_received)
-					{
-						u16 id; // unused
-						memcpy(&id, &buffer[bytes_read], sizeof(id));
-						bytes_read += sizeof(id);
+			if (ImGui_HandleEvent(event))
+				continue;
 
-						memcpy(&objects.x, &buffer[bytes_read], sizeof(objects.x));
-						bytes_read += sizeof(objects.x);
+			if (event.type & Event_Type_WINDOW_RESIZE) {
+				s32 w = event.window.dimension.x;
+				s32 h = event.window.dimension.y;
 
-						memcpy(&objects.y, &buffer[bytes_read], sizeof(objects.y));
-						bytes_read += sizeof(objects.y);
+				gfx_on_client_resize(w, h);
+				window_w = (r32)w;
+				window_h = (r32)h;
 
-						memcpy(&objects.facing, &buffer[bytes_read], sizeof(objects.facing));
-						bytes_read += sizeof(objects.facing);
-
-					//	++num_objects;
-					}
+				if (window_w && window_h) {
+					gfx_resize_framebuffer(w, h);
+					aspect_ratio = window_w / window_h;
+					framebuffer_w = window_w;
+					framebuffer_h = window_h;
 				}
+
+				continue;
+			}
+
+			if ((event.type & Event_Type_KEY_UP) && event.key.symbol == Key_ESCAPE) {
+				system_request_quit();
 				break;
-				}
 			}
 
+			if ((event.type & Event_Type_KEY_UP) && event.key.symbol == Key_F1) {
+				Dev_TogglePresentationState();
+				continue;
+			}
+			if ((event.type & Event_Type_KEY_UP) && event.key.symbol == Key_F11) {
+				system_fullscreen_state(SYSTEM_TOGGLE);
+				continue;
+			}
 
-			// Send input
-			if (slot != 0xFFFF)
-			{
-				buffer[0] = (u8)Client_Message::INPUTS;
-				int bytes_written = 1;
+			if ((event.type & Event_Type_KEY_UP) && event.key.symbol == Key_TAB) {
+				primary_player_index = (primary_player_index + 1) % (u32)(scene->by_type.player.count);
+				continue;
+			}
 
-				memcpy(&buffer[bytes_written], &send_packet_id, sizeof(send_packet_id));
-				bytes_written += sizeof(send_packet_id);
+			if (event.type & Event_Type_KEYBOARD) {
+				float value = (float)(event.key.state == Key_State_DOWN);
+				switch (event.key.symbol) {
+				case Key_D:
+				case Key_RIGHT:
+					controller.x = value;
+					break;
+				case Key_A:
+				case Key_LEFT:
+					controller.x = -value;
+					break;
 
-				memcpy(&buffer[bytes_written], &slot, sizeof(slot));
-				bytes_written += sizeof(slot);
-
-				u8 input = 0;
-				bool key_pressed = false;
-
-				if (system_key(Key_W) || system_key(Key_UP)) {
-					input |=  0x1;
-					key_pressed = true;
-					system_trace("key :w\n");
-
-				}
-				
-				if (system_key(Key_S) || system_key(Key_DOWN)) {
-					input |= 0x2;
-					key_pressed = true;
-					system_trace("key :s\n");
-				}
-
-				if (system_key(Key_A) || system_key(Key_LEFT)) {
-					input |= 0x4;
-					key_pressed = true;
-					system_trace("key :a\n");
-				}
-				
-				if (system_key(Key_D) || system_key(Key_RIGHT)) {
-					input |= 0x8;
-					key_pressed = true;
-					system_trace("key :d\n");
-				}
-
-				if (system_key(Key_Q)) {
-					running = false;
+				case Key_W:
+				case Key_UP:
+					controller.y = value;
+					break;
+				case Key_S:
+				case Key_DOWN:
+					controller.y = -value;
 					break;
 				}
-				
-				if (system_key(Key_ESCAPE)) {
-					running = false;
-					break;
-				}
-
-
-				memcpy(&buffer[bytes_written], &input, sizeof(input));
-				bytes_written += sizeof(input);
-
-				u32 crc = murmur3_32(buffer, bytes_written, 0);
-
-				memcpy(&buffer[bytes_written], &crc, sizeof(crc));
-				bytes_written += sizeof(crc);
-
-
-				if (key_pressed) {
-
-					send_packet_id = (send_packet_id + 1) % 250;
-					if (system_net_send_to(socket, buffer, bytes_written, to) < 0) {
-						system_trace("Falied to send!");
-						break;
-					}
-				}
-				
 			}
 
-
-			s32 time_taken_s = time_since(tick_start_time, clock_frequency);
-
-			while (time_taken_s < SECONDS_PER_TICK)
-			{
-				if (sleep_granularity_was_set)
-				{
-					DWORD time_to_wait_ms = DWORD((SECONDS_PER_TICK - time_taken_s) * 1000);
-					if (time_to_wait_ms > 0)
-					{
-						Sleep(time_to_wait_ms);
-					}
-				}
-
-				time_taken_s = time_since(tick_start_time, clock_frequency);
+			if (event.type & Event_Type_CONTROLLER_AXIS) {
+				if (event.controller_axis.symbol == Controller_Axis_LTHUMB_X)
+					controller.x = event.controller_axis.value;
+				else if (event.controller_axis.symbol == Controller_Axis_LTHUMB_Y)
+					controller.y = event.controller_axis.value;
 			}
 
-		
+		}
+
+		Dev_TimedBlockEnd(EventHandling);
+
+		Dev_TimedBlockBegin(Simulation);
+
+		static r32 movement_force = 20;
+
+		Array<Contact_Manifold> manifolds;
+		manifolds.allocator = TEMPORARY_ALLOCATOR;
+
+		while (accumulator_t >= fixed_dt) {
+			Dev_TimedScope(SimulationFrame);
+
+			const r32 gravity = 10;
+			const r32 drag = 5;
+
+			r32 len = sqrtf(controller.x * controller.x + controller.y * controller.y);
+			Vec2 dir = vec2(0);
+			if (len) {
+				dir.x = controller.x / len;
+				dir.y = controller.y / len;
+			}
+
+			if (len) {
+				primary_player->rigid_body->force = movement_force * dir;
+				//set_bit(primary_player->rigid_body->colliders->flags, Collision_Bit_MOTION);
+			}
+
+			for (auto& player : scene->by_type.player) {
+				player.color = vec4(1);
+				player.rigid_body->xform = mat3_translation(player.position) * mat3_scalar(player.radius, player.radius);
+			}
+
+			primary_player->color = vec4(0, 1, 1);
+
+			// TODO: Do broad phase collision detection
+			for (auto ptr = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, ptr); ptr = iter_next<Rigid_Body>(ptr)) {
+				ptr->data.velocity += dt * ptr->data.force;
+				ptr->data.velocity *= powf(0.5f, drag * dt);
+				ptr->data.force = vec2(0);
+				clear_bit(ptr->data.flags, Rigid_Body_COLLIDING);
+			}
+
+			Vec2 dv, dp;
+			Contact_Manifold manifold;
+
+			for (auto a = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, a); a = iter_next<Rigid_Body>(a)) {
+				Rigid_Body& a_body = a->data;
+				if (a_body.type == Rigid_Body_Type_Static) continue;
+				for (auto b = a->next; iter_continue(&scene->rigid_bodies, b); b = iter_next<Rigid_Body>(b)) {
+					Rigid_Body& b_body = b->data;
+
+					dv = a_body.velocity - b_body.velocity;
+					dp = dv * dt;
+
+					for (u32 b_index = 0; b_index < b_body.fixture_count; ++b_index) {
+						Fixture& b_collider = *rigid_body_get_fixture(&b_body, b_index);
+						for (u32 a_index = 0; a_index < a_body.fixture_count; ++a_index) {
+							Fixture& a_collider = *rigid_body_get_fixture(&a_body, a_index);
+
+							if (collider_vs_collider_dynamic(b_collider, a_collider, b_body.xform, a_body.xform, dp, &manifold)) {
+
+#if 1
+								r32 collision_time = manifold.penetration / dt * sgn(vec2_dot(manifold.normal, dv));
+								Vec2 vn, vt;
+
+								if (b_body.type == Rigid_Body_Type_Dynamic) {
+									r32 a_collision_time = 0.5f * collision_time;
+									r32 b_collision_time = -0.5f * collision_time;
+
+									vn = a_collision_time * manifold.normal;
+									vt = a_body.velocity - vn;
+									a_body.velocity = vt - 0.5f * vn;
+
+									vn = b_collision_time * manifold.normal;
+									vt = b_body.velocity - vn;
+									b_body.velocity = vt - 0.5f * vn;
+
+									dv = a_body.velocity - b_body.velocity;
+									dp = dv * dt;
+								}
+								else {
+									vn = collision_time * manifold.normal;
+									vt = a_body.velocity - vn;
+									a_body.velocity = vt;
+
+									dv = a_body.velocity;
+									dp = dv * dt;
+								}
+#endif
+								array_add(&manifolds, manifold);
+
+								b_body.flags |= Rigid_Body_COLLIDING;
+								a_body.flags |= Rigid_Body_COLLIDING;
+							}
+						}
+					}
+				}
+			}
+
+			for (auto& player : scene->by_type.player) {
+				player.position += dt * player.rigid_body->velocity;
+			}
+
+			r32 camera_follow_speed = 0.977f;
+			scene->camera.position = lerp(scene->camera.position, primary_player->position, 1.0f - powf(1.0f - camera_follow_speed, dt));
+
+			accumulator_t -= fixed_dt;
+		}
+
+		ImGui_UpdateFrame(real_dt);
+
+		r32 view_height = 5.0f;
+		r32 view_width = aspect_ratio * view_height;
+
+		auto view = orthographic_view(-view_width, view_width, view_height, -view_height);
+
+#if 1 
+		auto cursor = system_get_cursor_position();
+		cursor.x /= window_w;
+		cursor.y /= window_h;
+		cursor = 2.0f * cursor - vec2(1);
+		cursor.x *= view_width;
+		cursor.y *= view_height;
+
+		if (ImGui_IsUsingCursor()) {
+			cursor.x = 0;
+			cursor.y = 0;
+		}
+
+		cursor += scene->camera.position;
+		//Contact_Manifold manifold;
+		Nearest_Points nearest_points;
+
+		Array<Nearest_Points> all_nearest_points;
+		all_nearest_points.allocator = TEMPORARY_ALLOCATOR;
+
+		primary_player->rigid_body->xform = mat3_translation(primary_player->position);
+
+		bool draw_cursor = false;
+
+		for (auto a = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, a); a = iter_next<Rigid_Body>(a)) {
+			Rigid_Body& a_body = a->data;
+			for (u32 a_index = 0; a_index < a_body.fixture_count; ++a_index) {
+				Fixture& fixture = *rigid_body_get_fixture(&a_body, a_index);
+				if (collider_point_nearest_points(fixture, a_body.xform, cursor, 0, &nearest_points)) {
+					draw_cursor = true;
+					//array_add(&manifolds, manifold);
+				}
+				array_add(&all_nearest_points, nearest_points);
+			}
+		}
+
+#endif
+
+		Dev_TimedBlockEnd(Simulation);
+
+		Dev_TimedBlockBegin(Rendering);
+
+		r32 alpha = accumulator_t / fixed_dt; // TODO: Use this
+
+		gfx_begin_drawing(Framebuffer_Type_HDR, Clear_ALL, vec4(0.0f));
+		gfx_viewport(0, 0, window_w, window_h);
+
+		r32 scale = powf(0.5f, scene->camera.distance);
+		Mat4 transform = mat4_scalar(scale, scale, 1.0f) * mat4_translation(vec3(-scene->camera.position, 0.0f));
+
+		im2d_begin(view, transform);
+
+		for (auto& player : scene->by_type.player) {
+			im2d_circle(player.position, player.radius, player.color * player.intensity);
+			im2d_line(player.position, player.position + player.rigid_body->velocity, vec4(0, 1.5f, 0), 0.02f);
+		}
+
+		im2d_circle(vec2(0), 0.05f, vec4(1.2f, 1.2f, 1.2f));
+
+		for (auto ptr = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, ptr); ptr = iter_next<Rigid_Body>(ptr)) {
+			auto& body = ptr->data;
+
+			for (u32 index = 0; index < body.fixture_count; ++index) {
+				im2d_push_matrix(mat3_to_mat4(body.xform));
+
+				auto f = rigid_body_get_fixture(&body, index);
+				auto color = (body.flags & Rigid_Body_COLLIDING) ? vec4(1, 0, 0) : vec4(0, 1, 1);
+
+				switch (f->shape) {
+				case Fixture_Shape_Null: {
+
+				} break;
+
+				case Fixture_Shape_Circle: {
+					auto circle = fixture_get_shape(f, Circle);
+					im2d_circle_outline(circle->center, circle->radius, color, 0.02f);
+				} break;
+
+				case Fixture_Shape_Polygon: {
+					auto polygon = fixture_get_shape(f, Polygon);
+					im2d_polygon_outline(*polygon, color, 0.02f);
+				} break;
+
+				case Fixture_Shape_Mm_Rect: {
+					auto rect = fixture_get_shape(f, Mm_Rect);
+					im2d_rect_outline(rect->min, rect->max - rect->min, color, 0.02f);
+				} break;
+
+				case Fixture_Shape_Capsule: {
+					auto capsule = fixture_get_shape(f, Capsule);
+					Vec2 capsule_dir = capsule->b - capsule->a;
+					Vec2 capsule_norm = vec2_normalize(vec2(-capsule_dir.y, capsule_dir.x)) * capsule->radius;
+
+					im2d_circle_outline(capsule->a, capsule->radius, color, 0.02f);
+					im2d_circle_outline(capsule->b, capsule->radius, color, 0.02f);
+					im2d_line(capsule->a + capsule_norm, capsule->b + capsule_norm, color, 0.02f);
+					im2d_line(capsule->a - capsule_norm, capsule->b - capsule_norm, color, 0.02f);
+				} break;
+
+					invalid_default_case();
+
+				}
+
+				im2d_pop_matrix();
+			}
+		}
+
+		for (auto& m : manifolds) {
+			im2d_line(m.contacts[1], m.contacts[1] + m.penetration * m.normal, vec4(1, 0, 1), 0.02f);
+			im2d_line(m.contacts[1], m.contacts[1] + m.tangent, vec4(1, 0, 1), 0.02f);
+
+			im2d_circle(m.contacts[0], 0.08f, vec4(1, 0, 1));
+			im2d_circle(m.contacts[1], 0.08f, vec4(1, 0, 1));
+		}
+
+		if (draw_cursor) {
+			im2d_circle(cursor, 0.1f, 2 * vec4(1, 1, 0));
+		}
+
+		for (auto& n : all_nearest_points) {
+			im2d_line(n.a, n.b, vec4(1, 0, 1), 0.02f);
+		}
+
+		im2d_end();
+
+
+		gfx_end_drawing();
+
+
+		gfx_apply_bloom(2);
+
+		gfx_begin_drawing(Framebuffer_Type_DEFAULT, Clear_COLOR, vec4(0));
+		gfx_blit_hdr(0, 0, window_w, window_h);
+		gfx_viewport(0, 0, window_w, window_h);
+
+#if defined(BUILD_DEVELOPER_SERVICE)
+		{
+			Dev_TimedScope(DebugRender);
+			Dev_RenderFrame();
+		}
+#endif
+
+		editor_entity(primary_player);
+
+		ImGui::Begin("Camera", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
+		ImGui::DragFloat("Movement Force", &movement_force, 0.01f);
+		editor_draw(scene->camera);
+		ImGui::End();
+
+		ImGui::ShowDemoWindow();
+
+#if defined(BUILD_IMGUI)
+		{
+			Dev_TimedScope(ImGuiRender);
+			ImGui_RenderFrame();
+		}
+#endif
+
+		gfx_end_drawing();
+
+		Dev_TimedBlockBegin(Present);
+		gfx_present();
+		Dev_TimedBlockEnd(Present);
+		Dev_TimedBlockEnd(Rendering);
+
+		reset_temporary_memory();
+
+		auto new_counter = system_get_counter();
+		auto counts = new_counter - counter;
+		counter = new_counter;
+
+		real_dt = ((1000000.0f * (r32)counts) / (r32)frequency) / 1000000.0f;
+		real_t += real_dt;
+
+		game_dt = real_dt * speed_factor;
+		dt = fixed_dt * speed_factor;
+
+		accumulator_t += real_dt;
+		accumulator_t = minimum(accumulator_t, 0.3f);
+
+		Dev_TimedFrameEnd(real_dt);
 	}
 
-	buffer[0] = (u8)Client_Message::LEAVE;
-	int bytes_written = 1;
-	memcpy(&buffer[bytes_written], &slot, sizeof(slot));
-	if (system_net_send_to(socket, buffer, bytes_written, to) < 0) {
-		system_trace("falied to send!");
-	}
-
-	//u32 crc = murmur3_32(buffer, bytes_written, 0);
+	ImGui_Shutdown();
+	gfx_destroy_context();
 
 	return 0;
 }

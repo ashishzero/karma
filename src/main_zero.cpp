@@ -28,37 +28,37 @@ static Nearest_Points_Finder NEAREST_POINTS_FINDERS[Fixture_Shape_Count][Fixture
 typedef bool(*Collision_Detector)(Fixture &a, Fixture &b, const Mat3 &ta, const Mat3 &tb, const Mat2 &tdira, const Mat2 &tdirb, Vec2 dp);
 static Collision_Detector COLLISION_DETECTORS[Fixture_Shape_Count][Fixture_Shape_Count];
 
-bool null_collision_resolver(Fixture &a, Fixture &b, const Mat3 &ta, const Mat3 &tb, const Mat2 &tdira, const Mat2 &tdirb, Vec2 dp, Contact_Manifold *manifold) {
+static bool null_collision_resolver(Fixture &a, Fixture &b, const Mat3 &ta, const Mat3 &tb, const Mat2 &tdira, const Mat2 &tdirb, Vec2 dp, Contact_Manifold *manifold) {
 	return false;
 }
 
-bool null_nearest_points_finder(Fixture &a, Fixture &b, const Mat3 &ta, const Mat3 &tb, const Mat2 &tdira, const Mat2 &tdirb, Vec2 dp, Nearest_Points *nearest_points) {
+static bool null_nearest_points_finder(Fixture &a, Fixture &b, const Mat3 &ta, const Mat3 &tb, const Mat2 &tdira, const Mat2 &tdirb, Vec2 dp, Nearest_Points *nearest_points) {
 	nearest_points->a = vec2(INFINITY, INFINITY);
 	nearest_points->b = vec2(INFINITY, INFINITY);
 	nearest_points->distance = INFINITY;
 	return false;
 }
 
-bool null_collision_detector(Fixture &a, Fixture &b, const Mat3 &ta, const Mat3 &tb, const Mat2 &tdira, const Mat2 &tdirb, Vec2 dp) {
+static bool null_collision_detector(Fixture &a, Fixture &b, const Mat3 &ta, const Mat3 &tb, const Mat2 &tdira, const Mat2 &tdirb, Vec2 dp) {
 	return false;
 }
 
 template <typename ShapeA, typename ShapeB>
-bool shapes_collision_resolver(Fixture &a, Fixture &b, const Mat3 &ta, const Mat3 &tb, const Mat2 &tdira, const Mat2 &tdirb, Vec2 dp, Contact_Manifold *manifold) {
+static bool shapes_collision_resolver(Fixture &a, Fixture &b, const Mat3 &ta, const Mat3 &tb, const Mat2 &tdira, const Mat2 &tdirb, Vec2 dp, Contact_Manifold *manifold) {
 	return gjk_epa(*(ShapeA *)a.handle, *(ShapeB *)b.handle, manifold, ta, tb, tdira, tdirb, dp);
 }
 
 template <typename ShapeA, typename ShapeB>
-bool shapes_nearest_points_finder(Fixture &a, Fixture &b, const Mat3 &ta, const Mat3 &tb, const Mat2 &tdira, const Mat2 &tdirb, Vec2 dp, Nearest_Points *nearest_points) {
+static bool shapes_nearest_points_finder(Fixture &a, Fixture &b, const Mat3 &ta, const Mat3 &tb, const Mat2 &tdira, const Mat2 &tdirb, Vec2 dp, Nearest_Points *nearest_points) {
 	return gjk_epa_nearest_points(*(ShapeA *)a.handle, *(ShapeB *)b.handle, nearest_points, ta, tb, tdira, tdirb, dp);
 }
 
 template <typename ShapeA, typename ShapeB>
-bool shapes_collision_detector(Fixture &a, Fixture &b, const Mat3 &ta, const Mat3 &tb, const Mat2 &tdira, const Mat2 &tdirb, Vec2 dp) {
+static bool shapes_collision_detector(Fixture &a, Fixture &b, const Mat3 &ta, const Mat3 &tb, const Mat2 &tdira, const Mat2 &tdirb, Vec2 dp) {
 	return gjk(*(ShapeA *)a.handle, *(ShapeB *)b.handle, ta, tb, tdira, tdirb, dp);
 }
 
-void collision_resover_init() {
+static void collision_resover_init() {
 	COLLISION_RESOLVERS[Fixture_Shape_Null][Fixture_Shape_Null] = null_collision_resolver;
 	COLLISION_RESOLVERS[Fixture_Shape_Null][Fixture_Shape_Circle] = null_collision_resolver;
 	COLLISION_RESOLVERS[Fixture_Shape_Null][Fixture_Shape_Mm_Rect] = null_collision_resolver;
@@ -150,7 +150,7 @@ void collision_resover_init() {
 	COLLISION_DETECTORS[Fixture_Shape_Polygon][Fixture_Shape_Polygon] = shapes_collision_detector<Polygon, Polygon>;
 }
 
-bool collider_vs_collider_dynamic(Fixture &a, Fixture &b, const Mat3 &ta, const Mat3 &tb, Vec2 dp, Contact_Manifold *manifold) {
+static bool collider_vs_collider_dynamic(Fixture &a, Fixture &b, const Mat3 &ta, const Mat3 &tb, Vec2 dp, Contact_Manifold *manifold) {
 	Mat2 tdira, tdirb;
 	tdira.rows[0] = vec2(ta.m2[0][0], ta.m2[1][0]);
 	tdira.rows[1] = vec2(ta.m2[0][1], ta.m2[1][1]);
@@ -160,7 +160,7 @@ bool collider_vs_collider_dynamic(Fixture &a, Fixture &b, const Mat3 &ta, const 
 	return COLLISION_RESOLVERS[a.shape][b.shape](a, b, ta, tb, tdira, tdirb, dp, manifold);
 }
 
-bool collider_collider_nearest_points(Fixture &a, Fixture &b, const Mat3 &ta, const Mat3 &tb, Vec2 dp, Nearest_Points *nearest_points) {
+static bool collider_collider_nearest_points(Fixture &a, Fixture &b, const Mat3 &ta, const Mat3 &tb, Vec2 dp, Nearest_Points *nearest_points) {
 	Mat2 tdira, tdirb;
 	tdira.rows[0] = vec2(ta.m2[0][0], ta.m2[1][0]);
 	tdira.rows[1] = vec2(ta.m2[0][1], ta.m2[1][1]);
@@ -170,7 +170,7 @@ bool collider_collider_nearest_points(Fixture &a, Fixture &b, const Mat3 &ta, co
 	return NEAREST_POINTS_FINDERS[a.shape][b.shape](a, b, ta, tb, tdira, tdirb, dp, nearest_points);
 }
 
-bool test_collider_collider(Fixture &a, Fixture &b, const Mat3 &ta, const Mat3 &tb, Vec2 dp) {
+static bool test_collider_collider(Fixture &a, Fixture &b, const Mat3 &ta, const Mat3 &tb, Vec2 dp) {
 	Mat2 tdira, tdirb;
 	tdira.rows[0] = vec2(ta.m2[0][0], ta.m2[1][0]);
 	tdira.rows[1] = vec2(ta.m2[0][1], ta.m2[1][1]);
@@ -182,7 +182,7 @@ bool test_collider_collider(Fixture &a, Fixture &b, const Mat3 &ta, const Mat3 &
 
 // TODO: Rename collider into fixture
 
-bool collider_vs_point_dynamic(Fixture &a, const Mat3 &t, Vec2 point, r32 size, Contact_Manifold *manifold) {
+static bool collider_vs_point_dynamic(Fixture &a, const Mat3 &t, Vec2 point, r32 size, Contact_Manifold *manifold) {
 	Circle circle = { point, size };
 	Fixture b;
 	b.shape = Fixture_Shape_Circle;
@@ -194,7 +194,7 @@ bool collider_vs_point_dynamic(Fixture &a, const Mat3 &t, Vec2 point, r32 size, 
 	return COLLISION_RESOLVERS[a.shape][b.shape](a, b, t, mat3_identity(), tdir, mat2_identity(), vec2(0), manifold);
 }
 
-bool collider_point_nearest_points(Fixture &a, const Mat3 &t, Vec2 point, r32 size, Nearest_Points *nearest_points) {
+static bool collider_point_nearest_points(Fixture &a, const Mat3 &t, Vec2 point, r32 size, Nearest_Points *nearest_points) {
 	Circle circle = { point, size };
 	Fixture b;
 	b.shape = Fixture_Shape_Circle;
@@ -206,7 +206,7 @@ bool collider_point_nearest_points(Fixture &a, const Mat3 &t, Vec2 point, r32 si
 	return NEAREST_POINTS_FINDERS[a.shape][b.shape](a, b, t, mat3_identity(), tdir, mat2_identity(), vec2(0), nearest_points);
 }
 
-bool test_collider_point(Fixture &a, const Mat3 &t, Vec2 point) {
+static bool test_collider_point(Fixture &a, const Mat3 &t, Vec2 point) {
 	Circle circle = { point, 0.0f };
 	Fixture b;
 	b.shape = Fixture_Shape_Circle;
