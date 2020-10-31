@@ -74,7 +74,8 @@ typename Circular_Linked_List<T>::Node *iter_next(typename Circular_Linked_List<
 template <typename T>
 void circular_linked_list_clear(Circular_Linked_List<T> *list) {
 	for (auto node = iter_begin(list); iter_continue(list, node); node = iter_next(node))
-		circular_linked_list_remove(list, node);
+		memory_free(node, list->allocator);
+	circular_linked_list_init(list, list->allocator);
 }
 
 template <typename T>

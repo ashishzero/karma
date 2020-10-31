@@ -285,10 +285,10 @@ int karma_user_zero() {
 		info.rigid_body.fixture_id = id;
 		info.rigid_body.xform = mat3_identity();
 
-		scene_create_new_entity(scene, Entity_Type_Player, info);
+		((Player *)scene_create_new_entity(scene, Entity_Type_Player, info))->radius = 0.5f;
 
-		info.position = vec2(-5, 8);
-		scene_create_new_entity(scene, Entity_Type_Player, info);
+		info.position = vec2(-3, 7);
+		((Player *)scene_create_new_entity(scene, Entity_Type_Player, info))->radius = 0.5f;
 
 		Mm_Rect rect;
 		rect.min = vec2(-1);
@@ -298,9 +298,9 @@ int karma_user_zero() {
 		fixture.handle = &rect;
 		id = scene_create_new_resource_fixture(scene, &fixture, 1);
 
-		info.position = vec2(0, 5);
+		info.position = vec2(2);
 		info.rigid_body.fixture_id = id;
-		scene_create_new_entity(scene, Entity_Type_Player, info);
+		((Player *)scene_create_new_entity(scene, Entity_Type_Player, info))->radius = 0.5f;
 	}
 
 	{
@@ -411,8 +411,8 @@ int karma_user_zero() {
 				window_h = (r32)h;
 
 				if (window_w && window_h) {
-					gfx_resize_framebuffer(w, h);
 					aspect_ratio = window_w / window_h;
+					gfx_resize_framebuffer(w, h, lroundf(512 * aspect_ratio), 512);
 					framebuffer_w = window_w;
 					framebuffer_h = window_h;
 				}
@@ -477,8 +477,17 @@ int karma_user_zero() {
 
 		static r32 movement_force = 20;
 
+		Contact_Manifold manifold;
+		manifold.normal = vec2(0);
+
 		Array<Contact_Manifold> manifolds;
 		manifolds.allocator = TEMPORARY_ALLOCATOR;
+
+		Nearest_Points np;
+		np.distance = 0;
+
+		Array<Nearest_Points> nearest_points;
+		nearest_points.allocator = TEMPORARY_ALLOCATOR;
 
 		while (accumulator_t >= fixed_dt) {
 			Dev_TimedScope(SimulationFrame);
@@ -514,13 +523,15 @@ int karma_user_zero() {
 			}
 
 			Vec2 dv, dp;
-			Contact_Manifold manifold;
+			//Contact_Manifold manifold;
 
 			for (auto a = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, a); a = iter_next<Rigid_Body>(a)) {
 				Rigid_Body &a_body = a->data;
-				if (a_body.type == Rigid_Body_Type_Static) continue;
 				for (auto b = a->next; iter_continue(&scene->rigid_bodies, b); b = iter_next<Rigid_Body>(b)) {
 					Rigid_Body &b_body = b->data;
+
+					if (a_body.type == Rigid_Body_Type_Static && b_body.type == Rigid_Body_Type_Static)
+						continue;
 
 					dv = a_body.velocity - b_body.velocity;
 					dp = dv * dt;
@@ -530,13 +541,13 @@ int karma_user_zero() {
 						for (u32 a_index = 0; a_index < a_body.fixture_count; ++a_index) {
 							Fixture &a_collider = *rigid_body_get_fixture(&a_body, a_index);
 
+#if 1
 							if (collider_vs_collider_dynamic(b_collider, a_collider, b_body.xform, a_body.xform, dp, &manifold)) {
 
-#if 0
 								r32 collision_time = manifold.penetration / dt * sgn(vec2_dot(manifold.normal, dv));
 								Vec2 vn, vt;
 
-								if (b_body.type == Rigid_Body_Type_Dynamic) {
+								if (b_body.type == Rigid_Body_Type_Dynamic && a_body.type == Rigid_Body_Type_Dynamic) {
 									r32 a_collision_time =  0.5f * collision_time;
 									r32 b_collision_time = -0.5f * collision_time;
 
@@ -550,20 +561,28 @@ int karma_user_zero() {
 
 									dv = a_body.velocity - b_body.velocity;
 									dp = dv * dt;
-								} else {
+								} else if (a_body.type == Rigid_Body_Type_Dynamic) {
 									vn = collision_time * manifold.normal;
 									vt = a_body.velocity - vn;
 									a_body.velocity = vt;
 
 									dv = a_body.velocity;
 									dp = dv * dt;
+								} else {
+									vn = -collision_time * manifold.normal;
+									vt = b_body.velocity - vn;
+									b_body.velocity = vt;
+
+									dv = b_body.velocity;
+									dp = dv * dt;
 								}
-#endif
+
 								array_add(&manifolds, manifold);
 
 								b_body.flags |= Rigid_Body_COLLIDING;
 								a_body.flags |= Rigid_Body_COLLIDING;
 							}
+#endif
 						}
 					}
 				}
@@ -586,20 +605,20 @@ int karma_user_zero() {
 
 		auto view = orthographic_view(-view_width, view_width, view_height, -view_height);
 
-#if 1 
+#if 0 
 		auto cursor = system_get_cursor_position();
 		cursor.x /= window_w;
 		cursor.y /= window_h;
 		cursor = 2.0f * cursor - vec2(1);
 		cursor.x *= view_width;
 		cursor.y *= view_height;
+		cursor += scene->camera.position;
 
 		if (ImGui_IsUsingCursor()) {
 			cursor.x = 0;
 			cursor.y = 0;
 		}
 
-		cursor += scene->camera.position;
 		//Contact_Manifold manifold;
 		Nearest_Points nearest_points;
 
@@ -630,7 +649,7 @@ int karma_user_zero() {
 
 		r32 alpha = accumulator_t / fixed_dt; // TODO: Use this
 
-		gfx_begin_drawing(Framebuffer_Type_HDR, Clear_ALL, vec4(0.0f));
+		gfx_begin_drawing(Framebuffer_Type_HDR, Clear_ALL, vec4(0.05f, 0.05f, 0.05f, 1.0f));
 		gfx_viewport(0, 0, window_w, window_h);
 
 		r32 scale = powf(0.5f, scene->camera.distance);
@@ -701,11 +720,11 @@ int karma_user_zero() {
 			im2d_circle(m.contacts[1], 0.08f, vec4(1, 0, 1));
 		}
 
-		if (draw_cursor) {
-			im2d_circle(cursor, 0.1f, 2 * vec4(1, 1, 0));
-		}
+		//if (draw_cursor) {
+		//	im2d_circle(cursor, 0.1f, 2 * vec4(1, 1, 0));
+		//}
 
-		for (auto &n : all_nearest_points) {
+		for (auto &n : nearest_points) {
 			im2d_line(n.a, n.b, vec4(1, 0, 1), 0.02f);
 		}
 
@@ -717,7 +736,7 @@ int karma_user_zero() {
 
 		gfx_apply_bloom(2);
 
-		gfx_begin_drawing(Framebuffer_Type_DEFAULT, Clear_COLOR, vec4(0));
+		gfx_begin_drawing(Framebuffer_Type_DEFAULT, Clear_COLOR, vec4(0.0f));
 		gfx_blit_hdr(0, 0, window_w, window_h);
 		gfx_viewport(0, 0, window_w, window_h);
 
@@ -731,6 +750,7 @@ int karma_user_zero() {
 		editor_entity(primary_player);
 		
 		ImGui::Begin("Camera", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
+		ImGui::Text("Collision Count: %zd", manifolds.count);
 		ImGui::DragFloat("Movement Force", &movement_force, 0.01f);
 		editor_draw(scene->camera);
 		ImGui::End();
