@@ -285,10 +285,10 @@ int karma_user_zero() {
 		info.rigid_body.fixture_id = id;
 		info.rigid_body.xform = mat3_identity();
 
-		((Player *)scene_create_new_entity(scene, Entity_Type_Player, info))->radius = 0.5f;
+		((Player *)scene_create_new_entity(scene, Entity_Type_Player, info));
 
 		info.position = vec2(-3, 7);
-		((Player *)scene_create_new_entity(scene, Entity_Type_Player, info))->radius = 0.5f;
+		((Player *)scene_create_new_entity(scene, Entity_Type_Player, info));
 
 		Mm_Rect rect;
 		rect.min = vec2(-1);
@@ -300,7 +300,7 @@ int karma_user_zero() {
 
 		info.position = vec2(2);
 		info.rigid_body.fixture_id = id;
-		((Player *)scene_create_new_entity(scene, Entity_Type_Player, info))->radius = 0.5f;
+		((Player *)scene_create_new_entity(scene, Entity_Type_Player, info));
 	}
 
 	{
@@ -488,6 +488,8 @@ int karma_user_zero() {
 
 		Array<Nearest_Points> nearest_points;
 		nearest_points.allocator = TEMPORARY_ALLOCATOR;
+		static int number_of_iterations = 4;
+		static r32 stiffness = 0.5f;
 
 		while (accumulator_t >= fixed_dt) {
 			Dev_TimedScope(SimulationFrame);
@@ -525,64 +527,70 @@ int karma_user_zero() {
 			Vec2 dv, dp;
 			//Contact_Manifold manifold;
 
-			for (auto a = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, a); a = iter_next<Rigid_Body>(a)) {
-				Rigid_Body &a_body = a->data;
-				for (auto b = a->next; iter_continue(&scene->rigid_bodies, b); b = iter_next<Rigid_Body>(b)) {
-					Rigid_Body &b_body = b->data;
+			r32 stiffness = 1;
 
-					if (a_body.type == Rigid_Body_Type_Static && b_body.type == Rigid_Body_Type_Static)
-						continue;
+			for (int iteration = 0; iteration < number_of_iterations; ++iteration) {
+				for (auto a = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, a); a = iter_next<Rigid_Body>(a)) {
+					Rigid_Body &a_body = a->data;
+					for (auto b = a->next; iter_continue(&scene->rigid_bodies, b); b = iter_next<Rigid_Body>(b)) {
+						Rigid_Body &b_body = b->data;
 
-					dv = a_body.velocity - b_body.velocity;
-					dp = dv * dt;
+						if (a_body.type == Rigid_Body_Type_Static && b_body.type == Rigid_Body_Type_Static)
+							continue;
 
-					for (u32 b_index = 0; b_index < b_body.fixture_count; ++b_index) {
-						Fixture &b_collider = *rigid_body_get_fixture(&b_body, b_index);
-						for (u32 a_index = 0; a_index < a_body.fixture_count; ++a_index) {
-							Fixture &a_collider = *rigid_body_get_fixture(&a_body, a_index);
+						dv = a_body.velocity - b_body.velocity;
+						dp = dv * dt;
+
+						for (u32 b_index = 0; b_index < b_body.fixture_count; ++b_index) {
+							Fixture &b_collider = *rigid_body_get_fixture(&b_body, b_index);
+							for (u32 a_index = 0; a_index < a_body.fixture_count; ++a_index) {
+								Fixture &a_collider = *rigid_body_get_fixture(&a_body, a_index);
 
 #if 1
-							if (collider_vs_collider_dynamic(b_collider, a_collider, b_body.xform, a_body.xform, dp, &manifold)) {
+								if (collider_vs_collider_dynamic(b_collider, a_collider, b_body.xform, a_body.xform, dp, &manifold)) {
 
-								r32 collision_time = manifold.penetration / dt * sgn(vec2_dot(manifold.normal, dv));
-								Vec2 vn, vt;
+									r32 collision_time = -manifold.penetration / dt;
+									Vec2 vn, vt;
 
-								if (b_body.type == Rigid_Body_Type_Dynamic && a_body.type == Rigid_Body_Type_Dynamic) {
-									r32 a_collision_time =  0.5f * collision_time;
-									r32 b_collision_time = -0.5f * collision_time;
+									if (b_body.type == Rigid_Body_Type_Dynamic && a_body.type == Rigid_Body_Type_Dynamic) {
+										r32 a_collision_time = 0.5f * collision_time;
+										r32 b_collision_time = -0.5f * collision_time;
 
-									vn = a_collision_time * manifold.normal;
-									vt = a_body.velocity - vn;
-									a_body.velocity = vt - 0.5f * vn;
+										vn = a_collision_time * manifold.normal;
+										vt = a_body.velocity - stiffness * vn;
+										a_body.velocity = vt - 0.5f * vn;
 
-									vn = b_collision_time * manifold.normal;
-									vt = b_body.velocity - vn;
-									b_body.velocity = vt - 0.5f * vn;
+										vn = b_collision_time * manifold.normal;
+										vt = b_body.velocity - stiffness * vn;
+										b_body.velocity = vt - 0.5f * vn;
 
-									dv = a_body.velocity - b_body.velocity;
-									dp = dv * dt;
-								} else if (a_body.type == Rigid_Body_Type_Dynamic) {
-									vn = collision_time * manifold.normal;
-									vt = a_body.velocity - vn;
-									a_body.velocity = vt;
+										dv = a_body.velocity - b_body.velocity;
+										dp = dv * dt;
+									}
+									else if (a_body.type == Rigid_Body_Type_Dynamic) {
+										vn = collision_time * manifold.normal;
+										vt = a_body.velocity - stiffness * vn;
+										a_body.velocity = vt;
 
-									dv = a_body.velocity;
-									dp = dv * dt;
-								} else {
-									vn = -collision_time * manifold.normal;
-									vt = b_body.velocity - vn;
-									b_body.velocity = vt;
+										dv = a_body.velocity;
+										dp = dv * dt;
+									}
+									else {
+										vn = -collision_time * manifold.normal;
+										vt = b_body.velocity - stiffness * vn;
+										b_body.velocity = vt;
 
-									dv = b_body.velocity;
-									dp = dv * dt;
+										dv = -b_body.velocity;
+										dp = dv * dt;
+									}
+
+									array_add(&manifolds, manifold);
+
+									b_body.flags |= Rigid_Body_COLLIDING;
+									a_body.flags |= Rigid_Body_COLLIDING;
 								}
-
-								array_add(&manifolds, manifold);
-
-								b_body.flags |= Rigid_Body_COLLIDING;
-								a_body.flags |= Rigid_Body_COLLIDING;
-							}
 #endif
+							}
 						}
 					}
 				}
@@ -590,6 +598,7 @@ int karma_user_zero() {
 
 			for (auto &player : scene->by_type.player) {
 				player.position += dt * player.rigid_body->velocity;
+				player.rigid_body->xform = mat3_translation(player.position) * mat3_scalar(player.radius, player.radius);
 			}
 
 			r32 camera_follow_speed = 0.977f;
@@ -750,7 +759,8 @@ int karma_user_zero() {
 		editor_entity(primary_player);
 		
 		ImGui::Begin("Camera", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
-		ImGui::Text("Collision Count: %zd", manifolds.count);
+		ImGui::DragInt("Velocity Iteration", &number_of_iterations, 1, 1, 10000);
+		ImGui::DragFloat("Stiffness", &stiffness, 0.01f, 0, 1);
 		ImGui::DragFloat("Movement Force", &movement_force, 0.01f);
 		editor_draw(scene->camera);
 		ImGui::End();

@@ -25,7 +25,11 @@ void scene_destroy(Scene *scene) {
 }
 
 u64 iscene_generate_unique_id(Scene *scene) {
-	return random_get(&scene->id_series) | ((time(0) & 0xffffffff) << 32);
+	u64 id = 0;
+	while (id == 0) {
+		id = (u64)random_get(&scene->id_series) | (((u64)time(0) & 0xffffffff) << 32);
+	}
+	return id;
 }
 
 Resource_Fixture *scene_find_resource_fixture(Scene *scene, Resource_Id id) {
