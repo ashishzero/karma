@@ -91,5 +91,6 @@ struct Gfx_Platform {
 	virtual void destroy() = 0;
 };
 
+Gfx_Platform *create_null_context(Handle platform, Vsync vsync, s32 multisamples);
 Gfx_Platform *create_opengl_context(Handle platform, Vsync vsync, s32 multisamples);
 Gfx_Platform *create_directx11_context(Handle platform, Vsync vsync, s32 multisamples);

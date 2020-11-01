@@ -138,24 +138,20 @@ static String igfx_find_shader(String content, u32 shader_tag, const char *name 
 }
 
 bool gfx_create_context(Handle platform, Render_Backend backend, Vsync vsync, u32 multisamples, u32 framebuffer_w, u32 framebuffer_h) {
-	if (backend == Render_Backend_OPENGL) {
+	if (backend == Render_Backend_NONE) {
+		system_log(LOG_INFO, "Gfx", "gfx.backend = Render_Backend_NONE");
+		gfx = create_null_context(platform, vsync, multisamples);
+		shader_lang = 0;
+	} else if (backend == Render_Backend_OPENGL) {
 		system_log(LOG_INFO, "Gfx", "gfx.backend = Render_Backend_OPENGL");
 		gfx = create_opengl_context(platform, vsync, multisamples);
-		if (gfx->backend == Render_Backend_NONE) {
-			system_log(LOG_ERROR, "Gfx", "create_opengl_context() failed.");
-			return false;
-		}
 		shader_lang = SHADER_LANG_GLSL;
 	} else if (backend == Render_Backend_DIRECTX11) {
 		system_log(LOG_INFO, "Gfx", "gfx.backend = Render_Backend_DIRECTX11");
 		gfx = create_directx11_context(platform, vsync, multisamples);
-		if (gfx->backend == Render_Backend_NONE) {
-			system_log(LOG_ERROR, "Gfx", "create_directx11_context() failed.");
-			return false;
-		}
 		shader_lang = SHADER_LANG_HLSL;
 	} else {
-		return false;
+		invalid_code_path();
 	}
 
 	{
@@ -163,6 +159,11 @@ bool gfx_create_context(Handle platform, Render_Backend backend, Vsync vsync, u3
 		system_log(LOG_INFO, "Gfx", "Renderer: %s, Version %s", info->renderer, info->version);
 		system_log(LOG_INFO, "Gfx", "Vendor: %s", info->vendor);
 		system_log(LOG_INFO, "Gfx", "Shading Language: %s", info->shading_lang);
+
+		if (gfx->backend != backend) {
+			system_log(LOG_ERROR, "Gfx", "Context creation failed.");
+			return false;
+		}
 	}
 
 	gfx_resize_framebuffer(framebuffer_w, framebuffer_h);
@@ -402,6 +403,7 @@ Mat4 gfx_view_transform(Camera_View &view) {
 	auto backend = gfx_render_backend();
 	if (view.kind == ORTHOGRAPHIC) {
 		switch (backend) {
+		case Render_Backend_NONE: return mat4_identity();
 		case Render_Backend_OPENGL: return mat4_ortho_gl(view.orthographic.left, view.orthographic.right, 
 			view.orthographic.top, view.orthographic.bottom, 
 			view.orthographic.near, view.orthographic.far);
@@ -412,6 +414,7 @@ Mat4 gfx_view_transform(Camera_View &view) {
 		}
 	} else {
 		switch (backend) {
+		case Render_Backend_NONE: return mat4_identity();
 		case Render_Backend_OPENGL: return mat4_perspective_gl(view.perspective.field_of_view,
 			view.perspective.aspect_ratio, 
 			view.perspective.near_plane, 

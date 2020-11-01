@@ -123,7 +123,8 @@
 
 #include "modules/core/systems.h"
 
-namespace ImGui {
+namespace ImGuiEx {
+void RefreshRenderingContext();
 void Initialize();
 void Shutdown();
 bool HandleEvent(const Event &event);
@@ -133,15 +134,17 @@ void RenderFrame();
 
 #ifdef BUILD_IMGUI
 
-#define ImGui_Initialize()			ImGui::Initialize()
-#define ImGui_Shutdown()			ImGui::Shutdown()
-#define ImGui_HandleEvent(event)	ImGui::HandleEvent(event)
-#define ImGui_UpdateFrame(dt)		ImGui::UpdateFrame(dt)
-#define ImGui_RenderFrame()			ImGui::RenderFrame()
-#define ImGui_IsUsingCursor()		ImGui::GetIO().WantCaptureMouse
+#define ImGui_RefreshRenderingContext()	ImGuiEx::RefreshRenderingContext()
+#define ImGui_Initialize()				ImGuiEx::Initialize()
+#define ImGui_Shutdown()				ImGuiEx::Shutdown()
+#define ImGui_HandleEvent(event)		ImGuiEx::HandleEvent(event)
+#define ImGui_UpdateFrame(dt)			ImGuiEx::UpdateFrame(dt)
+#define ImGui_RenderFrame()				ImGuiEx::RenderFrame()
+#define ImGui_IsUsingCursor()			ImGui::GetIO().WantCaptureMouse
 
 #else
 
+#define ImGui_RefreshRenderingContext()
 #define ImGui_Initialize()
 #define ImGui_Shutdown()
 #define ImGui_HandleEvent(...) (false)

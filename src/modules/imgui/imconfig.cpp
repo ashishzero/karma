@@ -12,7 +12,50 @@ static Cursor_Kind        mouse_cursor[ImGuiMouseCursor_COUNT];
 static ImGuiDockNodeFlags dockspace_flags;
 ImGuiWindowFlags          dockspace_main_window_flags;
 
-void ImGui::Initialize() {
+typedef void (*ImGui_Create_Context)(void *, void *);
+typedef void (*ImGui_Destroy_Context)();
+typedef void (*ImGui_New_Frame)();
+typedef void (*ImGui_Render_Frame)(ImDrawData *draw_data);
+
+static ImGui_Create_Context		imgui_create_context;
+static ImGui_Destroy_Context	imgui_destroy_context;
+static ImGui_Render_Frame		imgui_render_frame;
+static ImGui_New_Frame			imgui_new_frame;
+
+static void imgui_set_renderer_backend(Render_Backend backend) {
+	switch (backend) {
+		case Render_Backend_NONE: {
+			imgui_create_context	= [](void *, void *) {};
+			imgui_destroy_context	= []() {};
+			imgui_new_frame			= []() {};
+			imgui_render_frame		= [](ImDrawData *) {};
+		} break;
+
+		case Render_Backend_OPENGL: {
+			imgui_create_context	= [](void *, void *) { ImGui_ImplOpenGL3_Init("#version 420"); };
+			imgui_destroy_context	= ImGui_ImplOpenGL3_Shutdown;
+			imgui_new_frame			= ImGui_ImplOpenGL3_NewFrame;
+			imgui_render_frame		= ImGui_ImplOpenGL3_RenderDrawData;
+		} break;
+
+		case Render_Backend_DIRECTX11: {
+			imgui_create_context	= [](void * device, void *device_context) { ImGui_ImplDX11_Init((ID3D11Device *)device, (ID3D11DeviceContext *)device_context); };
+			imgui_destroy_context	= ImGui_ImplDX11_Shutdown;
+			imgui_new_frame			= ImGui_ImplDX11_NewFrame;
+			imgui_render_frame		= ImGui_ImplDX11_RenderDrawData;
+		} break;
+
+		invalid_default_case();
+	}
+}
+
+void ImGuiEx::RefreshRenderingContext() {
+	imgui_destroy_context();
+	imgui_set_renderer_backend(gfx_render_backend());
+	imgui_create_context(gfx_render_device(), gfx_render_context());
+}
+
+void ImGuiEx::Initialize() {
 	IMGUI_CHECKVERSION();
 
 	ImGui::SetAllocatorFunctions(
@@ -175,11 +218,8 @@ void ImGui::Initialize() {
 	io.BackendRendererName = "Karma Renderer";
 	io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;
 
-	auto backend = gfx_render_backend();
-	if (backend == Render_Backend_OPENGL)
-		ImGui_ImplOpenGL3_Init("#version 150");
-	else if (backend == Render_Backend_DIRECTX11)
-		ImGui_ImplDX11_Init((ID3D11Device *)gfx_render_device(), (ID3D11DeviceContext *)gfx_render_context());
+	imgui_set_renderer_backend(gfx_render_backend());
+	imgui_create_context(gfx_render_device(), gfx_render_context());
 
 	dockspace_flags |= ImGuiDockNodeFlags_PassthruCentralNode;
 	dockspace_flags |= ImGuiDockNodeFlags_AutoHideTabBar;
@@ -193,7 +233,7 @@ void ImGui::Initialize() {
 	dockspace_main_window_flags |= ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoBringToFrontOnFocus;
 }
 
-void ImGui::Shutdown() {
+void ImGuiEx::Shutdown() {
 	String ini_content;
 	size_t size       = 0;
 	ini_content.data  = (utf8 *)ImGui::SaveIniSettingsToMemory(&size);
@@ -204,16 +244,13 @@ void ImGui::Shutdown() {
 
 	memory_free(user_name.data);
 
-	auto backend = gfx_render_backend();
-	if (backend == Render_Backend_OPENGL)
-		ImGui_ImplOpenGL3_DestroyDeviceObjects();
-	else if (backend == Render_Backend_DIRECTX11)
-		ImGui_ImplDX11_Shutdown();
+	imgui_destroy_context();
+	imgui_set_renderer_backend(Render_Backend_NONE);
 
 	ImGui::DestroyContext();
 }
 
-bool ImGui::HandleEvent(const Event &event) {
+bool ImGuiEx::HandleEvent(const Event &event) {
 	ImGuiIO &io = ImGui::GetIO();
 
 	switch (event.type) {
@@ -262,12 +299,8 @@ bool ImGui::HandleEvent(const Event &event) {
 	return false;
 }
 
-void ImGui::UpdateFrame(r32 dt) {
-	auto backend = gfx_render_backend();
-	if (backend == Render_Backend_OPENGL)
-		ImGui_ImplOpenGL3_NewFrame();
-	else if (backend == Render_Backend_DIRECTX11)
-		ImGui_ImplDX11_NewFrame();
+void ImGuiEx::UpdateFrame(r32 dt) {
+	imgui_new_frame();
 
 	ImGuiIO &io = ImGui::GetIO();
 	IM_ASSERT(io.Fonts->IsBuilt() && "Font atlas not built! It is generally built by the renderer back-end. Missing call to renderer _NewFrame() function? e.g. ImGui_ImplOpenGL3_NewFrame().");
@@ -315,12 +348,7 @@ void ImGui::UpdateFrame(r32 dt) {
 	ImGui::End();
 }
 
-void ImGui::RenderFrame() {
+void ImGuiEx::RenderFrame() {
 	ImGui::Render();
-
-	auto backend = gfx_render_backend();
-	if (backend == Render_Backend_OPENGL)
-		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-	else if (backend == Render_Backend_DIRECTX11)
-		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+	imgui_render_frame(ImGui::GetDrawData());
 }

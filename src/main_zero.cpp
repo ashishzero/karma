@@ -227,6 +227,8 @@ int karma_user_zero() {
 	}
 #endif
 
+	auto render_api = Render_Backend_DIRECTX11;
+
 	r32    framebuffer_w = 1280;
 	r32    framebuffer_h = 720;
 	Handle platform = system_create_window(u8"Karma", 1280, 720, System_Window_Show_NORMAL);
@@ -756,9 +758,18 @@ int karma_user_zero() {
 		}
 #endif
 
+		int new_render_api = (int)render_api;
+
+		const char *render_api_strings[] = {
+			"None",
+			"OpenGL",
+			"DirectX 11"
+		};
+
 		editor_entity(primary_player);
 		
 		ImGui::Begin("Camera", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
+		ImGui::Combo("Render Api", &new_render_api, render_api_strings, static_count(render_api_strings));
 		ImGui::DragInt("Velocity Iteration", &number_of_iterations, 1, 1, 10000);
 		ImGui::DragFloat("Stiffness", &stiffness, 0.01f, 0, 1);
 		ImGui::DragFloat("Movement Force", &movement_force, 0.01f);
@@ -797,6 +808,14 @@ int karma_user_zero() {
 		accumulator_t = minimum(accumulator_t, 0.3f);
 
 		Dev_TimedFrameEnd(real_dt);
+
+		if ((Render_Backend)new_render_api != render_api) {
+			gfx_destroy_context();
+			render_api = (Render_Backend)new_render_api;
+			gfx_create_context(platform, render_api, Vsync_ADAPTIVE, 2, (u32)framebuffer_w, (u32)framebuffer_h);
+			ImGui_RefreshRenderingContext();
+		}
+
 	}
 
 	ImGui_Shutdown();
