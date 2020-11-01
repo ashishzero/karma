@@ -952,7 +952,7 @@ Gfx_Platform *create_directx11_context(Handle platform, Vsync vsync, s32 multisa
 	if (SUCCEEDED(gfx.device->QueryInterface(__uuidof(ID3D11Debug), (void **)&debug))) {
 		ID3D11InfoQueue *info_queue = nullptr;
 		if (SUCCEEDED(gfx.device->QueryInterface(__uuidof(ID3D11InfoQueue), (void **)&info_queue))) {
-			system_log(LOG_INFO, "DirectX", "GL_DEBUG_OUTPUT_SYNCHRONOUS enabled.");
+			system_log(LOG_INFO, "DirectX", "ID3D11Debug enabled.");
 
 			info_queue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_CORRUPTION, true);
 			info_queue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_ERROR, true);

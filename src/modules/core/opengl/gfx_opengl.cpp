@@ -1148,21 +1148,37 @@ Gfx_Platform *create_opengl_context(Handle platform, Vsync vsync, s32 multisampl
 #		define WIN32_LEAN_AND_MEAN
 #		include <Windows.h>
 
-static HDC wnd_dc;
+
+typedef PROC WGLGetProcAddress(LPCSTR arg);
+
+static HDC					wnd_dc;
+static HMODULE				opengl_module;
+static WGLGetProcAddress *	wgl_get_proc_address;
 
 void Gfx_Platform_OpenGL::swap_buffers() {
 	SwapBuffers(wnd_dc);
 }
 
+static void *opengl_get_procedure_address(const char *name) {
+	void *result = NULL;
+
+	result = wgl_get_proc_address(name);
+	if (result == NULL) {
+		result = (void *)GetProcAddress(opengl_module, name);
+	}
+
+	return result;
+}
+
 bool Gfx_Platform_OpenGL::load_library(Vsync vsync) {
-	HMODULE opengl = LoadLibraryW(L"opengl32.dll");
-	if (!opengl) {
+	opengl_module = LoadLibraryW(L"opengl32.dll");
+	if (!opengl_module) {
 		// TODO: Handle win32 error!!!
 		system_log(LOG_WARNING, "Platform", "OpenGL module could not be loaded");
 		return false;
 	}
 	defer {
-		FreeLibrary(opengl);
+		FreeLibrary(opengl_module);
 	};
 
 	WNDCLASSEXW wnd_class   = {};
@@ -1223,30 +1239,28 @@ bool Gfx_Platform_OpenGL::load_library(Vsync vsync) {
 	WGLCreateContextFunc *wgl_create_context;
 	typedef BOOL          WGLMakeCurrent(HDC, HGLRC);
 	WGLMakeCurrent *      wgl_make_current;
-	typedef PROC          WGLGetProcAddress(LPCSTR arg);
-	WGLGetProcAddress *   wgl_get_proc_address;
 	typedef BOOL          WGLDeleteContext(HGLRC arg);
 	WGLDeleteContext *    wgl_delete_context;
 
-	wgl_create_context = (WGLCreateContextFunc *)GetProcAddress(opengl, "wglCreateContext");
+	wgl_create_context = (WGLCreateContextFunc *)GetProcAddress(opengl_module, "wglCreateContext");
 	if (!wgl_create_context) {
 		system_log(LOG_WARNING, "Platform",
 				   "wglCreateContext not found in OpenGL module");
 		return false;
 	}
-	wgl_make_current = (WGLMakeCurrent *)GetProcAddress(opengl, "wglMakeCurrent");
+	wgl_make_current = (WGLMakeCurrent *)GetProcAddress(opengl_module, "wglMakeCurrent");
 	if (!wgl_make_current) {
 		system_log(LOG_WARNING, "Platform",
 				   "wglMakeCurrent not found in OpenGL module");
 		return false;
 	}
-	wgl_get_proc_address = (WGLGetProcAddress *)GetProcAddress(opengl, "wglGetProcAddress");
+	wgl_get_proc_address = (WGLGetProcAddress *)GetProcAddress(opengl_module, "wglGetProcAddress");
 	if (!wgl_get_proc_address) {
 		system_log(LOG_WARNING, "Platform",
 				   "wglGetProcAddress not found in OpenGL module");
 		return false;
 	}
-	wgl_delete_context = (WGLDeleteContext *)GetProcAddress(opengl, "wglDeleteContext");
+	wgl_delete_context = (WGLDeleteContext *)GetProcAddress(opengl_module, "wglDeleteContext");
 	if (!wgl_delete_context) {
 		system_log(LOG_WARNING, "Platform",
 				   "wglDeleteContext not found in OpenGL module");
@@ -1386,7 +1400,7 @@ bool Gfx_Platform_OpenGL::load_library(Vsync vsync) {
 		system_log(LOG_WARNING, "OpenGL", "WGL_EXT_swap_control extension is not present, Vertical swapping disabled");
 	}
 
-	if (!gladLoadGL()) {
+	if (!gladLoadGLLoader(opengl_get_procedure_address)) {
 		system_log(LOG_ERROR, "OpenGL", "gladLoadGLLoader() - Failed to Load Proc Address for OpenGL");
 
 		// if error occurs do release resources and return
