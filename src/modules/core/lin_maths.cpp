@@ -1702,10 +1702,15 @@ r32 point_to_aabb2d_length2(Vec2 p, const Aabb2d &aabb) {
 
 Vec2 nearest_point_point_segment(Vec2 p, Vec2 a, Vec2 b, r32 *t) {
 	Vec2 ab = b - a;
-	*t = vec2_dot(p - a, ab) / vec2_dot(ab, ab);
-	if (*t < 0.0f) *t = 0.0f;
-	if (*t > 1.0f) *t = 1.0f;
-	return a + (*t * ab);
+	r32 len = vec2_dot(ab, ab);
+	if (len > EPSILON_FLOAT * EPSILON_FLOAT) {
+		*t = vec2_dot(p - a, ab) / len;
+		if (*t < 0.0f) *t = 0.0f;
+		if (*t > 1.0f) *t = 1.0f;
+		return a + (*t * ab);
+	}
+	*t = 0;
+	return a;
 }
 
 Vec2 nearest_point_point_segment(Vec2 p, Vec2 a, Vec2 b) {
@@ -1716,7 +1721,7 @@ Vec2 nearest_point_point_segment(Vec2 p, Vec2 a, Vec2 b) {
 Vec2 nearest_point_origin_segment(Vec2 a, Vec2 b, r32 *t) {
 	Vec2 ab = b - a;
 	r32 len = vec2_dot(ab, ab);
-	if (len > EPSILON_FLOAT) {
+	if (len > EPSILON_FLOAT * EPSILON_FLOAT) {
 		*t = vec2_dot(-a, ab) / len;
 		if (*t < 0.0f) *t = 0.0f;
 		if (*t > 1.0f) *t = 1.0f;
@@ -2044,7 +2049,7 @@ s32 point_farthest_from_edge(Vec2 a, Vec2 b, Vec2 *p, s32 n) {
 	return best_index;
 }
 
-void extreme_points_alone_direction(Vec2 dir, Vec2 *pt, s32 n, s32 *min_index, s32 *max_index) {
+void extreme_points_along_direction(Vec2 dir, Vec2 *pt, s32 n, s32 *min_index, s32 *max_index) {
 	r32 min_proj = FLT_MAX, max_proj = -FLT_MAX;
 
 	for (s32 i = 0; i < n; i++) {
@@ -2150,7 +2155,7 @@ Mm_Rect transform_mmrect(const Mm_Rect &a, r32 rot, Vec2 t) {
 	return transform_mmrect(a, mat2_rotation(rot), t);
 }
 
-Aabb2d update_aabb(const Aabb2d &a, const Mat2 &mat, Vec2 t) {
+Aabb2d transform_aabb(const Aabb2d &a, const Mat2 &mat, Vec2 t) {
 	Aabb2d b;
 	for (s32 i = 0; i < 2; i++) {
 		b.center.m[i] = t.m[i];
@@ -2163,8 +2168,8 @@ Aabb2d update_aabb(const Aabb2d &a, const Mat2 &mat, Vec2 t) {
 	return b;
 }
 
-Aabb2d update_aabb(const Aabb2d &a, r32 rot, Vec2 t) {
-	return update_aabb(a, mat2_rotation(rot), t);
+Aabb2d transform_aabb(const Aabb2d &a, r32 rot, Vec2 t) {
+	return transform_aabb(a, mat2_rotation(rot), t);
 }
 
 bool test_point_inside_rect(Vec2 point, const Mm_Rect &rect) {

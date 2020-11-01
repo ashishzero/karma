@@ -809,10 +809,6 @@ inline T integrate_rk4(const T &x, r32 t, r32 h, Function f) {
 //
 //
 
-//
-// TODO: Testing all of these functions
-//
-
 r32 signed_area(Vec2 a, Vec2 b, Vec2 c);
 r32 signed_area(Vec3 a, Vec3 b, Vec3 c);
 bool triangle_is_cw(Vec2 a, Vec2 b, Vec2 c);
@@ -846,15 +842,15 @@ Circle enclosing_circle_circle(const Circle &c0, const Circle &c1);
 Mm_Rect enclosing_mm_rect_circle(const Mm_Rect &r, const Circle &c);
 
 s32 point_farthest_from_edge(Vec2 a, Vec2 b, Vec2 *p, s32 n);
-void extreme_points_alone_direction(Vec2 dir, Vec2 *pt, s32 n, s32 *min_index, s32 *max_index);
+void extreme_points_along_direction(Vec2 dir, Vec2 *pt, s32 n, s32 *min_index, s32 *max_index);
 void most_seperated_points_on_aabb(Vec2 *pt, s32 n, s32 *min, s32 *max);
 Circle circle_from_distant_points(Vec2 *pt, s32 n);
 r32 min_area_rect(Vec2 *pt, s32 num_pts, Vec2 *center, Vec2 u[2]);
 
 Mm_Rect transform_mmrect(const Mm_Rect &a, const Mat2 &mat, Vec2 t);
 Mm_Rect transform_mmrect(const Mm_Rect &a, r32 rot, Vec2 t);
-Aabb2d update_aabb(const Aabb2d &a, const Mat2 &mat, Vec2 t);
-Aabb2d update_aabb(const Aabb2d &a, r32 rot, Vec2 t);
+Aabb2d transform_aabb(const Aabb2d &a, const Mat2 &mat, Vec2 t);
+Aabb2d transform_aabb(const Aabb2d &a, r32 rot, Vec2 t);
 
 bool test_point_inside_rect(Vec2 point, const Mm_Rect &rect);
 bool test_point_inside_aabb(Vec2 point, const Aabb2d &aabb);
