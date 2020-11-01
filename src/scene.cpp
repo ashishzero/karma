@@ -101,10 +101,13 @@ Rigid_Body *iscene_create_rigid_body(Scene *scene, Entity_Id entity_id, const Ri
 	Rigid_Body *rigid_body = &node->data;
 	rigid_body->type = info.type;
 	rigid_body->flags = 0;
+	rigid_body->drag = 5;
 	rigid_body->imass = (info.type == Rigid_Body_Type_Dynamic) ? 1.0f : 0.0f;
 	rigid_body->velocity = vec2(0);
 	rigid_body->force = vec2(0);
 	rigid_body->xform = info.xform;
+	rigid_body->stiffness = 1;
+	rigid_body->restitution = 0;
 	rigid_body->entity_id = entity_id;
 
 	if (info.fixture_id) {

@@ -1207,7 +1207,7 @@ bool gjk_epa(const ShapeA &sa, const ShapeB &sb, Contact_Manifold *manifold, con
 
 	Support_Ex s;
 	while (true) {
-		if (vec2_null(dir)) break;
+		if (vec2_null(dir)) return false;
 		s = support_ex(sa, sb, dir, args...);
 		if (vec2_dot(s.p, dir) < 0.0f) return false; // no intersection
 		simplex[vertex_count] = s;

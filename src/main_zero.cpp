@@ -300,7 +300,7 @@ int karma_user_zero() {
 		fixture.handle = &rect;
 		id = scene_create_new_resource_fixture(scene, &fixture, 1);
 
-		info.position = vec2(2);
+		info.position = vec2(2, 5);
 		info.rigid_body.fixture_id = id;
 		((Player *)scene_create_new_entity(scene, Entity_Type_Player, info));
 	}
@@ -491,13 +491,9 @@ int karma_user_zero() {
 		Array<Nearest_Points> nearest_points;
 		nearest_points.allocator = TEMPORARY_ALLOCATOR;
 		static int number_of_iterations = 4;
-		static r32 stiffness = 0.5f;
 
 		while (accumulator_t >= fixed_dt) {
 			Dev_TimedScope(SimulationFrame);
-
-			const r32 gravity = 10;
-			const r32 drag = 5;
 
 			r32 len = sqrtf(controller.x * controller.x + controller.y * controller.y);
 			Vec2 dir = vec2(0);
@@ -521,15 +517,13 @@ int karma_user_zero() {
 			// TODO: Do broad phase collision detection
 			for (auto ptr = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, ptr); ptr = iter_next<Rigid_Body>(ptr)) {
 				ptr->data.velocity += dt * ptr->data.force;
-				ptr->data.velocity *= powf(0.5f, drag * dt);
+				ptr->data.velocity *= powf(0.5f, ptr->data.drag * dt);
 				ptr->data.force = vec2(0);
 				clear_bit(ptr->data.flags, Rigid_Body_COLLIDING);
 			}
 
 			Vec2 dv, dp;
 			//Contact_Manifold manifold;
-
-			r32 stiffness = 1;
 
 			for (int iteration = 0; iteration < number_of_iterations; ++iteration) {
 				for (auto a = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, a); a = iter_next<Rigid_Body>(a)) {
@@ -559,28 +553,28 @@ int karma_user_zero() {
 										r32 b_collision_time = -0.5f * collision_time;
 
 										vn = a_collision_time * manifold.normal;
-										vt = a_body.velocity - stiffness * vn;
-										a_body.velocity = vt - 0.5f * vn;
+										vt = a_body.velocity - a_body.stiffness * vn;
+										a_body.velocity = vt - a_body.restitution * vn;
 
 										vn = b_collision_time * manifold.normal;
-										vt = b_body.velocity - stiffness * vn;
-										b_body.velocity = vt - 0.5f * vn;
+										vt = b_body.velocity - b_body.stiffness * vn;
+										b_body.velocity = vt - b_body.restitution * vn;
 
 										dv = a_body.velocity - b_body.velocity;
 										dp = dv * dt;
 									}
 									else if (a_body.type == Rigid_Body_Type_Dynamic) {
 										vn = collision_time * manifold.normal;
-										vt = a_body.velocity - stiffness * vn;
-										a_body.velocity = vt;
+										vt = a_body.velocity - a_body.stiffness * vn;
+										a_body.velocity = vt - a_body.restitution * vn;
 
 										dv = a_body.velocity;
 										dp = dv * dt;
 									}
 									else {
 										vn = -collision_time * manifold.normal;
-										vt = b_body.velocity - stiffness * vn;
-										b_body.velocity = vt;
+										vt = b_body.velocity - b_body.stiffness * vn;
+										b_body.velocity = vt - b_body.restitution * vn;
 
 										dv = -b_body.velocity;
 										dp = dv * dt;
@@ -771,7 +765,6 @@ int karma_user_zero() {
 		ImGui::Begin("Camera", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
 		ImGui::Combo("Render Api", &new_render_api, render_api_strings, static_count(render_api_strings));
 		ImGui::DragInt("Velocity Iteration", &number_of_iterations, 1, 1, 10000);
-		ImGui::DragFloat("Stiffness", &stiffness, 0.01f, 0, 1);
 		ImGui::DragFloat("Movement Force", &movement_force, 0.01f);
 		editor_draw(scene->camera);
 		ImGui::End();

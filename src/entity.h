@@ -37,9 +37,12 @@ struct Rigid_Body {
 	Rigid_Body_Type		type;
 	Rigid_Body_Flags	flags;
 	r32					imass;
+	r32					drag;
 	Vec2				velocity;
 	Vec2				force;
 	Mat3				xform;
+	r32					stiffness;
+	r32					restitution;
 	u32					fixture_count;
 	Fixture *			fixtures;
 	Entity_Id			entity_id;
