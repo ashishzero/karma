@@ -356,6 +356,20 @@ int karma_user_zero() {
 		}
 
 		{
+			Mm_Rect rect;
+			rect.min = vec2(-1);
+			rect.max = vec2(1);
+			fixture.shape = Fixture_Shape_Mm_Rect;
+			fixture.handle = &rect;
+			id = scene_create_new_resource_fixture(scene, &fixture, 1);
+
+			info.position = vec2(0, -8);
+			info.rigid_body.xform = mat3_translation(info.position) * mat3_scalar(15, 1);
+			info.rigid_body.fixture_id = id;
+			scene_create_new_entity(scene, Entity_Type_Obstacle, info);
+		}
+
+		{
 			Circle circle;
 			circle.center = vec2(1, -1);
 			circle.radius = 1;
@@ -384,6 +398,8 @@ int karma_user_zero() {
 
 	u64 frequency = system_get_frequency();
 	u64 counter = system_get_counter();
+
+	static r32 gravity = 0.2f;
 
 	while (running) {
 		Dev_TimedFrameBegin();
@@ -516,7 +532,7 @@ int karma_user_zero() {
 
 			// TODO: Do broad phase collision detection
 			for (auto ptr = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, ptr); ptr = iter_next<Rigid_Body>(ptr)) {
-				ptr->data.velocity += dt * ptr->data.force;
+				ptr->data.velocity += dt * ptr->data.force + vec2(0, -gravity);
 				ptr->data.velocity *= powf(0.5f, ptr->data.drag * dt);
 				ptr->data.force = vec2(0);
 				clear_bit(ptr->data.flags, Rigid_Body_COLLIDING);
@@ -542,10 +558,11 @@ int karma_user_zero() {
 							for (u32 a_index = 0; a_index < a_body.fixture_count; ++a_index) {
 								Fixture &a_collider = *rigid_body_get_fixture(&a_body, a_index);
 
-#if 1
 								if (collider_vs_collider_dynamic(b_collider, a_collider, b_body.xform, a_body.xform, dp, &manifold)) {
 
 									r32 collision_time = -manifold.penetration / dt;
+
+#if 1
 									Vec2 vn, vt;
 
 									if (b_body.type == Rigid_Body_Type_Dynamic && a_body.type == Rigid_Body_Type_Dynamic) {
@@ -579,13 +596,13 @@ int karma_user_zero() {
 										dv = -b_body.velocity;
 										dp = dv * dt;
 									}
+#endif
 
 									array_add(&manifolds, manifold);
 
 									b_body.flags |= Rigid_Body_COLLIDING;
 									a_body.flags |= Rigid_Body_COLLIDING;
 								}
-#endif
 							}
 						}
 					}
@@ -764,6 +781,7 @@ int karma_user_zero() {
 		
 		ImGui::Begin("Camera", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
 		ImGui::Combo("Render Api", &new_render_api, render_api_strings, static_count(render_api_strings));
+		ImGui::DragFloat("Gravity", &gravity, 0.01f);
 		ImGui::DragInt("Velocity Iteration", &number_of_iterations, 1, 1, 10000);
 		ImGui::DragFloat("Movement Force", &movement_force, 0.01f);
 		editor_draw(scene->camera);
