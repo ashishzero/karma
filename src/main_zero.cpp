@@ -619,7 +619,7 @@ int karma_user_zero() {
 							for (u32 a_index = 0; a_index < a_body.fixture_count; ++a_index) {
 								Fixture *a_collider = rigid_body_get_fixture(&a_body, a_index);
 
-#if 1
+#if 0
 #if 0
 								if (fixture_vs_fixture(b_collider, a_collider, b_body.transform, a_body.transform, &manifold)) {
 #else

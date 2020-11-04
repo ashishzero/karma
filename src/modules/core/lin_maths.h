@@ -950,6 +950,26 @@ inline Support_Ex support_ex(const ShapeA &a, const ShapeB &b, Vec2 dir, const T
 	return s;
 }
 
+template <typename ShapeA, typename ShapeB>
+inline Support_Ex support_ex(const ShapeA &a, const ShapeB &b, Vec2 dir, const Transform &ta, const Transform &tb, Vec2 a_dp, Vec2 b_dp) {
+	Support_Ex s;
+
+	s.a = support(a, vec2_mat2_mul(dir, ta.xform));
+	s.a = mat2_vec2_mul(ta.xform, s.a) + ta.p;
+
+	s.b = support(b, vec2_mat2_mul(-dir, tb.xform));
+	s.b = mat2_vec2_mul(tb.xform, s.b) + tb.p;
+
+	if (vec2_dot(a_dp, -dir) < 0.0f)
+		s.a += a_dp;
+
+	if (vec2_dot(b_dp,  dir) < 0.0f)
+		s.b += b_dp;
+
+	s.p = s.a - s.b;
+	return s;
+}
+
 bool next_simplex(Vec2 *simplex, Vec2 *dir, u32 *n);
 Nearest_Edge nearest_edge_origin_polygon(const Vec2 *vertices, u32 vertex_count);
 
@@ -1022,7 +1042,7 @@ bool gjk_nearest_points(const ShapeA &sa, const ShapeB &sb, Nearest_Points *near
 			simplex[0] = c;
 		}
 
-		if (min_dist - dist < EPA_TOLERANCE)
+		if (min_dist - dist < EPSILON_FLOAT_SQ)
 			break;
 		min_dist = dist;
 	}
@@ -1045,11 +1065,12 @@ bool gjk_nearest_points(const ShapeA &sa, const ShapeB &sb, Nearest_Points *near
 		ty = 0;
 	}
 
+	nearest_points->normal = vec2(-ty, tx);
 	nearest_points->a.x = simplex[0].a.x + tx * (simplex[1].a.x - simplex[0].a.x);
 	nearest_points->a.y = simplex[0].a.y + ty * (simplex[1].a.y - simplex[0].a.y);
 	nearest_points->b.x = simplex[0].b.x + tx * (simplex[1].b.x - simplex[0].b.x);
 	nearest_points->b.y = simplex[0].b.y + ty * (simplex[1].b.y - simplex[0].b.y);
-	nearest_points->distance = sqrtf(dist);
+	nearest_points->distance2 = dist;
 
 	return true;
 }
@@ -1159,28 +1180,44 @@ bool gjk_epa(const ShapeA &sa, const ShapeB &sb, Contact_Manifold *manifold, con
 	return true;
 }
 
-#if 0
+#if 1
+
 template <typename ShapeA, typename ShapeB>
 bool gjk_continuous(const ShapeA &a, const ShapeB &b,
-	const Transform &a_from, const Transform &a_to,
-	const Transform &b_from, const Transform &b_to,
-	Impact_Time *impact_time) {
-	
-	r32 near_t = 0;
-	r32 far_t  = 1;
-	r32 t = far_t;
+					const Transform &ta, const Transform &tb,
+					Vec2 a_dp, Vec2 b_dp, Impact_Time *impact_time) {
+	r32 t_near = 0;
+	r32 t_far  = 1;
+	r32 t = t_far;
 
-	Transform a_interpolated = a_from;
-	Transform b_interpolated = b_from;
+	Transform a_tran_near = ta;
+	Transform b_tran_near = tb;
+
+	Vec2 a_frac_dp = a_dp;
+	Vec2 b_frac_dp = b_dp;
 
 	Nearest_Points nearest_points;
-	while (true) {
-		if (gjk_nearest_points(a, b, &nearest_points, a_to, b_to)) {
-			return false;
+	nearest_points.distance2 = MAX_FLOAT;
+	while (nearest_points.distance2 > EPSILON_FLOAT_SQ) {
+		if (gjk_nearest_points(a, b, &nearest_points, a_tran_near, b_tran_near, a_frac_dp, b_frac_dp)) {
+			t_near = t;
+			t = 0.5f * (t_near + t_far);
+			a_tran_near.p = ta.p + t_near * a_frac_dp;
+			b_tran_near.p = tb.p + t_near * b_frac_dp;
+		} else {
+			t = 0.5f * (t_near + t_far);
+			a_frac_dp = t * a_dp;
+			b_frac_dp = t * b_dp;
+			
 		}
 	}
 
+	impact_time->t = t;
+	impact_time->contacts[0] = nearest_points.a; 
+	impact_time->contacts[1] = nearest_points.b; 
+	impact_time->normal = vec2_normalize_check(nearest_points.normal);
 }
+
 #else
 // http://dtecta.com/papers/jgt04raycast.pdf
 template <typename ShapeA, typename ShapeB>
