@@ -19,203 +19,232 @@ struct Player_Controller {
 	r32 x, y;
 };
 
-typedef bool(*Collision_Resolver)(Fixture &a, Fixture &b, const Mat3 &ta, const Mat3 &tb, const Mat2 &tdira, const Mat2 &tdirb, Vec2 dp, Contact_Manifold *manifold);
+typedef bool(*Collision_Resolver)(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb, Contact_Manifold *manifold);
 static Collision_Resolver COLLISION_RESOLVERS[Fixture_Shape_Count][Fixture_Shape_Count];
 
-typedef bool(*Nearest_Points_Finder)(Fixture &a, Fixture &b, const Mat3 &ta, const Mat3 &tb, const Mat2 &tdira, const Mat2 &tdirb, Vec2 dp, Nearest_Points *nearest_points);
+typedef bool(*Continuous_Collision_Resolver)(Fixture &a, Fixture &b, const Transform &a_from, const Transform &a_to, const Transform &b_from, const Transform &b_to, Impact_Time *impact);
+static Continuous_Collision_Resolver CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Count][Fixture_Shape_Count];
+
+typedef bool(*Nearest_Points_Finder)(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb, Nearest_Points *nearest_points);
 static Nearest_Points_Finder NEAREST_POINTS_FINDERS[Fixture_Shape_Count][Fixture_Shape_Count];
 
-typedef bool(*Collision_Detector)(Fixture &a, Fixture &b, const Mat3 &ta, const Mat3 &tb, const Mat2 &tdira, const Mat2 &tdirb, Vec2 dp);
+typedef bool(*Collision_Detector)(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb);
 static Collision_Detector COLLISION_DETECTORS[Fixture_Shape_Count][Fixture_Shape_Count];
 
-static bool null_collision_resolver(Fixture &a, Fixture &b, const Mat3 &ta, const Mat3 &tb, const Mat2 &tdira, const Mat2 &tdirb, Vec2 dp, Contact_Manifold *manifold) {
+// TODO: Do we really need null collider?? REMOVE THIS
+static bool null_collision_resolver(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb, Contact_Manifold *manifold) {
+	return false;
+}
+static bool null_continuous_collision_resolver(Fixture &a, Fixture &b, const Transform &a_from, const Transform &a_to, const Transform &b_from, const Transform &b_to, Impact_Time *impact) {
 	return false;
 }
 
-static bool null_nearest_points_finder(Fixture &a, Fixture &b, const Mat3 &ta, const Mat3 &tb, const Mat2 &tdira, const Mat2 &tdirb, Vec2 dp, Nearest_Points *nearest_points) {
+static bool null_nearest_points_finder(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb, Nearest_Points *nearest_points) {
 	nearest_points->a = vec2(INFINITY, INFINITY);
 	nearest_points->b = vec2(INFINITY, INFINITY);
 	nearest_points->distance = INFINITY;
 	return false;
 }
 
-static bool null_collision_detector(Fixture &a, Fixture &b, const Mat3 &ta, const Mat3 &tb, const Mat2 &tdira, const Mat2 &tdirb, Vec2 dp) {
+static bool null_collision_detector(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb) {
 	return false;
 }
 
 template <typename ShapeA, typename ShapeB>
-static bool shapes_collision_resolver(Fixture &a, Fixture &b, const Mat3 &ta, const Mat3 &tb, const Mat2 &tdira, const Mat2 &tdirb, Vec2 dp, Contact_Manifold *manifold) {
-	return gjk_epa(*(ShapeA *)a.handle, *(ShapeB *)b.handle, manifold, ta, tb, tdira, tdirb, dp);
+static bool shapes_collision_resolver(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb, Contact_Manifold *manifold) {
+	return gjk_epa(*(ShapeA *)a.handle, *(ShapeB *)b.handle, manifold, ta, tb);
 }
 
 template <typename ShapeA, typename ShapeB>
-static bool shapes_nearest_points_finder(Fixture &a, Fixture &b, const Mat3 &ta, const Mat3 &tb, const Mat2 &tdira, const Mat2 &tdirb, Vec2 dp, Nearest_Points *nearest_points) {
-	return gjk_epa_nearest_points(*(ShapeA *)a.handle, *(ShapeB *)b.handle, nearest_points, ta, tb, tdira, tdirb, dp);
+static bool shapes_continuous_collision_resolver(Fixture &a, Fixture &b, const Transform &a_from, const Transform &a_to, const Transform &b_from, const Transform &b_to, Impact_Time *impact) {
+	return gjk_continuous(*(ShapeA *)a.handle, *(ShapeB *)b.handle, a_from, a_to, b_from, b_to, impact);
 }
 
 template <typename ShapeA, typename ShapeB>
-static bool shapes_collision_detector(Fixture &a, Fixture &b, const Mat3 &ta, const Mat3 &tb, const Mat2 &tdira, const Mat2 &tdirb, Vec2 dp) {
-	return gjk(*(ShapeA *)a.handle, *(ShapeB *)b.handle, ta, tb, tdira, tdirb, dp);
+static bool shapes_nearest_points_finder(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb, Nearest_Points *nearest_points) {
+	return gjk_nearest_points(*(ShapeA *)a.handle, *(ShapeB *)b.handle, nearest_points, ta, tb);
+}
+
+template <typename ShapeA, typename ShapeB>
+static bool shapes_collision_detector(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb) {
+	return gjk(*(ShapeA *)a.handle, *(ShapeB *)b.handle, ta, tb);
 }
 
 static void collision_resover_init() {
-	COLLISION_RESOLVERS[Fixture_Shape_Null][Fixture_Shape_Null] = null_collision_resolver;
-	COLLISION_RESOLVERS[Fixture_Shape_Null][Fixture_Shape_Circle] = null_collision_resolver;
-	COLLISION_RESOLVERS[Fixture_Shape_Null][Fixture_Shape_Mm_Rect] = null_collision_resolver;
-	COLLISION_RESOLVERS[Fixture_Shape_Null][Fixture_Shape_Capsule] = null_collision_resolver;
-	COLLISION_RESOLVERS[Fixture_Shape_Null][Fixture_Shape_Polygon] = null_collision_resolver;
+	COLLISION_RESOLVERS[Fixture_Shape_Null][Fixture_Shape_Null]		= null_collision_resolver;
+	COLLISION_RESOLVERS[Fixture_Shape_Null][Fixture_Shape_Circle]	= null_collision_resolver;
+	COLLISION_RESOLVERS[Fixture_Shape_Null][Fixture_Shape_Mm_Rect]	= null_collision_resolver;
+	COLLISION_RESOLVERS[Fixture_Shape_Null][Fixture_Shape_Capsule]	= null_collision_resolver;
+	COLLISION_RESOLVERS[Fixture_Shape_Null][Fixture_Shape_Polygon]	= null_collision_resolver;
 
-	COLLISION_RESOLVERS[Fixture_Shape_Circle][Fixture_Shape_Null] = null_collision_resolver;
-	COLLISION_RESOLVERS[Fixture_Shape_Circle][Fixture_Shape_Circle] = shapes_collision_resolver<Circle, Circle>;
-	COLLISION_RESOLVERS[Fixture_Shape_Circle][Fixture_Shape_Mm_Rect] = shapes_collision_resolver<Circle, Mm_Rect>;
-	COLLISION_RESOLVERS[Fixture_Shape_Circle][Fixture_Shape_Capsule] = shapes_collision_resolver<Circle, Capsule>;
-	COLLISION_RESOLVERS[Fixture_Shape_Circle][Fixture_Shape_Polygon] = shapes_collision_resolver<Circle, Polygon>;
+	COLLISION_RESOLVERS[Fixture_Shape_Circle][Fixture_Shape_Null]		= null_collision_resolver;
+	COLLISION_RESOLVERS[Fixture_Shape_Circle][Fixture_Shape_Circle]		= shapes_collision_resolver<Circle, Circle>;
+	COLLISION_RESOLVERS[Fixture_Shape_Circle][Fixture_Shape_Mm_Rect]	= shapes_collision_resolver<Circle, Mm_Rect>;
+	COLLISION_RESOLVERS[Fixture_Shape_Circle][Fixture_Shape_Capsule]	= shapes_collision_resolver<Circle, Capsule>;
+	COLLISION_RESOLVERS[Fixture_Shape_Circle][Fixture_Shape_Polygon]	= shapes_collision_resolver<Circle, Polygon>;
 
-	COLLISION_RESOLVERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Null] = null_collision_resolver;
-	COLLISION_RESOLVERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Circle] = shapes_collision_resolver<Mm_Rect, Circle>;
-	COLLISION_RESOLVERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Mm_Rect] = shapes_collision_resolver<Mm_Rect, Mm_Rect>;
-	COLLISION_RESOLVERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Capsule] = shapes_collision_resolver<Mm_Rect, Capsule>;
-	COLLISION_RESOLVERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Polygon] = shapes_collision_resolver<Mm_Rect, Polygon>;
+	COLLISION_RESOLVERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Null]		= null_collision_resolver;
+	COLLISION_RESOLVERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Circle]	= shapes_collision_resolver<Mm_Rect, Circle>;
+	COLLISION_RESOLVERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Mm_Rect]	= shapes_collision_resolver<Mm_Rect, Mm_Rect>;
+	COLLISION_RESOLVERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Capsule]	= shapes_collision_resolver<Mm_Rect, Capsule>;
+	COLLISION_RESOLVERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Polygon]	= shapes_collision_resolver<Mm_Rect, Polygon>;
 
-	COLLISION_RESOLVERS[Fixture_Shape_Capsule][Fixture_Shape_Null] = null_collision_resolver;
-	COLLISION_RESOLVERS[Fixture_Shape_Capsule][Fixture_Shape_Circle] = shapes_collision_resolver<Capsule, Circle>;
-	COLLISION_RESOLVERS[Fixture_Shape_Capsule][Fixture_Shape_Mm_Rect] = shapes_collision_resolver<Capsule, Mm_Rect>;
-	COLLISION_RESOLVERS[Fixture_Shape_Capsule][Fixture_Shape_Capsule] = shapes_collision_resolver<Capsule, Capsule>;
-	COLLISION_RESOLVERS[Fixture_Shape_Capsule][Fixture_Shape_Polygon] = shapes_collision_resolver<Capsule, Polygon>;
+	COLLISION_RESOLVERS[Fixture_Shape_Capsule][Fixture_Shape_Null]		= null_collision_resolver;
+	COLLISION_RESOLVERS[Fixture_Shape_Capsule][Fixture_Shape_Circle]	= shapes_collision_resolver<Capsule, Circle>;
+	COLLISION_RESOLVERS[Fixture_Shape_Capsule][Fixture_Shape_Mm_Rect]	= shapes_collision_resolver<Capsule, Mm_Rect>;
+	COLLISION_RESOLVERS[Fixture_Shape_Capsule][Fixture_Shape_Capsule]	= shapes_collision_resolver<Capsule, Capsule>;
+	COLLISION_RESOLVERS[Fixture_Shape_Capsule][Fixture_Shape_Polygon]	= shapes_collision_resolver<Capsule, Polygon>;
 
-	COLLISION_RESOLVERS[Fixture_Shape_Polygon][Fixture_Shape_Null] = null_collision_resolver;
-	COLLISION_RESOLVERS[Fixture_Shape_Polygon][Fixture_Shape_Circle] = shapes_collision_resolver<Polygon, Circle>;
-	COLLISION_RESOLVERS[Fixture_Shape_Polygon][Fixture_Shape_Mm_Rect] = shapes_collision_resolver<Polygon, Mm_Rect>;
-	COLLISION_RESOLVERS[Fixture_Shape_Polygon][Fixture_Shape_Capsule] = shapes_collision_resolver<Polygon, Capsule>;
-	COLLISION_RESOLVERS[Fixture_Shape_Polygon][Fixture_Shape_Polygon] = shapes_collision_resolver<Polygon, Polygon>;
+	COLLISION_RESOLVERS[Fixture_Shape_Polygon][Fixture_Shape_Null]		= null_collision_resolver;
+	COLLISION_RESOLVERS[Fixture_Shape_Polygon][Fixture_Shape_Circle]	= shapes_collision_resolver<Polygon, Circle>;
+	COLLISION_RESOLVERS[Fixture_Shape_Polygon][Fixture_Shape_Mm_Rect]	= shapes_collision_resolver<Polygon, Mm_Rect>;
+	COLLISION_RESOLVERS[Fixture_Shape_Polygon][Fixture_Shape_Capsule]	= shapes_collision_resolver<Polygon, Capsule>;
+	COLLISION_RESOLVERS[Fixture_Shape_Polygon][Fixture_Shape_Polygon]	= shapes_collision_resolver<Polygon, Polygon>;
 
-	NEAREST_POINTS_FINDERS[Fixture_Shape_Null][Fixture_Shape_Null] = null_nearest_points_finder;
-	NEAREST_POINTS_FINDERS[Fixture_Shape_Null][Fixture_Shape_Circle] = null_nearest_points_finder;
-	NEAREST_POINTS_FINDERS[Fixture_Shape_Null][Fixture_Shape_Mm_Rect] = null_nearest_points_finder;
-	NEAREST_POINTS_FINDERS[Fixture_Shape_Null][Fixture_Shape_Capsule] = null_nearest_points_finder;
-	NEAREST_POINTS_FINDERS[Fixture_Shape_Null][Fixture_Shape_Polygon] = null_nearest_points_finder;
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Null][Fixture_Shape_Null] = null_continuous_collision_resolver;
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Null][Fixture_Shape_Circle] = null_continuous_collision_resolver;
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Null][Fixture_Shape_Mm_Rect] = null_continuous_collision_resolver;
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Null][Fixture_Shape_Capsule] = null_continuous_collision_resolver;
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Null][Fixture_Shape_Polygon] = null_continuous_collision_resolver;
+	
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Circle][Fixture_Shape_Null] = null_continuous_collision_resolver;
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Circle][Fixture_Shape_Circle] = shapes_continuous_collision_resolver<Circle, Circle>;
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Circle][Fixture_Shape_Mm_Rect] = shapes_continuous_collision_resolver<Circle, Mm_Rect>;
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Circle][Fixture_Shape_Capsule] = shapes_continuous_collision_resolver<Circle, Capsule>;
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Circle][Fixture_Shape_Polygon] = shapes_continuous_collision_resolver<Circle, Polygon>;
+	
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Null] = null_continuous_collision_resolver;
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Circle] = shapes_continuous_collision_resolver<Mm_Rect, Circle>;
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Mm_Rect] = shapes_continuous_collision_resolver<Mm_Rect, Mm_Rect>;
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Capsule] = shapes_continuous_collision_resolver<Mm_Rect, Capsule>;
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Polygon] = shapes_continuous_collision_resolver<Mm_Rect, Polygon>;
+	
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Capsule][Fixture_Shape_Null] = null_continuous_collision_resolver;
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Capsule][Fixture_Shape_Circle] = shapes_continuous_collision_resolver<Capsule, Circle>;
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Capsule][Fixture_Shape_Mm_Rect] = shapes_continuous_collision_resolver<Capsule, Mm_Rect>;
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Capsule][Fixture_Shape_Capsule] = shapes_continuous_collision_resolver<Capsule, Capsule>;
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Capsule][Fixture_Shape_Polygon] = shapes_continuous_collision_resolver<Capsule, Polygon>;
+	
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Polygon][Fixture_Shape_Null] = null_continuous_collision_resolver;
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Polygon][Fixture_Shape_Circle] = shapes_continuous_collision_resolver<Polygon, Circle>;
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Polygon][Fixture_Shape_Mm_Rect] = shapes_continuous_collision_resolver<Polygon, Mm_Rect>;
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Polygon][Fixture_Shape_Capsule] = shapes_continuous_collision_resolver<Polygon, Capsule>;
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Polygon][Fixture_Shape_Polygon] = shapes_continuous_collision_resolver<Polygon, Polygon>;
 
-	NEAREST_POINTS_FINDERS[Fixture_Shape_Circle][Fixture_Shape_Null] = null_nearest_points_finder;
-	NEAREST_POINTS_FINDERS[Fixture_Shape_Circle][Fixture_Shape_Circle] = shapes_nearest_points_finder<Circle, Circle>;
-	NEAREST_POINTS_FINDERS[Fixture_Shape_Circle][Fixture_Shape_Mm_Rect] = shapes_nearest_points_finder<Circle, Mm_Rect>;
+	NEAREST_POINTS_FINDERS[Fixture_Shape_Null][Fixture_Shape_Null]		= null_nearest_points_finder;
+	NEAREST_POINTS_FINDERS[Fixture_Shape_Null][Fixture_Shape_Circle]	= null_nearest_points_finder;
+	NEAREST_POINTS_FINDERS[Fixture_Shape_Null][Fixture_Shape_Mm_Rect]	= null_nearest_points_finder;
+	NEAREST_POINTS_FINDERS[Fixture_Shape_Null][Fixture_Shape_Capsule]	= null_nearest_points_finder;
+	NEAREST_POINTS_FINDERS[Fixture_Shape_Null][Fixture_Shape_Polygon]	= null_nearest_points_finder;
+
+	NEAREST_POINTS_FINDERS[Fixture_Shape_Circle][Fixture_Shape_Null]	= null_nearest_points_finder;
+	NEAREST_POINTS_FINDERS[Fixture_Shape_Circle][Fixture_Shape_Circle]	= shapes_nearest_points_finder<Circle, Circle>;
+	NEAREST_POINTS_FINDERS[Fixture_Shape_Circle][Fixture_Shape_Mm_Rect]	= shapes_nearest_points_finder<Circle, Mm_Rect>;
 	NEAREST_POINTS_FINDERS[Fixture_Shape_Circle][Fixture_Shape_Capsule] = shapes_nearest_points_finder<Circle, Capsule>;
 	NEAREST_POINTS_FINDERS[Fixture_Shape_Circle][Fixture_Shape_Polygon] = shapes_nearest_points_finder<Circle, Polygon>;
 
-	NEAREST_POINTS_FINDERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Null] = null_nearest_points_finder;
-	NEAREST_POINTS_FINDERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Circle] = shapes_nearest_points_finder<Mm_Rect, Circle>;
-	NEAREST_POINTS_FINDERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Mm_Rect] = shapes_nearest_points_finder<Mm_Rect, Mm_Rect>;
-	NEAREST_POINTS_FINDERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Capsule] = shapes_nearest_points_finder<Mm_Rect, Capsule>;
-	NEAREST_POINTS_FINDERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Polygon] = shapes_nearest_points_finder<Mm_Rect, Polygon>;
+	NEAREST_POINTS_FINDERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Null]		= null_nearest_points_finder;
+	NEAREST_POINTS_FINDERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Circle]		= shapes_nearest_points_finder<Mm_Rect, Circle>;
+	NEAREST_POINTS_FINDERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Mm_Rect]	= shapes_nearest_points_finder<Mm_Rect, Mm_Rect>;
+	NEAREST_POINTS_FINDERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Capsule]	= shapes_nearest_points_finder<Mm_Rect, Capsule>;
+	NEAREST_POINTS_FINDERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Polygon]	= shapes_nearest_points_finder<Mm_Rect, Polygon>;
 
-	NEAREST_POINTS_FINDERS[Fixture_Shape_Capsule][Fixture_Shape_Null] = null_nearest_points_finder;
-	NEAREST_POINTS_FINDERS[Fixture_Shape_Capsule][Fixture_Shape_Circle] = shapes_nearest_points_finder<Capsule, Circle>;
-	NEAREST_POINTS_FINDERS[Fixture_Shape_Capsule][Fixture_Shape_Mm_Rect] = shapes_nearest_points_finder<Capsule, Mm_Rect>;
-	NEAREST_POINTS_FINDERS[Fixture_Shape_Capsule][Fixture_Shape_Capsule] = shapes_nearest_points_finder<Capsule, Capsule>;
-	NEAREST_POINTS_FINDERS[Fixture_Shape_Capsule][Fixture_Shape_Polygon] = shapes_nearest_points_finder<Capsule, Polygon>;
+	NEAREST_POINTS_FINDERS[Fixture_Shape_Capsule][Fixture_Shape_Null]		= null_nearest_points_finder;
+	NEAREST_POINTS_FINDERS[Fixture_Shape_Capsule][Fixture_Shape_Circle]		= shapes_nearest_points_finder<Capsule, Circle>;
+	NEAREST_POINTS_FINDERS[Fixture_Shape_Capsule][Fixture_Shape_Mm_Rect]	= shapes_nearest_points_finder<Capsule, Mm_Rect>;
+	NEAREST_POINTS_FINDERS[Fixture_Shape_Capsule][Fixture_Shape_Capsule]	= shapes_nearest_points_finder<Capsule, Capsule>;
+	NEAREST_POINTS_FINDERS[Fixture_Shape_Capsule][Fixture_Shape_Polygon]	= shapes_nearest_points_finder<Capsule, Polygon>;
 
-	NEAREST_POINTS_FINDERS[Fixture_Shape_Polygon][Fixture_Shape_Null] = null_nearest_points_finder;
-	NEAREST_POINTS_FINDERS[Fixture_Shape_Polygon][Fixture_Shape_Circle] = shapes_nearest_points_finder<Polygon, Circle>;
-	NEAREST_POINTS_FINDERS[Fixture_Shape_Polygon][Fixture_Shape_Mm_Rect] = shapes_nearest_points_finder<Polygon, Mm_Rect>;
-	NEAREST_POINTS_FINDERS[Fixture_Shape_Polygon][Fixture_Shape_Capsule] = shapes_nearest_points_finder<Polygon, Capsule>;
-	NEAREST_POINTS_FINDERS[Fixture_Shape_Polygon][Fixture_Shape_Polygon] = shapes_nearest_points_finder<Polygon, Polygon>;
+	NEAREST_POINTS_FINDERS[Fixture_Shape_Polygon][Fixture_Shape_Null]		= null_nearest_points_finder;
+	NEAREST_POINTS_FINDERS[Fixture_Shape_Polygon][Fixture_Shape_Circle]		= shapes_nearest_points_finder<Polygon, Circle>;
+	NEAREST_POINTS_FINDERS[Fixture_Shape_Polygon][Fixture_Shape_Mm_Rect]	= shapes_nearest_points_finder<Polygon, Mm_Rect>;
+	NEAREST_POINTS_FINDERS[Fixture_Shape_Polygon][Fixture_Shape_Capsule]	= shapes_nearest_points_finder<Polygon, Capsule>;
+	NEAREST_POINTS_FINDERS[Fixture_Shape_Polygon][Fixture_Shape_Polygon]	= shapes_nearest_points_finder<Polygon, Polygon>;
 
-	COLLISION_DETECTORS[Fixture_Shape_Null][Fixture_Shape_Null] = null_collision_detector;
-	COLLISION_DETECTORS[Fixture_Shape_Null][Fixture_Shape_Circle] = null_collision_detector;
-	COLLISION_DETECTORS[Fixture_Shape_Null][Fixture_Shape_Mm_Rect] = null_collision_detector;
-	COLLISION_DETECTORS[Fixture_Shape_Null][Fixture_Shape_Capsule] = null_collision_detector;
-	COLLISION_DETECTORS[Fixture_Shape_Null][Fixture_Shape_Polygon] = null_collision_detector;
+	COLLISION_DETECTORS[Fixture_Shape_Null][Fixture_Shape_Null]		= null_collision_detector;
+	COLLISION_DETECTORS[Fixture_Shape_Null][Fixture_Shape_Circle]	= null_collision_detector;
+	COLLISION_DETECTORS[Fixture_Shape_Null][Fixture_Shape_Mm_Rect]	= null_collision_detector;
+	COLLISION_DETECTORS[Fixture_Shape_Null][Fixture_Shape_Capsule]	= null_collision_detector;
+	COLLISION_DETECTORS[Fixture_Shape_Null][Fixture_Shape_Polygon]	= null_collision_detector;
 
-	COLLISION_DETECTORS[Fixture_Shape_Circle][Fixture_Shape_Null] = null_collision_detector;
-	COLLISION_DETECTORS[Fixture_Shape_Circle][Fixture_Shape_Circle] = shapes_collision_detector<Circle, Circle>;
-	COLLISION_DETECTORS[Fixture_Shape_Circle][Fixture_Shape_Mm_Rect] = shapes_collision_detector<Circle, Mm_Rect>;
-	COLLISION_DETECTORS[Fixture_Shape_Circle][Fixture_Shape_Capsule] = shapes_collision_detector<Circle, Capsule>;
-	COLLISION_DETECTORS[Fixture_Shape_Circle][Fixture_Shape_Polygon] = shapes_collision_detector<Circle, Polygon>;
+	COLLISION_DETECTORS[Fixture_Shape_Circle][Fixture_Shape_Null]		= null_collision_detector;
+	COLLISION_DETECTORS[Fixture_Shape_Circle][Fixture_Shape_Circle]		= shapes_collision_detector<Circle, Circle>;
+	COLLISION_DETECTORS[Fixture_Shape_Circle][Fixture_Shape_Mm_Rect]	= shapes_collision_detector<Circle, Mm_Rect>;
+	COLLISION_DETECTORS[Fixture_Shape_Circle][Fixture_Shape_Capsule]	= shapes_collision_detector<Circle, Capsule>;
+	COLLISION_DETECTORS[Fixture_Shape_Circle][Fixture_Shape_Polygon]	= shapes_collision_detector<Circle, Polygon>;
 
-	COLLISION_DETECTORS[Fixture_Shape_Mm_Rect][Fixture_Shape_Null] = null_collision_detector;
-	COLLISION_DETECTORS[Fixture_Shape_Mm_Rect][Fixture_Shape_Circle] = shapes_collision_detector<Mm_Rect, Circle>;
-	COLLISION_DETECTORS[Fixture_Shape_Mm_Rect][Fixture_Shape_Mm_Rect] = shapes_collision_detector<Mm_Rect, Mm_Rect>;
-	COLLISION_DETECTORS[Fixture_Shape_Mm_Rect][Fixture_Shape_Capsule] = shapes_collision_detector<Mm_Rect, Capsule>;
-	COLLISION_DETECTORS[Fixture_Shape_Mm_Rect][Fixture_Shape_Polygon] = shapes_collision_detector<Mm_Rect, Polygon>;
+	COLLISION_DETECTORS[Fixture_Shape_Mm_Rect][Fixture_Shape_Null]		= null_collision_detector;
+	COLLISION_DETECTORS[Fixture_Shape_Mm_Rect][Fixture_Shape_Circle]	= shapes_collision_detector<Mm_Rect, Circle>;
+	COLLISION_DETECTORS[Fixture_Shape_Mm_Rect][Fixture_Shape_Mm_Rect]	= shapes_collision_detector<Mm_Rect, Mm_Rect>;
+	COLLISION_DETECTORS[Fixture_Shape_Mm_Rect][Fixture_Shape_Capsule]	= shapes_collision_detector<Mm_Rect, Capsule>;
+	COLLISION_DETECTORS[Fixture_Shape_Mm_Rect][Fixture_Shape_Polygon]	= shapes_collision_detector<Mm_Rect, Polygon>;
 
-	COLLISION_DETECTORS[Fixture_Shape_Capsule][Fixture_Shape_Null] = null_collision_detector;
-	COLLISION_DETECTORS[Fixture_Shape_Capsule][Fixture_Shape_Circle] = shapes_collision_detector<Capsule, Circle>;
-	COLLISION_DETECTORS[Fixture_Shape_Capsule][Fixture_Shape_Mm_Rect] = shapes_collision_detector<Capsule, Mm_Rect>;
-	COLLISION_DETECTORS[Fixture_Shape_Capsule][Fixture_Shape_Capsule] = shapes_collision_detector<Capsule, Capsule>;
-	COLLISION_DETECTORS[Fixture_Shape_Capsule][Fixture_Shape_Polygon] = shapes_collision_detector<Capsule, Polygon>;
+	COLLISION_DETECTORS[Fixture_Shape_Capsule][Fixture_Shape_Null]		= null_collision_detector;
+	COLLISION_DETECTORS[Fixture_Shape_Capsule][Fixture_Shape_Circle]	= shapes_collision_detector<Capsule, Circle>;
+	COLLISION_DETECTORS[Fixture_Shape_Capsule][Fixture_Shape_Mm_Rect]	= shapes_collision_detector<Capsule, Mm_Rect>;
+	COLLISION_DETECTORS[Fixture_Shape_Capsule][Fixture_Shape_Capsule]	= shapes_collision_detector<Capsule, Capsule>;
+	COLLISION_DETECTORS[Fixture_Shape_Capsule][Fixture_Shape_Polygon]	= shapes_collision_detector<Capsule, Polygon>;
 
-	COLLISION_DETECTORS[Fixture_Shape_Polygon][Fixture_Shape_Null] = null_collision_detector;
-	COLLISION_DETECTORS[Fixture_Shape_Polygon][Fixture_Shape_Circle] = shapes_collision_detector<Polygon, Circle>;
-	COLLISION_DETECTORS[Fixture_Shape_Polygon][Fixture_Shape_Mm_Rect] = shapes_collision_detector<Polygon, Mm_Rect>;
-	COLLISION_DETECTORS[Fixture_Shape_Polygon][Fixture_Shape_Capsule] = shapes_collision_detector<Polygon, Capsule>;
-	COLLISION_DETECTORS[Fixture_Shape_Polygon][Fixture_Shape_Polygon] = shapes_collision_detector<Polygon, Polygon>;
+	COLLISION_DETECTORS[Fixture_Shape_Polygon][Fixture_Shape_Null]		= null_collision_detector;
+	COLLISION_DETECTORS[Fixture_Shape_Polygon][Fixture_Shape_Circle]	= shapes_collision_detector<Polygon, Circle>;
+	COLLISION_DETECTORS[Fixture_Shape_Polygon][Fixture_Shape_Mm_Rect]	= shapes_collision_detector<Polygon, Mm_Rect>;
+	COLLISION_DETECTORS[Fixture_Shape_Polygon][Fixture_Shape_Capsule]	= shapes_collision_detector<Polygon, Capsule>;
+	COLLISION_DETECTORS[Fixture_Shape_Polygon][Fixture_Shape_Polygon]	= shapes_collision_detector<Polygon, Polygon>;
 }
 
-static bool collider_vs_collider_dynamic(Fixture *a, Fixture *b, const Mat3 &ta, const Mat3 &tb, Vec2 dp, Contact_Manifold *manifold) {
-	Mat2 tdira, tdirb;
-	tdira.rows[0] = vec2(ta.m2[0][0], ta.m2[1][0]);
-	tdira.rows[1] = vec2(ta.m2[0][1], ta.m2[1][1]);
-
-	tdirb.rows[0] = vec2(tb.m2[0][0], tb.m2[1][0]);
-	tdirb.rows[1] = vec2(tb.m2[0][1], tb.m2[1][1]);
-	return COLLISION_RESOLVERS[a->shape][b->shape](*a, *b, ta, tb, tdira, tdirb, dp, manifold);
+static bool fixture_vs_fixture(Fixture *a, Fixture *b, const Transform &ta, const Transform &tb, Contact_Manifold *manifold) {
+	return COLLISION_RESOLVERS[a->shape][b->shape](*a, *b, ta, tb, manifold);
 }
 
-static bool collider_collider_nearest_points(Fixture &a, Fixture &b, const Mat3 &ta, const Mat3 &tb, Vec2 dp, Nearest_Points *nearest_points) {
-	Mat2 tdira, tdirb;
-	tdira.rows[0] = vec2(ta.m2[0][0], ta.m2[1][0]);
-	tdira.rows[1] = vec2(ta.m2[0][1], ta.m2[1][1]);
-
-	tdirb.rows[0] = vec2(tb.m2[0][0], tb.m2[1][0]);
-	tdirb.rows[1] = vec2(tb.m2[0][1], tb.m2[1][1]);
-	return NEAREST_POINTS_FINDERS[a.shape][b.shape](a, b, ta, tb, tdira, tdirb, dp, nearest_points);
+static bool fixture_vs_fixture_continuous(Fixture *a, Fixture *b, const Transform &a_from, const Transform &a_to, const Transform &b_from, const Transform &b_to, Impact_Time *impact) {
+	return CONTINUOUS_COLLISION_RESOLVERS[a->shape][b->shape](*a, *b, a_from, a_to, b_from, b_to, impact);
 }
 
-static bool test_collider_collider(Fixture &a, Fixture &b, const Mat3 &ta, const Mat3 &tb, Vec2 dp) {
-	Mat2 tdira, tdirb;
-	tdira.rows[0] = vec2(ta.m2[0][0], ta.m2[1][0]);
-	tdira.rows[1] = vec2(ta.m2[0][1], ta.m2[1][1]);
-
-	tdirb.rows[0] = vec2(tb.m2[0][0], tb.m2[1][0]);
-	tdirb.rows[1] = vec2(tb.m2[0][1], tb.m2[1][1]);
-	return COLLISION_DETECTORS[a.shape][b.shape](a, b, ta, tb, tdira, tdirb, dp);
+static bool nearest_points_fixture_fixture(Fixture *a, Fixture *b, const Transform &ta, const Transform &tb, Nearest_Points *nearest_points) {
+	return NEAREST_POINTS_FINDERS[a->shape][b->shape](*a, *b, ta, tb, nearest_points);
 }
 
-// TODO: Rename collider into fixture
+static bool test_fixture_fixture(Fixture *a, Fixture *b, const Transform &ta, const Transform &tb) {
+	return COLLISION_DETECTORS[a->shape][b->shape](*a, *b, ta, tb);
+}
 
-static bool collider_vs_point_dynamic(Fixture &a, const Mat3 &t, Vec2 point, r32 size, Contact_Manifold *manifold) {
+static bool fixture_vs_point(Fixture *a, const Transform &ta, Vec2 point, r32 size, Contact_Manifold *manifold) {
 	Circle circle = { point, size };
 	Fixture b;
 	b.shape = Fixture_Shape_Circle;
 	b.handle = &circle;
 
-	Mat2 tdir;
-	tdir.rows[0] = vec2(t.m2[0][0], t.m2[1][0]);
-	tdir.rows[1] = vec2(t.m2[0][1], t.m2[1][1]);
-	return COLLISION_RESOLVERS[a.shape][b.shape](a, b, t, mat3_identity(), tdir, mat2_identity(), vec2(0), manifold);
+	Transform tb;
+	tb.p = vec2(0);
+	tb.xform = mat2_identity();
+
+	return COLLISION_RESOLVERS[a->shape][b.shape](*a, b, ta, tb, manifold);
 }
 
-static bool collider_point_nearest_points(Fixture &a, const Mat3 &t, Vec2 point, r32 size, Nearest_Points *nearest_points) {
+static bool nearest_points_fixture_point(Fixture &a, const Transform &ta, Vec2 point, r32 size, Nearest_Points *nearest_points) {
 	Circle circle = { point, size };
 	Fixture b;
 	b.shape = Fixture_Shape_Circle;
 	b.handle = &circle;
 
-	Mat2 tdir;
-	tdir.rows[0] = vec2(t.m2[0][0], t.m2[1][0]);
-	tdir.rows[1] = vec2(t.m2[0][1], t.m2[1][1]);
-	return NEAREST_POINTS_FINDERS[a.shape][b.shape](a, b, t, mat3_identity(), tdir, mat2_identity(), vec2(0), nearest_points);
+	Transform tb;
+	tb.p = vec2(0);
+	tb.xform = mat2_identity();
+
+	return NEAREST_POINTS_FINDERS[a.shape][b.shape](a, b, ta, tb, nearest_points);
 }
 
-static bool test_collider_point(Fixture &a, const Mat3 &t, Vec2 point) {
+static bool test_fixture_point(Fixture &a, const Transform &ta, Vec2 point) {
 	Circle circle = { point, 0.0f };
 	Fixture b;
 	b.shape = Fixture_Shape_Circle;
 	b.handle = &circle;
 
-	Mat2 tdir;
-	tdir.rows[0] = vec2(t.m2[0][0], t.m2[1][0]);
-	tdir.rows[1] = vec2(t.m2[0][1], t.m2[1][1]);
-	return COLLISION_DETECTORS[a.shape][b.shape](a, b, t, mat3_identity(), tdir, mat2_identity(), vec2(0));
+	Transform tb;
+	tb.p = vec2(0);
+	tb.xform = mat2_identity();
+
+	return COLLISION_DETECTORS[a.shape][b.shape](a, b, ta, tb);
 }
 
 enum Physics_State {
@@ -293,11 +322,13 @@ int karma_user_zero() {
 		info.position = vec2(5);
 		info.rigid_body.type = Rigid_Body_Type_Dynamic;
 		info.rigid_body.fixture_id = id;
-		info.rigid_body.xform = mat3_identity();
+		info.rigid_body.transform.p = info.position;
+		info.rigid_body.transform.xform = mat2_identity();
 
 		((Player *)scene_create_new_entity(scene, Entity_Type_Player, info));
 
 		info.position = vec2(-3, 7);
+		info.rigid_body.transform.p = info.position;
 		((Player *)scene_create_new_entity(scene, Entity_Type_Player, info));
 
 		Mm_Rect rect;
@@ -309,6 +340,7 @@ int karma_user_zero() {
 		id = scene_create_new_resource_fixture(scene, &fixture, 1);
 
 		info.position = vec2(2, 5);
+		info.rigid_body.transform.p = info.position;
 		info.rigid_body.fixture_id = id;
 		((Player *)scene_create_new_entity(scene, Entity_Type_Player, info));
 	}
@@ -330,7 +362,8 @@ int karma_user_zero() {
 			id = scene_create_new_resource_fixture(scene, &fixture, 1);
 
 			info.position = vec2(-5.6f, 0.4f);
-			info.rigid_body.xform = mat3_translation(info.position);
+			info.rigid_body.transform.xform = mat2_identity();
+			info.rigid_body.transform.p = info.position;
 			info.rigid_body.fixture_id = id;
 			scene_create_new_entity(scene, Entity_Type_Obstacle, info);
 		}
@@ -344,7 +377,8 @@ int karma_user_zero() {
 			id = scene_create_new_resource_fixture(scene, &fixture, 1);
 
 			info.position = vec2(1);
-			info.rigid_body.xform = mat3_translation(info.position);
+			info.rigid_body.transform.xform = mat2_identity();
+			info.rigid_body.transform.p = info.position;
 			info.rigid_body.fixture_id = id;
 			scene_create_new_entity(scene, Entity_Type_Obstacle, info);
 		}
@@ -358,7 +392,8 @@ int karma_user_zero() {
 			id = scene_create_new_resource_fixture(scene, &fixture, 1);
 
 			info.position = vec2(6.5f, -0.5f);
-			info.rigid_body.xform = mat3_translation(info.position) * mat3_rotation(to_radians(10));
+			info.rigid_body.transform.xform = mat2_rotation(to_radians(10));
+			info.rigid_body.transform.p = info.position;
 			info.rigid_body.fixture_id = id;
 			scene_create_new_entity(scene, Entity_Type_Obstacle, info);
 		}
@@ -372,7 +407,8 @@ int karma_user_zero() {
 			id = scene_create_new_resource_fixture(scene, &fixture, 1);
 
 			info.position = vec2(0, -8);
-			info.rigid_body.xform = mat3_translation(info.position) * mat3_scalar(15, 1);
+			info.rigid_body.transform.xform = mat2_scalar(15, 1);
+			info.rigid_body.transform.p = info.position;
 			info.rigid_body.fixture_id = id;
 			scene_create_new_entity(scene, Entity_Type_Obstacle, info);
 		}
@@ -396,7 +432,8 @@ int karma_user_zero() {
 			id = scene_create_new_resource_fixture(scene, f, static_count(f));
 
 			info.position = vec2(-1, -5);
-			info.rigid_body.xform = mat3_translation(info.position);
+			info.rigid_body.transform.xform = mat2_identity();
+			info.rigid_body.transform.p = info.position;
 			info.rigid_body.fixture_id = id;
 			scene_create_new_entity(scene, Entity_Type_Obstacle, info);
 		}
@@ -506,6 +543,12 @@ int karma_user_zero() {
 		Contact_Manifold manifold;
 		manifold.normal = vec2(0);
 
+		Impact_Time impact_time;
+		impact_time.t = 0;
+
+		Array<Impact_Time> impacts;
+		impacts.allocator = TEMPORARY_ALLOCATOR;
+
 		Array<Contact_Manifold> manifolds;
 		manifolds.allocator = TEMPORARY_ALLOCATOR;
 
@@ -536,11 +579,6 @@ int karma_user_zero() {
 				//set_bit(primary_player->rigid_body->colliders->flags, Collision_Bit_MOTION);
 			}
 
-			for (auto &player : scene->by_type.player) {
-				player.color = vec4(1);
-				player.rigid_body->xform = mat3_translation(player.position) * mat3_scalar(player.radius, player.radius);
-			}
-
 			primary_player->color = vec4(0, 1, 1);
 
 			// TODO: Do broad phase collision detection
@@ -549,8 +587,14 @@ int karma_user_zero() {
 					ptr->data.velocity += dt * ptr->data.force + vec2(0, -gravity);
 					ptr->data.velocity *= powf(0.5f, ptr->data.drag * dt);
 					ptr->data.force = vec2(0);
-					clear_bit(ptr->data.flags, Rigid_Body_COLLIDING);
 				}
+				clear_bit(ptr->data.flags, Rigid_Body_COLLIDING);
+			}
+
+			for (auto &player : scene->by_type.player) {
+				player.color = vec4(1);
+				player.rigid_body->final_transform.p = player.position + player.rigid_body->velocity * dt;
+				player.rigid_body->final_transform.xform = mat2_scalar(player.radius, player.radius);
 			}
 
 			Vec2 dv, dp;
@@ -559,7 +603,9 @@ int karma_user_zero() {
 			for (int iteration = 0; iteration < number_of_iterations; ++iteration) {
 				for (auto a = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, a); a = iter_next<Rigid_Body>(a)) {
 					Rigid_Body &a_body = a->data;
-					for (auto b = a->next; iter_continue(&scene->rigid_bodies, b); b = iter_next<Rigid_Body>(b)) {
+					for (auto b = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, b); b = iter_next<Rigid_Body>(b)) {
+						if (a == b) continue;
+
 						Rigid_Body &b_body = b->data;
 
 						if (a_body.type == Rigid_Body_Type_Static && b_body.type == Rigid_Body_Type_Static)
@@ -573,31 +619,63 @@ int karma_user_zero() {
 							for (u32 a_index = 0; a_index < a_body.fixture_count; ++a_index) {
 								Fixture *a_collider = rigid_body_get_fixture(&a_body, a_index);
 
-								if (collider_vs_collider_dynamic(b_collider, a_collider, b_body.xform, a_body.xform, dp, &manifold)) {
+#if 1
+#if 0
+								if (fixture_vs_fixture(b_collider, a_collider, b_body.transform, a_body.transform, &manifold)) {
+#else
+								
 
-									r32 len = vec2_length(dp);
-									// TODO: Properly handle division by zero
-									if (len == 0.0f) continue;
-									r32 t = 1.0f - manifold.penetration / len;
-									//t = maximum(t, 0);
+								auto &b_from = b_body.transform;
+								auto &b_to = b_body.final_transform;
+								auto &a_from = a_body.transform;
+								auto &a_to = a_body.final_transform;
 
-									if (b_body.type == Rigid_Body_Type_Dynamic && a_body.type == Rigid_Body_Type_Dynamic) {
-										//a_body.velocity = a_body.velocity - 0.5f * (1.0f - t) * a_body.velocity;
-										//b_body.velocity = b_body.velocity + 0.5f * (1.0f - t) * b_body.velocity;
-									} else if (a_body.type == Rigid_Body_Type_Dynamic) {
-										//a_body.velocity = a_body.velocity - (1.0f - t) * a_body.velocity;
-									} else {
-										//b_body.velocity = b_body.velocity + (1.0f - t) * b_body.velocity;
-									}
+								if (fixture_vs_fixture_continuous(b_collider, a_collider, b_from, b_to, a_from, a_to, &impact_time)) {
+#endif
+								
+									//if (vec2_dot(dv, manifold.normal) >= 0.0f) continue;
 
-									dv = a_body.velocity - b_body.velocity;
-									dp = dv * dt;
-
-									array_add(&manifolds, manifold);
-
+#if 1
+#if 1
+									array_add(&impacts, impact_time);
 									b_body.flags |= Rigid_Body_COLLIDING;
 									a_body.flags |= Rigid_Body_COLLIDING;
+#else
+									r32 e = minimum(a_body.restitution, b_body.restitution);
+									r32 j = -(1 + e) * vec2_dot(dv, manifold.normal) / (a_body.imass + b_body.imass);
+									j = maximum(j, 0);
+
+									a_body.velocity += j * a_body.imass * manifold.normal;
+									b_body.velocity -= j * b_body.imass * manifold.normal;
+#endif
+
+#else
+									r32 t = manifold.penetration / dt;
+									t = clamp01(t);
+
+									if (b_body.type == Rigid_Body_Type_Dynamic && a_body.type == Rigid_Body_Type_Dynamic) {
+										a_body.velocity += manifold.normal * t;
+										b_body.velocity -= manifold.normal * t;
+									} else if (a_body.type == Rigid_Body_Type_Dynamic) {
+										a_body.velocity += manifold.normal * t;
+									} else {
+										b_body.velocity -= manifold.normal * t;
+									}
+#endif
+									//dv = a_body.velocity - b_body.velocity;
+									//dp = dv * dt;
+									//
+									//array_add(&manifolds, manifold);
+									//
+									//b_body.flags |= Rigid_Body_COLLIDING;
+									//a_body.flags |= Rigid_Body_COLLIDING;
 								}
+#else
+								if (nearest_points_fixture_fixture(b_collider, a_collider, b_body.transform, a_body.transform, &np)) {
+									array_add(&nearest_points, np);
+								}
+#endif
+
 							}
 						}
 					}
@@ -605,8 +683,9 @@ int karma_user_zero() {
 			}
 
 			for (auto &player : scene->by_type.player) {
-				player.position += dt * player.rigid_body->velocity;
-				player.rigid_body->xform = mat3_translation(player.position) * mat3_scalar(player.radius, player.radius);
+				player.position += player.rigid_body->velocity * dt;
+				player.rigid_body->transform.p = player.rigid_body->final_transform.p;
+				player.rigid_body->transform.xform = mat2_scalar(player.radius, player.radius);
 			}
 
 			r32 camera_follow_speed = 0.977f;
@@ -685,7 +764,11 @@ int karma_user_zero() {
 			auto &body = ptr->data;
 
 			for (u32 index = 0; index < body.fixture_count; ++index) {
-				im2d_push_matrix(mat3_to_mat4(body.xform));
+				Mat3 xform = mat2_to_mat3(body.transform.xform);
+				xform.rows[0].z = body.transform.p.x;
+				xform.rows[1].z = body.transform.p.y;
+
+				im2d_push_matrix(mat3_to_mat4(xform));
 
 				auto f = rigid_body_get_fixture(&body, index);
 				auto color = (body.flags & Rigid_Body_COLLIDING) ? vec4(1, 0, 0) : vec4(0, 1, 1);
@@ -731,12 +814,15 @@ int karma_user_zero() {
 
 		for (auto &m : manifolds) {
 			im2d_line(m.contacts[1], m.contacts[1] + m.penetration * m.normal, vec4(1, 0, 1), 0.02f);
-			im2d_line(m.contacts[1], m.contacts[1] + m.tangent, vec4(1, 0, 1), 0.02f);
 
 			im2d_circle(m.contacts[0], 0.08f, vec4(1, 0, 1));
 			im2d_circle(m.contacts[1], 0.08f, vec4(1, 0, 1));
 		}
 
+		for (auto &i : impacts) {
+			im2d_line(i.contact, i.contact + i.t * i.normal, vec4(1, 0, 1), 0.02f);
+			im2d_circle(i.contact, 0.08f, vec4(1, 0, 1));
+		}
 		//if (draw_cursor) {
 		//	im2d_circle(cursor, 0.1f, 2 * vec4(1, 1, 0));
 		//}

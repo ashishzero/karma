@@ -439,7 +439,7 @@ inline Quad quad(Vec2 a, Vec2 b, Vec2 c, Vec2 d, Vec2 n1, Vec2 n2, Vec2 n3, Vec2
 struct Capsule {
 	Vec2 a;
 	Vec2 b;
-	r32 radius;
+	r32  radius;
 };
 
 struct Ray2d {
@@ -448,32 +448,36 @@ struct Ray2d {
 };
 
 struct Polygon {
-	u32 vertex_count;
-	Vec2 vertices[3];
+	u32		vertex_count;
+	Vec2	vertices[3];
+};
+
+struct Transform {
+	Vec2 p;		// position
+	Mat2 xform; // rotation and scale
 };
 
 struct Nearest_Points {
-	Vec2 a;
-	Vec2 b;
-	r32 distance;
+	Vec2	a;
+	Vec2	b;
+	r32		distance;
 };
 
 struct Nearest_Edge {
-	Vec2 normal;
-	r32 distance;
-	u32 index;
-};
-
-struct Nearest_Edge_Ex {
-	Vec2 normal;
-	r32 distance;
-	u32 a_index;
-	u32 b_index;
+	Vec2	normal;
+	r32		distance;
+	u32		a_index;
+	u32		b_index;
 };
 
 struct Contact_Manifold {
-	Vec2 normal;
-	Vec2 tangent;
-	Vec2 contacts[2];
-	r32 penetration;
+	Vec2	normal;
+	Vec2	contacts[2];
+	r32		penetration;
+};
+
+struct Impact_Time {
+	Vec2	normal;
+	Vec2	contact;
+	r32		t;
 };

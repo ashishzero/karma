@@ -31,7 +31,6 @@
     <ClCompile Include="src\first.cpp" />
     <ClCompile Include="src\main_zero.cpp" />
     <ClCompile Include="src\main_atish.cpp" />
-    <ClCompile Include="src\main_shankar.cpp" />
     <ClCompile Include="src\main_pujan.cpp" />
     <ClCompile Include="src\modules\core\thread_pool.cpp" />
     <ClCompile Include="src\modules\core\utility.cpp" />

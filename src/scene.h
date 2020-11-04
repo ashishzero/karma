@@ -51,7 +51,7 @@ inline Fixture *rigid_body_get_fixture(Rigid_Body *rigid_body, u32 index) {
 struct Rigid_Body_Info {
 	Rigid_Body_Type		type;
 	Resource_Id			fixture_id;
-	Mat3				xform;
+	Transform			transform;
 };
 
 struct Entity_Info {

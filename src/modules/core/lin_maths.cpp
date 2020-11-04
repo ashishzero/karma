@@ -624,6 +624,13 @@ Vec2 mat2_vec2_mul(const Mat2 &mat, Vec2 vec) {
 	return res;
 }
 
+Vec2 vec2_mat2_mul(Vec2 vec, const Mat2 &mat) {
+	Vec2 res;
+	res.m[0] = vec2_dot(vec, vec2(mat.m2[0][0], mat.m2[1][0]));
+	res.m[1] = vec2_dot(vec, vec2(mat.m2[0][1], mat.m2[1][1]));
+	return res;
+}
+
 Mat3 mat3_mul(const Mat3 &left, const Mat3 &right) {
 	Mat3 res;
 	Mat3 tras = mat3_transpose(right);
@@ -936,6 +943,21 @@ bool mat4_equals(const Mat4 &a, const Mat4 &b, r32 tolerance) {
 		vec4_equals(a.rows[1], b.rows[1], tolerance) &&
 		vec4_equals(a.rows[2], b.rows[2], tolerance) &&
 		vec4_equals(a.rows[3], b.rows[3], tolerance);
+}
+
+Mat2 mat3_to_mat2(const Mat3 &mat) {
+	Mat2 result;
+	result.rows[0] = mat.rows[0].xy;
+	result.rows[1] = mat.rows[1].xy;
+	return result;
+}
+
+Mat3 mat2_to_mat3(const Mat2 &mat) {
+	Mat3 result;
+	result.rows[0] = vec3(mat.rows[0], 0);
+	result.rows[1] = vec3(mat.rows[1], 0);
+	result.rows[2] = vec3(0, 0, 1);
+	return result;
 }
 
 Mat3 mat4_to_mat3(const Mat4 &mat) {
@@ -1426,7 +1448,22 @@ Vec4 vec4_clamp(Vec4 min, Vec4 max, Vec4 v) {
 //
 //
 
-Mat4 lerp(Mat4 &from, Mat4 &to, r32 t) {
+Mat2 lerp(const Mat2 &from, const Mat2 &to, r32 t) {
+	Mat2 res;
+	res.rows[0] = lerp(from.rows[0], to.rows[0], t);
+	res.rows[1] = lerp(from.rows[1], to.rows[1], t);
+	return res;
+}
+
+Mat3 lerp(const Mat3 &from, const Mat3 &to, r32 t) {
+	Mat3 res;
+	res.rows[0] = lerp(from.rows[0], to.rows[0], t);
+	res.rows[1] = lerp(from.rows[1], to.rows[1], t);
+	res.rows[2] = lerp(from.rows[2], to.rows[2], t);
+	return res;
+}
+
+Mat4 lerp(const Mat4 &from, const Mat4 &to, r32 t) {
 	Mat4 res;
 	res.rows[0] = lerp(from.rows[0], to.rows[0], t);
 	res.rows[1] = lerp(from.rows[1], to.rows[1], t);
@@ -2906,7 +2943,8 @@ Nearest_Edge nearest_edge_origin_polygon(const Vec2 *vertices, u32 vertex_count)
 		if (d < edge.distance) {
 			edge.normal = n;
 			edge.distance = d;
-			edge.index = q_index;
+			edge.a_index = p_index;
+			edge.b_index = q_index;
 		}
 	}
 
@@ -2994,8 +3032,8 @@ bool next_simplex_ex(Support_Ex *simplex, Vec2 *dir, u32 *n) {
 	return false;
 }
 
-Nearest_Edge_Ex nearest_edge_origin_polygon_ex(const Support_Ex *vertices, u32 vertex_count) {
-	Nearest_Edge_Ex edge;
+Nearest_Edge nearest_edge_origin_polygon_ex(const Support_Ex *vertices, u32 vertex_count) {
+	Nearest_Edge edge;
 	edge.distance = MAX_FLOAT;
 
 	for (u32 p_index = 0; p_index < vertex_count; p_index += 1) {

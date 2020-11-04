@@ -223,9 +223,10 @@ constexpr u16 MAX_UINT16 = UINT16_MAX;
 constexpr u32 MAX_UINT32 = UINT32_MAX;
 constexpr u64 MAX_UINT64 = UINT64_MAX;
 
-constexpr r32 EPSILON_FLOAT = FLT_EPSILON;
-constexpr r32 MAX_FLOAT     = FLT_MAX;
-constexpr r32 MIN_FLOAT     = FLT_MIN;
+constexpr r32 EPSILON_FLOAT		= FLT_EPSILON;
+constexpr r32 EPSILON_FLOAT_SQ  = FLT_EPSILON * FLT_EPSILON;
+constexpr r32 MAX_FLOAT			= FLT_MAX;
+constexpr r32 MIN_FLOAT			= FLT_MIN;
 
 constexpr ptrsize MAX_SIZE = SIZE_MAX;
 

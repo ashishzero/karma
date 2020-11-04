@@ -50,7 +50,8 @@ static bool shapes_collision_resolver(Fixture& a, Fixture& b, const Mat3& ta, co
 
 template <typename ShapeA, typename ShapeB>
 static bool shapes_nearest_points_finder(Fixture& a, Fixture& b, const Mat3& ta, const Mat3& tb, const Mat2& tdira, const Mat2& tdirb, Vec2 dp, Nearest_Points* nearest_points) {
-	return gjk_epa_nearest_points(*(ShapeA*)a.handle, *(ShapeB*)b.handle, nearest_points, ta, tb, tdira, tdirb, dp);
+	gjk_nearest_points(*(ShapeA*)a.handle, *(ShapeB*)b.handle, nearest_points, ta, tb, tdira, tdirb, dp);
+	return true;
 }
 
 template <typename ShapeA, typename ShapeB>
