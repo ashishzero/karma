@@ -150,14 +150,14 @@ static void collision_resover_init() {
 	COLLISION_DETECTORS[Fixture_Shape_Polygon][Fixture_Shape_Polygon] = shapes_collision_detector<Polygon, Polygon>;
 }
 
-static bool collider_vs_collider_dynamic(Fixture &a, Fixture &b, const Mat3 &ta, const Mat3 &tb, Vec2 dp, Contact_Manifold *manifold) {
+static bool collider_vs_collider_dynamic(Fixture *a, Fixture *b, const Mat3 &ta, const Mat3 &tb, Vec2 dp, Contact_Manifold *manifold) {
 	Mat2 tdira, tdirb;
 	tdira.rows[0] = vec2(ta.m2[0][0], ta.m2[1][0]);
 	tdira.rows[1] = vec2(ta.m2[0][1], ta.m2[1][1]);
 
 	tdirb.rows[0] = vec2(tb.m2[0][0], tb.m2[1][0]);
 	tdirb.rows[1] = vec2(tb.m2[0][1], tb.m2[1][1]);
-	return COLLISION_RESOLVERS[a.shape][b.shape](a, b, ta, tb, tdira, tdirb, dp, manifold);
+	return COLLISION_RESOLVERS[a->shape][b->shape](*a, *b, ta, tb, tdira, tdirb, dp, manifold);
 }
 
 static bool collider_collider_nearest_points(Fixture &a, Fixture &b, const Mat3 &ta, const Mat3 &tb, Vec2 dp, Nearest_Points *nearest_points) {
@@ -218,6 +218,12 @@ static bool test_collider_point(Fixture &a, const Mat3 &t, Vec2 point) {
 	return COLLISION_DETECTORS[a.shape][b.shape](a, b, t, mat3_identity(), tdir, mat2_identity(), vec2(0));
 }
 
+enum Physics_State {
+	Physics_State_RUNNING,
+	Physics_State_PAUSED,
+	Physics_State_RUN_SINGLE_STEP,
+};
+
 int karma_user_zero() {
 	collision_resover_init();
 
@@ -270,6 +276,8 @@ int karma_user_zero() {
 
 	Fixture fixture;
 	Resource_Id id;
+
+	Physics_State physics_state = Physics_State_RUNNING;
 
 	Entity_Info info;
 	
@@ -399,7 +407,7 @@ int karma_user_zero() {
 	u64 frequency = system_get_frequency();
 	u64 counter = system_get_counter();
 
-	static r32 gravity = 0.2f;
+	static r32 gravity = 0.0f;
 
 	while (running) {
 		Dev_TimedFrameBegin();
@@ -509,6 +517,11 @@ int karma_user_zero() {
 		static int number_of_iterations = 4;
 
 		while (accumulator_t >= fixed_dt) {
+			if (physics_state == Physics_State_PAUSED)
+				break;
+			else if (physics_state == Physics_State_RUN_SINGLE_STEP)
+				physics_state = Physics_State_PAUSED;
+
 			Dev_TimedScope(SimulationFrame);
 
 			r32 len = sqrtf(controller.x * controller.x + controller.y * controller.y);
@@ -532,10 +545,12 @@ int karma_user_zero() {
 
 			// TODO: Do broad phase collision detection
 			for (auto ptr = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, ptr); ptr = iter_next<Rigid_Body>(ptr)) {
-				ptr->data.velocity += dt * ptr->data.force + vec2(0, -gravity);
-				ptr->data.velocity *= powf(0.5f, ptr->data.drag * dt);
-				ptr->data.force = vec2(0);
-				clear_bit(ptr->data.flags, Rigid_Body_COLLIDING);
+				if (ptr->data.type == Rigid_Body_Type_Dynamic) {
+					ptr->data.velocity += dt * ptr->data.force + vec2(0, -gravity);
+					ptr->data.velocity *= powf(0.5f, ptr->data.drag * dt);
+					ptr->data.force = vec2(0);
+					clear_bit(ptr->data.flags, Rigid_Body_COLLIDING);
+				}
 			}
 
 			Vec2 dv, dp;
@@ -554,49 +569,29 @@ int karma_user_zero() {
 						dp = dv * dt;
 
 						for (u32 b_index = 0; b_index < b_body.fixture_count; ++b_index) {
-							Fixture &b_collider = *rigid_body_get_fixture(&b_body, b_index);
+							Fixture *b_collider = rigid_body_get_fixture(&b_body, b_index);
 							for (u32 a_index = 0; a_index < a_body.fixture_count; ++a_index) {
-								Fixture &a_collider = *rigid_body_get_fixture(&a_body, a_index);
+								Fixture *a_collider = rigid_body_get_fixture(&a_body, a_index);
 
 								if (collider_vs_collider_dynamic(b_collider, a_collider, b_body.xform, a_body.xform, dp, &manifold)) {
 
-									r32 collision_time = -manifold.penetration / dt;
-
-#if 1
-									Vec2 vn, vt;
+									r32 len = vec2_length(dp);
+									// TODO: Properly handle division by zero
+									if (len == 0.0f) continue;
+									r32 t = 1.0f - manifold.penetration / len;
+									//t = maximum(t, 0);
 
 									if (b_body.type == Rigid_Body_Type_Dynamic && a_body.type == Rigid_Body_Type_Dynamic) {
-										r32 a_collision_time = 0.5f * collision_time;
-										r32 b_collision_time = -0.5f * collision_time;
-
-										vn = a_collision_time * manifold.normal;
-										vt = a_body.velocity - a_body.stiffness * vn;
-										a_body.velocity = vt - a_body.restitution * vn;
-
-										vn = b_collision_time * manifold.normal;
-										vt = b_body.velocity - b_body.stiffness * vn;
-										b_body.velocity = vt - b_body.restitution * vn;
-
-										dv = a_body.velocity - b_body.velocity;
-										dp = dv * dt;
+										//a_body.velocity = a_body.velocity - 0.5f * (1.0f - t) * a_body.velocity;
+										//b_body.velocity = b_body.velocity + 0.5f * (1.0f - t) * b_body.velocity;
+									} else if (a_body.type == Rigid_Body_Type_Dynamic) {
+										//a_body.velocity = a_body.velocity - (1.0f - t) * a_body.velocity;
+									} else {
+										//b_body.velocity = b_body.velocity + (1.0f - t) * b_body.velocity;
 									}
-									else if (a_body.type == Rigid_Body_Type_Dynamic) {
-										vn = collision_time * manifold.normal;
-										vt = a_body.velocity - a_body.stiffness * vn;
-										a_body.velocity = vt - a_body.restitution * vn;
 
-										dv = a_body.velocity;
-										dp = dv * dt;
-									}
-									else {
-										vn = -collision_time * manifold.normal;
-										vt = b_body.velocity - b_body.stiffness * vn;
-										b_body.velocity = vt - b_body.restitution * vn;
-
-										dv = -b_body.velocity;
-										dp = dv * dt;
-									}
-#endif
+									dv = a_body.velocity - b_body.velocity;
+									dp = dv * dt;
 
 									array_add(&manifolds, manifold);
 
@@ -779,15 +774,29 @@ int karma_user_zero() {
 
 		editor_entity(primary_player);
 		
-		ImGui::Begin("Camera", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
-		ImGui::Combo("Render Api", &new_render_api, render_api_strings, static_count(render_api_strings));
+		ImGui::Begin("World", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
+		
+		if (physics_state == Physics_State_RUNNING) {
+			if (ImGui::Button("Pause")) {
+				physics_state = Physics_State_PAUSED;
+			}
+		} else if (physics_state == Physics_State_PAUSED) {
+			if (ImGui::Button("Run")) {
+				physics_state = Physics_State_RUNNING;
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Step")) {
+				physics_state = Physics_State_RUN_SINGLE_STEP;
+			}
+		}
+
 		ImGui::DragFloat("Gravity", &gravity, 0.01f);
-		ImGui::DragInt("Velocity Iteration", &number_of_iterations, 1, 1, 10000);
+		ImGui::DragInt("Iteration", &number_of_iterations, 1, 1, 10000);
 		ImGui::DragFloat("Movement Force", &movement_force, 0.01f);
 		editor_draw(scene->camera);
 		ImGui::End();
 
-		ImGui::ShowDemoWindow();
+		//ImGui::ShowDemoWindow();
 
 #if defined(BUILD_IMGUI)
 		{
