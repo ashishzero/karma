@@ -476,8 +476,15 @@ struct Contact_Manifold {
 	r32		penetration;
 };
 
+enum Impact_Type {
+	Impact_Type_OVERLAPPED,
+	Impact_Type_TOUCHING,
+	Impact_Type_SEPERATED,
+};
+
 struct Impact_Time {
 	Vec2	normal;
 	Vec2	contacts[2];
 	r32		t;
+	u32		iterations;
 };

@@ -1004,7 +1004,7 @@ bool gjk(const ShapeA &sa, const ShapeB &sb, const Args & ...args) {
 
 	Vec2 a;
 	while (true) {
-		if (vec2_null(dir)) return false;
+		if (vec2_null(dir)) return true;
 		a = support(sa, sb, dir, args...);
 		if (vec2_dot(a, dir) < 0.0f) return false; // no intersection
 		simplex[n] = a;
@@ -1034,7 +1034,7 @@ bool gjk_nearest_points(const ShapeA &sa, const ShapeB &sb, Nearest_Points *near
 	r32 min_dist = MAX_FLOAT;
 
 	while (min_dist - dist > EPSILON_FLOAT_SQ) {
-		min_dist = dist;
+		if (vec2_null(d)) return false;
 
 		c = support_ex(sa, sb, -d, args...);
 
@@ -1047,6 +1047,7 @@ bool gjk_nearest_points(const ShapeA &sa, const ShapeB &sb, Nearest_Points *near
 		r32 p1_dist = vec2_dot(p1, p1);
 		r32 p2_dist = vec2_dot(p2, p2);
 
+		min_dist = dist;
 		prev_dir = d;
 
 		if (p1_dist < p2_dist) {
@@ -1090,7 +1091,7 @@ bool gjk_nearest_points(const ShapeA &sa, const ShapeB &sb, Nearest_Points *near
 	return true;
 }
 
-constexpr r32 EPA_TOLERANCE = 0.00001f;
+constexpr r32 EPA_TOLERANCE = 0.0001f;
 
 template <typename ShapeA, typename ShapeB, typename ...Args>
 bool gjk_epa(const ShapeA &sa, const ShapeB &sb, Contact_Manifold *manifold, const Args &...args) {
@@ -1104,7 +1105,7 @@ bool gjk_epa(const ShapeA &sa, const ShapeB &sb, Contact_Manifold *manifold, con
 
 	Support_Ex s;
 	while (true) {
-		if (vec2_null(dir)) return false;
+		if (vec2_null(dir)) break;
 		s = support_ex(sa, sb, dir, args...);
 		if (vec2_dot(s.p, dir) < 0.0f) return false; // no intersection
 		simplex[vertex_count] = s;
@@ -1195,49 +1196,60 @@ bool gjk_epa(const ShapeA &sa, const ShapeB &sb, Contact_Manifold *manifold, con
 	return true;
 }
 
+constexpr r32 GJK_CONTINUOUS_BISECTION_DEFAULT_TOLERANCE	= 0.00001f;
+constexpr u32 GJK_CONTINUOUS_BISECTION_MAX_ITERATION		= 50;
+
 template <typename ShapeA, typename ShapeB>
-bool gjk_continuous(const ShapeA &a, const ShapeB &b,
-					const Transform &ta, const Transform &tb,
-					Vec2 a_dp, Vec2 b_dp, Impact_Time *impact_time) {
+Impact_Type gjk_continuous(const ShapeA &a, const ShapeB &b,
+						   const Transform &ta, const Transform &tb,
+						   Vec2 a_dp, Vec2 b_dp, Impact_Time *impact_time, 
+						   r32 tolerance = GJK_CONTINUOUS_BISECTION_DEFAULT_TOLERANCE) {
 	if (!gjk(a, b, ta, tb, a_dp, b_dp)) {
-		return false; // no collision occurs in [0,1]
+		return Impact_Type_SEPERATED;
 	}
 
-	r32 t_near	= 0.0f;
-	r32 t_far	= 1.0f;
-	r32 t		= 0.5f;
-
-	// t_near values
-	Transform a_tran_near = ta;
-	Transform b_tran_near = tb;
-
-	// t_near to t values
-	Vec2 a_frac_dp = t * a_dp;
-	Vec2 b_frac_dp = t * b_dp;
-
+	r32 t_min = 0;
+	r32 t_max = 1;
+	r32 t_impact = 0;
 	Nearest_Points nearest_points;
-	nearest_points.distance2 = MAX_FLOAT;
-	while (t_near < t_far) {
-		if (gjk_nearest_points(a, b, &nearest_points, a_tran_near, b_tran_near, a_frac_dp, b_frac_dp)) {
-			if (nearest_points.distance2 < EPSILON_FLOAT_SQ)
-				break;
-
-			t_near = t;
-			a_tran_near.p = ta.p + t_near * a_dp;
-			b_tran_near.p = tb.p + t_near * b_dp;
-		} else {
-			t_far = t;
-		}
-
-		t = 0.5f * (t_near + t_far);			
-		a_frac_dp = t * a_dp;
-		b_frac_dp = t * b_dp;
+	if (!gjk_nearest_points(a, b, &nearest_points, ta, tb)) {
+		return Impact_Type_OVERLAPPED;
 	}
 
-	impact_time->t = t;
-	impact_time->contacts[0] = nearest_points.a; 
-	impact_time->contacts[1] = nearest_points.b; 
-	impact_time->normal = vec2(0);
+	impact_time->normal = nearest_points.b - nearest_points.a; // Normalize later
 
-	return true;
+	Transform a_interpolated = ta;
+	Transform b_interpolated = tb;
+
+	Vec2 a_frac_dp, b_frac_dp;
+	r32 min_dist2 = nearest_points.distance2;
+	u32 iteration = GJK_CONTINUOUS_BISECTION_MAX_ITERATION;
+	while (min_dist2 > tolerance && t_min < t_max && iteration) {
+		t_impact = 0.5f * (t_min + t_max);
+		a_frac_dp = (t_impact - t_min) * a_dp;
+		b_frac_dp = (t_impact - t_min) * b_dp;
+		if (gjk_nearest_points(a, b, &nearest_points, a_interpolated, b_interpolated, a_frac_dp, b_frac_dp)) {
+			if (nearest_points.distance2 - min_dist2 > 0.0f)
+				break;
+			min_dist2 = nearest_points.distance2;
+			t_min = t_impact;
+			a_interpolated.p = ta.p + t_min * a_dp;
+			b_interpolated.p = tb.p + t_min * b_dp;
+
+			if (!gjk(a, b, a_interpolated, b_interpolated, (t_max - t_min) * a_dp, (t_max - t_min) * b_dp)) {
+				return Impact_Type_SEPERATED;
+			}
+		} else {
+			t_max = t_impact;
+		}
+		iteration -= 1;
+	}
+
+	impact_time->t = t_impact;
+	impact_time->contacts[0] = nearest_points.a;
+	impact_time->contacts[1] = nearest_points.b;
+	impact_time->normal = vec2_normalize_check(impact_time->normal);
+	impact_time->iterations = GJK_CONTINUOUS_BISECTION_MAX_ITERATION - iteration;
+
+	return Impact_Type_TOUCHING;
 }

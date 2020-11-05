@@ -57,7 +57,7 @@ static bool shapes_collision_resolver(Fixture &a, Fixture &b, const Transform &t
 
 template <typename ShapeA, typename ShapeB>
 static bool shapes_continuous_collision_resolver(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb, Vec2 a_dp, Vec2 b_dp, Impact_Time *impact) {
-	return gjk_continuous(*(ShapeA *)a.handle, *(ShapeB *)b.handle, ta, tb, a_dp, b_dp, impact);
+	return gjk_continuous(*(ShapeA *)a.handle, *(ShapeB *)b.handle, ta, tb, a_dp, b_dp, impact) == Impact_Type_TOUCHING;
 }
 
 template <typename ShapeA, typename ShapeB>
@@ -538,6 +538,7 @@ int karma_user_zero() {
 
 		Dev_TimedBlockBegin(Simulation);
 
+#if 0
 		static r32 movement_force = 20;
 
 		Contact_Manifold manifold;
@@ -684,6 +685,7 @@ int karma_user_zero() {
 
 			accumulator_t -= fixed_dt;
 		}
+#endif
 
 		ImGui_UpdateFrame(real_dt);
 
@@ -742,8 +744,119 @@ int karma_user_zero() {
 		r32 scale = powf(0.5f, scene->camera.distance);
 		Mat4 transform = mat4_scalar(scale, scale, 1.0f) * mat4_translation(vec3(-scene->camera.position, 0.0f));
 
+		Circle circle;
+		circle.center = vec2(0);
+		circle.radius = 1;
+
+		//Mm_Rect rect;
+		//rect.min = vec2(-1);
+		//rect.max = vec2( 1);
+
+		static Transform i;
+		//i.p = vec2(0, 3);
+		static Transform f;
+		//f.p = vec2(0, -2);
+		i.xform = f.xform = mat2_identity();
+
+		static Transform ti;
+		static Transform tf;
+		//t.p = vec2(0);
+		ti.xform = mat2_identity();
+		tf.xform = mat2_identity();
+
+		Vec2 a_dp, b_dp;
+		a_dp = f.p - i.p;
+		b_dp = tf.p - ti.p;
+
+
+		static r32 tol = GJK_CONTINUOUS_BISECTION_DEFAULT_TOLERANCE;
+
+		Dev_TimedBlockBegin(GjkContinuous);
+		Impact_Time impact;
+		auto impact_type = gjk_continuous(circle, circle, i, ti, a_dp, b_dp, &impact, tol);
+		Dev_TimedBlockEnd(GjkContinuous);
+
 		im2d_begin(view, transform);
 
+		Capsule cap;
+		cap.radius = 1;
+
+		cap.a = i.p;
+		cap.b = f.p;
+
+		Vec2 capsule_dir = cap.b - cap.a;
+		Vec2 capsule_norm = vec2_normalize_check(vec2(-capsule_dir.y, capsule_dir.x)) * cap.radius;
+		auto color = vec4(0, 1, 1);
+		im2d_circle_outline(cap.a, cap.radius, color, 0.02f);
+		im2d_circle_outline(cap.b, cap.radius, color, 0.02f);
+		im2d_line(cap.a + capsule_norm, cap.b + capsule_norm, color, 0.02f);
+		im2d_line(cap.a - capsule_norm, cap.b - capsule_norm, color, 0.02f);
+
+		Mat3 xform = mat2_to_mat3(i.xform);
+		xform.rows[0].z = i.p.x; xform.rows[1].z = i.p.y;
+		im2d_push_matrix(mat3_to_mat4(xform));
+		im2d_circle_outline(circle.center, circle.radius, vec4(1, 0, 1), 0.02f);
+		im2d_pop_matrix();
+
+		xform.rows[0].z = f.p.x; xform.rows[1].z = f.p.y;
+		im2d_push_matrix(mat3_to_mat4(xform));
+		im2d_circle_outline(circle.center, circle.radius, vec4(1, 0, 1), 0.02f);
+		im2d_pop_matrix();
+
+		//
+		//
+		//
+
+		cap.a = ti.p;
+		cap.b = tf.p;
+
+		capsule_dir = cap.b - cap.a;
+		capsule_norm = vec2_normalize_check(vec2(-capsule_dir.y, capsule_dir.x)) * cap.radius;
+		im2d_circle_outline(cap.a, cap.radius, color, 0.02f);
+		im2d_circle_outline(cap.b, cap.radius, color, 0.02f);
+		im2d_line(cap.a + capsule_norm, cap.b + capsule_norm, color, 0.02f);
+		im2d_line(cap.a - capsule_norm, cap.b - capsule_norm, color, 0.02f);
+
+		xform.rows[0].z = ti.p.x; xform.rows[1].z = ti.p.y;
+		im2d_push_matrix(mat3_to_mat4(xform));
+		im2d_circle_outline(circle.center, circle.radius, vec4(1, 0, 1), 0.02f);
+		im2d_pop_matrix();
+		
+		xform.rows[0].z = tf.p.x; xform.rows[1].z = tf.p.y;
+		im2d_push_matrix(mat3_to_mat4(xform));
+		im2d_circle_outline(circle.center, circle.radius, vec4(1, 0, 1), 0.02f);
+		im2d_pop_matrix();
+
+		if (impact_type == Impact_Type_TOUCHING) {
+			xform.rows[0].z = i.p.x + impact.t * a_dp.x; 
+			xform.rows[1].z = i.p.y + impact.t * a_dp.y;
+			im2d_push_matrix(mat3_to_mat4(xform));
+			im2d_circle_outline(circle.center, circle.radius, vec4(0.85f, 0, 0), 0.02f);
+			im2d_pop_matrix();
+			
+			xform.rows[0].z = ti.p.x + impact.t * b_dp.x; 
+			xform.rows[1].z = ti.p.y + impact.t * b_dp.y;
+			im2d_push_matrix(mat3_to_mat4(xform));
+			im2d_circle_outline(circle.center, circle.radius, vec4(0.85f, 0, 0), 0.02f);
+			im2d_pop_matrix();
+
+			im2d_line(impact.contacts[0], impact.contacts[1], vec4(1, 0, 1), 0.02f);
+
+			im2d_circle(impact.contacts[0], 0.08f, vec4(1, 1, 0));
+			im2d_circle(impact.contacts[1], 0.08f, vec4(1, 1, 0));
+
+			im2d_line(impact.contacts[0], impact.contacts[0] + impact.normal, vec4(1, 1, 0), 0.02f);
+		}
+
+		//xform = mat2_to_mat3(t.xform);
+		//xform.rows[0].z = t.p.x; xform.rows[1].z = t.p.y;
+		//im2d_push_matrix(mat3_to_mat4(xform));
+		//im2d_rect_outline(rect.min, rect.max - rect.min, vec4(1, 0, 1), 0.02f);
+		//im2d_pop_matrix();
+
+		im2d_circle(vec2(0), 0.05f, vec4(1.5f, 1.5f, 1.5f));
+
+#if 0
 		for (auto &player : scene->by_type.player) {
 			im2d_circle(player.position, player.radius, player.color * player.intensity);
 			im2d_line(player.position, player.position + player.rigid_body->velocity, vec4(0, 1.5f, 0), 0.02f);
@@ -821,8 +934,10 @@ int karma_user_zero() {
 		//}
 
 		for (auto &n : nearest_points) {
+			//im2d_line(n.a, n.a + n.normal, vec4(1, 0, 1), 0.02f);
 			im2d_line(n.a, n.b, vec4(1, 0, 1), 0.02f);
 		}
+#endif
 
 		im2d_end();
 
@@ -851,7 +966,7 @@ int karma_user_zero() {
 			"DirectX 11"
 		};
 
-		editor_entity(primary_player);
+		//editor_entity(primary_player);
 		
 		ImGui::Begin("World", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
 		
@@ -869,11 +984,31 @@ int karma_user_zero() {
 			}
 		}
 
-		ImGui::DragFloat("Gravity", &gravity, 0.01f);
-		ImGui::DragInt("Iteration", &number_of_iterations, 1, 1, 10000);
-		ImGui::DragFloat("Movement Force", &movement_force, 0.01f);
+		//ImGui::DragFloat("Gravity", &gravity, 0.01f);
+		//ImGui::DragInt("Iteration", &number_of_iterations, 1, 1, 10000);
+		//ImGui::DragFloat("Movement Force", &movement_force, 0.01f);
+		editor_draw(impact_type);
+		editor_draw(impact);
 		editor_draw(scene->camera);
+		ImGui::DragFloat("Tolerance", &tol, 0.001f);
 		ImGui::End();
+
+		ImGui::Begin("Initial A");
+		editor_draw(i);
+		ImGui::End();
+
+		ImGui::Begin("Final A");
+		editor_draw(f);
+		ImGui::End();
+
+		ImGui::Begin("Initial B");
+		editor_draw(ti);
+		ImGui::End();
+
+		ImGui::Begin("Final B");
+		editor_draw(tf);
+		ImGui::End();
+
 
 		//ImGui::ShowDemoWindow();
 
