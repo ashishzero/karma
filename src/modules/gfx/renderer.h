@@ -80,7 +80,6 @@ void gfx_end_drawing();
 
 void gfx_viewport(r32 x, r32 y, r32 w, r32 h);
 
-void im2d_debug_begin(r32 left, r32 right, r32 top, r32 bottom, r32 near = -1, r32 far = 1);
 void im2d_begin(const Mat4 &transform = mat4_identity());
 void im2d_begin(Camera_View &view, const Mat4 &transform = mat4_identity());
 void im2d_end();

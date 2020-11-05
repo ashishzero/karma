@@ -611,41 +611,6 @@ void gfx_viewport(r32 x, r32 y, r32 w, r32 h) {
 	gfx->cmd_set_viewport(x, y, w, h);
 }
 
-void im2d_debug_begin(r32 left, r32 right, r32 top, r32 bottom, r32 near, r32 far) {
-	Im_Uniform uniform;
-
-	switch (gfx->backend) {
-		case Render_Backend_OPENGL: {
-			uniform.transform = mat4_ortho_gl(left, right, top, bottom, near, far);
-		} break;
-
-		case Render_Backend_DIRECTX11: {
-			uniform.transform = mat4_ortho_dx(left, right, top, bottom, near, far);
-		} break;
-
-			invalid_default_case();
-	}
-
-	im_context2d.draw_cmd       = 0;
-	im_context2d.vertex         = 0;
-	im_context2d.index          = 0;
-	im_context2d.counter        = 0;
-	im_context2d.transformation = 1;
-
-	im_context2d.vertex_ptr = (Im_Vertex2d *)gfx->map(im_context2d.vertex_buffer, Map_Type_WRITE_DISCARD);
-	im_context2d.index_ptr  = (Im_Index *)gfx->map(im_context2d.index_buffer, Map_Type_WRITE_DISCARD);
-
-	im2d_start_cmd_record(white_texture.view);
-
-	void *ptr = gfx->map(im_context2d.uniform_buffer, Map_Type_WRITE_DISCARD);
-	memcpy(ptr, &uniform, sizeof(uniform));
-	gfx->unmap(im_context2d.uniform_buffer);
-
-	gfx->cmd_bind_pipeline(debug_pipeline);
-	gfx->cmd_bind_samplers(0, 1, &im_context2d.sampler);
-	gfx->cmd_bind_vs_uniform_buffers(0, 1, &im_context2d.uniform_buffer);
-}
-
 void im2d_begin(const Mat4 &transform) {
 	im_context2d.draw_cmd       = 0;
 	im_context2d.vertex         = 0;
@@ -1109,14 +1074,31 @@ void im2d_cube(Vec3 position, Quat rotation, Vec3 scale, Color4 color) {
 void im2d_line(Vec3 a, Vec3 b, Color4 color, r32 thickness) {
 	if (vec3_equals(a, b, 0)) return;
 
-	r32 dx   = b.x - a.x;
-	r32 dy   = b.y - a.y;
+	im2d_ensure_size(4, 6);
+
+	if (im_context2d.transformation > 1) {
+		auto &trans = im_context2d.transformations[im_context2d.transformation - 1];
+		a = (trans * vec4(a, 1)).xyz;
+		b = (trans * vec4(b, 1)).xyz;
+	}
+
+	r32 dx = b.x - a.x;
+	r32 dy = b.y - a.y;
 	r32 ilen = 1.0f / sqrtf(dx * dx + dy * dy);
 	dx *= (thickness * ilen);
 	dy *= (thickness * ilen);
 
-	im2d_quad(vec3(a.x - dy, a.y + dx, a.z), vec3(b.x - dy, b.y + dx, b.z),
-			vec3(b.x + dy, b.y - dx, b.z), vec3(a.x + dy, a.y - dx, a.z), color);
+	Im_Index  indices[] = { 0, 1, 2, 0, 2, 3 };
+	Im_Vertex2d vertices[] = {
+		{ vec3(a.x - dy, a.y + dx, a.z), vec2(0, 0), color },
+		{ vec3(b.x - dy, b.y + dx, b.z), vec2(0, 1), color },
+		{ vec3(b.x + dy, b.y - dx, b.z), vec2(1, 1), color },
+		{ vec3(a.x + dy, a.y - dx, a.z), vec2(1, 0), color },
+	};
+
+	im2d_push_indices(indices, static_count(indices));
+	auto dst = iim2d_push_vertex_count(static_count(vertices));
+	memcpy(dst, vertices, static_count(vertices) * sizeof(Im_Vertex2d));
 }
 
 void im2d_line(Vec2 a, Vec2 b, Color4 color, r32 thickness) {

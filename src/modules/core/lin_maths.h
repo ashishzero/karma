@@ -1091,7 +1091,7 @@ bool gjk_nearest_points(const ShapeA &sa, const ShapeB &sb, Nearest_Points *near
 	return true;
 }
 
-constexpr r32 EPA_TOLERANCE = 0.0001f;
+constexpr r32 EPA_TOLERANCE = 0.00001f;
 
 template <typename ShapeA, typename ShapeB, typename ...Args>
 bool gjk_epa(const ShapeA &sa, const ShapeB &sb, Contact_Manifold *manifold, const Args &...args) {
