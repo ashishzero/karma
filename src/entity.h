@@ -41,7 +41,6 @@ struct Rigid_Body {
 	Vec2				velocity;
 	Vec2				force;
 	Transform			transform;
-	Transform			final_transform; // TODO: Remove this!!
 	r32					stiffness;
 	r32					restitution;
 	u32					fixture_count;

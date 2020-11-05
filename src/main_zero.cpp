@@ -22,10 +22,10 @@ struct Player_Controller {
 typedef bool(*Collision_Resolver)(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb, Contact_Manifold *manifold);
 static Collision_Resolver COLLISION_RESOLVERS[Fixture_Shape_Count][Fixture_Shape_Count];
 
-typedef bool(*Continuous_Collision_Resolver)(Fixture &a, Fixture &b, const Transform &a_from, const Transform &a_to, const Transform &b_from, const Transform &b_to, Impact_Time *impact);
+typedef bool(*Continuous_Collision_Resolver)(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb, Vec2 a_dp, Vec2 b_dp, Impact_Time *impact);
 static Continuous_Collision_Resolver CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Count][Fixture_Shape_Count];
 
-typedef bool(*Nearest_Points_Finder)(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb, Nearest_Points *nearest_points);
+typedef bool(*Nearest_Points_Finder)(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb, Vec2 a_dp, Vec2 b_dp, Nearest_Points *nearest_points);
 static Nearest_Points_Finder NEAREST_POINTS_FINDERS[Fixture_Shape_Count][Fixture_Shape_Count];
 
 typedef bool(*Collision_Detector)(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb);
@@ -35,14 +35,14 @@ static Collision_Detector COLLISION_DETECTORS[Fixture_Shape_Count][Fixture_Shape
 static bool null_collision_resolver(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb, Contact_Manifold *manifold) {
 	return false;
 }
-static bool null_continuous_collision_resolver(Fixture &a, Fixture &b, const Transform &a_from, const Transform &a_to, const Transform &b_from, const Transform &b_to, Impact_Time *impact) {
+static bool null_continuous_collision_resolver(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb, Vec2 a_dp, Vec2 b_dp, Impact_Time *impact) {
 	return false;
 }
 
-static bool null_nearest_points_finder(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb, Nearest_Points *nearest_points) {
+static bool null_nearest_points_finder(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb, Vec2 a_dp, Vec2 b_dp, Nearest_Points *nearest_points) {
 	nearest_points->a = vec2(INFINITY, INFINITY);
 	nearest_points->b = vec2(INFINITY, INFINITY);
-	nearest_points->distance = INFINITY;
+	nearest_points->distance2 = INFINITY;
 	return false;
 }
 
@@ -56,13 +56,13 @@ static bool shapes_collision_resolver(Fixture &a, Fixture &b, const Transform &t
 }
 
 template <typename ShapeA, typename ShapeB>
-static bool shapes_continuous_collision_resolver(Fixture &a, Fixture &b, const Transform &a_from, const Transform &a_to, const Transform &b_from, const Transform &b_to, Impact_Time *impact) {
-	return gjk_continuous(*(ShapeA *)a.handle, *(ShapeB *)b.handle, a_from, a_to, b_from, b_to, impact);
+static bool shapes_continuous_collision_resolver(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb, Vec2 a_dp, Vec2 b_dp, Impact_Time *impact) {
+	return gjk_continuous(*(ShapeA *)a.handle, *(ShapeB *)b.handle, ta, tb, a_dp, b_dp, impact);
 }
 
 template <typename ShapeA, typename ShapeB>
-static bool shapes_nearest_points_finder(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb, Nearest_Points *nearest_points) {
-	return gjk_nearest_points(*(ShapeA *)a.handle, *(ShapeB *)b.handle, nearest_points, ta, tb);
+static bool shapes_nearest_points_finder(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb, Vec2 a_dp, Vec2 b_dp, Nearest_Points *nearest_points) {
+	return gjk_nearest_points(*(ShapeA *)a.handle, *(ShapeB *)b.handle, nearest_points, ta, tb, a_dp, b_dp);
 }
 
 template <typename ShapeA, typename ShapeB>
@@ -196,12 +196,12 @@ static bool fixture_vs_fixture(Fixture *a, Fixture *b, const Transform &ta, cons
 	return COLLISION_RESOLVERS[a->shape][b->shape](*a, *b, ta, tb, manifold);
 }
 
-static bool fixture_vs_fixture_continuous(Fixture *a, Fixture *b, const Transform &a_from, const Transform &a_to, const Transform &b_from, const Transform &b_to, Impact_Time *impact) {
-	return CONTINUOUS_COLLISION_RESOLVERS[a->shape][b->shape](*a, *b, a_from, a_to, b_from, b_to, impact);
+static bool fixture_vs_fixture_continuous(Fixture *a, Fixture *b, const Transform &ta, const Transform &tb, Vec2 a_dp, Vec2 b_dp, Impact_Time *impact) {
+	return CONTINUOUS_COLLISION_RESOLVERS[a->shape][b->shape](*a, *b, ta, tb, a_dp, b_dp, impact);
 }
 
-static bool nearest_points_fixture_fixture(Fixture *a, Fixture *b, const Transform &ta, const Transform &tb, Nearest_Points *nearest_points) {
-	return NEAREST_POINTS_FINDERS[a->shape][b->shape](*a, *b, ta, tb, nearest_points);
+static bool nearest_points_fixture_fixture(Fixture *a, Fixture *b, const Transform &ta, const Transform &tb, Vec2 a_dp, Vec2 b_dp, Nearest_Points *nearest_points) {
+	return NEAREST_POINTS_FINDERS[a->shape][b->shape](*a, *b, ta, tb, a_dp, b_dp, nearest_points);
 }
 
 static bool test_fixture_fixture(Fixture *a, Fixture *b, const Transform &ta, const Transform &tb) {
@@ -221,7 +221,7 @@ static bool fixture_vs_point(Fixture *a, const Transform &ta, Vec2 point, r32 si
 	return COLLISION_RESOLVERS[a->shape][b.shape](*a, b, ta, tb, manifold);
 }
 
-static bool nearest_points_fixture_point(Fixture &a, const Transform &ta, Vec2 point, r32 size, Nearest_Points *nearest_points) {
+static bool nearest_points_fixture_point(Fixture &a, const Transform &ta, Vec2 dp, Vec2 point, r32 size, Nearest_Points *nearest_points) {
 	Circle circle = { point, size };
 	Fixture b;
 	b.shape = Fixture_Shape_Circle;
@@ -231,7 +231,7 @@ static bool nearest_points_fixture_point(Fixture &a, const Transform &ta, Vec2 p
 	tb.p = vec2(0);
 	tb.xform = mat2_identity();
 
-	return NEAREST_POINTS_FINDERS[a.shape][b.shape](a, b, ta, tb, nearest_points);
+	return NEAREST_POINTS_FINDERS[a.shape][b.shape](a, b, ta, tb, dp, vec2(0), nearest_points);
 }
 
 static bool test_fixture_point(Fixture &a, const Transform &ta, Vec2 point) {
@@ -553,7 +553,7 @@ int karma_user_zero() {
 		manifolds.allocator = TEMPORARY_ALLOCATOR;
 
 		Nearest_Points np;
-		np.distance = 0;
+		np.distance2 = 0;
 
 		Array<Nearest_Points> nearest_points;
 		nearest_points.allocator = TEMPORARY_ALLOCATOR;
@@ -579,6 +579,12 @@ int karma_user_zero() {
 				//set_bit(primary_player->rigid_body->colliders->flags, Collision_Bit_MOTION);
 			}
 
+			for (auto &player : scene->by_type.player) {
+				player.color = vec4(1);
+				player.rigid_body->transform.p = player.position;
+				player.rigid_body->transform.xform = mat2_scalar(player.radius, player.radius);
+			}
+
 			primary_player->color = vec4(0, 1, 1);
 
 			// TODO: Do broad phase collision detection
@@ -591,28 +597,16 @@ int karma_user_zero() {
 				clear_bit(ptr->data.flags, Rigid_Body_COLLIDING);
 			}
 
-			for (auto &player : scene->by_type.player) {
-				player.color = vec4(1);
-				player.rigid_body->final_transform.p = player.position + player.rigid_body->velocity * dt;
-				player.rigid_body->final_transform.xform = mat2_scalar(player.radius, player.radius);
-			}
-
-			Vec2 dv, dp;
 			//Contact_Manifold manifold;
 
 			for (int iteration = 0; iteration < number_of_iterations; ++iteration) {
 				for (auto a = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, a); a = iter_next<Rigid_Body>(a)) {
 					Rigid_Body &a_body = a->data;
 					for (auto b = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, b); b = iter_next<Rigid_Body>(b)) {
-						if (a == b) continue;
-
 						Rigid_Body &b_body = b->data;
 
-						if (a_body.type == Rigid_Body_Type_Static && b_body.type == Rigid_Body_Type_Static)
+						if (a == b || (a_body.type == Rigid_Body_Type_Static && b_body.type == Rigid_Body_Type_Static))
 							continue;
-
-						dv = a_body.velocity - b_body.velocity;
-						dp = dv * dt;
 
 						for (u32 b_index = 0; b_index < b_body.fixture_count; ++b_index) {
 							Fixture *b_collider = rigid_body_get_fixture(&b_body, b_index);
@@ -624,13 +618,10 @@ int karma_user_zero() {
 								if (fixture_vs_fixture(b_collider, a_collider, b_body.transform, a_body.transform, &manifold)) {
 #else
 								
-
-								auto &b_from = b_body.transform;
-								auto &b_to = b_body.final_transform;
-								auto &a_from = a_body.transform;
-								auto &a_to = a_body.final_transform;
-
-								if (fixture_vs_fixture_continuous(b_collider, a_collider, b_from, b_to, a_from, a_to, &impact_time)) {
+								if (fixture_vs_fixture_continuous(b_collider, a_collider, 
+																  b_body.transform, a_body.transform, 
+																  b_body.velocity * dt, a_body.velocity * dt, 
+																  &impact_time)) {
 #endif
 								
 									//if (vec2_dot(dv, manifold.normal) >= 0.0f) continue;
@@ -671,7 +662,9 @@ int karma_user_zero() {
 									//a_body.flags |= Rigid_Body_COLLIDING;
 								}
 #else
-								if (nearest_points_fixture_fixture(b_collider, a_collider, b_body.transform, a_body.transform, &np)) {
+								if (nearest_points_fixture_fixture(b_collider, a_collider, 
+																   b_body.transform, a_body.transform, 
+																   b_body.velocity * dt, a_body.velocity * dt, &np)) {
 									array_add(&nearest_points, np);
 								}
 #endif
@@ -684,8 +677,6 @@ int karma_user_zero() {
 
 			for (auto &player : scene->by_type.player) {
 				player.position += player.rigid_body->velocity * dt;
-				player.rigid_body->transform.p = player.rigid_body->final_transform.p;
-				player.rigid_body->transform.xform = mat2_scalar(player.radius, player.radius);
 			}
 
 			r32 camera_follow_speed = 0.977f;
@@ -819,9 +810,11 @@ int karma_user_zero() {
 			im2d_circle(m.contacts[1], 0.08f, vec4(1, 0, 1));
 		}
 
-		for (auto &i : impacts) {
-			im2d_line(i.contact, i.contact + i.t * i.normal, vec4(1, 0, 1), 0.02f);
-			im2d_circle(i.contact, 0.08f, vec4(1, 0, 1));
+		for (auto &m : impacts) {
+			im2d_line(m.contacts[1], m.contacts[1] + m.normal, vec4(1, 0, 1), 0.02f);
+
+			im2d_circle(m.contacts[0], 0.08f, vec4(1, 0, 1));
+			im2d_circle(m.contacts[1], 0.08f, vec4(1, 0, 1));
 		}
 		//if (draw_cursor) {
 		//	im2d_circle(cursor, 0.1f, 2 * vec4(1, 1, 0));

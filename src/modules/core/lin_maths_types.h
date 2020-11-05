@@ -460,7 +460,6 @@ struct Transform {
 struct Nearest_Points {
 	Vec2	a;
 	Vec2	b;
-	Vec2	normal; // un-normalized
 	r32		distance2;
 };
 

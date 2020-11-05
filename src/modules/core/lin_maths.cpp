@@ -1740,14 +1740,9 @@ r32 point_to_aabb2d_length2(Vec2 p, const Aabb2d &aabb) {
 Vec2 nearest_point_point_segment(Vec2 p, Vec2 a, Vec2 b, r32 *t) {
 	Vec2 ab = b - a;
 	r32 len = vec2_dot(ab, ab);
-	if (len > EPSILON_FLOAT * EPSILON_FLOAT) {
-		*t = vec2_dot(p - a, ab) / len;
-		if (*t < 0.0f) *t = 0.0f;
-		if (*t > 1.0f) *t = 1.0f;
-		return a + (*t * ab);
-	}
-	*t = 0;
-	return a;
+	*t = vec2_dot(p - a, ab) / len;
+	*t = clamp01(*t);
+	return a + (*t * ab);
 }
 
 Vec2 nearest_point_point_segment(Vec2 p, Vec2 a, Vec2 b) {
@@ -1758,14 +1753,9 @@ Vec2 nearest_point_point_segment(Vec2 p, Vec2 a, Vec2 b) {
 Vec2 nearest_point_origin_segment(Vec2 a, Vec2 b, r32 *t) {
 	Vec2 ab = b - a;
 	r32 len = vec2_dot(ab, ab);
-	if (len > EPSILON_FLOAT * EPSILON_FLOAT) {
-		*t = vec2_dot(-a, ab) / len;
-		if (*t < 0.0f) *t = 0.0f;
-		if (*t > 1.0f) *t = 1.0f;
-		return a + (*t * ab);
-	}
-	*t = 0;
-	return a;
+	*t = vec2_dot(-a, ab) / len;
+	*t = clamp01(*t);
+	return a + (*t * ab);
 }
 
 Vec2 nearest_point_origin_segment(Vec2 a, Vec2 b) {

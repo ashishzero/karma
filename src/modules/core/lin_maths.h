@@ -921,6 +921,23 @@ inline Vec2 support(const ShapeA &a, const ShapeB &b, Vec2 dir, const Transform 
 	return p - q;
 }
 
+template <typename ShapeA, typename ShapeB>
+inline Vec2 support(const ShapeA &a, const ShapeB &b, Vec2 dir, const Transform &ta, const Transform &tb, Vec2 a_dp, Vec2 b_dp) {
+	Vec2 p = support(a, vec2_mat2_mul( dir, ta.xform));
+	p = mat2_vec2_mul(ta.xform, p) + ta.p;
+
+	Vec2 q = support(b, vec2_mat2_mul(-dir, tb.xform));
+	q = mat2_vec2_mul(tb.xform, q) + tb.p;
+
+	if (vec2_dot(a_dp, -dir) < 0.0f)
+		p += a_dp;
+
+	if (vec2_dot(b_dp, dir) < 0.0f)
+		q += b_dp;
+
+	return p - q;
+}
+
 struct Support_Ex {
 	Vec2 a;
 	Vec2 b;
@@ -1005,22 +1022,21 @@ template <typename ShapeA, typename ShapeB, typename ...Args>
 bool gjk_nearest_points(const ShapeA &sa, const ShapeB &sb, Nearest_Points *nearest_points, const Args &...args) {
 	Support_Ex simplex[2];
 
-	Vec2 dir = vec2(1, 1);
-	simplex[0] = support_ex(sa, sb,  dir, args...);
-	simplex[1] = support_ex(sa, sb, -dir, args...);
+	Vec2 prev_dir = vec2(1, 1);
+	simplex[0] = support_ex(sa, sb,  prev_dir, args...);
+	simplex[1] = support_ex(sa, sb, -prev_dir, args...);
 
 	Support_Ex c;
 	Vec2 p1, p2;
 
 	Vec2 d = nearest_point_origin_segment(simplex[0].p, simplex[1].p);
 	r32 dist = vec2_dot(d, d);
-	r32 min_dist = dist;
+	r32 min_dist = MAX_FLOAT;
 
-	while (true) {
+	while (min_dist - dist > EPSILON_FLOAT_SQ) {
+		min_dist = dist;
+
 		c = support_ex(sa, sb, -d, args...);
-
-		if (test_origin_inside_triangle(simplex[0].p, simplex[1].p, c.p))
-			return false;
 
 		if (vec2_null(c.p - simplex[0].p) || vec2_null(c.p - simplex[1].p))
 			break;
@@ -1031,20 +1047,22 @@ bool gjk_nearest_points(const ShapeA &sa, const ShapeB &sb, Nearest_Points *near
 		r32 p1_dist = vec2_dot(p1, p1);
 		r32 p2_dist = vec2_dot(p2, p2);
 
+		prev_dir = d;
+
 		if (p1_dist < p2_dist) {
 			d = p1;
 			dist = p1_dist;
 			simplex[1] = c;
-		}
-		else {
+		} else {
 			d = p2;
 			dist = p2_dist;
 			simplex[0] = c;
 		}
 
-		if (min_dist - dist < EPSILON_FLOAT_SQ)
-			break;
-		min_dist = dist;
+		// Since the previous search direction (towards origin) is in opposite direction of the new search direction
+		// origin in contained in the Minkowski difference, so the two shapes are colliding, distance in undefined
+		if (vec2_dot(prev_dir, d) < 0.0f) 
+			return false;
 	}
 
 	r32 tx, ty;
@@ -1053,19 +1071,16 @@ bool gjk_nearest_points(const ShapeA &sa, const ShapeB &sb, Nearest_Points *near
 
 	if (fabsf(tx) > EPSILON_FLOAT) {
 		tx = (d.x - simplex[0].p.x) / tx;
-	}
-	else {
+	} else {
 		tx = 0;
 	}
 
 	if (fabsf(ty) > EPSILON_FLOAT) {
 		ty = (d.y - simplex[0].p.y) / ty;
-	}
-	else {
+	} else {
 		ty = 0;
 	}
 
-	nearest_points->normal = vec2(-ty, tx);
 	nearest_points->a.x = simplex[0].a.x + tx * (simplex[1].a.x - simplex[0].a.x);
 	nearest_points->a.y = simplex[0].a.y + ty * (simplex[1].a.y - simplex[0].a.y);
 	nearest_points->b.x = simplex[0].b.x + tx * (simplex[1].b.x - simplex[0].b.x);
@@ -1180,144 +1195,49 @@ bool gjk_epa(const ShapeA &sa, const ShapeB &sb, Contact_Manifold *manifold, con
 	return true;
 }
 
-#if 1
-
 template <typename ShapeA, typename ShapeB>
 bool gjk_continuous(const ShapeA &a, const ShapeB &b,
 					const Transform &ta, const Transform &tb,
 					Vec2 a_dp, Vec2 b_dp, Impact_Time *impact_time) {
-	r32 t_near = 0;
-	r32 t_far  = 1;
-	r32 t = t_far;
+	if (!gjk(a, b, ta, tb, a_dp, b_dp)) {
+		return false; // no collision occurs in [0,1]
+	}
 
+	r32 t_near	= 0.0f;
+	r32 t_far	= 1.0f;
+	r32 t		= 0.5f;
+
+	// t_near values
 	Transform a_tran_near = ta;
 	Transform b_tran_near = tb;
 
-	Vec2 a_frac_dp = a_dp;
-	Vec2 b_frac_dp = b_dp;
+	// t_near to t values
+	Vec2 a_frac_dp = t * a_dp;
+	Vec2 b_frac_dp = t * b_dp;
 
 	Nearest_Points nearest_points;
 	nearest_points.distance2 = MAX_FLOAT;
-	while (nearest_points.distance2 > EPSILON_FLOAT_SQ) {
+	while (t_near < t_far) {
 		if (gjk_nearest_points(a, b, &nearest_points, a_tran_near, b_tran_near, a_frac_dp, b_frac_dp)) {
+			if (nearest_points.distance2 < EPSILON_FLOAT_SQ)
+				break;
+
 			t_near = t;
-			t = 0.5f * (t_near + t_far);
-			a_tran_near.p = ta.p + t_near * a_frac_dp;
-			b_tran_near.p = tb.p + t_near * b_frac_dp;
+			a_tran_near.p = ta.p + t_near * a_dp;
+			b_tran_near.p = tb.p + t_near * b_dp;
 		} else {
-			t = 0.5f * (t_near + t_far);
-			a_frac_dp = t * a_dp;
-			b_frac_dp = t * b_dp;
-			
+			t_far = t;
 		}
+
+		t = 0.5f * (t_near + t_far);			
+		a_frac_dp = t * a_dp;
+		b_frac_dp = t * b_dp;
 	}
 
 	impact_time->t = t;
 	impact_time->contacts[0] = nearest_points.a; 
 	impact_time->contacts[1] = nearest_points.b; 
-	impact_time->normal = vec2_normalize_check(nearest_points.normal);
-}
-
-#else
-// http://dtecta.com/papers/jgt04raycast.pdf
-template <typename ShapeA, typename ShapeB>
-bool gjk_continuous(const ShapeA &a, const ShapeB &b,
-						const Transform &a_from, const Transform &a_to,
-						const Transform &b_from, const Transform &b_to,
-						Impact_Time *impact_time) {
-	Support_Ex simplex[3];
-	u32 count = 1;
-
-	r32 lambda = 0.0f;
-	Vec2 normal = { 0, 0 };
-
-	Vec2 a_dp = a_to.p - a_from.p;
-	Vec2 b_dp = b_to.p - b_from.p;
-	const Vec2 r = a_dp - b_dp;
-
-	if (vec2_null(r)) return false;
-
-	Transform a_interpolated = a_from;
-	Transform b_interpolated = b_from;
-
-	simplex[0] = support_ex(a, b, -r, a_from, b_from);
-	Vec2 dir = -simplex[0].p;
-	r32 dist2 = vec2_dot(simplex[0].p, simplex[0].p);
-
-	Support_Ex w;
-	while (dist2 > EPSILON_FLOAT_SQ) {
-		if (lambda > 1.0f) return false;
-
-		if (vec2_null(dir)) return false;
-		w = support_ex(a, b, dir, a_interpolated, b_interpolated);
-
-		// v = simplex[count - 1].p
-		r32 vw = vec2_dot(simplex[count - 1].p, w.p);
-
-		if (vw > 0.0f) {
-			r32 vr = vec2_dot(simplex[count - 1].p, r);
-
-			if (fabsf(vr) < EPSILON_FLOAT_SQ) return false;
-
-			lambda = lambda - vw / vr;
-
-			a_interpolated.p		= lerp(a_from.p, a_to.p, lambda);
-			a_interpolated.xform	= lerp(a_from.xform, a_to.xform, lambda);
-			b_interpolated.p		= lerp(b_from.p, b_to.p, lambda);
-			b_interpolated.xform	= lerp(b_from.xform, b_to.xform, lambda);
-
-			normal = simplex[0].p;
-		}
-		simplex[count] = w;
-		count += 1;
-
-		if (next_simplex_ex(simplex, &dir, &count)) {
-			dist2 = 0;
-		} else {
-			dist2 = vec2_dot(simplex[count - 1].p, simplex[count - 1].p);
-		}
-	}
-
-	assert(count == 2 || count == 3);
-
-	impact_time->normal = vec2_normalize_check(normal);
-	if (vec2_dot(impact_time->normal, r) >= 0.0f)
-		return false;
-
-	impact_time->t = lambda;
-
-	if (count == 2) {
-		Support_Ex &s0 = simplex[0];
-		Support_Ex &s1 = simplex[1];
-
-		r32 tx, ty;
-		tx = s1.p.x - s0.p.x;
-		ty = s1.p.y - s0.p.y;
-
-		if (fabsf(tx) > EPSILON_FLOAT) {
-			tx = -s0.p.x / tx;
-		}
-		else {
-			tx = 0;
-		}
-
-		if (fabsf(ty) > EPSILON_FLOAT) {
-			ty = -s0.p.y / ty;
-		}
-		else {
-			ty = 0;
-		}
-
-		impact_time->contact.x = s0.a.x + tx * (s1.a.x - s0.a.x);
-		impact_time->contact.y = s0.a.y + ty * (s1.a.y - s0.a.y);
-		impact_time->contact.x = s0.b.x + tx * (s1.b.x - s0.b.x);
-		impact_time->contact.y = s0.b.y + ty * (s1.b.y - s0.b.y);
-	} else {
-		Vec3 b = barycentric(simplex[0].p, simplex[1].p, simplex[2].p, vec2(0));
-		impact_time->contact = b.x * simplex[0].p + b.y * simplex[1].p + b.z * simplex[2].p;
-	}
+	impact_time->normal = vec2(0);
 
 	return true;
 }
-
-#endif
