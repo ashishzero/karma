@@ -1007,10 +1007,13 @@ void im2d_circle(Vec2 pos, r32 radius, Color4 color, int segments) {
 }
 
 void im2d_pie(Vec3 pos, r32 radius_a, r32 radius_b, r32 theta_a, r32 theta_b, Color4 color, int segments) {
-	assert(theta_a >= 0 && theta_a <= MATH_PI * 2 && theta_b >= 0 && theta_b <= MATH_PI * 2 && theta_b >= theta_a);
+	assert(theta_a >= 0 && theta_a <= MATH_PI * 2 && theta_b >= 0 && theta_b <= MATH_PI * 2);
 
-	int first_index = (int)((0.5f * theta_a * MATH_PI_INVERSE) * (r32)(IM_MAX_CIRCLE_SEGMENTS - 1) + 0.5f);
-	int last_index  = (int)((0.5f * theta_b * MATH_PI_INVERSE) * (r32)(IM_MAX_CIRCLE_SEGMENTS - 1) + 0.5f);
+	int first_index = (int)((0.5f * theta_a * MATH_PI_INVERSE) * (r32)(IM_MAX_CIRCLE_SEGMENTS) + 0.5f);
+	int last_index  = (int)((0.5f * theta_b * MATH_PI_INVERSE) * (r32)(IM_MAX_CIRCLE_SEGMENTS) + 0.5f);
+
+	if (first_index >= last_index)
+		last_index += IM_MAX_CIRCLE_SEGMENTS;
 
 	auto value_count = last_index - first_index;
 	segments         = minimum(segments, value_count);
@@ -1021,6 +1024,7 @@ void im2d_pie(Vec3 pos, r32 radius_a, r32 radius_b, r32 theta_a, r32 theta_b, Co
 	r32 npx, npy;
 	for (int index = 1; index <= segments; ++index) {
 		auto lookup = first_index + (int)((r32)index / (r32)segments * (r32)value_count + 0.5f);
+		lookup = lookup % IM_MAX_CIRCLE_SEGMENTS;
 
 		npx = im_unit_circle_cos[lookup] * radius_a;
 		npy = im_unit_circle_sin[lookup] * radius_b;
@@ -1249,10 +1253,13 @@ void im2d_circle_outline(Vec2 position, r32 radius, Color4 color, r32 thickness,
 }
 
 void im2d_arc_outline(Vec3 position, r32 radius_a, r32 radius_b, r32 theta_a, r32 theta_b, Color4 color, bool closed, r32 thickness, int segments) {
-	assert(theta_a >= 0 && theta_a <= MATH_PI * 2 && theta_b >= 0 && theta_b <= MATH_PI * 2 && theta_b >= theta_a);
+	assert(theta_a >= 0 && theta_a <= MATH_PI * 2 && theta_b >= 0 && theta_b <= MATH_PI * 2);
 
-	int first_index = (int)((0.5f * theta_a * MATH_PI_INVERSE) * (r32)(IM_MAX_CIRCLE_SEGMENTS - 1) + 0.5f);
-	int last_index  = (int)((0.5f * theta_b * MATH_PI_INVERSE) * (r32)(IM_MAX_CIRCLE_SEGMENTS - 1) + 0.5f);
+	int first_index = (int)((0.5f * theta_a * MATH_PI_INVERSE) * (r32)(IM_MAX_CIRCLE_SEGMENTS) + 0.5f);
+	int last_index  = (int)((0.5f * theta_b * MATH_PI_INVERSE) * (r32)(IM_MAX_CIRCLE_SEGMENTS) + 0.5f);
+
+	if (first_index >= last_index)
+		last_index += IM_MAX_CIRCLE_SEGMENTS;
 
 	auto value_count = last_index - first_index;
 	segments         = minimum(segments, value_count);
@@ -1267,6 +1274,7 @@ void im2d_arc_outline(Vec3 position, r32 radius_a, r32 radius_b, r32 theta_a, r3
 	r32 npx, npy;
 	for (int index = 1; index <= segments; ++index) {
 		auto lookup = first_index + (int)((r32)index / (r32)segments * (r32)value_count + 0.5f);
+		lookup = lookup % IM_MAX_CIRCLE_SEGMENTS;
 
 		npx = im_unit_circle_cos[lookup] * radius_a;
 		npy = im_unit_circle_sin[lookup] * radius_b;

@@ -247,7 +247,69 @@ static bool test_fixture_point(Fixture &a, const Transform &ta, Vec2 point) {
 	return COLLISION_DETECTORS[a.shape][b.shape](a, b, ta, tb);
 }
 
+static void render_shape(Fixture &fixture, const Transform &transform, Vec3 color) {
+	const r32 alpha = 0.1f;
+	auto shade = vec4(color, alpha);
+	auto outline = vec4(color, 1);
 
+	Mat3 xform = mat2_to_mat3(transform.xform);
+	xform.rows[0].z = transform.p.x;
+	xform.rows[1].z = transform.p.y;
+
+	im2d_push_matrix(mat3_to_mat4(xform));
+
+	switch (fixture.shape) {
+	case Fixture_Shape_Null: break;
+
+	case Fixture_Shape_Circle: {
+		auto circle = fixture_get_shape(&fixture, Circle);
+		im2d_circle(circle->center, circle->radius, shade);
+		im2d_circle_outline(circle->center, circle->radius, outline);
+	} break;
+
+	case Fixture_Shape_Mm_Rect: {
+		auto mm_rect = fixture_get_shape(&fixture, Mm_Rect);
+		auto dim = mm_rect->max - mm_rect->min;
+		im2d_rect(mm_rect->min, dim, shade);
+		im2d_rect_outline(mm_rect->min, dim, outline);
+	} break;
+
+	case Fixture_Shape_Polygon: {
+		auto polygon = fixture_get_shape(&fixture, Polygon);
+		im2d_polygon(*polygon, shade);
+		im2d_polygon_outline(*polygon, outline);
+	} break;
+
+	case Fixture_Shape_Capsule: {
+		auto capsule = fixture_get_shape(&fixture, Capsule);
+		Vec2 capsule_dir = capsule->b - capsule->a;
+		Vec2 capsule_norm = vec2_normalize(vec2(-capsule_dir.y, capsule_dir.x)) * capsule->radius;
+		
+		Vec2 a, b, c, d;
+		a = capsule->a - capsule_norm;
+		b = capsule->a + capsule_norm;
+		c = capsule->b + capsule_norm;
+		d = capsule->b - capsule_norm;
+
+		r32 theta_a = atan2f(capsule_norm.y, capsule_norm.x) + MATH_PI;
+		r32 theta_b = theta_a + MATH_PI;
+		while (theta_b > 2 * MATH_PI) theta_b -= 2 * MATH_PI;
+
+		im2d_pie(capsule->a, capsule->radius, theta_b, theta_a, shade);
+		im2d_pie(capsule->b, capsule->radius, theta_a, theta_b, shade);
+		im2d_quad(a, b, c, d, shade);
+
+		im2d_arc_outline(capsule->a, capsule->radius, theta_b, theta_a, outline);
+		im2d_arc_outline(capsule->b, capsule->radius, theta_a, theta_b, outline);
+		im2d_line(a, d, outline);
+		im2d_line(b, c, outline);
+	} break;
+
+		invalid_default_case();
+	}
+
+	im2d_pop_matrix();
+}
 
 enum Physics_State {
 	Physics_State_RUNNING,
@@ -761,51 +823,9 @@ int karma_user_zero() {
 			auto &body = ptr->data;
 
 			for (u32 index = 0; index < body.fixture_count; ++index) {
-				Mat3 xform = mat2_to_mat3(body.transform.xform);
-				xform.rows[0].z = body.transform.p.x;
-				xform.rows[1].z = body.transform.p.y;
-
-				im2d_push_matrix(mat3_to_mat4(xform));
-
 				auto f = rigid_body_get_fixture(&body, index);
-				auto color = (body.flags & Rigid_Body_COLLIDING) ? vec4(1, 0, 0) : vec4(0, 1, 1);
-
-				switch (f->shape) {
-				case Fixture_Shape_Null: {
-
-				} break;
-
-				case Fixture_Shape_Circle: {
-					auto circle = fixture_get_shape(f, Circle);
-					im2d_circle_outline(circle->center, circle->radius, color);
-				} break;
-
-				case Fixture_Shape_Polygon: {
-					auto polygon = fixture_get_shape(f, Polygon);
-					im2d_polygon_outline(*polygon, color, 0.02f);
-				} break;
-
-				case Fixture_Shape_Mm_Rect: {
-					auto rect = fixture_get_shape(f, Mm_Rect);
-					im2d_rect_outline(rect->min, rect->max - rect->min, color);
-				} break;
-
-				case Fixture_Shape_Capsule: {
-					auto capsule = fixture_get_shape(f, Capsule);
-					Vec2 capsule_dir = capsule->b - capsule->a;
-					Vec2 capsule_norm = vec2_normalize(vec2(-capsule_dir.y, capsule_dir.x)) * capsule->radius;
-
-					im2d_circle_outline(capsule->a, capsule->radius, color);
-					im2d_circle_outline(capsule->b, capsule->radius, color);
-					im2d_line(capsule->a + capsule_norm, capsule->b + capsule_norm, color);
-					im2d_line(capsule->a - capsule_norm, capsule->b - capsule_norm, color);
-				} break;
-
-					invalid_default_case();
-
-				}
-
-				im2d_pop_matrix();
+				auto color = (body.flags & Rigid_Body_COLLIDING) ? vec3(1, 0, 0) : vec3(0.7f, 0.45f, 0);
+				render_shape(*f, body.transform, color);
 			}
 		}
 
