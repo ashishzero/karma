@@ -247,6 +247,8 @@ static bool test_fixture_point(Fixture &a, const Transform &ta, Vec2 point) {
 	return COLLISION_DETECTORS[a.shape][b.shape](a, b, ta, tb);
 }
 
+
+
 enum Physics_State {
 	Physics_State_RUNNING,
 	Physics_State_PAUSED,
@@ -694,6 +696,8 @@ int karma_user_zero() {
 
 		auto view = orthographic_view(-view_width, view_width, view_height, -view_height);
 
+		im2d_set_stroke_weight(0.02f);
+
 #if 0 
 		auto cursor = system_get_cursor_position();
 		cursor.x /= window_w;
@@ -748,7 +752,7 @@ int karma_user_zero() {
 
 		for (auto &player : scene->by_type.player) {
 			im2d_circle(player.position, player.radius, player.color * player.intensity);
-			im2d_line(player.position, player.position + player.rigid_body->velocity, vec4(0, 1.5f, 0), 0.02f);
+			im2d_line(player.position, player.position + player.rigid_body->velocity, vec4(0, 1.5f, 0));
 		}
 
 		im2d_circle(vec2(0), 0.05f, vec4(1.2f, 1.2f, 1.2f));
@@ -773,7 +777,7 @@ int karma_user_zero() {
 
 				case Fixture_Shape_Circle: {
 					auto circle = fixture_get_shape(f, Circle);
-					im2d_circle_outline(circle->center, circle->radius, color, 0.02f);
+					im2d_circle_outline(circle->center, circle->radius, color);
 				} break;
 
 				case Fixture_Shape_Polygon: {
@@ -783,7 +787,7 @@ int karma_user_zero() {
 
 				case Fixture_Shape_Mm_Rect: {
 					auto rect = fixture_get_shape(f, Mm_Rect);
-					im2d_rect_outline(rect->min, rect->max - rect->min, color, 0.02f);
+					im2d_rect_outline(rect->min, rect->max - rect->min, color);
 				} break;
 
 				case Fixture_Shape_Capsule: {
@@ -791,10 +795,10 @@ int karma_user_zero() {
 					Vec2 capsule_dir = capsule->b - capsule->a;
 					Vec2 capsule_norm = vec2_normalize(vec2(-capsule_dir.y, capsule_dir.x)) * capsule->radius;
 
-					im2d_circle_outline(capsule->a, capsule->radius, color, 0.02f);
-					im2d_circle_outline(capsule->b, capsule->radius, color, 0.02f);
-					im2d_line(capsule->a + capsule_norm, capsule->b + capsule_norm, color, 0.02f);
-					im2d_line(capsule->a - capsule_norm, capsule->b - capsule_norm, color, 0.02f);
+					im2d_circle_outline(capsule->a, capsule->radius, color);
+					im2d_circle_outline(capsule->b, capsule->radius, color);
+					im2d_line(capsule->a + capsule_norm, capsule->b + capsule_norm, color);
+					im2d_line(capsule->a - capsule_norm, capsule->b - capsule_norm, color);
 				} break;
 
 					invalid_default_case();

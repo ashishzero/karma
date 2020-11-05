@@ -106,6 +106,16 @@ static u32              bloom_texture_h;
 static Gfx_Platform *   gfx;
 static u32              shader_lang;
 
+//
+//
+//
+
+r32 im2d_stroke_weight = 1.0f;
+
+//
+//
+//
+
 static String igfx_find_shader(String content, u32 shader_tag, const char *name = 0) {
 	if (name == 0) name = "-unknown-";
 	shader_tag |= shader_lang;
@@ -1069,6 +1079,10 @@ void im2d_cube(Vec3 position, Quat rotation, Vec3 scale, Mm_Rect rect, Color4 co
 
 void im2d_cube(Vec3 position, Quat rotation, Vec3 scale, Color4 color) {
 	im2d_cube(position, rotation, scale, mm_rect(0, 0, 1, 1), color);
+}
+
+void im2d_set_stroke_weight(r32 weight) {
+	im2d_stroke_weight = weight;
 }
 
 void im2d_line(Vec3 a, Vec3 b, Color4 color, r32 thickness) {

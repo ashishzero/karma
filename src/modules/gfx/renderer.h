@@ -8,6 +8,8 @@ static constexpr int IM_MAX_CIRCLE_SEGMENTS     = 512;
 static constexpr int IM_DEFAULT_CIRCLE_SEGMENTS = 48;
 static constexpr int IM_DEFAULT_BEZIER_SEGMENTS = 48;
 
+extern r32 im2d_stroke_weight;
+
 struct Monospaced_Font_Glyph_Range {
 	r32     width, height;
 	Vec2    offset;
@@ -159,41 +161,43 @@ void im2d_cube(Vec3 position, Quat rotation, Vec3 scale,
 void im2d_cube(Vec3 position, Quat rotation, Vec3 scale, Mm_Rect rect, Color4 color);
 void im2d_cube(Vec3 position, Quat rotation, Vec3 scale, Color4 color);
 
-void im2d_line(Vec3 a, Vec3 b, Color4 color, r32 thickness = 1);
-void im2d_line(Vec2 a, Vec2 b, Color4 color, r32 thickness = 1);
+void im2d_set_stroke_weight(r32 weight);
 
-void im2d_bezier_quadratic(Vec3 a, Vec3 b, Vec3 c, Color4 color, r32 thickness = 1, int segments = IM_DEFAULT_BEZIER_SEGMENTS);
-void im2d_bezier_quadratic(Vec2 a, Vec2 b, Vec2 c, Color4 color, r32 thickness = 1, int segments = IM_DEFAULT_BEZIER_SEGMENTS);
+void im2d_line(Vec3 a, Vec3 b, Color4 color, r32 thickness = im2d_stroke_weight);
+void im2d_line(Vec2 a, Vec2 b, Color4 color, r32 thickness = im2d_stroke_weight);
 
-void im2d_bezier_cubic(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Color4 color, r32 thickness = 1, int segments = IM_DEFAULT_BEZIER_SEGMENTS);
-void im2d_bezier_cubic(Vec2 a, Vec2 b, Vec2 c, Vec2 d, Color4 color, r32 thickness = 1, int segments = IM_DEFAULT_BEZIER_SEGMENTS);
+void im2d_bezier_quadratic(Vec3 a, Vec3 b, Vec3 c, Color4 color, r32 thickness = im2d_stroke_weight, int segments = IM_DEFAULT_BEZIER_SEGMENTS);
+void im2d_bezier_quadratic(Vec2 a, Vec2 b, Vec2 c, Color4 color, r32 thickness = im2d_stroke_weight, int segments = IM_DEFAULT_BEZIER_SEGMENTS);
+
+void im2d_bezier_cubic(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Color4 color, r32 thickness = im2d_stroke_weight, int segments = IM_DEFAULT_BEZIER_SEGMENTS);
+void im2d_bezier_cubic(Vec2 a, Vec2 b, Vec2 c, Vec2 d, Color4 color, r32 thickness = im2d_stroke_weight, int segments = IM_DEFAULT_BEZIER_SEGMENTS);
 
 void im2d_polygon(const Polygon &polygon, r32 z, Color4 color);
 void im2d_polygon(const Polygon &polygon, Color4 color);
 
-void im2d_triangle_outline(Vec3 a, Vec3 b, Vec3 c, Color4 color, r32 thickness = 1);
-void im2d_triangle_outline(Vec2 a, Vec2 b, Vec2 c, Color4 color, r32 thickness = 1);
+void im2d_triangle_outline(Vec3 a, Vec3 b, Vec3 c, Color4 color, r32 thickness = im2d_stroke_weight);
+void im2d_triangle_outline(Vec2 a, Vec2 b, Vec2 c, Color4 color, r32 thickness = im2d_stroke_weight);
 
-void im2d_quad_outline(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Color4 color, r32 thickness = 1);
-void im2d_quad_outline(Vec2 a, Vec2 b, Vec2 c, Vec2 d, Color4 color, r32 thickness = 1);
-void im2d_rect_outline(Vec3 pos, Vec2 dim, Color4 color, r32 thickness = 1);
-void im2d_rect_outline(Vec2 pos, Vec2 dim, Color4 color, r32 thickness = 1);
-void im2d_rect_centered_outline(Vec3 pos, Vec2 dim, Color4 color, r32 thickness = 1);
-void im2d_rect_centered_outline(Vec2 pos, Vec2 dim, Color4 color, r32 thickness = 1);
+void im2d_quad_outline(Vec3 a, Vec3 b, Vec3 c, Vec3 d, Color4 color, r32 thickness = im2d_stroke_weight);
+void im2d_quad_outline(Vec2 a, Vec2 b, Vec2 c, Vec2 d, Color4 color, r32 thickness = im2d_stroke_weight);
+void im2d_rect_outline(Vec3 pos, Vec2 dim, Color4 color, r32 thickness = im2d_stroke_weight);
+void im2d_rect_outline(Vec2 pos, Vec2 dim, Color4 color, r32 thickness = im2d_stroke_weight);
+void im2d_rect_centered_outline(Vec3 pos, Vec2 dim, Color4 color, r32 thickness = im2d_stroke_weight);
+void im2d_rect_centered_outline(Vec2 pos, Vec2 dim, Color4 color, r32 thickness = im2d_stroke_weight);
 
-void im2d_ellipse_outline(Vec3 position, r32 radius_a, r32 radius_b, Color4 color, r32 thickness = 1, int segments = IM_DEFAULT_CIRCLE_SEGMENTS);
-void im2d_ellipse_outline(Vec2 position, r32 radius_a, r32 radius_b, Color4 color, r32 thickness = 1, int segments = IM_DEFAULT_CIRCLE_SEGMENTS);
+void im2d_ellipse_outline(Vec3 position, r32 radius_a, r32 radius_b, Color4 color, r32 thickness = im2d_stroke_weight, int segments = IM_DEFAULT_CIRCLE_SEGMENTS);
+void im2d_ellipse_outline(Vec2 position, r32 radius_a, r32 radius_b, Color4 color, r32 thickness = im2d_stroke_weight, int segments = IM_DEFAULT_CIRCLE_SEGMENTS);
 
-void im2d_circle_outline(Vec3 position, r32 radius, Color4 color, r32 thickness = 1, int segments = IM_DEFAULT_CIRCLE_SEGMENTS);
-void im2d_circle_outline(Vec2 position, r32 radius, Color4 color, r32 thickness = 1, int segments = IM_DEFAULT_CIRCLE_SEGMENTS);
+void im2d_circle_outline(Vec3 position, r32 radius, Color4 color, r32 thickness = im2d_stroke_weight, int segments = IM_DEFAULT_CIRCLE_SEGMENTS);
+void im2d_circle_outline(Vec2 position, r32 radius, Color4 color, r32 thickness = im2d_stroke_weight, int segments = IM_DEFAULT_CIRCLE_SEGMENTS);
 
-void im2d_arc_outline(Vec3 position, r32 radius_a, r32 radius_b, r32 theta_a, r32 theta_b, Color4 color, bool closed = false, r32 thickness = 1, int segments = IM_DEFAULT_CIRCLE_SEGMENTS);
-void im2d_arc_outline(Vec2 position, r32 radius_a, r32 radius_b, r32 theta_a, r32 theta_b, Color4 color, bool closed = false, r32 thickness = 1, int segments = IM_DEFAULT_CIRCLE_SEGMENTS);
-void im2d_arc_outline(Vec3 position, r32 radius, r32 theta_a, r32 theta_b, Color4 color, bool closed = false, r32 thickness = 1, int segments = IM_DEFAULT_CIRCLE_SEGMENTS);
-void im2d_arc_outline(Vec2 position, r32 radius, r32 theta_a, r32 theta_b, Color4 color, bool closed = false, r32 thickness = 1, int segments = IM_DEFAULT_CIRCLE_SEGMENTS);
+void im2d_arc_outline(Vec3 position, r32 radius_a, r32 radius_b, r32 theta_a, r32 theta_b, Color4 color, bool closed = false, r32 thickness = im2d_stroke_weight, int segments = IM_DEFAULT_CIRCLE_SEGMENTS);
+void im2d_arc_outline(Vec2 position, r32 radius_a, r32 radius_b, r32 theta_a, r32 theta_b, Color4 color, bool closed = false, r32 thickness = im2d_stroke_weight, int segments = IM_DEFAULT_CIRCLE_SEGMENTS);
+void im2d_arc_outline(Vec3 position, r32 radius, r32 theta_a, r32 theta_b, Color4 color, bool closed = false, r32 thickness = im2d_stroke_weight, int segments = IM_DEFAULT_CIRCLE_SEGMENTS);
+void im2d_arc_outline(Vec2 position, r32 radius, r32 theta_a, r32 theta_b, Color4 color, bool closed = false, r32 thickness = im2d_stroke_weight, int segments = IM_DEFAULT_CIRCLE_SEGMENTS);
 
-void im2d_polygon_outline(const Polygon &polygon, r32 z, Color4 color, r32 thickness = 1);
-void im2d_polygon_outline(const Polygon &polygon, Color4 color, r32 thickness = 1);
+void im2d_polygon_outline(const Polygon &polygon, r32 z, Color4 color, r32 thickness = im2d_stroke_weight);
+void im2d_polygon_outline(const Polygon &polygon, Color4 color, r32 thickness = im2d_stroke_weight);
 
 void im2d_text(Vec3 position, r32 scale, Monospaced_Font_Info &font, const String string, Color4 color);
 void im2d_text(Vec2 position, r32 scale, Monospaced_Font_Info &font, const String string, Color4 color);
