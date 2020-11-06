@@ -648,6 +648,7 @@ int karma_user_zero() {
 				player.color = vec4(1);
 				player.rigid_body->transform.p = player.position;
 				player.rigid_body->transform.xform = mat2_scalar(player.radius, player.radius);
+				player.rigid_body->bounding_box = rigid_body_bounding_box(player.rigid_body);
 			}
 
 			primary_player->color = vec4(0, 1, 1);
@@ -827,6 +828,8 @@ int karma_user_zero() {
 				auto color = (body.flags & Rigid_Body_COLLIDING) ? vec3(1, 0, 0) : vec3(0.7f, 0.45f, 0);
 				render_shape(*f, body.transform, color);
 			}
+
+			im2d_rect_outline(body.bounding_box.min, body.bounding_box.max - body.bounding_box.min, vec4(0.1f, 0.7f, 0.1f, 1));
 		}
 
 		for (auto &m : manifolds) {
@@ -845,11 +848,12 @@ int karma_user_zero() {
 		//if (draw_cursor) {
 		//	im2d_circle(cursor, 0.1f, 2 * vec4(1, 1, 0));
 		//}
-
+#if 0
 		for (auto &n : nearest_points) {
 			//im2d_line(n.a, n.a + n.normal, vec4(1, 0, 1), 0.02f);
 			im2d_line(n.a, n.b, vec4(1, 0, 1), 0.02f);
 		}
+#endif
 
 		im2d_end();
 

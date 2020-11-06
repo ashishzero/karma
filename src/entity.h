@@ -45,6 +45,7 @@ struct Rigid_Body {
 	r32					restitution;
 	u32					fixture_count;
 	Fixture *			fixtures;
+	Mm_Rect				bounding_box;
 	Entity_Id			entity_id;
 };
 

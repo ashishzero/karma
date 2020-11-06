@@ -20,11 +20,26 @@ inline Vec2 vec2_min(Vec2 a, Vec2 b) {
 	return r;
 }
 
+inline Vec2 vec2_max(Vec2 a, Vec2 b) {
+	Vec2 r;
+	r.x = maximum(a.x, b.x);
+	r.y = maximum(a.y, b.y);
+	return r;
+}
+
 inline Vec3 vec3_min(Vec3 a, Vec3 b) {
 	Vec3 r;
 	r.x = minimum(a.x, b.x);
 	r.y = minimum(a.y, b.y);
 	r.z = minimum(a.z, b.z);
+	return r;
+}
+
+inline Vec3 vec3_max(Vec3 a, Vec3 b) {
+	Vec3 r;
+	r.x = maximum(a.x, b.x);
+	r.y = maximum(a.y, b.y);
+	r.z = maximum(a.z, b.z);
 	return r;
 }
 
@@ -34,6 +49,15 @@ inline Vec4 vec4_min(Vec4 a, Vec4 b) {
 	r.y = minimum(a.y, b.y);
 	r.z = minimum(a.z, b.z);
 	r.w = minimum(a.w, b.w);
+	return r;
+}
+
+inline Vec4 vec4_max(Vec4 a, Vec4 b) {
+	Vec4 r;
+	r.x = maximum(a.x, b.x);
+	r.y = maximum(a.y, b.y);
+	r.z = maximum(a.z, b.z);
+	r.w = maximum(a.w, b.w);
 	return r;
 }
 
@@ -851,6 +875,11 @@ void extreme_points_along_direction(Vec2 dir, Vec2 *pt, s32 n, s32 *min_index, s
 void most_seperated_points_on_aabb(Vec2 *pt, s32 n, s32 *min, s32 *max);
 Circle circle_from_distant_points(Vec2 *pt, s32 n);
 r32 min_area_rect(Vec2 *pt, s32 num_pts, Vec2 *center, Vec2 u[2]);
+
+Mm_Rect mm_rect_enclosing_circle(const Circle &cirlce);
+Mm_Rect mm_rect_enclosing_capsule(const Capsule &capsule);
+Mm_Rect mm_rect_enclosing_polygon(const Polygon &polygon);
+Mm_Rect mm_rect_enclosing_quad(Vec2 a, Vec2 b, Vec2 c, Vec2 d);
 
 Mm_Rect transform_mmrect(const Mm_Rect &a, const Mat2 &mat, Vec2 t);
 Mm_Rect transform_mmrect(const Mm_Rect &a, r32 rot, Vec2 t);

@@ -2158,6 +2158,70 @@ r32 min_area_rect(Vec2 *pt, s32 num_pts, Vec2 *center, Vec2 u[2]) {
 	return min_area;
 }
 
+Mm_Rect mm_rect_enclosing_circle(const Circle &circle) {
+	Mm_Rect rect;
+	rect.min = vec2(-circle.radius);
+	rect.max = vec2( circle.radius);
+	rect.min += circle.center;
+	rect.max += circle.center;
+	return rect;
+}
+
+Mm_Rect mm_rect_enclosing_capsule(const Capsule &capsule) {
+	Mm_Rect rect;
+	
+	if (capsule.a.x > capsule.b.x) {
+		rect.min.x = capsule.b.x;
+		rect.max.x = capsule.a.x;
+	} else {
+		rect.min.x = capsule.a.x;
+		rect.max.x = capsule.b.x;
+	}
+
+	if (capsule.a.y > capsule.b.y) {
+		rect.min.y = capsule.b.y;
+		rect.max.y = capsule.a.y;
+	} else {
+		rect.min.y = capsule.a.y;
+		rect.max.y = capsule.b.y;
+	}
+
+	rect.min -= vec2(capsule.radius);
+	rect.max += vec2(capsule.radius);
+
+	return rect;
+}
+
+Mm_Rect mm_rect_enclosing_polygon(const Polygon &polygon) {
+	Mm_Rect rect;
+	rect.min = polygon.vertices[0];
+	rect.max = polygon.vertices[0];
+
+	for (u32 index = 1; index < polygon.vertex_count; ++index) {
+		const Vec2 *p = polygon.vertices + index;
+		rect.min = vec2_min(rect.min, *p);
+		rect.max = vec2_max(rect.max, *p);
+	}
+
+	return rect;
+}
+
+Mm_Rect mm_rect_enclosing_quad(Vec2 a, Vec2 b, Vec2 c, Vec2 d) {
+	Vec2 points[] = { a, b, c, d };
+
+	Mm_Rect rect;
+	rect.min = points[0];
+	rect.max = points[0];
+
+	for (u32 index = 1; index < static_count(points); ++index) {
+		Vec2 *p = points + index;
+		rect.min = vec2_min(rect.min, *p);
+		rect.max = vec2_max(rect.max, *p);
+	}
+
+	return rect;
+}
+
 Mm_Rect transform_mmrect(const Mm_Rect &a, const Mat2 &mat, Vec2 t) {
 	Mm_Rect b;
 	for (s32 i = 0; i < 2; i++) {
@@ -2217,12 +2281,6 @@ bool test_point_inside_circle(Vec2 p, const Circle &c) {
 	return dist2 < c.radius * c.radius;
 }
 
-bool test_mmrect_vs_mmrect(const Mm_Rect &a, const Mm_Rect &b) {
-	if (a.max.x < b.min.x || a.min.x > b.max.x) return false;
-	if (a.max.y < b.min.y || a.min.y > b.max.y) return false;
-	return true;
-}
-
 bool test_point_inside_capsule(Vec2 p, const Capsule &c) {
 	r32 dst2 = point_to_segment_length2(p, c.a, c.b);
 	return dst2 <= c.radius * c.radius;
@@ -2268,6 +2326,12 @@ bool test_point_inside_convex_polygon(Vec2 p, Vec2 *v, s32 n) {
 	// p is inside the polygon if it is left of
 	// the directed edge from v[low] to v[high]
 	return triangle_is_cw(v[low], v[high], p);
+}
+
+bool test_mmrect_vs_mmrect(const Mm_Rect &a, const Mm_Rect &b) {
+	if (a.max.x < b.min.x || a.min.x > b.max.x) return false;
+	if (a.max.y < b.min.y || a.min.y > b.max.y) return false;
+	return true;
 }
 
 bool test_aabb_vs_aabb(const Aabb2d &a, const Aabb2d &b) {
