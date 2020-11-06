@@ -317,6 +317,29 @@ enum Physics_State {
 	Physics_State_RUN_SINGLE_STEP,
 };
 
+static const s32 SIMULATION_SPEED_FACTORS[] = {
+	-8, -7, -6, -5, -4, -3, -2, 1, 2, 3, 4, 5, 6, 7, 8
+};
+static const u32 SIMULATION_SPEED_1X = 7;
+
+struct Simulation_Speed {
+	u32 index;
+	s32 x;
+	r32 factor;
+};
+
+Simulation_Speed simulation_speed(u32 index) {
+	assert(index < static_count(SIMULATION_SPEED_FACTORS));
+	Simulation_Speed speed;
+	speed.index = index;
+	speed.x = SIMULATION_SPEED_FACTORS[speed.index];
+	if (speed.x < 0)
+		speed.factor = -1.0f / (r32)speed.x;
+	else
+		speed.factor = (r32)speed.x;
+	return speed;
+}
+
 int karma_user_zero() {
 	collision_resover_init();
 
@@ -341,26 +364,17 @@ int karma_user_zero() {
 	bool running = true;
 
 	r32 aspect_ratio = framebuffer_w / framebuffer_h;
-	const r32 speed_factor = 1;
+	
+	Simulation_Speed sim_speed = simulation_speed(SIMULATION_SPEED_1X);
 
-	r32 const fixed_dt = 1.0f / 60.0f;
-	r32       dt = fixed_dt * speed_factor;
-	r32       game_dt = fixed_dt * speed_factor;
-	r32       real_dt = fixed_dt;
+	r32 const dt = 1.0f / 60.0f;
+	r32       game_dt = dt * sim_speed.factor;
+	r32       real_dt = dt;
 	r32       game_t = 0.0f;
 	r32       real_t = 0.0f;
-	r32       accumulator_t = fixed_dt;
+	r32       accumulator_t = dt;
 
 	r32 window_w = 0, window_h = 0;
-
-	r32 im_unit_circle_cos[IM_MAX_CIRCLE_SEGMENTS];
-	r32 im_unit_circle_sin[IM_MAX_CIRCLE_SEGMENTS];
-
-	for (int i = 0; i < IM_MAX_CIRCLE_SEGMENTS; ++i) {
-		r32 theta = ((r32)i / (r32)IM_MAX_CIRCLE_SEGMENTS) * MATH_PI * 2;
-		im_unit_circle_cos[i] = cosf(theta);
-		im_unit_circle_sin[i] = sinf(theta);
-	}
 
 	Scene *scene = scene_create();
 
@@ -602,47 +616,27 @@ int karma_user_zero() {
 
 		Dev_TimedBlockBegin(Simulation);
 
-#if 1
 		static r32 movement_force = 20;
 
-		Contact_Manifold manifold;
-		manifold.normal = vec2(0);
+		r32 len = sqrtf(controller.x * controller.x + controller.y * controller.y);
+		Vec2 dir = vec2(0);
+		if (len) {
+			dir.x = controller.x / len;
+			dir.y = controller.y / len;
+		}
 
-		Impact_Time impact_time;
-		impact_time.t = 0;
+		if (len) {
+			primary_player->rigid_body->force += movement_force * dir;
+			//set_bit(primary_player->rigid_body->colliders->flags, Collision_Bit_MOTION);
+		}
 
-		Array<Impact_Time> impacts;
-		impacts.allocator = TEMPORARY_ALLOCATOR;
-
-		Array<Contact_Manifold> manifolds;
-		manifolds.allocator = TEMPORARY_ALLOCATOR;
-
-		Nearest_Points np;
-		np.distance2 = 0;
-
-		Array<Nearest_Points> nearest_points;
-		nearest_points.allocator = TEMPORARY_ALLOCATOR;
-		static int number_of_iterations = 4;
-
-		while (accumulator_t >= fixed_dt) {
+		while (accumulator_t >= dt) {
 			if (physics_state == Physics_State_PAUSED)
 				break;
 			else if (physics_state == Physics_State_RUN_SINGLE_STEP)
 				physics_state = Physics_State_PAUSED;
 
 			Dev_TimedScope(SimulationFrame);
-
-			r32 len = sqrtf(controller.x * controller.x + controller.y * controller.y);
-			Vec2 dir = vec2(0);
-			if (len) {
-				dir.x = controller.x / len;
-				dir.y = controller.y / len;
-			}
-
-			if (len) {
-				primary_player->rigid_body->force = movement_force * dir;
-				//set_bit(primary_player->rigid_body->colliders->flags, Collision_Bit_MOTION);
-			}
 
 			for (auto &player : scene->by_type.player) {
 				player.color = vec4(1);
@@ -653,93 +647,16 @@ int karma_user_zero() {
 
 			primary_player->color = vec4(0, 1, 1);
 
-			// TODO: Do broad phase collision detection
 			for (auto ptr = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, ptr); ptr = iter_next<Rigid_Body>(ptr)) {
 				if (ptr->data.type == Rigid_Body_Type_Dynamic) {
 					ptr->data.velocity += dt * ptr->data.force + vec2(0, -gravity);
 					ptr->data.velocity *= powf(0.5f, ptr->data.drag * dt);
-					ptr->data.force = vec2(0);
 				}
 				clear_bit(ptr->data.flags, Rigid_Body_COLLIDING);
 			}
 
-			//Contact_Manifold manifold;
-
-			for (int iteration = 0; iteration < number_of_iterations; ++iteration) {
-				for (auto a = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, a); a = iter_next<Rigid_Body>(a)) {
-					Rigid_Body &a_body = a->data;
-					for (auto b = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, b); b = iter_next<Rigid_Body>(b)) {
-						Rigid_Body &b_body = b->data;
-
-						if (a == b || (a_body.type == Rigid_Body_Type_Static && b_body.type == Rigid_Body_Type_Static))
-							continue;
-
-						for (u32 b_index = 0; b_index < b_body.fixture_count; ++b_index) {
-							Fixture *b_collider = rigid_body_get_fixture(&b_body, b_index);
-							for (u32 a_index = 0; a_index < a_body.fixture_count; ++a_index) {
-								Fixture *a_collider = rigid_body_get_fixture(&a_body, a_index);
-
-#if 0
-#if 0
-								if (fixture_vs_fixture(b_collider, a_collider, b_body.transform, a_body.transform, &manifold)) {
-#else
-								
-								if (fixture_vs_fixture_continuous(b_collider, a_collider, 
-																  b_body.transform, a_body.transform, 
-																  b_body.velocity * dt, a_body.velocity * dt, 
-																  &impact_time)) {
-#endif
-								
-									//if (vec2_dot(dv, manifold.normal) >= 0.0f) continue;
-
-#if 1
-#if 1
-									array_add(&impacts, impact_time);
-									b_body.flags |= Rigid_Body_COLLIDING;
-									a_body.flags |= Rigid_Body_COLLIDING;
-#else
-									r32 e = minimum(a_body.restitution, b_body.restitution);
-									r32 j = -(1 + e) * vec2_dot(dv, manifold.normal) / (a_body.imass + b_body.imass);
-									j = maximum(j, 0);
-
-									a_body.velocity += j * a_body.imass * manifold.normal;
-									b_body.velocity -= j * b_body.imass * manifold.normal;
-#endif
-
-#else
-									r32 t = manifold.penetration / dt;
-									t = clamp01(t);
-
-									if (b_body.type == Rigid_Body_Type_Dynamic && a_body.type == Rigid_Body_Type_Dynamic) {
-										a_body.velocity += manifold.normal * t;
-										b_body.velocity -= manifold.normal * t;
-									} else if (a_body.type == Rigid_Body_Type_Dynamic) {
-										a_body.velocity += manifold.normal * t;
-									} else {
-										b_body.velocity -= manifold.normal * t;
-									}
-#endif
-									//dv = a_body.velocity - b_body.velocity;
-									//dp = dv * dt;
-									//
-									//array_add(&manifolds, manifold);
-									//
-									//b_body.flags |= Rigid_Body_COLLIDING;
-									//a_body.flags |= Rigid_Body_COLLIDING;
-								}
-#else
-								if (nearest_points_fixture_fixture(b_collider, a_collider, 
-																   b_body.transform, a_body.transform, 
-																   b_body.velocity * dt, a_body.velocity * dt, &np)) {
-									array_add(&nearest_points, np);
-								}
-#endif
-
-							}
-						}
-					}
-				}
-			}
+			// TODO: Do broad phase collision detection and narrow collision detection
+			// TODO: Do collision resolution
 
 			for (auto &player : scene->by_type.player) {
 				player.position += player.rigid_body->velocity * dt;
@@ -748,9 +665,12 @@ int karma_user_zero() {
 			r32 camera_follow_speed = 0.977f;
 			scene->camera.position = lerp(scene->camera.position, primary_player->position, 1.0f - powf(1.0f - camera_follow_speed, dt));
 
-			accumulator_t -= fixed_dt;
+			accumulator_t -= dt;
 		}
-#endif
+
+		for (auto &player : scene->by_type.player) {
+			player.rigid_body->force = vec2(0);
+		}
 
 		ImGui_UpdateFrame(real_dt);
 
@@ -761,7 +681,7 @@ int karma_user_zero() {
 
 		im2d_set_stroke_weight(0.02f);
 
-#if 0 
+		#if 0 
 		auto cursor = system_get_cursor_position();
 		cursor.x /= window_w;
 		cursor.y /= window_h;
@@ -774,36 +694,19 @@ int karma_user_zero() {
 			cursor.x = 0;
 			cursor.y = 0;
 		}
+		#endif
 
-		//Contact_Manifold manifold;
-		Nearest_Points nearest_points;
-
-		Array<Nearest_Points> all_nearest_points;
-		all_nearest_points.allocator = TEMPORARY_ALLOCATOR;
-
-		primary_player->rigid_body->xform = mat3_translation(primary_player->position);
-
-		bool draw_cursor = false;
-
-		for (auto a = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, a); a = iter_next<Rigid_Body>(a)) {
-			Rigid_Body &a_body = a->data;
-			for (u32 a_index = 0; a_index < a_body.fixture_count; ++a_index) {
-				Fixture &fixture = *rigid_body_get_fixture(&a_body, a_index);
-				if (collider_point_nearest_points(fixture, a_body.xform, cursor, 0, &nearest_points)) {
-					draw_cursor = true;
-					//array_add(&manifolds, manifold);
-				}
-				array_add(&all_nearest_points, nearest_points);
-			}
+		if (!ImGui_IsUsingCursor()) {
+			ImGui::GetStyle().Alpha = 0.4f;
+		} else {
+			ImGui::GetStyle().Alpha = 1.0f;
 		}
-
-#endif
 
 		Dev_TimedBlockEnd(Simulation);
 
 		Dev_TimedBlockBegin(Rendering);
 
-		r32 alpha = accumulator_t / fixed_dt; // TODO: Use this
+		r32 alpha = accumulator_t / dt; // TODO: Use this
 
 		gfx_begin_drawing(Framebuffer_Type_HDR, Clear_ALL, vec4(0.05f, 0.05f, 0.05f, 1.0f));
 		gfx_viewport(0, 0, window_w, window_h);
@@ -832,31 +735,7 @@ int karma_user_zero() {
 			im2d_rect_outline(body.bounding_box.min, body.bounding_box.max - body.bounding_box.min, vec4(0.1f, 0.7f, 0.1f, 1));
 		}
 
-		for (auto &m : manifolds) {
-			im2d_line(m.contacts[1], m.contacts[1] + m.penetration * m.normal, vec4(1, 0, 1), 0.02f);
-
-			im2d_circle(m.contacts[0], 0.08f, vec4(1, 0, 1));
-			im2d_circle(m.contacts[1], 0.08f, vec4(1, 0, 1));
-		}
-
-		for (auto &m : impacts) {
-			im2d_line(m.contacts[1], m.contacts[1] + m.normal, vec4(1, 0, 1), 0.02f);
-
-			im2d_circle(m.contacts[0], 0.08f, vec4(1, 0, 1));
-			im2d_circle(m.contacts[1], 0.08f, vec4(1, 0, 1));
-		}
-		//if (draw_cursor) {
-		//	im2d_circle(cursor, 0.1f, 2 * vec4(1, 1, 0));
-		//}
-#if 0
-		for (auto &n : nearest_points) {
-			//im2d_line(n.a, n.a + n.normal, vec4(1, 0, 1), 0.02f);
-			im2d_line(n.a, n.b, vec4(1, 0, 1), 0.02f);
-		}
-#endif
-
 		im2d_end();
-
 
 		gfx_end_drawing();
 
@@ -900,10 +779,15 @@ int karma_user_zero() {
 			}
 		}
 
+		int sim_index = (int)sim_speed.index;
+
 		ImGui::DragFloat("Gravity", &gravity, 0.01f);
-		ImGui::DragInt("Iteration", &number_of_iterations, 1, 1, 10000);
 		ImGui::DragFloat("Movement Force", &movement_force, 0.01f);
 		editor_draw(scene->camera);
+		ImGui::Text("Speed: x%d, Factor: %f", sim_speed.x, sim_speed.factor);
+		if (ImGui::DragInt("Speed Index", &sim_index, 1.0f, 0, static_count(SIMULATION_SPEED_FACTORS))) {
+			sim_speed = simulation_speed((u32)sim_index);
+		}
 		ImGui::End();
 
 		//ImGui::ShowDemoWindow();
@@ -931,10 +815,9 @@ int karma_user_zero() {
 		real_dt = ((1000000.0f * (r32)counts) / (r32)frequency) / 1000000.0f;
 		real_t += real_dt;
 
-		game_dt = real_dt * speed_factor;
-		dt = fixed_dt * speed_factor;
+		game_dt = real_dt * sim_speed.factor;
 
-		accumulator_t += real_dt;
+		accumulator_t += game_dt;
 		accumulator_t = minimum(accumulator_t, 0.2f);
 
 		Dev_TimedFrameEnd(real_dt);
