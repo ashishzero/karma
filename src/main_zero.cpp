@@ -328,7 +328,7 @@ struct Simulation_Speed {
 	r32 factor;
 };
 
-Simulation_Speed simulation_speed(u32 index) {
+static Simulation_Speed simulation_speed(u32 index) {
 	assert(index < static_count(SIMULATION_SPEED_FACTORS));
 	Simulation_Speed speed;
 	speed.index = index;

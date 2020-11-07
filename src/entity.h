@@ -31,6 +31,7 @@ typedef u16 Rigid_Body_Flags;
 
 enum Rigid_Body_Flag_Bit : u16 {
 	Rigid_Body_COLLIDING = bit(0),
+	Rigid_Body_BOUNDING_BOX_COLLIDING = bit(1)
 };
 
 struct Rigid_Body {

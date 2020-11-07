@@ -19,44 +19,55 @@ struct Player_Controller {
 	r32 x, y;
 };
 
-typedef bool(*Collision_Resolver)(Fixture& a, Fixture& b, const Mat3& ta, const Mat3& tb, const Mat2& tdira, const Mat2& tdirb, Vec2 dp, Contact_Manifold* manifold);
+typedef bool(*Collision_Resolver)(Fixture& a, Fixture& b, const Transform& ta, const Transform& tb, Contact_Manifold* manifold);
 static Collision_Resolver COLLISION_RESOLVERS[Fixture_Shape_Count][Fixture_Shape_Count];
 
-typedef bool(*Nearest_Points_Finder)(Fixture& a, Fixture& b, const Mat3& ta, const Mat3& tb, const Mat2& tdira, const Mat2& tdirb, Vec2 dp, Nearest_Points* nearest_points);
+typedef bool(*Continuous_Collision_Resolver)(Fixture& a, Fixture& b, const Transform& ta, const Transform& tb, Vec2 a_dp, Vec2 b_dp, Impact_Time* impact);
+static Continuous_Collision_Resolver CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Count][Fixture_Shape_Count];
+
+typedef bool(*Nearest_Points_Finder)(Fixture& a, Fixture& b, const Transform& ta, const Transform& tb, Vec2 a_dp, Vec2 b_dp, Nearest_Points* nearest_points);
 static Nearest_Points_Finder NEAREST_POINTS_FINDERS[Fixture_Shape_Count][Fixture_Shape_Count];
 
-typedef bool(*Collision_Detector)(Fixture& a, Fixture& b, const Mat3& ta, const Mat3& tb, const Mat2& tdira, const Mat2& tdirb, Vec2 dp);
+typedef bool(*Collision_Detector)(Fixture& a, Fixture& b, const Transform& ta, const Transform& tb);
 static Collision_Detector COLLISION_DETECTORS[Fixture_Shape_Count][Fixture_Shape_Count];
 
-static bool null_collision_resolver(Fixture& a, Fixture& b, const Mat3& ta, const Mat3& tb, const Mat2& tdira, const Mat2& tdirb, Vec2 dp, Contact_Manifold* manifold) {
+// TODO: Do we really need null collider?? REMOVE THIS
+static bool null_collision_resolver(Fixture& a, Fixture& b, const Transform& ta, const Transform& tb, Contact_Manifold* manifold) {
+	return false;
+}
+static bool null_continuous_collision_resolver(Fixture& a, Fixture& b, const Transform& ta, const Transform& tb, Vec2 a_dp, Vec2 b_dp, Impact_Time* impact) {
 	return false;
 }
 
-static bool null_nearest_points_finder(Fixture& a, Fixture& b, const Mat3& ta, const Mat3& tb, const Mat2& tdira, const Mat2& tdirb, Vec2 dp, Nearest_Points* nearest_points) {
+static bool null_nearest_points_finder(Fixture& a, Fixture& b, const Transform& ta, const Transform& tb, Vec2 a_dp, Vec2 b_dp, Nearest_Points* nearest_points) {
 	nearest_points->a = vec2(INFINITY, INFINITY);
 	nearest_points->b = vec2(INFINITY, INFINITY);
-	nearest_points->distance = INFINITY;
+	nearest_points->distance2 = INFINITY;
 	return false;
 }
 
-static bool null_collision_detector(Fixture& a, Fixture& b, const Mat3& ta, const Mat3& tb, const Mat2& tdira, const Mat2& tdirb, Vec2 dp) {
+static bool null_collision_detector(Fixture& a, Fixture& b, const Transform& ta, const Transform& tb) {
 	return false;
 }
 
 template <typename ShapeA, typename ShapeB>
-static bool shapes_collision_resolver(Fixture& a, Fixture& b, const Mat3& ta, const Mat3& tb, const Mat2& tdira, const Mat2& tdirb, Vec2 dp, Contact_Manifold* manifold) {
-	return gjk_epa(*(ShapeA*)a.handle, *(ShapeB*)b.handle, manifold, ta, tb, tdira, tdirb, dp);
+static bool shapes_collision_resolver(Fixture& a, Fixture& b, const Transform& ta, const Transform& tb, Contact_Manifold* manifold) {
+	return gjk_epa(*(ShapeA*)a.handle, *(ShapeB*)b.handle, manifold, ta, tb);
 }
 
 template <typename ShapeA, typename ShapeB>
-static bool shapes_nearest_points_finder(Fixture& a, Fixture& b, const Mat3& ta, const Mat3& tb, const Mat2& tdira, const Mat2& tdirb, Vec2 dp, Nearest_Points* nearest_points) {
-	gjk_nearest_points(*(ShapeA*)a.handle, *(ShapeB*)b.handle, nearest_points, ta, tb, tdira, tdirb, dp);
-	return true;
+static bool shapes_continuous_collision_resolver(Fixture& a, Fixture& b, const Transform& ta, const Transform& tb, Vec2 a_dp, Vec2 b_dp, Impact_Time* impact) {
+	return gjk_continuous(*(ShapeA*)a.handle, *(ShapeB*)b.handle, ta, tb, a_dp, b_dp, impact) == Impact_Type_TOUCHING;
 }
 
 template <typename ShapeA, typename ShapeB>
-static bool shapes_collision_detector(Fixture& a, Fixture& b, const Mat3& ta, const Mat3& tb, const Mat2& tdira, const Mat2& tdirb, Vec2 dp) {
-	return gjk(*(ShapeA*)a.handle, *(ShapeB*)b.handle, ta, tb, tdira, tdirb, dp);
+static bool shapes_nearest_points_finder(Fixture& a, Fixture& b, const Transform& ta, const Transform& tb, Vec2 a_dp, Vec2 b_dp, Nearest_Points* nearest_points) {
+	return gjk_nearest_points(*(ShapeA*)a.handle, *(ShapeB*)b.handle, nearest_points, ta, tb, a_dp, b_dp);
+}
+
+template <typename ShapeA, typename ShapeB>
+static bool shapes_collision_detector(Fixture& a, Fixture& b, const Transform& ta, const Transform& tb) {
+	return gjk(*(ShapeA*)a.handle, *(ShapeB*)b.handle, ta, tb);
 }
 
 static void collision_resover_init() {
@@ -89,6 +100,36 @@ static void collision_resover_init() {
 	COLLISION_RESOLVERS[Fixture_Shape_Polygon][Fixture_Shape_Mm_Rect] = shapes_collision_resolver<Polygon, Mm_Rect>;
 	COLLISION_RESOLVERS[Fixture_Shape_Polygon][Fixture_Shape_Capsule] = shapes_collision_resolver<Polygon, Capsule>;
 	COLLISION_RESOLVERS[Fixture_Shape_Polygon][Fixture_Shape_Polygon] = shapes_collision_resolver<Polygon, Polygon>;
+
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Null][Fixture_Shape_Null] = null_continuous_collision_resolver;
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Null][Fixture_Shape_Circle] = null_continuous_collision_resolver;
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Null][Fixture_Shape_Mm_Rect] = null_continuous_collision_resolver;
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Null][Fixture_Shape_Capsule] = null_continuous_collision_resolver;
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Null][Fixture_Shape_Polygon] = null_continuous_collision_resolver;
+
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Circle][Fixture_Shape_Null] = null_continuous_collision_resolver;
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Circle][Fixture_Shape_Circle] = shapes_continuous_collision_resolver<Circle, Circle>;
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Circle][Fixture_Shape_Mm_Rect] = shapes_continuous_collision_resolver<Circle, Mm_Rect>;
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Circle][Fixture_Shape_Capsule] = shapes_continuous_collision_resolver<Circle, Capsule>;
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Circle][Fixture_Shape_Polygon] = shapes_continuous_collision_resolver<Circle, Polygon>;
+
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Null] = null_continuous_collision_resolver;
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Circle] = shapes_continuous_collision_resolver<Mm_Rect, Circle>;
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Mm_Rect] = shapes_continuous_collision_resolver<Mm_Rect, Mm_Rect>;
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Capsule] = shapes_continuous_collision_resolver<Mm_Rect, Capsule>;
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Polygon] = shapes_continuous_collision_resolver<Mm_Rect, Polygon>;
+
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Capsule][Fixture_Shape_Null] = null_continuous_collision_resolver;
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Capsule][Fixture_Shape_Circle] = shapes_continuous_collision_resolver<Capsule, Circle>;
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Capsule][Fixture_Shape_Mm_Rect] = shapes_continuous_collision_resolver<Capsule, Mm_Rect>;
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Capsule][Fixture_Shape_Capsule] = shapes_continuous_collision_resolver<Capsule, Capsule>;
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Capsule][Fixture_Shape_Polygon] = shapes_continuous_collision_resolver<Capsule, Polygon>;
+
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Polygon][Fixture_Shape_Null] = null_continuous_collision_resolver;
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Polygon][Fixture_Shape_Circle] = shapes_continuous_collision_resolver<Polygon, Circle>;
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Polygon][Fixture_Shape_Mm_Rect] = shapes_continuous_collision_resolver<Polygon, Mm_Rect>;
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Polygon][Fixture_Shape_Capsule] = shapes_continuous_collision_resolver<Polygon, Capsule>;
+	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Polygon][Fixture_Shape_Polygon] = shapes_continuous_collision_resolver<Polygon, Polygon>;
 
 	NEAREST_POINTS_FINDERS[Fixture_Shape_Null][Fixture_Shape_Null] = null_nearest_points_finder;
 	NEAREST_POINTS_FINDERS[Fixture_Shape_Null][Fixture_Shape_Circle] = null_nearest_points_finder;
@@ -151,72 +192,152 @@ static void collision_resover_init() {
 	COLLISION_DETECTORS[Fixture_Shape_Polygon][Fixture_Shape_Polygon] = shapes_collision_detector<Polygon, Polygon>;
 }
 
-static bool collider_vs_collider_dynamic(Fixture& a, Fixture& b, const Mat3& ta, const Mat3& tb, Vec2 dp, Contact_Manifold* manifold) {
-	Mat2 tdira, tdirb;
-	tdira.rows[0] = vec2(ta.m2[0][0], ta.m2[1][0]);
-	tdira.rows[1] = vec2(ta.m2[0][1], ta.m2[1][1]);
-
-	tdirb.rows[0] = vec2(tb.m2[0][0], tb.m2[1][0]);
-	tdirb.rows[1] = vec2(tb.m2[0][1], tb.m2[1][1]);
-	return COLLISION_RESOLVERS[a.shape][b.shape](a, b, ta, tb, tdira, tdirb, dp, manifold);
+static bool fixture_vs_fixture(Fixture* a, Fixture* b, const Transform& ta, const Transform& tb, Contact_Manifold* manifold) {
+	return COLLISION_RESOLVERS[a->shape][b->shape](*a, *b, ta, tb, manifold);
 }
 
-static bool collider_collider_nearest_points(Fixture& a, Fixture& b, const Mat3& ta, const Mat3& tb, Vec2 dp, Nearest_Points* nearest_points) {
-	Mat2 tdira, tdirb;
-	tdira.rows[0] = vec2(ta.m2[0][0], ta.m2[1][0]);
-	tdira.rows[1] = vec2(ta.m2[0][1], ta.m2[1][1]);
-
-	tdirb.rows[0] = vec2(tb.m2[0][0], tb.m2[1][0]);
-	tdirb.rows[1] = vec2(tb.m2[0][1], tb.m2[1][1]);
-	return NEAREST_POINTS_FINDERS[a.shape][b.shape](a, b, ta, tb, tdira, tdirb, dp, nearest_points);
+static bool fixture_vs_fixture_continuous(Fixture* a, Fixture* b, const Transform& ta, const Transform& tb, Vec2 a_dp, Vec2 b_dp, Impact_Time* impact) {
+	return CONTINUOUS_COLLISION_RESOLVERS[a->shape][b->shape](*a, *b, ta, tb, a_dp, b_dp, impact);
 }
 
-static bool test_collider_collider(Fixture& a, Fixture& b, const Mat3& ta, const Mat3& tb, Vec2 dp) {
-	Mat2 tdira, tdirb;
-	tdira.rows[0] = vec2(ta.m2[0][0], ta.m2[1][0]);
-	tdira.rows[1] = vec2(ta.m2[0][1], ta.m2[1][1]);
-
-	tdirb.rows[0] = vec2(tb.m2[0][0], tb.m2[1][0]);
-	tdirb.rows[1] = vec2(tb.m2[0][1], tb.m2[1][1]);
-	return COLLISION_DETECTORS[a.shape][b.shape](a, b, ta, tb, tdira, tdirb, dp);
+static bool nearest_points_fixture_fixture(Fixture* a, Fixture* b, const Transform& ta, const Transform& tb, Vec2 a_dp, Vec2 b_dp, Nearest_Points* nearest_points) {
+	return NEAREST_POINTS_FINDERS[a->shape][b->shape](*a, *b, ta, tb, a_dp, b_dp, nearest_points);
 }
 
-// TODO: Rename collider into fixture
+static bool test_fixture_fixture(Fixture* a, Fixture* b, const Transform& ta, const Transform& tb) {
+	return COLLISION_DETECTORS[a->shape][b->shape](*a, *b, ta, tb);
+}
 
-static bool collider_vs_point_dynamic(Fixture& a, const Mat3& t, Vec2 point, r32 size, Contact_Manifold* manifold) {
+static bool fixture_vs_point(Fixture* a, const Transform& ta, Vec2 point, r32 size, Contact_Manifold* manifold) {
 	Circle circle = { point, size };
 	Fixture b;
 	b.shape = Fixture_Shape_Circle;
 	b.handle = &circle;
 
-	Mat2 tdir;
-	tdir.rows[0] = vec2(t.m2[0][0], t.m2[1][0]);
-	tdir.rows[1] = vec2(t.m2[0][1], t.m2[1][1]);
-	return COLLISION_RESOLVERS[a.shape][b.shape](a, b, t, mat3_identity(), tdir, mat2_identity(), vec2(0), manifold);
+	Transform tb;
+	tb.p = vec2(0);
+	tb.xform = mat2_identity();
+
+	return COLLISION_RESOLVERS[a->shape][b.shape](*a, b, ta, tb, manifold);
 }
 
-static bool collider_point_nearest_points(Fixture& a, const Mat3& t, Vec2 point, r32 size, Nearest_Points* nearest_points) {
+static bool nearest_points_fixture_point(Fixture& a, const Transform& ta, Vec2 dp, Vec2 point, r32 size, Nearest_Points* nearest_points) {
 	Circle circle = { point, size };
 	Fixture b;
 	b.shape = Fixture_Shape_Circle;
 	b.handle = &circle;
 
-	Mat2 tdir;
-	tdir.rows[0] = vec2(t.m2[0][0], t.m2[1][0]);
-	tdir.rows[1] = vec2(t.m2[0][1], t.m2[1][1]);
-	return NEAREST_POINTS_FINDERS[a.shape][b.shape](a, b, t, mat3_identity(), tdir, mat2_identity(), vec2(0), nearest_points);
+	Transform tb;
+	tb.p = vec2(0);
+	tb.xform = mat2_identity();
+
+	return NEAREST_POINTS_FINDERS[a.shape][b.shape](a, b, ta, tb, dp, vec2(0), nearest_points);
 }
 
-static bool test_collider_point(Fixture& a, const Mat3& t, Vec2 point) {
+static bool test_fixture_point(Fixture& a, const Transform& ta, Vec2 point) {
 	Circle circle = { point, 0.0f };
 	Fixture b;
 	b.shape = Fixture_Shape_Circle;
 	b.handle = &circle;
 
-	Mat2 tdir;
-	tdir.rows[0] = vec2(t.m2[0][0], t.m2[1][0]);
-	tdir.rows[1] = vec2(t.m2[0][1], t.m2[1][1]);
-	return COLLISION_DETECTORS[a.shape][b.shape](a, b, t, mat3_identity(), tdir, mat2_identity(), vec2(0));
+	Transform tb;
+	tb.p = vec2(0);
+	tb.xform = mat2_identity();
+
+	return COLLISION_DETECTORS[a.shape][b.shape](a, b, ta, tb);
+}
+
+static void render_shape(Fixture& fixture, const Transform& transform, Vec3 color) {
+	const r32 alpha = 0.1f;
+	auto shade = vec4(color, alpha);
+	auto outline = vec4(color, 1);
+
+	Mat3 xform = mat2_to_mat3(transform.xform);
+	xform.rows[0].z = transform.p.x;
+	xform.rows[1].z = transform.p.y;
+
+	im2d_push_matrix(mat3_to_mat4(xform));
+
+	switch (fixture.shape) {
+	case Fixture_Shape_Null: break;
+
+	case Fixture_Shape_Circle: {
+		auto circle = fixture_get_shape(&fixture, Circle);
+		im2d_circle(circle->center, circle->radius, shade);
+		im2d_circle_outline(circle->center, circle->radius, outline);
+	} break;
+
+	case Fixture_Shape_Mm_Rect: {
+		auto mm_rect = fixture_get_shape(&fixture, Mm_Rect);
+		auto dim = mm_rect->max - mm_rect->min;
+		im2d_rect(mm_rect->min, dim, shade);
+		im2d_rect_outline(mm_rect->min, dim, outline);
+	} break;
+
+	case Fixture_Shape_Polygon: {
+		auto polygon = fixture_get_shape(&fixture, Polygon);
+		im2d_polygon(*polygon, shade);
+		im2d_polygon_outline(*polygon, outline);
+	} break;
+
+	case Fixture_Shape_Capsule: {
+		auto capsule = fixture_get_shape(&fixture, Capsule);
+		Vec2 capsule_dir = capsule->b - capsule->a;
+		Vec2 capsule_norm = vec2_normalize(vec2(-capsule_dir.y, capsule_dir.x)) * capsule->radius;
+
+		Vec2 a, b, c, d;
+		a = capsule->a - capsule_norm;
+		b = capsule->a + capsule_norm;
+		c = capsule->b + capsule_norm;
+		d = capsule->b - capsule_norm;
+
+		r32 theta_a = atan2f(capsule_norm.y, capsule_norm.x) + MATH_PI;
+		r32 theta_b = theta_a + MATH_PI;
+		while (theta_b > 2 * MATH_PI) theta_b -= 2 * MATH_PI;
+
+		im2d_pie(capsule->a, capsule->radius, theta_b, theta_a, shade);
+		im2d_pie(capsule->b, capsule->radius, theta_a, theta_b, shade);
+		im2d_quad(a, b, c, d, shade);
+
+		im2d_arc_outline(capsule->a, capsule->radius, theta_b, theta_a, outline);
+		im2d_arc_outline(capsule->b, capsule->radius, theta_a, theta_b, outline);
+		im2d_line(a, d, outline);
+		im2d_line(b, c, outline);
+	} break;
+
+		invalid_default_case();
+	}
+
+	im2d_pop_matrix();
+}
+
+enum Physics_State {
+	Physics_State_RUNNING,
+	Physics_State_PAUSED,
+	Physics_State_RUN_SINGLE_STEP,
+};
+
+static const s32 SIMULATION_SPEED_FACTORS[] = {
+	-8, -7, -6, -5, -4, -3, -2, 1, 2, 3, 4, 5, 6, 7, 8
+};
+static const u32 SIMULATION_SPEED_1X = 7;
+
+struct Simulation_Speed {
+	u32 index;
+	s32 x;
+	r32 factor;
+};
+
+static Simulation_Speed simulation_speed(u32 index) {
+	assert(index < static_count(SIMULATION_SPEED_FACTORS));
+	Simulation_Speed speed;
+	speed.index = index;
+	speed.x = SIMULATION_SPEED_FACTORS[speed.index];
+	if (speed.x < 0)
+		speed.factor = -1.0f / (r32)speed.x;
+	else
+		speed.factor = (r32)speed.x;
+	return speed;
 }
 
 int karma_user_shankar() {
@@ -227,6 +348,8 @@ int karma_user_shankar() {
 		system_fatal_error("Thread could not be created");
 	}
 #endif
+
+	auto render_api = Render_Backend_DIRECTX11;
 
 	r32    framebuffer_w = 1280;
 	r32    framebuffer_h = 720;
@@ -241,26 +364,17 @@ int karma_user_shankar() {
 	bool running = true;
 
 	r32 aspect_ratio = framebuffer_w / framebuffer_h;
-	const r32 speed_factor = 1;
 
-	r32 const fixed_dt = 1.0f / 60.0f;
-	r32       dt = fixed_dt * speed_factor;
-	r32       game_dt = fixed_dt * speed_factor;
-	r32       real_dt = fixed_dt;
+	Simulation_Speed sim_speed = simulation_speed(SIMULATION_SPEED_1X);
+
+	r32 const dt = 1.0f / 60.0f;
+	r32       game_dt = dt * sim_speed.factor;
+	r32       real_dt = dt;
 	r32       game_t = 0.0f;
 	r32       real_t = 0.0f;
-	r32       accumulator_t = fixed_dt;
+	r32       accumulator_t = dt;
 
 	r32 window_w = 0, window_h = 0;
-
-	r32 im_unit_circle_cos[IM_MAX_CIRCLE_SEGMENTS];
-	r32 im_unit_circle_sin[IM_MAX_CIRCLE_SEGMENTS];
-
-	for (int i = 0; i < IM_MAX_CIRCLE_SEGMENTS; ++i) {
-		r32 theta = ((r32)i / (r32)IM_MAX_CIRCLE_SEGMENTS) * MATH_PI * 2;
-		im_unit_circle_cos[i] = cosf(theta);
-		im_unit_circle_sin[i] = sinf(theta);
-	}
 
 	Scene* scene = scene_create();
 
@@ -269,6 +383,8 @@ int karma_user_shankar() {
 
 	Fixture fixture;
 	Resource_Id id;
+
+	Physics_State physics_state = Physics_State_RUNNING;
 
 	Entity_Info info;
 
@@ -284,12 +400,14 @@ int karma_user_shankar() {
 		info.position = vec2(5);
 		info.rigid_body.type = Rigid_Body_Type_Dynamic;
 		info.rigid_body.fixture_id = id;
-		info.rigid_body.xform = mat3_identity();
+		info.rigid_body.transform.p = info.position;
+		info.rigid_body.transform.xform = mat2_identity();
 
-		scene_create_new_entity(scene, Entity_Type_Player, info);
+		((Player*)scene_create_new_entity(scene, Entity_Type_Player, info));
 
-		info.position = vec2(-5, 8);
-		scene_create_new_entity(scene, Entity_Type_Player, info);
+		info.position = vec2(-3, 7);
+		info.rigid_body.transform.p = info.position;
+		((Player*)scene_create_new_entity(scene, Entity_Type_Player, info));
 
 		Mm_Rect rect;
 		rect.min = vec2(-1);
@@ -299,9 +417,10 @@ int karma_user_shankar() {
 		fixture.handle = &rect;
 		id = scene_create_new_resource_fixture(scene, &fixture, 1);
 
-		info.position = vec2(0, 5);
+		info.position = vec2(2, 5);
+		info.rigid_body.transform.p = info.position;
 		info.rigid_body.fixture_id = id;
-		scene_create_new_entity(scene, Entity_Type_Player, info);
+		((Player*)scene_create_new_entity(scene, Entity_Type_Player, info));
 	}
 
 	{
@@ -321,7 +440,8 @@ int karma_user_shankar() {
 			id = scene_create_new_resource_fixture(scene, &fixture, 1);
 
 			info.position = vec2(-5.6f, 0.4f);
-			info.rigid_body.xform = mat3_translation(info.position);
+			info.rigid_body.transform.xform = mat2_identity();
+			info.rigid_body.transform.p = info.position;
 			info.rigid_body.fixture_id = id;
 			scene_create_new_entity(scene, Entity_Type_Obstacle, info);
 		}
@@ -335,7 +455,8 @@ int karma_user_shankar() {
 			id = scene_create_new_resource_fixture(scene, &fixture, 1);
 
 			info.position = vec2(1);
-			info.rigid_body.xform = mat3_translation(info.position);
+			info.rigid_body.transform.xform = mat2_identity();
+			info.rigid_body.transform.p = info.position;
 			info.rigid_body.fixture_id = id;
 			scene_create_new_entity(scene, Entity_Type_Obstacle, info);
 		}
@@ -349,7 +470,23 @@ int karma_user_shankar() {
 			id = scene_create_new_resource_fixture(scene, &fixture, 1);
 
 			info.position = vec2(6.5f, -0.5f);
-			info.rigid_body.xform = mat3_translation(info.position) * mat3_rotation(to_radians(10));
+			info.rigid_body.transform.xform = mat2_rotation(to_radians(10));
+			info.rigid_body.transform.p = info.position;
+			info.rigid_body.fixture_id = id;
+			scene_create_new_entity(scene, Entity_Type_Obstacle, info);
+		}
+
+		{
+			Mm_Rect rect;
+			rect.min = vec2(-1);
+			rect.max = vec2(1);
+			fixture.shape = Fixture_Shape_Mm_Rect;
+			fixture.handle = &rect;
+			id = scene_create_new_resource_fixture(scene, &fixture, 1);
+
+			info.position = vec2(0, -8);
+			info.rigid_body.transform.xform = mat2_scalar(15, 1);
+			info.rigid_body.transform.p = info.position;
 			info.rigid_body.fixture_id = id;
 			scene_create_new_entity(scene, Entity_Type_Obstacle, info);
 		}
@@ -373,7 +510,8 @@ int karma_user_shankar() {
 			id = scene_create_new_resource_fixture(scene, f, static_count(f));
 
 			info.position = vec2(-1, -5);
-			info.rigid_body.xform = mat3_translation(info.position);
+			info.rigid_body.transform.xform = mat2_identity();
+			info.rigid_body.transform.p = info.position;
 			info.rigid_body.fixture_id = id;
 			scene_create_new_entity(scene, Entity_Type_Obstacle, info);
 		}
@@ -383,6 +521,8 @@ int karma_user_shankar() {
 
 	u64 frequency = system_get_frequency();
 	u64 counter = system_get_counter();
+
+	static r32 gravity = 0.0f;
 
 	while (running) {
 		Dev_TimedFrameBegin();
@@ -412,8 +552,8 @@ int karma_user_shankar() {
 				window_h = (r32)h;
 
 				if (window_w && window_h) {
-					gfx_resize_framebuffer(w, h);
 					aspect_ratio = window_w / window_h;
+					gfx_resize_framebuffer(w, h, lroundf(512 * aspect_ratio), 512);
 					framebuffer_w = window_w;
 					framebuffer_h = window_h;
 				}
@@ -478,107 +618,59 @@ int karma_user_shankar() {
 
 		static r32 movement_force = 20;
 
-		Array<Contact_Manifold> manifolds;
-		manifolds.allocator = TEMPORARY_ALLOCATOR;
+		r32 len = sqrtf(controller.x * controller.x + controller.y * controller.y);
+		Vec2 dir = vec2(0);
+		if (len) {
+			dir.x = controller.x / len;
+			dir.y = controller.y / len;
+		}
 
-		while (accumulator_t >= fixed_dt) {
+		if (len) {
+			primary_player->rigid_body->force += movement_force * dir;
+			//set_bit(primary_player->rigid_body->colliders->flags, Collision_Bit_MOTION);
+		}
+
+		while (accumulator_t >= dt) {
+			if (physics_state == Physics_State_PAUSED)
+				break;
+			else if (physics_state == Physics_State_RUN_SINGLE_STEP)
+				physics_state = Physics_State_PAUSED;
+
 			Dev_TimedScope(SimulationFrame);
-
-			const r32 gravity = 10;
-			const r32 drag = 5;
-
-			r32 len = sqrtf(controller.x * controller.x + controller.y * controller.y);
-			Vec2 dir = vec2(0);
-			if (len) {
-				dir.x = controller.x / len;
-				dir.y = controller.y / len;
-			}
-
-			if (len) {
-				primary_player->rigid_body->force = movement_force * dir;
-				//set_bit(primary_player->rigid_body->colliders->flags, Collision_Bit_MOTION);
-			}
 
 			for (auto& player : scene->by_type.player) {
 				player.color = vec4(1);
-				player.rigid_body->xform = mat3_translation(player.position) * mat3_scalar(player.radius, player.radius);
+				player.rigid_body->transform.p = player.position;
+				player.rigid_body->transform.xform = mat2_scalar(player.radius, player.radius);
+				player.rigid_body->bounding_box = rigid_body_bounding_box(player.rigid_body);
 			}
 
 			primary_player->color = vec4(0, 1, 1);
 
-			// TODO: Do broad phase collision detection
 			for (auto ptr = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, ptr); ptr = iter_next<Rigid_Body>(ptr)) {
-				ptr->data.velocity += dt * ptr->data.force;
-				ptr->data.velocity *= powf(0.5f, drag * dt);
-				ptr->data.force = vec2(0);
-				clear_bit(ptr->data.flags, Rigid_Body_COLLIDING);
-			}
-
-			Vec2 dv, dp;
-			Contact_Manifold manifold;
-
-			for (auto a = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, a); a = iter_next<Rigid_Body>(a)) {
-				Rigid_Body& a_body = a->data;
-				if (a_body.type == Rigid_Body_Type_Static) continue;
-				for (auto b = a->next; iter_continue(&scene->rigid_bodies, b); b = iter_next<Rigid_Body>(b)) {
-					Rigid_Body& b_body = b->data;
-
-					dv = a_body.velocity - b_body.velocity;
-					dp = dv * dt;
-
-					for (u32 b_index = 0; b_index < b_body.fixture_count; ++b_index) {
-						Fixture& b_collider = *rigid_body_get_fixture(&b_body, b_index);
-						for (u32 a_index = 0; a_index < a_body.fixture_count; ++a_index) {
-							Fixture& a_collider = *rigid_body_get_fixture(&a_body, a_index);
-
-							if (collider_vs_collider_dynamic(b_collider, a_collider, b_body.xform, a_body.xform, dp, &manifold)) {
-
-#if 1
-								r32 collision_time = manifold.penetration / dt * sgn(vec2_dot(manifold.normal, dv));
-								Vec2 vn, vt;
-
-								if (b_body.type == Rigid_Body_Type_Dynamic) {
-									r32 a_collision_time = 0.5f * collision_time;
-									r32 b_collision_time = -0.5f * collision_time;
-
-									vn = a_collision_time * manifold.normal;
-									vt = a_body.velocity - vn;
-									a_body.velocity = vt - 0.5f * vn;
-
-									vn = b_collision_time * manifold.normal;
-									vt = b_body.velocity - vn;
-									b_body.velocity = vt - 0.5f * vn;
-
-									dv = a_body.velocity - b_body.velocity;
-									dp = dv * dt;
-								}
-								else {
-									vn = collision_time * manifold.normal;
-									vt = a_body.velocity - vn;
-									a_body.velocity = vt;
-
-									dv = a_body.velocity;
-									dp = dv * dt;
-								}
-#endif
-								array_add(&manifolds, manifold);
-
-								b_body.flags |= Rigid_Body_COLLIDING;
-								a_body.flags |= Rigid_Body_COLLIDING;
-							}
-						}
-					}
+				if (ptr->data.type == Rigid_Body_Type_Dynamic) {
+					ptr->data.velocity += dt * ptr->data.force + vec2(0, -gravity);
+					ptr->data.velocity *= powf(0.5f, ptr->data.drag * dt);
 				}
+				clear_bit(ptr->data.flags, Rigid_Body_COLLIDING);
+				clear_bit(ptr->data.flags, Rigid_Body_BOUNDING_BOX_COLLIDING);
 			}
+
+			// TODO: Do broad phase collision detection and narrow collision detection
+			// TODO: Do collision resolution
 
 			for (auto& player : scene->by_type.player) {
-				player.position += dt * player.rigid_body->velocity;
+				player.position += player.rigid_body->velocity * dt;
 			}
 
 			r32 camera_follow_speed = 0.977f;
 			scene->camera.position = lerp(scene->camera.position, primary_player->position, 1.0f - powf(1.0f - camera_follow_speed, dt));
 
-			accumulator_t -= fixed_dt;
+			accumulator_t -= dt;
+		}
+
+		for (auto& player : scene->by_type.player) {
+			player.rigid_body->force = vec2(0);
 		}
 
 		ImGui_UpdateFrame(real_dt);
@@ -588,51 +680,37 @@ int karma_user_shankar() {
 
 		auto view = orthographic_view(-view_width, view_width, view_height, -view_height);
 
-#if 1 
+		im2d_set_stroke_weight(0.02f);
+
+#if 0 
 		auto cursor = system_get_cursor_position();
 		cursor.x /= window_w;
 		cursor.y /= window_h;
 		cursor = 2.0f * cursor - vec2(1);
 		cursor.x *= view_width;
 		cursor.y *= view_height;
+		cursor += scene->camera.position;
 
 		if (ImGui_IsUsingCursor()) {
 			cursor.x = 0;
 			cursor.y = 0;
 		}
-
-		cursor += scene->camera.position;
-		//Contact_Manifold manifold;
-		Nearest_Points nearest_points;
-
-		Array<Nearest_Points> all_nearest_points;
-		all_nearest_points.allocator = TEMPORARY_ALLOCATOR;
-
-		primary_player->rigid_body->xform = mat3_translation(primary_player->position);
-
-		bool draw_cursor = false;
-
-		for (auto a = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, a); a = iter_next<Rigid_Body>(a)) {
-			Rigid_Body& a_body = a->data;
-			for (u32 a_index = 0; a_index < a_body.fixture_count; ++a_index) {
-				Fixture& fixture = *rigid_body_get_fixture(&a_body, a_index);
-				if (collider_point_nearest_points(fixture, a_body.xform, cursor, 0, &nearest_points)) {
-					draw_cursor = true;
-					//array_add(&manifolds, manifold);
-				}
-				array_add(&all_nearest_points, nearest_points);
-			}
-		}
-
 #endif
+
+		if (!ImGui_IsUsingCursor()) {
+			ImGui::GetStyle().Alpha = 0.4f;
+		}
+		else {
+			ImGui::GetStyle().Alpha = 1.0f;
+		}
 
 		Dev_TimedBlockEnd(Simulation);
 
 		Dev_TimedBlockBegin(Rendering);
 
-		r32 alpha = accumulator_t / fixed_dt; // TODO: Use this
+		r32 alpha = accumulator_t / dt; // TODO: Use this
 
-		gfx_begin_drawing(Framebuffer_Type_HDR, Clear_ALL, vec4(0.0f));
+		gfx_begin_drawing(Framebuffer_Type_HDR, Clear_ALL, vec4(0.05f, 0.05f, 0.05f, 1.0f));
 		gfx_viewport(0, 0, window_w, window_h);
 
 		r32 scale = powf(0.5f, scene->camera.distance);
@@ -642,7 +720,7 @@ int karma_user_shankar() {
 
 		for (auto& player : scene->by_type.player) {
 			im2d_circle(player.position, player.radius, player.color * player.intensity);
-			im2d_line(player.position, player.position + player.rigid_body->velocity, vec4(0, 1.5f, 0), 0.02f);
+			im2d_line(player.position, player.position + player.rigid_body->velocity, vec4(0, 1.5f, 0));
 		}
 
 		im2d_circle(vec2(0), 0.05f, vec4(1.2f, 1.2f, 1.2f));
@@ -651,75 +729,27 @@ int karma_user_shankar() {
 			auto& body = ptr->data;
 
 			for (u32 index = 0; index < body.fixture_count; ++index) {
-				im2d_push_matrix(mat3_to_mat4(body.xform));
-
 				auto f = rigid_body_get_fixture(&body, index);
-				auto color = (body.flags & Rigid_Body_COLLIDING) ? vec4(1, 0, 0) : vec4(0, 1, 1);
+				auto color = (body.flags & Rigid_Body_COLLIDING) ? vec3(1, 0, 0) : vec3(0.7f, 0.45f, 0);
+				render_shape(*f, body.transform, color);
+			}
 
-				switch (f->shape) {
-				case Fixture_Shape_Null: {
-
-				} break;
-
-				case Fixture_Shape_Circle: {
-					auto circle = fixture_get_shape(f, Circle);
-					im2d_circle_outline(circle->center, circle->radius, color, 0.02f);
-				} break;
-
-				case Fixture_Shape_Polygon: {
-					auto polygon = fixture_get_shape(f, Polygon);
-					im2d_polygon_outline(*polygon, color, 0.02f);
-				} break;
-
-				case Fixture_Shape_Mm_Rect: {
-					auto rect = fixture_get_shape(f, Mm_Rect);
-					im2d_rect_outline(rect->min, rect->max - rect->min, color, 0.02f);
-				} break;
-
-				case Fixture_Shape_Capsule: {
-					auto capsule = fixture_get_shape(f, Capsule);
-					Vec2 capsule_dir = capsule->b - capsule->a;
-					Vec2 capsule_norm = vec2_normalize(vec2(-capsule_dir.y, capsule_dir.x)) * capsule->radius;
-
-					im2d_circle_outline(capsule->a, capsule->radius, color, 0.02f);
-					im2d_circle_outline(capsule->b, capsule->radius, color, 0.02f);
-					im2d_line(capsule->a + capsule_norm, capsule->b + capsule_norm, color, 0.02f);
-					im2d_line(capsule->a - capsule_norm, capsule->b - capsule_norm, color, 0.02f);
-				} break;
-
-					invalid_default_case();
-
-				}
-
-				im2d_pop_matrix();
+			if (body.flags & Rigid_Body_BOUNDING_BOX_COLLIDING) {
+				im2d_rect_outline(body.bounding_box.min, body.bounding_box.max - body.bounding_box.min, vec4(0.1f, 0.7f, 0.1f, 1));
+			}
+			else{
+				im2d_rect_outline(body.bounding_box.min, body.bounding_box.max - body.bounding_box.min, vec4(0.7f, 0.1f, 0.1f, 1));
 			}
 		}
 
-		for (auto& m : manifolds) {
-			im2d_line(m.contacts[1], m.contacts[1] + m.penetration * m.normal, vec4(1, 0, 1), 0.02f);
-			im2d_line(m.contacts[1], m.contacts[1] + m.tangent, vec4(1, 0, 1), 0.02f);
-
-			im2d_circle(m.contacts[0], 0.08f, vec4(1, 0, 1));
-			im2d_circle(m.contacts[1], 0.08f, vec4(1, 0, 1));
-		}
-
-		if (draw_cursor) {
-			im2d_circle(cursor, 0.1f, 2 * vec4(1, 1, 0));
-		}
-
-		for (auto& n : all_nearest_points) {
-			im2d_line(n.a, n.b, vec4(1, 0, 1), 0.02f);
-		}
-
 		im2d_end();
-
 
 		gfx_end_drawing();
 
 
 		gfx_apply_bloom(2);
 
-		gfx_begin_drawing(Framebuffer_Type_DEFAULT, Clear_COLOR, vec4(0));
+		gfx_begin_drawing(Framebuffer_Type_DEFAULT, Clear_COLOR, vec4(0.0f));
 		gfx_blit_hdr(0, 0, window_w, window_h);
 		gfx_viewport(0, 0, window_w, window_h);
 
@@ -730,14 +760,45 @@ int karma_user_shankar() {
 		}
 #endif
 
-		editor_entity(primary_player);
+		int new_render_api = (int)render_api;
 
-		ImGui::Begin("Camera", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
+		const char* render_api_strings[] = {
+			"None",
+			"OpenGL",
+			"DirectX 11"
+		};
+
+		//editor_entity(primary_player);
+
+		ImGui::Begin("World", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
+
+		if (physics_state == Physics_State_RUNNING) {
+			if (ImGui::Button("Pause")) {
+				physics_state = Physics_State_PAUSED;
+			}
+		}
+		else if (physics_state == Physics_State_PAUSED) {
+			if (ImGui::Button("Run")) {
+				physics_state = Physics_State_RUNNING;
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Step")) {
+				physics_state = Physics_State_RUN_SINGLE_STEP;
+			}
+		}
+
+		int sim_index = (int)sim_speed.index;
+
+		ImGui::DragFloat("Gravity", &gravity, 0.01f);
 		ImGui::DragFloat("Movement Force", &movement_force, 0.01f);
 		editor_draw(scene->camera);
+		ImGui::Text("Speed: x%d, Factor: %f", sim_speed.x, sim_speed.factor);
+		if (ImGui::DragInt("Speed Index", &sim_index, 1.0f, 0, static_count(SIMULATION_SPEED_FACTORS))) {
+			sim_speed = simulation_speed((u32)sim_index);
+		}
 		ImGui::End();
 
-		ImGui::ShowDemoWindow();
+		//ImGui::ShowDemoWindow();
 
 #if defined(BUILD_IMGUI)
 		{
@@ -762,13 +823,20 @@ int karma_user_shankar() {
 		real_dt = ((1000000.0f * (r32)counts) / (r32)frequency) / 1000000.0f;
 		real_t += real_dt;
 
-		game_dt = real_dt * speed_factor;
-		dt = fixed_dt * speed_factor;
+		game_dt = real_dt * sim_speed.factor;
 
-		accumulator_t += real_dt;
-		accumulator_t = minimum(accumulator_t, 0.3f);
+		accumulator_t += game_dt;
+		accumulator_t = minimum(accumulator_t, 0.2f);
 
 		Dev_TimedFrameEnd(real_dt);
+
+		if ((Render_Backend)new_render_api != render_api) {
+			gfx_destroy_context();
+			render_api = (Render_Backend)new_render_api;
+			gfx_create_context(platform, render_api, Vsync_ADAPTIVE, 2, (u32)framebuffer_w, (u32)framebuffer_h);
+			ImGui_RefreshRenderingContext();
+		}
+
 	}
 
 	ImGui_Shutdown();
