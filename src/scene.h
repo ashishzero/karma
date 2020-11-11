@@ -48,7 +48,7 @@ inline Fixture *rigid_body_get_fixture(Rigid_Body *rigid_body, u32 index) {
 	return rigid_body->fixtures + index;
 }
 
-Mm_Rect rigid_body_bounding_box(Rigid_Body *body);
+Mm_Rect rigid_body_bounding_box(Rigid_Body *body, r32 dt);
 
 struct Rigid_Body_Info {
 	Rigid_Body_Type		type;

@@ -96,7 +96,7 @@ Obstacle *scene_add_obstacle(Scene *scene) {
 	return obstacle;
 }
 
-Mm_Rect rigid_body_bounding_box(Rigid_Body *body) {
+Mm_Rect rigid_body_bounding_box(Rigid_Body *body, r32 dt) {
 	Mm_Rect local_min_rect;
 	local_min_rect.min = vec2( MAX_FLOAT);
 	local_min_rect.max = vec2(-MAX_FLOAT);
@@ -137,6 +137,11 @@ Mm_Rect rigid_body_bounding_box(Rigid_Body *body) {
 		} 
 	}
 
+	Vec2 dp = dt * body->velocity;
+
+	local_min_rect.min = vec2_min(local_min_rect.min, local_min_rect.min + dp);
+	local_min_rect.max = vec2_max(local_min_rect.max, local_min_rect.max + dp);
+
 	Vec2 a, b, c, d;
 	a = local_min_rect.min;
 	b = vec2(local_min_rect.min.x, local_min_rect.max.y);
@@ -158,10 +163,10 @@ Rigid_Body *iscene_create_rigid_body(Scene *scene, Entity_Id entity_id, const Ri
 	rigid_body->flags = 0;
 	rigid_body->drag = 5;
 	rigid_body->imass = (info.type == Rigid_Body_Type_Dynamic) ? 1.0f : 0.0f;
+	rigid_body->prev_velocity = vec2(0);
 	rigid_body->velocity = vec2(0);
 	rigid_body->force = vec2(0);
 	rigid_body->transform = info.transform;
-	rigid_body->stiffness = 1;
 	rigid_body->restitution = 0;
 	rigid_body->entity_id = entity_id;
 
@@ -174,7 +179,7 @@ Rigid_Body *iscene_create_rigid_body(Scene *scene, Entity_Id entity_id, const Ri
 		rigid_body->fixtures		= 0;
 	}
 
-	rigid_body->bounding_box = rigid_body_bounding_box(rigid_body);
+	rigid_body->bounding_box = rigid_body_bounding_box(rigid_body, 0);
 
 	return rigid_body;
 }

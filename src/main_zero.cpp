@@ -22,7 +22,7 @@ struct Player_Controller {
 typedef bool(*Collision_Resolver)(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb, Contact_Manifold *manifold);
 static Collision_Resolver COLLISION_RESOLVERS[Fixture_Shape_Count][Fixture_Shape_Count];
 
-typedef bool(*Continuous_Collision_Resolver)(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb, Vec2 a_dp, Vec2 b_dp, Impact_Time *impact);
+typedef Impact_Type(*Continuous_Collision_Resolver)(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb, Vec2 a_dp, Vec2 b_dp, Impact_Time *impact);
 static Continuous_Collision_Resolver CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Count][Fixture_Shape_Count];
 
 typedef bool(*Nearest_Points_Finder)(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb, Vec2 a_dp, Vec2 b_dp, Nearest_Points *nearest_points);
@@ -35,8 +35,8 @@ static Collision_Detector COLLISION_DETECTORS[Fixture_Shape_Count][Fixture_Shape
 static bool null_collision_resolver(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb, Contact_Manifold *manifold) {
 	return false;
 }
-static bool null_continuous_collision_resolver(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb, Vec2 a_dp, Vec2 b_dp, Impact_Time *impact) {
-	return false;
+static Impact_Type null_continuous_collision_resolver(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb, Vec2 a_dp, Vec2 b_dp, Impact_Time *impact) {
+	return Impact_Type_SEPERATED;
 }
 
 static bool null_nearest_points_finder(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb, Vec2 a_dp, Vec2 b_dp, Nearest_Points *nearest_points) {
@@ -56,8 +56,8 @@ static bool shapes_collision_resolver(Fixture &a, Fixture &b, const Transform &t
 }
 
 template <typename ShapeA, typename ShapeB>
-static bool shapes_continuous_collision_resolver(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb, Vec2 a_dp, Vec2 b_dp, Impact_Time *impact) {
-	return gjk_continuous(*(ShapeA *)a.handle, *(ShapeB *)b.handle, ta, tb, a_dp, b_dp, impact) == Impact_Type_TOUCHING;
+static Impact_Type shapes_continuous_collision_resolver(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb, Vec2 a_dp, Vec2 b_dp, Impact_Time *impact) {
+	return gjk_continuous(*(ShapeA *)a.handle, *(ShapeB *)b.handle, ta, tb, a_dp, b_dp, impact);
 }
 
 template <typename ShapeA, typename ShapeB>
@@ -196,7 +196,7 @@ static bool fixture_vs_fixture(Fixture *a, Fixture *b, const Transform &ta, cons
 	return COLLISION_RESOLVERS[a->shape][b->shape](*a, *b, ta, tb, manifold);
 }
 
-static bool fixture_vs_fixture_continuous(Fixture *a, Fixture *b, const Transform &ta, const Transform &tb, Vec2 a_dp, Vec2 b_dp, Impact_Time *impact) {
+static Impact_Type fixture_vs_fixture_continuous(Fixture *a, Fixture *b, const Transform &ta, const Transform &tb, Vec2 a_dp, Vec2 b_dp, Impact_Time *impact) {
 	return CONTINUOUS_COLLISION_RESOLVERS[a->shape][b->shape](*a, *b, ta, tb, a_dp, b_dp, impact);
 }
 
@@ -530,6 +530,12 @@ int karma_user_zero() {
 		static u32 primary_player_index = 0;
 		auto primary_player = &scene->by_type.player[primary_player_index];
 
+		Array<Contact_Manifold> manifolds;
+		manifolds.allocator = TEMPORARY_ALLOCATOR;
+
+		Array<Impact_Time> impact_times;
+		impact_times.allocator = TEMPORARY_ALLOCATOR;
+
 		Dev_TimedBlockBegin(EventHandling);
 		auto events = system_poll_events();
 		for (s64 event_index = 0; event_index < events.count; ++event_index) {
@@ -642,24 +648,172 @@ int karma_user_zero() {
 				player.color = vec4(1);
 				player.rigid_body->transform.p = player.position;
 				player.rigid_body->transform.xform = mat2_scalar(player.radius, player.radius);
-				player.rigid_body->bounding_box = rigid_body_bounding_box(player.rigid_body);
 			}
 
 			primary_player->color = vec4(0, 1, 1);
 
+//#define DO_CONTINUOUS_COLLISION
+
+			Impact_Time impact_time;
+			impact_time.t = 0;
+
+#ifdef DO_CONTINUOUS_COLLISION
+			for (auto ptr = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, ptr); ptr = iter_next<Rigid_Body>(ptr)) {
+				if (ptr->data.type == Rigid_Body_Type_Dynamic) {
+					ptr->data.prev_velocity = ptr->data.velocity;
+					ptr->data.velocity += dt * ptr->data.force + vec2(0, -gravity);
+					ptr->data.velocity *= powf(0.5f, ptr->data.drag * dt);
+					ptr->data.bounding_box = rigid_body_bounding_box(&ptr->data, dt);
+				}
+
+				clear_bit(ptr->data.flags, Rigid_Body_COLLIDING);
+				clear_bit(ptr->data.flags, Rigid_Body_BOUNDING_BOX_COLLIDING);
+			}
+
+			for (auto a_ptr = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, a_ptr); a_ptr = iter_next<Rigid_Body>(a_ptr)) {
+				auto &a = a_ptr->data;
+
+				const u32 MAX_ITERATIONS = 5;
+
+				r32 total_movement_left = 1;
+				for (u32 iteration = 0; iteration < MAX_ITERATIONS && total_movement_left > 0; ++iteration) {
+					Rigid_Body *pair = nullptr;
+					Impact_Time t_min;
+					t_min.t = 1;
+
+					for (auto b_ptr = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, b_ptr); b_ptr = iter_next<Rigid_Body>(b_ptr)) {
+						auto &b = b_ptr->data;
+
+						if (&a == &b || (a.type == Rigid_Body_Type_Static && b.type == Rigid_Body_Type_Static)) continue;
+
+						if (test_mmrect_vs_mmrect(a.bounding_box, b.bounding_box)) {
+							set_bit(a.flags, Rigid_Body_BOUNDING_BOX_COLLIDING);
+							set_bit(b.flags, Rigid_Body_BOUNDING_BOX_COLLIDING);
+
+							for (u32 a_index = 0; a_index < a.fixture_count; ++a_index) {
+								for (u32 b_index = 0; b_index < b.fixture_count; ++b_index) {
+									Fixture *a_fixture = rigid_body_get_fixture(&a, a_index);
+									Fixture *b_fixture = rigid_body_get_fixture(&b, b_index);
+
+									auto type = fixture_vs_fixture_continuous(a_fixture, b_fixture, a.transform, b.transform, a.velocity * dt, b.velocity * dt, &impact_time);
+									//assert(type != Impact_Type_OVERLAPPED);
+									if (type == Impact_Type_TOUCHING) {
+										if (impact_time.t < t_min.t) {
+											t_min = impact_time;
+											pair = &b;
+										}
+									}
+
+								}
+							}
+						}
+
+					}
+
+					if (pair) {
+						auto &b = *pair;
+
+						set_bit(a.flags, Rigid_Body_COLLIDING);
+						set_bit(b.flags, Rigid_Body_COLLIDING);
+
+						a.prev_velocity += t_min.t * (a.velocity - a.prev_velocity);
+						b.prev_velocity += t_min.t * (b.velocity - b.prev_velocity);
+
+						// Resolve velocity
+						r32 restitution = minimum(a.restitution, b.restitution);
+						r32 j = -(1 + restitution) * vec2_dot(b.prev_velocity - a.prev_velocity, t_min.normal);
+						j /= (a.imass + b.imass);
+						j = maximum(0, j);
+
+						a.velocity = a.prev_velocity - j * a.imass * t_min.normal;
+						b.velocity = b.prev_velocity + j * b.imass * t_min.normal;
+
+						// Position correction
+						//a.transform.p += dt * a.prev_velocity;
+						//b.transform.p += dt * b.prev_velocity;
+
+						array_add(&impact_times, t_min);
+
+						total_movement_left -= t_min.t;
+					} else {
+						break;
+					}
+
+				}
+			}
+#endif
+			// TODO: Do broad phase collision detection and narrow collision detection
+			// TODO: Do collision resolution
+
+			Contact_Manifold manifold;
+			manifold.penetration = 0;
+
+#ifndef DO_CONTINUOUS_COLLISION
 			for (auto ptr = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, ptr); ptr = iter_next<Rigid_Body>(ptr)) {
 				if (ptr->data.type == Rigid_Body_Type_Dynamic) {
 					ptr->data.velocity += dt * ptr->data.force + vec2(0, -gravity);
 					ptr->data.velocity *= powf(0.5f, ptr->data.drag * dt);
+					ptr->data.bounding_box = rigid_body_bounding_box(&ptr->data, dt);
 				}
 				clear_bit(ptr->data.flags, Rigid_Body_COLLIDING);
+				clear_bit(ptr->data.flags, Rigid_Body_BOUNDING_BOX_COLLIDING);
 			}
 
-			// TODO: Do broad phase collision detection and narrow collision detection
-			// TODO: Do collision resolution
+			for (auto a_ptr = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, a_ptr); a_ptr = iter_next<Rigid_Body>(a_ptr)) {
+				for (auto b_ptr = a_ptr->next; iter_continue(&scene->rigid_bodies, b_ptr); b_ptr = iter_next<Rigid_Body>(b_ptr)) {
+
+					auto &a = a_ptr->data;
+					auto &b = b_ptr->data;
+
+					if (a.type == Rigid_Body_Type_Static && b.type == Rigid_Body_Type_Static) {
+						continue;
+					}
+
+					if (test_mmrect_vs_mmrect(a.bounding_box, b.bounding_box)) {
+						set_bit(a.flags, Rigid_Body_BOUNDING_BOX_COLLIDING);
+						set_bit(b.flags, Rigid_Body_BOUNDING_BOX_COLLIDING);
+
+						for (u32 a_index = 0; a_index < a.fixture_count; ++a_index) {
+							for (u32 b_index = 0; b_index < b.fixture_count; ++b_index) {
+								Fixture *a_fixture = rigid_body_get_fixture(&a, a_index);
+								Fixture *b_fixture = rigid_body_get_fixture(&b, b_index);
+
+								if (fixture_vs_fixture(a_fixture, b_fixture, a.transform, b.transform, &manifold)) {
+									set_bit(a.flags, Rigid_Body_COLLIDING);
+									set_bit(b.flags, Rigid_Body_COLLIDING);
+
+									// Resolve velocity
+									r32 restitution = minimum(a.restitution, b.restitution);
+									r32 j = -(1 + restitution) * vec2_dot(b.velocity - a.velocity, manifold.normal);
+									j /= (a.imass + b.imass);
+									j = maximum(0, j);
+
+									a.velocity -= j * a.imass * manifold.normal;
+									b.velocity += j * b.imass * manifold.normal;
+
+									// Fix position
+									Vec2 correction = maximum(manifold.penetration, 0.0f) / (a.imass + b.imass) * manifold.normal;
+									a.transform.p -= a.imass * correction;
+									b.transform.p += b.imass * correction;
+
+									array_add(&manifolds, manifold);
+								}
+							}
+						}
+					}
+
+				}		
+			}
+#endif
 
 			for (auto &player : scene->by_type.player) {
+#ifndef DO_CONTINUOUS_COLLISION
+				player.position = player.rigid_body->transform.p;
 				player.position += player.rigid_body->velocity * dt;
+#else
+				player.position += player.rigid_body->velocity * dt;
+				//player.position += player.rigid_body->prev_velocity * dt;
+#endif
 			}
 
 			r32 camera_follow_speed = 0.977f;
@@ -732,7 +886,23 @@ int karma_user_zero() {
 				render_shape(*f, body.transform, color);
 			}
 
-			im2d_rect_outline(body.bounding_box.min, body.bounding_box.max - body.bounding_box.min, vec4(0.1f, 0.7f, 0.1f, 1));
+			Vec4 color = (body.flags & Rigid_Body_BOUNDING_BOX_COLLIDING) ? vec4(0.7f, 0.1f, 0.1f, 1) : vec4(0.1f, 0.7f, 0.1f, 1);
+
+			im2d_rect_outline(body.bounding_box.min, body.bounding_box.max - body.bounding_box.min, color);
+		}
+
+		for (auto &m : manifolds) {
+			im2d_line(m.contacts[1], m.contacts[1] + m.penetration * m.normal, vec4(1, 0, 1), 0.02f);
+
+			im2d_circle(m.contacts[0], 0.08f, vec4(1, 0, 1));
+			im2d_circle(m.contacts[1], 0.08f, vec4(1, 0, 1));
+		}
+		
+		for (auto &m : impact_times) {
+			im2d_line(m.contacts[1], m.contacts[1] + 0.5f * m.normal, vec4(1, 0, 1), 0.02f);
+
+			im2d_circle(m.contacts[0], 0.08f, vec4(1, 0, 1));
+			im2d_circle(m.contacts[1], 0.08f, vec4(1, 0, 1));
 		}
 
 		im2d_end();
