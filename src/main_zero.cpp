@@ -644,7 +644,7 @@ int karma_user_zero() {
 
 			Dev_TimedScope(SimulationFrame);
 
-//#define DO_CONTINUOUS_COLLISION
+#define DO_CONTINUOUS_COLLISION
 
 			Impact_Time impact_time;
 			impact_time.t = 0;
@@ -676,12 +676,16 @@ int karma_user_zero() {
 				for (u32 iteration = 0; iteration < MAX_ITERATIONS && total_movement_left > 0; ++iteration) {
 					Rigid_Body *pair = nullptr;
 					Impact_Time t_min;
-					t_min.t = 1;
+					t_min.t = total_movement_left;
+
+					Vec2 a_dp = a.velocity * total_movement_left * dt;
 
 					for (auto b_ptr = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, b_ptr); b_ptr = iter_next<Rigid_Body>(b_ptr)) {
 						auto &b = b_ptr->data;
 
 						if (&a == &b || (a.type == Rigid_Body_Type_Static && b.type == Rigid_Body_Type_Static)) continue;
+
+						Vec2 b_dp = b.velocity * total_movement_left * dt;
 
 						if (test_mmrect_vs_mmrect(a.bounding_box, b.bounding_box)) {
 							set_bit(a.flags, Rigid_Body_BOUNDING_BOX_COLLIDING);
@@ -692,7 +696,7 @@ int karma_user_zero() {
 									Fixture *a_fixture = rigid_body_get_fixture(&a, a_index);
 									Fixture *b_fixture = rigid_body_get_fixture(&b, b_index);
 
-									auto type = fixture_vs_fixture_continuous(a_fixture, b_fixture, a.transform, b.transform, a.velocity * dt, b.velocity * dt, &impact_time);
+									auto type = fixture_vs_fixture_continuous(a_fixture, b_fixture, a.transform, b.transform, a_dp, b_dp, &impact_time);
 									//assert(type != Impact_Type_OVERLAPPED);
 									if (type == Impact_Type_TOUCHING) {
 										if (impact_time.t < t_min.t) {
@@ -713,8 +717,8 @@ int karma_user_zero() {
 						set_bit(a.flags, Rigid_Body_COLLIDING);
 						set_bit(b.flags, Rigid_Body_COLLIDING);
 
-						a.velocity *= t_min.t;
-						b.velocity *= t_min.t;
+						a.velocity -= t_min.t * vec2_dot(a.velocity, t_min.normal) * t_min.normal;
+						b.velocity -= t_min.t * vec2_dot(b.velocity, t_min.normal) * t_min.normal;
 
 						// Resolve velocity
 						r32 restitution = minimum(a.restitution, b.restitution);
@@ -725,13 +729,13 @@ int karma_user_zero() {
 						a.velocity = a.velocity - j * a.imass * t_min.normal;
 						b.velocity = b.velocity + j * b.imass * t_min.normal;
 
-						// Position correction
-						//a.transform.p += dt * a.prev_velocity;
-						//b.transform.p += dt * b.prev_velocity;
+						total_movement_left -= t_min.t;
+
+						a.bounding_box = rigid_body_bounding_box(&a, dt * total_movement_left);
+						b.bounding_box = rigid_body_bounding_box(&b, dt * total_movement_left);
 
 						array_add(&impact_times, t_min);
 
-						total_movement_left -= t_min.t;
 					} else {
 						break;
 					}
