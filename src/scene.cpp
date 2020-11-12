@@ -163,7 +163,6 @@ Rigid_Body *iscene_create_rigid_body(Scene *scene, Entity_Id entity_id, const Ri
 	rigid_body->flags = 0;
 	rigid_body->drag = 5;
 	rigid_body->imass = (info.type == Rigid_Body_Type_Dynamic) ? 1.0f : 0.0f;
-	rigid_body->prev_velocity = vec2(0);
 	rigid_body->velocity = vec2(0);
 	rigid_body->force = vec2(0);
 	rigid_body->transform = info.transform;

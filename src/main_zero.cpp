@@ -644,12 +644,6 @@ int karma_user_zero() {
 
 			Dev_TimedScope(SimulationFrame);
 
-			for (auto &player : scene->by_type.player) {
-				player.color = vec4(1);
-				player.rigid_body->transform.p = player.position;
-				player.rigid_body->transform.xform = mat2_scalar(player.radius, player.radius);
-			}
-
 			primary_player->color = vec4(0, 1, 1);
 
 //#define DO_CONTINUOUS_COLLISION
@@ -660,7 +654,6 @@ int karma_user_zero() {
 #ifdef DO_CONTINUOUS_COLLISION
 			for (auto ptr = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, ptr); ptr = iter_next<Rigid_Body>(ptr)) {
 				if (ptr->data.type == Rigid_Body_Type_Dynamic) {
-					ptr->data.prev_velocity = ptr->data.velocity;
 					ptr->data.velocity += dt * ptr->data.force + vec2(0, -gravity);
 					ptr->data.velocity *= powf(0.5f, ptr->data.drag * dt);
 					ptr->data.bounding_box = rigid_body_bounding_box(&ptr->data, dt);
@@ -716,17 +709,17 @@ int karma_user_zero() {
 						set_bit(a.flags, Rigid_Body_COLLIDING);
 						set_bit(b.flags, Rigid_Body_COLLIDING);
 
-						a.prev_velocity += t_min.t * (a.velocity - a.prev_velocity);
-						b.prev_velocity += t_min.t * (b.velocity - b.prev_velocity);
+						a.velocity *= t_min.t;
+						b.velocity *= t_min.t;
 
 						// Resolve velocity
 						r32 restitution = minimum(a.restitution, b.restitution);
-						r32 j = -(1 + restitution) * vec2_dot(b.prev_velocity - a.prev_velocity, t_min.normal);
+						r32 j = -(1 + restitution) * vec2_dot(b.velocity - a.velocity, t_min.normal);
 						j /= (a.imass + b.imass);
 						j = maximum(0, j);
 
-						a.velocity = a.prev_velocity - j * a.imass * t_min.normal;
-						b.velocity = b.prev_velocity + j * b.imass * t_min.normal;
+						a.velocity = a.velocity - j * a.imass * t_min.normal;
+						b.velocity = b.velocity + j * b.imass * t_min.normal;
 
 						// Position correction
 						//a.transform.p += dt * a.prev_velocity;
@@ -749,10 +742,18 @@ int karma_user_zero() {
 			manifold.penetration = 0;
 
 #ifndef DO_CONTINUOUS_COLLISION
+
+			for (auto &player : scene->by_type.player) {
+				player.color = vec4(1);
+				player.rigid_body->transform.p = player.position;
+				player.rigid_body->transform.xform = mat2_scalar(player.radius, player.radius);
+			}
+
 			for (auto ptr = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, ptr); ptr = iter_next<Rigid_Body>(ptr)) {
 				if (ptr->data.type == Rigid_Body_Type_Dynamic) {
 					ptr->data.velocity += dt * ptr->data.force + vec2(0, -gravity);
 					ptr->data.velocity *= powf(0.5f, ptr->data.drag * dt);
+					ptr->data.transform.p += dt * ptr->data.velocity;
 					ptr->data.bounding_box = rigid_body_bounding_box(&ptr->data, dt);
 				}
 				clear_bit(ptr->data.flags, Rigid_Body_COLLIDING);
@@ -809,7 +810,6 @@ int karma_user_zero() {
 			for (auto &player : scene->by_type.player) {
 #ifndef DO_CONTINUOUS_COLLISION
 				player.position = player.rigid_body->transform.p;
-				player.position += player.rigid_body->velocity * dt;
 #else
 				player.position += player.rigid_body->velocity * dt;
 				//player.position += player.rigid_body->prev_velocity * dt;
