@@ -284,8 +284,8 @@ void editor_entity(Entity *entity) {
 			editor_draw(*entity);
 		} break;
 
-		case Entity_Type_Player: {
-			editor_draw(*(Player *)entity);
+		case Entity_Type_Character: {
+			editor_draw(*(Character *)entity);
 		} break;
 
 		case Entity_Type_Obstacle: {

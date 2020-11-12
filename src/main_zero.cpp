@@ -378,17 +378,33 @@ int karma_user_zero() {
 
 	Scene *scene = scene_create();
 
-	scene->camera.id = 0;
-	scene->camera.type = Entity_Type_Camera;
+	Entity_Info info;
+	Camera_Info camera_info;
+	camera_info.target_position = vec2(0);
+	camera_info.target_distance = 0;
+	camera_info.distance = .4f;
+	camera_info.follow_factor = 0.977f;
+	camera_info.zoom_factor = 0.78f;
+	camera_info.behaviour = Camera_Behaviour_ANIMATE;
+	camera_info.lens.kind = Camera_View_Kind::ORTHOGRAPHIC;
+	camera_info.lens.field_of_view = 5.0f;
+	camera_info.lens.near = -1;
+	camera_info.lens.far = 1;
+	info.position = vec2(0);
+	info.data = &camera_info;
+
+	scene_create_new_entity(scene, Entity_Type_Camera, info);
 
 	Fixture fixture;
 	Resource_Id id;
 
 	Physics_State physics_state = Physics_State_RUNNING;
 
-	Entity_Info info;
 	
+	Rigid_Body_Info rigid_body;
+	info.data = &rigid_body;
 	{
+
 		Circle circle;
 		circle.center = vec2(0);
 		circle.radius = 1;
@@ -398,16 +414,16 @@ int karma_user_zero() {
 		id = scene_create_new_resource_fixture(scene, &fixture, 1);
 
 		info.position = vec2(5);
-		info.rigid_body.type = Rigid_Body_Type_Dynamic;
-		info.rigid_body.fixture_id = id;
-		info.rigid_body.transform.p = info.position;
-		info.rigid_body.transform.xform = mat2_identity();
+		rigid_body.type = Rigid_Body_Type_Dynamic;
+		rigid_body.fixture_id = id;
+		rigid_body.transform.p = info.position;
+		rigid_body.transform.xform = mat2_identity();
 
-		((Player *)scene_create_new_entity(scene, Entity_Type_Player, info));
+		scene_create_new_entity(scene, Entity_Type_Character, info);
 
 		info.position = vec2(-3, 7);
-		info.rigid_body.transform.p = info.position;
-		((Player *)scene_create_new_entity(scene, Entity_Type_Player, info));
+		rigid_body.transform.p = info.position;
+		scene_create_new_entity(scene, Entity_Type_Character, info);
 
 		Mm_Rect rect;
 		rect.min = vec2(-1);
@@ -418,13 +434,13 @@ int karma_user_zero() {
 		id = scene_create_new_resource_fixture(scene, &fixture, 1);
 
 		info.position = vec2(2, 5);
-		info.rigid_body.transform.p = info.position;
-		info.rigid_body.fixture_id = id;
-		((Player *)scene_create_new_entity(scene, Entity_Type_Player, info));
+		rigid_body.transform.p = info.position;
+		rigid_body.fixture_id = id;
+		scene_create_new_entity(scene, Entity_Type_Character, info);
 	}
 
 	{
-		info.rigid_body.type = Rigid_Body_Type_Static;
+		rigid_body.type = Rigid_Body_Type_Static;
 
 		{
 			Vec2 points[] = {
@@ -440,9 +456,9 @@ int karma_user_zero() {
 			id = scene_create_new_resource_fixture(scene, &fixture, 1);
 
 			info.position = vec2(-5.6f, 0.4f);
-			info.rigid_body.transform.xform = mat2_identity();
-			info.rigid_body.transform.p = info.position;
-			info.rigid_body.fixture_id = id;
+			rigid_body.transform.xform = mat2_identity();
+			rigid_body.transform.p = info.position;
+			rigid_body.fixture_id = id;
 			scene_create_new_entity(scene, Entity_Type_Obstacle, info);
 		}
 
@@ -455,9 +471,9 @@ int karma_user_zero() {
 			id = scene_create_new_resource_fixture(scene, &fixture, 1);
 
 			info.position = vec2(1);
-			info.rigid_body.transform.xform = mat2_identity();
-			info.rigid_body.transform.p = info.position;
-			info.rigid_body.fixture_id = id;
+			rigid_body.transform.xform = mat2_identity();
+			rigid_body.transform.p = info.position;
+			rigid_body.fixture_id = id;
 			scene_create_new_entity(scene, Entity_Type_Obstacle, info);
 		}
 
@@ -470,9 +486,9 @@ int karma_user_zero() {
 			id = scene_create_new_resource_fixture(scene, &fixture, 1);
 
 			info.position = vec2(6.5f, -0.5f);
-			info.rigid_body.transform.xform = mat2_rotation(to_radians(10));
-			info.rigid_body.transform.p = info.position;
-			info.rigid_body.fixture_id = id;
+			rigid_body.transform.xform = mat2_rotation(to_radians(10));
+			rigid_body.transform.p = info.position;
+			rigid_body.fixture_id = id;
 			scene_create_new_entity(scene, Entity_Type_Obstacle, info);
 		}
 
@@ -485,9 +501,9 @@ int karma_user_zero() {
 			id = scene_create_new_resource_fixture(scene, &fixture, 1);
 
 			info.position = vec2(0, -8);
-			info.rigid_body.transform.xform = mat2_scalar(15, 1);
-			info.rigid_body.transform.p = info.position;
-			info.rigid_body.fixture_id = id;
+			rigid_body.transform.xform = mat2_scalar(15, 1);
+			rigid_body.transform.p = info.position;
+			rigid_body.fixture_id = id;
 			scene_create_new_entity(scene, Entity_Type_Obstacle, info);
 		}
 
@@ -510,9 +526,9 @@ int karma_user_zero() {
 			id = scene_create_new_resource_fixture(scene, f, static_count(f));
 
 			info.position = vec2(-1, -5);
-			info.rigid_body.transform.xform = mat2_identity();
-			info.rigid_body.transform.p = info.position;
-			info.rigid_body.fixture_id = id;
+			rigid_body.transform.xform = mat2_identity();
+			rigid_body.transform.p = info.position;
+			rigid_body.fixture_id = id;
 			scene_create_new_entity(scene, Entity_Type_Obstacle, info);
 		}
 	}
@@ -528,7 +544,7 @@ int karma_user_zero() {
 		Dev_TimedFrameBegin();
 
 		static u32 primary_player_index = 0;
-		auto primary_player = &scene->by_type.player[primary_player_index];
+		auto primary_player = &scene->by_type.character[primary_player_index];
 
 		Array<Contact_Manifold> manifolds;
 		manifolds.allocator = TEMPORARY_ALLOCATOR;
@@ -582,7 +598,7 @@ int karma_user_zero() {
 			}
 
 			if ((event.type & Event_Type_KEY_UP) && event.key.symbol == Key_TAB) {
-				primary_player_index = (primary_player_index + 1) % (u32)(scene->by_type.player.count);
+				primary_player_index = (primary_player_index + 1) % (u32)(scene->by_type.character.count);
 				continue;
 			}
 
@@ -650,7 +666,7 @@ int karma_user_zero() {
 			Contact_Manifold manifold;
 			manifold.penetration = 0;
 
-			for (auto &player : scene->by_type.player) {
+			for (auto &player : scene->by_type.character) {
 				player.color = vec4(1);
 				player.rigid_body->transform.p = player.position;
 				player.rigid_body->transform.xform = mat2_scalar(player.radius, player.radius);
@@ -715,17 +731,23 @@ int karma_user_zero() {
 				}		
 			}
 
-			for (auto &player : scene->by_type.player) {
+			for (auto &player : scene->by_type.character) {
 				player.position = player.rigid_body->transform.p;
 			}
 
-			r32 camera_follow_speed = 0.977f;
-			scene->camera.position = lerp(scene->camera.position, primary_player->position, 1.0f - powf(1.0f - camera_follow_speed, dt));
+			scene->by_type.camera[0].target_position = primary_player->position;
+
+			for (auto &camera : scene->by_type.camera) {
+				if (camera.behaviour == Camera_Behaviour_ANIMATE) {
+					camera.position = lerp(camera.position, camera.target_position, 1.0f - powf(1.0f - camera.follow_factor, dt));
+					camera.distance = lerp(camera.distance, camera.target_distance, 1.0f - powf(1.0f - camera.zoom_factor, dt));
+				}
+			}
 
 			accumulator_t -= dt;
 		}
 
-		for (auto &player : scene->by_type.player) {
+		for (auto &player : scene->by_type.character) {
 			player.rigid_body->force = vec2(0);
 		}
 
@@ -733,10 +755,12 @@ int karma_user_zero() {
 
 		ImGui_UpdateFrame(real_dt);
 
-		r32 view_height = 5.0f;
+		Camera &camera = scene->by_type.camera[0];
+
+		r32 view_height = camera.lens.field_of_view;
 		r32 view_width = aspect_ratio * view_height;
 
-		auto view = orthographic_view(-view_width, view_width, view_height, -view_height);
+		auto view = orthographic_view(-view_width, view_width, view_height, -view_height, camera.lens.near, camera.lens.far);
 
 		im2d_set_stroke_weight(0.02f);
 
@@ -770,12 +794,12 @@ int karma_user_zero() {
 		gfx_begin_drawing(Framebuffer_Type_HDR, Clear_ALL, vec4(0.05f, 0.05f, 0.05f, 1.0f));
 		gfx_viewport(0, 0, window_w, window_h);
 
-		r32 scale = powf(0.5f, scene->camera.distance);
-		Mat4 transform = mat4_scalar(scale, scale, 1.0f) * mat4_translation(vec3(-scene->camera.position, 0.0f));
+		r32 scale = powf(0.5f, camera.distance);
+		Mat4 transform = mat4_scalar(scale, scale, 1.0f) * mat4_translation(vec3(-camera.position, 0.0f));
 
 		im2d_begin(view, transform);
 
-		for (auto &player : scene->by_type.player) {
+		for (auto &player : scene->by_type.character) {
 			im2d_circle(player.position, player.radius, player.color * player.intensity);
 			im2d_line(player.position, player.position + player.rigid_body->velocity, vec4(0, 1.5f, 0));
 		}
@@ -858,7 +882,7 @@ int karma_user_zero() {
 
 		ImGui::DragFloat("Gravity", &gravity, 0.01f);
 		ImGui::DragFloat("Movement Force", &movement_force, 0.01f);
-		editor_draw(scene->camera);
+		editor_draw(camera);
 		ImGui::Text("Speed: x%d, Factor: %f", sim_speed.x, sim_speed.factor);
 		if (ImGui::DragInt("Speed Index", &sim_index, 1.0f, 0, static_count(SIMULATION_SPEED_FACTORS))) {
 			sim_speed = simulation_speed((u32)sim_index);

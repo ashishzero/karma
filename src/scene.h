@@ -14,13 +14,21 @@ struct Resource_Fixture {
 
 using Rigid_Body_List = Circular_Linked_List<Rigid_Body>;
 
+struct Entity_Ref {
+	Entity_Id	id;
+	Entity_Type type;
+	u32			index;
+};
+
 struct Entity_By_Type {
-	Array<Player>		player;
+	Array<Camera>		camera;
+	Array<Character>	character;
 	Array<Obstacle>		obstacle;
 };
 
 struct Scene {
-	Camera			camera;
+	Array<Entity_Ref> entity;
+
 	Entity_By_Type	by_type;
 	Rigid_Body_List rigid_bodies;
 
@@ -30,9 +38,6 @@ struct Scene {
 	Random_Series	id_series;
 };
 
-
-struct Scene;
-
 Scene *scene_create();
 void scene_destroy(Scene *scene);
 
@@ -40,7 +45,7 @@ Resource_Fixture *scene_find_resource_fixture(Scene *scene, Resource_Id id);
 Resource_Id scene_create_new_resource_fixture(Scene *scene, Fixture *fixtures, u32 fixture_count);
 bool scene_delete_resource_fixture(Scene *scene, Resource_Id id);
 
-Player *scene_add_player(Scene *scene);
+Character *scene_add_character(Scene *scene);
 Obstacle *scene_add_obstacle(Scene *scene);
 
 inline Fixture *rigid_body_get_fixture(Rigid_Body *rigid_body, u32 index) {
@@ -50,6 +55,17 @@ inline Fixture *rigid_body_get_fixture(Rigid_Body *rigid_body, u32 index) {
 
 Mm_Rect rigid_body_bounding_box(Rigid_Body *body, r32 dt);
 
+struct Camera_Info {
+	r32					distance;
+	Vec2				target_position;
+	r32					target_distance;
+	r32					follow_factor;
+	r32					zoom_factor;
+	Camera_Behaviour	behaviour;
+
+	Camera_Lens			lens;
+};
+
 struct Rigid_Body_Info {
 	Rigid_Body_Type		type;
 	Resource_Id			fixture_id;
@@ -58,7 +74,7 @@ struct Rigid_Body_Info {
 
 struct Entity_Info {
 	Vec2			position;
-	Rigid_Body_Info rigid_body;
+	void *			data;
 };
 
 Entity *scene_create_new_entity(Scene *scene, Entity_Type type, const Entity_Info &info);

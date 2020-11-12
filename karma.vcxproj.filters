@@ -38,7 +38,6 @@
     <ClCompile Include="src\modules\core\stb.cpp" />
     <ClCompile Include="src\scene.cpp" />
     <ClCompile Include="src\modules\core\null\gfx_null.cpp" />
-    <ClCompile Include="src\main_shankar.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\modules\core\directx\dx_error.h" />

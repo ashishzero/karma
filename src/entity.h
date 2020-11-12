@@ -1,6 +1,7 @@
 #pragma once
 
 #include "modules/core/lin_maths.h"
+#include "modules/core/gfx_types.h"
 #include "modules/core/reflection.h"
 
 typedef u64 Entity_Id;
@@ -52,7 +53,7 @@ struct Rigid_Body {
 enum Entity_Type {
 	Entity_Type_Null,
 	Entity_Type_Camera,
-	Entity_Type_Player,
+	Entity_Type_Character,
 	Entity_Type_Obstacle,
 
 	Entity_Type_Count
@@ -64,11 +65,30 @@ struct Entity {
 										Vec2 position;
 };
 
-struct Camera : Entity {
-	r32 distance;
+enum Camera_Behaviour {
+	Camera_Behaviour_STILL,
+	Camera_Behaviour_ANIMATE
 };
 
-struct Player : public Entity {
+struct Camera_Lens {
+	Camera_View_Kind		kind;
+	r32						field_of_view;
+	r32						near;
+	r32						far;
+};
+
+struct Camera : public Entity {
+	r32						distance;
+	Vec2					target_position;
+	r32						target_distance;
+	r32						follow_factor;
+	r32						zoom_factor;
+	Camera_Behaviour		behaviour;
+
+	Camera_Lens				lens;
+};
+
+struct Character : public Entity {
 	attribute(min:0, max:5)				r32 radius;
 	attribute(color)					Vec4 color;
 										r32 intensity;

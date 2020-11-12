@@ -7,9 +7,6 @@
 Scene *scene_create() {
 	Scene *scene = new Scene;
 	
-	scene->camera.position = vec2(0);
-	scene->camera.distance = 0.0f;
-
 	circular_linked_list_init(&scene->rigid_bodies, context.allocator);
 
 	scene->pool_allocator = context.allocator;
@@ -84,10 +81,16 @@ bool scene_delete_resource_fixture(Scene *scene, Resource_Id id) {
 	return false;
 }
 
-Player *scene_add_player(Scene *scene) {
-	Player *player = array_add(&scene->by_type.player);
-	player->type = Entity_Type_Player;
-	return player;
+Camera *scene_add_camera(Scene *scene) {
+	Camera *camera = array_add(&scene->by_type.camera);
+	camera->type = Entity_Type_Camera;
+	return camera;
+}
+
+Character *scene_add_character(Scene *scene) {
+	Character *character = array_add(&scene->by_type.character);
+	character->type = Entity_Type_Character;
+	return character;
 }
 
 Obstacle *scene_add_obstacle(Scene *scene) {
@@ -156,21 +159,21 @@ Mm_Rect rigid_body_bounding_box(Rigid_Body *body, r32 dt) {
 	return mm_rect_enclosing_quad(a, b, c, d);
 }
 
-Rigid_Body *iscene_create_rigid_body(Scene *scene, Entity_Id entity_id, const Rigid_Body_Info &info) {
+Rigid_Body *iscene_create_rigid_body(Scene *scene, Entity_Id entity_id, const Rigid_Body_Info *info) {
 	auto node = circular_linked_list_add(&scene->rigid_bodies);
 	Rigid_Body *rigid_body = &node->data;
-	rigid_body->type = info.type;
+	rigid_body->type = info->type;
 	rigid_body->flags = 0;
 	rigid_body->drag = 5;
-	rigid_body->imass = (info.type == Rigid_Body_Type_Dynamic) ? 1.0f : 0.0f;
+	rigid_body->imass = (info->type == Rigid_Body_Type_Dynamic) ? 1.0f : 0.0f;
 	rigid_body->velocity = vec2(0);
 	rigid_body->force = vec2(0);
-	rigid_body->transform = info.transform;
+	rigid_body->transform = info->transform;
 	rigid_body->restitution = 0;
 	rigid_body->entity_id = entity_id;
 
-	if (info.fixture_id) {
-		Resource_Fixture *resource  = scene_find_resource_fixture(scene, info.fixture_id);
+	if (info->fixture_id) {
+		Resource_Fixture *resource  = scene_find_resource_fixture(scene, info->fixture_id);
 		rigid_body->fixtures		= resource->fixtures;
 		rigid_body->fixture_count	= resource->fixture_count;
 	} else {
@@ -194,19 +197,32 @@ Entity *scene_create_new_entity(Scene *scene, Entity_Type type, const Entity_Inf
 	Entity_Id id = iscene_generate_unique_id(scene);
 
 	switch (type) {
-		case Entity_Type_Player: {
-			auto player = (Player *)scene_add_player(scene);
+		case Entity_Type_Camera: {
+			auto camera = (Camera *)scene_add_camera(scene);
+			auto camera_info = (Camera_Info *)info.data;
+			camera->distance = camera_info->distance;
+			camera->target_position = camera_info->target_position;
+			camera->target_distance = camera_info->target_distance;
+			camera->follow_factor = camera_info->follow_factor;
+			camera->zoom_factor = camera_info->zoom_factor;
+			camera->behaviour = camera_info->behaviour;
+			camera->lens = camera_info->lens;
+			entity = camera;
+		} break;
+
+		case Entity_Type_Character: {
+			auto player = (Character *)scene_add_character(scene);
 			player->radius = 1;
 			player->color = vec4(1);
 			player->intensity = 1;
-			player->rigid_body = iscene_create_rigid_body(scene, id, info.rigid_body);
+			player->rigid_body = iscene_create_rigid_body(scene, id, (Rigid_Body_Info *)info.data);
 			entity = player;
 		} break;
 
 		case Entity_Type_Obstacle: {
 			auto obstacle = (Obstacle *)scene_add_obstacle(scene);
 			obstacle->color = vec4(1);
-			obstacle->rigid_body = iscene_create_rigid_body(scene, id, info.rigid_body);
+			obstacle->rigid_body = iscene_create_rigid_body(scene, id, (Rigid_Body_Info *)info.data);
 			entity = obstacle;
 		} break;
 	}
