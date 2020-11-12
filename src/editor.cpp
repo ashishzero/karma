@@ -284,6 +284,10 @@ void editor_entity(Entity *entity) {
 			editor_draw(*entity);
 		} break;
 
+		case Entity_Type_Camera: {
+			editor_draw(*(Camera *)entity);
+		} break;
+
 		case Entity_Type_Character: {
 			editor_draw(*(Character *)entity);
 		} break;

@@ -81,19 +81,19 @@ bool scene_delete_resource_fixture(Scene *scene, Resource_Id id) {
 	return false;
 }
 
-Camera *scene_add_camera(Scene *scene) {
+Camera *iscene_add_camera(Scene *scene) {
 	Camera *camera = array_add(&scene->by_type.camera);
 	camera->type = Entity_Type_Camera;
 	return camera;
 }
 
-Character *scene_add_character(Scene *scene) {
+Character *iscene_add_character(Scene *scene) {
 	Character *character = array_add(&scene->by_type.character);
 	character->type = Entity_Type_Character;
 	return character;
 }
 
-Obstacle *scene_add_obstacle(Scene *scene) {
+Obstacle *iscene_add_obstacle(Scene *scene) {
 	Obstacle *obstacle = array_add(&scene->by_type.obstacle);
 	obstacle->type = Entity_Type_Obstacle;
 	return obstacle;
@@ -195,10 +195,12 @@ Entity *scene_create_new_entity(Scene *scene, Entity_Type type, const Entity_Inf
 	Entity *entity = nullptr;
 
 	Entity_Id id = iscene_generate_unique_id(scene);
+	u32 index;
 
 	switch (type) {
 		case Entity_Type_Camera: {
-			auto camera = (Camera *)scene_add_camera(scene);
+			index = (u32)scene->by_type.camera.count;
+			auto camera = (Camera *)iscene_add_camera(scene);
 			auto camera_info = (Camera_Info *)info.data;
 			camera->distance = camera_info->distance;
 			camera->target_position = camera_info->target_position;
@@ -211,7 +213,8 @@ Entity *scene_create_new_entity(Scene *scene, Entity_Type type, const Entity_Inf
 		} break;
 
 		case Entity_Type_Character: {
-			auto player = (Character *)scene_add_character(scene);
+			index = (u32)scene->by_type.character.count;
+			auto player = (Character *)iscene_add_character(scene);
 			player->radius = 1;
 			player->color = vec4(1);
 			player->intensity = 1;
@@ -220,7 +223,8 @@ Entity *scene_create_new_entity(Scene *scene, Entity_Type type, const Entity_Inf
 		} break;
 
 		case Entity_Type_Obstacle: {
-			auto obstacle = (Obstacle *)scene_add_obstacle(scene);
+			index = (u32)scene->by_type.obstacle.count;
+			auto obstacle = (Obstacle *)iscene_add_obstacle(scene);
 			obstacle->color = vec4(1);
 			obstacle->rigid_body = iscene_create_rigid_body(scene, id, (Rigid_Body_Info *)info.data);
 			entity = obstacle;
@@ -229,6 +233,12 @@ Entity *scene_create_new_entity(Scene *scene, Entity_Type type, const Entity_Inf
 
 	entity->type = type;
 	entity->position = info.position;
+
+	auto ref = array_add(&scene->entity);
+	ref->id = entity->id;
+	ref->type = entity->type;
+	ref->index = index;
+
 	return entity;
 }
 

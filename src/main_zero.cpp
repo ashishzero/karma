@@ -760,7 +760,13 @@ int karma_user_zero() {
 		r32 view_height = camera.lens.field_of_view;
 		r32 view_width = aspect_ratio * view_height;
 
-		auto view = orthographic_view(-view_width, view_width, view_height, -view_height, camera.lens.near, camera.lens.far);
+		Camera_View view;
+
+		if (camera.lens.kind == Camera_View_Kind::ORTHOGRAPHIC) {
+			view = orthographic_view(-view_width, view_width, view_height, -view_height, camera.lens.near, camera.lens.far);
+		} else {
+			view = perspective_view(to_radians(camera.lens.field_of_view), aspect_ratio, camera.lens.near, camera.lens.far);
+		}
 
 		im2d_set_stroke_weight(0.02f);
 
@@ -795,7 +801,13 @@ int karma_user_zero() {
 		gfx_viewport(0, 0, window_w, window_h);
 
 		r32 scale = powf(0.5f, camera.distance);
-		Mat4 transform = mat4_scalar(scale, scale, 1.0f) * mat4_translation(vec3(-camera.position, 0.0f));
+
+		Mat4 transform;
+		if (camera.lens.kind == Camera_View_Kind::ORTHOGRAPHIC) {
+			transform = mat4_scalar(scale, scale, 1.0f) * mat4_translation(vec3(-camera.position, 0.0f));
+		} else {
+			transform = mat4_translation(vec3(-camera.position, -camera.distance));
+		}
 
 		im2d_begin(view, transform);
 
@@ -860,8 +872,9 @@ int karma_user_zero() {
 			"DirectX 11"
 		};
 
-		//editor_entity(primary_player);
-		
+#if 1
+		editor_entity(&camera);
+#else	
 		ImGui::Begin("World", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
 		
 		if (physics_state == Physics_State_RUNNING) {
@@ -888,6 +901,7 @@ int karma_user_zero() {
 			sim_speed = simulation_speed((u32)sim_index);
 		}
 		ImGui::End();
+#endif
 
 		//ImGui::ShowDemoWindow();
 

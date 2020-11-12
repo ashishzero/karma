@@ -45,9 +45,6 @@ Resource_Fixture *scene_find_resource_fixture(Scene *scene, Resource_Id id);
 Resource_Id scene_create_new_resource_fixture(Scene *scene, Fixture *fixtures, u32 fixture_count);
 bool scene_delete_resource_fixture(Scene *scene, Resource_Id id);
 
-Character *scene_add_character(Scene *scene);
-Obstacle *scene_add_obstacle(Scene *scene);
-
 inline Fixture *rigid_body_get_fixture(Rigid_Body *rigid_body, u32 index) {
 	assert(index < rigid_body->fixture_count);
 	return rigid_body->fixtures + index;
