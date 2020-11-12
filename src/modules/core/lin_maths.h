@@ -1063,7 +1063,7 @@ bool gjk_nearest_points(const ShapeA &sa, const ShapeB &sb, Nearest_Points *near
 	r32 min_dist = MAX_FLOAT;
 
 	while (min_dist - dist > EPSILON_FLOAT_SQ) {
-		if (vec2_null(d)) return false;
+		if (vec2_null(d)) break;
 
 		c = support_ex(sa, sb, -d, args...);
 

@@ -644,112 +644,11 @@ int karma_user_zero() {
 
 			Dev_TimedScope(SimulationFrame);
 
-#define DO_CONTINUOUS_COLLISION
-
-			Impact_Time impact_time;
-			impact_time.t = 0;
-
-#ifdef DO_CONTINUOUS_COLLISION
-			for (auto &player : scene->by_type.player) {
-				player.color = vec4(1);
-				player.rigid_body->transform.p = player.position;
-				player.rigid_body->transform.xform = mat2_scalar(player.radius, player.radius);
-			}
-
-			for (auto ptr = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, ptr); ptr = iter_next<Rigid_Body>(ptr)) {
-				if (ptr->data.type == Rigid_Body_Type_Dynamic) {
-					ptr->data.velocity += dt * ptr->data.force + vec2(0, -gravity);
-					ptr->data.velocity *= powf(0.5f, ptr->data.drag * dt);
-					ptr->data.bounding_box = rigid_body_bounding_box(&ptr->data, dt);
-				}
-
-				clear_bit(ptr->data.flags, Rigid_Body_COLLIDING);
-				clear_bit(ptr->data.flags, Rigid_Body_BOUNDING_BOX_COLLIDING);
-			}
-
-			for (auto a_ptr = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, a_ptr); a_ptr = iter_next<Rigid_Body>(a_ptr)) {
-				auto &a = a_ptr->data;
-
-				const u32 MAX_ITERATIONS = 5;
-
-				r32 total_movement_left = 1;
-				for (u32 iteration = 0; iteration < MAX_ITERATIONS && total_movement_left > 0; ++iteration) {
-					Rigid_Body *pair = nullptr;
-					Impact_Time t_min;
-					t_min.t = total_movement_left;
-
-					Vec2 a_dp = a.velocity * total_movement_left * dt;
-
-					for (auto b_ptr = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, b_ptr); b_ptr = iter_next<Rigid_Body>(b_ptr)) {
-						auto &b = b_ptr->data;
-
-						if (&a == &b || (a.type == Rigid_Body_Type_Static && b.type == Rigid_Body_Type_Static)) continue;
-
-						Vec2 b_dp = b.velocity * total_movement_left * dt;
-
-						if (test_mmrect_vs_mmrect(a.bounding_box, b.bounding_box)) {
-							set_bit(a.flags, Rigid_Body_BOUNDING_BOX_COLLIDING);
-							set_bit(b.flags, Rigid_Body_BOUNDING_BOX_COLLIDING);
-
-							for (u32 a_index = 0; a_index < a.fixture_count; ++a_index) {
-								for (u32 b_index = 0; b_index < b.fixture_count; ++b_index) {
-									Fixture *a_fixture = rigid_body_get_fixture(&a, a_index);
-									Fixture *b_fixture = rigid_body_get_fixture(&b, b_index);
-
-									auto type = fixture_vs_fixture_continuous(a_fixture, b_fixture, a.transform, b.transform, a_dp, b_dp, &impact_time);
-									//assert(type != Impact_Type_OVERLAPPED);
-									if (type == Impact_Type_TOUCHING) {
-										if (impact_time.t < t_min.t) {
-											t_min = impact_time;
-											pair = &b;
-										}
-									}
-
-								}
-							}
-						}
-
-					}
-
-					if (pair) {
-						auto &b = *pair;
-
-						set_bit(a.flags, Rigid_Body_COLLIDING);
-						set_bit(b.flags, Rigid_Body_COLLIDING);
-
-						a.velocity -= t_min.t * vec2_dot(a.velocity, t_min.normal) * t_min.normal;
-						b.velocity -= t_min.t * vec2_dot(b.velocity, t_min.normal) * t_min.normal;
-
-						// Resolve velocity
-						r32 restitution = minimum(a.restitution, b.restitution);
-						r32 j = -(1 + restitution) * vec2_dot(b.velocity - a.velocity, t_min.normal);
-						j /= (a.imass + b.imass);
-						j = maximum(0, j);
-
-						a.velocity = a.velocity - j * a.imass * t_min.normal;
-						b.velocity = b.velocity + j * b.imass * t_min.normal;
-
-						total_movement_left -= t_min.t;
-
-						a.bounding_box = rigid_body_bounding_box(&a, dt * total_movement_left);
-						b.bounding_box = rigid_body_bounding_box(&b, dt * total_movement_left);
-
-						array_add(&impact_times, t_min);
-
-					} else {
-						break;
-					}
-
-				}
-			}
-#endif
 			// TODO: Do broad phase collision detection and narrow collision detection
-			// TODO: Do collision resolution
+			// TODO: Continuous collision detection
 
 			Contact_Manifold manifold;
 			manifold.penetration = 0;
-
-#ifndef DO_CONTINUOUS_COLLISION
 
 			for (auto &player : scene->by_type.player) {
 				player.color = vec4(1);
@@ -815,15 +714,9 @@ int karma_user_zero() {
 
 				}		
 			}
-#endif
 
 			for (auto &player : scene->by_type.player) {
-#ifndef DO_CONTINUOUS_COLLISION
 				player.position = player.rigid_body->transform.p;
-#else
-				player.position += player.rigid_body->velocity * dt;
-				//player.position += player.rigid_body->prev_velocity * dt;
-#endif
 			}
 
 			r32 camera_follow_speed = 0.977f;
