@@ -399,9 +399,9 @@ int karma_user_zero() {
 	Resource_Id id;
 
 	Physics_State physics_state = Physics_State_RUNNING;
-
 	
 	Rigid_Body_Info rigid_body;
+	rigid_body.fixture = true;
 	info.data = &rigid_body;
 	{
 

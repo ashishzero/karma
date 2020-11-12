@@ -65,6 +65,7 @@ struct Camera_Info {
 
 struct Rigid_Body_Info {
 	Rigid_Body_Type		type;
+	booli				fixture;
 	Resource_Id			fixture_id;
 	Transform			transform;
 };

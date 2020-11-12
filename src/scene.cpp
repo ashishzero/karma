@@ -22,10 +22,9 @@ void scene_destroy(Scene *scene) {
 }
 
 u64 iscene_generate_unique_id(Scene *scene) {
-	u64 id = 0;
-	while (id == 0) {
-		id = (u64)random_get(&scene->id_series) | (((u64)time(0) & 0xffffffff) << 32);
-	}
+	u32 a = random_get(&scene->id_series);
+	u32 b = (time(0) & 0xffffffff);
+	u64 id = ((u64)a | ((u64)b << 32));
 	return id;
 }
 
@@ -172,7 +171,7 @@ Rigid_Body *iscene_create_rigid_body(Scene *scene, Entity_Id entity_id, const Ri
 	rigid_body->restitution = 0;
 	rigid_body->entity_id = entity_id;
 
-	if (info->fixture_id) {
+	if (info->fixture) {
 		Resource_Fixture *resource  = scene_find_resource_fixture(scene, info->fixture_id);
 		rigid_body->fixtures		= resource->fixtures;
 		rigid_body->fixture_count	= resource->fixture_count;
@@ -232,6 +231,7 @@ Entity *scene_create_new_entity(Scene *scene, Entity_Type type, const Entity_Inf
 	}
 
 	entity->type = type;
+	entity->id = id;
 	entity->position = info.position;
 
 	auto ref = array_add(&scene->entity);

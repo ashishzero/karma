@@ -71,10 +71,10 @@ enum Camera_Behaviour {
 };
 
 struct Camera_Lens {
-	Camera_View_Kind		kind;
-	r32						field_of_view;
-	r32						near;
-	r32						far;
+										Camera_View_Kind	kind;
+	attribute(slider, min:0, max:120)	r32					field_of_view;
+										r32					near;
+										r32					far;
 };
 
 struct Camera : public Entity {
