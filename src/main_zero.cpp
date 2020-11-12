@@ -644,14 +644,18 @@ int karma_user_zero() {
 
 			Dev_TimedScope(SimulationFrame);
 
-			primary_player->color = vec4(0, 1, 1);
-
 //#define DO_CONTINUOUS_COLLISION
 
 			Impact_Time impact_time;
 			impact_time.t = 0;
 
 #ifdef DO_CONTINUOUS_COLLISION
+			for (auto &player : scene->by_type.player) {
+				player.color = vec4(1);
+				player.rigid_body->transform.p = player.position;
+				player.rigid_body->transform.xform = mat2_scalar(player.radius, player.radius);
+			}
+
 			for (auto ptr = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, ptr); ptr = iter_next<Rigid_Body>(ptr)) {
 				if (ptr->data.type == Rigid_Body_Type_Dynamic) {
 					ptr->data.velocity += dt * ptr->data.force + vec2(0, -gravity);
@@ -754,7 +758,7 @@ int karma_user_zero() {
 					ptr->data.velocity += dt * ptr->data.force + vec2(0, -gravity);
 					ptr->data.velocity *= powf(0.5f, ptr->data.drag * dt);
 					ptr->data.transform.p += dt * ptr->data.velocity;
-					ptr->data.bounding_box = rigid_body_bounding_box(&ptr->data, dt);
+					ptr->data.bounding_box = rigid_body_bounding_box(&ptr->data, 0);
 				}
 				clear_bit(ptr->data.flags, Rigid_Body_COLLIDING);
 				clear_bit(ptr->data.flags, Rigid_Body_BOUNDING_BOX_COLLIDING);
@@ -796,6 +800,8 @@ int karma_user_zero() {
 									Vec2 correction = maximum(manifold.penetration, 0.0f) / (a.imass + b.imass) * manifold.normal;
 									a.transform.p -= a.imass * correction;
 									b.transform.p += b.imass * correction;
+									a.bounding_box = rigid_body_bounding_box(&a, 0);
+									b.bounding_box = rigid_body_bounding_box(&b, 0);
 
 									array_add(&manifolds, manifold);
 								}
@@ -825,6 +831,8 @@ int karma_user_zero() {
 		for (auto &player : scene->by_type.player) {
 			player.rigid_body->force = vec2(0);
 		}
+
+		primary_player->color = vec4(0, 1, 1);
 
 		ImGui_UpdateFrame(real_dt);
 
