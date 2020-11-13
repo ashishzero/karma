@@ -41,6 +41,8 @@ struct Scene {
 Scene *scene_create();
 void scene_destroy(Scene *scene);
 
+Entity *scene_find_entity(Scene *scene, Entity_Id id);
+
 Resource_Fixture *scene_find_resource_fixture(Scene *scene, Resource_Id id);
 Resource_Id scene_create_new_resource_fixture(Scene *scene, Fixture *fixtures, u32 fixture_count);
 bool scene_delete_resource_fixture(Scene *scene, Resource_Id id);

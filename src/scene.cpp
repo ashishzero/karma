@@ -28,6 +28,24 @@ u64 iscene_generate_unique_id(Scene *scene) {
 	return id;
 }
 
+Entity *scene_find_entity(Scene *scene, Entity_Id id) {
+	auto res = array_find(&scene->entity, [](const Entity_Ref &a, Entity_Id id) { return a.id == id; }, id);
+	if (res >= 0) {
+		Entity_Ref &ref = scene->entity[res];
+
+		switch (ref.type) {
+			case Entity_Type_Camera: return &scene->by_type.camera[ref.index];
+			case Entity_Type_Character: return &scene->by_type.character[ref.index];
+			case Entity_Type_Obstacle: return &scene->by_type.obstacle[ref.index];
+
+			invalid_default_case();
+		}
+
+	}
+
+	return nullptr;
+}
+
 Resource_Fixture *scene_find_resource_fixture(Scene *scene, Resource_Id id) {
 	auto res = array_find(&scene->resource_fixtures, [](const Resource_Fixture &f, Resource_Id id) { return f.id == id; }, id);
 	if (res >= 0) return scene->resource_fixtures.data + res;
@@ -216,7 +234,6 @@ Entity *scene_create_new_entity(Scene *scene, Entity_Type type, const Entity_Inf
 			auto player = (Character *)iscene_add_character(scene);
 			player->radius = 1;
 			player->color = vec4(1);
-			player->intensity = 1;
 			player->rigid_body = iscene_create_rigid_body(scene, id, (Rigid_Body_Info *)info.data);
 			entity = player;
 		} break;

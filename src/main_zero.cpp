@@ -234,8 +234,8 @@ static bool nearest_points_fixture_point(Fixture &a, const Transform &ta, Vec2 d
 	return NEAREST_POINTS_FINDERS[a.shape][b.shape](a, b, ta, tb, dp, vec2(0), nearest_points);
 }
 
-static bool test_fixture_point(Fixture &a, const Transform &ta, Vec2 point) {
-	Circle circle = { point, 0.0f };
+static bool test_fixture_point(Fixture &a, const Transform &ta, Vec2 point, r32 size = 0) {
+	Circle circle = { point, size };
 	Fixture b;
 	b.shape = Fixture_Shape_Circle;
 	b.handle = &circle;
@@ -393,7 +393,11 @@ int karma_user_zero() {
 	info.position = vec2(0);
 	info.data = &camera_info;
 
-	Camera *cam = (Camera *)scene_create_new_entity(scene, Entity_Type_Camera, info);
+	scene_create_new_entity(scene, Entity_Type_Camera, info);
+
+	Entity *entity_hovered, *entity_selected;
+	entity_hovered = nullptr;
+	entity_selected = nullptr;
 
 	Fixture fixture;
 	Resource_Id id;
@@ -770,19 +774,34 @@ int karma_user_zero() {
 
 		im2d_set_stroke_weight(0.02f);
 
-		#if 0 
+		#if 1
 		auto cursor = system_get_cursor_position();
 		cursor.x /= window_w;
 		cursor.y /= window_h;
 		cursor = 2.0f * cursor - vec2(1);
 		cursor.x *= view_width;
 		cursor.y *= view_height;
-		cursor += scene->camera.position;
+		cursor += camera.position;
 
-		if (ImGui_IsUsingCursor()) {
-			cursor.x = 0;
-			cursor.y = 0;
+		if (!ImGui_IsUsingCursor()) {
+			entity_hovered = nullptr;
+			for (auto ptr = iter_begin(&scene->rigid_bodies); 
+				iter_continue(&scene->rigid_bodies, ptr) && !entity_hovered; 
+				ptr = iter_next<Rigid_Body>(ptr)) {
+				auto &body = ptr->data;
+				for (u32 index = 0; index < body.fixture_count && !entity_hovered; ++index) {
+					Fixture *fixture = rigid_body_get_fixture(&body, index);
+					if (test_fixture_point(*fixture, body.transform, cursor)) {
+						entity_hovered = scene_find_entity(scene, body.entity_id);
+					}
+				}
+			}
+
+			if (system_button(Button_LEFT) == Key_State_DOWN) {
+				entity_selected = entity_hovered;
+			}
 		}
+
 		#endif
 
 		if (!ImGui_IsUsingCursor()) {
@@ -812,7 +831,7 @@ int karma_user_zero() {
 		im2d_begin(view, transform);
 
 		for (auto &player : scene->by_type.character) {
-			im2d_circle(player.position, player.radius, player.color * player.intensity);
+			im2d_circle(player.position, player.radius, player.color);
 			im2d_line(player.position, player.position + player.rigid_body->velocity, vec4(0, 1.5f, 0));
 		}
 
@@ -874,9 +893,11 @@ int karma_user_zero() {
 
 #if 1
 		//ImGui::ShowDemoWindow();
-		ImGui::Begin("Entity", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
-		editor(camera, "Camera");
-		ImGui::End();
+		if (entity_selected) {
+			ImGui::Begin("Entity", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
+			editor_entity(entity_selected);
+			ImGui::End();
+		}
 #else	
 		ImGui::Begin("World", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
 		

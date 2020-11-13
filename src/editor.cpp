@@ -36,6 +36,7 @@ static const ptrsize TYPE_UID_VPTR = (ptrsize)reflect_info<void>();
 static const ptrsize TYPE_UID_VEC2 = (ptrsize)reflect_info<Vec2>();
 static const ptrsize TYPE_UID_VEC3 = (ptrsize)reflect_info<Vec3>();
 static const ptrsize TYPE_UID_VEC4 = (ptrsize)reflect_info<Vec4>();
+static const ptrsize TYPE_UID_TRANSFORM = (ptrsize)reflect_info<Transform>();
 
 void scan_element_attributes(const String *attrs, ptrsize count, Element_Attribute *out) {
 	for (u32 index = 0; index < (u32)count; ++index) {
@@ -155,6 +156,36 @@ static bool editor_widget_slider(ptrsize uid, const char *label, void *data, u32
 		} else {
 			return editor_widget_basic_slider<r32>(label, ImGuiDataType_Float, (r32 *)data, 4, speed, min, max, flags);
 		}
+	} else if (uid == TYPE_UID_TRANSFORM) {
+		Transform *t = (Transform *)data;
+
+		editor_widget_basic_slider<r32>("translation", ImGuiDataType_Float, t->p.m, 2, speed, min, max, flags | Attr_READ_ONLY);
+
+		r32 angle;
+		Vec2 scale;
+
+		r32 _00 = t->xform.m2[0][0];
+		r32 _01 = t->xform.m2[0][1];
+		r32 _10 = t->xform.m2[1][0];
+		r32 _11 = t->xform.m2[1][1];
+
+		scale.x = sqrtf(_00 * _00 + _10 * _10);
+		scale.y = sqrtf(_01 * _01 + _11 * _11);
+
+		r32 c = _00 / scale.x;
+		r32 s = _10 / scale.x;
+
+		angle = atanf(s / c) + ((c < 0) ? MATH_PI : 0);
+
+		bool changed = false;
+		changed |= editor_widget_basic_slider<r32>("rotate", ImGuiDataType_Float, &angle, 1, speed, min, max, flags);
+		changed |= editor_widget_basic_slider<r32>("scale", ImGuiDataType_Float, scale.m, 2, speed, min, max, flags);
+
+		if (changed) {
+			t->xform = mat2_rotation(angle) * mat2_scalar(scale);
+		}
+
+		return changed;
 	}
 
 	return false;
@@ -226,6 +257,12 @@ bool editor_widget_draw(const Type_Info *base_info, char *data, const Element_At
 	} break;
 
 	case Type_Id_STRUCT: {
+		ptrsize uid = (ptrsize)base_info;
+
+		if (uid == TYPE_UID_TRANSFORM) {
+			return editor_widget_slider(uid, name, data, attr.flags, attr.step, attr.speed, attr.min, attr.max);
+		}
+
 		auto info = (Type_Info_Struct *)base_info;
 		auto mem_counts = info->member_count;
 
@@ -304,4 +341,39 @@ bool editor_widget_draw(const Type_Info *base_info, char *data, const Element_At
 	}
 
 	return false;
+}
+
+//
+//
+//
+
+bool editor_entity(Entity *entity) {
+	bool result = false;
+
+	switch (entity->type) {
+		case Entity_Type_Null: {
+			result = editor<Entity>(*entity, "Null Entity");
+		} break;
+
+		case Entity_Type_Camera: {
+			result = editor<Camera>(*(Camera *)entity, "Camera Entity");
+		} break;
+
+		case Entity_Type_Character: {
+			result = editor<Character>(*(Character *)entity, "Character Entity");
+		} break;
+
+		case Entity_Type_Obstacle: {
+			result = editor<Obstacle>(*(Obstacle *)entity, "Obstacle Entity");
+			if (result) {
+				Obstacle *o = (Obstacle *)entity;
+				o->rigid_body->transform.p = entity->position;
+				o->rigid_body->bounding_box = rigid_body_bounding_box(o->rigid_body, 0);
+			}
+		} break;
+
+		invalid_default_case();
+	}
+
+	return result;
 }

@@ -36,18 +36,18 @@ enum Rigid_Body_Flag_Bit : u16 {
 };
 
 struct Rigid_Body {
-	Rigid_Body_Type		type;
-	Rigid_Body_Flags	flags;
-	r32					imass;
-	r32					drag;
-	Vec2				velocity;
-	Vec2				force;
-	Transform			transform;
-	r32					restitution;
-	u32					fixture_count;
-	Fixture *			fixtures;
-	Mm_Rect				bounding_box;
-	Entity_Id			entity_id;
+	attribute(read_only)			Rigid_Body_Type		type;
+	attribute(no_display)			Rigid_Body_Flags	flags;
+	attribute(min:0)				r32					imass;
+	attribute(min:0)				r32					drag;
+	attribute(read_only)			Vec2				velocity;
+	attribute(read_only)			Vec2				force;
+									Transform			transform;
+	attribute(slider, min:0, max:1)	r32					restitution;
+	attribute(no_display)			u32					fixture_count;
+	attribute(no_display)			Fixture *			fixtures;
+	attribute(read_only)			Mm_Rect				bounding_box;
+	attribute(no_display)			Entity_Id			entity_id;
 };
 
 enum Entity_Type {
@@ -88,13 +88,12 @@ struct Camera : public Entity {
 };
 
 struct Character : public Entity {
-	attribute(min:0, max:5)				r32 radius;
-	attribute(color)					Vec4 color;
-										r32 intensity;
-	attribute(no_serialize)				Rigid_Body *rigid_body;
+	attribute(min:0)		r32 radius;
+	attribute(color)		Vec4 color;
+							Rigid_Body *rigid_body;
 };
 
 struct Obstacle : public Entity {
 	attribute(color)		Vec4 color;
-	attribute(no_serialize) Rigid_Body *rigid_body;
+							Rigid_Body *rigid_body;
 };

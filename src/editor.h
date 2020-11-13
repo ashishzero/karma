@@ -26,3 +26,6 @@ bool editor(const T &value, const char *name) {
 	Element_Attribute attr = {};
 	return editor_widget_draw(reflect_info<T>(), (char *)&value, attr, name);
 }
+
+struct Entity;
+bool editor_entity(Entity *entity);
