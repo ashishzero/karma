@@ -873,7 +873,12 @@ int karma_user_zero() {
 		};
 
 #if 1
-		editor_entity(&camera);
+		static uint value = 0;
+
+		ImGui::Begin("Entity", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
+		editor(value, "Value");
+		editor(camera, "Camera");
+		ImGui::End();
 #else	
 		ImGui::Begin("World", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
 		
