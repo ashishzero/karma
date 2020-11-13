@@ -46,6 +46,8 @@ void scan_element_attributes(const String *attrs, ptrsize count, Element_Attribu
 			break;
 		} else if (string_match(name, "read_only")) {
 			out->flags |= Attr_READ_ONLY;
+		} else if (string_match(name, "slider")) {
+			out->flags |= Attr_SLIDER;
 		} else if (string_match(name, "color")) {
 			out->flags |= Attr_COLOR;
 		} else if (string_match(name, "use")) {
@@ -64,54 +66,94 @@ void scan_element_attributes(const String *attrs, ptrsize count, Element_Attribu
 }
 
 template <typename T>
-static bool editor_widget_basic_slider(const char *label, ImGuiDataType type, T *data, int components, r32 speed, T min, T max, bool read_only) {
-	int flags = read_only ? ImGuiSliderFlags_NoInput : 0;
-	flags |= ImGuiSliderFlags_AlwaysClamp;
-	return ImGui::DragScalarN(label, type, data, components, speed, &min, &max, MAP_DATA_FORMAT[type], flags);
+static bool editor_widget_basic_slider(const char *label, ImGuiDataType type, T *data, int components, r32 speed, T min, T max, u32 flags) {
+	if (!(flags & Attr_READ_ONLY)) {
+		if (flags & Attr_SLIDER) {
+			return ImGui::SliderScalarN(label, type, data, components, &min, &max, MAP_DATA_FORMAT[type], ImGuiSliderFlags_AlwaysClamp);
+		} else {
+			return ImGui::DragScalarN(label, type, data, components, speed, &min, &max, MAP_DATA_FORMAT[type], ImGuiSliderFlags_AlwaysClamp);
+		}
+	}
+
+	if (components == 1) {
+		ImGui::LabelText(label, MAP_DATA_FORMAT[type], *data);
+	} else if (components == 2) {
+		const char *fmt = MAP_DATA_FORMAT[type];
+		ImGui::LabelText(label, null_tprintf("x: %s y: %s", fmt, fmt), data[0], data[1]);
+	} else if (components == 3) {
+		if (flags & Attr_COLOR) {
+			int color_flags = ImGuiColorEditFlags_DisplayHSV | ImGuiColorEditFlags_HDR;
+			ImVec4 color;
+			color.x = (r32)data[0];
+			color.y = (r32)data[1];
+			color.z = (r32)data[2];
+			color.w = 1;
+			ImGuiEx::LabelColor(label, color, color_flags);
+		} else {
+			const char *fmt = MAP_DATA_FORMAT[type];
+			ImGui::LabelText(label, null_tprintf("x: %s y: %s z: %s", fmt, fmt, fmt), data[0], data[1], data[2]);
+		}
+	} else if (components == 4) {
+		if (flags & Attr_COLOR) {
+			int color_flags = ImGuiColorEditFlags_DisplayHSV | ImGuiColorEditFlags_AlphaBar | ImGuiColorEditFlags_HDR | ImGuiColorEditFlags_AlphaPreview;
+			ImVec4 color;
+			color.x = (r32)data[0];
+			color.y = (r32)data[1];
+			color.z = (r32)data[2];
+			color.w = (r32)data[3];
+			ImGuiEx::LabelColor(label, color, color_flags);
+		} else {
+			const char *fmt = MAP_DATA_FORMAT[type];
+			ImGui::LabelText(label, null_tprintf("x: %s y: %s z: %s w: %s", fmt, fmt, fmt, fmt), data[0], data[1], data[2], data[3]);
+		}
+	}
+
+	return false;
 }
 
 static bool editor_widget_slider(ptrsize uid, const char *label, void *data, u32 flags, s32 step, r32 speed, r32 min, r32 max) {
-	bool read_only = (flags & Attr_READ_ONLY);
 	if (uid == TYPE_UID_BOOL) {
-		return ImGui::Checkbox(label, (bool *)data);
+		return ImGuiEx::LabelCheckbox(label, (bool *)data, !(flags & Attr_READ_ONLY));
 	} else if (uid == TYPE_UID_U8) {
-		return editor_widget_basic_slider<u8>(label, ImGuiDataType_U8, (u8 *)data, 1, (r32)step, (u8)maximum(min, 0), (u8)minimum(max, MAX_UINT8), read_only);
+		return editor_widget_basic_slider<u8>(label, ImGuiDataType_U8, (u8 *)data, 1, (r32)step, (u8)maximum(min, 0), (u8)minimum(max, MAX_UINT8), flags);
 	} else if (uid == TYPE_UID_U16) {
-		return editor_widget_basic_slider<u16>(label, ImGuiDataType_U16, (u16 *)data, 1, (r32)step, (u16)maximum(min, 0), (u16)minimum(max, MAX_UINT16), read_only);
+		return editor_widget_basic_slider<u16>(label, ImGuiDataType_U16, (u16 *)data, 1, (r32)step, (u16)maximum(min, 0), (u16)minimum(max, MAX_UINT16), flags);
 	} else if (uid == TYPE_UID_U32) {
-		return editor_widget_basic_slider<u32>(label, ImGuiDataType_U32, (u32 *)data, 1, (r32)step, (u32)maximum(min, 0), (u32)minimum(max, MAX_UINT32), read_only);
+		return editor_widget_basic_slider<u32>(label, ImGuiDataType_U32, (u32 *)data, 1, (r32)step, (u32)maximum(min, 0), (u32)minimum(max, MAX_UINT32), flags);
 	} else if (uid == TYPE_UID_U64) {
-		return editor_widget_basic_slider<u64>(label, ImGuiDataType_U64, (u64 *)data, 1, (r32)step, (u64)maximum(min, 0), (u64)minimum(max, MAX_UINT64), read_only);
+		return editor_widget_basic_slider<u64>(label, ImGuiDataType_U64, (u64 *)data, 1, (r32)step, (u64)maximum(min, 0), (u64)minimum(max, MAX_UINT64), flags);
 	} else if (uid == TYPE_UID_S8) {
-		return editor_widget_basic_slider<s8>(label, ImGuiDataType_S8, (s8 *)data, 1, (r32)step, (s8)maximum(min, MIN_INT8), (s8)minimum(max, MAX_INT8), read_only);
+		return editor_widget_basic_slider<s8>(label, ImGuiDataType_S8, (s8 *)data, 1, (r32)step, (s8)maximum(min, MIN_INT8), (s8)minimum(max, MAX_INT8), flags);
 	} else if (uid == TYPE_UID_S16) {
-		return editor_widget_basic_slider<s16>(label, ImGuiDataType_S16, (s16 *)data, 1, (r32)step, (s16)maximum(min, MIN_INT16), (s16)minimum(max, MAX_INT16), read_only);
+		return editor_widget_basic_slider<s16>(label, ImGuiDataType_S16, (s16 *)data, 1, (r32)step, (s16)maximum(min, MIN_INT16), (s16)minimum(max, MAX_INT16), flags);
 	} else if (uid == TYPE_UID_S32) {
-		return editor_widget_basic_slider<s32>(label, ImGuiDataType_S32, (s32 *)data, 1, (r32)step, (s32)maximum(min, MIN_INT32), (s32)minimum(max, MAX_INT32), read_only);
+		return editor_widget_basic_slider<s32>(label, ImGuiDataType_S32, (s32 *)data, 1, (r32)step, (s32)maximum(min, MIN_INT32), (s32)minimum(max, MAX_INT32), flags);
 	} else if (uid == TYPE_UID_S64) {
-		return editor_widget_basic_slider<s64>(label, ImGuiDataType_S64, (s64 *)data, 1, (r32)step, (s64)maximum(min, MIN_INT64), (s64)minimum(max, MAX_INT64), read_only);
+		return editor_widget_basic_slider<s64>(label, ImGuiDataType_S64, (s64 *)data, 1, (r32)step, (s64)maximum(min, MIN_INT64), (s64)minimum(max, MAX_INT64), flags);
 	} else if (uid == TYPE_UID_R32) {
-		return editor_widget_basic_slider<r32>(label, ImGuiDataType_Float, (r32 *)data, 1, speed, (r32)min, (r32)max, read_only);
+		return editor_widget_basic_slider<r32>(label, ImGuiDataType_Float, (r32 *)data, 1, speed, (r32)min, (r32)max, flags);
 	} else if (uid == TYPE_UID_R64) {
-		return editor_widget_basic_slider<r64>(label, ImGuiDataType_Double, (r64 *)data, 1, speed, (r64)min, (r64)max, read_only);
+		return editor_widget_basic_slider<r64>(label, ImGuiDataType_Double, (r64 *)data, 1, speed, (r64)min, (r64)max, flags);
 	} else if (uid == TYPE_UID_CHAR) {
-		return editor_widget_basic_slider<char>(label, ImGuiDataType_S8, (char *)data, 1, (r32)step, (char)maximum(min, MIN_INT8), (char)minimum(max, MAX_INT8), read_only);
+		return editor_widget_basic_slider<char>(label, ImGuiDataType_S8, (char *)data, 1, (r32)step, (char)maximum(min, MIN_INT8), (char)minimum(max, MAX_INT8), flags);
 	} else if (uid == TYPE_UID_VPTR) {
 		u64 ptr = (u64)((void *)data);
-		return editor_widget_basic_slider<u64>(label, ImGuiDataType_U64, &ptr, 1, 0.0f, (u64)min, (u64)max, read_only);
+		return editor_widget_basic_slider<u64>(label, ImGuiDataType_U64, &ptr, 1, 0.0f, (u64)min, (u64)max, flags);
 	} else if (uid == TYPE_UID_VEC2) {
-		return editor_widget_basic_slider<r32>(label, ImGuiDataType_Float, (r32 *)data, 2, speed, min, max, read_only);
+		return editor_widget_basic_slider<r32>(label, ImGuiDataType_Float, (r32 *)data, 2, speed, min, max, flags);
 	} else if (uid == TYPE_UID_VEC3) {
-		if (flags & Attr_COLOR) {
-			return ImGui::ColorEdit3(label, (r32 *)data, ImGuiColorEditFlags_DisplayHSV);
+		if ((flags & Attr_COLOR) && !(flags & Attr_READ_ONLY)) {
+			int flags = ImGuiColorEditFlags_DisplayHSV | ImGuiColorEditFlags_HDR;
+			return ImGui::ColorEdit3(label, (r32 *)data, flags);
 		} else {
-			return editor_widget_basic_slider<r32>(label, ImGuiDataType_Float, (r32 *)data, 3, speed, min, max, read_only);
+			return editor_widget_basic_slider<r32>(label, ImGuiDataType_Float, (r32 *)data, 3, speed, min, max, flags);
 		}
 	} else if (uid == TYPE_UID_VEC4) {
-		if (flags & Attr_COLOR) {
-			return ImGui::ColorEdit4(label, (r32 *)data, ImGuiColorEditFlags_DisplayHSV | ImGuiColorEditFlags_AlphaBar);
+		if ((flags & Attr_COLOR) && !(flags & Attr_READ_ONLY)) {
+			int flags = ImGuiColorEditFlags_DisplayHSV | ImGuiColorEditFlags_AlphaBar | ImGuiColorEditFlags_HDR | ImGuiColorEditFlags_AlphaPreview;
+			return ImGui::ColorEdit4(label, (r32 *)data, flags);
 		} else {
-			return editor_widget_basic_slider<r32>(label, ImGuiDataType_Float, (r32 *)data, 4, speed, min, max, read_only);
+			return editor_widget_basic_slider<r32>(label, ImGuiDataType_Float, (r32 *)data, 4, speed, min, max, flags);
 		}
 	}
 
@@ -172,7 +214,7 @@ bool editor_widget_draw(const Type_Info *base_info, char *data, const Element_At
 		int index = get_int_enum_value(info, data);
 
 		if (attr.flags & Attr_READ_ONLY) {
-			ImGui::Text("%s : %s", name, info->item_strings[index]);
+			ImGui::LabelText(name, info->item_strings[index]);
 			return false;
 		} else {
 			if (ImGui::Combo(name, &index, info->item_strings.data, (int)info->item_strings.count)) {
@@ -219,7 +261,6 @@ bool editor_widget_draw(const Type_Info *base_info, char *data, const Element_At
 		if (uid == TYPE_UID_VEC2 || uid == TYPE_UID_VEC3 || uid == TYPE_UID_VEC4) {
 			return editor_widget_slider(uid, name, data, attr.flags, attr.step, attr.speed, attr.min, attr.max);
 		} else {
-
 			auto info = (Type_Info_Union *)base_info;
 			auto mem_counts = info->member_count;
 

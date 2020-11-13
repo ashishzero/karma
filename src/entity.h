@@ -78,14 +78,13 @@ struct Camera_Lens {
 };
 
 struct Camera : public Entity {
-	r32						distance;
-	Vec2					target_position;
-	r32						target_distance;
-	r32						follow_factor;
-	r32						zoom_factor;
-	Camera_Behaviour		behaviour;
-
-	Camera_Lens				lens;
+									r32					distance;
+									Vec2				target_position;
+									r32					target_distance;
+	attribute(slider, min:0, max:1)	r32					follow_factor;
+	attribute(slider, min:0, max:1)	r32					zoom_factor;
+									Camera_Behaviour	behaviour;
+									Camera_Lens			lens;
 };
 
 struct Character : public Entity {

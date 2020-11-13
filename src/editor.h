@@ -6,8 +6,9 @@ typedef u32 Attr_Flags;
 enum Attr_Flag_Bit : Attr_Flags {
 	Attr_NO_DISPLAY = bit(0),
 	Attr_READ_ONLY = bit(1),
-	Attr_COLOR = bit(2),
-	Attr_UNION_DISPLAY = bit(3),
+	Attr_SLIDER = bit(2),
+	Attr_COLOR = bit(3),
+	Attr_UNION_DISPLAY = bit(4),
 };
 
 struct Element_Attribute {

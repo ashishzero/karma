@@ -393,7 +393,7 @@ int karma_user_zero() {
 	info.position = vec2(0);
 	info.data = &camera_info;
 
-	scene_create_new_entity(scene, Entity_Type_Camera, info);
+	Camera *cam = (Camera *)scene_create_new_entity(scene, Entity_Type_Camera, info);
 
 	Fixture fixture;
 	Resource_Id id;
@@ -873,10 +873,8 @@ int karma_user_zero() {
 		};
 
 #if 1
-		static uint value = 0;
-
+		//ImGui::ShowDemoWindow();
 		ImGui::Begin("Entity", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
-		editor(value, "Value");
 		editor(camera, "Camera");
 		ImGui::End();
 #else	
