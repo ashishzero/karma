@@ -2158,12 +2158,50 @@ r32 min_area_rect(Vec2 *pt, s32 num_pts, Vec2 *center, Vec2 u[2]) {
 	return min_area;
 }
 
+Mm_Rect mm_rect_enclosing_quad(Vec2 a, Vec2 b, Vec2 c, Vec2 d) {
+	Vec2 points[] = { a, b, c, d };
+
+	Mm_Rect rect;
+	rect.min = points[0];
+	rect.max = points[0];
+
+	for (u32 index = 1; index < static_count(points); ++index) {
+		Vec2 *p = points + index;
+		rect.min = vec2_min(rect.min, *p);
+		rect.max = vec2_max(rect.max, *p);
+	}
+
+	return rect;
+}
+
+Mm_Rect mm_rect_enclosing_mm_rect(const Mm_Rect &mm_rect, const Transform &t) {
+	Vec2 a = mat2_vec2_mul(t.xform, mm_rect.min);
+	Vec2 b = mat2_vec2_mul(t.xform, vec2(mm_rect.min.x, mm_rect.max.y));
+	Vec2 c = mat2_vec2_mul(t.xform, mm_rect.max);
+	Vec2 d = mat2_vec2_mul(t.xform, vec2(mm_rect.max.x, mm_rect.min.y));
+	Mm_Rect result = mm_rect_enclosing_quad(a, b, c, d);
+	result.min += t.p;
+	result.max += t.p;
+	return result;
+}
+
 Mm_Rect mm_rect_enclosing_circle(const Circle &circle) {
 	Mm_Rect rect;
 	rect.min = vec2(-circle.radius);
 	rect.max = vec2( circle.radius);
 	rect.min += circle.center;
 	rect.max += circle.center;
+	return rect;
+}
+
+Mm_Rect mm_rect_enclosing_circle(const Circle &circle, const Transform &t) {
+	Mm_Rect rect;
+	Vec2 rv = vec2(circle.radius, 0);
+	rv = mat2_vec2_mul(t.xform, rv);
+	rect.min = vec2(-rv.x);
+	rect.max = vec2( rv.x);
+	rect.min += circle.center + t.p;
+	rect.max += circle.center + t.p;
 	return rect;
 }
 
@@ -2192,6 +2230,37 @@ Mm_Rect mm_rect_enclosing_capsule(const Capsule &capsule) {
 	return rect;
 }
 
+Mm_Rect mm_rect_enclosing_capsule(const Capsule &capsule, const Transform &t) {
+	Mm_Rect rect;
+
+	Vec2 a = mat2_vec2_mul(t.xform, capsule.a);
+	Vec2 b = mat2_vec2_mul(t.xform, capsule.b);
+	
+	if (a.x > b.x) {
+		rect.min.x = b.x;
+		rect.max.x = a.x;
+	} else {
+		rect.min.x = a.x;
+		rect.max.x = b.x;
+	}
+
+	if (a.y > b.y) {
+		rect.min.y = b.y;
+		rect.max.y = a.y;
+	} else {
+		rect.min.y = a.y;
+		rect.max.y = b.y;
+	}
+
+	rect.min -= vec2(capsule.radius);
+	rect.max += vec2(capsule.radius);
+
+	rect.min += t.p;
+	rect.max += t.p;
+
+	return rect;
+}
+
 Mm_Rect mm_rect_enclosing_polygon(const Polygon &polygon) {
 	Mm_Rect rect;
 	rect.min = polygon.vertices[0];
@@ -2206,18 +2275,19 @@ Mm_Rect mm_rect_enclosing_polygon(const Polygon &polygon) {
 	return rect;
 }
 
-Mm_Rect mm_rect_enclosing_quad(Vec2 a, Vec2 b, Vec2 c, Vec2 d) {
-	Vec2 points[] = { a, b, c, d };
-
+Mm_Rect mm_rect_enclosing_polygon(const Polygon &polygon, const Transform &t) {
 	Mm_Rect rect;
-	rect.min = points[0];
-	rect.max = points[0];
+	rect.min = mat2_vec2_mul(t.xform, polygon.vertices[0]);
+	rect.max = mat2_vec2_mul(t.xform, polygon.vertices[0]);
 
-	for (u32 index = 1; index < static_count(points); ++index) {
-		Vec2 *p = points + index;
-		rect.min = vec2_min(rect.min, *p);
-		rect.max = vec2_max(rect.max, *p);
+	for (u32 index = 1; index < polygon.vertex_count; ++index) {
+		const Vec2 *p = polygon.vertices + index;
+		rect.min = vec2_min(rect.min, mat2_vec2_mul(t.xform, *p));
+		rect.max = vec2_max(rect.max, mat2_vec2_mul(t.xform, *p));
 	}
+
+	rect.min += t.p;
+	rect.max += t.p;
 
 	return rect;
 }

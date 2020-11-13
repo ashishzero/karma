@@ -876,10 +876,14 @@ void most_seperated_points_on_aabb(Vec2 *pt, s32 n, s32 *min, s32 *max);
 Circle circle_from_distant_points(Vec2 *pt, s32 n);
 r32 min_area_rect(Vec2 *pt, s32 num_pts, Vec2 *center, Vec2 u[2]);
 
-Mm_Rect mm_rect_enclosing_circle(const Circle &cirlce);
-Mm_Rect mm_rect_enclosing_capsule(const Capsule &capsule);
-Mm_Rect mm_rect_enclosing_polygon(const Polygon &polygon);
 Mm_Rect mm_rect_enclosing_quad(Vec2 a, Vec2 b, Vec2 c, Vec2 d);
+Mm_Rect mm_rect_enclosing_mm_rect(const Mm_Rect &mm_rect, const Transform &t);
+Mm_Rect mm_rect_enclosing_circle(const Circle &cirlce);
+Mm_Rect mm_rect_enclosing_circle(const Circle &cirlce, const Transform &t);
+Mm_Rect mm_rect_enclosing_capsule(const Capsule &capsule);
+Mm_Rect mm_rect_enclosing_capsule(const Capsule &capsule, const Transform &t);
+Mm_Rect mm_rect_enclosing_polygon(const Polygon &polygon);
+Mm_Rect mm_rect_enclosing_polygon(const Polygon &polygon, const Transform &t);
 
 Mm_Rect transform_mmrect(const Mm_Rect &a, const Mat2 &mat, Vec2 t);
 Mm_Rect transform_mmrect(const Mm_Rect &a, r32 rot, Vec2 t);

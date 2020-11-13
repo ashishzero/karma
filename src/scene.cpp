@@ -117,9 +117,11 @@ Obstacle *iscene_add_obstacle(Scene *scene) {
 }
 
 Mm_Rect rigid_body_bounding_box(Rigid_Body *body, r32 dt) {
-	Mm_Rect local_min_rect;
-	local_min_rect.min = vec2( MAX_FLOAT);
-	local_min_rect.max = vec2(-MAX_FLOAT);
+	Mm_Rect most_min_rect;
+	most_min_rect.min = vec2( MAX_FLOAT);
+	most_min_rect.max = vec2(-MAX_FLOAT);
+
+	const Transform &t = body->transform;
 
 	for (u32 index = 0; index < body->fixture_count; ++index) {
 		Fixture *fixture = rigid_body_get_fixture(body, index);
@@ -128,29 +130,30 @@ Mm_Rect rigid_body_bounding_box(Rigid_Body *body, r32 dt) {
 
 			case Fixture_Shape_Circle: {
 				auto circle = fixture_get_shape(fixture, Circle);
-				auto rect = mm_rect_enclosing_circle(*circle);
-				local_min_rect.min = vec2_min(local_min_rect.min, rect.min);
-				local_min_rect.max = vec2_max(local_min_rect.max, rect.max);
+				auto rect = mm_rect_enclosing_circle(*circle, t);
+				most_min_rect.min = vec2_min(most_min_rect.min, rect.min);
+				most_min_rect.max = vec2_max(most_min_rect.max, rect.max);
 			} break;
 
 			case Fixture_Shape_Mm_Rect: {
-				auto rect = fixture_get_shape(fixture, Mm_Rect);
-				local_min_rect.min = vec2_min(local_min_rect.min, rect->min);
-				local_min_rect.max = vec2_max(local_min_rect.max, rect->max);
+				auto mm_rect = fixture_get_shape(fixture, Mm_Rect);
+				auto rect = mm_rect_enclosing_mm_rect(*mm_rect, t);
+				most_min_rect.min = vec2_min(most_min_rect.min, rect.min);
+				most_min_rect.max = vec2_max(most_min_rect.max, rect.max);
 			} break;
 
 			case Fixture_Shape_Capsule: {
 				auto capsule = fixture_get_shape(fixture, Capsule);
-				auto rect = mm_rect_enclosing_capsule(*capsule);
-				local_min_rect.min = vec2_min(local_min_rect.min, rect.min);
-				local_min_rect.max = vec2_max(local_min_rect.max, rect.max);
+				auto rect = mm_rect_enclosing_capsule(*capsule, t);
+				most_min_rect.min = vec2_min(most_min_rect.min, rect.min);
+				most_min_rect.max = vec2_max(most_min_rect.max, rect.max);
 			} break;
 
 			case Fixture_Shape_Polygon: {
 				auto polygon = fixture_get_shape(fixture, Polygon);
-				auto rect = mm_rect_enclosing_polygon(*polygon);
-				local_min_rect.min = vec2_min(local_min_rect.min, rect.min);
-				local_min_rect.max = vec2_max(local_min_rect.max, rect.max);
+				auto rect = mm_rect_enclosing_polygon(*polygon, t);
+				most_min_rect.min = vec2_min(most_min_rect.min, rect.min);
+				most_min_rect.max = vec2_max(most_min_rect.max, rect.max);
 			} break;
 
 			invalid_default_case();
@@ -159,21 +162,10 @@ Mm_Rect rigid_body_bounding_box(Rigid_Body *body, r32 dt) {
 
 	Vec2 dp = dt * body->velocity;
 
-	local_min_rect.min = vec2_min(local_min_rect.min, local_min_rect.min + dp);
-	local_min_rect.max = vec2_max(local_min_rect.max, local_min_rect.max + dp);
+	most_min_rect.min = vec2_min(most_min_rect.min, most_min_rect.min + dp);
+	most_min_rect.max = vec2_max(most_min_rect.max, most_min_rect.max + dp);
 
-	Vec2 a, b, c, d;
-	a = local_min_rect.min;
-	b = vec2(local_min_rect.min.x, local_min_rect.max.y);
-	c = local_min_rect.max;
-	d = vec2(local_min_rect.max.x, local_min_rect.min.y);
-
-	a = mat2_vec2_mul(body->transform.xform, a) + body->transform.p;
-	b = mat2_vec2_mul(body->transform.xform, b) + body->transform.p;
-	c = mat2_vec2_mul(body->transform.xform, c) + body->transform.p;
-	d = mat2_vec2_mul(body->transform.xform, d) + body->transform.p;
-
-	return mm_rect_enclosing_quad(a, b, c, d);
+	return most_min_rect;
 }
 
 Rigid_Body *iscene_create_rigid_body(Scene *scene, Entity_Id entity_id, const Rigid_Body_Info *info) {
