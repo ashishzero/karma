@@ -2196,12 +2196,15 @@ Mm_Rect mm_rect_enclosing_circle(const Circle &circle) {
 
 Mm_Rect mm_rect_enclosing_circle(const Circle &circle, const Transform &t) {
 	Mm_Rect rect;
-	Vec2 rv = vec2(circle.radius, 0);
-	rv = mat2_vec2_mul(t.xform, rv);
-	rect.min = vec2(-rv.x);
-	rect.max = vec2( rv.x);
-	rect.min += circle.center + t.p;
-	rect.max += circle.center + t.p;
+	
+	Vec2 a = support(circle, t, vec2(1, 0));
+	Vec2 b = support(circle, t, vec2(0, 1));
+	Vec2 c = support(circle, t, vec2(-1, 0));
+	Vec2 d = support(circle, t, vec2(0, -1));
+
+	rect.min = vec2(c.x, d.y);
+	rect.max = vec2(a.x, b.y);
+	
 	return rect;
 }
 
@@ -2233,30 +2236,13 @@ Mm_Rect mm_rect_enclosing_capsule(const Capsule &capsule) {
 Mm_Rect mm_rect_enclosing_capsule(const Capsule &capsule, const Transform &t) {
 	Mm_Rect rect;
 
-	Vec2 a = mat2_vec2_mul(t.xform, capsule.a);
-	Vec2 b = mat2_vec2_mul(t.xform, capsule.b);
-	
-	if (a.x > b.x) {
-		rect.min.x = b.x;
-		rect.max.x = a.x;
-	} else {
-		rect.min.x = a.x;
-		rect.max.x = b.x;
-	}
+	Vec2 a = support(capsule, t, vec2(1, 0));
+	Vec2 b = support(capsule, t, vec2(0, 1));
+	Vec2 c = support(capsule, t, vec2(-1, 0));
+	Vec2 d = support(capsule, t, vec2(0, -1));
 
-	if (a.y > b.y) {
-		rect.min.y = b.y;
-		rect.max.y = a.y;
-	} else {
-		rect.min.y = a.y;
-		rect.max.y = b.y;
-	}
-
-	rect.min -= vec2(capsule.radius);
-	rect.max += vec2(capsule.radius);
-
-	rect.min += t.p;
-	rect.max += t.p;
+	rect.min = vec2(c.x, d.y);
+	rect.max = vec2(a.x, b.y);
 
 	return rect;
 }

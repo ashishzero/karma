@@ -673,7 +673,7 @@ int karma_user_zero() {
 			for (auto &player : scene->by_type.character) {
 				player.color = vec4(1);
 				player.rigid_body->transform.p = player.position;
-				player.rigid_body->transform.xform = mat2_scalar(player.radius, player.radius);
+				//player.rigid_body->transform.xform = mat2_scalar(player.radius, player.radius);
 			}
 
 			for (auto ptr = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, ptr); ptr = iter_next<Rigid_Body>(ptr)) {

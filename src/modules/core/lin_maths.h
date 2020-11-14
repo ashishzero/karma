@@ -943,6 +943,13 @@ inline Vec2 support(const ShapeA &a, const ShapeB &b, Vec2 dir) {
 	return support(a, dir) - support(b, -dir);
 }
 
+template <typename Shape>
+inline Vec2 support(const Shape &s, const Transform &t, Vec2 dir) {
+	Vec2 p = support(s, vec2_mat2_mul(dir, t.xform));
+	p = mat2_vec2_mul(t.xform, p) + t.p;
+	return p;
+}
+
 template <typename ShapeA, typename ShapeB>
 inline Vec2 support(const ShapeA &a, const ShapeB &b, Vec2 dir, const Transform &ta, const Transform &tb) {
 	Vec2 p = support(a, vec2_mat2_mul( dir, ta.xform));

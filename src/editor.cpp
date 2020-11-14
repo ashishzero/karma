@@ -179,7 +179,7 @@ static bool editor_widget_slider(ptrsize uid, const char *label, void *data, u32
 
 		bool changed = false;
 		changed |= editor_widget_basic_slider<r32>("rotate", ImGuiDataType_Float, &angle, 1, speed, min, max, flags);
-		changed |= editor_widget_basic_slider<r32>("scale", ImGuiDataType_Float, scale.m, 2, speed, min, max, flags);
+		changed |= editor_widget_basic_slider<r32>("scale", ImGuiDataType_Float, scale.m, 2, speed, 0.001f, max, flags);
 
 		if (changed) {
 			t->xform = mat2_rotation(angle) * mat2_scalar(scale);
