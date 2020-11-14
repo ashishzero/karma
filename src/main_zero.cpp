@@ -247,6 +247,17 @@ static bool test_fixture_point(Fixture &a, const Transform &ta, Vec2 point, r32 
 	return COLLISION_DETECTORS[a.shape][b.shape](a, b, ta, tb);
 }
 
+template <typename Shape>
+static bool test_shape_vs_point(const Shape &s, const Transform &t, Vec2 point, r32 size = 0) {
+	Circle circle = { point, size };
+	
+	Transform tc;
+	tc.p = vec2(0);
+	tc.xform = mat2_identity();
+
+	return gjk(s, circle, t, tc);
+}
+
 static void render_shape(Fixture &fixture, const Transform &transform, Vec3 color) {
 	const r32 alpha = 0.1f;
 	auto shade = vec4(color, alpha);
@@ -339,6 +350,50 @@ static Simulation_Speed simulation_speed(u32 index) {
 		speed.factor = (r32)speed.x;
 	return speed;
 }
+
+const r32 GIZMO_LINE_THICKNESS = 0.1f;
+const r32 GIZMO_LINE_HALF_THICKNESS = 0.5f * GIZMO_LINE_THICKNESS;
+const r32 GIZMO_LINE_LENGTH = 1.3f;
+const r32 GIZMO_POINTER_THICKNESS = 2.0f * GIZMO_LINE_THICKNESS;
+const r32 GIZMO_POINTER_HALF_THICKNESS = 0.5f * GIZMO_POINTER_THICKNESS;
+const Vec3 GIZMO_SQUARE_COLOR = vec3(1);
+const r32 GIZMO_ROTOR_MAX_RADIUS = GIZMO_LINE_LENGTH;
+const r32 GIZMO_ROTOR_MIN_RADIUS = GIZMO_ROTOR_MAX_RADIUS - 0.5f * GIZMO_POINTER_THICKNESS;
+const Vec3 GIZMO_X_COLOR = vec3(0.8f, 0.1f, 0.1f);
+const Vec3 GIZMO_Y_COLOR = vec3(0.1f, 0.8f, 0.1f);
+const Vec3 GIZMO_ROTOR_COLOR = vec3(0.1f, 0.1f, 0.9f);
+const Vec3 GIZMO_ROTOR_INDICATOR_COLOR = vec3(1, 1, 0.1f);
+const r32 GIZMO_POINTER_OFFSET = GIZMO_LINE_LENGTH + GIZMO_LINE_HALF_THICKNESS;
+
+enum Gizmo_Type {
+	Gizmo_Type_NONE,
+	Gizmo_Type_CENTER,
+	Gizmo_Type_TRANSLATE_X,
+	Gizmo_Type_TRANSLATE_Y,
+	Gizmo_Type_SCALE_X,
+	Gizmo_Type_SCALE_Y,
+	Gizmo_Type_ROTOR,
+	
+	Gizmo_Type_COUNT
+};
+
+enum Gizmo_Render_Type {
+	Gizmo_Render_Type_NONE,
+	Gizmo_Render_Type_TRANSLATE,
+	Gizmo_Render_Type_SCALE,
+	Gizmo_Render_Type_ROTATE,
+
+	Gizmo_Render_Type_COUNT
+};
+
+struct Gizmo {
+	Gizmo_Type type;
+	Gizmo_Render_Type render_type;
+	r32 intensity[4]; // center, x, y, rotor
+	r32 values[2];
+};
+
+static Gizmo gizmo = { Gizmo_Type_NONE, Gizmo_Render_Type_NONE, { 1, 1 } };
 
 int karma_user_zero() {
 	collision_resover_init();
@@ -601,6 +656,23 @@ int karma_user_zero() {
 				continue;
 			}
 
+			if ((event.type & Event_Type_KEY_UP)) {
+				switch (event.key.symbol) {
+					case Key_T: {
+						gizmo.render_type = Gizmo_Render_Type_TRANSLATE;
+						gizmo.type = Gizmo_Type_NONE;
+					} break;
+					case Key_S: {
+						gizmo.render_type = Gizmo_Render_Type_SCALE;
+						gizmo.type = Gizmo_Type_NONE;
+					} break;
+					case Key_R: {
+						gizmo.render_type = Gizmo_Render_Type_ROTATE;
+						gizmo.type = Gizmo_Type_NONE;
+					} break;
+				}
+			}
+
 			if ((event.type & Event_Type_KEY_UP) && event.key.symbol == Key_TAB) {
 				primary_player_index = (primary_player_index + 1) % (u32)(scene->by_type.character.count);
 				continue;
@@ -789,8 +861,8 @@ int karma_user_zero() {
 
 		if (!ImGui_IsUsingCursor()) {
 			body_hovered = nullptr;
-			for (auto ptr = iter_begin(&scene->rigid_bodies); 
-				iter_continue(&scene->rigid_bodies, ptr) && !body_hovered; 
+			for (auto ptr = iter_begin(&scene->rigid_bodies);
+				iter_continue(&scene->rigid_bodies, ptr) && !body_hovered;
 				ptr = iter_next<Rigid_Body>(ptr)) {
 				auto &body = ptr->data;
 				for (u32 index = 0; index < body.fixture_count && !body_hovered; ++index) {
@@ -801,28 +873,230 @@ int karma_user_zero() {
 				}
 			}
 
-			if (ImGui::GetIO().MouseClicked[ImGuiMouseButton_Left]) {
-				body_selected = body_hovered;
+			if (body_selected) {
+				for (auto &inten : gizmo.intensity) {
+					inten = 1;
+				}
+
+				if (!ImGui::GetIO().MouseDown[ImGuiMouseButton_Left]) {
+					gizmo.type = Gizmo_Type_NONE;
+				}
+
+				Vec2 delta = ImGui::GetIO().MouseDelta;
+				delta.x /= window_w;
+				delta.y /= (-window_h);
+
+				switch (gizmo.type) {
+					case Gizmo_Type_NONE: {
+						Transform gizmo_transform;
+						gizmo_transform.p = body_selected->transform.p;
+						gizmo_transform.xform = mat2_scalar(iscale, iscale);
+
+						switch (gizmo.render_type) {
+							case Gizmo_Render_Type_TRANSLATE: {
+								const Mm_Rect GIZMO_CENTER_RECT = mm_rect(vec2(-GIZMO_LINE_HALF_THICKNESS), vec2(-GIZMO_LINE_HALF_THICKNESS) + vec2(GIZMO_LINE_THICKNESS));
+
+								const Mm_Rect GIZMO_X_LINE_RECT = mm_rect(vec2(GIZMO_LINE_HALF_THICKNESS, -GIZMO_LINE_HALF_THICKNESS),
+									vec2(GIZMO_LINE_HALF_THICKNESS, -GIZMO_LINE_HALF_THICKNESS) + vec2(GIZMO_LINE_LENGTH, GIZMO_LINE_THICKNESS));
+								const Mm_Rect GIZMO_Y_LINE_RECT = mm_rect(vec2(-GIZMO_LINE_HALF_THICKNESS, GIZMO_LINE_HALF_THICKNESS),
+									vec2(-GIZMO_LINE_HALF_THICKNESS, GIZMO_LINE_HALF_THICKNESS) + vec2(GIZMO_LINE_THICKNESS, GIZMO_LINE_LENGTH));
+
+								const Polygon GIZMO_X_POINTER_POLY = { 3, {
+									vec2(GIZMO_POINTER_OFFSET, -GIZMO_POINTER_HALF_THICKNESS),
+									vec2(GIZMO_POINTER_OFFSET, GIZMO_POINTER_HALF_THICKNESS),
+									vec2(GIZMO_POINTER_OFFSET + GIZMO_POINTER_THICKNESS, 0)
+									}
+								};
+								const Polygon GIZMO_Y_POINTER_POLY = { 3, {
+									vec2(GIZMO_POINTER_HALF_THICKNESS, GIZMO_POINTER_OFFSET),
+									vec2(-GIZMO_POINTER_HALF_THICKNESS, GIZMO_POINTER_OFFSET),
+									vec2(0, GIZMO_POINTER_OFFSET + GIZMO_POINTER_THICKNESS)
+								} };
+
+								if (test_shape_vs_point(GIZMO_CENTER_RECT, gizmo_transform, cursor)) {
+									gizmo.intensity[0] = 2;
+									if (ImGui::GetIO().MouseDown[ImGuiMouseButton_Left])
+										gizmo.type = Gizmo_Type_CENTER;
+								} else if (test_shape_vs_point(GIZMO_X_LINE_RECT, gizmo_transform, cursor) ||
+									test_shape_vs_point(GIZMO_X_POINTER_POLY, gizmo_transform, cursor)) {
+									gizmo.intensity[1] = 4.5f;
+									if (ImGui::GetIO().MouseDown[ImGuiMouseButton_Left])
+										gizmo.type = Gizmo_Type_TRANSLATE_X;
+								} else if (test_shape_vs_point(GIZMO_Y_LINE_RECT, gizmo_transform, cursor) ||
+									test_shape_vs_point(GIZMO_Y_POINTER_POLY, gizmo_transform, cursor)) {
+									gizmo.intensity[2] = 2;
+									if (ImGui::GetIO().MouseDown[ImGuiMouseButton_Left])
+										gizmo.type = Gizmo_Type_TRANSLATE_Y;
+								}
+							} break;
+
+							case Gizmo_Render_Type_SCALE: {
+								const Mm_Rect GIZMO_CENTER_RECT = mm_rect(vec2(-GIZMO_LINE_HALF_THICKNESS), vec2(-GIZMO_LINE_HALF_THICKNESS) + vec2(GIZMO_LINE_THICKNESS));
+
+								const Mm_Rect GIZMO_X_LINE_RECT = mm_rect(vec2(GIZMO_LINE_HALF_THICKNESS, -GIZMO_LINE_HALF_THICKNESS),
+									vec2(GIZMO_LINE_HALF_THICKNESS, -GIZMO_LINE_HALF_THICKNESS) + vec2(GIZMO_LINE_LENGTH, GIZMO_LINE_THICKNESS));
+								const Mm_Rect GIZMO_Y_LINE_RECT = mm_rect(vec2(-GIZMO_LINE_HALF_THICKNESS, GIZMO_LINE_HALF_THICKNESS),
+									vec2(-GIZMO_LINE_HALF_THICKNESS, GIZMO_LINE_HALF_THICKNESS) + vec2(GIZMO_LINE_THICKNESS, GIZMO_LINE_LENGTH));
+
+								const Mm_Rect GIZMO_X_POINTER_RECT = mm_rect(vec2(GIZMO_POINTER_OFFSET, -GIZMO_POINTER_HALF_THICKNESS),
+									vec2(GIZMO_POINTER_OFFSET, -GIZMO_POINTER_HALF_THICKNESS) + vec2(GIZMO_POINTER_THICKNESS));
+								const Mm_Rect GIZMO_Y_POINTER_RECT = mm_rect(vec2(-GIZMO_POINTER_HALF_THICKNESS, GIZMO_POINTER_OFFSET),
+									vec2(-GIZMO_POINTER_HALF_THICKNESS, GIZMO_POINTER_OFFSET) + vec2(GIZMO_POINTER_THICKNESS));
+
+								if (test_shape_vs_point(GIZMO_CENTER_RECT, gizmo_transform, cursor)) {
+									gizmo.intensity[0] = 2;
+									if (ImGui::GetIO().MouseDown[ImGuiMouseButton_Left])
+										gizmo.type = Gizmo_Type_CENTER;
+								} else if (test_shape_vs_point(GIZMO_X_LINE_RECT, gizmo_transform, cursor) ||
+									test_shape_vs_point(GIZMO_X_POINTER_RECT, gizmo_transform, cursor)) {
+									gizmo.intensity[1] = 4.5f;
+									if (ImGui::GetIO().MouseDown[ImGuiMouseButton_Left]) {
+										gizmo.type = Gizmo_Type_SCALE_X;
+										gizmo.values[0] = 1;
+										gizmo.values[1] = 1;
+									}
+								} else if (test_shape_vs_point(GIZMO_Y_LINE_RECT, gizmo_transform, cursor) ||
+									test_shape_vs_point(GIZMO_Y_POINTER_RECT, gizmo_transform, cursor)) {
+									gizmo.intensity[2] = 2;
+									if (ImGui::GetIO().MouseDown[ImGuiMouseButton_Left]) {
+										gizmo.type = Gizmo_Type_SCALE_Y;
+										gizmo.values[0] = 1;
+										gizmo.values[1] = 1;
+									}
+								}
+							} break;
+
+							case Gizmo_Render_Type_ROTATE: {
+								const Circle GIZMO_OUTER = { vec2(0), GIZMO_ROTOR_MAX_RADIUS };
+								const Circle GIZMO_INNER = { vec2(0), GIZMO_ROTOR_MIN_RADIUS };
+
+								if (test_shape_vs_point(GIZMO_OUTER, gizmo_transform, cursor) &&
+									!test_shape_vs_point(GIZMO_INNER, gizmo_transform, cursor)) {
+									gizmo.intensity[3] = 2;
+									if (ImGui::GetIO().MouseDown[ImGuiMouseButton_Left]) {
+										gizmo.type = Gizmo_Type_ROTOR;
+										gizmo.values[0] = cursor.x - body_selected->transform.p.x;
+										gizmo.values[1] = cursor.y - body_selected->transform.p.y;
+									}
+								}
+							} break;
+						}
+					} break;
+
+					case Gizmo_Type_CENTER: {
+						gizmo.intensity[0] = 2;
+						
+						delta.x *= 2 * iscale * view_width;
+						delta.y *= 2 * iscale * view_height;
+
+						Entity *entity = scene_find_entity(scene, body_selected->entity_id);
+						entity->position += delta;
+						body_selected->transform.p = entity->position;
+						body_selected->bounding_box = rigid_body_bounding_box(body_selected, 0);
+					} break;
+
+					case Gizmo_Type_TRANSLATE_X: {
+						gizmo.intensity[1] = 4.5f;
+						
+						delta.x *= 2 * iscale * view_width;
+						delta.y *= 2 * iscale * view_height; 
+
+						Entity *entity = scene_find_entity(scene, body_selected->entity_id);
+						entity->position.x += delta.x;
+						body_selected->transform.p = entity->position;
+						body_selected->bounding_box = rigid_body_bounding_box(body_selected, 0);
+					} break;
+						
+					case Gizmo_Type_TRANSLATE_Y: {
+						gizmo.intensity[2] = 2;
+
+						delta.x *= 2 * iscale * view_width;
+						delta.y *= 2 * iscale * view_height; 
+
+						Entity *entity = scene_find_entity(scene, body_selected->entity_id);
+						entity->position.y += delta.y;
+						body_selected->transform.p = entity->position;
+						body_selected->bounding_box = rigid_body_bounding_box(body_selected, 0);
+					} break;
+
+					case Gizmo_Type_SCALE_X: {
+						gizmo.intensity[1] = 4.5f;
+
+						delta.x *= 2 * iscale * view_width;
+						delta.y *= 2 * iscale * view_height;
+
+						r32 scale_amount_x, scale_amount_y;
+						scale_amount_x = powf(2.0f, delta.x);
+						scale_amount_y = ImGui::GetIO().KeyShift ? scale_amount_x : 1;
+						gizmo.values[0] *= scale_amount_x;
+						gizmo.values[1] *= scale_amount_y;
+						body_selected->transform.xform = mat2_scalar(scale_amount_x, scale_amount_y) * body_selected->transform.xform;
+						body_selected->bounding_box = rigid_body_bounding_box(body_selected, 0);
+					} break;
+					
+					case Gizmo_Type_SCALE_Y: {
+						gizmo.intensity[2] = 2;
+
+						delta.x *= 2 * iscale * view_width;
+						delta.y *= 2 * iscale * view_height;
+
+						r32 scale_amount_x, scale_amount_y;
+						scale_amount_y = powf(2.0f, delta.y);
+						scale_amount_x = ImGui::GetIO().KeyShift ? scale_amount_y : 1;
+						gizmo.values[0] *= scale_amount_x;
+						gizmo.values[1] *= scale_amount_y;
+						body_selected->transform.xform = mat2_scalar(scale_amount_x, scale_amount_y) * body_selected->transform.xform;
+						body_selected->bounding_box = rigid_body_bounding_box(body_selected, 0);
+					} break;
+
+					case Gizmo_Type_ROTOR: {
+						gizmo.intensity[3] = 2;
+
+						Vec2 a = vec2_normalize_check(vec2(gizmo.values[0], gizmo.values[1]));
+						Vec2 b = vec2_normalize_check(cursor - body_selected->transform.p);
+						r32 angle = vec2_signed_angle_between(a, b);
+
+						gizmo.values[0] = b.x;
+						gizmo.values[1] = b.y;
+
+						body_selected->transform.xform = mat2_rotation(angle) * body_selected->transform.xform;
+						body_selected->bounding_box = rigid_body_bounding_box(body_selected, 0);
+					} break;
+				}
+				
+			}
+
+			if (gizmo.type == Gizmo_Type_NONE) {
+				if (ImGui::GetIO().MouseClicked[ImGuiMouseButton_Left]) {
+					body_selected = body_hovered;
+					if (gizmo.render_type == Gizmo_Render_Type_NONE)
+						gizmo.render_type = Gizmo_Render_Type_TRANSLATE;
+				}
+
+				if (body_hovered && ImGui::GetIO().MouseDoubleClicked[ImGuiMouseButton_Left]) {
+					body_selected = body_hovered;
+					if (gizmo.render_type == Gizmo_Render_Type_NONE)
+						gizmo.render_type = Gizmo_Render_Type_TRANSLATE;
+
+					camera.target_position = body_selected->transform.p;
+					camera.behaviour = Camera_Behaviour_ANIMATE;
+
+					r32 sx = body_selected->bounding_box.max.x - body_selected->bounding_box.min.x;
+					r32 sy = body_selected->bounding_box.max.y - body_selected->bounding_box.min.y;
+					sx /= view_width;
+					sy /= view_height;
+					r32 s = maximum(sx, sy);
+
+					camera.target_distance = log2f(s);
+				}
+			}
+
+			if (body_selected == nullptr) {
+				gizmo.render_type = Gizmo_Render_Type_NONE;
 			}
 		}
 
 		#endif
-
-		if (body_selected) {
-			camera.target_position = body_selected->transform.p;
-
-			r32 sx = body_selected->bounding_box.max.x - body_selected->bounding_box.min.x;
-			r32 sy = body_selected->bounding_box.max.y - body_selected->bounding_box.min.y;
-			sx /= view_width;
-			sy /= view_height;
-			r32 s = maximum(sx, sy);
-
-			camera.target_distance = log2f(s);
-
-		} else {
-			camera.target_distance = 0;
-			camera.target_position = primary_player->position;
-		}
 
 		if (!ImGui_IsUsingCursor()) {
 			ImGui::GetStyle().Alpha = 0.4f;
@@ -860,13 +1134,8 @@ int karma_user_zero() {
 			
 			if (&body == body_hovered) {
 				color.xyz = vec3(1) - color.xyz;
-				color.xyz *= 1.5f;
 			} 
 			
-			if (&body == body_selected) {
-				color.xyz *= 3;
-			}
-
 			for (u32 index = 0; index < body.fixture_count; ++index) {
 				auto f = rigid_body_get_fixture(&body, index);
 				render_shape(*f, body.transform, color.xyz);
@@ -896,75 +1165,87 @@ int karma_user_zero() {
 
 		// Gizmo
 
-		if (body_selected) {
-			const auto &t = body_selected->transform;
-			r32 _00 = t.xform.m2[0][0];
-			r32 _01 = t.xform.m2[0][1];
-			r32 _10 = t.xform.m2[1][0];
-			r32 _11 = t.xform.m2[1][1];
+		if (gizmo.render_type != Gizmo_Render_Type_NONE) {
+			transform = transform * mat4_translation(vec3(body_selected->transform.p, 0)) * mat4_scalar(iscale, iscale, 1);
+			im2d_begin(view, transform);
 
-			auto scale_x = sqrtf(_00 * _00 + _10 * _10);
-			auto scale_y = sqrtf(_01 * _01 + _11 * _11);
 
-			r32 c = _00 / scale_x;
-			r32 s = _10 / scale_x;
+			switch (gizmo.render_type) {
+				case Gizmo_Render_Type_TRANSLATE: {
+					// square
+					im2d_rect(vec2(-GIZMO_LINE_HALF_THICKNESS), vec2(GIZMO_LINE_THICKNESS), vec4(gizmo.intensity[0] * GIZMO_SQUARE_COLOR, 1));
+					
+					// x
+					im2d_rect(vec2(GIZMO_LINE_HALF_THICKNESS, -GIZMO_LINE_HALF_THICKNESS), vec2(GIZMO_LINE_LENGTH, GIZMO_LINE_THICKNESS), vec4(gizmo.intensity[1] * GIZMO_X_COLOR, 1));
 
-			r32 angle = atanf(s / c) + ((c < 0) ? MATH_PI : 0);
+					// y
+					im2d_rect(vec2(-GIZMO_LINE_HALF_THICKNESS, GIZMO_LINE_HALF_THICKNESS), vec2(GIZMO_LINE_THICKNESS, GIZMO_LINE_LENGTH), vec4(gizmo.intensity[2] * GIZMO_Y_COLOR, 1));
 
-			transform = transform * mat4_translation(vec3(body_selected->transform.p, 0)) * mat4_rotation_z(angle);
+					// x pointer arrow
+					im2d_triangle(vec2(GIZMO_POINTER_OFFSET, -GIZMO_POINTER_HALF_THICKNESS),
+						vec2(GIZMO_POINTER_OFFSET, GIZMO_POINTER_HALF_THICKNESS),
+						vec2(GIZMO_POINTER_OFFSET + GIZMO_POINTER_THICKNESS, 0),
+						vec4(gizmo.intensity[1] * GIZMO_X_COLOR, 1));
+
+					// y pointer arrow
+					im2d_triangle(vec2(GIZMO_POINTER_HALF_THICKNESS, GIZMO_POINTER_OFFSET),
+						vec2(-GIZMO_POINTER_HALF_THICKNESS, GIZMO_POINTER_OFFSET),
+						vec2(0, GIZMO_POINTER_OFFSET + GIZMO_POINTER_THICKNESS),
+						vec4(gizmo.intensity[2] * GIZMO_Y_COLOR, 1));
+
+				} break;
+
+				case Gizmo_Render_Type_SCALE: {
+					r32 offset_x = GIZMO_LINE_LENGTH, offset_y = GIZMO_LINE_LENGTH;
+
+					if (gizmo.type == Gizmo_Type_SCALE_X || gizmo.type == Gizmo_Type_SCALE_Y) {
+						offset_x *= gizmo.values[0];
+						offset_y *= gizmo.values[1];
+					}
+
+					// square
+					im2d_rect(vec2(-GIZMO_LINE_HALF_THICKNESS), vec2(GIZMO_LINE_THICKNESS), vec4(gizmo.intensity[0] * GIZMO_SQUARE_COLOR, 1));
+
+					// x
+					im2d_rect(vec2(GIZMO_LINE_HALF_THICKNESS, -GIZMO_LINE_HALF_THICKNESS), vec2(offset_x, GIZMO_LINE_THICKNESS), vec4(gizmo.intensity[1] * GIZMO_X_COLOR, 1));
+
+					// y
+					im2d_rect(vec2(-GIZMO_LINE_HALF_THICKNESS, GIZMO_LINE_HALF_THICKNESS), vec2(GIZMO_LINE_THICKNESS, offset_y), vec4(gizmo.intensity[2] * GIZMO_Y_COLOR, 1));
+
+					// x pointer box
+					im2d_rect(vec2(offset_x - GIZMO_LINE_LENGTH + GIZMO_POINTER_OFFSET, -GIZMO_POINTER_HALF_THICKNESS), vec2(GIZMO_POINTER_THICKNESS), vec4(gizmo.intensity[1] * GIZMO_X_COLOR, 1));
+
+					// y pointer box
+					im2d_rect(vec2(-GIZMO_POINTER_HALF_THICKNESS, offset_y - GIZMO_LINE_LENGTH + GIZMO_POINTER_OFFSET), vec2(GIZMO_POINTER_THICKNESS), vec4(gizmo.intensity[2] * GIZMO_Y_COLOR, 1));
+
+				} break;
+
+				case Gizmo_Render_Type_ROTATE: {
+					const auto &t = body_selected->transform.xform;
+					r32 _00 = t.m2[0][0];
+					r32 _01 = t.m2[0][1];
+					r32 _10 = t.m2[1][0];
+					r32 _11 = t.m2[1][1];
+
+					r32 scale_x = sqrtf(_00 * _00 + _10 * _10);
+					r32 scale_y = sqrtf(_01 * _01 + _11 * _11);
+
+					r32 c = _00 / scale_x;
+					r32 s = _10 / scale_x;
+
+					r32 angle_a = atanf(s / c) + ((c < 0) ? MATH_PI : 0);
+					while (angle_a < 0) angle_a += 2 * MATH_PI;
+					r32 angle_b = angle_a + 0.6f * MATH_TAU;
+					while (angle_b > 2 * MATH_PI) angle_b -= 2 * MATH_PI;
+
+					r32 intensity = gizmo.intensity[3];
+					im2d_pie_part(vec2(0), GIZMO_ROTOR_MIN_RADIUS, GIZMO_ROTOR_MAX_RADIUS, 0, 2 * MATH_PI, vec4(GIZMO_ROTOR_COLOR, 1));
+					im2d_pie_part(vec2(0), GIZMO_ROTOR_MIN_RADIUS, GIZMO_ROTOR_MAX_RADIUS, angle_a, angle_b, vec4(intensity * GIZMO_ROTOR_INDICATOR_COLOR, 1));
+				} break;
+			}
+
+			im2d_end();
 		}
-
-		transform = transform * mat4_scalar(iscale, iscale, 1);
-
-		im2d_begin(view, transform);
-
-		const r32 GIZMO_LINE_THICKNESS = 0.1f;
-		const r32 GIZMO_LINE_HALF_THICKNESS = 0.5f * GIZMO_LINE_THICKNESS;
-		const r32 GIZMO_LINE_LENGTH = 1.3f;
-		const r32 GIZMO_POINTER_THICKNESS = 2.0f * GIZMO_LINE_THICKNESS;
-		const r32 GIZMO_POINTER_HALF_THICKNESS = 0.5f * GIZMO_POINTER_THICKNESS;
-		const Vec3 GIZMO_SQUARE_COLOR = vec3(1);
-		const r32 GIZMO_ROTOR_MAX_RADIUS = 1.5f * GIZMO_LINE_LENGTH;
-		const r32 GIZMO_ROTOR_MIN_RADIUS = GIZMO_ROTOR_MAX_RADIUS - 0.6f * GIZMO_POINTER_THICKNESS;
-		const Vec3 GIZMO_X_COLOR = vec3(0.8f, 0.1f, 0.1f);
-		const Vec3 GIZMO_Y_COLOR = vec3(0.1f, 0.8f, 0.1f);
-		const Vec3 GIZMO_ROTOR_COLOR = vec3(0.1f, 0.1f, 0.8f);
-
-		static r32 intensity = 1;
-
-		// square
-		im2d_rect(vec2(-GIZMO_LINE_HALF_THICKNESS), vec2(GIZMO_LINE_THICKNESS), vec4(intensity * GIZMO_SQUARE_COLOR, 1));
-
-		// x
-		im2d_rect(vec2(GIZMO_LINE_HALF_THICKNESS, -GIZMO_LINE_HALF_THICKNESS), vec2(GIZMO_LINE_LENGTH, GIZMO_LINE_THICKNESS), vec4(intensity * GIZMO_X_COLOR, 1));
-
-		// y
-		im2d_rect(vec2(-GIZMO_LINE_HALF_THICKNESS, GIZMO_LINE_HALF_THICKNESS), vec2(GIZMO_LINE_THICKNESS, GIZMO_LINE_LENGTH), vec4(intensity * GIZMO_Y_COLOR, 1));
-
-		const r32 GIZMO_POINTER_OFFSET = GIZMO_LINE_LENGTH + GIZMO_LINE_HALF_THICKNESS;
-
-		// x pointer box
-		//im2d_rect(vec2(GIZMO_POINTER_OFFSET, -GIZMO_POINTER_HALF_THICKNESS), vec2(GIZMO_POINTER_THICKNESS), GIZMO_X_COLOR);
-
-		// y pointer box
-		//im2d_rect(vec2(-GIZMO_POINTER_HALF_THICKNESS, GIZMO_POINTER_OFFSET), vec2(GIZMO_POINTER_THICKNESS), GIZMO_Y_COLOR);
-
-		// x pointer arrow
-		im2d_triangle(vec2(GIZMO_POINTER_OFFSET, -GIZMO_POINTER_HALF_THICKNESS),
-			vec2(GIZMO_POINTER_OFFSET, GIZMO_POINTER_HALF_THICKNESS),
-			vec2(GIZMO_POINTER_OFFSET + GIZMO_POINTER_THICKNESS, 0),
-			vec4(intensity * GIZMO_X_COLOR, 1));
-
-		// y pointer arrow
-		im2d_triangle(vec2(GIZMO_POINTER_HALF_THICKNESS, GIZMO_POINTER_OFFSET),
-			vec2(-GIZMO_POINTER_HALF_THICKNESS, GIZMO_POINTER_OFFSET),
-			vec2(0, GIZMO_POINTER_OFFSET + GIZMO_POINTER_THICKNESS),
-			vec4(intensity * GIZMO_Y_COLOR, 1));
-
-		// rotor
-		im2d_pie_part(vec2(0), GIZMO_ROTOR_MIN_RADIUS, GIZMO_ROTOR_MAX_RADIUS, 0.2f * MATH_TAU, 0.8f * MATH_TAU, vec4(intensity * GIZMO_ROTOR_COLOR, 1));
-
-		im2d_end();
 
 		gfx_end_drawing();
 
@@ -1000,7 +1281,6 @@ int karma_user_zero() {
 		}
 
 		ImGui::Begin("Entity", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
-		ImGui::DragFloat("Instensity", &intensity);
 		editor_entity(entity_selected);
 		ImGui::End();
 #else	

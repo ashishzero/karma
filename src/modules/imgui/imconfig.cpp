@@ -288,7 +288,7 @@ bool ImGuiEx::HandleEvent(const Event &event) {
 		case Event_Type_KEY_DOWN: {
 			auto key = event.key.symbol;
 			IM_ASSERT(key >= 0 && key < IM_ARRAYSIZE(io.KeysDown));
-			io.KeysDown[key] = event.type == Event_Type_KEY_DOWN;
+			io.KeysDown[key] = (event.type & Event_Type_KEY_DOWN);
 			io.KeyShift      = ((system_get_key_mods() & Key_Mod_SHIFT) != 0);
 			io.KeyCtrl       = ((system_get_key_mods() & Key_Mod_CTRL) != 0);
 			io.KeyAlt        = ((system_get_key_mods() & Key_Mod_ALT) != 0);
