@@ -395,9 +395,9 @@ int karma_user_zero() {
 
 	scene_create_new_entity(scene, Entity_Type_Camera, info);
 
-	Entity *entity_hovered, *entity_selected;
-	entity_hovered = nullptr;
-	entity_selected = nullptr;
+	Rigid_Body *body_hovered, *body_selected;
+	body_hovered = nullptr;
+	body_selected = nullptr;
 
 	Fixture fixture;
 	Resource_Id id;
@@ -774,31 +774,35 @@ int karma_user_zero() {
 
 		im2d_set_stroke_weight(0.02f);
 
+		r32 scale = powf(0.5f, camera.distance);
+		r32 iscale = 1.0f / scale;
+
 		#if 1
 		auto cursor = system_get_cursor_position();
 		cursor.x /= window_w;
 		cursor.y /= window_h;
 		cursor = 2.0f * cursor - vec2(1);
-		cursor.x *= view_width;
-		cursor.y *= view_height;
+
+		cursor.x *= iscale * view_width;
+		cursor.y *= iscale * view_height;
 		cursor += camera.position;
 
 		if (!ImGui_IsUsingCursor()) {
-			entity_hovered = nullptr;
+			body_hovered = nullptr;
 			for (auto ptr = iter_begin(&scene->rigid_bodies); 
-				iter_continue(&scene->rigid_bodies, ptr) && !entity_hovered; 
+				iter_continue(&scene->rigid_bodies, ptr) && !body_hovered; 
 				ptr = iter_next<Rigid_Body>(ptr)) {
 				auto &body = ptr->data;
-				for (u32 index = 0; index < body.fixture_count && !entity_hovered; ++index) {
+				for (u32 index = 0; index < body.fixture_count && !body_hovered; ++index) {
 					Fixture *fixture = rigid_body_get_fixture(&body, index);
 					if (test_fixture_point(*fixture, body.transform, cursor)) {
-						entity_hovered = scene_find_entity(scene, body.entity_id);
+						body_hovered = &body;
 					}
 				}
 			}
 
 			if (system_button(Button_LEFT) == Key_State_DOWN) {
-				entity_selected = entity_hovered;
+				body_selected = body_hovered;
 			}
 		}
 
@@ -819,8 +823,6 @@ int karma_user_zero() {
 		gfx_begin_drawing(Framebuffer_Type_HDR, Clear_ALL, vec4(0.05f, 0.05f, 0.05f, 1.0f));
 		gfx_viewport(0, 0, window_w, window_h);
 
-		r32 scale = powf(0.5f, camera.distance);
-
 		Mat4 transform;
 		if (camera.lens.kind == Camera_View_Kind::ORTHOGRAPHIC) {
 			transform = mat4_scalar(scale, scale, 1.0f) * mat4_translation(vec3(-camera.position, 0.0f));
@@ -840,13 +842,23 @@ int karma_user_zero() {
 		for (auto ptr = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, ptr); ptr = iter_next<Rigid_Body>(ptr)) {
 			auto &body = ptr->data;
 
-			for (u32 index = 0; index < body.fixture_count; ++index) {
-				auto f = rigid_body_get_fixture(&body, index);
-				auto color = (body.flags & Rigid_Body_COLLIDING) ? vec3(1, 0, 0) : vec3(0.7f, 0.45f, 0);
-				render_shape(*f, body.transform, color);
+			Vec4 color = (body.flags & Rigid_Body_COLLIDING) ? vec4(1, 0, 0) : vec4(0.7f, 0.45f, 0);
+			
+			if (&body == body_hovered) {
+				color.xyz = vec3(1) - color.xyz;
+				color.xyz *= 1.5f;
+			} 
+			
+			if (&body == body_selected) {
+				color.xyz *= 3;
 			}
 
-			Vec4 color = (body.flags & Rigid_Body_BOUNDING_BOX_COLLIDING) ? vec4(0.7f, 0.1f, 0.1f, 1) : vec4(0.1f, 0.7f, 0.1f, 1);
+			for (u32 index = 0; index < body.fixture_count; ++index) {
+				auto f = rigid_body_get_fixture(&body, index);
+				render_shape(*f, body.transform, color.xyz);
+			}
+
+			color = (body.flags & Rigid_Body_BOUNDING_BOX_COLLIDING) ? vec4(0.7f, 0.1f, 0.1f, 1) : vec4(0.1f, 0.7f, 0.1f, 1);
 
 			im2d_rect_outline(body.bounding_box.min, body.bounding_box.max - body.bounding_box.min, color);
 		}
@@ -893,11 +905,16 @@ int karma_user_zero() {
 
 #if 1
 		//ImGui::ShowDemoWindow();
-		if (entity_selected) {
-			ImGui::Begin("Entity", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
-			editor_entity(entity_selected);
-			ImGui::End();
+		Entity *entity_selected;
+		if (!body_selected) {
+			entity_selected = &camera;
+		} else {
+			entity_selected = scene_find_entity(scene, body_selected->entity_id);
 		}
+
+		ImGui::Begin("Entity", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
+		editor_entity(entity_selected);
+		ImGui::End();
 #else	
 		ImGui::Begin("World", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
 		
