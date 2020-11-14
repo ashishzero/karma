@@ -130,6 +130,7 @@ void Shutdown();
 bool HandleEvent(const Event &event);
 void UpdateFrame(r32 dt);
 void RenderFrame();
+Vec2 MouseCursorReverse();
 void LabelColor(const char *label, const Vec4 &color, int flags);
 bool LabelCheckbox(const char *label, bool *v, bool enabled);
 };

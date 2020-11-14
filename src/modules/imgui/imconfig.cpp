@@ -358,6 +358,13 @@ void ImGuiEx::RenderFrame() {
 //
 #include "imgui_internal.h"
 
+Vec2 ImGuiEx::MouseCursorReverse() {
+	Vec2 c = ImGui::GetIO().MousePos;
+	r32 y = (r32)system_get_client_size().y;
+	c.y = y - c.y;
+	return c;
+}
+
 bool ImGuiEx::LabelCheckbox(const char *label, bool *v, bool enabled) {
 	ImGuiWindow *window = ImGui::GetCurrentWindow();
 	if (window->SkipItems)

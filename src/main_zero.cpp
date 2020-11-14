@@ -739,8 +739,6 @@ int karma_user_zero() {
 				player.position = player.rigid_body->transform.p;
 			}
 
-			scene->by_type.camera[0].target_position = primary_player->position;
-
 			for (auto &camera : scene->by_type.camera) {
 				if (camera.behaviour == Camera_Behaviour_ANIMATE) {
 					camera.position = lerp(camera.position, camera.target_position, 1.0f - powf(1.0f - camera.follow_factor, dt));
@@ -778,10 +776,12 @@ int karma_user_zero() {
 		r32 iscale = 1.0f / scale;
 
 		#if 1
-		auto cursor = system_get_cursor_position();
+		Vec2 cursor = ImGui::GetIO().MousePos;
 		cursor.x /= window_w;
 		cursor.y /= window_h;
+		cursor.y = 1.0f - cursor.y;
 		cursor = 2.0f * cursor - vec2(1);
+
 
 		cursor.x *= iscale * view_width;
 		cursor.y *= iscale * view_height;
@@ -801,12 +801,28 @@ int karma_user_zero() {
 				}
 			}
 
-			if (system_button(Button_LEFT) == Key_State_DOWN) {
+			if (ImGui::GetIO().MouseClicked[ImGuiMouseButton_Left]) {
 				body_selected = body_hovered;
 			}
 		}
 
 		#endif
+
+		if (body_selected) {
+			camera.target_position = body_selected->transform.p;
+
+			r32 sx = body_selected->bounding_box.max.x - body_selected->bounding_box.min.x;
+			r32 sy = body_selected->bounding_box.max.y - body_selected->bounding_box.min.y;
+			sx /= view_width;
+			sy /= view_height;
+			r32 s = maximum(sx, sy);
+
+			camera.target_distance = log2f(s);
+
+		} else {
+			camera.target_distance = 0;
+			camera.target_position = primary_player->position;
+		}
 
 		if (!ImGui_IsUsingCursor()) {
 			ImGui::GetStyle().Alpha = 0.4f;
@@ -836,8 +852,6 @@ int karma_user_zero() {
 			im2d_circle(player.position, player.radius, player.color);
 			im2d_line(player.position, player.position + player.rigid_body->velocity, vec4(0, 1.5f, 0));
 		}
-
-		im2d_circle(vec2(0), 0.05f, vec4(1.2f, 1.2f, 1.2f));
 
 		for (auto ptr = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, ptr); ptr = iter_next<Rigid_Body>(ptr)) {
 			auto &body = ptr->data;
@@ -879,6 +893,79 @@ int karma_user_zero() {
 
 		im2d_end();
 
+
+		// Gizmo
+
+		if (body_selected) {
+			const auto &t = body_selected->transform;
+			r32 _00 = t.xform.m2[0][0];
+			r32 _01 = t.xform.m2[0][1];
+			r32 _10 = t.xform.m2[1][0];
+			r32 _11 = t.xform.m2[1][1];
+
+			auto scale_x = sqrtf(_00 * _00 + _10 * _10);
+			auto scale_y = sqrtf(_01 * _01 + _11 * _11);
+
+			r32 c = _00 / scale_x;
+			r32 s = _10 / scale_x;
+
+			r32 angle = atanf(s / c) + ((c < 0) ? MATH_PI : 0);
+
+			transform = transform * mat4_translation(vec3(body_selected->transform.p, 0)) * mat4_rotation_z(angle);
+		}
+
+		transform = transform * mat4_scalar(iscale, iscale, 1);
+
+		im2d_begin(view, transform);
+
+		const r32 GIZMO_LINE_THICKNESS = 0.1f;
+		const r32 GIZMO_LINE_HALF_THICKNESS = 0.5f * GIZMO_LINE_THICKNESS;
+		const r32 GIZMO_LINE_LENGTH = 1.3f;
+		const r32 GIZMO_POINTER_THICKNESS = 2.0f * GIZMO_LINE_THICKNESS;
+		const r32 GIZMO_POINTER_HALF_THICKNESS = 0.5f * GIZMO_POINTER_THICKNESS;
+		const Vec3 GIZMO_SQUARE_COLOR = vec3(1);
+		const r32 GIZMO_ROTOR_MAX_RADIUS = 1.5f * GIZMO_LINE_LENGTH;
+		const r32 GIZMO_ROTOR_MIN_RADIUS = GIZMO_ROTOR_MAX_RADIUS - 0.6f * GIZMO_POINTER_THICKNESS;
+		const Vec3 GIZMO_X_COLOR = vec3(0.8f, 0.1f, 0.1f);
+		const Vec3 GIZMO_Y_COLOR = vec3(0.1f, 0.8f, 0.1f);
+		const Vec3 GIZMO_ROTOR_COLOR = vec3(0.1f, 0.1f, 0.8f);
+
+		static r32 intensity = 1;
+
+		// square
+		im2d_rect(vec2(-GIZMO_LINE_HALF_THICKNESS), vec2(GIZMO_LINE_THICKNESS), vec4(intensity * GIZMO_SQUARE_COLOR, 1));
+
+		// x
+		im2d_rect(vec2(GIZMO_LINE_HALF_THICKNESS, -GIZMO_LINE_HALF_THICKNESS), vec2(GIZMO_LINE_LENGTH, GIZMO_LINE_THICKNESS), vec4(intensity * GIZMO_X_COLOR, 1));
+
+		// y
+		im2d_rect(vec2(-GIZMO_LINE_HALF_THICKNESS, GIZMO_LINE_HALF_THICKNESS), vec2(GIZMO_LINE_THICKNESS, GIZMO_LINE_LENGTH), vec4(intensity * GIZMO_Y_COLOR, 1));
+
+		const r32 GIZMO_POINTER_OFFSET = GIZMO_LINE_LENGTH + GIZMO_LINE_HALF_THICKNESS;
+
+		// x pointer box
+		//im2d_rect(vec2(GIZMO_POINTER_OFFSET, -GIZMO_POINTER_HALF_THICKNESS), vec2(GIZMO_POINTER_THICKNESS), GIZMO_X_COLOR);
+
+		// y pointer box
+		//im2d_rect(vec2(-GIZMO_POINTER_HALF_THICKNESS, GIZMO_POINTER_OFFSET), vec2(GIZMO_POINTER_THICKNESS), GIZMO_Y_COLOR);
+
+		// x pointer arrow
+		im2d_triangle(vec2(GIZMO_POINTER_OFFSET, -GIZMO_POINTER_HALF_THICKNESS),
+			vec2(GIZMO_POINTER_OFFSET, GIZMO_POINTER_HALF_THICKNESS),
+			vec2(GIZMO_POINTER_OFFSET + GIZMO_POINTER_THICKNESS, 0),
+			vec4(intensity * GIZMO_X_COLOR, 1));
+
+		// y pointer arrow
+		im2d_triangle(vec2(GIZMO_POINTER_HALF_THICKNESS, GIZMO_POINTER_OFFSET),
+			vec2(-GIZMO_POINTER_HALF_THICKNESS, GIZMO_POINTER_OFFSET),
+			vec2(0, GIZMO_POINTER_OFFSET + GIZMO_POINTER_THICKNESS),
+			vec4(intensity * GIZMO_Y_COLOR, 1));
+
+		// rotor
+		im2d_pie_part(vec2(0), GIZMO_ROTOR_MIN_RADIUS, GIZMO_ROTOR_MAX_RADIUS, 0.2f * MATH_TAU, 0.8f * MATH_TAU, vec4(intensity * GIZMO_ROTOR_COLOR, 1));
+
+		im2d_end();
+
 		gfx_end_drawing();
 
 
@@ -913,6 +1000,7 @@ int karma_user_zero() {
 		}
 
 		ImGui::Begin("Entity", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
+		ImGui::DragFloat("Instensity", &intensity);
 		editor_entity(entity_selected);
 		ImGui::End();
 #else	

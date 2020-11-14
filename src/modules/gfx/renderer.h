@@ -155,6 +155,11 @@ void im2d_pie(Vec2 pos, r32 radius_a, r32 radius_b, r32 theta_a, r32 theta_b, Co
 void im2d_pie(Vec3 pos, r32 radius, r32 theta_a, r32 theta_b, Color4 color, int segments = IM_DEFAULT_CIRCLE_SEGMENTS);
 void im2d_pie(Vec2 pos, r32 radius, r32 theta_a, r32 theta_b, Color4 color, int segments = IM_DEFAULT_CIRCLE_SEGMENTS);
 
+void im2d_pie_part(Vec3 pos, r32 radius_a_min, r32 radius_b_min, r32 radius_a_max, r32 radius_b_max, r32 theta_a, r32 theta_b, Color4 color, int segments = IM_DEFAULT_CIRCLE_SEGMENTS);
+void im2d_pie_part(Vec2 pos, r32 radius_a_min, r32 radius_b_min, r32 radius_a_max, r32 radius_b_max, r32 theta_a, r32 theta_b, Color4 color, int segments = IM_DEFAULT_CIRCLE_SEGMENTS);
+void im2d_pie_part(Vec3 pos, r32 radius_min, r32 radius_max, r32 theta_a, r32 theta_b, Color4 color, int segments = IM_DEFAULT_CIRCLE_SEGMENTS);
+void im2d_pie_part(Vec2 pos, r32 radius_min, r32 radius_max, r32 theta_a, r32 theta_b, Color4 color, int segments = IM_DEFAULT_CIRCLE_SEGMENTS);
+
 void im2d_cube(Vec3 position, Quat rotation, Vec3 scale,
 			 Mm_Rect rect0, Mm_Rect rect1, Mm_Rect rect2,
 			 Mm_Rect rect3, Mm_Rect rect4, Mm_Rect rect5, Color4 color);

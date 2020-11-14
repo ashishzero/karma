@@ -1048,6 +1048,59 @@ void im2d_pie(Vec2 pos, r32 radius, r32 theta_a, r32 theta_b, Color4 color, int 
 	im2d_pie(vec3(pos, 1), radius, radius, theta_a, theta_b, color, segments);
 }
 
+void im2d_pie_part(Vec3 pos, r32 radius_a_min, r32 radius_b_min, r32 radius_a_max, r32 radius_b_max, r32 theta_a, r32 theta_b, Color4 color, int segments) {
+	assert(theta_a >= 0 && theta_a <= MATH_PI * 2 && theta_b >= 0 && theta_b <= MATH_PI * 2);
+
+	int first_index = (int)((0.5f * theta_a * MATH_PI_INVERSE) * (r32)(IM_MAX_CIRCLE_SEGMENTS)+0.5f);
+	int last_index = (int)((0.5f * theta_b * MATH_PI_INVERSE) * (r32)(IM_MAX_CIRCLE_SEGMENTS)+0.5f);
+
+	if (first_index >= last_index)
+		last_index += IM_MAX_CIRCLE_SEGMENTS;
+
+	auto value_count = last_index - first_index;
+	segments = minimum(segments, value_count);
+
+	r32 min_px = im_unit_circle_cos[first_index] * radius_a_min;
+	r32 min_py = im_unit_circle_sin[first_index] * radius_b_min;
+	r32 max_px = im_unit_circle_cos[first_index] * radius_a_max;
+	r32 max_py = im_unit_circle_sin[first_index] * radius_b_max;
+
+	r32 min_npx, min_npy;
+	r32 max_npx, max_npy;
+	for (int index = 1; index <= segments; ++index) {
+		auto lookup = first_index + (int)((r32)index / (r32)segments * (r32)value_count + 0.5f);
+		lookup = lookup % IM_MAX_CIRCLE_SEGMENTS;
+
+		min_npx = im_unit_circle_cos[lookup] * radius_a_min;
+		min_npy = im_unit_circle_sin[lookup] * radius_b_min;
+		max_npx = im_unit_circle_cos[lookup] * radius_a_max;
+		max_npy = im_unit_circle_sin[lookup] * radius_b_max;
+
+		im2d_quad(pos + vec3(min_npx, min_npy, 0),
+			pos + vec3(max_npx, max_npy, 0),
+			pos + vec3(max_px, max_py, 0),
+			pos + vec3(min_px, min_py, 0),
+			color);
+
+		min_px = min_npx;
+		min_py = min_npy;
+		max_px = max_npx;
+		max_py = max_npy;
+	}
+}
+
+void im2d_pie_part(Vec2 pos, r32 radius_a_min, r32 radius_b_min, r32 radius_a_max, r32 radius_b_max, r32 theta_a, r32 theta_b, Color4 color, int segments) {
+	im2d_pie_part(vec3(pos, 1), radius_a_min, radius_b_min, radius_a_max, radius_b_max, theta_a, theta_b, color, segments);
+}
+
+void im2d_pie_part(Vec3 pos, r32 radius_min, r32 radius_max, r32 theta_a, r32 theta_b, Color4 color, int segments) {
+	im2d_pie_part(pos, radius_min, radius_min, radius_max, radius_max, theta_a, theta_b, color, segments);
+}
+
+void im2d_pie_part(Vec2 pos, r32 radius_min, r32 radius_max, r32 theta_a, r32 theta_b, Color4 color, int segments) {
+	im2d_pie_part(vec3(pos, 1), radius_min, radius_min, radius_max, radius_max, theta_a, theta_b, color, segments);
+}
+
 void im2d_cube(Vec3 position, Quat rotation, Vec3 scale,
 			 Mm_Rect rect0, Mm_Rect rect1, Mm_Rect rect2,
 			 Mm_Rect rect3, Mm_Rect rect4, Mm_Rect rect5, Color4 color) {
