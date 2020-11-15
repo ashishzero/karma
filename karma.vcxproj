@@ -289,7 +289,7 @@ popd
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Developer|x64'">false</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="src\editor.cpp" />
+    <ClCompile Include="src\modules\imgui\editor.cpp" />
     <ClCompile Include="src\modules\imgui\imgui_impl_dx11.cpp" />
     <ClCompile Include="src\modules\imgui\imconfig.cpp" />
     <ClCompile Include="src\modules\imgui\imgui.cpp" />
@@ -354,7 +354,7 @@ popd
     <ClInclude Include="src\modules\core\thread_pool.h" />
     <ClInclude Include="src\modules\imgui\dev.h" />
     <ClInclude Include="src\modules\core\directx\dx_error.h" />
-    <ClInclude Include="src\editor.h" />
+    <ClInclude Include="src\modules\imgui\editor.h" />
     <ClInclude Include="src\entity.h" />
     <ClInclude Include="src\scene.h" />
     <ClInclude Include="src\shaders\gfx_shaders.h" />

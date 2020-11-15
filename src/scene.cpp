@@ -4,8 +4,8 @@
 #include "modules/core/systems.h"
 #include "modules/gfx/renderer.h"
 #include "modules/imgui/imgui.h"
+#include "modules/imgui/editor.h"
 
-#include "editor.h"
 #include ".generated/entity.typeinfo"
 
 const r32 GIZMO_LINE_THICKNESS = 0.1f;
@@ -614,8 +614,9 @@ void scene_update(Scene *scene, r32 window_w, r32 window_h) {
 		}
 
 		if (ImGui::GetIO().MouseWheel) {
-			camera.behaviour |= Camera_Behaviour_ANIMATE_FOCUS;
-			camera.target_distance -= 0.6f * ImGui::GetIO().MouseWheel;
+			clear_bit(camera.behaviour, Camera_Behaviour_ANIMATE_FOCUS);
+			camera.target_distance = camera.distance;
+			camera.distance -= ImGui::GetIO().DeltaTime * ImGui::GetIO().MouseWheel * 6;
 		}
 
 		editor.hovered_body = nullptr;
