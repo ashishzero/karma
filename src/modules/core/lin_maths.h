@@ -865,6 +865,7 @@ Vec3 barycentric(Vec3 a, Vec3 b, Vec3 c, Vec3 p);
 
 bool is_quad_convex(Vec2 a, Vec2 b, Vec2 c, Vec2 d);
 bool is_quad_convex(Vec3 a, Vec3 b, Vec3 c, Vec3 d);
+bool is_polygon_convex(const Polygon &polygon);
 
 Mm_Rect enclosing_mm_rect_mm_rect(const Mm_Rect &a0, const Mm_Rect &a1);
 Circle enclosing_circle_circle(const Circle &c0, const Circle &c1);

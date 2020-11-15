@@ -2013,6 +2013,29 @@ bool is_quad_convex(Vec3 a, Vec3 b, Vec3 c, Vec3 d) {
 	return vec3_dot(acd, acb) < 0.0f;
 }
 
+bool is_polygon_convex(const Polygon &polygon) {
+	u32 count = polygon.vertex_count;
+	const Vec2 *vertices = polygon.vertices;
+	Vec2 a, b, c;
+	a = vertices[0];
+	b = vertices[1];
+
+	for (u32 index = 2; index < count; ++index) {
+		c = vertices[index];
+
+		if (!triangle_is_cw(a, b, c))
+			return false;
+
+		b = c;
+	}
+
+	b = vertices[1];
+	if (!triangle_is_cw(a, b, c))
+		return false;
+
+	return true;
+}
+
 Mm_Rect enclosing_mm_rect_mm_rect(const Mm_Rect &a0, const Mm_Rect &a1) {
 	Mm_Rect a;
 	for (s32 i = 0; i < 2; i++) {

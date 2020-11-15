@@ -1030,7 +1030,24 @@ bool editor_fixture(Fixture *fixture, u32 count) {
 
 			case Fixture_Shape_Polygon: {
 				auto shape = fixture_get_shape(f, Polygon);
-				result |= editor_fixture_shape(*shape, "Polygon");
+				u32 count = shape->vertex_count;
+				Vec2 *vertices = shape->vertices;
+
+				ImGui::PushID((void *)(vertices + index));
+
+				char label[5];
+				for (u32 index = 0; index < count; ++index) {
+					snprintf(label, sizeof(label), "%u", index);
+					Vec2 v = vertices[index];
+					if (ImGui::DragFloat2(label, vertices[index].m, 0.01f, 0.0f, 0.0f, "%.4f", 0)) {
+						if (!is_polygon_convex(*shape)) {
+							vertices[index] = v;
+						}
+						result = true;
+					}
+				}
+
+				ImGui::PopID();
 			} break;
 
 				invalid_default_case();
