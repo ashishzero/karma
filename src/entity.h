@@ -22,6 +22,16 @@ struct Fixture {
 
 #define fixture_get_shape(fixture, type) ((type *)((fixture)->handle))
 
+typedef u64 Resource_Id;
+typedef char Resource_Name[125];
+
+struct Resource_Fixture {
+	attribute(read_only)	Resource_Id		id;
+	attribute(text)			Resource_Name	name;
+	attribute(no_display)	Fixture *		fixtures;
+	attribute(no_display)	u32				fixture_count;
+};
+
 enum Rigid_Body_Type : u16 {
 	Rigid_Body_Type_Static,
 	Rigid_Body_Type_Dynamic

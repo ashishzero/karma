@@ -1012,7 +1012,7 @@ void im2d_pie(Vec3 pos, r32 radius_a, r32 radius_b, r32 theta_a, r32 theta_b, Co
 	int first_index = (int)((0.5f * theta_a * MATH_PI_INVERSE) * (r32)(IM_MAX_CIRCLE_SEGMENTS) + 0.5f);
 	int last_index  = (int)((0.5f * theta_b * MATH_PI_INVERSE) * (r32)(IM_MAX_CIRCLE_SEGMENTS) + 0.5f);
 
-	if (first_index >= last_index)
+	while (first_index >= last_index)
 		last_index += IM_MAX_CIRCLE_SEGMENTS;
 
 	auto value_count = last_index - first_index;
@@ -1054,7 +1054,7 @@ void im2d_pie_part(Vec3 pos, r32 radius_a_min, r32 radius_b_min, r32 radius_a_ma
 	int first_index = (int)((0.5f * theta_a * MATH_PI_INVERSE) * (r32)(IM_MAX_CIRCLE_SEGMENTS)+0.5f);
 	int last_index = (int)((0.5f * theta_b * MATH_PI_INVERSE) * (r32)(IM_MAX_CIRCLE_SEGMENTS)+0.5f);
 
-	if (first_index >= last_index)
+	while (first_index >= last_index)
 		last_index += IM_MAX_CIRCLE_SEGMENTS;
 
 	auto value_count = last_index - first_index;
@@ -1311,7 +1311,7 @@ void im2d_arc_outline(Vec3 position, r32 radius_a, r32 radius_b, r32 theta_a, r3
 	int first_index = (int)((0.5f * theta_a * MATH_PI_INVERSE) * (r32)(IM_MAX_CIRCLE_SEGMENTS) + 0.5f);
 	int last_index  = (int)((0.5f * theta_b * MATH_PI_INVERSE) * (r32)(IM_MAX_CIRCLE_SEGMENTS) + 0.5f);
 
-	if (first_index >= last_index)
+	while (first_index >= last_index)
 		last_index += IM_MAX_CIRCLE_SEGMENTS;
 
 	auto value_count = last_index - first_index;

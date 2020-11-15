@@ -84,20 +84,7 @@ int karma_user_zero() {
 	Scene *scene = scene_create();
 
 	Entity_Info info;
-	Camera_Info camera_info;
-	camera_info.target_position = vec2(0);
-	camera_info.target_distance = 0;
-	camera_info.distance = .4f;
-	camera_info.follow_factor = 0.977f;
-	camera_info.zoom_factor = 0.78f;
-	camera_info.behaviour = Camera_Behaviour_STILL;
-	camera_info.lens.field_of_view = 5.0f;
-	camera_info.lens.near = -1;
-	camera_info.lens.far = 1;
 	info.position = vec2(0);
-	info.data = &camera_info;
-
-	scene_create_new_entity(scene, Entity_Type_Camera, info);
 
 	Rigid_Body *body_hovered, *body_selected;
 	body_hovered = nullptr;
@@ -119,7 +106,7 @@ int karma_user_zero() {
 
 		fixture.shape = Fixture_Shape_Circle;
 		fixture.handle = &circle;
-		id = scene_create_new_resource_fixture(scene, &fixture, 1);
+		id = scene_create_new_resource_fixture(scene, "Player Circle", &fixture, 1);
 
 		info.position = vec2(5);
 		rigid_body.type = Rigid_Body_Type_Dynamic;
@@ -139,7 +126,7 @@ int karma_user_zero() {
 
 		fixture.shape = Fixture_Shape_Mm_Rect;
 		fixture.handle = &rect;
-		id = scene_create_new_resource_fixture(scene, &fixture, 1);
+		id = scene_create_new_resource_fixture(scene, "Player Rect", &fixture, 1);
 
 		info.position = vec2(2, 5);
 		rigid_body.transform.p = info.position;
@@ -161,7 +148,7 @@ int karma_user_zero() {
 			memcpy(polygon->vertices, points, sizeof(points));
 			fixture.shape = Fixture_Shape_Polygon;
 			fixture.handle = polygon;
-			id = scene_create_new_resource_fixture(scene, &fixture, 1);
+			id = scene_create_new_resource_fixture(scene, "Ploygon", &fixture, 1);
 
 			info.position = vec2(-5.6f, 0.4f);
 			rigid_body.transform.xform = mat2_identity();
@@ -176,7 +163,7 @@ int karma_user_zero() {
 			circle.radius = 0.6f;
 			fixture.shape = Fixture_Shape_Circle;
 			fixture.handle = &circle;
-			id = scene_create_new_resource_fixture(scene, &fixture, 1);
+			id = scene_create_new_resource_fixture(scene, "Circle", &fixture, 1);
 
 			info.position = vec2(1);
 			rigid_body.transform.xform = mat2_identity();
@@ -191,7 +178,7 @@ int karma_user_zero() {
 			rect.max = vec2(2.5f, 3.5f);
 			fixture.shape = Fixture_Shape_Mm_Rect;
 			fixture.handle = &rect;
-			id = scene_create_new_resource_fixture(scene, &fixture, 1);
+			id = scene_create_new_resource_fixture(scene, "Rect", &fixture, 1);
 
 			info.position = vec2(6.5f, -0.5f);
 			rigid_body.transform.xform = mat2_rotation(to_radians(10));
@@ -206,7 +193,7 @@ int karma_user_zero() {
 			rect.max = vec2(1);
 			fixture.shape = Fixture_Shape_Mm_Rect;
 			fixture.handle = &rect;
-			id = scene_create_new_resource_fixture(scene, &fixture, 1);
+			id = scene_create_new_resource_fixture(scene, "Rect", &fixture, 1);
 
 			info.position = vec2(0, -8);
 			rigid_body.transform.xform = mat2_scalar(15, 1);
@@ -231,7 +218,7 @@ int karma_user_zero() {
 			f[1].shape = Fixture_Shape_Capsule;
 			f[1].handle = &capsule;
 
-			id = scene_create_new_resource_fixture(scene, f, static_count(f));
+			id = scene_create_new_resource_fixture(scene, "Capsule and Circle", f, static_count(f));
 
 			info.position = vec2(-1, -5);
 			rigid_body.transform.xform = mat2_identity();
@@ -403,6 +390,8 @@ int karma_user_zero() {
 		gfx_begin_drawing(Framebuffer_Type_DEFAULT, Clear_COLOR, vec4(0.0f));
 		gfx_blit_hdr(0, 0, window_w, window_h);
 		gfx_viewport(0, 0, window_w, window_h);
+
+		//ImGui::ShowDemoWindow();
 
 		#if defined(ENABLE_DEVELOPER_OPTIONS)
 		{

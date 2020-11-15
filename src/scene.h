@@ -10,13 +10,6 @@ typedef Impact_Type(*Continuous_Collision_Resolver)(Fixture &a, Fixture &b, cons
 typedef bool(*Nearest_Points_Finder)(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb, Vec2 a_dp, Vec2 b_dp, Nearest_Points *nearest_points);
 typedef bool(*Collision_Detector)(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb);
 
-typedef u64 Resource_Id;
-struct Resource_Fixture {
-	Resource_Id id;
-	Fixture *	fixtures;
-	u32			fixture_count;
-};
-
 using Rigid_Body_List = Circular_Linked_List<Rigid_Body>;
 
 struct Entity_Ref {
@@ -59,15 +52,38 @@ enum Gizmo_Render_Type {
 struct Gizmo {
 	Gizmo_Type type;
 	Gizmo_Render_Type render_type;
+	Vec2 out;
 	r32 intensity[4]; // center, x, y, rotor
 	r32 values[2];
 };
 
-struct Scene_Editor {
+enum Scene_Editor_Mode {
+	Scene_Editor_Mode_MAP,
+	Scene_Editor_Mode_FIXTURE
+};
+
+struct Scene_Editor_Map {
 	Rigid_Body *hovered_body;
 	Rigid_Body *selected_body;
-	Gizmo		gizmo;
-	bool		open_fixture;
+};
+
+struct Scene_Editor_Fixture {
+	s64 index;
+	Vec2 *hovered_vertex_ptr;
+	Vec2 *selected_vertex_ptr;
+	u32 hovered_fixture_index;
+	u32 selected_fixture_index;
+	r32	vertex_pointer_angle;
+};
+
+struct Scene_Editor {
+	Scene_Editor_Mode	mode;
+	Gizmo				gizmo;
+
+	union {
+		Scene_Editor_Map		map;
+		Scene_Editor_Fixture	fixture;
+	};
 };
 
 struct Scene_Debug {
@@ -100,7 +116,7 @@ void scene_destroy(Scene *scene);
 Entity *scene_find_entity(Scene *scene, Entity_Id id);
 
 Resource_Fixture *scene_find_resource_fixture(Scene *scene, Resource_Id id);
-Resource_Id scene_create_new_resource_fixture(Scene *scene, Fixture *fixtures, u32 fixture_count);
+Resource_Id scene_create_new_resource_fixture(Scene *scene, String name, Fixture *fixtures, u32 fixture_count);
 bool scene_delete_resource_fixture(Scene *scene, Resource_Id id);
 
 inline Fixture *rigid_body_get_fixture(Rigid_Body *rigid_body, u32 index) {
@@ -116,7 +132,7 @@ struct Camera_Info {
 	r32					target_distance;
 	r32					follow_factor;
 	r32					zoom_factor;
-	Camera_Behaviour	behaviour;
+	u32					behaviour;
 
 	Camera_Lens			lens;
 };
@@ -135,7 +151,9 @@ struct Entity_Info {
 
 Entity *scene_create_new_entity(Scene *scene, Entity_Type type, const Entity_Info &info);
 
-Camera &scene_primary_camera(Scene *scene);
+Camera *scene_primary_camera(Scene *scene);
+
+Camera *scene_editor_camera(Scene *scene, Scene_Editor_Mode mode);
 
 //
 //

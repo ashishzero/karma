@@ -8,7 +8,8 @@ enum Attr_Flag_Bit : Attr_Flags {
 	Attr_READ_ONLY = bit(1),
 	Attr_SLIDER = bit(2),
 	Attr_COLOR = bit(3),
-	Attr_UNION_DISPLAY = bit(4),
+	Attr_TEXT = bit(4),
+	Attr_UNION_DISPLAY = bit(5),
 };
 
 struct Element_Attribute {

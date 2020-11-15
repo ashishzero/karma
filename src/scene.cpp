@@ -12,6 +12,12 @@
 // Gizmo Values
 //
 
+const r32  EDITOR_VERTEX_RADIUS = 0.1f;
+const r32  EDITOR_VERTEX_SELECTOR_RADIUS = 0.3f;
+const r32  EDITOR_VERTEX_SELECTOR_THICKNESS = 0.1f;
+const Vec4 EDITOR_VERTEX_COLOR = vec4(1, 1, 0);
+const Vec4 EDITOR_SELECTED_VERTEX_COLOR = vec4(0, 3, 3);
+
 const r32 GIZMO_LINE_THICKNESS = 0.1f;
 const r32 GIZMO_LINE_HALF_THICKNESS = 0.5f * GIZMO_LINE_THICKNESS;
 const r32 GIZMO_LINE_LENGTH = 1.3f;
@@ -259,6 +265,30 @@ Scene *scene_create() {
 	scene->debug.manifold.allocator = TEMPORARY_ALLOCATOR;
 	#endif
 
+	Entity_Info info;
+	Camera_Info camera_info;
+	camera_info.target_position = vec2(0);
+	camera_info.target_distance = 0;
+	camera_info.distance = .4f;
+	camera_info.follow_factor = 0.977f;
+	camera_info.zoom_factor = 0.9f;
+	camera_info.behaviour = Camera_Behaviour_STILL;
+	camera_info.lens.field_of_view = 5.0f;
+	camera_info.lens.near = -1;
+	camera_info.lens.far = 1;
+	info.position = vec2(0);
+	info.data = &camera_info;
+
+	scene_create_new_entity(scene, Entity_Type_Camera, info);
+
+	#ifdef ENABLE_DEVELOPER_OPTIONS
+	camera_info.behaviour = Camera_Behaviour_STILL;
+	camera_info.target_distance = 0;
+	camera_info.target_position = vec2(0);
+
+	scene_create_new_entity(scene, Entity_Type_Camera, info);
+	#endif
+
 	return scene;
 }
 
@@ -298,10 +328,22 @@ Resource_Fixture *scene_find_resource_fixture(Scene *scene, Resource_Id id) {
 	return nullptr;
 }
 
-Resource_Id scene_create_new_resource_fixture(Scene *scene, Fixture *fixtures, u32 fixture_count) {
+s64 iscene_find_resource_fixture_index_from_pointer(Scene *scene, Fixture *fixture) {
+	s64 index = array_find(&scene->resource_fixtures, [](const Resource_Fixture &f, Fixture *ptr) { return f.fixtures == ptr; }, fixture);
+	index = maximum(index, 0);
+	return index;
+}
+
+Resource_Id scene_create_new_resource_fixture(Scene *scene, String name, Fixture *fixtures, u32 fixture_count) {
 	Resource_Fixture *resource = array_add(&scene->resource_fixtures);
 
+	assert(name.count < (sizeof(Resource_Name) - 1));
+
 	resource->id = iscene_generate_unique_id(scene);
+
+	memcpy(resource->name, name.data, name.count);
+	resource->name[name.count] = 0;
+
 	resource->fixture_count = fixture_count;
 	resource->fixtures = new (scene->pool_allocator) Fixture[resource->fixture_count];
 
@@ -494,35 +536,91 @@ Entity *scene_create_new_entity(Scene *scene, Entity_Type type, const Entity_Inf
 	return entity;
 }
 
-Camera &scene_primary_camera(Scene *scene) {
-	return scene->by_type.camera[0];
+Camera *scene_primary_camera(Scene *scene) {
+	return &scene->by_type.camera[0];
+}
+
+Camera *scene_editor_camera(Scene *scene, Scene_Editor_Mode mode) {
+	if (mode == Scene_Editor_Mode_MAP) {
+		return &scene->by_type.camera[0];
+	} else if (mode == Scene_Editor_Mode_FIXTURE) {
+		return &scene->by_type.camera[1];
+	}
+	invalid_code_path();
+	return &scene->by_type.camera[0];
 }
 
 //
 //
 //
 
-bool scene_handle_event(Scene *scene, const Event &event) {
+void iscene_set_editor_mode_map(Scene *scene) {
+	if (scene->debug.editor.mode == Scene_Editor_Mode_FIXTURE) {
+		for (auto ptr = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, ptr); ptr = iter_next<Rigid_Body>(ptr)) {
+			ptr->data.bounding_box = rigid_body_bounding_box(&ptr->data, 0);
+		}
+	}
 
+	scene->debug.editor.mode = Scene_Editor_Mode_MAP;
+	scene->debug.editor.map.hovered_body = nullptr;
+	scene->debug.editor.map.selected_body = nullptr;
+	scene->debug.editor.gizmo.render_type = Gizmo_Render_Type_NONE;
+	scene->debug.editor.gizmo.type = Gizmo_Type_NONE;
+}
+
+void iscene_set_editor_mode_fixture(Scene *scene, s64 index) {
+	scene->debug.editor.mode = Scene_Editor_Mode_FIXTURE;
+	scene->debug.editor.fixture.index = index;
+	scene->debug.editor.fixture.hovered_vertex_ptr = nullptr;
+	scene->debug.editor.fixture.selected_vertex_ptr = nullptr;
+	auto camera = scene_editor_camera(scene, Scene_Editor_Mode_FIXTURE);
+	camera->position = vec2(0);
+	camera->target_position = vec2(0);
+	camera->distance = 0;
+	camera->target_distance = 0;
+	camera->behaviour = 0;
+}
+
+bool scene_handle_event(Scene *scene, const Event &event) {
 	#ifdef ENABLE_DEVELOPER_OPTIONS
+	auto &editor = scene->debug.editor;
 	auto &gizmo = scene->debug.editor.gizmo;
-	if ((event.type & Event_Type_KEY_UP)) {
-		switch (event.key.symbol) {
-			case Key_T: {
-				gizmo.render_type = Gizmo_Render_Type_TRANSLATE;
-				gizmo.type = Gizmo_Type_NONE;
-				return true;
-			} break;
-			case Key_S: {
-				gizmo.render_type = Gizmo_Render_Type_SCALE;
-				gizmo.type = Gizmo_Type_NONE;
-				return true;
-			} break;
-			case Key_R: {
-				gizmo.render_type = Gizmo_Render_Type_ROTATE;
-				gizmo.type = Gizmo_Type_NONE;
-				return true;
-			} break;
+
+	if ((event.type & Event_Type_KEY_UP) && editor.gizmo.render_type != Gizmo_Render_Type_NONE) {
+		if (editor.mode == Scene_Editor_Mode_MAP) {
+			switch (event.key.symbol) {
+				case Key_T: {
+					gizmo.render_type = Gizmo_Render_Type_TRANSLATE;
+					gizmo.type = Gizmo_Type_NONE;
+					return true;
+				} break;
+				case Key_S: {
+					gizmo.render_type = Gizmo_Render_Type_SCALE;
+					gizmo.type = Gizmo_Type_NONE;
+					return true;
+				} break;
+				case Key_R: {
+					gizmo.render_type = Gizmo_Render_Type_ROTATE;
+					gizmo.type = Gizmo_Type_NONE;
+					return true;
+				} break;
+			}
+		} else if (editor.mode == Scene_Editor_Mode_FIXTURE) {
+			switch (event.key.symbol) {
+				case Key_T: {
+					gizmo.render_type = Gizmo_Render_Type_TRANSLATE;
+					gizmo.type = Gizmo_Type_NONE;
+					return true;
+				} break;
+				case Key_S: {
+					Fixture &f = scene->resource_fixtures[editor.fixture.index].fixtures[editor.fixture.selected_fixture_index];
+					if (f.shape == Fixture_Shape_Circle || f.shape == Fixture_Shape_Capsule) {
+						gizmo.render_type = Gizmo_Render_Type_SCALE;
+						gizmo.type = Gizmo_Type_NONE;
+						return true;
+					}
+				} break;
+			}
 		}
 	}
 	#endif
@@ -628,6 +726,147 @@ void scene_simulate(Scene *scene, r32 dt) {
 	}
 }
 
+void gizmo_action(Gizmo *gizmo, const Transform &gizmo_transform, Vec2 cursor, Vec2 delta) {
+	auto &io = ImGui::GetIO();
+
+	for (auto &inten : gizmo->intensity) {
+		inten = 1;
+	}
+
+	if (!io.MouseDown[ImGuiMouseButton_Left]) {
+		gizmo->type = Gizmo_Type_NONE;
+	}
+
+	switch (gizmo->type) {
+		case Gizmo_Type_NONE: {
+			// Check if we have hovered over or used gizmo
+
+			switch (gizmo->render_type) {
+				case Gizmo_Render_Type_TRANSLATE: {
+					if (test_shape_vs_point(GIZMO_CENTER_RECT, gizmo_transform, cursor)) {
+						gizmo->intensity[0] = 2;
+						if (io.MouseDown[ImGuiMouseButton_Left])
+							gizmo->type = Gizmo_Type_CENTER;
+					} else if (test_shape_vs_point(GIZMO_X_LINE_RECT, gizmo_transform, cursor) ||
+							   test_shape_vs_point(GIZMO_X_POINTER_POLY, gizmo_transform, cursor)) {
+						gizmo->intensity[1] = 4.5f;
+						if (io.MouseDown[ImGuiMouseButton_Left])
+							gizmo->type = Gizmo_Type_TRANSLATE_X;
+					} else if (test_shape_vs_point(GIZMO_Y_LINE_RECT, gizmo_transform, cursor) ||
+							   test_shape_vs_point(GIZMO_Y_POINTER_POLY, gizmo_transform, cursor)) {
+						gizmo->intensity[2] = 2;
+						if (io.MouseDown[ImGuiMouseButton_Left])
+							gizmo->type = Gizmo_Type_TRANSLATE_Y;
+					}
+
+					if (gizmo->type != Gizmo_Type_NONE) {
+						gizmo->out = vec2(0);
+					}
+				} break;
+
+				case Gizmo_Render_Type_SCALE: {
+					if (test_shape_vs_point(GIZMO_CENTER_RECT, gizmo_transform, cursor)) {
+						gizmo->intensity[0] = 2;
+						if (io.MouseDown[ImGuiMouseButton_Left])
+							gizmo->type = Gizmo_Type_CENTER;
+					} else if (test_shape_vs_point(GIZMO_X_LINE_RECT, gizmo_transform, cursor) ||
+							   test_shape_vs_point(GIZMO_X_POINTER_RECT, gizmo_transform, cursor)) {
+						gizmo->intensity[1] = 4.5f;
+						if (io.MouseDown[ImGuiMouseButton_Left]) {
+							gizmo->type = Gizmo_Type_SCALE_X;
+							gizmo->values[0] = 1;
+							gizmo->values[1] = 1;
+						}
+					} else if (test_shape_vs_point(GIZMO_Y_LINE_RECT, gizmo_transform, cursor) ||
+							   test_shape_vs_point(GIZMO_Y_POINTER_RECT, gizmo_transform, cursor)) {
+						gizmo->intensity[2] = 2;
+						if (io.MouseDown[ImGuiMouseButton_Left]) {
+							gizmo->type = Gizmo_Type_SCALE_Y;
+							gizmo->values[0] = 1;
+							gizmo->values[1] = 1;
+						}
+					}
+
+					if (gizmo->type == Gizmo_Type_CENTER) {
+						gizmo->out = vec2(0);
+					} else if (gizmo->type != Gizmo_Type_NONE) {
+						gizmo->out = vec2(1);
+					}
+				} break;
+
+				case Gizmo_Render_Type_ROTATE: {
+					if (test_shape_vs_point(GIZMO_OUTER, gizmo_transform, cursor) &&
+						!test_shape_vs_point(GIZMO_INNER, gizmo_transform, cursor)) {
+						gizmo->intensity[3] = 2;
+						if (io.MouseDown[ImGuiMouseButton_Left]) {
+							gizmo->type = Gizmo_Type_ROTOR;
+							gizmo->values[0] = cursor.x - gizmo_transform.p.x;
+							gizmo->values[1] = cursor.y - gizmo_transform.p.y;
+						}
+					}
+
+					if (gizmo->type != Gizmo_Type_NONE) {
+						gizmo->out = vec2(0);
+					}
+				} break;
+			}
+		} break;
+
+		case Gizmo_Type_CENTER: {
+			gizmo->intensity[0] = 2;
+			gizmo->out = delta;
+		} break;
+
+		case Gizmo_Type_TRANSLATE_X: {
+			gizmo->intensity[1] = 4.5f;
+			gizmo->out.x = delta.x;
+			gizmo->out.y = 0;
+		} break;
+
+		case Gizmo_Type_TRANSLATE_Y: {
+			gizmo->intensity[2] = 2;
+			gizmo->out.x = 0;
+			gizmo->out.y = delta.y;
+		} break;
+
+		case Gizmo_Type_SCALE_X: {
+			gizmo->intensity[1] = 4.5f;
+
+			r32 scale_amount_x, scale_amount_y;
+			scale_amount_x = powf(2.0f, delta.x);
+			scale_amount_y = io.KeyShift ? scale_amount_x : 1;
+			gizmo->out.x = scale_amount_x;
+			gizmo->out.y = scale_amount_y;
+			gizmo->values[0] *= scale_amount_x;
+			gizmo->values[1] *= scale_amount_y;
+		} break;
+
+		case Gizmo_Type_SCALE_Y: {
+			gizmo->intensity[2] = 2;
+
+			r32 scale_amount_x, scale_amount_y;
+			scale_amount_y = powf(2.0f, delta.y);
+			scale_amount_x = io.KeyShift ? scale_amount_y : 1;
+			gizmo->out.x = scale_amount_x;
+			gizmo->out.y = scale_amount_y;
+			gizmo->values[0] *= scale_amount_x;
+			gizmo->values[1] *= scale_amount_y;
+		} break;
+
+		case Gizmo_Type_ROTOR: {
+			gizmo->intensity[3] = 2;
+
+			Vec2 a = vec2_normalize_check(vec2(gizmo->values[0], gizmo->values[1]));
+			Vec2 b = vec2_normalize_check(cursor - gizmo_transform.p);
+			r32 angle = vec2_signed_angle_between(a, b);
+
+			gizmo->out.x = angle;
+			gizmo->values[0] = b.x;
+			gizmo->values[1] = b.y;
+		} break;
+	}
+}
+
 void scene_update(Scene *scene, r32 window_w, r32 window_h) {
 	auto count = scene->by_type.character.count;
 	auto &characters = scene->by_type.character;
@@ -642,17 +881,16 @@ void scene_update(Scene *scene, r32 window_w, r32 window_h) {
 	if (!ImGui_IsUsingCursor()) {
 		ImGui::GetStyle().Alpha = 0.4f;
 
-		Camera &camera = scene_primary_camera(scene);
+		Camera *camera = scene_editor_camera(scene, scene->debug.editor.mode);
 		Scene_Editor &editor = scene->debug.editor;
 		Gizmo &gizmo = editor.gizmo;
+		auto &io = ImGui::GetIO();
 
-		r32 view_height = camera.lens.field_of_view;
+		r32 view_height = camera->lens.field_of_view;
 		r32 view_width = (window_w / window_h) * view_height;
 
-		r32 scale = powf(0.5f, camera.distance);
+		r32 scale = powf(0.5f, camera->distance);
 		r32 iscale = 1.0f / scale;
-
-		auto &io = ImGui::GetIO();
 
 		Vec2 cursor = io.MousePos;
 		Vec2 delta = io.MouseDelta;
@@ -665,7 +903,7 @@ void scene_update(Scene *scene, r32 window_w, r32 window_h) {
 
 			cursor.x *= iscale * view_width;
 			cursor.y *= iscale * view_height;
-			cursor += camera.position;
+			cursor += camera->position;
 
 			delta.x /= window_w;
 			delta.y /= (-window_h);
@@ -676,234 +914,291 @@ void scene_update(Scene *scene, r32 window_w, r32 window_h) {
 
 		// Movement of the view of the world when editing
 		if (io.MouseDown[ImGuiMouseButton_Right]) {
-			clear_bit(camera.behaviour, Camera_Behaviour_ANIMATE_MOVEMENT);
-			camera.position -= delta;
+			clear_bit(camera->behaviour, Camera_Behaviour_ANIMATE_MOVEMENT);
+			camera->position -= delta;
 		}
 
 		// Zoom in and out of the world when editing
 		if (io.MouseWheel) {
-			clear_bit(camera.behaviour, Camera_Behaviour_ANIMATE_FOCUS);
-			camera.distance -= io.DeltaTime * io.MouseWheel * 6;
+			camera->behaviour |= Camera_Behaviour_ANIMATE_FOCUS;
+			camera->target_distance -= io.DeltaTime * io.MouseWheel * 7;
 		}
 
-		// Get the Rigid_Body under the mouse cursor, nullptr if mouse doesn't hover over any Rigid_Body
-		editor.hovered_body = nullptr;
-		for (auto ptr = iter_begin(&scene->rigid_bodies);
-			 iter_continue(&scene->rigid_bodies, ptr) && !editor.hovered_body;
-			 ptr = iter_next<Rigid_Body>(ptr)) {
-			auto &body = ptr->data;
-			for (u32 index = 0; index < body.fixture_count && !editor.hovered_body; ++index) {
-				Fixture *fixture = rigid_body_get_fixture(&body, index);
-				if (test_fixture_point(*fixture, body.transform, cursor)) {
-					editor.hovered_body = &body;
+		switch (editor.mode) {
+			case Scene_Editor_Mode_MAP: {
+				// Get the Rigid_Body under the mouse cursor, nullptr if mouse doesn't hover over any Rigid_Body
+				editor.map.hovered_body = nullptr;
+				for (auto ptr = iter_begin(&scene->rigid_bodies);
+					 iter_continue(&scene->rigid_bodies, ptr) && !editor.map.hovered_body;
+					 ptr = iter_next<Rigid_Body>(ptr)) {
+					auto &body = ptr->data;
+					for (u32 index = 0; index < body.fixture_count && !editor.map.hovered_body; ++index) {
+						Fixture *fixture = rigid_body_get_fixture(&body, index);
+						if (test_fixture_point(*fixture, body.transform, cursor)) {
+							editor.map.hovered_body = &body;
+						}
+					}
 				}
-			}
-		}
 
-		bool camera_focus_on_body = false;
-
-		if (editor.selected_body) {
-			for (auto &inten : gizmo.intensity) {
-				inten = 1;
-			}
-
-			if (!io.MouseDown[ImGuiMouseButton_Left]) {
-				gizmo.type = Gizmo_Type_NONE;
-			}
-
-			switch (gizmo.type) {
-				case Gizmo_Type_NONE: {
-					// Check if we have hovered over or used gizmo
+				if (editor.map.selected_body) {
 					Transform gizmo_transform;
-					gizmo_transform.p = editor.selected_body->transform.p;
+					gizmo_transform.p = editor.map.selected_body->transform.p;
 					gizmo_transform.xform = mat2_scalar(iscale, iscale);
 
-					switch (gizmo.render_type) {
-						case Gizmo_Render_Type_TRANSLATE: {
-							if (test_shape_vs_point(GIZMO_CENTER_RECT, gizmo_transform, cursor)) {
-								gizmo.intensity[0] = 2;
-								if (io.MouseDown[ImGuiMouseButton_Left])
-									gizmo.type = Gizmo_Type_CENTER;
-							} else if (test_shape_vs_point(GIZMO_X_LINE_RECT, gizmo_transform, cursor) ||
-									   test_shape_vs_point(GIZMO_X_POINTER_POLY, gizmo_transform, cursor)) {
-								gizmo.intensity[1] = 4.5f;
-								if (io.MouseDown[ImGuiMouseButton_Left])
-									gizmo.type = Gizmo_Type_TRANSLATE_X;
-							} else if (test_shape_vs_point(GIZMO_Y_LINE_RECT, gizmo_transform, cursor) ||
-									   test_shape_vs_point(GIZMO_Y_POINTER_POLY, gizmo_transform, cursor)) {
-								gizmo.intensity[2] = 2;
-								if (io.MouseDown[ImGuiMouseButton_Left])
-									gizmo.type = Gizmo_Type_TRANSLATE_Y;
-							}
+					gizmo_action(&editor.gizmo, gizmo_transform, cursor, delta);
+
+					switch (gizmo.type) {
+						case Gizmo_Type_TRANSLATE_X:
+						case Gizmo_Type_TRANSLATE_Y:
+						case Gizmo_Type_CENTER: {
+							Entity *entity = scene_find_entity(scene, editor.map.selected_body->entity_id);
+							entity->position += gizmo.out;
+							editor.map.selected_body->transform.p = entity->position;
+							editor.map.selected_body->bounding_box = rigid_body_bounding_box(editor.map.selected_body, 0);
 						} break;
 
-						case Gizmo_Render_Type_SCALE: {
-							if (test_shape_vs_point(GIZMO_CENTER_RECT, gizmo_transform, cursor)) {
-								gizmo.intensity[0] = 2;
-								if (io.MouseDown[ImGuiMouseButton_Left])
-									gizmo.type = Gizmo_Type_CENTER;
-							} else if (test_shape_vs_point(GIZMO_X_LINE_RECT, gizmo_transform, cursor) ||
-									   test_shape_vs_point(GIZMO_X_POINTER_RECT, gizmo_transform, cursor)) {
-								gizmo.intensity[1] = 4.5f;
-								if (io.MouseDown[ImGuiMouseButton_Left]) {
-									gizmo.type = Gizmo_Type_SCALE_X;
-									gizmo.values[0] = 1;
-									gizmo.values[1] = 1;
-								}
-							} else if (test_shape_vs_point(GIZMO_Y_LINE_RECT, gizmo_transform, cursor) ||
-									   test_shape_vs_point(GIZMO_Y_POINTER_RECT, gizmo_transform, cursor)) {
-								gizmo.intensity[2] = 2;
-								if (io.MouseDown[ImGuiMouseButton_Left]) {
-									gizmo.type = Gizmo_Type_SCALE_Y;
-									gizmo.values[0] = 1;
-									gizmo.values[1] = 1;
-								}
-							}
+						case Gizmo_Type_SCALE_X:
+						case Gizmo_Type_SCALE_Y: {
+							editor.map.selected_body->transform.xform = mat2_scalar(gizmo.out) * editor.map.selected_body->transform.xform;
+							editor.map.selected_body->bounding_box = rigid_body_bounding_box(editor.map.selected_body, 0);
 						} break;
 
-						case Gizmo_Render_Type_ROTATE: {
-							if (test_shape_vs_point(GIZMO_OUTER, gizmo_transform, cursor) &&
-								!test_shape_vs_point(GIZMO_INNER, gizmo_transform, cursor)) {
-								gizmo.intensity[3] = 2;
-								if (io.MouseDown[ImGuiMouseButton_Left]) {
-									gizmo.type = Gizmo_Type_ROTOR;
-									gizmo.values[0] = cursor.x - editor.selected_body->transform.p.x;
-									gizmo.values[1] = cursor.y - editor.selected_body->transform.p.y;
-								}
-							}
+						case Gizmo_Type_ROTOR: {
+							editor.map.selected_body->bounding_box = rigid_body_bounding_box(editor.map.selected_body, 0);
+							editor.map.selected_body->transform.xform = mat2_rotation(gizmo.out.x) * editor.map.selected_body->transform.xform;
+							editor.map.selected_body->bounding_box = rigid_body_bounding_box(editor.map.selected_body, 0);
 						} break;
 					}
-				} break;
+				}
 
-				case Gizmo_Type_CENTER: {
-					gizmo.intensity[0] = 2;
+				if (gizmo.type == Gizmo_Type_NONE) {
+					// If we are not using Gizmo and Press left button,
+					// then hovered body is selected
+					if (io.MouseClicked[ImGuiMouseButton_Left]) {
+						editor.map.selected_body = editor.map.hovered_body;
+						if (gizmo.render_type == Gizmo_Render_Type_NONE)
+							gizmo.render_type = Gizmo_Render_Type_TRANSLATE;
+					}
 
-					Entity *entity = scene_find_entity(scene, editor.selected_body->entity_id);
-					entity->position += delta;
-					editor.selected_body->transform.p = entity->position;
-					editor.selected_body->bounding_box = rigid_body_bounding_box(editor.selected_body, 0);
-				} break;
+					// If we are not using Gizmo and Double click left button,
+					// then hovered body is selected and focused
+					if (editor.map.hovered_body && io.MouseDoubleClicked[ImGuiMouseButton_Left]) {
+						editor.map.selected_body = editor.map.hovered_body;
+						if (gizmo.render_type == Gizmo_Render_Type_NONE)
+							gizmo.render_type = Gizmo_Render_Type_TRANSLATE;
 
-				case Gizmo_Type_TRANSLATE_X: {
-					gizmo.intensity[1] = 4.5f;
-					camera.behaviour |= Camera_Behaviour_ANIMATE_MOVEMENT;
-					clear_bit(camera.behaviour, Camera_Behaviour_ANIMATE_FOCUS);
-					camera_focus_on_body = true;
+						// Focus on Rigid_Body
+						camera->behaviour |= Camera_Behaviour_ANIMATE_FOCUS | Camera_Behaviour_ANIMATE_MOVEMENT;
+						camera->target_position = editor.map.selected_body->transform.p;
 
-					Entity *entity = scene_find_entity(scene, editor.selected_body->entity_id);
-					entity->position.x += delta.x;
-					editor.selected_body->transform.p = entity->position;
-					editor.selected_body->bounding_box = rigid_body_bounding_box(editor.selected_body, 0);
-				} break;
+						r32 sx = editor.map.selected_body->bounding_box.max.x - editor.map.selected_body->bounding_box.min.x;
+						r32 sy = editor.map.selected_body->bounding_box.max.y - editor.map.selected_body->bounding_box.min.y;
+						sx /= view_width;
+						sy /= view_height;
+						r32 s = maximum(sx, sy);
 
-				case Gizmo_Type_TRANSLATE_Y: {
-					gizmo.intensity[2] = 2;
-					camera.behaviour |= Camera_Behaviour_ANIMATE_MOVEMENT;
-					clear_bit(camera.behaviour, Camera_Behaviour_ANIMATE_FOCUS);
-					camera_focus_on_body = true;
+						camera->target_distance = log2f(s);
+					}
+				}
 
-					Entity *entity = scene_find_entity(scene, editor.selected_body->entity_id);
-					entity->position.y += delta.y;
-					editor.selected_body->transform.p = entity->position;
-					editor.selected_body->bounding_box = rigid_body_bounding_box(editor.selected_body, 0);
-				} break;
 
-				case Gizmo_Type_SCALE_X: {
-					gizmo.intensity[1] = 4.5f;
-					camera.behaviour |= Camera_Behaviour_ANIMATE_MOVEMENT | Camera_Behaviour_ANIMATE_FOCUS;
-					camera_focus_on_body = true;
+				if (editor.map.selected_body == nullptr) {
+					gizmo.render_type = Gizmo_Render_Type_NONE;
+				}
+			} break;
 
-					r32 scale_amount_x, scale_amount_y;
-					scale_amount_x = powf(2.0f, delta.x);
-					scale_amount_y = io.KeyShift ? scale_amount_x : 1;
-					gizmo.values[0] *= scale_amount_x;
-					gizmo.values[1] *= scale_amount_y;
-					editor.selected_body->transform.xform = mat2_scalar(scale_amount_x, scale_amount_y) * editor.selected_body->transform.xform;
-					editor.selected_body->bounding_box = rigid_body_bounding_box(editor.selected_body, 0);
-				} break;
+			case Scene_Editor_Mode_FIXTURE: {
+				if (editor.fixture.index >= 0) {
+					Transform p_transform;
+					p_transform.p = vec2(0);
+					p_transform.xform = mat2_identity();
 
-				case Gizmo_Type_SCALE_Y: {
-					gizmo.intensity[2] = 2;
-					camera.behaviour |= Camera_Behaviour_ANIMATE_MOVEMENT | Camera_Behaviour_ANIMATE_FOCUS;
-					camera_focus_on_body = true;
+					Circle p;
+					p.radius = EDITOR_VERTEX_RADIUS;
 
-					r32 scale_amount_x, scale_amount_y;
-					scale_amount_y = powf(2.0f, delta.y);
-					scale_amount_x = io.KeyShift ? scale_amount_y : 1;
-					gizmo.values[0] *= scale_amount_x;
-					gizmo.values[1] *= scale_amount_y;
-					editor.selected_body->transform.xform = mat2_scalar(scale_amount_x, scale_amount_y) * editor.selected_body->transform.xform;
-					editor.selected_body->bounding_box = rigid_body_bounding_box(editor.selected_body, 0);
-				} break;
+					Resource_Fixture &resource = scene->resource_fixtures[editor.fixture.index];
+					u32 count = resource.fixture_count;
+					auto &fixtures = resource.fixtures;
 
-				case Gizmo_Type_ROTOR: {
-					gizmo.intensity[3] = 2;
-					camera.behaviour |= Camera_Behaviour_ANIMATE_MOVEMENT | Camera_Behaviour_ANIMATE_FOCUS;
-					camera_focus_on_body = true;
+					editor.fixture.hovered_vertex_ptr = nullptr;
 
-					Vec2 a = vec2_normalize_check(vec2(gizmo.values[0], gizmo.values[1]));
-					Vec2 b = vec2_normalize_check(cursor - editor.selected_body->transform.p);
-					r32 angle = vec2_signed_angle_between(a, b);
+					editor.fixture.vertex_pointer_angle += io.DeltaTime * 5;
+					while (editor.fixture.vertex_pointer_angle >= 2 * MATH_PI) 
+						editor.fixture.vertex_pointer_angle -= 2 * MATH_PI;
 
-					gizmo.values[0] = b.x;
-					gizmo.values[1] = b.y;
+					for (u32 index = 0; index < count; ++index) {
+						auto f = fixtures + index;
+						switch (f->shape) {
+							case Fixture_Shape_Circle: {
+								auto shape = fixture_get_shape(f, Circle);
+								p.center = shape->center;
+								if (test_shape_vs_point(p, p_transform, cursor)) {
+									editor.fixture.hovered_vertex_ptr = &shape->center;
+									editor.fixture.hovered_fixture_index = index;
+								}
+							} break;
 
-					editor.selected_body->transform.xform = mat2_rotation(angle) * editor.selected_body->transform.xform;
-					editor.selected_body->bounding_box = rigid_body_bounding_box(editor.selected_body, 0);
-				} break;
-			}
+							case Fixture_Shape_Mm_Rect: {
+								auto shape = fixture_get_shape(f, Mm_Rect);
+								p.center = shape->min;
+								if (test_shape_vs_point(p, p_transform, cursor)) {
+									editor.fixture.hovered_vertex_ptr = &shape->min;
+									editor.fixture.hovered_fixture_index = index;
+								}
 
+								p.center = shape->max;
+								if (test_shape_vs_point(p, p_transform, cursor)) {
+									editor.fixture.hovered_vertex_ptr = &shape->max;
+									editor.fixture.hovered_fixture_index = index;
+								}
+							} break;
+
+							case Fixture_Shape_Capsule: {
+								auto shape = fixture_get_shape(f, Capsule);
+								p.center = shape->a;
+								if (test_shape_vs_point(p, p_transform, cursor)) {
+									editor.fixture.hovered_vertex_ptr = &shape->a;
+									editor.fixture.hovered_fixture_index = index;
+								}
+
+								p.center = shape->b;
+								if (test_shape_vs_point(p, p_transform, cursor)) {
+									editor.fixture.hovered_vertex_ptr = &shape->b;
+									editor.fixture.hovered_fixture_index = index;
+								}
+							} break;
+
+							case Fixture_Shape_Polygon: {
+								auto shape = fixture_get_shape(f, Polygon);
+								u32 vcount = shape->vertex_count;
+								auto v = shape->vertices;
+								for (u32 vi = 0; vi < vcount; ++vi, ++v) {
+									p.center = *v;
+									if (test_shape_vs_point(p, p_transform, cursor)) {
+										editor.fixture.hovered_vertex_ptr = v;
+										editor.fixture.hovered_fixture_index = index;
+										break;
+									}
+								}
+							} break;
+						}
+					}
+
+					if (editor.fixture.selected_vertex_ptr) {
+						Transform gizmo_transform;
+						gizmo_transform.p = *editor.fixture.selected_vertex_ptr;
+						gizmo_transform.xform = mat2_scalar(iscale, iscale);
+
+						gizmo_action(&editor.gizmo, gizmo_transform, cursor, delta);
+
+						switch (gizmo.type) {
+							case Gizmo_Type_TRANSLATE_X:
+							case Gizmo_Type_TRANSLATE_Y:
+							case Gizmo_Type_CENTER: {
+								editor.fixture.selected_vertex_ptr->x += gizmo.out.x;
+								editor.fixture.selected_vertex_ptr->y += gizmo.out.y;
+
+								// Reject if the polygon is not convex
+								Fixture &fixture = fixtures[editor.fixture.selected_fixture_index];
+								if (fixture.shape == Fixture_Shape_Polygon) {
+									if (!is_polygon_convex(*fixture_get_shape(&fixture, Polygon))) {
+										editor.fixture.selected_vertex_ptr->x = gizmo_transform.p.x;
+										editor.fixture.selected_vertex_ptr->y = gizmo_transform.p.y;
+									}
+								}
+							} break;
+
+							case Gizmo_Type_SCALE_X:
+							case Gizmo_Type_SCALE_Y: {
+								Fixture &fixture = fixtures[editor.fixture.selected_fixture_index];
+								if (fixture.shape == Fixture_Shape_Circle) {
+									auto circle = fixture_get_shape(&fixture, Circle);
+									circle->radius *= ((gizmo.type == Gizmo_Type_SCALE_X) ? gizmo.out.x: gizmo.out.y);
+								} else if (fixture.shape == Fixture_Shape_Capsule) {
+									auto capsule = fixture_get_shape(&fixture, Capsule);
+									capsule->radius *= ((gizmo.type == Gizmo_Type_SCALE_X) ? gizmo.out.x : gizmo.out.y);
+								} else {
+									invalid_code_path();
+								}
+							} break;
+
+							case Gizmo_Type_ROTOR: {
+								invalid_code_path();
+							} break;
+						}
+					}
+
+					if (gizmo.type == Gizmo_Type_NONE) {
+						// If we are not using Gizmo and Press left button,
+						// then hovered vertex is selected
+						if (io.MouseClicked[ImGuiMouseButton_Left]) {
+							editor.fixture.selected_vertex_ptr = editor.fixture.hovered_vertex_ptr;
+							editor.fixture.selected_fixture_index = editor.fixture.hovered_fixture_index;
+
+							Fixture &fixture = fixtures[editor.fixture.selected_fixture_index];
+
+							if (gizmo.render_type == Gizmo_Render_Type_NONE) {
+								gizmo.render_type = Gizmo_Render_Type_TRANSLATE;
+							} else if (editor.fixture.selected_vertex_ptr && 
+									   (fixture.shape == Fixture_Shape_Mm_Rect || fixture.shape == Fixture_Shape_Polygon)) {
+								gizmo.render_type = Gizmo_Render_Type_TRANSLATE;
+							}
+						}
+					}
+
+					if (editor.fixture.selected_vertex_ptr == nullptr) {
+						gizmo.render_type = Gizmo_Render_Type_NONE;
+					}
+
+				}
+			} break;
 		}
 
-		if (gizmo.type == Gizmo_Type_NONE) {
-			// If we are not using Gizmo and Press left button,
-			// then hovered body is selected
-			if (io.MouseClicked[ImGuiMouseButton_Left]) {
-				editor.selected_body = editor.hovered_body;
-				if (gizmo.render_type == Gizmo_Render_Type_NONE)
-					gizmo.render_type = Gizmo_Render_Type_TRANSLATE;
-			}
-
-			// If we are not using Gizmo and Double click left button,
-			// then hovered body is selected and focused
-			if (editor.hovered_body && io.MouseDoubleClicked[ImGuiMouseButton_Left]) {
-				editor.selected_body = editor.hovered_body;
-				if (gizmo.render_type == Gizmo_Render_Type_NONE)
-					gizmo.render_type = Gizmo_Render_Type_TRANSLATE;
-
-				camera.behaviour |= Camera_Behaviour_ANIMATE_FOCUS | Camera_Behaviour_ANIMATE_MOVEMENT;
-				camera_focus_on_body = true;
-			}
-		}
-
-		if (camera_focus_on_body) {
-			// Focus only on selected behaviour
-
-			if (camera.behaviour & Camera_Behaviour_ANIMATE_MOVEMENT) {
-				camera.target_position = editor.selected_body->transform.p;
-			}
-
-			if (camera.behaviour & Camera_Behaviour_ANIMATE_FOCUS) {
-				r32 sx = editor.selected_body->bounding_box.max.x - editor.selected_body->bounding_box.min.x;
-				r32 sy = editor.selected_body->bounding_box.max.y - editor.selected_body->bounding_box.min.y;
-				sx /= view_width;
-				sy /= view_height;
-				r32 s = maximum(sx, sy);
-
-				// Only animate camera if the new distance for camera is greater than the old distance
-				r32 new_distance = log2f(s);
-				camera.target_distance = maximum(new_distance, camera.target_distance);
-			}
-		}
-
-		if (editor.selected_body == nullptr) {
-			gizmo.render_type = Gizmo_Render_Type_NONE;
-		}
 	}
 	#endif
 }
 
-static void iscene_render_shape(Fixture &fixture, const Transform &transform, Vec3 color) {
+static void iscene_render_shape(const Circle &circle, Vec4 shade, Vec4 outline) {
+	im2d_circle(circle.center, circle.radius, shade);
+	im2d_circle_outline(circle.center, circle.radius, outline);
+}
+
+static void iscene_render_shape(const Mm_Rect &mm_rect, Vec4 shade, Vec4 outline) {
+	auto dim = mm_rect.max - mm_rect.min;
+	im2d_rect(mm_rect.min, dim, shade);
+	im2d_rect_outline(mm_rect.min, dim, outline);
+}
+
+static void iscene_render_shape(const Polygon &polygon, Vec4 shade, Vec4 outline) {
+	im2d_polygon(polygon, shade);
+	im2d_polygon_outline(polygon, outline);
+}
+
+static void iscene_render_shape(const Capsule &capsule, Vec4 shade, Vec4 outline) {
+	Vec2 capsule_dir = capsule.b - capsule.a;
+	Vec2 capsule_norm = vec2_normalize(vec2(-capsule_dir.y, capsule_dir.x)) * capsule.radius;
+
+	Vec2 a, b, c, d;
+	a = capsule.a - capsule_norm;
+	b = capsule.a + capsule_norm;
+	c = capsule.b + capsule_norm;
+	d = capsule.b - capsule_norm;
+
+	r32 theta_a = atan2f(capsule_norm.y, capsule_norm.x) + MATH_PI;
+	r32 theta_b = theta_a + MATH_PI;
+	while (theta_b >= 2 * MATH_PI) theta_b -= 2 * MATH_PI;
+
+	im2d_pie(capsule.a, capsule.radius, theta_b, theta_a, shade);
+	im2d_pie(capsule.b, capsule.radius, theta_a, theta_b, shade);
+	im2d_quad(a, b, c, d, shade);
+
+	im2d_arc_outline(capsule.a, capsule.radius, theta_b, theta_a, outline);
+	im2d_arc_outline(capsule.b, capsule.radius, theta_a, theta_b, outline);
+	im2d_line(a, d, outline);
+	im2d_line(b, c, outline);
+}
+
+static void iscene_render_shape_transformed(Fixture &fixture, const Transform &transform, Vec3 color) {
 	const r32 alpha = 0.1f;
 	auto shade = vec4(color, alpha);
 	auto outline = vec4(color, 1);
@@ -917,46 +1212,22 @@ static void iscene_render_shape(Fixture &fixture, const Transform &transform, Ve
 	switch (fixture.shape) {
 		case Fixture_Shape_Circle: {
 			auto circle = fixture_get_shape(&fixture, Circle);
-			im2d_circle(circle->center, circle->radius, shade);
-			im2d_circle_outline(circle->center, circle->radius, outline);
+			iscene_render_shape(*circle, shade, outline);
 		} break;
 
 		case Fixture_Shape_Mm_Rect: {
 			auto mm_rect = fixture_get_shape(&fixture, Mm_Rect);
-			auto dim = mm_rect->max - mm_rect->min;
-			im2d_rect(mm_rect->min, dim, shade);
-			im2d_rect_outline(mm_rect->min, dim, outline);
+			iscene_render_shape(*mm_rect, shade, outline);
 		} break;
 
 		case Fixture_Shape_Polygon: {
 			auto polygon = fixture_get_shape(&fixture, Polygon);
-			im2d_polygon(*polygon, shade);
-			im2d_polygon_outline(*polygon, outline);
+			iscene_render_shape(*polygon, shade, outline);
 		} break;
 
 		case Fixture_Shape_Capsule: {
 			auto capsule = fixture_get_shape(&fixture, Capsule);
-			Vec2 capsule_dir = capsule->b - capsule->a;
-			Vec2 capsule_norm = vec2_normalize(vec2(-capsule_dir.y, capsule_dir.x)) * capsule->radius;
-
-			Vec2 a, b, c, d;
-			a = capsule->a - capsule_norm;
-			b = capsule->a + capsule_norm;
-			c = capsule->b + capsule_norm;
-			d = capsule->b - capsule_norm;
-
-			r32 theta_a = atan2f(capsule_norm.y, capsule_norm.x) + MATH_PI;
-			r32 theta_b = theta_a + MATH_PI;
-			while (theta_b > 2 * MATH_PI) theta_b -= 2 * MATH_PI;
-
-			im2d_pie(capsule->a, capsule->radius, theta_b, theta_a, shade);
-			im2d_pie(capsule->b, capsule->radius, theta_a, theta_b, shade);
-			im2d_quad(a, b, c, d, shade);
-
-			im2d_arc_outline(capsule->a, capsule->radius, theta_b, theta_a, outline);
-			im2d_arc_outline(capsule->b, capsule->radius, theta_a, theta_b, outline);
-			im2d_line(a, d, outline);
-			im2d_line(b, c, outline);
+			iscene_render_shape(*capsule, shade, outline);
 		} break;
 
 			invalid_default_case();
@@ -965,7 +1236,7 @@ static void iscene_render_shape(Fixture &fixture, const Transform &transform, Ve
 	im2d_pop_matrix();
 }
 
-void iscene_editor_fixture_group(Scene_Editor *editor, Rigid_Body *body) {
+void iscene_editor_fixture_group(Scene *scene, Scene_Editor *editor, Rigid_Body *body) {
 	if (ImGui::CollapsingHeader("Fixtures")) {
 		ImGui::Indent();
 		ImGui::LabelText("id", "%016zx", (u64)body->fixtures);
@@ -986,7 +1257,7 @@ void iscene_editor_fixture_group(Scene_Editor *editor, Rigid_Body *body) {
 		}
 
 		if (ImGui::Button("Edit##Fixture", ImVec2(ImGui::CalcItemWidth(), 0))) {
-			editor->open_fixture = true;
+			iscene_set_editor_mode_fixture(scene, iscene_find_resource_fixture_index_from_pointer(scene, body->fixtures));
 		}
 
 		ImGui::Unindent();
@@ -1036,14 +1307,16 @@ bool editor_fixture(Fixture *fixture, u32 count) {
 				ImGui::PushID((void *)(vertices + index));
 
 				char label[5];
-				for (u32 index = 0; index < count; ++index) {
-					snprintf(label, sizeof(label), "%u", index);
-					Vec2 v = vertices[index];
-					if (ImGui::DragFloat2(label, vertices[index].m, 0.01f, 0.0f, 0.0f, "%.4f", 0)) {
-						if (!is_polygon_convex(*shape)) {
-							vertices[index] = v;
+				if (ImGui::CollapsingHeader("Vertices")) {
+					for (u32 index = 0; index < count; ++index) {
+						snprintf(label, sizeof(label), "%u", index);
+						Vec2 v = vertices[index];
+						if (ImGui::DragFloat2(label, vertices[index].m, 0.01f, 0.0f, 0.0f, "%.4f", 0)) {
+							if (!is_polygon_convex(*shape)) {
+								vertices[index] = v;
+							}
+							result = true;
 						}
-						result = true;
 					}
 				}
 
@@ -1057,83 +1330,219 @@ bool editor_fixture(Fixture *fixture, u32 count) {
 	return result;
 }
 
-bool iscene_editor_entity(Scene_Editor *editor, Entity *entity) {
-	if (entity == nullptr) {
-		return false;
-	}
+bool iscene_make_editor(Scene *scene) {
+	auto &editor = scene->debug.editor;
 
 	bool result = false;
-	Rigid_Body *body = nullptr;
 
-	ImGui::Begin("Entity", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
+	switch (editor.mode) {
+		case Scene_Editor_Mode_MAP: {
+			ImGui::Begin("Editor", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
 
-	switch (entity->type) {
-		case Entity_Type_Null: {
-			result = editor_widget<Entity>(*entity, "Null Entity");
-		} break;
-
-		case Entity_Type_Camera: {
-			result = editor_widget<Camera>(*(Camera *)entity, "Camera Entity");
-		} break;
-
-		case Entity_Type_Character: {
-			Character *c = (Character *)entity;
-			result = editor_widget<Character>(*c, "Character Entity");
-			body = c->rigid_body;
-		} break;
-
-		case Entity_Type_Obstacle: {
-			Obstacle *o = (Obstacle *)entity;
-			result = editor_widget<Obstacle>(*o, "Obstacle Entity");
-			if (result) {
-				o->rigid_body->transform.p = entity->position;
-				o->rigid_body->bounding_box = rigid_body_bounding_box(o->rigid_body, 0);
+			Entity *entity = nullptr;
+			if (editor.map.selected_body) {
+				entity = scene_find_entity(scene, editor.map.selected_body->entity_id);
 			}
 
-			body = o->rigid_body;
+			if (entity == nullptr) {
+				ImGui::LabelText("type", "Entity_Type_Null");
+				ImGui::End();
+				return false;
+			}
+
+			Rigid_Body *body = nullptr;
+
+			switch (entity->type) {
+				case Entity_Type_Null: {
+					result = editor_widget<Entity>(*entity, "Null Entity");
+				} break;
+
+				case Entity_Type_Camera: {
+					result = editor_widget<Camera>(*(Camera *)entity, "Camera Entity");
+				} break;
+
+				case Entity_Type_Character: {
+					Character *c = (Character *)entity;
+					result = editor_widget<Character>(*c, "Character Entity");
+					body = c->rigid_body;
+				} break;
+
+				case Entity_Type_Obstacle: {
+					Obstacle *o = (Obstacle *)entity;
+					result = editor_widget<Obstacle>(*o, "Obstacle Entity");
+					if (result) {
+						o->rigid_body->transform.p = entity->position;
+						o->rigid_body->bounding_box = rigid_body_bounding_box(o->rigid_body, 0);
+					}
+
+					body = o->rigid_body;
+				} break;
+
+					invalid_default_case();
+			}
+
+			if (body) {
+				iscene_editor_fixture_group(scene, &editor, body);
+			}
+
+			ImGui::End();
+		} break;
+
+		case Scene_Editor_Mode_FIXTURE: {
+			bool open_fixture = true;
+
+			ImGui::SetNextWindowSize(ImVec2(500, 440), ImGuiCond_FirstUseEver);
+			if (ImGui::Begin("Fixture Editor", &open_fixture)) {
+				int selected = (int)editor.fixture.index;
+				
+				// Left
+				{
+					ImGui::BeginChild("Fixtures", ImVec2(200, 0), true);
+					
+					int count = (int)scene->resource_fixtures.count;
+					auto &fixtures = scene->resource_fixtures;
+					for (int index = 0; index < count; index++) {
+						auto &f = fixtures[index];
+						ImGui::PushID((void *)&f);
+						if (ImGui::Selectable(f.name, selected == index))
+							selected = index;
+						ImGui::PopID();
+					}
+
+					ImGui::EndChild();
+				}
+				ImGui::SameLine();
+
+				editor.fixture.index = selected;
+
+				// Right
+				{
+					ImGui::BeginGroup();
+					ImGui::BeginChild("Resource View");
+
+					auto &resource = scene->resource_fixtures[selected];
+					editor_widget<Resource_Fixture>(resource, "Resource");
+					editor_fixture(resource.fixtures, resource.fixture_count);
+
+					ImGui::EndChild();
+					ImGui::EndGroup();
+				}
+			}
+			ImGui::End();
+
+			if (!open_fixture) {
+				iscene_set_editor_mode_map(scene);
+			}
 		} break;
 
 			invalid_default_case();
 	}
 
-	if (body) {
-		iscene_editor_fixture_group(editor, body);
-	} else {
-		editor->open_fixture = false;
-	}
-
-	ImGui::End();
-
-	if (editor->open_fixture) {
-		if (ImGui::Begin("Fixture Editor", &editor->open_fixture)) {
-			if (editor_fixture(body->fixtures, body->fixture_count)) {
-				body->bounding_box = rigid_body_bounding_box(body, 0);
-			}
-		}
-		ImGui::End();
-	}
-
 	return result;
 }
 
-void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio, Scene_Render_Flags flags) {
-	Camera &camera = scene->by_type.camera[0];
+void gizmo_render(const Gizmo &gizmo, const Mat2 &t) {
+	switch (gizmo.render_type) {
+		case Gizmo_Render_Type_TRANSLATE: {
+			// square
+			im2d_rect(vec2(-GIZMO_LINE_HALF_THICKNESS), vec2(GIZMO_LINE_THICKNESS), vec4(gizmo.intensity[0] * GIZMO_SQUARE_COLOR, 1));
 
-	r32 view_height = camera.lens.field_of_view;
+			// x
+			im2d_rect(vec2(GIZMO_LINE_HALF_THICKNESS, -GIZMO_LINE_HALF_THICKNESS), vec2(GIZMO_LINE_LENGTH, GIZMO_LINE_THICKNESS), vec4(gizmo.intensity[1] * GIZMO_X_COLOR, 1));
+
+			// y
+			im2d_rect(vec2(-GIZMO_LINE_HALF_THICKNESS, GIZMO_LINE_HALF_THICKNESS), vec2(GIZMO_LINE_THICKNESS, GIZMO_LINE_LENGTH), vec4(gizmo.intensity[2] * GIZMO_Y_COLOR, 1));
+
+			// x pointer arrow
+			im2d_triangle(vec2(GIZMO_POINTER_OFFSET, -GIZMO_POINTER_HALF_THICKNESS),
+						  vec2(GIZMO_POINTER_OFFSET, GIZMO_POINTER_HALF_THICKNESS),
+						  vec2(GIZMO_POINTER_OFFSET + GIZMO_POINTER_THICKNESS, 0),
+						  vec4(gizmo.intensity[1] * GIZMO_X_COLOR, 1));
+
+			// y pointer arrow
+			im2d_triangle(vec2(GIZMO_POINTER_HALF_THICKNESS, GIZMO_POINTER_OFFSET),
+						  vec2(-GIZMO_POINTER_HALF_THICKNESS, GIZMO_POINTER_OFFSET),
+						  vec2(0, GIZMO_POINTER_OFFSET + GIZMO_POINTER_THICKNESS),
+						  vec4(gizmo.intensity[2] * GIZMO_Y_COLOR, 1));
+
+		} break;
+
+		case Gizmo_Render_Type_SCALE: {
+			r32 offset_x = GIZMO_LINE_LENGTH, offset_y = GIZMO_LINE_LENGTH;
+
+			if (gizmo.type == Gizmo_Type_SCALE_X || gizmo.type == Gizmo_Type_SCALE_Y) {
+				offset_x *= gizmo.values[0];
+				offset_y *= gizmo.values[1];
+			}
+
+			// square
+			im2d_rect(vec2(-GIZMO_LINE_HALF_THICKNESS), vec2(GIZMO_LINE_THICKNESS), vec4(gizmo.intensity[0] * GIZMO_SQUARE_COLOR, 1));
+
+			// x
+			im2d_rect(vec2(GIZMO_LINE_HALF_THICKNESS, -GIZMO_LINE_HALF_THICKNESS), vec2(offset_x, GIZMO_LINE_THICKNESS), vec4(gizmo.intensity[1] * GIZMO_X_COLOR, 1));
+
+			// y
+			im2d_rect(vec2(-GIZMO_LINE_HALF_THICKNESS, GIZMO_LINE_HALF_THICKNESS), vec2(GIZMO_LINE_THICKNESS, offset_y), vec4(gizmo.intensity[2] * GIZMO_Y_COLOR, 1));
+
+			// x pointer box
+			im2d_rect(vec2(offset_x - GIZMO_LINE_LENGTH + GIZMO_POINTER_OFFSET, -GIZMO_POINTER_HALF_THICKNESS), vec2(GIZMO_POINTER_THICKNESS), vec4(gizmo.intensity[1] * GIZMO_X_COLOR, 1));
+
+			// y pointer box
+			im2d_rect(vec2(-GIZMO_POINTER_HALF_THICKNESS, offset_y - GIZMO_LINE_LENGTH + GIZMO_POINTER_OFFSET), vec2(GIZMO_POINTER_THICKNESS), vec4(gizmo.intensity[2] * GIZMO_Y_COLOR, 1));
+
+		} break;
+
+		case Gizmo_Render_Type_ROTATE: {
+			r32 _00 = t.m2[0][0];
+			r32 _01 = t.m2[0][1];
+			r32 _10 = t.m2[1][0];
+			r32 _11 = t.m2[1][1];
+
+			r32 scale_x = sqrtf(_00 * _00 + _10 * _10);
+			r32 scale_y = sqrtf(_01 * _01 + _11 * _11);
+
+			r32 c = _00 / scale_x;
+			r32 s = _10 / scale_x;
+
+			if (c == 0 && s == 0) {
+				c = 1;
+			}
+
+			r32 angle_a = atanf(s / c) + ((c < 0) ? MATH_PI : 0);
+			while (angle_a < 0) angle_a += 2 * MATH_PI;
+			r32 angle_b = angle_a + 0.6f * MATH_TAU;
+			while (angle_b >= 2 * MATH_PI) angle_b -= 2 * MATH_PI;
+
+			r32 intensity = gizmo.intensity[3];
+			im2d_pie_part(vec2(0), GIZMO_ROTOR_MIN_RADIUS, GIZMO_ROTOR_MAX_RADIUS, 0, 2 * MATH_PI, vec4(GIZMO_ROTOR_COLOR, 1));
+			im2d_pie_part(vec2(0), GIZMO_ROTOR_MIN_RADIUS, GIZMO_ROTOR_MAX_RADIUS, angle_a, angle_b, vec4(intensity * GIZMO_ROTOR_INDICATOR_COLOR, 1));
+		} break;
+	}
+}
+
+void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio, Scene_Render_Flags flags) {
+	Camera *camera = scene_primary_camera(scene);
+
+	r32 view_height = camera->lens.field_of_view;
 	r32 view_width = aspect_ratio * view_height;
 
-	Camera_View view = orthographic_view(-view_width, view_width, view_height, -view_height, camera.lens.near, camera.lens.far);
+	Camera_View view = orthographic_view(-view_width, view_width, view_height, -view_height, camera->lens.near, camera->lens.far);
 
 	im2d_set_stroke_weight(0.02f);
 
-	r32 scale = powf(0.5f, camera.distance);
+	r32 scale = powf(0.5f, camera->distance);
 	r32 iscale = 1.0f / scale;
 
-	Mat4 transform = mat4_scalar(scale, scale, 1.0f) * mat4_translation(vec3(-camera.position, 0.0f));
+	Mat4 transform = mat4_scalar(scale, scale, 1.0f) * mat4_translation(vec3(-camera->position, 0.0f));
+
+	bool editor_map_mode = true;
+	#ifdef ENABLE_DEVELOPER_OPTIONS
+	editor_map_mode = (scene->debug.editor.mode == Scene_Editor_Mode_MAP);
+	#endif
 
 	im2d_begin(view, transform);
 
-	if (flags & Scene_Render_WORLD) {
+	if ((flags & Scene_Render_WORLD) && editor_map_mode) {
 		s64 count = scene->by_type.character.count;
 		auto &characters = scene->by_type.character;
 		for (s64 index = 0; index < count; ++index) {
@@ -1143,9 +1552,9 @@ void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio, Scene_Render_Flags 
 		}
 	}
 
-	if (flags & Scene_Render_FIXTURE) {
+	if ((flags & Scene_Render_FIXTURE) && editor_map_mode) {
 		#ifdef ENABLE_DEVELOPER_OPTIONS
-		Rigid_Body *body_hovered = scene->debug.editor.hovered_body;
+		Rigid_Body *body_hovered = scene->debug.editor.map.hovered_body;
 		#endif
 
 		for (auto ptr = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, ptr); ptr = iter_next<Rigid_Body>(ptr)) {
@@ -1161,7 +1570,7 @@ void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio, Scene_Render_Flags 
 
 			for (u32 index = 0; index < body.fixture_count; ++index) {
 				auto f = rigid_body_get_fixture(&body, index);
-				iscene_render_shape(*f, body.transform, color.xyz);
+				iscene_render_shape_transformed(*f, body.transform, color.xyz);
 			}
 
 			color = (body.flags & Rigid_Body_BOUNDING_BOX_COLLIDING) ? vec4(0.7f, 0.1f, 0.1f, 1) : vec4(0.1f, 0.7f, 0.1f, 1);
@@ -1171,7 +1580,7 @@ void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio, Scene_Render_Flags 
 	}
 
 	#ifdef ENABLE_DEVELOPER_OPTIONS
-	if (flags & Scene_Render_COLLISION) {
+	if ((flags & Scene_Render_COLLISION) && editor_map_mode) {
 		auto manifolds = scene->debug.manifold;
 		for (auto &m : manifolds) {
 			im2d_line(m.contacts[1], m.contacts[1] + m.penetration * m.normal, vec4(1, 0, 1), 0.02f);
@@ -1185,102 +1594,117 @@ void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio, Scene_Render_Flags 
 	im2d_end();
 
 	#ifdef ENABLE_DEVELOPER_OPTIONS
+	auto &editor = scene->debug.editor;
+	auto &gizmo = scene->debug.editor.gizmo;
+	auto body_selected = scene->debug.editor.map.selected_body;
+
 	if (flags & Scene_Render_EDITOR) {
-		auto &gizmo = scene->debug.editor.gizmo;
-		auto body_selected = scene->debug.editor.selected_body;
 
-		if (gizmo.render_type != Gizmo_Render_Type_NONE) {
-			transform = transform * mat4_translation(vec3(body_selected->transform.p, 0)) * mat4_scalar(iscale, iscale, 1);
-			im2d_begin(view, transform);
+		switch (editor.mode) {
+			case Scene_Editor_Mode_MAP: {
+				if (gizmo.render_type != Gizmo_Render_Type_NONE) {
+					// Using the same view as primary camera and updating the primary camera transform
+					Vec2 p = body_selected->transform.p;
+					transform = transform * mat4_translation(vec3(p, 0)) * mat4_scalar(iscale, iscale, 1);
+					im2d_begin(view, transform);
+					gizmo_render(gizmo, body_selected->transform.xform);
+					im2d_end();
+				}
+			} break;
 
-			switch (gizmo.render_type) {
-				case Gizmo_Render_Type_TRANSLATE: {
-					// square
-					im2d_rect(vec2(-GIZMO_LINE_HALF_THICKNESS), vec2(GIZMO_LINE_THICKNESS), vec4(gizmo.intensity[0] * GIZMO_SQUARE_COLOR, 1));
+			case Scene_Editor_Mode_FIXTURE: {
+				if (editor.fixture.index >= 0) {
+					camera = scene_editor_camera(scene, Scene_Editor_Mode_FIXTURE);
 
-					// x
-					im2d_rect(vec2(GIZMO_LINE_HALF_THICKNESS, -GIZMO_LINE_HALF_THICKNESS), vec2(GIZMO_LINE_LENGTH, GIZMO_LINE_THICKNESS), vec4(gizmo.intensity[1] * GIZMO_X_COLOR, 1));
+					view_height = camera->lens.field_of_view;
+					view_width = aspect_ratio * view_height;
 
-					// y
-					im2d_rect(vec2(-GIZMO_LINE_HALF_THICKNESS, GIZMO_LINE_HALF_THICKNESS), vec2(GIZMO_LINE_THICKNESS, GIZMO_LINE_LENGTH), vec4(gizmo.intensity[2] * GIZMO_Y_COLOR, 1));
+					view = orthographic_view(-view_width, view_width, view_height, -view_height, camera->lens.near, camera->lens.far);
 
-					// x pointer arrow
-					im2d_triangle(vec2(GIZMO_POINTER_OFFSET, -GIZMO_POINTER_HALF_THICKNESS),
-								  vec2(GIZMO_POINTER_OFFSET, GIZMO_POINTER_HALF_THICKNESS),
-								  vec2(GIZMO_POINTER_OFFSET + GIZMO_POINTER_THICKNESS, 0),
-								  vec4(gizmo.intensity[1] * GIZMO_X_COLOR, 1));
+					scale = powf(0.5f, camera->distance);
+					iscale = 1.0f / scale;
 
-					// y pointer arrow
-					im2d_triangle(vec2(GIZMO_POINTER_HALF_THICKNESS, GIZMO_POINTER_OFFSET),
-								  vec2(-GIZMO_POINTER_HALF_THICKNESS, GIZMO_POINTER_OFFSET),
-								  vec2(0, GIZMO_POINTER_OFFSET + GIZMO_POINTER_THICKNESS),
-								  vec4(gizmo.intensity[2] * GIZMO_Y_COLOR, 1));
+					transform = mat4_scalar(scale, scale, 1.0f) * mat4_translation(vec3(-camera->position, 0.0f));
 
-				} break;
+					im2d_begin(view, transform);
 
-				case Gizmo_Render_Type_SCALE: {
-					r32 offset_x = GIZMO_LINE_LENGTH, offset_y = GIZMO_LINE_LENGTH;
+					Resource_Fixture &resource = scene->resource_fixtures[editor.fixture.index];
 
-					if (gizmo.type == Gizmo_Type_SCALE_X || gizmo.type == Gizmo_Type_SCALE_Y) {
-						offset_x *= gizmo.values[0];
-						offset_y *= gizmo.values[1];
+					u32 count = resource.fixture_count;
+					auto &fixtures = resource.fixtures;
+
+					for (u32 index = 0; index < count; ++index) {
+						auto f = fixtures + index;
+						switch (f->shape) {
+							case Fixture_Shape_Circle: {
+								auto shape = fixture_get_shape(f, Circle);
+								im2d_circle(shape->center, EDITOR_VERTEX_RADIUS, EDITOR_VERTEX_COLOR);
+								iscene_render_shape(*shape, vec4(0, 1, 0, 0.3f), vec4(0, 2, 0));
+							} break;
+
+							case Fixture_Shape_Mm_Rect: {
+								auto shape = fixture_get_shape(f, Mm_Rect);
+								im2d_circle(shape->min, EDITOR_VERTEX_RADIUS, EDITOR_VERTEX_COLOR);
+								im2d_circle(shape->max, EDITOR_VERTEX_RADIUS, EDITOR_VERTEX_COLOR);
+								iscene_render_shape(*shape, vec4(0, 1, 0, 0.1f), vec4(0, 2, 0));
+							} break;
+
+							case Fixture_Shape_Capsule: {
+								auto shape = fixture_get_shape(f, Capsule);
+								im2d_circle(shape->a, EDITOR_VERTEX_RADIUS, EDITOR_VERTEX_COLOR);
+								im2d_circle(shape->b, EDITOR_VERTEX_RADIUS, EDITOR_VERTEX_COLOR);
+								iscene_render_shape(*shape, vec4(0, 1, 0, 0.1f), vec4(0, 2, 0));
+							} break;
+
+							case Fixture_Shape_Polygon: {
+								auto shape = fixture_get_shape(f, Polygon);
+								u32 vcount = shape->vertex_count;
+								auto v = shape->vertices;
+								for (u32 vi = 0; vi < vcount; ++vi, ++v) {
+									im2d_circle(*v, EDITOR_VERTEX_RADIUS, EDITOR_VERTEX_COLOR);
+								}
+								iscene_render_shape(*shape, vec4(0, 1, 0, 0.1f), vec4(0, 2, 0));
+							} break;
+						}
 					}
 
-					// square
-					im2d_rect(vec2(-GIZMO_LINE_HALF_THICKNESS), vec2(GIZMO_LINE_THICKNESS), vec4(gizmo.intensity[0] * GIZMO_SQUARE_COLOR, 1));
+					im2d_line(vec2(-0.5f, 0.0f), vec2(0.5f, 0.0f), vec4(1));
+					im2d_line(vec2(0.0f, -0.5f), vec2(0.0f, 0.5f), vec4(1));
+					
+					if (editor.fixture.hovered_vertex_ptr) {
+						Vec2 p = *editor.fixture.hovered_vertex_ptr;
+						r32 a, b, c, d;
+						a = editor.fixture.vertex_pointer_angle;
+						b = a + 0.5f * MATH_TAU;
+						while (b >= 2 * MATH_PI) b -= 2 * MATH_PI;
+						c = a + MATH_PI;
+						while (c >= 2 * MATH_PI) c -= 2 * MATH_PI;
+						d = c + 0.5f * MATH_TAU;
+						while (d >= 2 * MATH_PI) d -= 2 * MATH_PI;
+						im2d_pie_part(p, EDITOR_VERTEX_SELECTOR_RADIUS, EDITOR_VERTEX_SELECTOR_RADIUS + EDITOR_VERTEX_SELECTOR_THICKNESS, a, b, EDITOR_SELECTED_VERTEX_COLOR);
+						im2d_pie_part(p, EDITOR_VERTEX_SELECTOR_RADIUS, EDITOR_VERTEX_SELECTOR_RADIUS + EDITOR_VERTEX_SELECTOR_THICKNESS, c, d, EDITOR_SELECTED_VERTEX_COLOR);
+					}
 
-					// x
-					im2d_rect(vec2(GIZMO_LINE_HALF_THICKNESS, -GIZMO_LINE_HALF_THICKNESS), vec2(offset_x, GIZMO_LINE_THICKNESS), vec4(gizmo.intensity[1] * GIZMO_X_COLOR, 1));
+					if (editor.fixture.selected_vertex_ptr) {
+						im2d_circle(*editor.fixture.selected_vertex_ptr, EDITOR_VERTEX_RADIUS, EDITOR_SELECTED_VERTEX_COLOR);
+						
+						Mat4 gt = mat4_translation(vec3(*editor.fixture.selected_vertex_ptr, 0)) *
+							mat4_scalar(iscale, iscale, 1);
+						im2d_push_matrix(gt);
+						gizmo_render(gizmo, mat2_identity());
+						im2d_pop_matrix();
+					}
 
-					// y
-					im2d_rect(vec2(-GIZMO_LINE_HALF_THICKNESS, GIZMO_LINE_HALF_THICKNESS), vec2(GIZMO_LINE_THICKNESS, offset_y), vec4(gizmo.intensity[2] * GIZMO_Y_COLOR, 1));
+					im2d_end();
+				}
+			} break;
 
-					// x pointer box
-					im2d_rect(vec2(offset_x - GIZMO_LINE_LENGTH + GIZMO_POINTER_OFFSET, -GIZMO_POINTER_HALF_THICKNESS), vec2(GIZMO_POINTER_THICKNESS), vec4(gizmo.intensity[1] * GIZMO_X_COLOR, 1));
-
-					// y pointer box
-					im2d_rect(vec2(-GIZMO_POINTER_HALF_THICKNESS, offset_y - GIZMO_LINE_LENGTH + GIZMO_POINTER_OFFSET), vec2(GIZMO_POINTER_THICKNESS), vec4(gizmo.intensity[2] * GIZMO_Y_COLOR, 1));
-
-				} break;
-
-				case Gizmo_Render_Type_ROTATE: {
-					const auto &t = body_selected->transform.xform;
-					r32 _00 = t.m2[0][0];
-					r32 _01 = t.m2[0][1];
-					r32 _10 = t.m2[1][0];
-					r32 _11 = t.m2[1][1];
-
-					r32 scale_x = sqrtf(_00 * _00 + _10 * _10);
-					r32 scale_y = sqrtf(_01 * _01 + _11 * _11);
-
-					r32 c = _00 / scale_x;
-					r32 s = _10 / scale_x;
-
-					r32 angle_a = atanf(s / c) + ((c < 0) ? MATH_PI : 0);
-					while (angle_a < 0) angle_a += 2 * MATH_PI;
-					r32 angle_b = angle_a + 0.6f * MATH_TAU;
-					while (angle_b > 2 * MATH_PI) angle_b -= 2 * MATH_PI;
-
-					r32 intensity = gizmo.intensity[3];
-					im2d_pie_part(vec2(0), GIZMO_ROTOR_MIN_RADIUS, GIZMO_ROTOR_MAX_RADIUS, 0, 2 * MATH_PI, vec4(GIZMO_ROTOR_COLOR, 1));
-					im2d_pie_part(vec2(0), GIZMO_ROTOR_MIN_RADIUS, GIZMO_ROTOR_MAX_RADIUS, angle_a, angle_b, vec4(intensity * GIZMO_ROTOR_INDICATOR_COLOR, 1));
-				} break;
-			}
-
-			im2d_end();
+				invalid_default_case();
 		}
+
 	}
 
-	Entity *entity_selected = nullptr;
-	Rigid_Body *body_selected = scene->debug.editor.selected_body;
-
-	if (!body_selected) {
-		entity_selected = &scene->by_type.camera[0];
-	} else {
-		entity_selected = scene_find_entity(scene, body_selected->entity_id);
-	}
-
-	iscene_editor_entity(&scene->debug.editor, entity_selected);
+	iscene_make_editor(scene);
 
 	#endif
 }
@@ -1393,13 +1817,13 @@ bool deserialize_collider(Scene *scene, Collider_Type type, Collider_Node *node,
 			auto collider = scene_attach_collider(scene, node, Polygon, &attachment);
 			collider->vertex_count = (u32)points.count;
 			memcpy(collider->vertices, points.data, sizeof(Vec2) * points.count);
-		} break;
+							} break;
 
 			invalid_default_case();
-	}
+						}
 
 	return result;
-}
+					}
 
 bool deserialize_collider_group(Scene *scene, Entity *entity, Collider_Group *group, Deserialize_State *state) {
 	u32 count;

@@ -53,6 +53,8 @@ void scan_element_attributes(const String *attrs, ptrsize count, Element_Attribu
 			out->flags |= Attr_COLOR;
 		} else if (string_match(name, "use")) {
 			out->flags |= Attr_COLOR;
+		} else if (string_match(name, "text")) {
+			out->flags |= Attr_TEXT;
 		} else if (string_starts_with(name, "step")) {
 			sscanf(string_cstr(name), "step:%d", &out->step);
 		} else if (string_starts_with(name, "speed")) {
@@ -174,6 +176,10 @@ static bool editor_widget_slider(ptrsize uid, const char *label, void *data, u32
 
 		r32 c = _00 / scale.x;
 		r32 s = _10 / scale.x;
+
+		if (c == 0 && s == 0) {
+			c = 1;
+		}
 
 		angle = atanf(s / c) + ((c < 0) ? MATH_PI : 0);
 
@@ -336,6 +342,14 @@ bool editor_widget_draw(const Type_Info *base_info, char *data, const Element_At
 				}
 			}
 
+		}
+	} break;
+
+	case Type_Id_STATIC_ARRAY: {
+		auto info = (Type_Info_Static_Array *)base_info;
+		if (info->type->id == Type_Id_CHAR && (attr.flags & Attr_TEXT)) {
+			ImGuiInputTextFlags input_flags = (attr.flags & Attr_READ_ONLY) ? ImGuiInputTextFlags_ReadOnly : 0;
+			return ImGui::InputText(name, data, info->size, input_flags);
 		}
 	} break;
 
