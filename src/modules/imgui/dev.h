@@ -2,10 +2,6 @@
 #include "modules/core/karma.h"
 #include "modules/core/systems.h"
 
-#if defined(BUILD_DEBUG) || defined(BUILD_DEBUG_FAST) || defined(BUILD_DEVELOPER)
-#define BUILD_DEVELOPER_SERVICE
-#endif
-
 typedef String Timed_Block_Match;
 
 void dev_mode_enable();
@@ -41,7 +37,7 @@ struct Timed_Procedure {
 //
 //
 
-#if defined(BUILD_DEVELOPER_SERVICE)
+#if defined(ENABLE_DEVELOPER_OPTIONS)
 
 #define Dev_ModeEnable						dev_mode_enable
 #define Dev_AudioFeedback					dev_audio_feedback

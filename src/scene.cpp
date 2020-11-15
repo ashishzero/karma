@@ -29,9 +29,9 @@ const r32 GIZMO_POINTER_OFFSET = GIZMO_LINE_LENGTH + GIZMO_LINE_HALF_THICKNESS;
 const Mm_Rect GIZMO_CENTER_RECT = mm_rect(vec2(-GIZMO_LINE_HALF_THICKNESS), vec2(-GIZMO_LINE_HALF_THICKNESS) + vec2(GIZMO_LINE_THICKNESS));
 
 const Mm_Rect GIZMO_X_LINE_RECT = mm_rect(vec2(GIZMO_LINE_HALF_THICKNESS, -GIZMO_LINE_HALF_THICKNESS),
-	vec2(GIZMO_LINE_HALF_THICKNESS, -GIZMO_LINE_HALF_THICKNESS) + vec2(GIZMO_LINE_LENGTH, GIZMO_LINE_THICKNESS));
+										  vec2(GIZMO_LINE_HALF_THICKNESS, -GIZMO_LINE_HALF_THICKNESS) + vec2(GIZMO_LINE_LENGTH, GIZMO_LINE_THICKNESS));
 const Mm_Rect GIZMO_Y_LINE_RECT = mm_rect(vec2(-GIZMO_LINE_HALF_THICKNESS, GIZMO_LINE_HALF_THICKNESS),
-	vec2(-GIZMO_LINE_HALF_THICKNESS, GIZMO_LINE_HALF_THICKNESS) + vec2(GIZMO_LINE_THICKNESS, GIZMO_LINE_LENGTH));
+										  vec2(-GIZMO_LINE_HALF_THICKNESS, GIZMO_LINE_HALF_THICKNESS) + vec2(GIZMO_LINE_THICKNESS, GIZMO_LINE_LENGTH));
 
 const Polygon GIZMO_X_POINTER_POLY = { 3, {
 	vec2(GIZMO_POINTER_OFFSET, -GIZMO_POINTER_HALF_THICKNESS),
@@ -46,9 +46,9 @@ const Polygon GIZMO_Y_POINTER_POLY = { 3, {
 } };
 
 const Mm_Rect GIZMO_X_POINTER_RECT = mm_rect(vec2(GIZMO_POINTER_OFFSET, -GIZMO_POINTER_HALF_THICKNESS),
-	vec2(GIZMO_POINTER_OFFSET, -GIZMO_POINTER_HALF_THICKNESS) + vec2(GIZMO_POINTER_THICKNESS));
+											 vec2(GIZMO_POINTER_OFFSET, -GIZMO_POINTER_HALF_THICKNESS) + vec2(GIZMO_POINTER_THICKNESS));
 const Mm_Rect GIZMO_Y_POINTER_RECT = mm_rect(vec2(-GIZMO_POINTER_HALF_THICKNESS, GIZMO_POINTER_OFFSET),
-	vec2(-GIZMO_POINTER_HALF_THICKNESS, GIZMO_POINTER_OFFSET) + vec2(GIZMO_POINTER_THICKNESS));
+											 vec2(-GIZMO_POINTER_HALF_THICKNESS, GIZMO_POINTER_OFFSET) + vec2(GIZMO_POINTER_THICKNESS));
 
 const Circle GIZMO_OUTER = { vec2(0), GIZMO_ROTOR_MAX_RADIUS };
 const Circle GIZMO_INNER = { vec2(0), GIZMO_ROTOR_MIN_RADIUS };
@@ -254,10 +254,10 @@ Scene *scene_create() {
 
 	scene->id_series = random_init(context.id, system_get_counter());
 
-#ifdef SCENE_DEVELOPER_TOOLS
+	#ifdef ENABLE_DEVELOPER_OPTIONS
 	memset(&scene->debug, 0, sizeof(scene->debug));
 	scene->debug.manifold.allocator = TEMPORARY_ALLOCATOR;
-#endif
+	#endif
 
 	return scene;
 }
@@ -504,7 +504,7 @@ Camera &scene_primary_camera(Scene *scene) {
 
 bool scene_handle_event(Scene *scene, const Event &event) {
 
-#ifdef SCENE_DEVELOPER_TOOLS
+	#ifdef ENABLE_DEVELOPER_OPTIONS
 	auto &gizmo = scene->debug.editor.gizmo;
 	if ((event.type & Event_Type_KEY_UP)) {
 		switch (event.key.symbol) {
@@ -525,16 +525,16 @@ bool scene_handle_event(Scene *scene, const Event &event) {
 			} break;
 		}
 	}
-#endif
+	#endif
 
 	return false;
 }
 
 void scene_pre_simulate(Scene *scene) {
-#ifdef SCENE_DEVELOPER_TOOLS
+	#ifdef ENABLE_DEVELOPER_OPTIONS
 	scene->debug.manifold.capacity = scene->debug.manifold.count = 0;
 	scene->debug.manifold.data = nullptr;
-#endif
+	#endif
 }
 
 void scene_simulate(Scene *scene, r32 dt) {
@@ -599,9 +599,9 @@ void scene_simulate(Scene *scene, r32 dt) {
 							a.bounding_box = rigid_body_bounding_box(&a, 0);
 							b.bounding_box = rigid_body_bounding_box(&b, 0);
 
-#ifdef SCENE_DEVELOPER_TOOLS
+							#ifdef ENABLE_DEVELOPER_OPTIONS
 							array_add(&scene->debug.manifold, manifold);
-#endif
+							#endif
 						}
 					}
 				}
@@ -636,8 +636,12 @@ void scene_update(Scene *scene, r32 window_w, r32 window_h) {
 		character.rigid_body->force = vec2(0);
 	}
 
-#ifdef SCENE_DEVELOPER_TOOLS
+	#ifdef ENABLE_DEVELOPER_OPTIONS
+	ImGui::GetStyle().Alpha = 1.0f;
+
 	if (!ImGui_IsUsingCursor()) {
+		ImGui::GetStyle().Alpha = 0.4f;
+
 		Camera &camera = scene_primary_camera(scene);
 		Scene_Editor &editor = scene->debug.editor;
 		Gizmo &gizmo = editor.gizmo;
@@ -685,8 +689,8 @@ void scene_update(Scene *scene, r32 window_w, r32 window_h) {
 		// Get the Rigid_Body under the mouse cursor, nullptr if mouse doesn't hover over any Rigid_Body
 		editor.hovered_body = nullptr;
 		for (auto ptr = iter_begin(&scene->rigid_bodies);
-			iter_continue(&scene->rigid_bodies, ptr) && !editor.hovered_body;
-			ptr = iter_next<Rigid_Body>(ptr)) {
+			 iter_continue(&scene->rigid_bodies, ptr) && !editor.hovered_body;
+			 ptr = iter_next<Rigid_Body>(ptr)) {
 			auto &body = ptr->data;
 			for (u32 index = 0; index < body.fixture_count && !editor.hovered_body; ++index) {
 				Fixture *fixture = rigid_body_get_fixture(&body, index);
@@ -721,12 +725,12 @@ void scene_update(Scene *scene, r32 window_w, r32 window_h) {
 								if (io.MouseDown[ImGuiMouseButton_Left])
 									gizmo.type = Gizmo_Type_CENTER;
 							} else if (test_shape_vs_point(GIZMO_X_LINE_RECT, gizmo_transform, cursor) ||
-								test_shape_vs_point(GIZMO_X_POINTER_POLY, gizmo_transform, cursor)) {
+									   test_shape_vs_point(GIZMO_X_POINTER_POLY, gizmo_transform, cursor)) {
 								gizmo.intensity[1] = 4.5f;
 								if (io.MouseDown[ImGuiMouseButton_Left])
 									gizmo.type = Gizmo_Type_TRANSLATE_X;
 							} else if (test_shape_vs_point(GIZMO_Y_LINE_RECT, gizmo_transform, cursor) ||
-								test_shape_vs_point(GIZMO_Y_POINTER_POLY, gizmo_transform, cursor)) {
+									   test_shape_vs_point(GIZMO_Y_POINTER_POLY, gizmo_transform, cursor)) {
 								gizmo.intensity[2] = 2;
 								if (io.MouseDown[ImGuiMouseButton_Left])
 									gizmo.type = Gizmo_Type_TRANSLATE_Y;
@@ -739,7 +743,7 @@ void scene_update(Scene *scene, r32 window_w, r32 window_h) {
 								if (io.MouseDown[ImGuiMouseButton_Left])
 									gizmo.type = Gizmo_Type_CENTER;
 							} else if (test_shape_vs_point(GIZMO_X_LINE_RECT, gizmo_transform, cursor) ||
-								test_shape_vs_point(GIZMO_X_POINTER_RECT, gizmo_transform, cursor)) {
+									   test_shape_vs_point(GIZMO_X_POINTER_RECT, gizmo_transform, cursor)) {
 								gizmo.intensity[1] = 4.5f;
 								if (io.MouseDown[ImGuiMouseButton_Left]) {
 									gizmo.type = Gizmo_Type_SCALE_X;
@@ -747,7 +751,7 @@ void scene_update(Scene *scene, r32 window_w, r32 window_h) {
 									gizmo.values[1] = 1;
 								}
 							} else if (test_shape_vs_point(GIZMO_Y_LINE_RECT, gizmo_transform, cursor) ||
-								test_shape_vs_point(GIZMO_Y_POINTER_RECT, gizmo_transform, cursor)) {
+									   test_shape_vs_point(GIZMO_Y_POINTER_RECT, gizmo_transform, cursor)) {
 								gizmo.intensity[2] = 2;
 								if (io.MouseDown[ImGuiMouseButton_Left]) {
 									gizmo.type = Gizmo_Type_SCALE_Y;
@@ -896,7 +900,7 @@ void scene_update(Scene *scene, r32 window_w, r32 window_h) {
 			gizmo.render_type = Gizmo_Render_Type_NONE;
 		}
 	}
-#endif
+	#endif
 }
 
 static void iscene_render_shape(Fixture &fixture, const Transform &transform, Vec3 color) {
@@ -1123,20 +1127,20 @@ void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio, Scene_Render_Flags 
 	}
 
 	if (flags & Scene_Render_FIXTURE) {
-#ifdef SCENE_DEVELOPER_TOOLS
+		#ifdef ENABLE_DEVELOPER_OPTIONS
 		Rigid_Body *body_hovered = scene->debug.editor.hovered_body;
-#endif
+		#endif
 
 		for (auto ptr = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, ptr); ptr = iter_next<Rigid_Body>(ptr)) {
 			auto &body = ptr->data;
 
 			Vec4 color = (body.flags & Rigid_Body_COLLIDING) ? vec4(1, 0, 0) : vec4(0.7f, 0.45f, 0);
 
-#ifdef SCENE_DEVELOPER_TOOLS
+			#ifdef ENABLE_DEVELOPER_OPTIONS
 			if (&body == body_hovered) {
 				color.xyz = vec3(1) - color.xyz;
 			}
-#endif
+			#endif
 
 			for (u32 index = 0; index < body.fixture_count; ++index) {
 				auto f = rigid_body_get_fixture(&body, index);
@@ -1149,7 +1153,7 @@ void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio, Scene_Render_Flags 
 		}
 	}
 
-#ifdef SCENE_DEVELOPER_TOOLS
+	#ifdef ENABLE_DEVELOPER_OPTIONS
 	if (flags & Scene_Render_COLLISION) {
 		auto manifolds = scene->debug.manifold;
 		for (auto &m : manifolds) {
@@ -1159,11 +1163,11 @@ void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio, Scene_Render_Flags 
 			im2d_circle(m.contacts[1], 0.08f, vec4(1, 0, 1));
 		}
 	}
-#endif
+	#endif
 
 	im2d_end();
 
-#ifdef SCENE_DEVELOPER_TOOLS
+	#ifdef ENABLE_DEVELOPER_OPTIONS
 	if (flags & Scene_Render_EDITOR) {
 		auto &gizmo = scene->debug.editor.gizmo;
 		auto body_selected = scene->debug.editor.selected_body;
@@ -1185,15 +1189,15 @@ void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio, Scene_Render_Flags 
 
 					// x pointer arrow
 					im2d_triangle(vec2(GIZMO_POINTER_OFFSET, -GIZMO_POINTER_HALF_THICKNESS),
-						vec2(GIZMO_POINTER_OFFSET, GIZMO_POINTER_HALF_THICKNESS),
-						vec2(GIZMO_POINTER_OFFSET + GIZMO_POINTER_THICKNESS, 0),
-						vec4(gizmo.intensity[1] * GIZMO_X_COLOR, 1));
+								  vec2(GIZMO_POINTER_OFFSET, GIZMO_POINTER_HALF_THICKNESS),
+								  vec2(GIZMO_POINTER_OFFSET + GIZMO_POINTER_THICKNESS, 0),
+								  vec4(gizmo.intensity[1] * GIZMO_X_COLOR, 1));
 
 					// y pointer arrow
 					im2d_triangle(vec2(GIZMO_POINTER_HALF_THICKNESS, GIZMO_POINTER_OFFSET),
-						vec2(-GIZMO_POINTER_HALF_THICKNESS, GIZMO_POINTER_OFFSET),
-						vec2(0, GIZMO_POINTER_OFFSET + GIZMO_POINTER_THICKNESS),
-						vec4(gizmo.intensity[2] * GIZMO_Y_COLOR, 1));
+								  vec2(-GIZMO_POINTER_HALF_THICKNESS, GIZMO_POINTER_OFFSET),
+								  vec2(0, GIZMO_POINTER_OFFSET + GIZMO_POINTER_THICKNESS),
+								  vec4(gizmo.intensity[2] * GIZMO_Y_COLOR, 1));
 
 				} break;
 
@@ -1261,7 +1265,7 @@ void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio, Scene_Render_Flags 
 
 	iscene_editor_entity(&scene->debug.editor, entity_selected);
 
-#endif
+	#endif
 }
 
 //

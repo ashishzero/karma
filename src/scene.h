@@ -5,10 +5,6 @@
 #include "modules/core/data_structures.h"
 #include "entity.h"
 
-#if defined(BUILD_DEBUG) || defined(BUILD_DEVELOPER)
-#define SCENE_DEVELOPER_TOOLS
-#endif
-
 typedef bool(*Collision_Resolver)(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb, Contact_Manifold *manifold);
 typedef Impact_Type(*Continuous_Collision_Resolver)(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb, Vec2 a_dp, Vec2 b_dp, Impact_Time *impact);
 typedef bool(*Nearest_Points_Finder)(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb, Vec2 a_dp, Vec2 b_dp, Nearest_Points *nearest_points);
@@ -92,7 +88,7 @@ struct Scene {
 
 	Random_Series	id_series;
 
-#ifdef SCENE_DEVELOPER_TOOLS
+#ifdef ENABLE_DEVELOPER_OPTIONS
 	Scene_Debug debug;
 #endif
 };

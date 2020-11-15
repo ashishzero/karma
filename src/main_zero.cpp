@@ -48,11 +48,11 @@ static Simulation_Speed simulation_speed(u32 index) {
 }
 
 int karma_user_zero() {
-#ifdef INIT_THREAD_POOL
+	#ifdef INIT_THREAD_POOL
 	if (!async_initialize(2, mega_bytes(32), context.allocator)) {
 		system_fatal_error("Thread could not be created");
 	}
-#endif
+	#endif
 
 	r32    framebuffer_w = 1280;
 	r32    framebuffer_h = 720;
@@ -381,12 +381,6 @@ int karma_user_zero() {
 
 		ImGui_UpdateFrame(real_dt);
 
-		if (!ImGui_IsUsingCursor()) {
-			ImGui::GetStyle().Alpha = 0.4f;
-		} else {
-			ImGui::GetStyle().Alpha = 1.0f;
-		}
-
 		Dev_TimedBlockEnd(Simulation);
 
 		Dev_TimedBlockBegin(Rendering);
@@ -400,6 +394,9 @@ int karma_user_zero() {
 
 		gfx_end_drawing();
 
+		//
+		//
+		//
 
 		gfx_apply_bloom(2);
 
@@ -407,19 +404,16 @@ int karma_user_zero() {
 		gfx_blit_hdr(0, 0, window_w, window_h);
 		gfx_viewport(0, 0, window_w, window_h);
 
-#if defined(BUILD_DEVELOPER_SERVICE)
+		#if defined(ENABLE_DEVELOPER_OPTIONS)
 		{
 			Dev_TimedScope(DebugRender);
 			Dev_RenderFrame();
 		}
-#endif
-
-#if defined(BUILD_IMGUI)
 		{
 			Dev_TimedScope(ImGuiRender);
 			ImGui_RenderFrame();
 		}
-#endif
+		#endif
 
 		gfx_end_drawing();
 
