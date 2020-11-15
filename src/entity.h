@@ -65,9 +65,10 @@ struct Entity {
 										Vec2 position;
 };
 
-enum Camera_Behaviour {
-	Camera_Behaviour_STILL,
-	Camera_Behaviour_ANIMATE
+enum Camera_Behaviour : u32 {
+	Camera_Behaviour_STILL = 0,
+	Camera_Behaviour_ANIMATE_MOVEMENT = bit(0),
+	Camera_Behaviour_ANIMATE_FOCUS = bit(1),
 };
 
 struct Camera_Lens {
@@ -83,7 +84,7 @@ struct Camera : public Entity {
 									r32					target_distance;
 	attribute(slider, min:0, max:1)	r32					follow_factor;
 	attribute(slider, min:0, max:1)	r32					zoom_factor;
-									Camera_Behaviour	behaviour;
+									u32					behaviour;
 									Camera_Lens			lens;
 };
 

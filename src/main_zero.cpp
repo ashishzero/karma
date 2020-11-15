@@ -440,7 +440,7 @@ int karma_user_zero() {
 	camera_info.distance = .4f;
 	camera_info.follow_factor = 0.977f;
 	camera_info.zoom_factor = 0.78f;
-	camera_info.behaviour = Camera_Behaviour_ANIMATE;
+	camera_info.behaviour = Camera_Behaviour_STILL;
 	camera_info.lens.kind = Camera_View_Kind::ORTHOGRAPHIC;
 	camera_info.lens.field_of_view = 5.0f;
 	camera_info.lens.near = -1;
@@ -812,8 +812,10 @@ int karma_user_zero() {
 			}
 
 			for (auto &camera : scene->by_type.camera) {
-				if (camera.behaviour == Camera_Behaviour_ANIMATE) {
+				if (camera.behaviour & Camera_Behaviour_ANIMATE_MOVEMENT) {
 					camera.position = lerp(camera.position, camera.target_position, 1.0f - powf(1.0f - camera.follow_factor, dt));
+				}
+				if (camera.behaviour & Camera_Behaviour_ANIMATE_FOCUS) {
 					camera.distance = lerp(camera.distance, camera.target_distance, 1.0f - powf(1.0f - camera.zoom_factor, dt));
 				}
 			}
@@ -854,12 +856,29 @@ int karma_user_zero() {
 		cursor.y = 1.0f - cursor.y;
 		cursor = 2.0f * cursor - vec2(1);
 
-
 		cursor.x *= iscale * view_width;
 		cursor.y *= iscale * view_height;
 		cursor += camera.position;
 
 		if (!ImGui_IsUsingCursor()) {
+			Vec2 delta = ImGui::GetIO().MouseDelta;
+			delta.x /= window_w;
+			delta.y /= (-window_h);
+
+			delta.x *= 2 * iscale * view_width;
+			delta.y *= 2 * iscale * view_height;
+
+			if (ImGui::GetIO().MouseDown[ImGuiMouseButton_Right]) {
+				clear_bit(camera.behaviour, Camera_Behaviour_ANIMATE_MOVEMENT);
+				camera.position -= delta;
+			}
+
+			if (ImGui::GetIO().MouseWheel) {
+				camera.behaviour |= Camera_Behaviour_ANIMATE_FOCUS;
+				camera.target_position = camera.position;
+				camera.target_distance -= 0.6f * ImGui::GetIO().MouseWheel;
+			}
+
 			body_hovered = nullptr;
 			for (auto ptr = iter_begin(&scene->rigid_bodies);
 				iter_continue(&scene->rigid_bodies, ptr) && !body_hovered;
@@ -873,6 +892,8 @@ int karma_user_zero() {
 				}
 			}
 
+			bool camera_focus_on_body = false;
+
 			if (body_selected) {
 				for (auto &inten : gizmo.intensity) {
 					inten = 1;
@@ -881,10 +902,6 @@ int karma_user_zero() {
 				if (!ImGui::GetIO().MouseDown[ImGuiMouseButton_Left]) {
 					gizmo.type = Gizmo_Type_NONE;
 				}
-
-				Vec2 delta = ImGui::GetIO().MouseDelta;
-				delta.x /= window_w;
-				delta.y /= (-window_h);
 
 				switch (gizmo.type) {
 					case Gizmo_Type_NONE: {
@@ -985,9 +1002,6 @@ int karma_user_zero() {
 
 					case Gizmo_Type_CENTER: {
 						gizmo.intensity[0] = 2;
-						
-						delta.x *= 2 * iscale * view_width;
-						delta.y *= 2 * iscale * view_height;
 
 						Entity *entity = scene_find_entity(scene, body_selected->entity_id);
 						entity->position += delta;
@@ -997,9 +1011,9 @@ int karma_user_zero() {
 
 					case Gizmo_Type_TRANSLATE_X: {
 						gizmo.intensity[1] = 4.5f;
-						
-						delta.x *= 2 * iscale * view_width;
-						delta.y *= 2 * iscale * view_height; 
+						camera.behaviour |= Camera_Behaviour_ANIMATE_MOVEMENT;
+						clear_bit(camera.behaviour, Camera_Behaviour_ANIMATE_FOCUS);
+						camera_focus_on_body = true;
 
 						Entity *entity = scene_find_entity(scene, body_selected->entity_id);
 						entity->position.x += delta.x;
@@ -1009,9 +1023,9 @@ int karma_user_zero() {
 						
 					case Gizmo_Type_TRANSLATE_Y: {
 						gizmo.intensity[2] = 2;
-
-						delta.x *= 2 * iscale * view_width;
-						delta.y *= 2 * iscale * view_height; 
+						camera.behaviour |= Camera_Behaviour_ANIMATE_MOVEMENT;
+						clear_bit(camera.behaviour, Camera_Behaviour_ANIMATE_FOCUS);
+						camera_focus_on_body = true;
 
 						Entity *entity = scene_find_entity(scene, body_selected->entity_id);
 						entity->position.y += delta.y;
@@ -1021,9 +1035,8 @@ int karma_user_zero() {
 
 					case Gizmo_Type_SCALE_X: {
 						gizmo.intensity[1] = 4.5f;
-
-						delta.x *= 2 * iscale * view_width;
-						delta.y *= 2 * iscale * view_height;
+						camera.behaviour |= Camera_Behaviour_ANIMATE_MOVEMENT | Camera_Behaviour_ANIMATE_FOCUS;
+						camera_focus_on_body = true;
 
 						r32 scale_amount_x, scale_amount_y;
 						scale_amount_x = powf(2.0f, delta.x);
@@ -1036,9 +1049,8 @@ int karma_user_zero() {
 					
 					case Gizmo_Type_SCALE_Y: {
 						gizmo.intensity[2] = 2;
-
-						delta.x *= 2 * iscale * view_width;
-						delta.y *= 2 * iscale * view_height;
+						camera.behaviour |= Camera_Behaviour_ANIMATE_MOVEMENT | Camera_Behaviour_ANIMATE_FOCUS;
+						camera_focus_on_body = true;
 
 						r32 scale_amount_x, scale_amount_y;
 						scale_amount_y = powf(2.0f, delta.y);
@@ -1051,6 +1063,8 @@ int karma_user_zero() {
 
 					case Gizmo_Type_ROTOR: {
 						gizmo.intensity[3] = 2;
+						camera.behaviour |= Camera_Behaviour_ANIMATE_MOVEMENT | Camera_Behaviour_ANIMATE_FOCUS;
+						camera_focus_on_body = true;
 
 						Vec2 a = vec2_normalize_check(vec2(gizmo.values[0], gizmo.values[1]));
 						Vec2 b = vec2_normalize_check(cursor - body_selected->transform.p);
@@ -1078,8 +1092,17 @@ int karma_user_zero() {
 					if (gizmo.render_type == Gizmo_Render_Type_NONE)
 						gizmo.render_type = Gizmo_Render_Type_TRANSLATE;
 
+					camera.behaviour |= Camera_Behaviour_ANIMATE_FOCUS | Camera_Behaviour_ANIMATE_MOVEMENT;
+					camera_focus_on_body = true;
+				}
+			}
+
+			if (camera_focus_on_body) {
+				if (camera.behaviour & Camera_Behaviour_ANIMATE_MOVEMENT) {
 					camera.target_position = body_selected->transform.p;
-					camera.behaviour = Camera_Behaviour_ANIMATE;
+				}
+
+				if (camera.behaviour & Camera_Behaviour_ANIMATE_FOCUS) {
 
 					r32 sx = body_selected->bounding_box.max.x - body_selected->bounding_box.min.x;
 					r32 sy = body_selected->bounding_box.max.y - body_selected->bounding_box.min.y;
