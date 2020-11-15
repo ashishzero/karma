@@ -39,10 +39,10 @@ struct Rigid_Body {
 	attribute(no_display)			Rigid_Body_Flags	flags;
 	attribute(min:0)				r32					imass;
 	attribute(min:0)				r32					drag;
+	attribute(slider, min:0, max:1)	r32					restitution;
 	attribute(read_only)			Vec2				velocity;
 	attribute(read_only)			Vec2				force;
 									Transform			transform;
-	attribute(slider, min:0, max:1)	r32					restitution;
 	attribute(no_display)			u32					fixture_count;
 	attribute(no_display)			Fixture *			fixtures;
 	attribute(read_only)			Mm_Rect				bounding_box;
@@ -71,7 +71,6 @@ enum Camera_Behaviour : u32 {
 };
 
 struct Camera_Lens {
-								Camera_View_Kind	kind;
 	attribute(min:0, max:120)	r32					field_of_view;
 								r32					near;
 								r32					far;

@@ -231,7 +231,10 @@ bool editor_widget_draw(const Type_Info *base_info, char *data, const Element_At
 
 		if (editor_expanding_widget(info->pointer_to)) {
 			if (ImGui::CollapsingHeader(string_cstr(info->pointer_to->name))) {
-				return editor_widget_draw(info->pointer_to, (char *)(*(ptrsize *)data), attr, name);
+				ImGui::Indent();
+				bool result = editor_widget_draw(info->pointer_to, (char *)(*(ptrsize *)data), attr, name);
+				ImGui::Unindent();
+				return result;
 			}
 		} else {
 			return editor_widget_draw(info->pointer_to, (char *)(*(ptrsize *)data), attr, name);
@@ -283,7 +286,9 @@ bool editor_widget_draw(const Type_Info *base_info, char *data, const Element_At
 
 			if (editor_expanding_widget(mem->info)) {
 				if (ImGui::CollapsingHeader(string_cstr(mem->name))) {
+					ImGui::Indent();
 					result |= editor_widget_draw(mem->info, data + mem->offset, mem_attr, string_cstr(mem->name));
+					ImGui::Unindent();
 				}
 			} else {
 				result |= editor_widget_draw(mem->info, data + mem->offset, mem_attr, string_cstr(mem->name));
@@ -341,39 +346,4 @@ bool editor_widget_draw(const Type_Info *base_info, char *data, const Element_At
 	}
 
 	return false;
-}
-
-//
-//
-//
-
-bool editor_entity(Entity *entity) {
-	bool result = false;
-
-	switch (entity->type) {
-		case Entity_Type_Null: {
-			result = editor<Entity>(*entity, "Null Entity");
-		} break;
-
-		case Entity_Type_Camera: {
-			result = editor<Camera>(*(Camera *)entity, "Camera Entity");
-		} break;
-
-		case Entity_Type_Character: {
-			result = editor<Character>(*(Character *)entity, "Character Entity");
-		} break;
-
-		case Entity_Type_Obstacle: {
-			result = editor<Obstacle>(*(Obstacle *)entity, "Obstacle Entity");
-			if (result) {
-				Obstacle *o = (Obstacle *)entity;
-				o->rigid_body->transform.p = entity->position;
-				o->rigid_body->bounding_box = rigid_body_bounding_box(o->rigid_body, 0);
-			}
-		} break;
-
-		invalid_default_case();
-	}
-
-	return result;
 }

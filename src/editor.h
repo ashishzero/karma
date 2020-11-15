@@ -22,10 +22,7 @@ struct Element_Attribute {
 bool editor_widget_draw(const Type_Info *base_info, char *data, const Element_Attribute &attr, const char *name);
 
 template <typename T>
-bool editor(const T &value, const char *name) {
+bool editor_widget(const T &value, const char *name) {
 	Element_Attribute attr = {};
 	return editor_widget_draw(reflect_info<T>(), (char *)&value, attr, name);
 }
-
-struct Entity;
-bool editor_entity(Entity *entity);
