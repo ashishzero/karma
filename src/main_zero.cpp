@@ -67,7 +67,7 @@ int karma_user_zero() {
 	bool running = true;
 
 	r32 aspect_ratio = framebuffer_w / framebuffer_h;
-	
+
 	Simulation_Speed sim_speed = simulation_speed(SIMULATION_SPEED_1X);
 
 	r32 const dt = 1.0f / 60.0f;
@@ -107,7 +107,7 @@ int karma_user_zero() {
 	Resource_Id id;
 
 	Physics_State physics_state = Physics_State_RUNNING;
-	
+
 	Rigid_Body_Info rigid_body;
 	rigid_body.fixture = true;
 	info.data = &rigid_body;
@@ -116,7 +116,7 @@ int karma_user_zero() {
 		Circle circle;
 		circle.center = vec2(0);
 		circle.radius = 1;
-		
+
 		fixture.shape = Fixture_Shape_Circle;
 		fixture.handle = &circle;
 		id = scene_create_new_resource_fixture(scene, &fixture, 1);
@@ -135,7 +135,7 @@ int karma_user_zero() {
 
 		Mm_Rect rect;
 		rect.min = vec2(-1);
-		rect.max = vec2( 1);
+		rect.max = vec2(1);
 
 		fixture.shape = Fixture_Shape_Mm_Rect;
 		fixture.handle = &rect;
@@ -310,23 +310,23 @@ int karma_user_zero() {
 			if (event.type & Event_Type_KEYBOARD) {
 				float value = (float)(event.key.state == Key_State_DOWN);
 				switch (event.key.symbol) {
-				case Key_D:
-				case Key_RIGHT:
-					controller.x = value;
-					break;
-				case Key_A:
-				case Key_LEFT:
-					controller.x = -value;
-					break;
+					case Key_D:
+					case Key_RIGHT:
+						controller.x = value;
+						break;
+					case Key_A:
+					case Key_LEFT:
+						controller.x = -value;
+						break;
 
-				case Key_W:
-				case Key_UP:
-					controller.y = value;
-					break;
-				case Key_S:
-				case Key_DOWN:
-					controller.y = -value;
-					break;
+					case Key_W:
+					case Key_UP:
+						controller.y = value;
+						break;
+					case Key_S:
+					case Key_DOWN:
+						controller.y = -value;
+						break;
 				}
 			}
 

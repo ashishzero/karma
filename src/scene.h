@@ -139,6 +139,8 @@ struct Entity_Info {
 
 Entity *scene_create_new_entity(Scene *scene, Entity_Type type, const Entity_Info &info);
 
+Camera &scene_primary_camera(Scene *scene);
+
 //
 //
 //

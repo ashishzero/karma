@@ -8,6 +8,10 @@
 
 #include ".generated/entity.typeinfo"
 
+//
+// Gizmo Values
+//
+
 const r32 GIZMO_LINE_THICKNESS = 0.1f;
 const r32 GIZMO_LINE_HALF_THICKNESS = 0.5f * GIZMO_LINE_THICKNESS;
 const r32 GIZMO_LINE_LENGTH = 1.3f;
@@ -21,6 +25,42 @@ const Vec3 GIZMO_Y_COLOR = vec3(0.1f, 0.8f, 0.1f);
 const Vec3 GIZMO_ROTOR_COLOR = vec3(0.1f, 0.1f, 0.9f);
 const Vec3 GIZMO_ROTOR_INDICATOR_COLOR = vec3(1, 1, 0.1f);
 const r32 GIZMO_POINTER_OFFSET = GIZMO_LINE_LENGTH + GIZMO_LINE_HALF_THICKNESS;
+
+const Mm_Rect GIZMO_CENTER_RECT = mm_rect(vec2(-GIZMO_LINE_HALF_THICKNESS), vec2(-GIZMO_LINE_HALF_THICKNESS) + vec2(GIZMO_LINE_THICKNESS));
+
+const Mm_Rect GIZMO_X_LINE_RECT = mm_rect(vec2(GIZMO_LINE_HALF_THICKNESS, -GIZMO_LINE_HALF_THICKNESS),
+	vec2(GIZMO_LINE_HALF_THICKNESS, -GIZMO_LINE_HALF_THICKNESS) + vec2(GIZMO_LINE_LENGTH, GIZMO_LINE_THICKNESS));
+const Mm_Rect GIZMO_Y_LINE_RECT = mm_rect(vec2(-GIZMO_LINE_HALF_THICKNESS, GIZMO_LINE_HALF_THICKNESS),
+	vec2(-GIZMO_LINE_HALF_THICKNESS, GIZMO_LINE_HALF_THICKNESS) + vec2(GIZMO_LINE_THICKNESS, GIZMO_LINE_LENGTH));
+
+const Polygon GIZMO_X_POINTER_POLY = { 3, {
+	vec2(GIZMO_POINTER_OFFSET, -GIZMO_POINTER_HALF_THICKNESS),
+	vec2(GIZMO_POINTER_OFFSET, GIZMO_POINTER_HALF_THICKNESS),
+	vec2(GIZMO_POINTER_OFFSET + GIZMO_POINTER_THICKNESS, 0)
+	}
+};
+const Polygon GIZMO_Y_POINTER_POLY = { 3, {
+	vec2(GIZMO_POINTER_HALF_THICKNESS, GIZMO_POINTER_OFFSET),
+	vec2(-GIZMO_POINTER_HALF_THICKNESS, GIZMO_POINTER_OFFSET),
+	vec2(0, GIZMO_POINTER_OFFSET + GIZMO_POINTER_THICKNESS)
+} };
+
+const Mm_Rect GIZMO_X_POINTER_RECT = mm_rect(vec2(GIZMO_POINTER_OFFSET, -GIZMO_POINTER_HALF_THICKNESS),
+	vec2(GIZMO_POINTER_OFFSET, -GIZMO_POINTER_HALF_THICKNESS) + vec2(GIZMO_POINTER_THICKNESS));
+const Mm_Rect GIZMO_Y_POINTER_RECT = mm_rect(vec2(-GIZMO_POINTER_HALF_THICKNESS, GIZMO_POINTER_OFFSET),
+	vec2(-GIZMO_POINTER_HALF_THICKNESS, GIZMO_POINTER_OFFSET) + vec2(GIZMO_POINTER_THICKNESS));
+
+const Circle GIZMO_OUTER = { vec2(0), GIZMO_ROTOR_MAX_RADIUS };
+const Circle GIZMO_INNER = { vec2(0), GIZMO_ROTOR_MIN_RADIUS };
+
+//
+// End Gizmo Values
+//
+
+
+//
+// Collision
+//
 
 template <typename ShapeA, typename ShapeB>
 static bool shapes_collision_resolver(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb, Contact_Manifold *manifold) {
@@ -46,6 +86,76 @@ static Continuous_Collision_Resolver	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shap
 static Nearest_Points_Finder			NEAREST_POINTS_FINDERS[Fixture_Shape_Count][Fixture_Shape_Count];
 static Collision_Resolver				COLLISION_RESOLVERS[Fixture_Shape_Count][Fixture_Shape_Count];
 static Collision_Detector				COLLISION_DETECTORS[Fixture_Shape_Count][Fixture_Shape_Count];
+
+static bool fixture_vs_fixture(Fixture *a, Fixture *b, const Transform &ta, const Transform &tb, Contact_Manifold *manifold) {
+	return COLLISION_RESOLVERS[a->shape][b->shape](*a, *b, ta, tb, manifold);
+}
+
+static Impact_Type fixture_vs_fixture_continuous(Fixture *a, Fixture *b, const Transform &ta, const Transform &tb, Vec2 a_dp, Vec2 b_dp, Impact_Time *impact) {
+	return CONTINUOUS_COLLISION_RESOLVERS[a->shape][b->shape](*a, *b, ta, tb, a_dp, b_dp, impact);
+}
+
+static bool nearest_points_fixture_fixture(Fixture *a, Fixture *b, const Transform &ta, const Transform &tb, Vec2 a_dp, Vec2 b_dp, Nearest_Points *nearest_points) {
+	return NEAREST_POINTS_FINDERS[a->shape][b->shape](*a, *b, ta, tb, a_dp, b_dp, nearest_points);
+}
+
+static bool test_fixture_fixture(Fixture *a, Fixture *b, const Transform &ta, const Transform &tb) {
+	return COLLISION_DETECTORS[a->shape][b->shape](*a, *b, ta, tb);
+}
+
+static bool fixture_vs_point(Fixture *a, const Transform &ta, Vec2 point, r32 size, Contact_Manifold *manifold) {
+	Circle circle = { point, size };
+	Fixture b;
+	b.shape = Fixture_Shape_Circle;
+	b.handle = &circle;
+
+	Transform tb;
+	tb.p = vec2(0);
+	tb.xform = mat2_identity();
+
+	return COLLISION_RESOLVERS[a->shape][b.shape](*a, b, ta, tb, manifold);
+}
+
+static bool nearest_points_fixture_point(Fixture &a, const Transform &ta, Vec2 dp, Vec2 point, r32 size, Nearest_Points *nearest_points) {
+	Circle circle = { point, size };
+	Fixture b;
+	b.shape = Fixture_Shape_Circle;
+	b.handle = &circle;
+
+	Transform tb;
+	tb.p = vec2(0);
+	tb.xform = mat2_identity();
+
+	return NEAREST_POINTS_FINDERS[a.shape][b.shape](a, b, ta, tb, dp, vec2(0), nearest_points);
+}
+
+static bool test_fixture_point(Fixture &a, const Transform &ta, Vec2 point, r32 size = 0) {
+	Circle circle = { point, size };
+	Fixture b;
+	b.shape = Fixture_Shape_Circle;
+	b.handle = &circle;
+
+	Transform tb;
+	tb.p = vec2(0);
+	tb.xform = mat2_identity();
+
+	return COLLISION_DETECTORS[a.shape][b.shape](a, b, ta, tb);
+}
+
+template <typename Shape>
+static bool test_shape_vs_point(const Shape &s, const Transform &t, Vec2 point, r32 size = 0) {
+	Circle circle = { point, size };
+
+	Transform tc;
+	tc.p = vec2(0);
+	tc.xform = mat2_identity();
+
+	return gjk(s, circle, t, tc);
+}
+
+//
+// End Collision
+//
 
 void scene_prepare() {
 	COLLISION_RESOLVERS[Fixture_Shape_Circle][Fixture_Shape_Circle] = shapes_collision_resolver<Circle, Circle>;
@@ -129,79 +239,13 @@ void scene_prepare() {
 	COLLISION_DETECTORS[Fixture_Shape_Polygon][Fixture_Shape_Polygon] = shapes_collision_detector<Polygon, Polygon>;
 }
 
-static bool fixture_vs_fixture(Fixture *a, Fixture *b, const Transform &ta, const Transform &tb, Contact_Manifold *manifold) {
-	return COLLISION_RESOLVERS[a->shape][b->shape](*a, *b, ta, tb, manifold);
-}
-
-static Impact_Type fixture_vs_fixture_continuous(Fixture *a, Fixture *b, const Transform &ta, const Transform &tb, Vec2 a_dp, Vec2 b_dp, Impact_Time *impact) {
-	return CONTINUOUS_COLLISION_RESOLVERS[a->shape][b->shape](*a, *b, ta, tb, a_dp, b_dp, impact);
-}
-
-static bool nearest_points_fixture_fixture(Fixture *a, Fixture *b, const Transform &ta, const Transform &tb, Vec2 a_dp, Vec2 b_dp, Nearest_Points *nearest_points) {
-	return NEAREST_POINTS_FINDERS[a->shape][b->shape](*a, *b, ta, tb, a_dp, b_dp, nearest_points);
-}
-
-static bool test_fixture_fixture(Fixture *a, Fixture *b, const Transform &ta, const Transform &tb) {
-	return COLLISION_DETECTORS[a->shape][b->shape](*a, *b, ta, tb);
-}
-
-static bool fixture_vs_point(Fixture *a, const Transform &ta, Vec2 point, r32 size, Contact_Manifold *manifold) {
-	Circle circle = { point, size };
-	Fixture b;
-	b.shape = Fixture_Shape_Circle;
-	b.handle = &circle;
-
-	Transform tb;
-	tb.p = vec2(0);
-	tb.xform = mat2_identity();
-
-	return COLLISION_RESOLVERS[a->shape][b.shape](*a, b, ta, tb, manifold);
-}
-
-static bool nearest_points_fixture_point(Fixture &a, const Transform &ta, Vec2 dp, Vec2 point, r32 size, Nearest_Points *nearest_points) {
-	Circle circle = { point, size };
-	Fixture b;
-	b.shape = Fixture_Shape_Circle;
-	b.handle = &circle;
-
-	Transform tb;
-	tb.p = vec2(0);
-	tb.xform = mat2_identity();
-
-	return NEAREST_POINTS_FINDERS[a.shape][b.shape](a, b, ta, tb, dp, vec2(0), nearest_points);
-}
-
-static bool test_fixture_point(Fixture &a, const Transform &ta, Vec2 point, r32 size = 0) {
-	Circle circle = { point, size };
-	Fixture b;
-	b.shape = Fixture_Shape_Circle;
-	b.handle = &circle;
-
-	Transform tb;
-	tb.p = vec2(0);
-	tb.xform = mat2_identity();
-
-	return COLLISION_DETECTORS[a.shape][b.shape](a, b, ta, tb);
-}
-
-template <typename Shape>
-static bool test_shape_vs_point(const Shape &s, const Transform &t, Vec2 point, r32 size = 0) {
-	Circle circle = { point, size };
-
-	Transform tc;
-	tc.p = vec2(0);
-	tc.xform = mat2_identity();
-
-	return gjk(s, circle, t, tc);
-}
-
 //
 //
 //
 
 Scene *scene_create() {
 	Scene *scene = new Scene;
-	
+
 	circular_linked_list_init(&scene->rigid_bodies, context.allocator);
 
 	scene->world.gravity = 0;
@@ -240,7 +284,7 @@ Entity *scene_find_entity(Scene *scene, Entity_Id id) {
 			case Entity_Type_Character: return &scene->by_type.character[ref.index];
 			case Entity_Type_Obstacle: return &scene->by_type.obstacle[ref.index];
 
-			invalid_default_case();
+				invalid_default_case();
 		}
 
 	}
@@ -273,7 +317,7 @@ Resource_Id scene_create_new_resource_fixture(Scene *scene, Fixture *fixtures, u
 			case Fixture_Shape_Capsule: size = sizeof(Capsule); break;
 			case Fixture_Shape_Polygon: size = sizeof(Polygon) + sizeof(Vec2) * ((Polygon *)src->handle)->vertex_count; break;
 
-			invalid_default_case();
+				invalid_default_case();
 		}
 
 		dst->shape = src->shape;
@@ -319,7 +363,7 @@ Obstacle *iscene_add_obstacle(Scene *scene) {
 
 Mm_Rect rigid_body_bounding_box(Rigid_Body *body, r32 dt) {
 	Mm_Rect most_min_rect;
-	most_min_rect.min = vec2( MAX_FLOAT);
+	most_min_rect.min = vec2(MAX_FLOAT);
 	most_min_rect.max = vec2(-MAX_FLOAT);
 
 	const Transform &t = body->transform;
@@ -355,8 +399,8 @@ Mm_Rect rigid_body_bounding_box(Rigid_Body *body, r32 dt) {
 				most_min_rect.max = vec2_max(most_min_rect.max, rect.max);
 			} break;
 
-			invalid_default_case();
-		} 
+				invalid_default_case();
+		}
 	}
 
 	Vec2 dp = dt * body->velocity;
@@ -381,12 +425,12 @@ Rigid_Body *iscene_create_rigid_body(Scene *scene, Entity_Id entity_id, const Ri
 	rigid_body->entity_id = entity_id;
 
 	if (info->fixture) {
-		Resource_Fixture *resource  = scene_find_resource_fixture(scene, info->fixture_id);
-		rigid_body->fixtures		= resource->fixtures;
-		rigid_body->fixture_count	= resource->fixture_count;
+		Resource_Fixture *resource = scene_find_resource_fixture(scene, info->fixture_id);
+		rigid_body->fixtures = resource->fixtures;
+		rigid_body->fixture_count = resource->fixture_count;
 	} else {
-		rigid_body->fixture_count	= 0;
-		rigid_body->fixtures		= 0;
+		rigid_body->fixture_count = 0;
+		rigid_body->fixtures = 0;
 	}
 
 	rigid_body->bounding_box = rigid_body_bounding_box(rigid_body, 0);
@@ -450,6 +494,10 @@ Entity *scene_create_new_entity(Scene *scene, Entity_Type type, const Entity_Inf
 	return entity;
 }
 
+Camera &scene_primary_camera(Scene *scene) {
+	return scene->by_type.camera[0];
+}
+
 //
 //
 //
@@ -493,9 +541,12 @@ void scene_simulate(Scene *scene, r32 dt) {
 	Contact_Manifold manifold;
 	manifold.penetration = 0;
 
-	for (auto &player : scene->by_type.character) {
-		player.color = vec4(1);
-		player.rigid_body->transform.p = player.position;
+	auto count = scene->by_type.character.count;
+	auto &characters = scene->by_type.character;
+	for (auto index = 0; index < count; ++index) {
+		auto &character = characters[index];
+		character.color = vec4(1);
+		character.rigid_body->transform.p = character.position;
 	}
 
 	for (auto ptr = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, ptr); ptr = iter_next<Rigid_Body>(ptr)) {
@@ -548,9 +599,9 @@ void scene_simulate(Scene *scene, r32 dt) {
 							a.bounding_box = rigid_body_bounding_box(&a, 0);
 							b.bounding_box = rigid_body_bounding_box(&b, 0);
 
-							#ifdef SCENE_DEVELOPER_TOOLS
+#ifdef SCENE_DEVELOPER_TOOLS
 							array_add(&scene->debug.manifold, manifold);
-							#endif
+#endif
 						}
 					}
 				}
@@ -559,11 +610,15 @@ void scene_simulate(Scene *scene, r32 dt) {
 		}
 	}
 
-	for (auto &player : scene->by_type.character) {
-		player.position = player.rigid_body->transform.p;
+	for (auto index = 0; index < count; ++index) {
+		auto &character = characters[index];
+		character.position = character.rigid_body->transform.p;
 	}
 
-	for (auto &camera : scene->by_type.camera) {
+	count = scene->by_type.camera.count;
+	auto &cameras = scene->by_type.camera;
+	for (s64 index = 0; index < count; ++index) {
+		Camera &camera = cameras[index];
 		if (camera.behaviour & Camera_Behaviour_ANIMATE_MOVEMENT) {
 			camera.position = lerp(camera.position, camera.target_position, 1.0f - powf(1.0f - camera.follow_factor, dt));
 		}
@@ -574,13 +629,16 @@ void scene_simulate(Scene *scene, r32 dt) {
 }
 
 void scene_update(Scene *scene, r32 window_w, r32 window_h) {
-	for (auto &player : scene->by_type.character) {
-		player.rigid_body->force = vec2(0);
+	auto count = scene->by_type.character.count;
+	auto &characters = scene->by_type.character;
+	for (auto index = 0; index < count; ++index) {
+		auto &character = characters[index];
+		character.rigid_body->force = vec2(0);
 	}
 
 #ifdef SCENE_DEVELOPER_TOOLS
 	if (!ImGui_IsUsingCursor()) {
-		Camera &camera = scene->by_type.camera[0];
+		Camera &camera = scene_primary_camera(scene);
 		Scene_Editor &editor = scene->debug.editor;
 		Gizmo &gizmo = editor.gizmo;
 
@@ -590,35 +648,41 @@ void scene_update(Scene *scene, r32 window_w, r32 window_h) {
 		r32 scale = powf(0.5f, camera.distance);
 		r32 iscale = 1.0f / scale;
 
-		Vec2 cursor = ImGui::GetIO().MousePos;
-		cursor.x /= window_w;
-		cursor.y /= window_h;
-		cursor.y = 1.0f - cursor.y;
-		cursor = 2.0f * cursor - vec2(1);
+		auto &io = ImGui::GetIO();
 
-		cursor.x *= iscale * view_width;
-		cursor.y *= iscale * view_height;
-		cursor += camera.position;
+		Vec2 cursor = io.MousePos;
+		Vec2 delta = io.MouseDelta;
+		{
+			// Convert cursor and delta value from window space into world space
+			cursor.x /= window_w;
+			cursor.y /= window_h;
+			cursor.y = 1.0f - cursor.y;
+			cursor = 2.0f * cursor - vec2(1);
 
-		Vec2 delta = ImGui::GetIO().MouseDelta;
-		delta.x /= window_w;
-		delta.y /= (-window_h);
+			cursor.x *= iscale * view_width;
+			cursor.y *= iscale * view_height;
+			cursor += camera.position;
 
-		delta.x *= 2 * iscale * view_width;
-		delta.y *= 2 * iscale * view_height;
+			delta.x /= window_w;
+			delta.y /= (-window_h);
 
-		if (ImGui::GetIO().MouseDown[ImGuiMouseButton_Right]) {
+			delta.x *= 2 * iscale * view_width;
+			delta.y *= 2 * iscale * view_height;
+		}
+
+		// Movement of the view of the world when editing
+		if (io.MouseDown[ImGuiMouseButton_Right]) {
 			clear_bit(camera.behaviour, Camera_Behaviour_ANIMATE_MOVEMENT);
-			camera.target_position = camera.position;
 			camera.position -= delta;
 		}
 
-		if (ImGui::GetIO().MouseWheel) {
+		// Zoom in and out of the world when editing
+		if (io.MouseWheel) {
 			clear_bit(camera.behaviour, Camera_Behaviour_ANIMATE_FOCUS);
-			camera.target_distance = camera.distance;
-			camera.distance -= ImGui::GetIO().DeltaTime * ImGui::GetIO().MouseWheel * 6;
+			camera.distance -= io.DeltaTime * io.MouseWheel * 6;
 		}
 
+		// Get the Rigid_Body under the mouse cursor, nullptr if mouse doesn't hover over any Rigid_Body
 		editor.hovered_body = nullptr;
 		for (auto ptr = iter_begin(&scene->rigid_bodies);
 			iter_continue(&scene->rigid_bodies, ptr) && !editor.hovered_body;
@@ -639,87 +703,53 @@ void scene_update(Scene *scene, r32 window_w, r32 window_h) {
 				inten = 1;
 			}
 
-			if (!ImGui::GetIO().MouseDown[ImGuiMouseButton_Left]) {
+			if (!io.MouseDown[ImGuiMouseButton_Left]) {
 				gizmo.type = Gizmo_Type_NONE;
 			}
 
 			switch (gizmo.type) {
 				case Gizmo_Type_NONE: {
+					// Check if we have hovered over or used gizmo
 					Transform gizmo_transform;
 					gizmo_transform.p = editor.selected_body->transform.p;
 					gizmo_transform.xform = mat2_scalar(iscale, iscale);
 
 					switch (gizmo.render_type) {
 						case Gizmo_Render_Type_TRANSLATE: {
-							const Mm_Rect GIZMO_CENTER_RECT = mm_rect(vec2(-GIZMO_LINE_HALF_THICKNESS), vec2(-GIZMO_LINE_HALF_THICKNESS) + vec2(GIZMO_LINE_THICKNESS));
-
-							const Mm_Rect GIZMO_X_LINE_RECT = mm_rect(vec2(GIZMO_LINE_HALF_THICKNESS, -GIZMO_LINE_HALF_THICKNESS),
-								vec2(GIZMO_LINE_HALF_THICKNESS, -GIZMO_LINE_HALF_THICKNESS) + vec2(GIZMO_LINE_LENGTH, GIZMO_LINE_THICKNESS));
-							const Mm_Rect GIZMO_Y_LINE_RECT = mm_rect(vec2(-GIZMO_LINE_HALF_THICKNESS, GIZMO_LINE_HALF_THICKNESS),
-								vec2(-GIZMO_LINE_HALF_THICKNESS, GIZMO_LINE_HALF_THICKNESS) + vec2(GIZMO_LINE_THICKNESS, GIZMO_LINE_LENGTH));
-
-							const Polygon GIZMO_X_POINTER_POLY = { 3, {
-								vec2(GIZMO_POINTER_OFFSET, -GIZMO_POINTER_HALF_THICKNESS),
-								vec2(GIZMO_POINTER_OFFSET, GIZMO_POINTER_HALF_THICKNESS),
-								vec2(GIZMO_POINTER_OFFSET + GIZMO_POINTER_THICKNESS, 0)
-								}
-							};
-							const Polygon GIZMO_Y_POINTER_POLY = { 3, {
-								vec2(GIZMO_POINTER_HALF_THICKNESS, GIZMO_POINTER_OFFSET),
-								vec2(-GIZMO_POINTER_HALF_THICKNESS, GIZMO_POINTER_OFFSET),
-								vec2(0, GIZMO_POINTER_OFFSET + GIZMO_POINTER_THICKNESS)
-							} };
-
 							if (test_shape_vs_point(GIZMO_CENTER_RECT, gizmo_transform, cursor)) {
 								gizmo.intensity[0] = 2;
-								if (ImGui::GetIO().MouseDown[ImGuiMouseButton_Left])
+								if (io.MouseDown[ImGuiMouseButton_Left])
 									gizmo.type = Gizmo_Type_CENTER;
-							}
-							else if (test_shape_vs_point(GIZMO_X_LINE_RECT, gizmo_transform, cursor) ||
+							} else if (test_shape_vs_point(GIZMO_X_LINE_RECT, gizmo_transform, cursor) ||
 								test_shape_vs_point(GIZMO_X_POINTER_POLY, gizmo_transform, cursor)) {
 								gizmo.intensity[1] = 4.5f;
-								if (ImGui::GetIO().MouseDown[ImGuiMouseButton_Left])
+								if (io.MouseDown[ImGuiMouseButton_Left])
 									gizmo.type = Gizmo_Type_TRANSLATE_X;
-							}
-							else if (test_shape_vs_point(GIZMO_Y_LINE_RECT, gizmo_transform, cursor) ||
+							} else if (test_shape_vs_point(GIZMO_Y_LINE_RECT, gizmo_transform, cursor) ||
 								test_shape_vs_point(GIZMO_Y_POINTER_POLY, gizmo_transform, cursor)) {
 								gizmo.intensity[2] = 2;
-								if (ImGui::GetIO().MouseDown[ImGuiMouseButton_Left])
+								if (io.MouseDown[ImGuiMouseButton_Left])
 									gizmo.type = Gizmo_Type_TRANSLATE_Y;
 							}
 						} break;
 
 						case Gizmo_Render_Type_SCALE: {
-							const Mm_Rect GIZMO_CENTER_RECT = mm_rect(vec2(-GIZMO_LINE_HALF_THICKNESS), vec2(-GIZMO_LINE_HALF_THICKNESS) + vec2(GIZMO_LINE_THICKNESS));
-
-							const Mm_Rect GIZMO_X_LINE_RECT = mm_rect(vec2(GIZMO_LINE_HALF_THICKNESS, -GIZMO_LINE_HALF_THICKNESS),
-								vec2(GIZMO_LINE_HALF_THICKNESS, -GIZMO_LINE_HALF_THICKNESS) + vec2(GIZMO_LINE_LENGTH, GIZMO_LINE_THICKNESS));
-							const Mm_Rect GIZMO_Y_LINE_RECT = mm_rect(vec2(-GIZMO_LINE_HALF_THICKNESS, GIZMO_LINE_HALF_THICKNESS),
-								vec2(-GIZMO_LINE_HALF_THICKNESS, GIZMO_LINE_HALF_THICKNESS) + vec2(GIZMO_LINE_THICKNESS, GIZMO_LINE_LENGTH));
-
-							const Mm_Rect GIZMO_X_POINTER_RECT = mm_rect(vec2(GIZMO_POINTER_OFFSET, -GIZMO_POINTER_HALF_THICKNESS),
-								vec2(GIZMO_POINTER_OFFSET, -GIZMO_POINTER_HALF_THICKNESS) + vec2(GIZMO_POINTER_THICKNESS));
-							const Mm_Rect GIZMO_Y_POINTER_RECT = mm_rect(vec2(-GIZMO_POINTER_HALF_THICKNESS, GIZMO_POINTER_OFFSET),
-								vec2(-GIZMO_POINTER_HALF_THICKNESS, GIZMO_POINTER_OFFSET) + vec2(GIZMO_POINTER_THICKNESS));
-
 							if (test_shape_vs_point(GIZMO_CENTER_RECT, gizmo_transform, cursor)) {
 								gizmo.intensity[0] = 2;
-								if (ImGui::GetIO().MouseDown[ImGuiMouseButton_Left])
+								if (io.MouseDown[ImGuiMouseButton_Left])
 									gizmo.type = Gizmo_Type_CENTER;
-							}
-							else if (test_shape_vs_point(GIZMO_X_LINE_RECT, gizmo_transform, cursor) ||
+							} else if (test_shape_vs_point(GIZMO_X_LINE_RECT, gizmo_transform, cursor) ||
 								test_shape_vs_point(GIZMO_X_POINTER_RECT, gizmo_transform, cursor)) {
 								gizmo.intensity[1] = 4.5f;
-								if (ImGui::GetIO().MouseDown[ImGuiMouseButton_Left]) {
+								if (io.MouseDown[ImGuiMouseButton_Left]) {
 									gizmo.type = Gizmo_Type_SCALE_X;
 									gizmo.values[0] = 1;
 									gizmo.values[1] = 1;
 								}
-							}
-							else if (test_shape_vs_point(GIZMO_Y_LINE_RECT, gizmo_transform, cursor) ||
+							} else if (test_shape_vs_point(GIZMO_Y_LINE_RECT, gizmo_transform, cursor) ||
 								test_shape_vs_point(GIZMO_Y_POINTER_RECT, gizmo_transform, cursor)) {
 								gizmo.intensity[2] = 2;
-								if (ImGui::GetIO().MouseDown[ImGuiMouseButton_Left]) {
+								if (io.MouseDown[ImGuiMouseButton_Left]) {
 									gizmo.type = Gizmo_Type_SCALE_Y;
 									gizmo.values[0] = 1;
 									gizmo.values[1] = 1;
@@ -728,13 +758,10 @@ void scene_update(Scene *scene, r32 window_w, r32 window_h) {
 						} break;
 
 						case Gizmo_Render_Type_ROTATE: {
-							const Circle GIZMO_OUTER = { vec2(0), GIZMO_ROTOR_MAX_RADIUS };
-							const Circle GIZMO_INNER = { vec2(0), GIZMO_ROTOR_MIN_RADIUS };
-
 							if (test_shape_vs_point(GIZMO_OUTER, gizmo_transform, cursor) &&
 								!test_shape_vs_point(GIZMO_INNER, gizmo_transform, cursor)) {
 								gizmo.intensity[3] = 2;
-								if (ImGui::GetIO().MouseDown[ImGuiMouseButton_Left]) {
+								if (io.MouseDown[ImGuiMouseButton_Left]) {
 									gizmo.type = Gizmo_Type_ROTOR;
 									gizmo.values[0] = cursor.x - editor.selected_body->transform.p.x;
 									gizmo.values[1] = cursor.y - editor.selected_body->transform.p.y;
@@ -784,7 +811,7 @@ void scene_update(Scene *scene, r32 window_w, r32 window_h) {
 
 					r32 scale_amount_x, scale_amount_y;
 					scale_amount_x = powf(2.0f, delta.x);
-					scale_amount_y = ImGui::GetIO().KeyShift ? scale_amount_x : 1;
+					scale_amount_y = io.KeyShift ? scale_amount_x : 1;
 					gizmo.values[0] *= scale_amount_x;
 					gizmo.values[1] *= scale_amount_y;
 					editor.selected_body->transform.xform = mat2_scalar(scale_amount_x, scale_amount_y) * editor.selected_body->transform.xform;
@@ -798,7 +825,7 @@ void scene_update(Scene *scene, r32 window_w, r32 window_h) {
 
 					r32 scale_amount_x, scale_amount_y;
 					scale_amount_y = powf(2.0f, delta.y);
-					scale_amount_x = ImGui::GetIO().KeyShift ? scale_amount_y : 1;
+					scale_amount_x = io.KeyShift ? scale_amount_y : 1;
 					gizmo.values[0] *= scale_amount_x;
 					gizmo.values[1] *= scale_amount_y;
 					editor.selected_body->transform.xform = mat2_scalar(scale_amount_x, scale_amount_y) * editor.selected_body->transform.xform;
@@ -825,13 +852,17 @@ void scene_update(Scene *scene, r32 window_w, r32 window_h) {
 		}
 
 		if (gizmo.type == Gizmo_Type_NONE) {
-			if (ImGui::GetIO().MouseClicked[ImGuiMouseButton_Left]) {
+			// If we are not using Gizmo and Press left button,
+			// then hovered body is selected
+			if (io.MouseClicked[ImGuiMouseButton_Left]) {
 				editor.selected_body = editor.hovered_body;
 				if (gizmo.render_type == Gizmo_Render_Type_NONE)
 					gizmo.render_type = Gizmo_Render_Type_TRANSLATE;
 			}
 
-			if (editor.hovered_body && ImGui::GetIO().MouseDoubleClicked[ImGuiMouseButton_Left]) {
+			// If we are not using Gizmo and Double click left button,
+			// then hovered body is selected and focused
+			if (editor.hovered_body && io.MouseDoubleClicked[ImGuiMouseButton_Left]) {
 				editor.selected_body = editor.hovered_body;
 				if (gizmo.render_type == Gizmo_Render_Type_NONE)
 					gizmo.render_type = Gizmo_Render_Type_TRANSLATE;
@@ -842,6 +873,8 @@ void scene_update(Scene *scene, r32 window_w, r32 window_h) {
 		}
 
 		if (camera_focus_on_body) {
+			// Focus only on selected behaviour
+
 			if (camera.behaviour & Camera_Behaviour_ANIMATE_MOVEMENT) {
 				camera.target_position = editor.selected_body->transform.p;
 			}
@@ -853,6 +886,7 @@ void scene_update(Scene *scene, r32 window_w, r32 window_h) {
 				sy /= view_height;
 				r32 s = maximum(sx, sy);
 
+				// Only animate camera if the new distance for camera is greater than the old distance
 				r32 new_distance = log2f(s);
 				camera.target_distance = maximum(new_distance, camera.target_distance);
 			}
@@ -1043,8 +1077,7 @@ bool iscene_editor_entity(Scene_Editor *editor, Entity *entity) {
 
 	if (body) {
 		iscene_editor_fixture_group(editor, body);
-	}
-	else {
+	} else {
 		editor->open_fixture = false;
 	}
 
@@ -1080,27 +1113,30 @@ void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio, Scene_Render_Flags 
 	im2d_begin(view, transform);
 
 	if (flags & Scene_Render_WORLD) {
-		for (auto &player : scene->by_type.character) {
-			im2d_circle(player.position, player.radius, player.color);
-			im2d_line(player.position, player.position + player.rigid_body->velocity, vec4(0, 1.5f, 0));
+		s64 count = scene->by_type.character.count;
+		auto &characters = scene->by_type.character;
+		for (s64 index = 0; index < count; ++index) {
+			Character &c = characters[index];
+			im2d_circle(c.position, c.radius, c.color);
+			im2d_line(c.position, c.position + c.rigid_body->velocity, vec4(0, 1.5f, 0));
 		}
 	}
 
 	if (flags & Scene_Render_FIXTURE) {
-		#ifdef SCENE_DEVELOPER_TOOLS
+#ifdef SCENE_DEVELOPER_TOOLS
 		Rigid_Body *body_hovered = scene->debug.editor.hovered_body;
-		#endif
+#endif
 
 		for (auto ptr = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, ptr); ptr = iter_next<Rigid_Body>(ptr)) {
 			auto &body = ptr->data;
 
 			Vec4 color = (body.flags & Rigid_Body_COLLIDING) ? vec4(1, 0, 0) : vec4(0.7f, 0.45f, 0);
 
-			#ifdef SCENE_DEVELOPER_TOOLS
+#ifdef SCENE_DEVELOPER_TOOLS
 			if (&body == body_hovered) {
 				color.xyz = vec3(1) - color.xyz;
 			}
-			#endif
+#endif
 
 			for (u32 index = 0; index < body.fixture_count; ++index) {
 				auto f = rigid_body_get_fixture(&body, index);
@@ -1113,7 +1149,7 @@ void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio, Scene_Render_Flags 
 		}
 	}
 
-	#ifdef SCENE_DEVELOPER_TOOLS
+#ifdef SCENE_DEVELOPER_TOOLS
 	if (flags & Scene_Render_COLLISION) {
 		auto manifolds = scene->debug.manifold;
 		for (auto &m : manifolds) {
@@ -1123,11 +1159,11 @@ void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio, Scene_Render_Flags 
 			im2d_circle(m.contacts[1], 0.08f, vec4(1, 0, 1));
 		}
 	}
-	#endif
+#endif
 
 	im2d_end();
 
-	#ifdef SCENE_DEVELOPER_TOOLS
+#ifdef SCENE_DEVELOPER_TOOLS
 	if (flags & Scene_Render_EDITOR) {
 		auto &gizmo = scene->debug.editor.gizmo;
 		auto body_selected = scene->debug.editor.selected_body;
@@ -1225,7 +1261,7 @@ void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio, Scene_Render_Flags 
 
 	iscene_editor_entity(&scene->debug.editor, entity_selected);
 
-	#endif
+#endif
 }
 
 //
@@ -1236,31 +1272,31 @@ void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio, Scene_Render_Flags 
 
 void serialize_collider(Scene *scene, Collider &collider, Ostream *out) {
 	switch (collider.type) {
-	case Collider_Null: {
-		serialize_fmt_text(out, "collider_data", reflect_info<Null>(), (char *)collider.handle);
-	} break;
+		case Collider_Null: {
+			serialize_fmt_text(out, "collider_data", reflect_info<Null>(), (char *)collider.handle);
+		} break;
 
-	case Collider_Circle: {
-		serialize_fmt_text(out, "collider_data", reflect_info<Circle>(), (char *)collider.handle);
-	} break;
+		case Collider_Circle: {
+			serialize_fmt_text(out, "collider_data", reflect_info<Circle>(), (char *)collider.handle);
+		} break;
 
-	case Collider_Mm_Rect: {
-		serialize_fmt_text(out, "collider_data", reflect_info<Mm_Rect>(), (char *)collider.handle);
-	} break;
+		case Collider_Mm_Rect: {
+			serialize_fmt_text(out, "collider_data", reflect_info<Mm_Rect>(), (char *)collider.handle);
+		} break;
 
-	case Collider_Capsule: {
-		serialize_fmt_text(out, "collider_data", reflect_info<Capsule>(), (char *)collider.handle);
-	} break;
+		case Collider_Capsule: {
+			serialize_fmt_text(out, "collider_data", reflect_info<Capsule>(), (char *)collider.handle);
+		} break;
 
-	case Collider_Polygon: {
-		Polygon *polygon = collider_get_shape(&collider, Polygon);
-		Array_View<Vec2> points;
-		points.count = polygon->vertex_count;
-		points.data = polygon->vertices;
-		serialize_fmt_text(out, "collider_data", reflect_info(points), (char *)&points);
-	} break;
+		case Collider_Polygon: {
+			Polygon *polygon = collider_get_shape(&collider, Polygon);
+			Array_View<Vec2> points;
+			points.count = polygon->vertex_count;
+			points.data = polygon->vertices;
+			serialize_fmt_text(out, "collider_data", reflect_info(points), (char *)&points);
+		} break;
 
-		invalid_default_case();
+			invalid_default_case();
 	}
 }
 
@@ -1281,17 +1317,17 @@ void serialize_entity(Scene *scene, Entity *entity, Ostream *out) {
 	serialize_fmt_text_next(out);
 
 	switch (entity->type) {
-	case Entity_Player: {
-		serialize_fmt_text(out, "player", reflect_info<Player>(), (char *)entity);
-	} break;
+		case Entity_Player: {
+			serialize_fmt_text(out, "player", reflect_info<Player>(), (char *)entity);
+		} break;
 
-	case Entity_Static_Body: {
-		serialize_fmt_text(out, "static_body", reflect_info<Static_Body>(), (char *)entity);
-		serialize_fmt_text_next(out);
-		serialize_collider_group(scene, ((Static_Body *)entity)->colliders, out);
-	} break;
+		case Entity_Static_Body: {
+			serialize_fmt_text(out, "static_body", reflect_info<Static_Body>(), (char *)entity);
+			serialize_fmt_text_next(out);
+			serialize_collider_group(scene, ((Static_Body *)entity)->colliders, out);
+		} break;
 
-		invalid_default_case();
+			invalid_default_case();
 	}
 
 }
@@ -1300,45 +1336,45 @@ bool deserialize_collider(Scene *scene, Collider_Type type, Collider_Node *node,
 	bool result = false;
 
 	switch (type) {
-	case Collider_Null: {
-		auto collider = scene_attach_collider(scene, node, Null, 0);
-		Null temp; // we don't need to get value for null collider
-		result = deserialize_fmt_text(state, "collider_data", reflect_info<Null>(), (char *)&temp);
-	} break;
+		case Collider_Null: {
+			auto collider = scene_attach_collider(scene, node, Null, 0);
+			Null temp; // we don't need to get value for null collider
+			result = deserialize_fmt_text(state, "collider_data", reflect_info<Null>(), (char *)&temp);
+		} break;
 
-	case Collider_Circle: {
-		auto collider = scene_attach_collider(scene, node, Circle, 0);
-		result = deserialize_fmt_text(state, "collider_data", reflect_info<Circle>(), (char *)collider);
-	} break;
+		case Collider_Circle: {
+			auto collider = scene_attach_collider(scene, node, Circle, 0);
+			result = deserialize_fmt_text(state, "collider_data", reflect_info<Circle>(), (char *)collider);
+		} break;
 
-	case Collider_Mm_Rect: {
-		auto collider = scene_attach_collider(scene, node, Mm_Rect, 0);
-		result = deserialize_fmt_text(state, "collider_data", reflect_info<Mm_Rect>(), (char *)collider);
-	} break;
+		case Collider_Mm_Rect: {
+			auto collider = scene_attach_collider(scene, node, Mm_Rect, 0);
+			result = deserialize_fmt_text(state, "collider_data", reflect_info<Mm_Rect>(), (char *)collider);
+		} break;
 
-	case Collider_Capsule: {
-		auto collider = scene_attach_collider(scene, node, Capsule, 0);
-		result = deserialize_fmt_text(state, "collider_data", reflect_info<Capsule>(), (char *)collider);
-	} break;
+		case Collider_Capsule: {
+			auto collider = scene_attach_collider(scene, node, Capsule, 0);
+			result = deserialize_fmt_text(state, "collider_data", reflect_info<Capsule>(), (char *)collider);
+		} break;
 
-	case Collider_Polygon: {
-		Array_View<Vec2> points;
+		case Collider_Polygon: {
+			Array_View<Vec2> points;
 
-		scoped_temporary_allocation();
-		auto mark = push_temporary_allocator();
-		result = deserialize_fmt_text(state, "collider_data", reflect_info(points), (char *)&points);
-		pop_temporary_allocator(mark);
+			scoped_temporary_allocation();
+			auto mark = push_temporary_allocator();
+			result = deserialize_fmt_text(state, "collider_data", reflect_info(points), (char *)&points);
+			pop_temporary_allocator(mark);
 
-		if (!result) break;
+			if (!result) break;
 
-		Collider_Attachment attachment;
-		attachment.polygon_n = (u32)points.count;
-		auto collider = scene_attach_collider(scene, node, Polygon, &attachment);
-		collider->vertex_count = (u32)points.count;
-		memcpy(collider->vertices, points.data, sizeof(Vec2) * points.count);
-	} break;
+			Collider_Attachment attachment;
+			attachment.polygon_n = (u32)points.count;
+			auto collider = scene_attach_collider(scene, node, Polygon, &attachment);
+			collider->vertex_count = (u32)points.count;
+			memcpy(collider->vertices, points.data, sizeof(Vec2) * points.count);
+		} break;
 
-		invalid_default_case();
+			invalid_default_case();
 	}
 
 	return result;
@@ -1366,21 +1402,21 @@ bool deserialize_entity(Scene *scene, Entity *entity, Deserialize_State *state) 
 	if (!result) return false;
 
 	switch (entity->type) {
-	case Entity_Player: {
-		result = deserialize_fmt_text(state, "player", reflect_info<Player>(), (char *)entity);
-		auto player = (Player *)entity;
-		player->rigid_body = scene_create_rigid_body(scene, entity, 1);
-		scene_attach_collider(scene, collider_node(player->rigid_body->colliders.handle, 0), Circle, 0);
-	} break;
+		case Entity_Player: {
+			result = deserialize_fmt_text(state, "player", reflect_info<Player>(), (char *)entity);
+			auto player = (Player *)entity;
+			player->rigid_body = scene_create_rigid_body(scene, entity, 1);
+			scene_attach_collider(scene, collider_node(player->rigid_body->colliders.handle, 0), Circle, 0);
+		} break;
 
-	case Entity_Static_Body: {
-		if (!deserialize_fmt_text(state, "static_body", reflect_info<Static_Body>(), (char *)entity))
-			return false;
-		Collider_Group *group = &((Static_Body *)entity)->colliders;
-		result = deserialize_collider_group(scene, entity, group, state);
-	} break;
+		case Entity_Static_Body: {
+			if (!deserialize_fmt_text(state, "static_body", reflect_info<Static_Body>(), (char *)entity))
+				return false;
+			Collider_Group *group = &((Static_Body *)entity)->colliders;
+			result = deserialize_collider_group(scene, entity, group, state);
+		} break;
 
-		invalid_default_case();
+			invalid_default_case();
 	}
 
 	return result;
