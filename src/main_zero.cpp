@@ -870,12 +870,12 @@ int karma_user_zero() {
 
 			if (ImGui::GetIO().MouseDown[ImGuiMouseButton_Right]) {
 				clear_bit(camera.behaviour, Camera_Behaviour_ANIMATE_MOVEMENT);
+				camera.target_position = camera.position;
 				camera.position -= delta;
 			}
 
 			if (ImGui::GetIO().MouseWheel) {
 				camera.behaviour |= Camera_Behaviour_ANIMATE_FOCUS;
-				camera.target_position = camera.position;
 				camera.target_distance -= 0.6f * ImGui::GetIO().MouseWheel;
 			}
 
@@ -1063,7 +1063,8 @@ int karma_user_zero() {
 
 					case Gizmo_Type_ROTOR: {
 						gizmo.intensity[3] = 2;
-						camera.behaviour |= Camera_Behaviour_ANIMATE_MOVEMENT | Camera_Behaviour_ANIMATE_FOCUS;
+						camera.behaviour |= Camera_Behaviour_ANIMATE_MOVEMENT;
+						clear_bit(camera.behaviour, Camera_Behaviour_ANIMATE_FOCUS);
 						camera_focus_on_body = true;
 
 						Vec2 a = vec2_normalize_check(vec2(gizmo.values[0], gizmo.values[1]));
@@ -1103,14 +1104,14 @@ int karma_user_zero() {
 				}
 
 				if (camera.behaviour & Camera_Behaviour_ANIMATE_FOCUS) {
-
 					r32 sx = body_selected->bounding_box.max.x - body_selected->bounding_box.min.x;
 					r32 sy = body_selected->bounding_box.max.y - body_selected->bounding_box.min.y;
 					sx /= view_width;
 					sy /= view_height;
 					r32 s = maximum(sx, sy);
 
-					camera.target_distance = log2f(s);
+					r32 new_distance = log2f(s);
+					camera.target_distance = maximum(new_distance, camera.target_distance);
 				}
 			}
 

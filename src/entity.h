@@ -80,11 +80,11 @@ struct Camera_Lens {
 
 struct Camera : public Entity {
 									r32					distance;
-									Vec2				target_position;
-									r32					target_distance;
+	attribute(no_display)			Vec2				target_position;
+	attribute(no_display)			r32					target_distance;
 	attribute(slider, min:0, max:1)	r32					follow_factor;
 	attribute(slider, min:0, max:1)	r32					zoom_factor;
-									u32					behaviour;
+	attribute(no_display)			u32					behaviour;
 									Camera_Lens			lens;
 };
 
