@@ -1404,8 +1404,10 @@ bool iscene_make_editor(Scene *scene) {
 					for (int index = 0; index < count; index++) {
 						auto &f = fixtures[index];
 						ImGui::PushID((void *)&f);
-						if (ImGui::Selectable(f.name, selected == index))
+						if (ImGui::Selectable(f.name, selected == index)) {
 							selected = index;
+							editor.fixture.selected_vertex_ptr = nullptr;
+						}
 						ImGui::PopID();
 					}
 
