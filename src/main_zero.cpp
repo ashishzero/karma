@@ -31,25 +31,6 @@ static Nearest_Points_Finder NEAREST_POINTS_FINDERS[Fixture_Shape_Count][Fixture
 typedef bool(*Collision_Detector)(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb);
 static Collision_Detector COLLISION_DETECTORS[Fixture_Shape_Count][Fixture_Shape_Count];
 
-// TODO: Do we really need null collider?? REMOVE THIS
-static bool null_collision_resolver(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb, Contact_Manifold *manifold) {
-	return false;
-}
-static Impact_Type null_continuous_collision_resolver(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb, Vec2 a_dp, Vec2 b_dp, Impact_Time *impact) {
-	return Impact_Type_SEPERATED;
-}
-
-static bool null_nearest_points_finder(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb, Vec2 a_dp, Vec2 b_dp, Nearest_Points *nearest_points) {
-	nearest_points->a = vec2(INFINITY, INFINITY);
-	nearest_points->b = vec2(INFINITY, INFINITY);
-	nearest_points->distance2 = INFINITY;
-	return false;
-}
-
-static bool null_collision_detector(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb) {
-	return false;
-}
-
 template <typename ShapeA, typename ShapeB>
 static bool shapes_collision_resolver(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb, Contact_Manifold *manifold) {
 	return gjk_epa(*(ShapeA *)a.handle, *(ShapeB *)b.handle, manifold, ta, tb);
@@ -71,121 +52,81 @@ static bool shapes_collision_detector(Fixture &a, Fixture &b, const Transform &t
 }
 
 static void collision_resover_init() {
-	COLLISION_RESOLVERS[Fixture_Shape_Null][Fixture_Shape_Null]		= null_collision_resolver;
-	COLLISION_RESOLVERS[Fixture_Shape_Null][Fixture_Shape_Circle]	= null_collision_resolver;
-	COLLISION_RESOLVERS[Fixture_Shape_Null][Fixture_Shape_Mm_Rect]	= null_collision_resolver;
-	COLLISION_RESOLVERS[Fixture_Shape_Null][Fixture_Shape_Capsule]	= null_collision_resolver;
-	COLLISION_RESOLVERS[Fixture_Shape_Null][Fixture_Shape_Polygon]	= null_collision_resolver;
-
-	COLLISION_RESOLVERS[Fixture_Shape_Circle][Fixture_Shape_Null]		= null_collision_resolver;
 	COLLISION_RESOLVERS[Fixture_Shape_Circle][Fixture_Shape_Circle]		= shapes_collision_resolver<Circle, Circle>;
 	COLLISION_RESOLVERS[Fixture_Shape_Circle][Fixture_Shape_Mm_Rect]	= shapes_collision_resolver<Circle, Mm_Rect>;
 	COLLISION_RESOLVERS[Fixture_Shape_Circle][Fixture_Shape_Capsule]	= shapes_collision_resolver<Circle, Capsule>;
 	COLLISION_RESOLVERS[Fixture_Shape_Circle][Fixture_Shape_Polygon]	= shapes_collision_resolver<Circle, Polygon>;
 
-	COLLISION_RESOLVERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Null]		= null_collision_resolver;
 	COLLISION_RESOLVERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Circle]	= shapes_collision_resolver<Mm_Rect, Circle>;
 	COLLISION_RESOLVERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Mm_Rect]	= shapes_collision_resolver<Mm_Rect, Mm_Rect>;
 	COLLISION_RESOLVERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Capsule]	= shapes_collision_resolver<Mm_Rect, Capsule>;
 	COLLISION_RESOLVERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Polygon]	= shapes_collision_resolver<Mm_Rect, Polygon>;
 
-	COLLISION_RESOLVERS[Fixture_Shape_Capsule][Fixture_Shape_Null]		= null_collision_resolver;
 	COLLISION_RESOLVERS[Fixture_Shape_Capsule][Fixture_Shape_Circle]	= shapes_collision_resolver<Capsule, Circle>;
 	COLLISION_RESOLVERS[Fixture_Shape_Capsule][Fixture_Shape_Mm_Rect]	= shapes_collision_resolver<Capsule, Mm_Rect>;
 	COLLISION_RESOLVERS[Fixture_Shape_Capsule][Fixture_Shape_Capsule]	= shapes_collision_resolver<Capsule, Capsule>;
 	COLLISION_RESOLVERS[Fixture_Shape_Capsule][Fixture_Shape_Polygon]	= shapes_collision_resolver<Capsule, Polygon>;
 
-	COLLISION_RESOLVERS[Fixture_Shape_Polygon][Fixture_Shape_Null]		= null_collision_resolver;
 	COLLISION_RESOLVERS[Fixture_Shape_Polygon][Fixture_Shape_Circle]	= shapes_collision_resolver<Polygon, Circle>;
 	COLLISION_RESOLVERS[Fixture_Shape_Polygon][Fixture_Shape_Mm_Rect]	= shapes_collision_resolver<Polygon, Mm_Rect>;
 	COLLISION_RESOLVERS[Fixture_Shape_Polygon][Fixture_Shape_Capsule]	= shapes_collision_resolver<Polygon, Capsule>;
 	COLLISION_RESOLVERS[Fixture_Shape_Polygon][Fixture_Shape_Polygon]	= shapes_collision_resolver<Polygon, Polygon>;
 
-	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Null][Fixture_Shape_Null] = null_continuous_collision_resolver;
-	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Null][Fixture_Shape_Circle] = null_continuous_collision_resolver;
-	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Null][Fixture_Shape_Mm_Rect] = null_continuous_collision_resolver;
-	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Null][Fixture_Shape_Capsule] = null_continuous_collision_resolver;
-	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Null][Fixture_Shape_Polygon] = null_continuous_collision_resolver;
-	
-	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Circle][Fixture_Shape_Null] = null_continuous_collision_resolver;
 	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Circle][Fixture_Shape_Circle] = shapes_continuous_collision_resolver<Circle, Circle>;
 	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Circle][Fixture_Shape_Mm_Rect] = shapes_continuous_collision_resolver<Circle, Mm_Rect>;
 	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Circle][Fixture_Shape_Capsule] = shapes_continuous_collision_resolver<Circle, Capsule>;
 	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Circle][Fixture_Shape_Polygon] = shapes_continuous_collision_resolver<Circle, Polygon>;
 	
-	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Null] = null_continuous_collision_resolver;
 	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Circle] = shapes_continuous_collision_resolver<Mm_Rect, Circle>;
 	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Mm_Rect] = shapes_continuous_collision_resolver<Mm_Rect, Mm_Rect>;
 	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Capsule] = shapes_continuous_collision_resolver<Mm_Rect, Capsule>;
 	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Polygon] = shapes_continuous_collision_resolver<Mm_Rect, Polygon>;
 	
-	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Capsule][Fixture_Shape_Null] = null_continuous_collision_resolver;
 	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Capsule][Fixture_Shape_Circle] = shapes_continuous_collision_resolver<Capsule, Circle>;
 	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Capsule][Fixture_Shape_Mm_Rect] = shapes_continuous_collision_resolver<Capsule, Mm_Rect>;
 	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Capsule][Fixture_Shape_Capsule] = shapes_continuous_collision_resolver<Capsule, Capsule>;
 	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Capsule][Fixture_Shape_Polygon] = shapes_continuous_collision_resolver<Capsule, Polygon>;
 	
-	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Polygon][Fixture_Shape_Null] = null_continuous_collision_resolver;
 	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Polygon][Fixture_Shape_Circle] = shapes_continuous_collision_resolver<Polygon, Circle>;
 	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Polygon][Fixture_Shape_Mm_Rect] = shapes_continuous_collision_resolver<Polygon, Mm_Rect>;
 	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Polygon][Fixture_Shape_Capsule] = shapes_continuous_collision_resolver<Polygon, Capsule>;
 	CONTINUOUS_COLLISION_RESOLVERS[Fixture_Shape_Polygon][Fixture_Shape_Polygon] = shapes_continuous_collision_resolver<Polygon, Polygon>;
 
-	NEAREST_POINTS_FINDERS[Fixture_Shape_Null][Fixture_Shape_Null]		= null_nearest_points_finder;
-	NEAREST_POINTS_FINDERS[Fixture_Shape_Null][Fixture_Shape_Circle]	= null_nearest_points_finder;
-	NEAREST_POINTS_FINDERS[Fixture_Shape_Null][Fixture_Shape_Mm_Rect]	= null_nearest_points_finder;
-	NEAREST_POINTS_FINDERS[Fixture_Shape_Null][Fixture_Shape_Capsule]	= null_nearest_points_finder;
-	NEAREST_POINTS_FINDERS[Fixture_Shape_Null][Fixture_Shape_Polygon]	= null_nearest_points_finder;
-
-	NEAREST_POINTS_FINDERS[Fixture_Shape_Circle][Fixture_Shape_Null]	= null_nearest_points_finder;
 	NEAREST_POINTS_FINDERS[Fixture_Shape_Circle][Fixture_Shape_Circle]	= shapes_nearest_points_finder<Circle, Circle>;
 	NEAREST_POINTS_FINDERS[Fixture_Shape_Circle][Fixture_Shape_Mm_Rect]	= shapes_nearest_points_finder<Circle, Mm_Rect>;
 	NEAREST_POINTS_FINDERS[Fixture_Shape_Circle][Fixture_Shape_Capsule] = shapes_nearest_points_finder<Circle, Capsule>;
 	NEAREST_POINTS_FINDERS[Fixture_Shape_Circle][Fixture_Shape_Polygon] = shapes_nearest_points_finder<Circle, Polygon>;
 
-	NEAREST_POINTS_FINDERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Null]		= null_nearest_points_finder;
 	NEAREST_POINTS_FINDERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Circle]		= shapes_nearest_points_finder<Mm_Rect, Circle>;
 	NEAREST_POINTS_FINDERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Mm_Rect]	= shapes_nearest_points_finder<Mm_Rect, Mm_Rect>;
 	NEAREST_POINTS_FINDERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Capsule]	= shapes_nearest_points_finder<Mm_Rect, Capsule>;
 	NEAREST_POINTS_FINDERS[Fixture_Shape_Mm_Rect][Fixture_Shape_Polygon]	= shapes_nearest_points_finder<Mm_Rect, Polygon>;
 
-	NEAREST_POINTS_FINDERS[Fixture_Shape_Capsule][Fixture_Shape_Null]		= null_nearest_points_finder;
 	NEAREST_POINTS_FINDERS[Fixture_Shape_Capsule][Fixture_Shape_Circle]		= shapes_nearest_points_finder<Capsule, Circle>;
 	NEAREST_POINTS_FINDERS[Fixture_Shape_Capsule][Fixture_Shape_Mm_Rect]	= shapes_nearest_points_finder<Capsule, Mm_Rect>;
 	NEAREST_POINTS_FINDERS[Fixture_Shape_Capsule][Fixture_Shape_Capsule]	= shapes_nearest_points_finder<Capsule, Capsule>;
 	NEAREST_POINTS_FINDERS[Fixture_Shape_Capsule][Fixture_Shape_Polygon]	= shapes_nearest_points_finder<Capsule, Polygon>;
 
-	NEAREST_POINTS_FINDERS[Fixture_Shape_Polygon][Fixture_Shape_Null]		= null_nearest_points_finder;
 	NEAREST_POINTS_FINDERS[Fixture_Shape_Polygon][Fixture_Shape_Circle]		= shapes_nearest_points_finder<Polygon, Circle>;
 	NEAREST_POINTS_FINDERS[Fixture_Shape_Polygon][Fixture_Shape_Mm_Rect]	= shapes_nearest_points_finder<Polygon, Mm_Rect>;
 	NEAREST_POINTS_FINDERS[Fixture_Shape_Polygon][Fixture_Shape_Capsule]	= shapes_nearest_points_finder<Polygon, Capsule>;
 	NEAREST_POINTS_FINDERS[Fixture_Shape_Polygon][Fixture_Shape_Polygon]	= shapes_nearest_points_finder<Polygon, Polygon>;
 
-	COLLISION_DETECTORS[Fixture_Shape_Null][Fixture_Shape_Null]		= null_collision_detector;
-	COLLISION_DETECTORS[Fixture_Shape_Null][Fixture_Shape_Circle]	= null_collision_detector;
-	COLLISION_DETECTORS[Fixture_Shape_Null][Fixture_Shape_Mm_Rect]	= null_collision_detector;
-	COLLISION_DETECTORS[Fixture_Shape_Null][Fixture_Shape_Capsule]	= null_collision_detector;
-	COLLISION_DETECTORS[Fixture_Shape_Null][Fixture_Shape_Polygon]	= null_collision_detector;
-
-	COLLISION_DETECTORS[Fixture_Shape_Circle][Fixture_Shape_Null]		= null_collision_detector;
 	COLLISION_DETECTORS[Fixture_Shape_Circle][Fixture_Shape_Circle]		= shapes_collision_detector<Circle, Circle>;
 	COLLISION_DETECTORS[Fixture_Shape_Circle][Fixture_Shape_Mm_Rect]	= shapes_collision_detector<Circle, Mm_Rect>;
 	COLLISION_DETECTORS[Fixture_Shape_Circle][Fixture_Shape_Capsule]	= shapes_collision_detector<Circle, Capsule>;
 	COLLISION_DETECTORS[Fixture_Shape_Circle][Fixture_Shape_Polygon]	= shapes_collision_detector<Circle, Polygon>;
 
-	COLLISION_DETECTORS[Fixture_Shape_Mm_Rect][Fixture_Shape_Null]		= null_collision_detector;
 	COLLISION_DETECTORS[Fixture_Shape_Mm_Rect][Fixture_Shape_Circle]	= shapes_collision_detector<Mm_Rect, Circle>;
 	COLLISION_DETECTORS[Fixture_Shape_Mm_Rect][Fixture_Shape_Mm_Rect]	= shapes_collision_detector<Mm_Rect, Mm_Rect>;
 	COLLISION_DETECTORS[Fixture_Shape_Mm_Rect][Fixture_Shape_Capsule]	= shapes_collision_detector<Mm_Rect, Capsule>;
 	COLLISION_DETECTORS[Fixture_Shape_Mm_Rect][Fixture_Shape_Polygon]	= shapes_collision_detector<Mm_Rect, Polygon>;
 
-	COLLISION_DETECTORS[Fixture_Shape_Capsule][Fixture_Shape_Null]		= null_collision_detector;
 	COLLISION_DETECTORS[Fixture_Shape_Capsule][Fixture_Shape_Circle]	= shapes_collision_detector<Capsule, Circle>;
 	COLLISION_DETECTORS[Fixture_Shape_Capsule][Fixture_Shape_Mm_Rect]	= shapes_collision_detector<Capsule, Mm_Rect>;
 	COLLISION_DETECTORS[Fixture_Shape_Capsule][Fixture_Shape_Capsule]	= shapes_collision_detector<Capsule, Capsule>;
 	COLLISION_DETECTORS[Fixture_Shape_Capsule][Fixture_Shape_Polygon]	= shapes_collision_detector<Capsule, Polygon>;
 
-	COLLISION_DETECTORS[Fixture_Shape_Polygon][Fixture_Shape_Null]		= null_collision_detector;
 	COLLISION_DETECTORS[Fixture_Shape_Polygon][Fixture_Shape_Circle]	= shapes_collision_detector<Polygon, Circle>;
 	COLLISION_DETECTORS[Fixture_Shape_Polygon][Fixture_Shape_Mm_Rect]	= shapes_collision_detector<Polygon, Mm_Rect>;
 	COLLISION_DETECTORS[Fixture_Shape_Polygon][Fixture_Shape_Capsule]	= shapes_collision_detector<Polygon, Capsule>;
@@ -270,8 +211,6 @@ static void render_shape(Fixture &fixture, const Transform &transform, Vec3 colo
 	im2d_push_matrix(mat3_to_mat4(xform));
 
 	switch (fixture.shape) {
-	case Fixture_Shape_Null: break;
-
 	case Fixture_Shape_Circle: {
 		auto circle = fixture_get_shape(&fixture, Circle);
 		im2d_circle(circle->center, circle->radius, shade);

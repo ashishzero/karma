@@ -7,7 +7,6 @@
 typedef u64 Entity_Id;
 
 enum Fixture_Shape : u32 {
-	Fixture_Shape_Null,
 	Fixture_Shape_Circle,
 	Fixture_Shape_Mm_Rect,
 	Fixture_Shape_Capsule,

@@ -66,7 +66,6 @@ Resource_Id scene_create_new_resource_fixture(Scene *scene, Fixture *fixtures, u
 		src = fixtures + index;
 
 		switch (src->shape) {
-			case Fixture_Shape_Null:	invalid_code_path(); break;
 			case Fixture_Shape_Circle:	size = sizeof(Circle); break;
 			case Fixture_Shape_Mm_Rect: size = sizeof(Mm_Rect); break;
 			case Fixture_Shape_Capsule: size = sizeof(Capsule); break;
@@ -126,8 +125,6 @@ Mm_Rect rigid_body_bounding_box(Rigid_Body *body, r32 dt) {
 	for (u32 index = 0; index < body->fixture_count; ++index) {
 		Fixture *fixture = rigid_body_get_fixture(body, index);
 		switch (fixture->shape) {
-			case Fixture_Shape_Null: break;
-
 			case Fixture_Shape_Circle: {
 				auto circle = fixture_get_shape(fixture, Circle);
 				auto rect = mm_rect_enclosing_circle(*circle, t);
