@@ -2016,22 +2016,14 @@ bool is_quad_convex(Vec3 a, Vec3 b, Vec3 c, Vec3 d) {
 bool is_polygon_convex(const Polygon &polygon) {
 	u32 count = polygon.vertex_count;
 	const Vec2 *vertices = polygon.vertices;
+
 	Vec2 a, b, c;
 
-	for (u32 outer = 0; outer< count; ++outer) {
+	for (u32 outer = 0; outer < count; ++outer) {
 		a = vertices[outer];
 		b = vertices[(outer + 1) % count];
+		c = vertices[(outer + 2) % count];
 
-		for (u32 inner = 2; inner < count; ++inner) {
-			c = vertices[(inner + outer) % count];
-
-			if (!triangle_is_cw(a, b, c))
-				return false;
-
-			b = c;
-		}
-
-		b = vertices[(outer + 1) % count];
 		if (!triangle_is_cw(a, b, c))
 			return false;
 	}
