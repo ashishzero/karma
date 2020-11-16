@@ -1,0 +1,19 @@
+resource: #0
+   id: 6895733817534399694
+   name: "Capsule and CircleÇ>"
+fixture_count: 2
+shape: 0
+shape_data: #0
+   center: #0
+      x: 1.000000
+      y: -1.000000
+   radius: 1.000000
+shape: 2
+shape_data: #0
+   a: #0
+      x: -2.000000
+      y: -3.000000
+   b: #0
+      x: 2.000000
+      y: 3.000000
+   radius: 1.000000

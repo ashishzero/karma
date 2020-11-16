@@ -1047,8 +1047,6 @@ u32 windows_find_files_count(const wchar_t *root_dir, int root_dir_len, const wc
 }
 
 u32 windows_find_files_info(System_Find_File_Info *info, const System_Find_File_Info *info_one_past_end, const wchar_t *root_dir, int root_dir_len, const wchar_t *extension, bool recursive) {
-	scoped_temporary_allocation();
-
 	wchar_t *search = (wchar_t *)tallocate((root_dir_len + 3) * sizeof(wchar_t));
 	memcpy(search, root_dir, root_dir_len * sizeof(wchar_t));
 	search[root_dir_len + 0] = '/';
@@ -1089,7 +1087,7 @@ u32 windows_find_files_info(System_Find_File_Info *info, const System_Find_File_
 			utf_full_file_name[found_full_file_len] = 0;
 
 			info->path.data = (u8 *)utf_full_file_name;
-			info->path.count = root_dir_len + 1;
+			info->path.count = found_full_file_len;
 			info->name.data = (u8 *)utf_full_file_name + root_dir_len + 1;
 			info->name.count = found_file_len;
 
@@ -1116,8 +1114,6 @@ u32 windows_find_files_info(System_Find_File_Info *info, const System_Find_File_
 }
 
 Array_View<System_Find_File_Info> system_find_files(const String directory, const String extension, bool recursive) {
-	scoped_temporary_allocation();
-
 	int      length = MultiByteToWideChar(CP_UTF8, 0, (char *)directory.data, (int)directory.count, 0, 0);
 	wchar_t *wsearch = (wchar_t *)tallocate((length + 1) * sizeof(wchar_t));
 	MultiByteToWideChar(CP_UTF8, 0, (char *)directory.data, (int)directory.count, wsearch, length);

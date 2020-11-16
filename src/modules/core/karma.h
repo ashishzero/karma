@@ -535,6 +535,17 @@ inline void *null_allocator_proc(Allocation_Type type, ptrsize size, const void 
 constexpr Allocator TEMPORARY_ALLOCATOR = { temporary_allocator_proc, 0 };
 constexpr Allocator NULL_ALLOCATOR = { null_allocator_proc, 0 };
 
+inline Push_Allocator push_allocator(Allocator allocator) {
+	Push_Allocator result;
+	result.allocator = context.allocator;
+	context.allocator = allocator;
+	return result;
+}
+
+inline void pop_allocator(Push_Allocator &mark) {
+	context.allocator = mark.allocator;
+}
+
 inline Push_Allocator push_temporary_allocator() {
 	Push_Allocator result;
 	result.allocator  = context.allocator;

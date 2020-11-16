@@ -74,26 +74,26 @@ bool parse_unsigned_integer(const String string, u64 *out) {
 
 		if (index < string.count) {
 			switch (string[index]) {
-			case 'x':
-				index += 1;
-				base = 16;
-				break;
-			case 'h':
-				index += 1;
-				base = 16;
-				break;
-			case 'd':
-				index += 1;
-				base = 10;
-				break;
-			case 'o':
-				index += 1;
-				base = 8;
-				break;
-			case 'b':
-				index += 1;
-				base = 2;
-				break;
+				case 'x':
+					index += 1;
+					base = 16;
+					break;
+				case 'h':
+					index += 1;
+					base = 16;
+					break;
+				case 'd':
+					index += 1;
+					base = 10;
+					break;
+				case 'o':
+					index += 1;
+					base = 8;
+					break;
+				case 'b':
+					index += 1;
+					base = 2;
+					break;
 			}
 		}
 	}
@@ -110,19 +110,15 @@ bool parse_unsigned_integer(const String string, u64 *out) {
 				value = value * base + (code - '0');
 			else
 				break;
-		}
-		else if (base == 16) {
+		} else if (base == 16) {
 			if (code >= 'a' && code <= 'f') {
 				value = value * base + (code - 'a') + 10;
-			}
-			else if (code >= 'A' && code <= 'F') {
+			} else if (code >= 'A' && code <= 'F') {
 				value = value * base + (code - 'A') + 10;
-			}
-			else {
+			} else {
 				break;
 			}
-		}
-		else {
+		} else {
 			break;
 		}
 	}
@@ -150,26 +146,26 @@ bool parse_integer(const String string, s64 *out, bool *is_signed) {
 
 		if (index < string.count) {
 			switch (string[index]) {
-			case 'x':
-				index += 1;
-				base = 16;
-				break;
-			case 'h':
-				index += 1;
-				base = 16;
-				break;
-			case 'd':
-				index += 1;
-				base = 10;
-				break;
-			case 'o':
-				index += 1;
-				base = 8;
-				break;
-			case 'b':
-				index += 1;
-				base = 2;
-				break;
+				case 'x':
+					index += 1;
+					base = 16;
+					break;
+				case 'h':
+					index += 1;
+					base = 16;
+					break;
+				case 'd':
+					index += 1;
+					base = 10;
+					break;
+				case 'o':
+					index += 1;
+					base = 8;
+					break;
+				case 'b':
+					index += 1;
+					base = 2;
+					break;
 			}
 		}
 	}
@@ -187,19 +183,15 @@ bool parse_integer(const String string, s64 *out, bool *is_signed) {
 				value = value * base + (code - '0');
 			else
 				break;
-		}
-		else if (base == 16) {
+		} else if (base == 16) {
 			if (code >= 'a' && code <= 'f') {
 				value = value * base + (code - 'a') + 10;
-			}
-			else if (code >= 'A' && code <= 'F') {
+			} else if (code >= 'A' && code <= 'F') {
 				value = value * base + (code - 'A') + 10;
-			}
-			else {
+			} else {
 				break;
 			}
-		}
-		else {
+		} else {
 			break;
 		}
 	}
@@ -277,8 +269,7 @@ bool parse_real(const String string, r64 *out, bool *is_signed) {
 				value /= p;
 			else
 				value *= p;
-		}
-		else {
+		} else {
 			exponent_fail = true;
 		}
 	}
@@ -349,8 +340,7 @@ bool tokenizer_check_and_advance_comments(Tokenizer_State *tokenizer) {
 			}
 
 			return true;
-		}
-		else if (tokenizer->at[1].codepoint.code == '*') {
+		} else if (tokenizer->at[1].codepoint.code == '*') {
 			tokenizer_advance(tokenizer, 2);
 
 			ptrsize err_row = tokenizer->row;
@@ -427,101 +417,90 @@ Token tokenizer_next_token(Tokenizer_State *tokenizer) {
 
 				if (b == '=') {
 					switch (a) {
-					case '=':
-						token.kind = Token_Kind_COMPARE_EQUALS;
-						tok_counts = 2;
-						break;
-					case '!':
-						token.kind = Token_Kind_COMPARE_NOT_EQUALS;
-						tok_counts = 2;
-						break;
-					case '<':
-						token.kind = Token_Kind_COMPARE_LESS_THAN_EQUALS;
-						tok_counts = 2;
-						break;
-					case '>':
-						token.kind = Token_Kind_COMPARE_GREATER_THAN_EQUALS;
-						tok_counts = 2;
-						break;
-					case '+':
-						token.kind = Token_Kind_PLUS_EQUALS;
-						tok_counts = 2;
-						break;
-					case '-':
-						token.kind = Token_Kind_MINUS_EQUALS;
-						tok_counts = 2;
-						break;
-					case '*':
-						token.kind = Token_Kind_MUL_EQUALS;
-						tok_counts = 2;
-						break;
-					case '/':
-						token.kind = Token_Kind_DIV_EQUALS;
-						tok_counts = 2;
-						break;
-					case '%':
-						token.kind = Token_Kind_MOD_EQUALS;
-						tok_counts = 2;
-						break;
-					case '&':
-						token.kind = Token_Kind_AND_EQUALS;
-						tok_counts = 2;
-						break;
-					case '|':
-						token.kind = Token_Kind_OR_EQUALS;
-						tok_counts = 2;
-						break;
-					case '^':
-						token.kind = Token_Kind_XOR_EQUALS;
-						tok_counts = 2;
-						break;
+						case '=':
+							token.kind = Token_Kind_COMPARE_EQUALS;
+							tok_counts = 2;
+							break;
+						case '!':
+							token.kind = Token_Kind_COMPARE_NOT_EQUALS;
+							tok_counts = 2;
+							break;
+						case '<':
+							token.kind = Token_Kind_COMPARE_LESS_THAN_EQUALS;
+							tok_counts = 2;
+							break;
+						case '>':
+							token.kind = Token_Kind_COMPARE_GREATER_THAN_EQUALS;
+							tok_counts = 2;
+							break;
+						case '+':
+							token.kind = Token_Kind_PLUS_EQUALS;
+							tok_counts = 2;
+							break;
+						case '-':
+							token.kind = Token_Kind_MINUS_EQUALS;
+							tok_counts = 2;
+							break;
+						case '*':
+							token.kind = Token_Kind_MUL_EQUALS;
+							tok_counts = 2;
+							break;
+						case '/':
+							token.kind = Token_Kind_DIV_EQUALS;
+							tok_counts = 2;
+							break;
+						case '%':
+							token.kind = Token_Kind_MOD_EQUALS;
+							tok_counts = 2;
+							break;
+						case '&':
+							token.kind = Token_Kind_AND_EQUALS;
+							tok_counts = 2;
+							break;
+						case '|':
+							token.kind = Token_Kind_OR_EQUALS;
+							tok_counts = 2;
+							break;
+						case '^':
+							token.kind = Token_Kind_XOR_EQUALS;
+							tok_counts = 2;
+							break;
 					}
 
-				}
-				else if (a == '&' && b == '&') {
+				} else if (a == '&' && b == '&') {
 					token.kind = Token_Kind_LOGICAL_AND;
 					tok_counts = 2;
-				}
-				else if (a == '|' && b == '|') {
+				} else if (a == '|' && b == '|') {
 					token.kind = Token_Kind_LOGICAL_OR;
 					tok_counts = 2;
-				}
-				else if (a == '<' && b == '<') {
+				} else if (a == '<' && b == '<') {
 					token.kind = Token_Kind_LEFT_SHIFT;
 					tok_counts = 2;
-				}
-				else if (a == '>' && b == '>') {
+				} else if (a == '>' && b == '>') {
 					token.kind = Token_Kind_RIGHT_SHIFT;
 					tok_counts = 2;
-				}
-				else if (a == '+' && b == '+') {
+				} else if (a == '+' && b == '+') {
 					token.kind = Token_Kind_PLUS_PLUS;
 					tok_counts = 2;
-				}
-				else if (a == '-' && b == '-') {
+				} else if (a == '-' && b == '-') {
 					token.kind = Token_Kind_MINUS_MINUS;
 					tok_counts = 2;
-				}
-				else if (a == '-' && b == '>') {
+				} else if (a == '-' && b == '>') {
 					token.kind = Token_Kind_DASH_ARROW;
 					tok_counts = 2;
-				}
-				else if (a == '=' && b == '>') {
+				} else if (a == '=' && b == '>') {
 					token.kind = Token_Kind_EQUAL_ARROW;
 					tok_counts = 2;
-				}
-				else if (a == ':' && b == ':') {
+				} else if (a == ':' && b == ':') {
 					token.kind = Token_Kind_DOUBLE_COLON;
 					tok_counts = 2;
-				}
-				else {
+				} else {
 					if (a == '+' || a == '-' || a == '.') {
 						if (is_numeral(b)) {
 							count = 2;
 							tokenizer_advance(tokenizer, 2);
 							continue;
-						}
-						else if (a != '.' && b == '.' && is_numeral(c)) {
+						} else if (a != '.' && b == '.' && is_numeral(c)) {
 							count = 3;
 							tokenizer_advance(tokenizer, 3);
 							continue;
@@ -540,50 +519,48 @@ Token tokenizer_next_token(Tokenizer_State *tokenizer) {
 			Token_Kind kind = Token_Kind_NONE;
 
 			switch (a) {
-			case '@': kind = Token_Kind_AT; break;
-			case '#': kind = Token_Kind_HASH; break;
-			case '$': kind = Token_Kind_DOLLAR; break;
-			case '(': kind = Token_Kind_OPEN_BRACKET; break;
-			case ')': kind = Token_Kind_CLOSE_BRACKET; break;
-			case '{': kind = Token_Kind_OPEN_CURLY_BRACKET; break;
-			case '}': kind = Token_Kind_CLOSE_CURLY_BRACKET; break;
-			case '[': kind = Token_Kind_OPEN_SQUARE_BRACKET; break;
-			case ']': kind = Token_Kind_CLOSE_SQUARE_BRACKET; break;
-			case ':': kind = Token_Kind_COLON; break;
-			case ';': kind = Token_Kind_SEMICOLON; break;
-			case ',': kind = Token_Kind_COMMA; break;
-			case '.': kind = Token_Kind_PERIOD; break;
-			case '?': kind = Token_Kind_QUESTION_MARK; break;
-			case '~': kind = Token_Kind_TILDE; break;
-			case '`': kind = Token_Kind_BACK_TICK; break;
-			case '!': kind = Token_Kind_EXCLAMATION; break;
-			case '%': kind = Token_Kind_PERCENT; break;
-			case '^': kind = Token_Kind_CARET; break;
-			case '|': kind = Token_Kind_PIPE; break;
-			case '&': kind = Token_Kind_AMPERSAND; break;
-			case '*': kind = Token_Kind_ASTRICK; break;
-			case '=': kind = Token_Kind_EQUALS; break;
-			case '<': kind = Token_Kind_LESS_THAN; break;
-			case '>': kind = Token_Kind_GREATER_THAN; break;
-			case '+': kind = Token_Kind_PLUS; break;
-			case '-': kind = Token_Kind_MINUS; break;
-			case '/': kind = Token_Kind_SLASH; break;
-			case '\\': kind = Token_Kind_BACK_SLASH; break;
-			case '\0': kind = Token_Kind_NULL; break;
+				case '@': kind = Token_Kind_AT; break;
+				case '#': kind = Token_Kind_HASH; break;
+				case '$': kind = Token_Kind_DOLLAR; break;
+				case '(': kind = Token_Kind_OPEN_BRACKET; break;
+				case ')': kind = Token_Kind_CLOSE_BRACKET; break;
+				case '{': kind = Token_Kind_OPEN_CURLY_BRACKET; break;
+				case '}': kind = Token_Kind_CLOSE_CURLY_BRACKET; break;
+				case '[': kind = Token_Kind_OPEN_SQUARE_BRACKET; break;
+				case ']': kind = Token_Kind_CLOSE_SQUARE_BRACKET; break;
+				case ':': kind = Token_Kind_COLON; break;
+				case ';': kind = Token_Kind_SEMICOLON; break;
+				case ',': kind = Token_Kind_COMMA; break;
+				case '.': kind = Token_Kind_PERIOD; break;
+				case '?': kind = Token_Kind_QUESTION_MARK; break;
+				case '~': kind = Token_Kind_TILDE; break;
+				case '`': kind = Token_Kind_BACK_TICK; break;
+				case '!': kind = Token_Kind_EXCLAMATION; break;
+				case '%': kind = Token_Kind_PERCENT; break;
+				case '^': kind = Token_Kind_CARET; break;
+				case '|': kind = Token_Kind_PIPE; break;
+				case '&': kind = Token_Kind_AMPERSAND; break;
+				case '*': kind = Token_Kind_ASTRICK; break;
+				case '=': kind = Token_Kind_EQUALS; break;
+				case '<': kind = Token_Kind_LESS_THAN; break;
+				case '>': kind = Token_Kind_GREATER_THAN; break;
+				case '+': kind = Token_Kind_PLUS; break;
+				case '-': kind = Token_Kind_MINUS; break;
+				case '/': kind = Token_Kind_SLASH; break;
+				case '\\': kind = Token_Kind_BACK_SLASH; break;
+				case '\0': kind = Token_Kind_NULL; break;
 			}
 
 			if (kind != Token_Kind_NONE) {
 				if (kind == Token_Kind_PERIOD && is_numeral(b)) {
 					kind = Token_Kind_NONE;
-				}
-				else if (!count) {
+				} else if (!count) {
 					count = 1;
 					token.kind = kind;
 					token.value = tokenizer->at[0].codepoint;
 					tokenizer_advance(tokenizer, 1);
 					break;
-				}
-				else {
+				} else {
 					break;
 				}
 			}
@@ -646,27 +623,22 @@ Token tokenizer_next_token(Tokenizer_State *tokenizer) {
 				else
 					parse_unsigned_integer(token.content, &uval);
 				token.value = Value(ival, uval, is_signed);
-			}
-			else if (parse_real(token.content, &rval, &is_signed)) {
+			} else if (parse_real(token.content, &rval, &is_signed)) {
 				token.kind = Token_Kind_REAL_LITERAL;
 				token.value = Value(rval, is_signed);
-			}
-			else {
+			} else {
 				if (string_match(token.content, "true")) {
 					token.kind = Token_Kind_INTEGER_LITERAL;
 					token.value = Value(1, 1, false);
-				}
-				else if (string_match(token.content, "false")) {
+				} else if (string_match(token.content, "false")) {
 					token.kind = Token_Kind_INTEGER_LITERAL;
 					token.value = Value(0, 0, false);
-				}
-				else {
+				} else {
 					token.kind = Token_Kind_IDENTIFIER;
 					token.value = token.content;
 				}
 			}
-		}
-		else {
+		} else {
 			token.kind = Token_Kind_END_OF_STREAM;
 			token.content = String(tokenizer->content.data + tokenizer->content.count, 0);
 			token.value = token.content;
@@ -709,8 +681,7 @@ template <typename Type, typename Cast>
 void serialize_text_basic(Ostream *out, Type *data, s64 count, const char *fmt) {
 	if (count == -1) {
 		ostream_write_formatted(out, fmt, (Cast)*data);
-	}
-	else {
+	} else {
 		ostream_write_formatted(out, "[ ");
 		for (s64 i = 0; i < count - 1; ++i) {
 			ostream_write_formatted(out, fmt, (Cast)*data);
@@ -722,13 +693,22 @@ void serialize_text_basic(Ostream *out, Type *data, s64 count, const char *fmt) 
 	}
 }
 
+void serialize_text_basic_char(Ostream *out, char *data, s64 count) {
+	if (count == -1) {
+		int num;
+		ostream_write_formatted(out, "%d", &num);
+		*data = (char)num;
+	} else {
+		ostream_write_formatted(out, "\"%s\"", data);
+	}
+}
+
 void serialize_text_basic(Ostream *out, String *string, s64 count) {
 	if (count == -1) {
 		ostream_write_formatted(out, "\"");
 		ostream_write_buffer(out, string->data, string->count);
 		ostream_write_formatted(out, "\"");
-	}
-	else {
+	} else {
 		ostream_write_formatted(out, "[ ");
 		for (s64 i = 0; i < count - 1; ++i) {
 			ostream_write_formatted(out, "\"");
@@ -796,8 +776,7 @@ void serialize_text_struct(Ostream *out, const Type_Info_Struct *info, char *dat
 		if (!no_serialize && version <= mem_version_deprecated) {
 			if (string_match(mem->name, "anonymous")) {
 				serialize_fmt_text(out, "", mem->info, data + mem->offset, -1, tab_count);
-			}
-			else {
+			} else {
 				ostream_write_formatted(out, "\n");
 				serialize_fmt_text(out, mem->name, mem->info, data + mem->offset, -1, tab_count);
 			}
@@ -827,8 +806,7 @@ void serialize_text_union(Ostream *out, const Type_Info_Union *info, char *data,
 
 	if (string_match(write_mem->name, "anonymous")) {
 		serialize_fmt_text(out, "", write_mem->info, data, -1, tab_count);
-	}
-	else {
+	} else {
 		ostream_write_formatted(out, "\n");
 		serialize_fmt_text(out, write_mem->name, write_mem->info, data, -1, tab_count);
 	}
@@ -856,8 +834,7 @@ template <typename Cast_Info, typename Proc>
 void serialize_text_recursive(Proc proc, Ostream *out, const Type_Info *info, char *data, s64 array_count, int tab_count) {
 	if (array_count == -1) {
 		proc(out, (Cast_Info *)info, data, tab_count);
-	}
-	else {
+	} else {
 		ostream_write_formatted(out, "[ ");
 		for (s64 i = 0; i < array_count - 1; ++i) {
 			proc(out, (Cast_Info *)info, data, tab_count);
@@ -878,52 +855,52 @@ void serialize_fmt_text(Ostream *out, String name, const Type_Info *info, char *
 	}
 
 	switch (info->id) {
-	case Type_Id_S8:  serialize_text_basic<s8, s32>(out, (s8 *)data, array_count, "%d");  break;
-	case Type_Id_S16:  serialize_text_basic<s16, s32>(out, (s16 *)data, array_count, "%d");  break;
-	case Type_Id_S32:  serialize_text_basic<s32, s32>(out, (s32 *)data, array_count, "%d");  break;
-	case Type_Id_S64:  serialize_text_basic<s64, s64>(out, (s64 *)data, array_count, "%zd"); break;
-	case Type_Id_U8:  serialize_text_basic<u8, u32>(out, (u8 *)data, array_count, "%u");  break;
-	case Type_Id_U16:  serialize_text_basic<u16, u32>(out, (u16 *)data, array_count, "%u");  break;
-	case Type_Id_U32:  serialize_text_basic<u32, u32>(out, (u32 *)data, array_count, "%u");  break;
-	case Type_Id_U64:  serialize_text_basic<u64, s64>(out, (u64 *)data, array_count, "%zu"); break;
-	case Type_Id_R32:  serialize_text_basic<r32, r32>(out, (r32 *)data, array_count, "%f");  break;
-	case Type_Id_R64:  serialize_text_basic<r64, r64>(out, (r64 *)data, array_count, "%lf"); break;
-	case Type_Id_CHAR: serialize_text_basic<char, s32>(out, (char *)data, array_count, "%d");  break;
+		case Type_Id_S8:  serialize_text_basic<s8, s32>(out, (s8 *)data, array_count, "%d");  break;
+		case Type_Id_S16:  serialize_text_basic<s16, s32>(out, (s16 *)data, array_count, "%d");  break;
+		case Type_Id_S32:  serialize_text_basic<s32, s32>(out, (s32 *)data, array_count, "%d");  break;
+		case Type_Id_S64:  serialize_text_basic<s64, s64>(out, (s64 *)data, array_count, "%zd"); break;
+		case Type_Id_U8:  serialize_text_basic<u8, u32>(out, (u8 *)data, array_count, "%u");  break;
+		case Type_Id_U16:  serialize_text_basic<u16, u32>(out, (u16 *)data, array_count, "%u");  break;
+		case Type_Id_U32:  serialize_text_basic<u32, u32>(out, (u32 *)data, array_count, "%u");  break;
+		case Type_Id_U64:  serialize_text_basic<u64, s64>(out, (u64 *)data, array_count, "%zu"); break;
+		case Type_Id_R32:  serialize_text_basic<r32, r32>(out, (r32 *)data, array_count, "%f");  break;
+		case Type_Id_R64:  serialize_text_basic<r64, r64>(out, (r64 *)data, array_count, "%lf"); break;
+		case Type_Id_CHAR: serialize_text_basic_char(out, (char *)data, array_count);  break;
 
-	case Type_Id_STRING: serialize_text_basic(out, (String *)data, array_count); break;
+		case Type_Id_STRING: serialize_text_basic(out, (String *)data, array_count); break;
 
-	case Type_Id_VOID: invalid_code_path(); break;
-	case Type_Id_FUNCTION: break;
+		case Type_Id_VOID: invalid_code_path(); break;
+		case Type_Id_FUNCTION: break;
 
-	case Type_Id_POINTER: {
-		serialize_text_recursive<Type_Info_Pointer>(serialize_text_pointer, out, info, data, array_count, tab_count);
-	} break;
+		case Type_Id_POINTER: {
+			serialize_text_recursive<Type_Info_Pointer>(serialize_text_pointer, out, info, data, array_count, tab_count);
+		} break;
 
-	case Type_Id_ENUM: {
-		serialize_text_recursive<Type_Info_Enum>(serialize_text_enum, out, info, data, array_count, tab_count);
-	} break;
+		case Type_Id_ENUM: {
+			serialize_text_recursive<Type_Info_Enum>(serialize_text_enum, out, info, data, array_count, tab_count);
+		} break;
 
-	case Type_Id_STRUCT: {
-		serialize_text_recursive<Type_Info_Struct>(serialize_text_struct, out, info, data, array_count, tab_count);
-	} break;
+		case Type_Id_STRUCT: {
+			serialize_text_recursive<Type_Info_Struct>(serialize_text_struct, out, info, data, array_count, tab_count);
+		} break;
 
-	case Type_Id_UNION: {
-		serialize_text_recursive<Type_Info_Union>(serialize_text_union, out, info, data, array_count, tab_count);
-	} break;
+		case Type_Id_UNION: {
+			serialize_text_recursive<Type_Info_Union>(serialize_text_union, out, info, data, array_count, tab_count);
+		} break;
 
-	case Type_Id_STATIC_ARRAY: {
-		serialize_text_recursive<Type_Info_Static_Array>(serialize_text_static_array, out, info, data, array_count, tab_count);
-	} break;
+		case Type_Id_STATIC_ARRAY: {
+			serialize_text_recursive<Type_Info_Static_Array>(serialize_text_static_array, out, info, data, array_count, tab_count);
+		} break;
 
-	case Type_Id_DYNAMIC_ARRAY: {
-		serialize_text_recursive<Type_Info_Dynamic_Array>(serialize_text_dynamic_array, out, info, data, array_count, tab_count);
-	} break;
+		case Type_Id_DYNAMIC_ARRAY: {
+			serialize_text_recursive<Type_Info_Dynamic_Array>(serialize_text_dynamic_array, out, info, data, array_count, tab_count);
+		} break;
 
-	case Type_Id_ARRAY_VIEW: {
-		serialize_text_recursive<Type_Info_Array_View>(serialize_text_array_view, out, info, data, array_count, tab_count);
-	} break;
+		case Type_Id_ARRAY_VIEW: {
+			serialize_text_recursive<Type_Info_Array_View>(serialize_text_array_view, out, info, data, array_count, tab_count);
+		} break;
 
-		invalid_default_case();
+			invalid_default_case();
 
 	}
 }
@@ -983,12 +960,10 @@ inline bool parse_require_integral(Deserialize_State *w, T *d, bool is_signed) {
 	if (t && t->kind == Token_Kind_INTEGER_LITERAL) {
 		if (is_signed) {
 			*d = (T)t->value.integer;
-		}
-		else {
+		} else {
 			if (!t->value.is_signed) {
 				*d = (T)t->value.uinteger;
-			}
-			else {
+			} else {
 				parsing_error(w, Token_Kind_INTEGER_LITERAL);
 				return false;
 			}
@@ -1006,8 +981,7 @@ inline bool parse_require_real(Deserialize_State *w, T *d) {
 		if (t->kind == Token_Kind_INTEGER_LITERAL) {
 			*d = (T)t->value.integer;
 			return true;
-		}
-		else if (t->kind == Token_Kind_REAL_LITERAL) {
+		} else if (t->kind == Token_Kind_REAL_LITERAL) {
 			*d = (T)t->value.real;
 			return true;
 		}
@@ -1030,8 +1004,7 @@ template <typename Type, typename Proc, typename ...ExtraParams>
 bool parse_basic_array(Proc proc, Deserialize_State *w, Type *data, s64 count, ExtraParams... params) {
 	if (count == -1) {
 		return proc(w, data, params...);
-	}
-	else {
+	} else {
 		if (parse_require_token(w, Token_Kind_OPEN_SQUARE_BRACKET)) {
 			for (s64 i = 0; i < count - 1; ++i) {
 				if (!proc(w, data, params...) ||
@@ -1041,6 +1014,21 @@ bool parse_basic_array(Proc proc, Deserialize_State *w, Type *data, s64 count, E
 				data += 1;
 			}
 			return proc(w, data, params...) && parse_require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET);
+		}
+	}
+	return false;
+}
+
+bool parse_basic_array_char(Deserialize_State *w, char *data, s64 count) {
+	if (count == -1) {
+		return parse_require_integral<char>(w, data, true);
+	} else {
+		String string;
+		if (parse_require_string(w, &string)) {
+			s64 str_count = minimum(string.count, count - 1);
+			memcpy(data, string.data, str_count);
+			data[count] = 0;
+			return true;
 		}
 	}
 	return false;
@@ -1072,7 +1060,7 @@ bool parse_struct(Deserialize_State *w, const Type_Info_Struct *info, char *data
 
 	for (ptrsize mem_index = 0; mem_index < info->member_count; ++mem_index) {
 		auto mem = info->members + mem_index;
-		
+
 		bool no_serialize = false;
 		u32 mem_version = 0;
 		u32 mem_version_deprecated = MAX_UINT32;
@@ -1120,8 +1108,7 @@ bool parse_union(Deserialize_State *w, const Type_Info_Union *info, char *data) 
 
 	if (string_match(parse_mem->name, "anonymous")) {
 		return deserialize_fmt_text(w, "", parse_mem->info, data, -1);
-	}
-	else {
+	} else {
 		return deserialize_fmt_text(w, parse_mem->name, parse_mem->info, data, -1);
 	}
 
@@ -1167,8 +1154,7 @@ template <typename Cast_Info, typename Proc>
 bool parse_recursive_array(Proc proc, Deserialize_State *w, const Type_Info *info, char *data, s64 array_count) {
 	if (array_count == -1) {
 		return proc(w, (const Cast_Info *)info, data);
-	}
-	else {
+	} else {
 		if (parse_require_token(w, Token_Kind_OPEN_SQUARE_BRACKET)) {
 			for (s64 i = 0; i < array_count - 1; ++i) {
 				if (!proc(w, (const Cast_Info *)info, data) ||
@@ -1191,56 +1177,56 @@ bool deserialize_fmt_text(Deserialize_State *w, String name, const Type_Info *in
 	}
 
 	switch (info->id) {
-	case Type_Id_S8:  if (!parse_basic_array<s8 >(parse_require_integral<s8 >, w, (s8 *)data, array_count, true)) return false; break;
-	case Type_Id_S16: if (!parse_basic_array<s16>(parse_require_integral<s16>, w, (s16 *)data, array_count, true)) return false; break;
-	case Type_Id_S32: if (!parse_basic_array<s32>(parse_require_integral<s32>, w, (s32 *)data, array_count, true)) return false; break;
-	case Type_Id_S64: if (!parse_basic_array<s64>(parse_require_integral<s64>, w, (s64 *)data, array_count, true)) return false; break;
-	case Type_Id_U8:  if (!parse_basic_array<u8 >(parse_require_integral<u8 >, w, (u8 *)data, array_count, false)) return false; break;
-	case Type_Id_U16: if (!parse_basic_array<u16>(parse_require_integral<u16>, w, (u16 *)data, array_count, false)) return false; break;
-	case Type_Id_U32: if (!parse_basic_array<u32>(parse_require_integral<u32>, w, (u32 *)data, array_count, false)) return false; break;
-	case Type_Id_U64: if (!parse_basic_array<u64>(parse_require_integral<u64>, w, (u64 *)data, array_count, false)) return false; break;
-	case Type_Id_R32: if (!parse_basic_array<r32>(parse_require_real<r32>, w, (r32 *)data, array_count)) return false; break;
-	case Type_Id_R64: if (!parse_basic_array<r64>(parse_require_real<r64>, w, (r64 *)data, array_count)) return false; break;
-	case Type_Id_CHAR: if (!parse_basic_array<char>(parse_require_integral<char>, w, (char *)data, array_count, true)) return false; break;
-	case Type_Id_STRING: if (!parse_basic_array(parse_require_string, w, (String *)data, array_count)) return false; break;
+		case Type_Id_S8:  if (!parse_basic_array<s8 >(parse_require_integral<s8 >, w, (s8 *)data, array_count, true)) return false; break;
+		case Type_Id_S16: if (!parse_basic_array<s16>(parse_require_integral<s16>, w, (s16 *)data, array_count, true)) return false; break;
+		case Type_Id_S32: if (!parse_basic_array<s32>(parse_require_integral<s32>, w, (s32 *)data, array_count, true)) return false; break;
+		case Type_Id_S64: if (!parse_basic_array<s64>(parse_require_integral<s64>, w, (s64 *)data, array_count, true)) return false; break;
+		case Type_Id_U8:  if (!parse_basic_array<u8 >(parse_require_integral<u8 >, w, (u8 *)data, array_count, false)) return false; break;
+		case Type_Id_U16: if (!parse_basic_array<u16>(parse_require_integral<u16>, w, (u16 *)data, array_count, false)) return false; break;
+		case Type_Id_U32: if (!parse_basic_array<u32>(parse_require_integral<u32>, w, (u32 *)data, array_count, false)) return false; break;
+		case Type_Id_U64: if (!parse_basic_array<u64>(parse_require_integral<u64>, w, (u64 *)data, array_count, false)) return false; break;
+		case Type_Id_R32: if (!parse_basic_array<r32>(parse_require_real<r32>, w, (r32 *)data, array_count)) return false; break;
+		case Type_Id_R64: if (!parse_basic_array<r64>(parse_require_real<r64>, w, (r64 *)data, array_count)) return false; break;
+		case Type_Id_CHAR: if (!parse_basic_array_char(w, (char *)data, array_count)) return false; break;
+		case Type_Id_STRING: if (!parse_basic_array(parse_require_string, w, (String *)data, array_count)) return false; break;
 
-	case Type_Id_VOID: invalid_code_path(); break;
-	case Type_Id_FUNCTION: break;
+		case Type_Id_VOID: invalid_code_path(); break;
+		case Type_Id_FUNCTION: break;
 
-	case Type_Id_POINTER: {
-		if (!parse_recursive_array<Type_Info_Pointer>(parse_pointer, w, info, data, array_count))
-			return false;
-	} break;
+		case Type_Id_POINTER: {
+			if (!parse_recursive_array<Type_Info_Pointer>(parse_pointer, w, info, data, array_count))
+				return false;
+		} break;
 
-	case Type_Id_ENUM: {
-		if (!parse_recursive_array<Type_Info_Enum>(parse_enum, w, info, data, array_count))
-			return false;
-	} break;
+		case Type_Id_ENUM: {
+			if (!parse_recursive_array<Type_Info_Enum>(parse_enum, w, info, data, array_count))
+				return false;
+		} break;
 
-	case Type_Id_STRUCT: {
-		if (!parse_recursive_array<Type_Info_Struct>(parse_struct, w, info, data, array_count))
-			return false;
-	} break;
+		case Type_Id_STRUCT: {
+			if (!parse_recursive_array<Type_Info_Struct>(parse_struct, w, info, data, array_count))
+				return false;
+		} break;
 
-	case Type_Id_UNION: {
-		if (!parse_recursive_array<Type_Info_Union>(parse_union, w, info, data, array_count))
-			return false;
-	} break;
+		case Type_Id_UNION: {
+			if (!parse_recursive_array<Type_Info_Union>(parse_union, w, info, data, array_count))
+				return false;
+		} break;
 
-	case Type_Id_STATIC_ARRAY: {
-		if (!parse_recursive_array<Type_Info_Static_Array>(parse_static_array, w, info, data, array_count))
-			return false;
-	} break;
+		case Type_Id_STATIC_ARRAY: {
+			if (!parse_recursive_array<Type_Info_Static_Array>(parse_static_array, w, info, data, array_count))
+				return false;
+		} break;
 
-	case Type_Id_DYNAMIC_ARRAY: {
-		if (!parse_recursive_array<Type_Info_Dynamic_Array>(parse_dynamic_array, w, info, data, array_count))
-			return false;
-	} break;
+		case Type_Id_DYNAMIC_ARRAY: {
+			if (!parse_recursive_array<Type_Info_Dynamic_Array>(parse_dynamic_array, w, info, data, array_count))
+				return false;
+		} break;
 
-	case Type_Id_ARRAY_VIEW: {
-		if (!parse_recursive_array<Type_Info_Array_View>(parse_array_view, w, info, data, array_count))
-			return false;
-	} break;
+		case Type_Id_ARRAY_VIEW: {
+			if (!parse_recursive_array<Type_Info_Array_View>(parse_array_view, w, info, data, array_count))
+				return false;
+		} break;
 	}
 
 	return true;

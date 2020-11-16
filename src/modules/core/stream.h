@@ -113,6 +113,7 @@ void ostream_builder(Ostream *stream, const Procedure &procedure, void *user_con
 		procedure(buk->data, buk->filled, user_context);
 	}
 }
-String ostream_build_string(Ostream *stream, bool null_terminate = false);
-void   ostream_build_out_file(Ostream *stream, System_File *file);
-void   ostream_free(Ostream *stream);
+String	ostream_build_string(Ostream *stream, bool null_terminate = false);
+void	ostream_build_out_file(Ostream *stream, System_File *file);
+void	ostream_reset(Ostream *stream);
+void	ostream_free(Ostream *stream);

@@ -26,10 +26,10 @@ typedef u64 Resource_Id;
 typedef char Resource_Name[125];
 
 struct Resource_Fixture {
-	attribute(read_only)	Resource_Id		id;
-	attribute(text)			Resource_Name	name;
-	attribute(no_display)	Fixture *		fixtures;
-	attribute(no_display)	u32				fixture_count;
+	attribute(read_only)				Resource_Id		id;
+	attribute(text)						Resource_Name	name;
+	attribute(no_serialize, no_display)	Fixture *		fixtures;
+	attribute(no_serialize, no_display)	u32				fixture_count;
 };
 
 enum Rigid_Body_Type : u16 {

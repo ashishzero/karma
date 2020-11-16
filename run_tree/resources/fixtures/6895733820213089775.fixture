@@ -1,0 +1,12 @@
+resource: #0
+   id: 6895733820213089775
+   name: "Rect"
+fixture_count: 1
+shape: 1
+shape_data: #0
+   min: #0
+      x: -2.500000
+      y: -3.500000
+   max: #0
+      x: 2.500000
+      y: 3.500000

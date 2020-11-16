@@ -83,6 +83,8 @@ int karma_user_zero() {
 
 	Scene *scene = scene_create();
 
+	scene_load_resources(scene);
+
 	Entity_Info info;
 	info.position = vec2(0);
 
@@ -90,8 +92,8 @@ int karma_user_zero() {
 	body_hovered = nullptr;
 	body_selected = nullptr;
 
-	Fixture fixture;
-	Resource_Id id;
+	//Fixture fixture;
+	//Resource_Id id;
 
 	Physics_State physics_state = Physics_State_RUNNING;
 
@@ -99,7 +101,7 @@ int karma_user_zero() {
 	rigid_body.fixture = true;
 	info.data = &rigid_body;
 	{
-
+		#if 0
 		Circle circle;
 		circle.center = vec2(0);
 		circle.radius = 1;
@@ -107,10 +109,11 @@ int karma_user_zero() {
 		fixture.shape = Fixture_Shape_Circle;
 		fixture.handle = &circle;
 		id = scene_create_new_resource_fixture(scene, "Player Circle", &fixture, 1);
+		#endif
 
 		info.position = vec2(5);
 		rigid_body.type = Rigid_Body_Type_Dynamic;
-		rigid_body.fixture_id = id;
+		rigid_body.fixture_id = 6895733819830550519;
 		rigid_body.transform.p = info.position;
 		rigid_body.transform.xform = mat2_identity();
 
@@ -124,13 +127,15 @@ int karma_user_zero() {
 		rect.min = vec2(-1);
 		rect.max = vec2(1);
 
+		#if 0
 		fixture.shape = Fixture_Shape_Mm_Rect;
 		fixture.handle = &rect;
 		id = scene_create_new_resource_fixture(scene, "Player Rect", &fixture, 1);
+		#endif
 
 		info.position = vec2(2, 5);
 		rigid_body.transform.p = info.position;
-		rigid_body.fixture_id = id;
+		rigid_body.fixture_id = 6895733820584886160;
 		scene_create_new_entity(scene, Entity_Type_Character, info);
 	}
 
@@ -138,6 +143,7 @@ int karma_user_zero() {
 		rigid_body.type = Rigid_Body_Type_Static;
 
 		{
+			#if 0
 			Vec2 points[] = {
 				vec2(-2.4f, 4.6f), vec2(3.6f, 4.6f), vec2(4.6f, -1.4f), vec2(1.6f, -5.4f), vec2(-7.4f, -2.4f)
 			};
@@ -149,60 +155,68 @@ int karma_user_zero() {
 			fixture.shape = Fixture_Shape_Polygon;
 			fixture.handle = polygon;
 			id = scene_create_new_resource_fixture(scene, "Ploygon", &fixture, 1);
+			#endif
 
 			info.position = vec2(-5.6f, 0.4f);
 			rigid_body.transform.xform = mat2_identity();
 			rigid_body.transform.p = info.position;
-			rigid_body.fixture_id = id;
+			rigid_body.fixture_id = 6895733818091600993;
 			scene_create_new_entity(scene, Entity_Type_Obstacle, info);
 		}
 
 		{
+			#if 0
 			Circle circle;
 			circle.center = vec2(0);
 			circle.radius = 0.6f;
 			fixture.shape = Fixture_Shape_Circle;
 			fixture.handle = &circle;
 			id = scene_create_new_resource_fixture(scene, "Circle", &fixture, 1);
+			#endif
 
 			info.position = vec2(1);
 			rigid_body.transform.xform = mat2_identity();
 			rigid_body.transform.p = info.position;
-			rigid_body.fixture_id = id;
+			rigid_body.fixture_id = 6895733820386901951;
 			scene_create_new_entity(scene, Entity_Type_Obstacle, info);
 		}
 
 		{
+			#if 0
 			Mm_Rect rect;
 			rect.min = vec2(-2.5f, -3.5f);
 			rect.max = vec2(2.5f, 3.5f);
 			fixture.shape = Fixture_Shape_Mm_Rect;
 			fixture.handle = &rect;
 			id = scene_create_new_resource_fixture(scene, "Rect", &fixture, 1);
+			#endif
 
 			info.position = vec2(6.5f, -0.5f);
 			rigid_body.transform.xform = mat2_rotation(to_radians(10));
 			rigid_body.transform.p = info.position;
-			rigid_body.fixture_id = id;
+			rigid_body.fixture_id = 6895733820213089775;
 			scene_create_new_entity(scene, Entity_Type_Obstacle, info);
 		}
 
 		{
+			#if 0
 			Mm_Rect rect;
 			rect.min = vec2(-1);
 			rect.max = vec2(1);
 			fixture.shape = Fixture_Shape_Mm_Rect;
 			fixture.handle = &rect;
 			id = scene_create_new_resource_fixture(scene, "Rect", &fixture, 1);
+			#endif
 
 			info.position = vec2(0, -8);
 			rigid_body.transform.xform = mat2_scalar(15, 1);
 			rigid_body.transform.p = info.position;
-			rigid_body.fixture_id = id;
+			rigid_body.fixture_id = 6895733820574158072;
 			scene_create_new_entity(scene, Entity_Type_Obstacle, info);
 		}
 
 		{
+			#if 0
 			Circle circle;
 			circle.center = vec2(1, -1);
 			circle.radius = 1;
@@ -219,11 +233,12 @@ int karma_user_zero() {
 			f[1].handle = &capsule;
 
 			id = scene_create_new_resource_fixture(scene, "Capsule and Circle", f, static_count(f));
+			#endif
 
 			info.position = vec2(-1, -5);
 			rigid_body.transform.xform = mat2_identity();
 			rigid_body.transform.p = info.position;
-			rigid_body.fixture_id = id;
+			rigid_body.fixture_id = 6895733817534399694;
 			scene_create_new_entity(scene, Entity_Type_Obstacle, info);
 		}
 	}
@@ -392,6 +407,14 @@ int karma_user_zero() {
 		gfx_viewport(0, 0, window_w, window_h);
 
 		//ImGui::ShowDemoWindow();
+
+		ImGui::Begin("Scene");
+
+		if (ImGui::Button("Save Resources")) {
+			scene_save_resources(scene);
+		}
+
+		ImGui::End();
 
 		#if defined(ENABLE_DEVELOPER_OPTIONS)
 		{
