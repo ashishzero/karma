@@ -2017,21 +2017,24 @@ bool is_polygon_convex(const Polygon &polygon) {
 	u32 count = polygon.vertex_count;
 	const Vec2 *vertices = polygon.vertices;
 	Vec2 a, b, c;
-	a = vertices[0];
-	b = vertices[1];
 
-	for (u32 index = 2; index < count; ++index) {
-		c = vertices[index];
+	for (u32 outer = 0; outer< count; ++outer) {
+		a = vertices[outer];
+		b = vertices[(outer + 1) % count];
 
+		for (u32 inner = 2; inner < count; ++inner) {
+			c = vertices[(inner + outer) % count];
+
+			if (!triangle_is_cw(a, b, c))
+				return false;
+
+			b = c;
+		}
+
+		b = vertices[(outer + 1) % count];
 		if (!triangle_is_cw(a, b, c))
 			return false;
-
-		b = c;
 	}
-
-	b = vertices[1];
-	if (!triangle_is_cw(a, b, c))
-		return false;
 
 	return true;
 }
