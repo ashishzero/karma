@@ -1131,6 +1131,23 @@ Array_View<System_Find_File_Info> system_find_files(const String directory, cons
 	return items;
 }
 
+Create_Directory system_create_directory(const String path) {
+	int      length = MultiByteToWideChar(CP_UTF8, 0, (char *)path.data, (int)path.count, 0, 0);
+	wchar_t *wpath = (wchar_t *)tallocate((length + 1) * sizeof(wchar_t));
+	MultiByteToWideChar(CP_UTF8, 0, (char *)path.data, (int)path.count, wpath, length);
+	wpath[length] = 0;
+
+	BOOL result = CreateDirectoryW(wpath, nullptr);
+	if (result) return Create_Directory_SUCCESS;
+	DWORD error = GetLastError();
+	if (error == ERROR_ALREADY_EXISTS)
+		return Create_Directory_ALREADY_EXIST;
+	else if (error == ERROR_PATH_NOT_FOUND)
+		return Create_Directory_PATH_NOT_FOUND;
+	else
+		return Create_Directory_SYSTEM_ERROR;
+}
+
 //
 //
 //

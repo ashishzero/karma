@@ -24,10 +24,6 @@ struct Entity_By_Type {
 	Array<Obstacle>		obstacle;
 };
 
-struct World {
-	r32			gravity;
-};
-
 enum Gizmo_Type {
 	Gizmo_Type_NONE,
 	Gizmo_Type_CENTER,
@@ -97,10 +93,12 @@ struct Scene {
 	Entity_By_Type	by_type;
 	Rigid_Body_List rigid_bodies;
 
-	World			world;
 
 	Array<Resource_Fixture>		resource_fixtures;
 	Allocator					pool_allocator;
+
+	s32				loaded_level;
+	Array<Level>	levels;
 
 	Random_Series	id_series;
 
@@ -119,6 +117,8 @@ Resource_Fixture *scene_find_resource_fixture(Scene *scene, Resource_Id id);
 Resource_Id scene_create_new_resource_fixture(Scene *scene, String name, Fixture *fixtures, u32 fixture_count);
 bool scene_delete_resource_fixture(Scene *scene, Resource_Id id);
 void scene_delete_all_resource_fixture(Scene *scene);
+
+void scene_release_all_entity(Scene *scene);
 
 inline Fixture *rigid_body_get_fixture(Rigid_Body *rigid_body, u32 index) {
 	assert(index < rigid_body->fixture_count);
@@ -180,5 +180,13 @@ void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio, Scene_Render_Flags 
 //
 //
 
+
 void scene_save_resources(Scene *scene);
 void scene_load_resources(Scene *scene);
+
+Level *scene_create_new_level(Scene *scene, const String name);
+void scene_set_level(Scene *scene, s32 index);
+Level *scene_current_level(Scene *scene);
+
+bool scene_save_level(Scene *scene);
+s32 scene_load_level(Scene *scene, const String name);

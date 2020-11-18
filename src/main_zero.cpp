@@ -85,17 +85,18 @@ int karma_user_zero() {
 
 	scene_load_resources(scene);
 
-	Entity_Info info;
-	info.position = vec2(0);
+	//scene_create_new_level(scene, "test_level");
+	//scene_set_level(scene, 0);
 
-	Rigid_Body *body_hovered, *body_selected;
-	body_hovered = nullptr;
-	body_selected = nullptr;
-
-	//Fixture fixture;
-	//Resource_Id id;
+	s32 index = scene_load_level(scene, "test_level");
+	assert(index >= 0);
+	scene_set_level(scene, index);
 
 	Physics_State physics_state = Physics_State_RUNNING;
+
+	#if 0
+	Entity_Info info;
+	info.position = vec2(0);
 
 	Rigid_Body_Info rigid_body;
 	rigid_body.fixture = true;
@@ -242,6 +243,7 @@ int karma_user_zero() {
 			scene_create_new_entity(scene, Entity_Type_Obstacle, info);
 		}
 	}
+	#endif
 
 	Player_Controller controller = {};
 
@@ -412,6 +414,9 @@ int karma_user_zero() {
 
 		if (ImGui::Button("Save Resources")) {
 			scene_save_resources(scene);
+		}
+		if (ImGui::Button("Save Game")) {
+			scene_save_level(scene);
 		}
 
 		ImGui::End();

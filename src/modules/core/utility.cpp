@@ -735,22 +735,25 @@ void serialize_text_enum(Ostream *out, const Type_Info_Enum *info, char *data, i
 }
 
 void serialize_text_struct(Ostream *out, const Type_Info_Struct *info, char *data, int tab_count) {
-	if (info->base) {
-		serialize_fmt_text(out, "", info->base, data, -1, tab_count);
-		ostream_write_formatted(out, "\n");
-		ostream_write_formatted(out, "%*s", tab_count, "");
-	}
-
 	u32 version = 0;
+	bool do_base = true;
 
 	for (ptrsize attr_index = 0; attr_index < info->attribute_count; ++attr_index) {
 		const String &attr = info->attributes[attr_index];
-		if (string_starts_with(attr, "v:")) {
+		if (string_match(attr, "no_serialize_base")) {
+			do_base = false;
+		} else if (string_starts_with(attr, "v:")) {
 			u64 num;
 			if (parse_unsigned_integer(string_substring(attr, 2, attr.count - 2), &num)) {
 				version = (u32)num;
 			}
 		}
+	}
+
+	if (do_base && info->base) {
+		serialize_fmt_text(out, "", info->base, data, -1, tab_count);
+		ostream_write_formatted(out, "\n");
+		ostream_write_formatted(out, "%*s", tab_count, "");
 	}
 
 	ostream_write_formatted(out, "#%u", version);
@@ -1046,7 +1049,17 @@ bool parse_enum(Deserialize_State *w, const Type_Info_Enum *info, char *data) {
 }
 
 bool parse_struct(Deserialize_State *w, const Type_Info_Struct *info, char *data) {
-	if (info->base) {
+	bool do_base = true;
+
+	for (ptrsize attr_index = 0; attr_index < info->attribute_count; ++attr_index) {
+		const String &attr = info->attributes[attr_index];
+		if (string_match(attr, "no_serialize_base")) {
+			do_base = false;
+			break;
+		}
+	}
+
+	if (do_base && info->base) {
 		if (!deserialize_fmt_text(w, "", info->base, data, -1))
 			return false;
 	}

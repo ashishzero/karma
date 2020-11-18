@@ -32,6 +32,11 @@ struct Resource_Fixture {
 	attribute(no_serialize, no_display)	u32				fixture_count;
 };
 
+struct Resource_Entity {
+	Entity_Id	id;
+	Resource_Id fixture_id;
+};
+
 enum Rigid_Body_Type : u16 {
 	Rigid_Body_Type_Static,
 	Rigid_Body_Type_Dynamic
@@ -45,18 +50,18 @@ enum Rigid_Body_Flag_Bit : u16 {
 };
 
 struct Rigid_Body {
-	attribute(read_only)			Rigid_Body_Type		type;
-	attribute(no_display)			Rigid_Body_Flags	flags;
-	attribute(min:0)				r32					imass;
-	attribute(min:0)				r32					drag;
-	attribute(slider, min:0, max:1)	r32					restitution;
-	attribute(read_only)			Vec2				velocity;
-	attribute(read_only)			Vec2				force;
-									Transform			transform;
-	attribute(no_display)			u32					fixture_count;
-	attribute(no_display)			Fixture *			fixtures;
-	attribute(read_only)			Mm_Rect				bounding_box;
-	attribute(no_display)			Entity_Id			entity_id;
+	attribute(read_only)						Rigid_Body_Type		type;
+	attribute(no_serialize, no_display)			Rigid_Body_Flags	flags;
+	attribute(min:0)							r32					imass;
+	attribute(min:0)							r32					drag;
+	attribute(slider, min:0, max:1)				r32					restitution;
+	attribute(no_serialize, read_only)			Vec2				velocity;
+	attribute(no_serialize, read_only)			Vec2				force;
+												Transform			transform;
+	attribute(no_serialize, no_display)			u32					fixture_count;
+	attribute(no_serialize, no_display)			Fixture *			fixtures;
+	attribute(no_serialize, read_only)			Mm_Rect				bounding_box;
+	attribute(no_serialize, no_display)			Entity_Id			entity_id;
 };
 
 enum Entity_Type {
@@ -86,7 +91,7 @@ struct Camera_Lens {
 								r32					far;
 };
 
-struct Camera : public Entity {
+struct attribute(no_serialize_base) Camera : public Entity {
 									r32					distance;
 	attribute(no_display)			Vec2				target_position;
 	attribute(no_display)			r32					target_distance;
@@ -96,13 +101,25 @@ struct Camera : public Entity {
 									Camera_Lens			lens;
 };
 
-struct Character : public Entity {
+struct attribute(no_serialize_base) Character : public Entity {
 	attribute(min:0)		r32 radius;
 	attribute(color)		Vec4 color;
-							Rigid_Body *rigid_body;
+	attribute(no_serialize)	Rigid_Body *rigid_body;
 };
 
-struct Obstacle : public Entity {
+struct attribute(no_serialize_base) Obstacle : public Entity {
 	attribute(color)		Vec4 color;
-							Rigid_Body *rigid_body;
+	attribute(no_serialize)	Rigid_Body *rigid_body;
+};
+
+//
+//
+//
+
+typedef char Level_Name[125];
+struct Level {
+	attribute(no_serialize)				Level_Name				name;
+	attribute(no_serialize, no_display) u32						name_count;
+	attribute(no_serialize, no_display) u32						key;
+	attribute(no_display)				Array<Resource_Entity>	resources;
 };

@@ -254,8 +254,6 @@ Scene *scene_create() {
 
 	circular_linked_list_init(&scene->rigid_bodies, context.allocator);
 
-	scene->world.gravity = 0;
-
 	scene->pool_allocator = context.allocator;
 
 	scene->id_series = random_init(context.id, system_get_counter());
@@ -280,6 +278,8 @@ Scene *scene_create() {
 	info.data = &camera_info;
 
 	scene_create_new_entity(scene, Entity_Type_Camera, info);
+
+	scene->loaded_level = -1;
 
 	#ifdef ENABLE_DEVELOPER_OPTIONS
 	camera_info.behaviour = Camera_Behaviour_STILL;
@@ -395,6 +395,25 @@ void scene_delete_all_resource_fixture(Scene *scene) {
 	scene->resource_fixtures.count = 0;
 }
 
+void iscene_destroy_rigid_body(Scene *scene, Rigid_Body *rigid_body) {
+	auto node = circular_linked_list_node_from_data(rigid_body);
+	circular_linked_list_remove(&scene->rigid_bodies, node);
+}
+
+void scene_release_all_entity(Scene *scene) {
+	scene->entity.count = 0;
+	for (auto &character : scene->by_type.character) {
+		iscene_destroy_rigid_body(scene, character.rigid_body);
+	}
+	for (auto &obstable : scene->by_type.obstacle) {
+		iscene_destroy_rigid_body(scene, obstable.rigid_body);
+	}
+	scene->by_type.camera.count = 0;
+	scene->by_type.character.count = 0;
+	scene->by_type.obstacle.count = 0;
+	scene->entity.count = 0;
+}
+
 Camera *iscene_add_camera(Scene *scene) {
 	Camera *camera = array_add(&scene->by_type.camera);
 	camera->type = Entity_Type_Camera;
@@ -466,34 +485,32 @@ Mm_Rect rigid_body_bounding_box(Rigid_Body *body, r32 dt) {
 Rigid_Body *iscene_create_rigid_body(Scene *scene, Entity_Id entity_id, const Rigid_Body_Info *info) {
 	auto node = circular_linked_list_add(&scene->rigid_bodies);
 	Rigid_Body *rigid_body = &node->data;
-	rigid_body->type = info->type;
-	rigid_body->flags = 0;
-	rigid_body->drag = 5;
-	rigid_body->imass = (info->type == Rigid_Body_Type_Dynamic) ? 1.0f : 0.0f;
-	rigid_body->velocity = vec2(0);
-	rigid_body->force = vec2(0);
-	rigid_body->transform = info->transform;
-	rigid_body->restitution = 0;
-	rigid_body->entity_id = entity_id;
 
-	rigid_body->fixture_count = 0;
-	rigid_body->fixtures = 0;
-	if (info->fixture) {
-		Resource_Fixture *resource = scene_find_resource_fixture(scene, info->fixture_id);
-		if (resource) {
-			rigid_body->fixtures = resource->fixtures;
-			rigid_body->fixture_count = resource->fixture_count;
+	if (info) {
+		rigid_body->type = info->type;
+		rigid_body->flags = 0;
+		rigid_body->drag = 5;
+		rigid_body->imass = (info->type == Rigid_Body_Type_Dynamic) ? 1.0f : 0.0f;
+		rigid_body->velocity = vec2(0);
+		rigid_body->force = vec2(0);
+		rigid_body->transform = info->transform;
+		rigid_body->restitution = 0;
+		rigid_body->entity_id = entity_id;
+
+		rigid_body->fixture_count = 0;
+		rigid_body->fixtures = 0;
+		if (info->fixture) {
+			Resource_Fixture *resource = scene_find_resource_fixture(scene, info->fixture_id);
+			if (resource) {
+				rigid_body->fixtures = resource->fixtures;
+				rigid_body->fixture_count = resource->fixture_count;
+			}
 		}
+
+		rigid_body->bounding_box = rigid_body_bounding_box(rigid_body, 0);
 	}
 
-	rigid_body->bounding_box = rigid_body_bounding_box(rigid_body, 0);
-
 	return rigid_body;
-}
-
-void iscene_destroy_rigid_body(Scene *scene, Rigid_Body *rigid_body) {
-	auto node = circular_linked_list_node_from_data(rigid_body);
-	circular_linked_list_remove(&scene->rigid_bodies, node);
 }
 
 Entity *scene_create_new_entity(Scene *scene, Entity_Type type, const Entity_Info &info) {
@@ -524,6 +541,12 @@ Entity *scene_create_new_entity(Scene *scene, Entity_Type type, const Entity_Inf
 			player->color = vec4(1);
 			player->rigid_body = iscene_create_rigid_body(scene, id, (Rigid_Body_Info *)info.data);
 			entity = player;
+
+			Resource_Entity resource;
+			resource.id = id;
+			resource.fixture_id = ((Rigid_Body_Info *)info.data)->fixture_id;
+			Level *level = scene_current_level(scene);
+			array_add(&level->resources, resource);
 		} break;
 
 		case Entity_Type_Obstacle: {
@@ -532,6 +555,12 @@ Entity *scene_create_new_entity(Scene *scene, Entity_Type type, const Entity_Inf
 			obstacle->color = vec4(1);
 			obstacle->rigid_body = iscene_create_rigid_body(scene, id, (Rigid_Body_Info *)info.data);
 			entity = obstacle;
+
+			Resource_Entity resource;
+			resource.id = id;
+			resource.fixture_id = ((Rigid_Body_Info *)info.data)->fixture_id;
+			Level *level = scene_current_level(scene);
+			array_add(&level->resources, resource);
 		} break;
 	}
 
@@ -660,7 +689,7 @@ void scene_simulate(Scene *scene, r32 dt) {
 
 	for (auto ptr = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, ptr); ptr = iter_next<Rigid_Body>(ptr)) {
 		if (ptr->data.type == Rigid_Body_Type_Dynamic) {
-			ptr->data.velocity += dt * ptr->data.force + vec2(0, -scene->world.gravity);
+			ptr->data.velocity += dt * ptr->data.force;
 			ptr->data.velocity *= powf(0.5f, ptr->data.drag * dt);
 			ptr->data.transform.p += dt * ptr->data.velocity;
 			ptr->data.bounding_box = rigid_body_bounding_box(&ptr->data, 0);
@@ -1872,6 +1901,10 @@ void scene_load_resources(Scene *scene) {
 		if (content.count) {
 			Tokenization_Status status;
 			auto tokens = tokenize(content, &status);
+			defer{
+				memory_free(content.data);
+				memory_free(tokens.data);
+			};
 
 			if (status.result == Tokenization_Result_SUCCESS) {
 				auto state = deserialize_begin(tokens);
@@ -1887,4 +1920,323 @@ void scene_load_resources(Scene *scene) {
 			system_log(LOG_ERROR, "Scene", "Failed opening file %s.", tto_cstring(f.name));
 		}
 	}
+}
+
+void iscene_serialize_entity(Entity *entity, Resource_Entity *resource, Ostream *out) {
+	serialize_fmt_text(out, "header", reflect_info<Entity>(), (char *)entity);
+	serialize_fmt_text_next(out);
+
+	switch (entity->type) {
+		case Entity_Type_Camera: {
+			serialize_fmt_text(out, "data", reflect_info<Camera>(), (char *)entity);
+		} break;
+
+		case Entity_Type_Character: {
+			serialize_fmt_text(out, "resource", reflect_info<Resource_Entity>(), (char *)resource);
+			serialize_fmt_text_next(out);
+			serialize_fmt_text(out, "data", reflect_info<Character>(), (char *)entity);
+			serialize_fmt_text_next(out);
+			serialize_fmt_text(out, "body", reflect_info<Rigid_Body>(), (char *)((Character *)entity)->rigid_body);
+		} break;
+
+		case Entity_Type_Obstacle: {
+			serialize_fmt_text(out, "resource", reflect_info<Resource_Entity>(), (char *)resource);
+			serialize_fmt_text_next(out);
+			serialize_fmt_text(out, "data", reflect_info<Obstacle>(), (char *)entity);
+			serialize_fmt_text_next(out);
+			serialize_fmt_text(out, "body", reflect_info<Rigid_Body>(), (char *)((Obstacle *)entity)->rigid_body);
+		} break;
+
+			invalid_default_case();
+	}
+}
+
+bool iscene_deserialize_entity(Scene *scene, Deserialize_State *state) {
+	Entity entity;
+	if (!deserialize_fmt_text(state, "header", reflect_info<Entity>(), (char *)&entity))
+		return false;
+
+	u32 index;
+
+	Entity *result = nullptr;
+	switch (entity.type) {
+		case Entity_Type_Camera: {
+			index = (u32)scene->by_type.camera.count;
+			Camera *camera = iscene_add_camera(scene);
+			if (!deserialize_fmt_text(state, "data", reflect_info<Camera>(), (char *)camera)) {
+				scene->by_type.camera.count -= 1;
+				return false;
+			}
+			result = camera;
+		} break;
+
+		case Entity_Type_Character: {
+			index = (u32)scene->by_type.character.count;
+			Character *character = iscene_add_character(scene);
+			character->rigid_body = iscene_create_rigid_body(scene, entity.id, nullptr);
+			Resource_Entity resource;
+			if (deserialize_fmt_text(state, "resource", reflect_info<Resource_Entity>(), (char *)&resource) &&
+				deserialize_fmt_text(state, "data", reflect_info<Character>(), (char *)character) &&
+				deserialize_fmt_text(state, "body", reflect_info<Rigid_Body>(), (char *)(character->rigid_body))) {
+				auto body = character->rigid_body;
+				Resource_Fixture *res_fixture = scene_find_resource_fixture(scene, resource.fixture_id);
+				if (res_fixture) {
+					body->fixtures = res_fixture->fixtures;
+					body->fixture_count = res_fixture->fixture_count;
+				} else {
+					body->fixture_count = 0;
+					body->fixtures = 0;
+				}
+
+				body->entity_id = entity.id;
+
+				result = character;
+			} else {
+				scene->by_type.character.count -= 1;
+				iscene_destroy_rigid_body(scene, character->rigid_body);
+				return false;
+			}
+		} break;
+
+		case Entity_Type_Obstacle: {
+			index = (u32)scene->by_type.obstacle.count;
+			Obstacle *obstacle = iscene_add_obstacle(scene);
+			obstacle->rigid_body = iscene_create_rigid_body(scene, entity.id, nullptr);
+			Resource_Entity resource;
+
+			if (deserialize_fmt_text(state, "resource", reflect_info<Resource_Entity>(), (char *)&resource) &&
+				deserialize_fmt_text(state, "data", reflect_info<Obstacle>(), (char *)obstacle) &&
+				deserialize_fmt_text(state, "body", reflect_info<Rigid_Body>(), (char *)(obstacle->rigid_body))) {
+				auto body = obstacle->rigid_body;
+				Resource_Fixture *res_fixture = scene_find_resource_fixture(scene, resource.fixture_id);
+				if (res_fixture) {
+					body->fixtures = res_fixture->fixtures;
+					body->fixture_count = res_fixture->fixture_count;
+				} else {
+					body->fixture_count = 0;
+					body->fixtures = 0;
+				}
+
+				body->entity_id = entity.id;
+
+				result = obstacle;
+			} else {
+				scene->by_type.character.count -= 1;
+				iscene_destroy_rigid_body(scene, obstacle->rigid_body);
+				return false;
+			}
+		} break;
+	}
+
+	result->id = entity.id;
+	result->position = entity.position;
+
+	Entity_Ref ref;
+	ref.id = entity.id;
+	ref.index = index;
+	ref.type = entity.type;
+
+	array_add(&scene->entity, ref);
+
+	return true;
+}
+
+Resource_Entity *iscene_level_find_resource(Level *level, Entity_Id id) {
+	auto index = array_find(&level->resources, [](const Resource_Entity &e, Entity_Id id) { return  e.id == id; }, id);
+	if (index >= 0)
+		return level->resources.data + index;
+	return nullptr;
+}
+
+Level *scene_create_new_level(Scene *scene, const String name) {
+	auto level = array_add(&scene->levels);
+	level->name_count = minimum((u32)name.count, (u32)sizeof(Level_Name) - 1);
+	memcpy(level->name, name.data, level->name_count);
+	level->name[level->name_count] = 0;
+	level->key = murmur3_32(level->name, level->name_count, 5656);
+	level->resources = {};
+	return level;
+}
+
+void scene_set_level(Scene *scene, s32 index) {
+	scene->loaded_level = index;
+}
+
+Level *scene_current_level(Scene *scene) {
+	assert(scene->loaded_level >= 0);
+	Level *level = &scene->levels[scene->loaded_level];
+	return level;
+}
+
+bool scene_save_level(Scene *scene) {
+	Level *level = scene_current_level(scene);
+
+	String level_path = tprintf("resources/levels/%s", level->name);
+
+	auto res = system_create_directory(level_path);
+	if (res != Create_Directory_ALREADY_EXIST && res != Create_Directory_SUCCESS) {
+		system_log(LOG_ERROR, "Scene", "%s level directory could not be created. Failed to save level.", tto_cstring(level_path));
+		return false;
+	}
+
+	Ostream out;
+	defer{ ostream_free(&out); };
+
+	const char *level_dir = null_tprintf("resources/levels/%s", level->name);
+
+	serialize_fmt_text(&out, "level", reflect_info<Level>(), (char *)level);
+	System_File file;
+	if (!system_open_file(tprintf("resources/levels/%s/level", level->name), File_Operation_NEW, &file)) {
+		system_log(LOG_ERROR, "Scene", "%s level file could not be created. Failed to save level.", level_dir);
+		return false;
+	}
+
+	ostream_build_out_file(&out, &file);
+	system_close_file(&file);
+	ostream_reset(&out);
+
+	s64 count;
+
+	{
+		count = scene->by_type.camera.count;
+		auto camera = scene->by_type.camera.data;
+		for (s64 index = 0; index < count; ++index, ++camera) {
+			iscene_serialize_entity(camera, nullptr, &out);
+			if (system_open_file(tprintf("%s/%zu.ent", level_dir, camera->id), File_Operation_NEW, &file)) {
+				ostream_build_out_file(&out, &file);
+				system_close_file(&file);
+			} else {
+				system_log(LOG_ERROR, "Scene", "%s/%zu.ent file could not be opened. Failed to save entity.", level_dir, camera->id);
+			}
+			ostream_reset(&out);
+		}
+	}
+
+	{
+		count = scene->by_type.character.count;
+		auto character = scene->by_type.character.data;
+		for (s64 index = 0; index < count; ++index, ++character) {
+			auto resource = iscene_level_find_resource(level, character->id);
+			assert(resource);
+			iscene_serialize_entity(character, resource, &out);
+			if (system_open_file(tprintf("%s/%zu.ent", level_dir, character->id), File_Operation_NEW, &file)) {
+				ostream_build_out_file(&out, &file);
+				system_close_file(&file);
+			} else {
+				system_log(LOG_ERROR, "Scene", "%s/%zu.ent file could not be opened. Failed to save entity.", level_dir, character->id);
+			}
+			ostream_reset(&out);
+		}
+	}
+
+	{
+		count = scene->by_type.obstacle.count;
+		auto obstacle = scene->by_type.obstacle.data;
+		for (s64 index = 0; index < count; ++index, ++obstacle) {
+			auto resource = iscene_level_find_resource(level, obstacle->id);
+			assert(resource);
+			iscene_serialize_entity(obstacle, resource, &out);
+			if (system_open_file(tprintf("%s/%zu.ent", level_dir, obstacle->id), File_Operation_NEW, &file)) {
+				ostream_build_out_file(&out, &file);
+				system_close_file(&file);
+			} else {
+				system_log(LOG_ERROR, "Scene", "%s/%zu.ent file could not be opened. Failed to save entity.", level_dir, obstacle->id);
+			}
+			ostream_reset(&out);
+		}
+	}
+
+	return true;
+}
+
+s32 scene_load_level(Scene *scene, const String name) {
+	assert(name.count < sizeof(Level_Name) - 1);
+
+	// First search if the level if already loaded
+	u32 key = murmur3_32(name.data, name.count, 5656);
+	auto index = array_find(&scene->levels, [](const Level &l, u32 key, const String name) {
+		return l.key == key && string_match(name, String(l.name, l.name_count));
+							}, key, name);
+	if (index >= 0) return (s32)index;
+
+	// Load from file is the level is not already loaded
+	index = scene->levels.count;
+	Level *level = scene_create_new_level(scene, name);
+
+	auto point = begin_temporary_allocation();
+
+	const char *cname = tto_cstring(name);
+	auto mark = push_temporary_allocator();
+	String content = system_read_entire_file(tprintf("resources/levels/%s/level", cname));
+
+	if (!content.count) {
+		system_log(LOG_ERROR, "Scene", "Failed to load level: %s", cname);
+		scene->levels.count -= 1;
+		return -1;
+	}
+
+	Tokenization_Status status;
+	auto tokens = tokenize(content, &status);
+	pop_temporary_allocator(mark);
+
+	if (status.result != Tokenization_Result_SUCCESS) {
+		system_log(LOG_ERROR, "Scene", "Failed to parse file: resources/levels/%s/level. Invalid file", cname);
+		scene->levels.count -= 1;
+		return -1;
+	}
+
+	auto state = deserialize_begin(tokens);
+	if (!deserialize_fmt_text(&state, "level", reflect_info<Level>(), (char *)level)) {
+		system_log(LOG_ERROR, "Scene", "Failed to parse file: resources/levels/%s/level", cname);
+		scene->levels.count -= 1;
+		return -1;
+	}
+	deserialize_end(&state);
+
+	end_temporary_allocation(point);
+
+	memcpy(level->name, name.data, name.count);
+	level->name[name.count] = 0;
+	level->name_count = (u32)name.count;
+
+	scene_release_all_entity(scene);
+
+	auto files = system_find_files(tprintf("resources/levels/%s", cname), ".ent", false);
+	defer{ memory_free(files.data); };
+
+	System_File file;
+
+	for (auto &f : files) {
+		scoped_temporary_allocation();
+		content = system_read_entire_file(f.path);
+		if (content.count) {
+			Tokenization_Status status;
+			auto tokens = tokenize(content, &status);
+			defer{
+				memory_free(content.data);
+				memory_free(tokens.data);
+			};
+
+			if (status.result == Tokenization_Result_SUCCESS) {
+				auto state = deserialize_begin(tokens);
+				if (!iscene_deserialize_entity(scene, &state)) {
+					system_log(LOG_ERROR, "Scene", "Failed loading %s. Invalid file: %s", tto_cstring(f.path), state.error.string);
+				}
+				deserialize_end(&state);
+			} else {
+				system_log(LOG_ERROR, "Scene", "Tokenization of file %s failed at %zu:%zu.", tto_cstring(f.path), status.row, status.column);
+			}
+		} else {
+			system_log(LOG_ERROR, "Scene", "Failed opening file %s.", tto_cstring(f.path));
+		}
+	}
+
+	for (auto ptr = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, ptr); ptr = iter_next<Rigid_Body>(ptr)) {
+		auto &body = ptr->data;
+		body.velocity = vec2(0);
+		body.force = vec2(0);
+		body.bounding_box = rigid_body_bounding_box(&body, 0);
+	}
+
+	return (s32)index;
 }

@@ -433,6 +433,15 @@ void system_close_file(System_File *file);
 
 Array_View<System_Find_File_Info> system_find_files(const String directory, const String extension, bool recursive);
 
+enum Create_Directory {
+	Create_Directory_SUCCESS,
+	Create_Directory_ALREADY_EXIST,
+	Create_Directory_PATH_NOT_FOUND,
+	Create_Directory_SYSTEM_ERROR,
+};
+
+Create_Directory system_create_directory(const String path);
+
 Vec2s system_get_primary_monitor_size();
 Vec2s system_get_client_size();
 int   system_fullscreen_state(int toggle);
