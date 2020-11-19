@@ -116,26 +116,6 @@ Camera *scene_primary_camera(Scene *scene);
 //
 //
 
-void scene_delete_all_resource_fixture(Scene *scene);
-
-void scene_release_all_entity(Scene *scene);
-
-// TODO
-//
-// -Make a specific place for allocation, deallocation, inserting and removing entities
-// -Remove unnecessary indices and ids, and try to make a single handle for single entity
-//	because it is confusing with indices, handles, pointers and references, too many 
-//	things to worry about
-// -Seperate debug code and runtime code, remove code that is added for debug optimization
-// -Do not use scene structure for handling editor, use seperate structures for editor and debug things
-//
-// -Finish all of this tomorrow
-//
-
-//
-//
-//
-
 bool scene_handle_event(Scene *scene, const Event &event);
 
 void scene_pre_simulate(Scene *scene);
@@ -152,20 +132,16 @@ void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio);
 //
 //
 
-Level *scene_create_new_level(Scene *scene, const String name);
-void scene_set_level(Scene *scene, s32 index);
-Level *scene_current_level(Scene *scene);
-
-//
-//
-//
-
 void scene_save_resources(Scene *scene);
 void scene_load_resources(Scene *scene);
+void scene_clean_resources(Scene *scene);
+void scene_clean_entities(Scene *scene);
 
 //
 //
 //
 
 bool scene_save_level(Scene *scene);
-s32 scene_load_level(Scene *scene, const String name);
+bool scene_load_level(Scene *scene, const String name);
+void scene_unload_current_level(Scene *scene);
+const char *scene_current_level(Scene *scene);

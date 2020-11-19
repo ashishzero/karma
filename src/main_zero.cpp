@@ -85,9 +85,8 @@ int karma_user_zero() {
 
 	scene_load_resources(scene);
 
-	s32 index = scene_load_level(scene, "test_level");
-	assert(index >= 0);
-	scene_set_level(scene, index);
+	bool loaded = scene_load_level(scene, "test_level");
+	assert(loaded);
 
 	Physics_State physics_state = Physics_State_RUNNING;
 

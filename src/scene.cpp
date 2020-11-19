@@ -239,6 +239,11 @@ static void iscene_destroy_rigid_body(Scene *scene, Rigid_Body *rigid_body) {
 	circular_linked_list_remove(&scene->rigid_bodies, node);
 }
 
+static Level *iscene_current_level(Scene *scene) {
+	assert(scene->loaded_level >= 0);
+	return &scene->levels[scene->loaded_level];
+}
+
 //
 //
 //
@@ -298,6 +303,11 @@ Scene *scene_create() {
 }
 
 void scene_destroy(Scene *scene) {
+	// Entites are cleaned when level is unloaded
+	scene_unload_current_level(scene);
+
+	scene_clean_resources(scene);
+
 	array_free(&scene->levels);
 
 	array_free(&scene->resource_fixtures);
@@ -390,7 +400,7 @@ Entity *scene_create_new_entity(Scene *scene, Entity *src, Vec2 p) {
 			resource.id = id;
 			resource.fixture_id = scene_find_resource_fixture_from_fixture(scene, character->rigid_body->fixtures);
 
-			Level *level = scene_current_level(scene);
+			Level *level = iscene_current_level(scene);
 			array_add(&level->resources, resource);
 
 			result = character;
@@ -406,7 +416,7 @@ Entity *scene_create_new_entity(Scene *scene, Entity *src, Vec2 p) {
 			resource.id = id;
 			resource.fixture_id = scene_find_resource_fixture_from_fixture(scene, obstacle->rigid_body->fixtures);
 			
-			Level *level = scene_current_level(scene);
+			Level *level = iscene_current_level(scene);
 			array_add(&level->resources, resource);
 
 			result = obstacle;
@@ -428,6 +438,10 @@ Entity *scene_find_entity(Scene *scene, Entity_Id id) {
 
 	return nullptr;
 }
+
+//
+//
+//
 
 Fixture *scene_rigid_body_get_fixture(Rigid_Body *rigid_body, u32 index) {
 	assert(index < rigid_body->fixture_count);
@@ -513,32 +527,12 @@ Rigid_Body *scene_collide_point(Scene *scene, Vec2 point, r32 size) {
 	return collided;
 }
 
+//
+//
+//
+
 Camera *scene_primary_camera(Scene *scene) {
 	return &scene->by_type.camera[0];
-}
-
-void scene_delete_all_resource_fixture(Scene *scene) {
-	auto &resources = scene->resource_fixtures;
-	for (auto &r : resources) {
-		for (u32 i = 0; i < r.fixture_count; ++i)
-			memory_free(r.fixtures[i].handle);
-		memory_free(r.fixtures);
-	}
-	scene->resource_fixtures.count = 0;
-}
-
-void scene_release_all_entity(Scene *scene) {
-	scene->entity.count = 0;
-	for (auto &character : scene->by_type.character) {
-		iscene_destroy_rigid_body(scene, character.rigid_body);
-	}
-	for (auto &obstable : scene->by_type.obstacle) {
-		iscene_destroy_rigid_body(scene, obstable.rigid_body);
-	}
-	scene->by_type.camera.count = 0;
-	scene->by_type.character.count = 0;
-	scene->by_type.obstacle.count = 0;
-	scene->entity.count = 0;
 }
 
 //
@@ -963,31 +957,6 @@ bool iscene_deserialize_fixture_resource(Scene *scene, Resource_Fixture *resourc
 //
 //
 
-Level *scene_create_new_level(Scene *scene, const String name) {
-	auto level = array_add(&scene->levels);
-	level->name_count = minimum((u32)name.count, (u32)sizeof(Level_Name) - 1);
-	memcpy(level->name, name.data, level->name_count);
-	level->name[level->name_count] = 0;
-	level->key = murmur3_32(level->name, level->name_count, 5656);
-	level->resources.count = level->resources.capacity = 0;
-	level->resources.data = nullptr;
-	return level;
-}
-
-void scene_set_level(Scene *scene, s32 index) {
-	scene->loaded_level = index;
-}
-
-Level *scene_current_level(Scene *scene) {
-	assert(scene->loaded_level >= 0);
-	Level *level = &scene->levels[scene->loaded_level];
-	return level;
-}
-
-//
-//
-//
-
 void scene_save_resources(Scene *scene) {
 	auto &resources = scene->resource_fixtures;
 
@@ -1010,7 +979,7 @@ void scene_save_resources(Scene *scene) {
 }
 
 void scene_load_resources(Scene *scene) {
-	scene_delete_all_resource_fixture(scene);
+	scene_clean_resources(scene);
 
 	auto mark = push_temporary_allocator();
 	defer{ pop_temporary_allocator(mark); };
@@ -1045,6 +1014,30 @@ void scene_load_resources(Scene *scene) {
 			system_log(LOG_ERROR, "Scene", "Failed opening file %s.", tto_cstring(f.name));
 		}
 	}
+}
+
+void scene_clean_resources(Scene *scene) {
+	auto &resources = scene->resource_fixtures;
+	for (auto &r : resources) {
+		for (u32 i = 0; i < r.fixture_count; ++i)
+			memory_free(r.fixtures[i].handle, scene->pool_allocator);
+		memory_free(r.fixtures, scene->pool_allocator);
+	}
+	scene->resource_fixtures.count = 0;
+}
+
+void scene_clean_entities(Scene *scene) {
+	scene->entity.count = 0;
+	for (auto &character : scene->by_type.character) {
+		iscene_destroy_rigid_body(scene, character.rigid_body);
+	}
+	for (auto &obstable : scene->by_type.obstacle) {
+		iscene_destroy_rigid_body(scene, obstable.rigid_body);
+	}
+	scene->by_type.camera.count = 0;
+	scene->by_type.character.count = 0;
+	scene->by_type.obstacle.count = 0;
+	scene->entity.count = 0;
 }
 
 void iscene_serialize_entity(Entity *entity, Resource_Entity *resource, Ostream *out) {
@@ -1164,8 +1157,20 @@ Resource_Entity *iscene_level_find_resource(Level *level, Entity_Id id) {
 //
 //
 
+Level *iscene_create_new_level(Scene *scene, const String name, s32 *index) {
+	*index = (s32)scene->levels.count;
+	auto level = array_add(&scene->levels);
+	level->name_count = minimum((u32)name.count, (u32)sizeof(Level_Name) - 1);
+	memcpy(level->name, name.data, level->name_count);
+	level->name[level->name_count] = 0;
+	level->key = murmur3_32(level->name, level->name_count, 5656);
+	level->resources.count = level->resources.capacity = 0;
+	level->resources.data = nullptr;
+	return level;
+}
+
 bool scene_save_level(Scene *scene) {
-	Level *level = scene_current_level(scene);
+	Level *level = iscene_current_level(scene);
 
 	String level_path = tprintf("resources/levels/%s", level->name);
 
@@ -1245,61 +1250,61 @@ bool scene_save_level(Scene *scene) {
 	return true;
 }
 
-s32 scene_load_level(Scene *scene, const String name) {
+bool scene_load_level(Scene *scene, const String name) {
+	scene_unload_current_level(scene);
+	
 	assert(name.count < sizeof(Level_Name) - 1);
 
 	// First search if the level if already loaded
 	u32 key = murmur3_32(name.data, name.count, 5656);
-	auto index = array_find(&scene->levels, [](const Level &l, u32 key, const String name) {
+	s32 index = (s32)array_find(&scene->levels, [](const Level &l, u32 key, const String name) {
 		return l.key == key && string_match(name, String(l.name, l.name_count));
 							}, key, name);
-	if (index >= 0) return (s32)index;
-
-	// Load from file is the level is not already loaded
-	index = scene->levels.count;
-	Level *level = scene_create_new_level(scene, name);
-
-	auto point = begin_temporary_allocation();
 
 	const char *cname = tto_cstring(name);
-	auto mark = push_temporary_allocator();
-	String content = system_read_entire_file(tprintf("resources/levels/%s/level", cname));
+	
+	// Load from file is the level is not already loaded
+	if (index < 0) {
+		Level *level = iscene_create_new_level(scene, name, &index);
 
-	if (!content.count) {
-		system_log(LOG_ERROR, "Scene", "Failed to load level: %s", cname);
-		scene->levels.count -= 1;
-		return -1;
+		auto point = begin_temporary_allocation();
+
+		auto mark = push_temporary_allocator();
+		String content = system_read_entire_file(tprintf("resources/levels/%s/level", cname));
+
+		if (!content.count) {
+			system_log(LOG_ERROR, "Scene", "Failed to load level: %s", cname);
+			scene->levels.count -= 1;
+			return false;
+		}
+
+		Tokenization_Status status;
+		auto tokens = tokenize(content, &status);
+		pop_temporary_allocator(mark);
+
+		if (status.result != Tokenization_Result_SUCCESS) {
+			system_log(LOG_ERROR, "Scene", "Failed to parse file: resources/levels/%s/level. Invalid file", cname);
+			scene->levels.count -= 1;
+			return false;
+		}
+
+		auto state = deserialize_begin(tokens);
+		if (!deserialize_fmt_text(&state, "level", reflect_info<Level>(), (char *)level)) {
+			system_log(LOG_ERROR, "Scene", "Failed to parse file: resources/levels/%s/level", cname);
+			scene->levels.count -= 1;
+			return false;
+		}
+		deserialize_end(&state);
+
+		end_temporary_allocation(point);
 	}
 
-	Tokenization_Status status;
-	auto tokens = tokenize(content, &status);
-	pop_temporary_allocator(mark);
-
-	if (status.result != Tokenization_Result_SUCCESS) {
-		system_log(LOG_ERROR, "Scene", "Failed to parse file: resources/levels/%s/level. Invalid file", cname);
-		scene->levels.count -= 1;
-		return -1;
-	}
-
-	auto state = deserialize_begin(tokens);
-	if (!deserialize_fmt_text(&state, "level", reflect_info<Level>(), (char *)level)) {
-		system_log(LOG_ERROR, "Scene", "Failed to parse file: resources/levels/%s/level", cname);
-		scene->levels.count -= 1;
-		return -1;
-	}
-	deserialize_end(&state);
-
-	end_temporary_allocation(point);
-
-	memcpy(level->name, name.data, name.count);
-	level->name[name.count] = 0;
-	level->name_count = (u32)name.count;
-
-	scene_release_all_entity(scene);
+	// Load entities
 
 	auto files = system_find_files(tprintf("resources/levels/%s", cname), ".ent", false);
 	defer{ memory_free(files.data); };
 
+	String content;
 	System_File file;
 
 	for (auto &f : files) {
@@ -1329,5 +1334,20 @@ s32 scene_load_level(Scene *scene, const String name) {
 
 	scene_refresh_rigid_bodies(scene);
 
-	return (s32)index;
+	scene->loaded_level = index;
+
+	return true;
+}
+
+void scene_unload_current_level(Scene *scene) {
+	if (scene->loaded_level >= 0) {
+		scene_clean_entities(scene);
+		scene->loaded_level = -1;
+	}
+}
+
+const char *scene_current_level(Scene *scene) {
+	assert(scene->loaded_level >= 0);
+	Level *level = &scene->levels[scene->loaded_level];
+	return level->name;
 }
