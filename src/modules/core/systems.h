@@ -273,6 +273,7 @@ struct System_Find_File_Info {
 	String extension;
 	u64    size;
 	u64	   modified;
+	bool   is_dir;
 };
 
 enum File_Operation {

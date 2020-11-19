@@ -1099,6 +1099,7 @@ u32 windows_find_files_info(System_Find_File_Info *info, const System_Find_File_
 			}
 
 			info->size = (find_data.nFileSizeHigh * ((u64)MAXDWORD + 1)) + find_data.nFileSizeLow;
+			info->is_dir = ((find_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY);
 
 			ULARGE_INTEGER ul;
 			ul.HighPart = find_data.ftLastWriteTime.dwHighDateTime;

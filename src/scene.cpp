@@ -1157,7 +1157,7 @@ Resource_Entity *iscene_level_find_resource(Level *level, Entity_Id id) {
 //
 //
 
-Level *iscene_create_new_level(Scene *scene, const String name, s32 *index) {
+Level *iscene_add_new_level(Scene *scene, const String name, s32 *index) {
 	*index = (s32)scene->levels.count;
 	auto level = array_add(&scene->levels);
 	level->name_count = minimum((u32)name.count, (u32)sizeof(Level_Name) - 1);
@@ -1167,6 +1167,24 @@ Level *iscene_create_new_level(Scene *scene, const String name, s32 *index) {
 	level->resources.count = level->resources.capacity = 0;
 	level->resources.data = nullptr;
 	return level;
+}
+
+Level *iscene_create_new_level(Scene *scene, const String name, s32 *index) {
+	auto mark = push_temporary_allocator();
+	auto dirs = system_find_files("resources/levels", "*", false);
+	pop_temporary_allocator(mark);
+
+	for (auto &d : dirs) {
+		if (d.is_dir) {
+			if (string_match(d.name, ".") || string_match(d.name, ".."))
+				continue;
+
+			if (string_match(d.name, name))
+				return nullptr;
+		}
+	}
+
+	return iscene_add_new_level(scene, name, index);
 }
 
 bool scene_save_level(Scene *scene) {
@@ -1265,7 +1283,7 @@ bool scene_load_level(Scene *scene, const String name) {
 	
 	// Load from file is the level is not already loaded
 	if (index < 0) {
-		Level *level = iscene_create_new_level(scene, name, &index);
+		Level *level = iscene_add_new_level(scene, name, &index);
 
 		auto point = begin_temporary_allocation();
 
