@@ -121,6 +121,7 @@ void editor_set_mode_map(Scene *scene, Editor *editor) {
 	editor->mode = Editor_Mode_MAP;
 	editor->map.hovered_body = nullptr;
 	editor->map.selected_body = nullptr;
+	editor->map.select_camera_index = -1;
 	editor->gizmo.render_type = Gizmo_Render_Type_NONE;
 	editor->gizmo.type = Gizmo_Type_NONE;
 }
@@ -367,6 +368,7 @@ void editor_update(Scene *scene, Editor *editor) {
 					// then hovered body is selected
 					if (io.MouseClicked[ImGuiMouseButton_Left]) {
 						editor->map.selected_body = editor->map.hovered_body;
+						editor->map.select_camera_index = -1;
 						if (gizmo.render_type == Gizmo_Render_Type_NONE)
 							gizmo.render_type = Gizmo_Render_Type_TRANSLATE;
 					}
@@ -375,6 +377,7 @@ void editor_update(Scene *scene, Editor *editor) {
 					// then hovered body is selected and focused
 					if (editor->map.hovered_body && io.MouseDoubleClicked[ImGuiMouseButton_Left]) {
 						editor->map.selected_body = editor->map.hovered_body;
+						editor->map.select_camera_index = -1;
 						if (gizmo.render_type == Gizmo_Render_Type_NONE)
 							gizmo.render_type = Gizmo_Render_Type_TRANSLATE;
 
@@ -394,6 +397,12 @@ void editor_update(Scene *scene, Editor *editor) {
 
 				if (editor->map.selected_body == nullptr) {
 					gizmo.render_type = Gizmo_Render_Type_NONE;
+				}
+
+				if (editor->map.select_camera_index >= 0) {
+					auto dst = scene_primary_camera(scene);
+					dst->position = camera->position;
+					dst->distance = camera->distance;
 				}
 			} break;
 
@@ -674,6 +683,21 @@ bool ieditor_gui(Scene *scene, Editor *editor) {
 				}
 			}
 
+			if (ImGui::CollapsingHeader("Cameras")) {
+				const Array_View<Camera> cameras = scene_cameras(scene);
+				int count = (int)cameras.count;
+				int selected = editor->map.select_camera_index;
+				for (int index = 0; index < count; index++) {
+					auto &c = cameras[index];
+					ImGui::PushID((void *)&c);
+					if (ImGui::Selectable(null_tprintf("%d Camera", index), selected == index)) {
+						selected = (selected == index) ? -1 : index;
+					}
+					ImGui::PopID();
+				}
+				editor->map.select_camera_index = selected;
+			}
+
 			if (ImGui::Button("Save##Level")) {
 				scene_save_level(scene);
 			}
@@ -686,6 +710,8 @@ bool ieditor_gui(Scene *scene, Editor *editor) {
 			Entity *entity = nullptr;
 			if (editor->map.selected_body) {
 				entity = scene_find_entity(scene, editor->map.selected_body->entity_id);
+			} else if (editor->map.select_camera_index >= 0) {
+				entity = &scene_cameras(scene)[editor->map.select_camera_index];
 			}
 
 			if (entity == nullptr) {
@@ -699,6 +725,11 @@ bool ieditor_gui(Scene *scene, Editor *editor) {
 			switch (entity->type) {
 				case Entity_Type_Camera: {
 					result = editor_widget<Camera>(*(Camera *)entity, "Camera Entity");
+					if (result) {
+						Camera *src = (Camera *)entity;
+						editor->camera.position = src->position;
+						editor->camera.distance = src->distance;
+					}
 				} break;
 
 				case Entity_Type_Character: {
@@ -871,20 +902,22 @@ void editor_render(Scene *scene, Editor *editor, r32 aspect_ratio) {
 				Camera *camera = &editor->camera;
 				auto selected_body = editor->map.selected_body;
 
-				Vec2 p = selected_body->transform.p - camera->position;
-				r32 scale = camera_distance_to_scale(camera);
-				r32 iscale = 1.0f / scale;
+				if (selected_body) {
+					Vec2 p = selected_body->transform.p - camera->position;
+					r32 scale = camera_distance_to_scale(camera);
+					r32 iscale = 1.0f / scale;
 
-				Mat4 transform = mat4_scalar(scale, scale, 1.0f) * mat4_translation(vec3(p, 0)) * mat4_scalar(iscale, iscale, 1.0f);
+					Mat4 transform = mat4_scalar(scale, scale, 1.0f) * mat4_translation(vec3(p, 0)) * mat4_scalar(iscale, iscale, 1.0f);
 
-				r32 view_height = SCENE_VIEW_HEIGHT_HALF;
-				r32 view_width = aspect_ratio * view_height;
+					r32 view_height = SCENE_VIEW_HEIGHT_HALF;
+					r32 view_width = aspect_ratio * view_height;
 
-				Camera_View view = orthographic_view(-view_width, view_width, view_height, -view_height);
+					Camera_View view = orthographic_view(-view_width, view_width, view_height, -view_height);
 
-				im2d_begin(view, transform);
-				ieditor_gizmo_render(editor->gizmo, selected_body->transform.xform);
-				im2d_end();
+					im2d_begin(view, transform);
+					ieditor_gizmo_render(editor->gizmo, selected_body->transform.xform);
+					im2d_end();
+				}
 			}
 		} break;
 

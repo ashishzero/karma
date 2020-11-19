@@ -96,6 +96,8 @@ Resource_Id			scene_find_resource_fixture_from_fixture(Scene *scene, Fixture *fi
 Entity *scene_create_new_entity(Scene *scene, Entity *entity, Vec2 p);
 Entity *scene_find_entity(Scene *scene, Entity_Id id);
 
+const Array_View<Camera> scene_cameras(Scene *scene);
+
 //
 //
 //

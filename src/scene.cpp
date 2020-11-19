@@ -434,6 +434,10 @@ Entity *scene_find_entity(Scene *scene, Entity_Id id) {
 	return nullptr;
 }
 
+const Array_View<Camera> scene_cameras(Scene *scene) {
+	return scene->by_type.camera;
+}
+
 //
 //
 //

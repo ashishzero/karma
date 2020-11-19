@@ -38,6 +38,7 @@ enum Editor_Mode {
 struct Editor_Map {
 	Rigid_Body *hovered_body;
 	Rigid_Body *selected_body;
+	int			select_camera_index;
 };
 
 struct Editor_Fixture {
