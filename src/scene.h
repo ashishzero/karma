@@ -5,6 +5,15 @@
 #include "modules/core/data_structures.h"
 #include "entity.h"
 
+constexpr r32 SCENE_VIEW_HEIGHT_HALF = 5;
+
+struct Scene;
+
+
+#ifdef ENABLE_DEVELOPER_OPTIONS
+#include "scene_debug.h"
+#endif
+
 typedef bool(*Collision_Resolver)(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb, Contact_Manifold *manifold);
 typedef Impact_Type(*Continuous_Collision_Resolver)(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb, Vec2 a_dp, Vec2 b_dp, Impact_Time *impact);
 typedef bool(*Nearest_Points_Finder)(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb, Vec2 a_dp, Vec2 b_dp, Nearest_Points *nearest_points);
@@ -12,87 +21,28 @@ typedef bool(*Collision_Detector)(Fixture &a, Fixture &b, const Transform &ta, c
 
 using Rigid_Body_List = Circular_Linked_List<Rigid_Body>;
 
-struct Entity_Ref {
+struct Entity_Reference {
 	Entity_Id	id;
 	Entity_Type type;
-	u32			index;
-};
-
-struct Entity_By_Type {
-	Array<Camera>		camera;
-	Array<Character>	character;
-	Array<Obstacle>		obstacle;
-};
-
-enum Gizmo_Type {
-	Gizmo_Type_NONE,
-	Gizmo_Type_CENTER,
-	Gizmo_Type_TRANSLATE_X,
-	Gizmo_Type_TRANSLATE_Y,
-	Gizmo_Type_SCALE_X,
-	Gizmo_Type_SCALE_Y,
-	Gizmo_Type_ROTOR,
-
-	Gizmo_Type_COUNT
-};
-
-enum Gizmo_Render_Type {
-	Gizmo_Render_Type_NONE,
-	Gizmo_Render_Type_TRANSLATE,
-	Gizmo_Render_Type_SCALE,
-	Gizmo_Render_Type_ROTATE,
-
-	Gizmo_Render_Type_COUNT
-};
-
-struct Gizmo {
-	Gizmo_Type type;
-	Gizmo_Render_Type render_type;
-	Vec2 out;
-	r32 intensity[4]; // center, x, y, rotor
-	r32 values[2];
-};
-
-enum Scene_Editor_Mode {
-	Scene_Editor_Mode_MAP,
-	Scene_Editor_Mode_FIXTURE
-};
-
-struct Scene_Editor_Map {
-	Rigid_Body *hovered_body;
-	Rigid_Body *selected_body;
-};
-
-struct Scene_Editor_Fixture {
-	s64 index;
-	Vec2 *hovered_vertex_ptr;
-	Vec2 *selected_vertex_ptr;
-	u32 hovered_fixture_index;
-	u32 selected_fixture_index;
-	r32	vertex_pointer_angle;
-};
-
-struct Scene_Editor {
-	Scene_Editor_Mode	mode;
-	Gizmo				gizmo;
-
-	union {
-		Scene_Editor_Map		map;
-		Scene_Editor_Fixture	fixture;
-	};
-};
-
-struct Scene_Debug {
-	Array<Contact_Manifold> manifold;
-	Scene_Editor			editor;
+	u32			offset;
 };
 
 struct Scene {
-	Array<Entity_Ref> entity;
+	union Entity_By_Type {
+		struct {
+			Array<Camera>		camera;
+			Array<Character>	character;
+			Array<Obstacle>		obstacle;
+		};
+		struct {
+			Array<u8>	data[Entity_Type_Count];
+		};
+	};
+
+	Array<Entity_Reference> entity;
 
 	Entity_By_Type	by_type;
 	Rigid_Body_List rigid_bodies;
-
 
 	Array<Resource_Fixture>		resource_fixtures;
 	Allocator					pool_allocator;
@@ -102,59 +52,85 @@ struct Scene {
 
 	Random_Series	id_series;
 
-#ifdef ENABLE_DEVELOPER_OPTIONS
-	Scene_Debug debug;
-#endif
+	#ifdef ENABLE_DEVELOPER_OPTIONS
+	struct State {
+		enum Type {
+			GAME, GAME_DEVELOPER, LEVEL_EDITOR, ENTITY_EDITOR
+		};
+
+		enum Flags : u32 {
+			RENDER_WORLD = bit(0),
+			RENDER_FIXTURE = bit(1),
+			RENDER_COLLISION = bit(2),
+			RENDER_EDITOR = bit(3),
+		};
+
+		Type type;
+		u32 flags;
+	};
+
+	State state;
+	Array<Contact_Manifold> manifolds;
+
+	Editor editor;
+	#endif
 };
 
 void scene_prepare();
+
+//
+//
+//
+
 Scene *scene_create();
 void scene_destroy(Scene *scene);
 
+//
+//
+//
+
+Resource_Id			scene_create_new_resource_fixture(Scene *scene, String name, Fixture *fixtures, u32 fixture_count);
+Resource_Fixture *	scene_find_resource_fixture(Scene *scene, Resource_Id id);
+Resource_Id			scene_find_resource_fixture_from_fixture(Scene *scene, Fixture *fixture);
+
+Entity *scene_create_new_entity(Scene *scene, Entity *entity, Vec2 p);
 Entity *scene_find_entity(Scene *scene, Entity_Id id);
 
-Resource_Fixture *scene_find_resource_fixture(Scene *scene, Resource_Id id);
-Resource_Id scene_create_new_resource_fixture(Scene *scene, String name, Fixture *fixtures, u32 fixture_count);
-bool scene_delete_resource_fixture(Scene *scene, Resource_Id id);
+//
+//
+//
+
+Fixture *	scene_rigid_body_get_fixture(Rigid_Body *body, u32 index);
+Mm_Rect		scene_rigid_body_bounding_box(Rigid_Body *body, r32 dt);
+void		scene_rigid_body_update_bounding_box(Rigid_Body *body, r32 dt);
+void		scene_refresh_rigid_bodies(Scene *scene);
+Rigid_Body *scene_collide_point(Scene *scene, Vec2 point, r32 size = 0);
+
+//
+//
+//
+
+Camera *scene_primary_camera(Scene *scene);
+
+//
+//
+//
+
 void scene_delete_all_resource_fixture(Scene *scene);
 
 void scene_release_all_entity(Scene *scene);
 
-inline Fixture *rigid_body_get_fixture(Rigid_Body *rigid_body, u32 index) {
-	assert(index < rigid_body->fixture_count);
-	return rigid_body->fixtures + index;
-}
-
-Mm_Rect rigid_body_bounding_box(Rigid_Body *body, r32 dt);
-
-struct Camera_Info {
-	r32					distance;
-	Vec2				target_position;
-	r32					target_distance;
-	r32					follow_factor;
-	r32					zoom_factor;
-	u32					behaviour;
-
-	Camera_Lens			lens;
-};
-
-struct Rigid_Body_Info {
-	Rigid_Body_Type		type;
-	booli				fixture;
-	Resource_Id			fixture_id;
-	Transform			transform;
-};
-
-struct Entity_Info {
-	Vec2			position;
-	void *			data;
-};
-
-Entity *scene_create_new_entity(Scene *scene, Entity_Type type, const Entity_Info &info);
-
-Camera *scene_primary_camera(Scene *scene);
-
-Camera *scene_editor_camera(Scene *scene, Scene_Editor_Mode mode);
+// TODO
+//
+// -Make a specific place for allocation, deallocation, inserting and removing entities
+// -Remove unnecessary indices and ids, and try to make a single handle for single entity
+//	because it is confusing with indices, handles, pointers and references, too many 
+//	things to worry about
+// -Seperate debug code and runtime code, remove code that is added for debug optimization
+// -Do not use scene structure for handling editor, use seperate structures for editor and debug things
+//
+// -Finish all of this tomorrow
+//
 
 //
 //
@@ -164,29 +140,32 @@ bool scene_handle_event(Scene *scene, const Event &event);
 
 void scene_pre_simulate(Scene *scene);
 void scene_simulate(Scene *scene, r32 dt);
-void scene_update(Scene *scene, r32 window_w, r32 window_h);
-
-typedef u32 Scene_Render_Flags;
-enum Scene_Render_Bit : Scene_Render_Flags {
-	Scene_Render_WORLD = bit(0),
-	Scene_Render_FIXTURE = bit(1),
-	Scene_Render_COLLISION = bit(2),
-	Scene_Render_EDITOR = bit(3),
-};
-
-void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio, Scene_Render_Flags flags);
+void scene_update(Scene *scene);
 
 //
 //
 //
 
+void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio);
 
-void scene_save_resources(Scene *scene);
-void scene_load_resources(Scene *scene);
+//
+//
+//
 
 Level *scene_create_new_level(Scene *scene, const String name);
 void scene_set_level(Scene *scene, s32 index);
 Level *scene_current_level(Scene *scene);
+
+//
+//
+//
+
+void scene_save_resources(Scene *scene);
+void scene_load_resources(Scene *scene);
+
+//
+//
+//
 
 bool scene_save_level(Scene *scene);
 s32 scene_load_level(Scene *scene, const String name);

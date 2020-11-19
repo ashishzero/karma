@@ -344,6 +344,7 @@ popd
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Developer|x64'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="src\scene.cpp" />
+    <ClCompile Include="src\scene_debug.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\asset_loader.h" />
@@ -357,6 +358,7 @@ popd
     <ClInclude Include="src\modules\imgui\editor.h" />
     <ClInclude Include="src\entity.h" />
     <ClInclude Include="src\scene.h" />
+    <ClInclude Include="src\scene_debug.h" />
     <ClInclude Include="src\shaders\gfx_shaders.h" />
     <ClInclude Include="src\modules\imgui\imconfig.h" />
     <ClInclude Include="src\modules\imgui\imgui.h" />

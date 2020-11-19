@@ -1,12 +1,15 @@
 header: #0
-   id: 6896376796827747487
-   type: 2
+   id: #0
+      handle: 6896376796827747487
+   type: 1
    position: #0
       x: 2.000000
       y: 5.000000
 resource: #0
-   id: 6896376796827747487
-   fixture_id: 6895733820584886160
+   id: #0
+      handle: 6896376796827747487
+   fixture_id: #0
+      handle: 6895733820584886160
 data: #0
    radius: 1.000000
    color: #0

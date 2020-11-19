@@ -1,5 +1,6 @@
 resource: #0
-   id: 6895733819830550519
+   id: #0
+      handle: 6895733819830550519
    name: "Player Circle"
 fixture_count: 1
 shape: 0

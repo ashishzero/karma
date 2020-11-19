@@ -38,6 +38,7 @@
     <ClCompile Include="src\scene.cpp" />
     <ClCompile Include="src\modules\core\null\gfx_null.cpp" />
     <ClCompile Include="src\modules\imgui\editor.cpp" />
+    <ClCompile Include="src\scene_debug.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\modules\core\directx\dx_error.h" />
@@ -84,6 +85,7 @@
     <ClInclude Include="src\scene.h" />
     <ClInclude Include="src\modules\core\data_structures.h" />
     <ClInclude Include="src\modules\imgui\editor.h" />
+    <ClInclude Include="src\scene_debug.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitattributes" />

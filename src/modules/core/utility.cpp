@@ -1030,7 +1030,7 @@ bool parse_basic_array_char(Deserialize_State *w, char *data, s64 count) {
 		if (parse_require_string(w, &string)) {
 			s64 str_count = minimum(string.count, count - 1);
 			memcpy(data, string.data, str_count);
-			data[count] = 0;
+			data[str_count] = 0;
 			return true;
 		}
 	}

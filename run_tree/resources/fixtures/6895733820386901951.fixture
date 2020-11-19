@@ -1,6 +1,7 @@
 resource: #0
-   id: 6895733820386901951
-   name: "CircleDA"
+   id: #0
+      handle: 6895733820386901951
+   name: "Circle"
 fixture_count: 1
 shape: 0
 shape_data: #0

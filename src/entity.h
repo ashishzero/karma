@@ -4,7 +4,9 @@
 #include "modules/core/gfx_types.h"
 #include "modules/core/reflection.h"
 
-typedef u64 Entity_Id;
+struct Entity_Id {
+	u64 handle;
+};
 
 enum Fixture_Shape : u32 {
 	Fixture_Shape_Circle,
@@ -22,7 +24,9 @@ struct Fixture {
 
 #define fixture_get_shape(fixture, type) ((type *)((fixture)->handle))
 
-typedef u64 Resource_Id;
+struct Resource_Id {
+	u64 handle;
+};
 typedef char Resource_Name[125];
 
 struct Resource_Fixture {
@@ -64,8 +68,7 @@ struct Rigid_Body {
 	attribute(no_serialize, no_display)			Entity_Id			entity_id;
 };
 
-enum Entity_Type {
-	Entity_Type_Null,
+enum Entity_Type : u32 {
 	Entity_Type_Camera,
 	Entity_Type_Character,
 	Entity_Type_Obstacle,
@@ -85,12 +88,6 @@ enum Camera_Behaviour : u32 {
 	Camera_Behaviour_ANIMATE_FOCUS = bit(1),
 };
 
-struct Camera_Lens {
-	attribute(min:0, max:120)	r32					field_of_view;
-								r32					near;
-								r32					far;
-};
-
 struct attribute(no_serialize_base) Camera : public Entity {
 									r32					distance;
 	attribute(no_display)			Vec2				target_position;
@@ -98,8 +95,9 @@ struct attribute(no_serialize_base) Camera : public Entity {
 	attribute(slider, min:0, max:1)	r32					follow_factor;
 	attribute(slider, min:0, max:1)	r32					zoom_factor;
 	attribute(no_display)			u32					behaviour;
-									Camera_Lens			lens;
 };
+
+#define camera_distance_to_scale(camera) powf(0.5f, camera->distance)
 
 struct attribute(no_serialize_base) Character : public Entity {
 	attribute(min:0)		r32 radius;

@@ -73,7 +73,7 @@ typename Circular_Linked_List<T>::Node *iter_next(typename Circular_Linked_List<
 
 template <typename T>
 void circular_linked_list_clear(Circular_Linked_List<T> *list) {
-	for (auto node = iter_begin(list); iter_continue(list, node); node = iter_next(node))
+	for (auto node = iter_begin(list); iter_continue(list, node); node = iter_next<T>(node))
 		memory_free(node, list->allocator);
 	circular_linked_list_init(list, list->allocator);
 }
@@ -82,3 +82,6 @@ template <typename T>
 typename Circular_Linked_List<T>::Node *circular_linked_list_node_from_data(const T *data) {
 	return (Circular_Linked_List<T>::Node *)(((char *)data) - offsetof(Circular_Linked_List<T>::Node, Circular_Linked_List<T>::Node::data));
 }
+
+#define for_list(type, ptr, l) for (auto ptr = iter_begin(l); iter_continue(l, ptr); ptr = iter_next<type>(ptr))
+#define for_list_offset(type, ptr, offset, l) for (auto ptr = offset->next; iter_continue(l, ptr); ptr = iter_next<type>(ptr))

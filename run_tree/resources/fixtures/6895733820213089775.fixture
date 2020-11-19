@@ -1,5 +1,6 @@
 resource: #0
-   id: 6895733820213089775
+   id: #0
+      handle: 6895733820213089775
    name: "Rect"
 fixture_count: 1
 shape: 1

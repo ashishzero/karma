@@ -1,6 +1,7 @@
 header: #0
-   id: 6896376795596945727
-   type: 1
+   id: #0
+      handle: 6896376795596945727
+   type: 0
    position: #0
       x: 0.278377
       y: -2.523953
@@ -13,7 +14,3 @@ data: #0
    follow_factor: 0.977000
    zoom_factor: 0.900000
    behaviour: 0
-   lens: #0
-      field_of_view: 5.000000
-      near: -1.000000
-      far: 1.000000

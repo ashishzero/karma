@@ -1,6 +1,7 @@
 resource: #0
-   id: 6895733817534399694
-   name: "Capsule and CircleÇ>"
+   id: #0
+      handle: 6895733817534399694
+   name: "Capsule and Circle"
 fixture_count: 2
 shape: 0
 shape_data: #0

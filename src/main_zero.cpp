@@ -85,9 +85,6 @@ int karma_user_zero() {
 
 	scene_load_resources(scene);
 
-	//scene_create_new_level(scene, "test_level");
-	//scene_set_level(scene, 0);
-
 	s32 index = scene_load_level(scene, "test_level");
 	assert(index >= 0);
 	scene_set_level(scene, index);
@@ -379,7 +376,7 @@ int karma_user_zero() {
 			accumulator_t -= dt;
 		}
 
-		scene_update(scene, window_w, window_h);
+		scene_update(scene);
 
 		primary_player->color = vec4(0, 1, 1);
 
@@ -394,7 +391,7 @@ int karma_user_zero() {
 		gfx_begin_drawing(Framebuffer_Type_HDR, Clear_ALL, vec4(0.05f, 0.05f, 0.05f, 1.0f));
 		gfx_viewport(0, 0, window_w, window_h);
 
-		scene_render(scene, alpha, aspect_ratio, Scene_Render_FIXTURE | Scene_Render_EDITOR);
+		scene_render(scene, alpha, aspect_ratio);
 
 		gfx_end_drawing();
 

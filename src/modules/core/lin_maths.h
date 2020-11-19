@@ -1059,6 +1059,17 @@ bool gjk(const ShapeA &sa, const ShapeB &sb, const Args & ...args) {
 	return false;
 }
 
+template <typename Shape>
+static bool test_shape_vs_point(const Shape &s, const Transform &t, Vec2 point, r32 size = 0) {
+	Circle circle = { point, size };
+
+	Transform tc;
+	tc.p = vec2(0);
+	tc.xform = mat2_identity();
+
+	return gjk(s, circle, t, tc);
+}
+
 template <typename ShapeA, typename ShapeB, typename ...Args>
 bool gjk_nearest_points(const ShapeA &sa, const ShapeB &sb, Nearest_Points *nearest_points, const Args &...args) {
 	Support_Ex simplex[2];

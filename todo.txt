@@ -2,25 +2,21 @@
 
 - Audio using DirectSound or Windows Core Audio
 - Addition of lights and lighting in the shader
-- Framerate independent Game Physics (consistency is required)
 - Complex Font Shaping and Rendering
 - Add *system_get_user_directory*, *system_create_directory*, *system_directory_exists* functions (systems.h)
 - Add Instanced Rendering (gfx_renderer.h)
 - Create generic HashTable (utility.h)
 - Make asset loading system
-- Serializing and Deserializing save data
 - Particles systems
 - Implement better way for multisampling
-- Add some timers to time different functions and work, then display it in runtime
 - Add Depth of Field in Camera (https://developer.nvidia.com/gpugems/gpugems/part-iv-image-processing/chapter-23-depth-field-survey-techniques)
 - Add SSE1-4, AVX1-2 support for particles and mathematics operations
+
+- Make Ostream directly write to speficied file
 
 # TODO in Files
 - length_string.h (32)
 - gfx_opengl.cpp (823)
-- Handle error in load_library function during opengl context creation (gfx_opengl.cpp, 929)
-- stream.h inline functions needs to be cleaned up
-- systems_windows.cpp, use of _ReadWriteBarrier() which is deprecated (923, 930)
 
 # Performance
 - XInput poling is done more than once a frame and it takes large amount of time to poll XInput controllers,
