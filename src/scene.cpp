@@ -164,6 +164,8 @@ Rigid_Body *iscene_create_rigid_body(Scene *scene, Entity_Id entity_id, const Ri
 	rigid_body->stiffness = 1;
 	rigid_body->restitution = 0;
 	rigid_body->entity_id = entity_id;
+	rigid_body->next = NULL;
+	rigid_body->grid_index = -1;
 
 	if (info.fixture_id) {
 		Resource_Fixture *resource  = scene_find_resource_fixture(scene, info.fixture_id);

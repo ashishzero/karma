@@ -39,6 +39,7 @@ struct Rigid_Body {
 	Rigid_Body_Flags	flags;
 	r32					imass;
 	r32					drag;
+	u32					grid_index;
 	Vec2				velocity;
 	Vec2				force;
 	Transform			transform;
@@ -48,6 +49,7 @@ struct Rigid_Body {
 	Fixture *			fixtures;
 	Mm_Rect				bounding_box;
 	Entity_Id			entity_id;
+	Rigid_Body* next;
 };
 
 enum Entity_Type {

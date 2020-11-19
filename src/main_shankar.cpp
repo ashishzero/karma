@@ -19,6 +19,212 @@ struct Player_Controller {
 	r32 x, y;
 };
 
+struct Grid {
+	struct Grid* one, * two, * three, * four;
+	Vec2 grid_position;
+	r32 dimension;
+	int level;
+	u32 index;
+	int no_of_object;
+	Rigid_Body* next_member;
+
+};
+
+struct queue
+{
+	struct Grid* current;
+	struct queue* next;
+
+};
+
+struct queue* head = NULL, * tail = NULL;
+
+void insert_queue(struct Grid* newtree)
+{
+	struct queue* newnode = new queue;
+
+	newnode->current = newtree;
+	newnode->next = NULL;
+	if (head == NULL)
+	{
+		head = newnode;
+		tail = newnode;
+	}
+	else {
+		tail->next = newnode;
+		tail = newnode;
+	}
+
+}
+
+Grid* dequeue_tree()
+{
+
+	if (head == NULL) {
+		system_trace("empty queue\n");
+		return 0;
+	}
+	else {
+		struct Grid* newtree = new Grid;
+		struct queue* freequeue = new queue;
+		freequeue = head;
+		newtree = head->current;
+		if (head == tail) {
+			head = NULL;
+			tail = NULL;
+		}
+		else {
+			head = head->next;
+		}
+
+		memory_free(freequeue);
+		return newtree;
+
+	}
+}
+
+bool fully_fits(Vec2 R1, r32 dimension, Mm_Rect rect) {
+
+	if (R1.x <= rect.min.x && R1.y <= rect.min.y && (R1.x + dimension) >= rect.max.x && (R1.y + dimension) >= rect.max.y)
+		return true;
+
+	return false;
+}
+
+void add_body_to_grid(Grid* start, Rigid_Body* body) {
+	bool collided_with_child = false;
+
+	if (fully_fits(start->grid_position, start->dimension, body->bounding_box) && start->one != NULL) {
+
+		if (fully_fits(start->one->grid_position, start->one->dimension, body->bounding_box)) {
+			add_body_to_grid(start->one, body);
+			collided_with_child = true;
+		}
+		else if (fully_fits(start->two->grid_position, start->two->dimension, body->bounding_box)) {
+			add_body_to_grid(start->two, body);
+			collided_with_child = true;
+
+		}
+		else if (fully_fits(start->three->grid_position, start->three->dimension, body->bounding_box)) {
+			add_body_to_grid(start->three, body);
+			collided_with_child = true;
+		}
+		else if (fully_fits(start->four->grid_position, start->four->dimension, body->bounding_box)) {
+			add_body_to_grid(start->four, body);
+			collided_with_child = true;
+		}
+	}
+	if (collided_with_child == false) {
+		//add to parent;
+		struct Rigid_Body* temp;
+		temp = start->next_member;
+		if (temp == NULL) {
+			temp = body;
+			start->no_of_object++;
+			start->next_member = body;
+			body->grid_index = start->index;
+			body->next = NULL;
+		}
+		else {
+			while (temp->next != NULL) {
+				temp = temp->next;
+			}
+			temp->next = body;
+			start->no_of_object++;
+			body->grid_index = start->index;
+			body->next = NULL;
+		}
+	}
+}
+
+void add_body_to_grid(Grid* grids, Rigid_Body* body, u32 index, u32 count) {
+	bool collided_with_child = false;
+
+	auto grid = grids + index;
+
+	if (fully_fits(grid->grid_position, grid->dimension, body->bounding_box) && index >= count) {
+		for (int i = 0; i < 4; i++) {
+			auto child = grids + 4 * index + i;
+			if (fully_fits(child->grid_position, child->dimension, body->bounding_box)) {
+				collided_with_child = true;
+				break;
+			}
+		}
+
+	}
+	if (collided_with_child == false) {
+		//add to parent;
+		struct Rigid_Body* temp;
+		temp = grid->next_member;
+		if (temp == NULL) {
+			temp = body;
+			grid->no_of_object++;
+			grid->next_member = body;
+			body->grid_index = index;
+			body->next = NULL;
+		}
+		else {
+			while (temp->next != NULL) {
+				temp = temp->next;
+			}
+			temp->next = body;
+			grid->no_of_object++;
+			body->grid_index = index;
+			body->next = NULL;
+		}
+	}
+}
+
+void iterate_and_remove_linklist(Grid* start, Rigid_Body* body) {
+	struct Rigid_Body* temp, * prev = NULL;
+	temp = start->next_member;
+	while (temp != body) {
+		prev = temp;
+		temp = temp->next;
+	}
+	if (prev == NULL) {
+		start->next_member = temp->next;
+	}
+	else {
+		prev->next = temp->next;
+	}
+}
+
+void remove_body_from_grid(Grid* start, Rigid_Body* body) {
+
+	iterate_and_remove_linklist(start+body->grid_index, body);
+}
+
+void preorder_collision_check(struct Grid* start, Rigid_Body* body) {
+	if (start != NULL)
+	{
+		struct Rigid_Body* temp;
+		temp = start->next_member;
+		while (temp != NULL) {
+			if (temp == body) {
+				temp = temp->next;
+				continue;
+			}
+			if (test_mmrect_vs_mmrect(temp->bounding_box, body->bounding_box)) {
+				set_bit(temp->flags, Rigid_Body_BOUNDING_BOX_COLLIDING);
+				set_bit(body->flags, Rigid_Body_BOUNDING_BOX_COLLIDING);
+
+			}
+			temp = temp->next;
+		}
+		preorder_collision_check(start->one, body);
+		preorder_collision_check(start->two, body);
+		preorder_collision_check(start->three, body);
+		preorder_collision_check(start->four, body);
+	}
+}
+
+void check_collision(Grid* start, Rigid_Body* body) {
+
+		preorder_collision_check(start+body->grid_index, body);
+}
+
+
 typedef bool(*Collision_Resolver)(Fixture& a, Fixture& b, const Transform& ta, const Transform& tb, Contact_Manifold* manifold);
 static Collision_Resolver COLLISION_RESOLVERS[Fixture_Shape_Count][Fixture_Shape_Count];
 
@@ -386,6 +592,75 @@ int karma_user_shankar() {
 
 	Physics_State physics_state = Physics_State_RUNNING;
 
+
+	struct Grid* poped_tree = new Grid;
+	struct queue* temp = new queue;
+	struct Grid* start = new Grid[85];
+	start->level = 0;
+	start->index = 0;
+	start->one = NULL;
+	start->two = NULL;
+	start->three = NULL;
+	start->four = NULL;
+	start->no_of_object = 0;
+	start->dimension = r32(powf(2, 8));
+	start->grid_position.x = -128;
+	start->grid_position.y = -128;
+
+	start->next_member = NULL;
+	insert_queue(start);
+
+	for (int i = 1; i <= 3; i++)
+	{
+
+		for (int j = 1; j <= pow(4, i); j++)
+		{
+			if (j == 1)
+			{
+				poped_tree = dequeue_tree();
+			}
+			struct Grid* newtree = start + 4 * poped_tree->index + (j % 5);
+			newtree->level = i;
+			newtree->index = 4 * poped_tree->index + (j % 5);
+			newtree->one = NULL;
+			newtree->two = NULL;
+			newtree->three = NULL;
+			newtree->four = NULL;
+			newtree->no_of_object = 0;
+			newtree->dimension = r32(256 / (pow(2, newtree->level)));
+			newtree->next_member = NULL;
+			insert_queue(newtree);
+
+			if (j % 4 == 1) {
+				newtree->grid_position.x = poped_tree->grid_position.x;
+				newtree->grid_position.y = poped_tree->grid_position.y + newtree->dimension;
+				poped_tree->one = newtree;
+			}
+
+			else if (j % 4 == 2) {
+				newtree->grid_position.x = poped_tree->grid_position.x + newtree->dimension;
+				newtree->grid_position.y = poped_tree->grid_position.y + newtree->dimension;
+				poped_tree->two = newtree;
+			}
+
+			else if (j % 4 == 3) {
+				newtree->grid_position.x = poped_tree->grid_position.x;
+				newtree->grid_position.y = poped_tree->grid_position.y;
+				poped_tree->three = newtree;
+			}
+
+			else {
+				newtree->grid_position.x = poped_tree->grid_position.x + newtree->dimension;
+				newtree->grid_position.y = poped_tree->grid_position.y;
+				poped_tree->four = newtree;
+			}
+
+			if (j % 4 == 0 && j != pow(4, i))
+				poped_tree = dequeue_tree();
+
+		}
+	}
+
 	Entity_Info info;
 
 	{
@@ -459,6 +734,19 @@ int karma_user_shankar() {
 			info.rigid_body.transform.p = info.position;
 			info.rigid_body.fixture_id = id;
 			scene_create_new_entity(scene, Entity_Type_Obstacle, info);
+
+			Circle circle_2;
+			circle_2.center = vec2(6);
+			circle_2.radius = 0.6f;
+			fixture.shape = Fixture_Shape_Circle;
+			fixture.handle = &circle_2;
+			id = scene_create_new_resource_fixture(scene, &fixture, 1);
+
+			info.position = vec2(1);
+			info.rigid_body.transform.xform = mat2_identity();
+			info.rigid_body.transform.p = info.position;
+			info.rigid_body.fixture_id = id;
+			scene_create_new_entity(scene, Entity_Type_Obstacle, info);
 		}
 
 		{
@@ -515,6 +803,13 @@ int karma_user_shankar() {
 			info.rigid_body.fixture_id = id;
 			scene_create_new_entity(scene, Entity_Type_Obstacle, info);
 		}
+	}
+
+	/// add rigidbodies to grid
+
+	for (auto ptr = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, ptr); ptr = iter_next<Rigid_Body>(ptr)) {
+		Rigid_Body* body = &ptr->data;
+		add_body_to_grid(start, body);
 	}
 
 	Player_Controller controller = {};
@@ -637,12 +932,13 @@ int karma_user_shankar() {
 				physics_state = Physics_State_PAUSED;
 
 			Dev_TimedScope(SimulationFrame);
-
 			for (auto& player : scene->by_type.player) {
 				player.color = vec4(1);
 				player.rigid_body->transform.p = player.position;
 				player.rigid_body->transform.xform = mat2_scalar(player.radius, player.radius);
 				player.rigid_body->bounding_box = rigid_body_bounding_box(player.rigid_body);
+				remove_body_from_grid(start, player.rigid_body);
+				add_body_to_grid(start, player.rigid_body);
 			}
 
 			primary_player->color = vec4(0, 1, 1);
@@ -657,6 +953,11 @@ int karma_user_shankar() {
 			}
 
 			// TODO: Do broad phase collision detection and narrow collision detection
+
+			for (auto ptr = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, ptr); ptr = iter_next<Rigid_Body>(ptr)) {
+				check_collision(start, &ptr->data);
+			}
+
 			// TODO: Do collision resolution
 
 			for (auto& player : scene->by_type.player) {
@@ -737,11 +1038,16 @@ int karma_user_shankar() {
 			if (body.flags & Rigid_Body_BOUNDING_BOX_COLLIDING) {
 				im2d_rect_outline(body.bounding_box.min, body.bounding_box.max - body.bounding_box.min, vec4(0.1f, 0.7f, 0.1f, 1));
 			}
-			else{
+			else {
 				im2d_rect_outline(body.bounding_box.min, body.bounding_box.max - body.bounding_box.min, vec4(0.7f, 0.1f, 0.1f, 1));
 			}
 		}
 
+		for (r32 y = -128; y < 128; y += 32) {
+			for (r32 x = -128; x < 128; x += 32) {
+				im2d_rect_outline(vec2(x, y), vec2(32), vec4(1));
+			}
+		}
 		im2d_end();
 
 		gfx_end_drawing();
