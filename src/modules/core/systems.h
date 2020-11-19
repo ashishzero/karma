@@ -442,6 +442,7 @@ enum Create_Directory {
 };
 
 Create_Directory system_create_directory(const String path);
+bool			 system_rename_directory(const String existing_path, const String new_path);
 
 Vec2s system_get_primary_monitor_size();
 Vec2s system_get_client_size();

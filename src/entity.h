@@ -116,7 +116,7 @@ struct attribute(no_serialize_base) Obstacle : public Entity {
 
 typedef char Level_Name[125];
 struct Level {
-	attribute(no_serialize)				Level_Name				name;
+	attribute(no_serialize, text)		Level_Name				name;
 	attribute(no_serialize, no_display) u32						name_count;
 	attribute(no_serialize, no_display) u32						key;
 	attribute(no_display)				Array<Resource_Entity>	resources;

@@ -1149,6 +1149,22 @@ Create_Directory system_create_directory(const String path) {
 		return Create_Directory_SYSTEM_ERROR;
 }
 
+bool system_rename_directory(const String existing_path, const String new_path) {
+	int length;
+
+	length = MultiByteToWideChar(CP_UTF8, 0, (char *)existing_path.data, (int)existing_path.count, 0, 0);
+	wchar_t *wexisting_path = (wchar_t *)tallocate((length + 1) * sizeof(wchar_t));
+	MultiByteToWideChar(CP_UTF8, 0, (char *)existing_path.data, (int)existing_path.count, wexisting_path, length);
+	wexisting_path[length] = 0;
+
+	length = MultiByteToWideChar(CP_UTF8, 0, (char *)new_path.data, (int)new_path.count, 0, 0);
+	wchar_t *wnew_path = (wchar_t *)tallocate((length + 1) * sizeof(wchar_t));
+	MultiByteToWideChar(CP_UTF8, 0, (char *)new_path.data, (int)new_path.count, wnew_path, length);
+	wnew_path[length] = 0;
+
+	return MoveFileW(wexisting_path, wnew_path);
+}
+
 //
 //
 //

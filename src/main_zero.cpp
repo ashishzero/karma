@@ -406,17 +406,6 @@ int karma_user_zero() {
 
 		//ImGui::ShowDemoWindow();
 
-		ImGui::Begin("Scene");
-
-		if (ImGui::Button("Save Resources")) {
-			scene_save_resources(scene);
-		}
-		if (ImGui::Button("Save Game")) {
-			scene_save_level(scene);
-		}
-
-		ImGui::End();
-
 		#if defined(ENABLE_DEVELOPER_OPTIONS)
 		{
 			Dev_TimedScope(DebugRender);

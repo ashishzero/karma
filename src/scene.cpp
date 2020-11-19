@@ -239,11 +239,6 @@ static void iscene_destroy_rigid_body(Scene *scene, Rigid_Body *rigid_body) {
 	circular_linked_list_remove(&scene->rigid_bodies, node);
 }
 
-static Level *iscene_current_level(Scene *scene) {
-	assert(scene->loaded_level >= 0);
-	return &scene->levels[scene->loaded_level];
-}
-
 //
 //
 //
@@ -400,7 +395,7 @@ Entity *scene_create_new_entity(Scene *scene, Entity *src, Vec2 p) {
 			resource.id = id;
 			resource.fixture_id = scene_find_resource_fixture_from_fixture(scene, character->rigid_body->fixtures);
 
-			Level *level = iscene_current_level(scene);
+			Level *level = scene_current_level_pointer(scene);
 			array_add(&level->resources, resource);
 
 			result = character;
@@ -416,7 +411,7 @@ Entity *scene_create_new_entity(Scene *scene, Entity *src, Vec2 p) {
 			resource.id = id;
 			resource.fixture_id = scene_find_resource_fixture_from_fixture(scene, obstacle->rigid_body->fixtures);
 			
-			Level *level = iscene_current_level(scene);
+			Level *level = scene_current_level_pointer(scene);
 			array_add(&level->resources, resource);
 
 			result = obstacle;
@@ -1188,7 +1183,7 @@ Level *iscene_create_new_level(Scene *scene, const String name, s32 *index) {
 }
 
 bool scene_save_level(Scene *scene) {
-	Level *level = iscene_current_level(scene);
+	Level *level = scene_current_level_pointer(scene);
 
 	String level_path = tprintf("resources/levels/%s", level->name);
 
@@ -1364,8 +1359,12 @@ void scene_unload_current_level(Scene *scene) {
 	}
 }
 
-const char *scene_current_level(Scene *scene) {
+Level *scene_current_level_pointer(Scene *scene) {
 	assert(scene->loaded_level >= 0);
-	Level *level = &scene->levels[scene->loaded_level];
+	return &scene->levels[scene->loaded_level];
+}
+
+const char *scene_current_level(Scene *scene) {
+	Level *level = scene_current_level_pointer(scene);
 	return level->name;
 }

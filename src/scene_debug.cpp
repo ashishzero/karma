@@ -655,7 +655,33 @@ bool ieditor_gui(Scene *scene, Editor *editor) {
 
 	switch (editor->mode) {
 		case Editor_Mode_MAP: {
-			ImGui::Begin("Editor", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
+			// Level
+			Level *level = scene_current_level_pointer(scene);
+
+			ImGui::Begin("Level");
+
+			Level_Name level_name;
+			u32 level_name_count = level->name_count;
+			memcpy(level_name, level->name, sizeof(Level_Name));
+			if (editor_widget<Level>(*level, "Level Editor")) {
+				String old_path = tprintf("resources/levels/%s", level_name);
+				String new_path = tprintf("resources/levels/%s", level->name);
+				if (system_rename_directory(old_path, new_path)) {
+					level->name_count = (u32)strlen(level->name);
+				} else {
+					// TODO: Failed to rename, log error somewhere
+					memcpy(level->name, level_name, sizeof(Level_Name));
+				}
+			}
+
+			if (ImGui::Button("Save##Level")) {
+				scene_save_level(scene);
+			}
+
+			ImGui::End();
+
+			// Entity Properties
+			ImGui::Begin("Entity", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
 
 			Entity *entity = nullptr;
 			if (editor->map.selected_body) {
