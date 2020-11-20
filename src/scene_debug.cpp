@@ -122,7 +122,7 @@ bool editor_handle_event(const Event &event, Editor *editor) {
 }
 
 void editor_set_mode_game(Scene *scene, Editor *editor) {
-	scene_refresh_rigid_bodies(scene);
+	scene_reload_level(scene);
 	editor->mode = Editor_Mode_GAME;
 	editor->map.hovered_body = nullptr;
 	editor->map.selected_body = nullptr;
@@ -133,7 +133,7 @@ void editor_set_mode_game(Scene *scene, Editor *editor) {
 }
 
 void editor_set_mode_game_developer(Scene *scene, Editor *editor) {
-	scene_refresh_rigid_bodies(scene);
+	scene_reload_level(scene);
 	editor->mode = Editor_Mode_GAME_DEVELOPER;
 	editor->map.hovered_body = nullptr;
 	editor->map.selected_body = nullptr;
@@ -144,7 +144,7 @@ void editor_set_mode_game_developer(Scene *scene, Editor *editor) {
 }
 
 void editor_set_mode_level_editor(Scene *scene, Editor *editor) {
-	scene_refresh_rigid_bodies(scene);
+	scene_reload_level(scene);
 	editor->mode = Editor_Mode_LEVEL_EDITOR;
 	editor->map.hovered_body = nullptr;
 	editor->map.selected_body = nullptr;
@@ -811,6 +811,7 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 		}
 		ImGui::SameLine();
 		if (ImGui::Button("Close##Level")) {
+			// TODO: Save changes??
 			editor_set_mode_game_developer(scene, editor);
 		}
 	}

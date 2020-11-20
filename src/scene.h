@@ -130,6 +130,7 @@ void scene_clean_entities(Scene *scene);
 
 bool scene_save_level(Scene *scene);
 bool scene_load_level(Scene *scene, const String name);
+bool scene_reload_level(Scene *scene);
 void scene_unload_current_level(Scene *scene);
 Level *scene_current_level_pointer(Scene *scene);
-const char *scene_current_level(Scene *scene);
+const String scene_current_level(Scene *scene);

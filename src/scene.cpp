@@ -851,8 +851,8 @@ void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio) {
 		for (auto &m : manifolds) {
 			im2d_line(m.contacts[1], m.contacts[1] + m.penetration * m.normal, vec4(1, 0, 1), 0.02f);
 
-			im2d_circle(m.contacts[0], 0.08f, vec4(1, 0, 1));
-			im2d_circle(m.contacts[1], 0.08f, vec4(1, 0, 1));
+			im2d_circle(m.contacts[0], 0.02f, vec4(1, 0, 1));
+			im2d_circle(m.contacts[1], 0.02f, vec4(1, 0, 1));
 		}
 	}
 	im2d_end();
@@ -1376,6 +1376,15 @@ bool scene_load_level(Scene *scene, const String name) {
 	return true;
 }
 
+bool scene_reload_level(Scene *scene) {
+	if (scene->loaded_level >= 0) {
+		String name = scene_current_level(scene);
+		scene_unload_current_level(scene);
+		return scene_load_level(scene, name);
+	}
+	return false;
+}
+
 void scene_unload_current_level(Scene *scene) {
 	if (scene->loaded_level >= 0) {
 		scene_clean_entities(scene);
@@ -1388,7 +1397,7 @@ Level *scene_current_level_pointer(Scene *scene) {
 	return &scene->levels[scene->loaded_level];
 }
 
-const char *scene_current_level(Scene *scene) {
+const String scene_current_level(Scene *scene) {
 	Level *level = scene_current_level_pointer(scene);
-	return level->name;
+	return String(level->name, level->name_count);
 }
