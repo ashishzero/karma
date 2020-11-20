@@ -13,9 +13,9 @@ const r32  EDITOR_VERTEX_SELECTOR_THICKNESS = 0.1f;
 const Vec4 EDITOR_VERTEX_COLOR = vec4(1, 1, 0);
 const Vec4 EDITOR_SELECTED_VERTEX_COLOR = vec4(0, 3, 3);
 
-const r32 GIZMO_LINE_THICKNESS = 0.1f;
+const r32 GIZMO_LINE_THICKNESS = 0.022f;
 const r32 GIZMO_LINE_HALF_THICKNESS = 0.5f * GIZMO_LINE_THICKNESS;
-const r32 GIZMO_LINE_LENGTH = 1.3f;
+const r32 GIZMO_LINE_LENGTH = 0.3f;
 const r32 GIZMO_POINTER_THICKNESS = 2.0f * GIZMO_LINE_THICKNESS;
 const r32 GIZMO_POINTER_HALF_THICKNESS = 0.5f * GIZMO_POINTER_THICKNESS;
 const Vec3 GIZMO_SQUARE_COLOR = vec3(1);
@@ -118,7 +118,7 @@ bool editor_handle_event(const Event &event, Editor *editor) {
 		}
 	}
 
-	return false;
+	return true;
 }
 
 void editor_set_mode_game(Scene *scene, Editor *editor) {
@@ -837,7 +837,11 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 
 	switch (entity->type) {
 		case Entity_Type_Camera: {
-			result = editor_widget<Camera>(*(Camera *)entity, "Camera Entity");
+			Camera *c = (Camera *)entity;
+			result = editor_widget<Camera>(*c, "Camera Entity");
+			if (result) {
+				c->behaviour = 0;
+			}
 		} break;
 
 		case Entity_Type_Character: {

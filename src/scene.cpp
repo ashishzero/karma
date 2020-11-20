@@ -602,52 +602,56 @@ void scene_simulate(Scene *scene, r32 dt) {
 			clear_bit(ptr->data.flags, Rigid_Body_BOUNDING_BOX_COLLIDING);
 		}
 
-		for_list(Rigid_Body, a_ptr, &scene->rigid_bodies) {
-			for_list_offset(Rigid_Body, b_ptr, a_ptr, &scene->rigid_bodies) {
-				auto &a = a_ptr->data;
-				auto &b = b_ptr->data;
+		for (int iteration = 0; iteration < SCENE_SIMULATION_MAX_ITERATION; ++iteration) {
+			for_list(Rigid_Body, a_ptr, &scene->rigid_bodies) {
+				for_list_offset(Rigid_Body, b_ptr, a_ptr, &scene->rigid_bodies) {
+					auto &a = a_ptr->data;
+					auto &b = b_ptr->data;
 
-				if (a.type == Rigid_Body_Type_Static && b.type == Rigid_Body_Type_Static) {
-					continue;
-				}
+					if (a.type == Rigid_Body_Type_Static && b.type == Rigid_Body_Type_Static) {
+						continue;
+					}
 
-				if (test_mmrect_vs_mmrect(a.bounding_box, b.bounding_box)) {
-					set_bit(a.flags, Rigid_Body_BOUNDING_BOX_COLLIDING);
-					set_bit(b.flags, Rigid_Body_BOUNDING_BOX_COLLIDING);
+					if (test_mmrect_vs_mmrect(a.bounding_box, b.bounding_box)) {
+						set_bit(a.flags, Rigid_Body_BOUNDING_BOX_COLLIDING);
+						set_bit(b.flags, Rigid_Body_BOUNDING_BOX_COLLIDING);
 
-					for (u32 a_index = 0; a_index < a.fixture_count; ++a_index) {
-						for (u32 b_index = 0; b_index < b.fixture_count; ++b_index) {
-							Fixture *a_fixture = scene_rigid_body_get_fixture(&a, a_index);
-							Fixture *b_fixture = scene_rigid_body_get_fixture(&b, b_index);
+						for (u32 a_index = 0; a_index < a.fixture_count; ++a_index) {
+							for (u32 b_index = 0; b_index < b.fixture_count; ++b_index) {
+								Fixture *a_fixture = scene_rigid_body_get_fixture(&a, a_index);
+								Fixture *b_fixture = scene_rigid_body_get_fixture(&b, b_index);
 
-							if (fixture_vs_fixture(a_fixture, b_fixture, a.transform, b.transform, &manifold)) {
-								set_bit(a.flags, Rigid_Body_COLLIDING);
-								set_bit(b.flags, Rigid_Body_COLLIDING);
+								if (fixture_vs_fixture(a_fixture, b_fixture, a.transform, b.transform, &manifold)) {
+									set_bit(a.flags, Rigid_Body_COLLIDING);
+									set_bit(b.flags, Rigid_Body_COLLIDING);
 
-								// Resolve velocity
-								r32 restitution = minimum(a.restitution, b.restitution);
-								r32 j = -(1 + restitution) * vec2_dot(b.velocity - a.velocity, manifold.normal);
-								j /= (a.imass + b.imass);
-								j = maximum(0, j);
+									// Resolve velocity
+									r32 restitution = minimum(a.restitution, b.restitution);
+									r32 j = -(1 + restitution) * vec2_dot(b.velocity - a.velocity, manifold.normal);
+									j /= (a.imass + b.imass);
+									j = maximum(0, j);
 
-								a.velocity -= j * a.imass * manifold.normal;
-								b.velocity += j * b.imass * manifold.normal;
+									r32 alpha = SCENE_SIMULATION_CORRECTION_ALPHA;
 
-								// Fix position
-								Vec2 correction = maximum(manifold.penetration, 0.0f) / (a.imass + b.imass) * manifold.normal;
-								a.transform.p -= a.imass * correction;
-								b.transform.p += b.imass * correction;
-								a.bounding_box = scene_rigid_body_bounding_box(&a, 0);
-								b.bounding_box = scene_rigid_body_bounding_box(&b, 0);
+									a.velocity -= alpha * j * a.imass * manifold.normal;
+									b.velocity += alpha * j * b.imass * manifold.normal;
 
-								#ifdef ENABLE_DEVELOPER_OPTIONS
-								array_add(&scene->manifolds, manifold);
-								#endif
+									// Fix position
+									Vec2 correction = maximum(manifold.penetration, 0.0f) / (a.imass + b.imass) * manifold.normal;
+									a.transform.p -= a.imass * correction;
+									b.transform.p += b.imass * correction;
+									a.bounding_box = scene_rigid_body_bounding_box(&a, 0);
+									b.bounding_box = scene_rigid_body_bounding_box(&b, 0);
+
+									#ifdef ENABLE_DEVELOPER_OPTIONS
+									array_add(&scene->manifolds, manifold);
+									#endif
+								}
 							}
 						}
 					}
-				}
 
+				}
 			}
 		}
 
@@ -802,7 +806,7 @@ void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio) {
 
 	Camera_View view = orthographic_view(-view_width, view_width, view_height, -view_height);
 
-	im2d_set_stroke_weight(0.02f);
+	im2d_set_stroke_weight(0.008f);
 
 	r32 scale = camera_distance_to_scale(camera);
 	Mat4 transform = mat4_scalar(scale, scale, 1.0f) * mat4_translation(vec3(-camera->position, 0.0f));

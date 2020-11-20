@@ -263,12 +263,6 @@ int karma_user_zero() {
 				break;
 			}
 
-			if (ImGui_HandleEvent(event))
-				continue;
-
-			if (scene_handle_event(scene, event))
-				continue;
-
 			if (event.type & Event_Type_WINDOW_RESIZE) {
 				s32 w = event.window.dimension.x;
 				s32 h = event.window.dimension.y;
@@ -287,6 +281,9 @@ int karma_user_zero() {
 				continue;
 			}
 
+			if (ImGui_HandleEvent(event))
+				continue;
+
 			if ((event.type & Event_Type_KEY_UP) && event.key.symbol == Key_ESCAPE) {
 				system_request_quit();
 				break;
@@ -296,6 +293,9 @@ int karma_user_zero() {
 				system_fullscreen_state(SYSTEM_TOGGLE);
 				continue;
 			}
+
+			if (scene_handle_event(scene, event))
+				continue;
 
 			if (event.type & Event_Type_KEYBOARD) {
 				float value = (float)(event.key.state == Key_State_DOWN);
@@ -335,7 +335,7 @@ int karma_user_zero() {
 
 		scene_pre_simulate(scene);
 
-		static r32 movement_force = 20;
+		static r32 movement_force = 6;
 
 		r32 len = sqrtf(controller.x * controller.x + controller.y * controller.y);
 		Vec2 dir = vec2(0);

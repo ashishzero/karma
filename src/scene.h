@@ -5,7 +5,9 @@
 #include "modules/core/data_structures.h"
 #include "entity.h"
 
-constexpr r32 SCENE_VIEW_HEIGHT_HALF = 5;
+constexpr r32 SCENE_VIEW_HEIGHT_HALF = 1;
+constexpr int SCENE_SIMULATION_MAX_ITERATION = 5;
+constexpr r32 SCENE_SIMULATION_CORRECTION_ALPHA = 0.8f;
 
 struct Scene;
 
