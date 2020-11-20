@@ -3,7 +3,6 @@
 
 #include "modules/core/systems.h"
 #include "modules/gfx/renderer.h"
-#include "modules/imgui/dev.h"
 
 #include ".generated/entity.typeinfo"
 
@@ -537,24 +536,8 @@ Camera *scene_primary_camera(Scene *scene) {
 
 bool scene_handle_event(Scene *scene, const Event &event) {
 	#ifdef ENABLE_DEVELOPER_OPTIONS
-	if (editor_handle_event(event, &scene->editor))
+	if (editor_handle_event(event, scene, &scene->editor))
 		return true;
-	if (event.type & Event_Type_KEY_UP) {
-		switch (event.key.symbol) {
-			case Key_F1: {
-				Dev_TogglePresentationState();
-				return true;
-			} break;
-
-			case Key_F2: {
-				if (scene->editor.mode == Editor_Mode_GAME)
-					editor_set_mode_level_editor(scene, &scene->editor);
-				else
-					editor_set_mode_game(scene, &scene->editor);
-				return true;
-			} break;
-		}
-	}
 	#endif
 
 	return false;

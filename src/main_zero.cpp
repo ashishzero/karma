@@ -251,7 +251,9 @@ int karma_user_zero() {
 	while (running) {
 		Dev_TimedFrameBegin();
 
-		auto primary_player = &scene->by_type.character[0];
+		Character *primary_player = nullptr;
+		if (scene->by_type.character.count)
+			primary_player = &scene->by_type.character[0];
 
 		Dev_TimedBlockBegin(EventHandling);
 		auto events = system_poll_events();
@@ -367,7 +369,8 @@ int karma_user_zero() {
 
 		scene_update(scene);
 
-		primary_player->color = vec4(0, 1, 1);
+		if (primary_player)
+			primary_player->color = vec4(0, 1, 1);
 
 		ImGui_UpdateFrame(real_dt);
 

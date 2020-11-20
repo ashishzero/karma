@@ -69,7 +69,7 @@ struct Editor {
 struct Scene;
 
 Editor editor_create(Scene *scene);
-bool editor_handle_event(const Event &event, Editor *editor);
+bool editor_handle_event(const Event &event, Scene *scene, Editor *editor);
 void editor_set_mode_game(Scene *scene, Editor *editor);
 void editor_set_mode_game_developer(Scene *scene, Editor *editor);
 void editor_set_mode_level_editor(Scene *scene, Editor *editor);

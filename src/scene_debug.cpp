@@ -3,6 +3,7 @@
 #include "modules/imgui/imgui.h"
 #include "modules/imgui/editor.h"
 #include "modules/gfx/renderer.h"
+#include "modules/imgui/dev.h"
 #include "scene.h"
 
 #include ".generated/entity.typeinfo"
@@ -87,7 +88,24 @@ Editor editor_create(Scene *scene) {
 	return editor;
 }
 
-bool editor_handle_event(const Event &event, Editor *editor) {
+bool editor_handle_event(const Event &event, Scene *scene, Editor *editor) {
+	if (event.type & Event_Type_KEY_UP) {
+		switch (event.key.symbol) {
+			case Key_F1: {
+				Dev_TogglePresentationState();
+				return true;
+			} break;
+
+			case Key_F2: {
+				if (editor->mode == Editor_Mode_GAME)
+					editor_set_mode_level_editor(scene, &scene->editor);
+				else
+					editor_set_mode_game(scene, &scene->editor);
+				return true;
+			} break;
+		}
+	}
+
 	if (editor->mode == Editor_Mode_GAME || editor->mode == Editor_Mode_GAME_DEVELOPER)
 		return false;
 
@@ -490,7 +508,7 @@ void editor_update(Scene *scene, Editor *editor) {
 						r32 s = maximum(sx, sy);
 
 						camera->target_distance = log2f(s);
-												
+
 						// Deselect Camera if pressed on empty world
 						ieditor_deselect_camera(scene, editor);
 					}
