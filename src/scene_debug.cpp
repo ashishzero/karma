@@ -816,6 +816,7 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 		u32 *flags = &editor->flags;
 		ImGui::CheckboxFlags("Render World", flags, Editor_Flag_Bit_RENDER_WORLD);
 		ImGui::CheckboxFlags("Render Fixture", flags, Editor_Flag_Bit_RENDER_FIXTURE);
+		ImGui::CheckboxFlags("Render Bounding Box", flags, Editor_Flag_Bit_RENDER_BOUNDING_BOX);
 		ImGui::CheckboxFlags("Render Collision", flags, Editor_Flag_Bit_RENDER_COLLISION);
 	}
 

@@ -765,11 +765,13 @@ inline bool iscene_render_world_enabled(Scene *scene) {
 		);
 }
 
-inline bool iscene_render_fixture_enabled(Scene *scene) {
+inline bool iscene_render_fixture_enabled(Scene *scene, u32 *type) {
 	auto mode = scene->editor.mode;
 	auto flags = scene->editor.flags;
 	if (mode == Editor_Mode_GAME) return false;
-	return (flags & Editor_Flag_Bit_RENDER_FIXTURE) && (mode == Editor_Mode_GAME_DEVELOPER || mode == Editor_Mode_LEVEL_EDITOR);
+	*type = (flags & (Editor_Flag_Bit_RENDER_FIXTURE | Editor_Flag_Bit_RENDER_BOUNDING_BOX));
+	return ((flags & Editor_Flag_Bit_RENDER_FIXTURE) || (flags & Editor_Flag_Bit_RENDER_BOUNDING_BOX) ) && 
+		(mode == Editor_Mode_GAME_DEVELOPER || mode == Editor_Mode_LEVEL_EDITOR);
 }
 
 inline bool iscene_render_collision_enabled(Scene *scene) {
@@ -806,26 +808,31 @@ void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio) {
 		}
 	}
 
-	if (iscene_render_fixture_enabled(scene)) {
+	u32 type;
+	if (iscene_render_fixture_enabled(scene, &type)) {
 		Rigid_Body *body_hovered = scene->editor.map.hovered_body;
-
+		Vec4 color;
 		for_list(Rigid_Body, ptr, &scene->rigid_bodies) {
 			auto &body = ptr->data;
 
-			Vec4 color = (body.flags & Rigid_Body_COLLIDING) ? vec4(1, 0, 0) : vec4(0.7f, 0.45f, 0);
+			if (type & Editor_Flag_Bit_RENDER_FIXTURE) {
+				color = (body.flags & Rigid_Body_COLLIDING) ? vec4(1, 0, 0) : vec4(0.7f, 0.45f, 0);
 
-			if (&body == body_hovered) {
-				color.xyz = vec3(1) - color.xyz;
+				if (&body == body_hovered) {
+					color.xyz = vec3(1) - color.xyz;
+				}
+
+				for (u32 index = 0; index < body.fixture_count; ++index) {
+					auto f = scene_rigid_body_get_fixture(&body, index);
+					iscene_render_shape_transformed(*f, body.transform, color.xyz);
+				}
 			}
 
-			for (u32 index = 0; index < body.fixture_count; ++index) {
-				auto f = scene_rigid_body_get_fixture(&body, index);
-				iscene_render_shape_transformed(*f, body.transform, color.xyz);
+			if (type & Editor_Flag_Bit_RENDER_BOUNDING_BOX) {
+				color = (body.flags & Rigid_Body_BOUNDING_BOX_COLLIDING) ? vec4(0.7f, 0.1f, 0.1f, 1) : vec4(0.1f, 0.7f, 0.1f, 1);
+
+				im2d_rect_outline(body.bounding_box.min, body.bounding_box.max - body.bounding_box.min, color);
 			}
-
-			color = (body.flags & Rigid_Body_BOUNDING_BOX_COLLIDING) ? vec4(0.7f, 0.1f, 0.1f, 1) : vec4(0.1f, 0.7f, 0.1f, 1);
-
-			im2d_rect_outline(body.bounding_box.min, body.bounding_box.max - body.bounding_box.min, color);
 		}
 	}
 	

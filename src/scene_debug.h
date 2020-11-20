@@ -40,7 +40,8 @@ enum Editor_Mode {
 enum Editor_Flags : u32 {
 	Editor_Flag_Bit_RENDER_WORLD		= bit(0),
 	Editor_Flag_Bit_RENDER_FIXTURE		= bit(1),
-	Editor_Flag_Bit_RENDER_COLLISION	= bit(2),
+	Editor_Flag_Bit_RENDER_BOUNDING_BOX	= bit(2),
+	Editor_Flag_Bit_RENDER_COLLISION	= bit(3),
 };
 
 struct Editor_Map {
