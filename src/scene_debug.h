@@ -44,27 +44,50 @@ enum Editor_Flags : u32 {
 	Editor_Flag_Bit_RENDER_COLLISION	= bit(3),
 };
 
-struct Editor_Map {
+struct Editor_Level {
 	Rigid_Body *hovered_body;
 	Rigid_Body *selected_body;
 	int			select_camera_index;
 };
 
-struct Editor_Fixture {
-	r32		pointer_rotation;
+constexpr u32 MAXIMUM_POLYGON_VERTICES	= 100;
+constexpr u32 MAXIMUM_FIXTURE_COUNT		= 25;
+
+struct Editor_Entity {
+	enum Mode {
+		UNSELECTED,
+		SELECTED,
+		EDITING
+	};
+
+	Fixture fixtures[MAXIMUM_FIXTURE_COUNT];
+	int		fixture_count;
+
+	int			  selected_index;
+	int			  hovered_index;
+
+	Vec2 *		hovered_vertex;
+	Vec2 *		selected_vertex;
+
+	Fixture_Shape	new_shape;
+	Mode			mode;
+
+	Circle		circle_storage[MAXIMUM_FIXTURE_COUNT];
+	Mm_Rect		mm_rect_storage[MAXIMUM_FIXTURE_COUNT];
+	Capsule		capsule_storage[MAXIMUM_FIXTURE_COUNT];
+	Polygon_Pt	polygon_storage[MAXIMUM_FIXTURE_COUNT];
+	Vec2		polygon_vertices[MAXIMUM_FIXTURE_COUNT][MAXIMUM_POLYGON_VERTICES];
 };
 
 struct Editor {
-	Gizmo				gizmo;
+	Gizmo		gizmo;
 
 	Camera		camera;
 	Editor_Mode	mode;
 	u32			flags;
 
-	union {
-		Editor_Map		map;
-		Editor_Fixture	fixture;
-	};
+	Editor_Level	level;
+	Editor_Entity	entity;
 };
 
 struct Scene;

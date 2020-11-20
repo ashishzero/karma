@@ -865,7 +865,9 @@ Vec3 barycentric(Vec3 a, Vec3 b, Vec3 c, Vec3 p);
 
 bool is_quad_convex(Vec2 a, Vec2 b, Vec2 c, Vec2 d);
 bool is_quad_convex(Vec3 a, Vec3 b, Vec3 c, Vec3 d);
+bool is_polygon_convex(const Vec2 *vertices, u32 count);
 bool is_polygon_convex(const Polygon &polygon);
+bool is_polygon_convex(const Polygon_Pt &polygon);
 
 Mm_Rect enclosing_mm_rect_mm_rect(const Mm_Rect &a0, const Mm_Rect &a1);
 Circle enclosing_circle_circle(const Circle &c0, const Circle &c1);
@@ -930,8 +932,9 @@ bool dynamic_mm_rect_vs_mm_rect(const Mm_Rect &a, const Mm_Rect &b, Vec2 va, Vec
 
 Vec2 support(const Circle &c, Vec2 dir);
 Vec2 support(const Mm_Rect &m, Vec2 dir);
-Vec2 support(const Polygon &p, Vec2 dir);
 Vec2 support(const Capsule &c, Vec2 dir);
+Vec2 support(const Polygon &p, Vec2 dir);
+Vec2 support(const Polygon_Pt &p, Vec2 dir);
 
 Vec2 support(const Circle &a, const Circle &b, Vec2 dir);
 Vec2 support(const Circle &a, const Capsule &b, Vec2 dir);
@@ -1060,7 +1063,7 @@ bool gjk(const ShapeA &sa, const ShapeB &sb, const Args & ...args) {
 }
 
 template <typename Shape>
-static bool test_shape_vs_point(const Shape &s, const Transform &t, Vec2 point, r32 size = 0) {
+bool test_shape_vs_point(const Shape &s, Vec2 point, r32 size, const Transform &t) {
 	Circle circle = { point, size };
 
 	Transform tc;
@@ -1068,6 +1071,12 @@ static bool test_shape_vs_point(const Shape &s, const Transform &t, Vec2 point, 
 	tc.xform = mat2_identity();
 
 	return gjk(s, circle, t, tc);
+}
+
+template <typename Shape>
+bool test_shape_vs_point(const Shape &s, Vec2 point, r32 size) {
+	Circle circle = { point, size };
+	return gjk(s, circle);
 }
 
 template <typename ShapeA, typename ShapeB, typename ...Args>

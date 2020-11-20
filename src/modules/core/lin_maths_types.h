@@ -448,6 +448,11 @@ struct Ray2d {
 	Vec2 dir;
 };
 
+struct Polygon_Pt {
+	u32		vertex_count;
+	Vec2	*vertices;
+};
+
 struct Polygon {
 	u32		vertex_count;
 	Vec2	vertices[3];

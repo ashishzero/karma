@@ -8,10 +8,10 @@
 
 #include ".generated/entity.typeinfo"
 
-const r32  EDITOR_VERTEX_RADIUS = 0.1f;
+const r32  EDITOR_VERTEX_RADIUS = 0.02f;
 const r32  EDITOR_VERTEX_SELECTOR_RADIUS = 0.3f;
 const r32  EDITOR_VERTEX_SELECTOR_THICKNESS = 0.1f;
-const Vec4 EDITOR_VERTEX_COLOR = vec4(1, 1, 0);
+const Vec4 EDITOR_VERTEX_COLOR = vec4(1, 0, 0);
 const Vec4 EDITOR_SELECTED_VERTEX_COLOR = vec4(0, 3, 3);
 
 const r32 GIZMO_LINE_THICKNESS = 0.022f;
@@ -83,6 +83,16 @@ Editor editor_create(Scene *scene) {
 
 	editor_set_mode_level_editor(scene, &editor);
 
+	editor.entity.fixture_count = 0;
+	editor.entity.selected_index = -1;
+	editor.entity.hovered_index = -1;
+
+	editor.entity.hovered_vertex = nullptr;
+	editor.entity.selected_vertex = nullptr;
+
+	editor.entity.new_shape = Fixture_Shape_Circle;
+	editor.entity.mode = Editor_Entity::UNSELECTED;
+
 	editor.flags = Editor_Flag_Bit_RENDER_WORLD | Editor_Flag_Bit_RENDER_FIXTURE;
 
 	return editor;
@@ -139,58 +149,57 @@ bool editor_handle_event(const Event &event, Scene *scene, Editor *editor) {
 	return true;
 }
 
-void editor_set_mode_game(Scene *scene, Editor *editor) {
-	scene_reload_level(scene);
-	editor->mode = Editor_Mode_GAME;
-	editor->map.hovered_body = nullptr;
-	editor->map.selected_body = nullptr;
-	editor->map.select_camera_index = -1;
+inline void ieditor_reset(Editor *editor) {
+	editor->level.hovered_body = nullptr;
+	editor->level.selected_body = nullptr;
+	editor->level.select_camera_index = -1;
 	editor->gizmo.render_type = Gizmo_Render_Type_NONE;
 	editor->gizmo.type = Gizmo_Type_NONE;
 	editor->camera.behaviour = 0;
+}
+
+void editor_set_mode_game(Scene *scene, Editor *editor) {
+	scene_reload_level(scene);
+	editor->mode = Editor_Mode_GAME;
+	ieditor_reset(editor);
 }
 
 void editor_set_mode_game_developer(Scene *scene, Editor *editor) {
 	scene_reload_level(scene);
 	editor->mode = Editor_Mode_GAME_DEVELOPER;
-	editor->map.hovered_body = nullptr;
-	editor->map.selected_body = nullptr;
-	editor->map.select_camera_index = -1;
-	editor->gizmo.render_type = Gizmo_Render_Type_NONE;
-	editor->gizmo.type = Gizmo_Type_NONE;
-	editor->camera.behaviour = 0;
+	ieditor_reset(editor);
 }
 
 void editor_set_mode_level_editor(Scene *scene, Editor *editor) {
 	scene_reload_level(scene);
 	editor->mode = Editor_Mode_LEVEL_EDITOR;
-	editor->map.hovered_body = nullptr;
-	editor->map.selected_body = nullptr;
-	editor->map.select_camera_index = -1;
-	editor->gizmo.render_type = Gizmo_Render_Type_NONE;
-	editor->gizmo.type = Gizmo_Type_NONE;
-	editor->camera.behaviour = 0;
+	ieditor_reset(editor);
 }
 
 void editor_set_mode_entity_editor(Scene *scene, Editor *editor) {
 	editor->mode = Editor_Mode_ENTITY_EDITOR;
-	editor->camera.behaviour = 0;
+	editor->camera.position = vec2(0);
+	editor->camera.distance = 0;
+	editor->camera.target_position = vec2(0);
+	editor->camera.target_distance = 0;
+	editor->entity.fixture_count = 0;
+	ieditor_reset(editor);
 }
 
 Camera *ieditor_get_selected_camera(Scene *scene, Editor *editor) {
-	int index = editor->map.select_camera_index;
+	int index = editor->level.select_camera_index;
 	auto cameras = scene_cameras(scene);
 	if (index >= 0 && index < cameras.count) {
 		return &cameras[index];
 	} else {
-		editor->map.select_camera_index = -1;
+		editor->level.select_camera_index = -1;
 	}
 	return nullptr;
 }
 
 void ieditor_select_camera(Editor *editor, int index) {
-	editor->map.selected_body = nullptr;
-	editor->map.select_camera_index = index;
+	editor->level.selected_body = nullptr;
+	editor->level.select_camera_index = index;
 }
 
 void ieditor_deselect_camera(Scene *scene, Editor *editor) {
@@ -199,7 +208,7 @@ void ieditor_deselect_camera(Scene *scene, Editor *editor) {
 		editor->camera.behaviour = 0;
 		editor->camera.position = src->position;
 		editor->camera.distance = src->distance;
-		editor->map.select_camera_index = -1;
+		editor->level.select_camera_index = -1;
 	}
 }
 
@@ -210,13 +219,13 @@ Camera *editor_rendering_camera(Scene *scene, Editor *editor) {
 		} break;
 
 		case Editor_Mode_GAME_DEVELOPER: {
-			if (editor->map.select_camera_index >= 0)
+			if (editor->level.select_camera_index >= 0)
 				return ieditor_get_selected_camera(scene, editor);
 			return scene_primary_camera(scene);
 		} break;
 
 		case Editor_Mode_LEVEL_EDITOR: {
-			if (editor->map.select_camera_index >= 0)
+			if (editor->level.select_camera_index >= 0)
 				return ieditor_get_selected_camera(scene, editor);
 			return &editor->camera;
 		} break;
@@ -235,7 +244,91 @@ Camera *editor_rendering_camera(Scene *scene, Editor *editor) {
 //
 //
 
-void ieditor_gizmo_action(Gizmo *gizmo, const Transform &gizmo_transform, Vec2 cursor, Vec2 delta) {
+void ieditor_select_fixture(Editor *editor, int index) {
+	editor->entity.selected_index = index;
+	editor->entity.hovered_vertex = nullptr;
+	editor->entity.selected_vertex = nullptr;
+	if (index < 0)
+		editor->entity.mode = Editor_Entity::UNSELECTED;
+	else
+		editor->entity.mode = Editor_Entity::SELECTED;
+}
+
+void ieditor_select_vertex(Editor *editor, Vec2 *vertex) {
+	assert(editor->entity.selected_index >= 0);
+	editor->entity.selected_vertex = vertex;
+	editor->entity.mode = Editor_Entity::EDITING;
+}
+
+void ieditor_deselect_vertex(Editor *editor) {
+	assert(editor->entity.selected_index >= 0);
+	editor->entity.selected_vertex = nullptr;
+	editor->entity.mode = Editor_Entity::SELECTED;
+}
+
+void ieditor_deselect_fixture(Editor *editor) {
+	editor->entity.selected_vertex = nullptr;
+	editor->entity.hovered_vertex = nullptr;
+	editor->entity.selected_index = -1;
+	editor->entity.hovered_index = -1;
+	editor->entity.mode = Editor_Entity::UNSELECTED;
+}
+
+void ieditor_add_fixture(Editor *editor) {
+	assert(editor->mode == Editor_Mode_ENTITY_EDITOR);
+
+	u32 index = editor->entity.fixture_count;
+	Fixture *f = &editor->entity.fixtures[index];
+	editor->entity.fixture_count += 1;
+	f->shape = editor->entity.new_shape;
+
+	switch (f->shape) {
+		case Fixture_Shape_Circle: {
+			auto circle = &editor->entity.circle_storage[index];
+			circle->center = vec2(0);
+			circle->radius = 0.1f;
+			f->handle = circle;
+		} break;
+
+		case Fixture_Shape_Mm_Rect: {
+			auto rect = &editor->entity.mm_rect_storage[index];
+			rect->min = vec2(-0.1f);
+			rect->max = vec2(0.1f);
+			f->handle = rect;
+		} break;
+
+		case Fixture_Shape_Capsule: {
+			Capsule *capsule = &editor->entity.capsule_storage[index];
+			capsule->a = vec2(-0.1f, 0);
+			capsule->b = vec2(0.1f, 0);
+			capsule->radius = 0.1f;
+			f->handle = capsule;
+		} break;
+
+		case Fixture_Shape_Polygon: {
+			Polygon_Pt *polygon = &editor->entity.polygon_storage[index];
+			polygon->vertex_count = 3;
+			polygon->vertices = editor->entity.polygon_vertices[index];
+			polygon->vertices[0] = vec2(-0.1f, -0.1f);
+			polygon->vertices[1] = vec2(0.0f, 0.1f);
+			polygon->vertices[2] = vec2(0.1f, -0.1f);
+			f->handle = polygon;
+		} break;
+
+		invalid_default_case();
+	}
+}
+
+void ieditor_remove_fixture(Editor *editor, int index) {
+	assert(index < editor->entity.fixture_count);
+
+	editor->entity.fixtures[index] = editor->entity.fixtures[editor->entity.fixture_count - 1];
+	editor->entity.fixture_count -= 1;
+	ieditor_deselect_fixture(editor);
+}
+
+template <typename ...Args>
+void ieditor_gizmo_action(Gizmo *gizmo, Vec2 cursor, Vec2 delta, Vec2 p, const Args & ...args) {
 	auto &io = ImGui::GetIO();
 
 	for (auto &inten : gizmo->intensity) {
@@ -252,17 +345,17 @@ void ieditor_gizmo_action(Gizmo *gizmo, const Transform &gizmo_transform, Vec2 c
 
 			switch (gizmo->render_type) {
 				case Gizmo_Render_Type_TRANSLATE: {
-					if (test_shape_vs_point(GIZMO_CENTER_RECT, gizmo_transform, cursor)) {
+					if (test_shape_vs_point(GIZMO_CENTER_RECT, cursor, 0, args...)) {
 						gizmo->intensity[0] = 2;
 						if (io.MouseDown[ImGuiMouseButton_Left])
 							gizmo->type = Gizmo_Type_CENTER;
-					} else if (test_shape_vs_point(GIZMO_X_LINE_RECT, gizmo_transform, cursor) ||
-							   test_shape_vs_point(GIZMO_X_POINTER_POLY, gizmo_transform, cursor)) {
+					} else if (test_shape_vs_point(GIZMO_X_LINE_RECT, cursor, 0, args...) ||
+							   test_shape_vs_point(GIZMO_X_POINTER_POLY, cursor, 0, args...)) {
 						gizmo->intensity[1] = 4.5f;
 						if (io.MouseDown[ImGuiMouseButton_Left])
 							gizmo->type = Gizmo_Type_TRANSLATE_X;
-					} else if (test_shape_vs_point(GIZMO_Y_LINE_RECT, gizmo_transform, cursor) ||
-							   test_shape_vs_point(GIZMO_Y_POINTER_POLY, gizmo_transform, cursor)) {
+					} else if (test_shape_vs_point(GIZMO_Y_LINE_RECT, cursor, 0, args...) ||
+							   test_shape_vs_point(GIZMO_Y_POINTER_POLY, cursor, 0, args...)) {
 						gizmo->intensity[2] = 2;
 						if (io.MouseDown[ImGuiMouseButton_Left])
 							gizmo->type = Gizmo_Type_TRANSLATE_Y;
@@ -274,20 +367,20 @@ void ieditor_gizmo_action(Gizmo *gizmo, const Transform &gizmo_transform, Vec2 c
 				} break;
 
 				case Gizmo_Render_Type_SCALE: {
-					if (test_shape_vs_point(GIZMO_CENTER_RECT, gizmo_transform, cursor)) {
+					if (test_shape_vs_point(GIZMO_CENTER_RECT, cursor, 0, args...)) {
 						gizmo->intensity[0] = 2;
 						if (io.MouseDown[ImGuiMouseButton_Left])
 							gizmo->type = Gizmo_Type_CENTER;
-					} else if (test_shape_vs_point(GIZMO_X_LINE_RECT, gizmo_transform, cursor) ||
-							   test_shape_vs_point(GIZMO_X_POINTER_RECT, gizmo_transform, cursor)) {
+					} else if (test_shape_vs_point(GIZMO_X_LINE_RECT, cursor, 0, args...) ||
+							   test_shape_vs_point(GIZMO_X_POINTER_RECT, cursor, 0, args...)) {
 						gizmo->intensity[1] = 4.5f;
 						if (io.MouseDown[ImGuiMouseButton_Left]) {
 							gizmo->type = Gizmo_Type_SCALE_X;
 							gizmo->values[0] = 1;
 							gizmo->values[1] = 1;
 						}
-					} else if (test_shape_vs_point(GIZMO_Y_LINE_RECT, gizmo_transform, cursor) ||
-							   test_shape_vs_point(GIZMO_Y_POINTER_RECT, gizmo_transform, cursor)) {
+					} else if (test_shape_vs_point(GIZMO_Y_LINE_RECT, cursor, 0, args...) ||
+							   test_shape_vs_point(GIZMO_Y_POINTER_RECT, cursor, 0, args...)) {
 						gizmo->intensity[2] = 2;
 						if (io.MouseDown[ImGuiMouseButton_Left]) {
 							gizmo->type = Gizmo_Type_SCALE_Y;
@@ -304,13 +397,13 @@ void ieditor_gizmo_action(Gizmo *gizmo, const Transform &gizmo_transform, Vec2 c
 				} break;
 
 				case Gizmo_Render_Type_ROTATE: {
-					if (test_shape_vs_point(GIZMO_OUTER, gizmo_transform, cursor) &&
-						!test_shape_vs_point(GIZMO_INNER, gizmo_transform, cursor)) {
+					if (test_shape_vs_point(GIZMO_OUTER, cursor, 0, args...) &&
+						!test_shape_vs_point(GIZMO_INNER, cursor, 0, args...)) {
 						gizmo->intensity[3] = 2;
 						if (io.MouseDown[ImGuiMouseButton_Left]) {
 							gizmo->type = Gizmo_Type_ROTOR;
-							gizmo->values[0] = cursor.x - gizmo_transform.p.x;
-							gizmo->values[1] = cursor.y - gizmo_transform.p.y;
+							gizmo->values[0] = cursor.x - p.x;
+							gizmo->values[1] = cursor.y - p.y;
 						}
 					}
 
@@ -366,13 +459,147 @@ void ieditor_gizmo_action(Gizmo *gizmo, const Transform &gizmo_transform, Vec2 c
 			gizmo->intensity[3] = 2;
 
 			Vec2 a = vec2_normalize_check(vec2(gizmo->values[0], gizmo->values[1]));
-			Vec2 b = vec2_normalize_check(cursor - gizmo_transform.p);
+			Vec2 b = vec2_normalize_check(cursor - p);
 			r32 angle = vec2_signed_angle_between(a, b);
 
 			gizmo->out.x = angle;
 			gizmo->values[0] = b.x;
 			gizmo->values[1] = b.y;
 		} break;
+	}
+}
+
+void ieditor_try_select_fixture(Editor *editor, Vec2 cursor) {
+	const auto &io = ImGui::GetIO();
+	bool hovered = false;
+
+	editor->entity.hovered_index = -1;
+
+	int count = editor->entity.fixture_count;
+	auto fixtures = editor->entity.fixtures;
+	for (int index = 0; index < count; ++index) {
+		Fixture *f = fixtures + index;
+
+		switch (f->shape) {
+			case Fixture_Shape_Circle: {
+				auto shape = fixture_get_shape(f, Circle);
+				if (test_shape_vs_point(*shape, cursor, 0)) {
+					hovered = true;
+					editor->entity.hovered_index = index;
+				}
+			} break;
+
+			case Fixture_Shape_Mm_Rect: {
+				auto shape = fixture_get_shape(f, Mm_Rect);
+				if (test_shape_vs_point(*shape, cursor, 0)) {
+					hovered = true;
+					editor->entity.hovered_index = index;
+				}
+			} break;
+
+			case Fixture_Shape_Capsule: {
+				auto shape = fixture_get_shape(f, Capsule);
+				if (test_shape_vs_point(*shape, cursor, 0)) {
+					hovered = true;
+					editor->entity.hovered_index = index;
+				}
+			} break;
+
+			case Fixture_Shape_Polygon: {
+				auto shape = fixture_get_shape(f, Polygon_Pt);
+				if (test_shape_vs_point(*shape, cursor, 0)) {
+					hovered = true;
+					editor->entity.hovered_index = index;
+				}
+			} break;
+		}
+	}
+
+	if (io.MouseClicked[ImGuiMouseButton_Left]) {
+		ieditor_select_fixture(editor, editor->entity.hovered_index);
+	}
+}
+
+void ieditor_try_select_vertex(Editor *editor, Vec2 cursor) {
+	assert(editor->entity.selected_index >= 0);
+	Fixture *f = editor->entity.fixtures + editor->entity.selected_index;
+
+	editor->entity.hovered_vertex = nullptr;
+
+	Circle p;
+	p.radius = EDITOR_VERTEX_RADIUS;
+
+	bool vertex_hovered = false;
+
+	switch (f->shape) {
+		case Fixture_Shape_Circle: {
+			auto shape = fixture_get_shape(f, Circle);
+			p.center = shape->center;
+			if (test_shape_vs_point(p, cursor, 0)) {
+				vertex_hovered = true;
+				editor->entity.hovered_vertex = &shape->center;
+			}
+		} break;
+
+		case Fixture_Shape_Mm_Rect: {
+			auto shape = fixture_get_shape(f, Mm_Rect);
+			p.center = shape->min;
+			if (test_shape_vs_point(p, cursor, 0)) {
+				vertex_hovered = true;
+				editor->entity.hovered_vertex = &shape->min;
+			} else {
+				p.center = shape->max;
+				if (test_shape_vs_point(p, cursor, 0)) {
+					vertex_hovered = true;
+					editor->entity.hovered_vertex = &shape->max;
+				}
+			}
+		} break;
+
+		case Fixture_Shape_Capsule: {
+			auto shape = fixture_get_shape(f, Capsule);
+			p.center = shape->a;
+			if (test_shape_vs_point(p, cursor, 0)) {
+				vertex_hovered = true;
+				editor->entity.hovered_vertex = &shape->a;
+			} else {
+				p.center = shape->b;
+				if (test_shape_vs_point(p, cursor, 0)) {
+					vertex_hovered = true;
+					editor->entity.hovered_vertex = &shape->b;
+				}
+			}
+		} break;
+
+		case Fixture_Shape_Polygon: {
+			auto shape = fixture_get_shape(f, Polygon_Pt);
+			u32 vcount = shape->vertex_count;
+			auto v = shape->vertices;
+			for (u32 vi = 0; vi < vcount; ++vi, ++v) {
+				p.center = *v;
+				if (test_shape_vs_point(p, cursor, 0)) {
+					vertex_hovered = true;
+					editor->entity.hovered_vertex = v;
+					break;
+				}
+			}
+		} break;
+	}
+
+	if (vertex_hovered && ImGui::GetIO().MouseClicked[ImGuiMouseButton_Left]) {
+		ieditor_select_vertex(editor, editor->entity.hovered_vertex);
+
+		Gizmo &gizmo = editor->gizmo;
+		if (gizmo.render_type == Gizmo_Render_Type_NONE) {
+			gizmo.render_type = Gizmo_Render_Type_TRANSLATE;
+		} else if (editor->entity.selected_vertex &&
+				   (f->shape == Fixture_Shape_Mm_Rect || f->shape == Fixture_Shape_Polygon)) {
+			gizmo.render_type = Gizmo_Render_Type_TRANSLATE;
+		}
+	}
+
+	if (editor->entity.mode == Editor_Entity::SELECTED) {
+		ieditor_try_select_fixture(editor, cursor);
 	}
 }
 
@@ -421,10 +648,10 @@ void editor_update(Scene *scene, Editor *editor) {
 		switch (editor->mode) {
 			case Editor_Mode_GAME_DEVELOPER: {
 				// Get the Rigid_Body under the mouse cursor, nullptr if mouse doesn't hover over any Rigid_Body
-				editor->map.hovered_body = scene_collide_point(scene, cursor);
+				editor->level.hovered_body = scene_collide_point(scene, cursor);
 
 				if (io.MouseClicked[ImGuiMouseButton_Left]) {
-					editor->map.selected_body = editor->map.hovered_body;
+					editor->level.selected_body = editor->level.hovered_body;
 
 					// Deselect Camera if pressed on empty world
 					ieditor_deselect_camera(scene, editor);
@@ -433,7 +660,7 @@ void editor_update(Scene *scene, Editor *editor) {
 
 			case Editor_Mode_LEVEL_EDITOR: {
 				// Get the Rigid_Body under the mouse cursor, nullptr if mouse doesn't hover over any Rigid_Body
-				editor->map.hovered_body = scene_collide_point(scene, cursor);
+				editor->level.hovered_body = scene_collide_point(scene, cursor);
 
 				// Movement of the view of the world when editing
 				if (io.MouseDown[ImGuiMouseButton_Right]) {
@@ -447,33 +674,33 @@ void editor_update(Scene *scene, Editor *editor) {
 					camera->target_distance -= io.DeltaTime * io.MouseWheel * 7;
 				}
 
-				if (editor->map.selected_body) {
+				if (editor->level.selected_body) {
 					Transform gizmo_transform;
-					gizmo_transform.p = editor->map.selected_body->transform.p;
+					gizmo_transform.p = editor->level.selected_body->transform.p;
 					gizmo_transform.xform = mat2_scalar(iscale, iscale);
 
-					ieditor_gizmo_action(&editor->gizmo, gizmo_transform, cursor, delta);
+					ieditor_gizmo_action(&editor->gizmo, cursor, delta, gizmo_transform.p, gizmo_transform);
 
 					switch (gizmo.type) {
 						case Gizmo_Type_TRANSLATE_X:
 						case Gizmo_Type_TRANSLATE_Y:
 						case Gizmo_Type_CENTER: {
-							Entity *entity = scene_find_entity(scene, editor->map.selected_body->entity_id);
+							Entity *entity = scene_find_entity(scene, editor->level.selected_body->entity_id);
 							entity->position += gizmo.out;
-							editor->map.selected_body->transform.p = entity->position;
-							scene_rigid_body_update_bounding_box(editor->map.selected_body, 0);
+							editor->level.selected_body->transform.p = entity->position;
+							scene_rigid_body_update_bounding_box(editor->level.selected_body, 0);
 						} break;
 
 						case Gizmo_Type_SCALE_X:
 						case Gizmo_Type_SCALE_Y: {
-							editor->map.selected_body->transform.xform = mat2_scalar(gizmo.out) * editor->map.selected_body->transform.xform;
-							scene_rigid_body_update_bounding_box(editor->map.selected_body, 0);
+							editor->level.selected_body->transform.xform = mat2_scalar(gizmo.out) * editor->level.selected_body->transform.xform;
+							scene_rigid_body_update_bounding_box(editor->level.selected_body, 0);
 						} break;
 
 						case Gizmo_Type_ROTOR: {
-							editor->map.selected_body->bounding_box = scene_rigid_body_bounding_box(editor->map.selected_body, 0);
-							editor->map.selected_body->transform.xform = mat2_rotation(gizmo.out.x) * editor->map.selected_body->transform.xform;
-							scene_rigid_body_update_bounding_box(editor->map.selected_body, 0);
+							editor->level.selected_body->bounding_box = scene_rigid_body_bounding_box(editor->level.selected_body, 0);
+							editor->level.selected_body->transform.xform = mat2_rotation(gizmo.out.x) * editor->level.selected_body->transform.xform;
+							scene_rigid_body_update_bounding_box(editor->level.selected_body, 0);
 						} break;
 					}
 				}
@@ -482,7 +709,7 @@ void editor_update(Scene *scene, Editor *editor) {
 					// If we are not using Gizmo and Press left button,
 					// then hovered body is selected
 					if (io.MouseClicked[ImGuiMouseButton_Left]) {
-						editor->map.selected_body = editor->map.hovered_body;
+						editor->level.selected_body = editor->level.hovered_body;
 						if (gizmo.render_type == Gizmo_Render_Type_NONE)
 							gizmo.render_type = Gizmo_Render_Type_TRANSLATE;
 
@@ -492,17 +719,17 @@ void editor_update(Scene *scene, Editor *editor) {
 
 					// If we are not using Gizmo and Double click left button,
 					// then hovered body is selected and focused
-					if (editor->map.hovered_body && io.MouseDoubleClicked[ImGuiMouseButton_Left]) {
-						editor->map.selected_body = editor->map.hovered_body;
+					if (editor->level.hovered_body && io.MouseDoubleClicked[ImGuiMouseButton_Left]) {
+						editor->level.selected_body = editor->level.hovered_body;
 						if (gizmo.render_type == Gizmo_Render_Type_NONE)
 							gizmo.render_type = Gizmo_Render_Type_TRANSLATE;
 
 						// Focus on Rigid_Body
 						camera->behaviour |= Camera_Behaviour_ANIMATE_FOCUS | Camera_Behaviour_ANIMATE_MOVEMENT;
-						camera->target_position = editor->map.selected_body->transform.p;
+						camera->target_position = editor->level.selected_body->transform.p;
 
-						r32 sx = editor->map.selected_body->bounding_box.max.x - editor->map.selected_body->bounding_box.min.x;
-						r32 sy = editor->map.selected_body->bounding_box.max.y - editor->map.selected_body->bounding_box.min.y;
+						r32 sx = editor->level.selected_body->bounding_box.max.x - editor->level.selected_body->bounding_box.min.x;
+						r32 sy = editor->level.selected_body->bounding_box.max.y - editor->level.selected_body->bounding_box.min.y;
 						sx /= view_width;
 						sy /= view_height;
 						r32 s = maximum(sx, sy);
@@ -514,116 +741,45 @@ void editor_update(Scene *scene, Editor *editor) {
 					}
 				}
 
-				if (editor->map.selected_body == nullptr) {
+				if (editor->level.selected_body == nullptr) {
 					gizmo.render_type = Gizmo_Render_Type_NONE;
 				}
 			} break;
 
 			case Editor_Mode_ENTITY_EDITOR: {
-				#if 0
-				if (editor->fixture.index >= 0) {
-					Transform p_transform;
-					p_transform.p = vec2(0);
-					p_transform.xform = mat2_identity();
+				switch (editor->entity.mode) {
+					case Editor_Entity::UNSELECTED: {
+						ieditor_try_select_fixture(editor, cursor);
+					} break;
 
-					Circle p;
-					p.radius = EDITOR_VERTEX_RADIUS;
+					case Editor_Entity::SELECTED: {
+						ieditor_try_select_vertex(editor, cursor);
+					} break;
 
-					Resource_Fixture &resource = scene->resource_fixtures[editor->fixture.index];
-					u32 count = resource.fixture_count;
-					auto &fixtures = resource.fixtures;
-
-					editor->fixture.hovered_vertex_ptr = nullptr;
-
-					editor->fixture.vertex_pointer_angle += io.DeltaTime * 5;
-					while (editor->fixture.vertex_pointer_angle >= 2 * MATH_PI)
-						editor->fixture.vertex_pointer_angle -= 2 * MATH_PI;
-
-					for (u32 index = 0; index < count; ++index) {
-						auto f = fixtures + index;
-						switch (f->shape) {
-							case Fixture_Shape_Circle: {
-								auto shape = fixture_get_shape(f, Circle);
-								p.center = shape->center;
-								if (test_shape_vs_point(p, p_transform, cursor)) {
-									editor->fixture.hovered_vertex_ptr = &shape->center;
-									editor->fixture.hovered_fixture_index = index;
-								}
-							} break;
-
-							case Fixture_Shape_Mm_Rect: {
-								auto shape = fixture_get_shape(f, Mm_Rect);
-								p.center = shape->min;
-								if (test_shape_vs_point(p, p_transform, cursor)) {
-									editor->fixture.hovered_vertex_ptr = &shape->min;
-									editor->fixture.hovered_fixture_index = index;
-								}
-
-								p.center = shape->max;
-								if (test_shape_vs_point(p, p_transform, cursor)) {
-									editor->fixture.hovered_vertex_ptr = &shape->max;
-									editor->fixture.hovered_fixture_index = index;
-								}
-							} break;
-
-							case Fixture_Shape_Capsule: {
-								auto shape = fixture_get_shape(f, Capsule);
-								p.center = shape->a;
-								if (test_shape_vs_point(p, p_transform, cursor)) {
-									editor->fixture.hovered_vertex_ptr = &shape->a;
-									editor->fixture.hovered_fixture_index = index;
-								}
-
-								p.center = shape->b;
-								if (test_shape_vs_point(p, p_transform, cursor)) {
-									editor->fixture.hovered_vertex_ptr = &shape->b;
-									editor->fixture.hovered_fixture_index = index;
-								}
-							} break;
-
-							case Fixture_Shape_Polygon: {
-								auto shape = fixture_get_shape(f, Polygon);
-								u32 vcount = shape->vertex_count;
-								auto v = shape->vertices;
-								for (u32 vi = 0; vi < vcount; ++vi, ++v) {
-									p.center = *v;
-									if (test_shape_vs_point(p, p_transform, cursor)) {
-										editor->fixture.hovered_vertex_ptr = v;
-										editor->fixture.hovered_fixture_index = index;
-										break;
-									}
-								}
-							} break;
-						}
-					}
-
-					if (editor->fixture.selected_vertex_ptr) {
-						Transform gizmo_transform;
-						gizmo_transform.p = *editor->fixture.selected_vertex_ptr;
-						gizmo_transform.xform = mat2_scalar(iscale, iscale);
-
-						gizmo_action(&editor->gizmo, gizmo_transform, cursor, delta);
+					case Editor_Entity::EDITING: {
+						ieditor_gizmo_action(&editor->gizmo, cursor - *editor->entity.selected_vertex, delta, vec2(0));
 
 						switch (gizmo.type) {
 							case Gizmo_Type_TRANSLATE_X:
 							case Gizmo_Type_TRANSLATE_Y:
 							case Gizmo_Type_CENTER: {
-								editor->fixture.selected_vertex_ptr->x += gizmo.out.x;
-								editor->fixture.selected_vertex_ptr->y += gizmo.out.y;
+								Vec2 p = *editor->entity.selected_vertex;
+								editor->entity.selected_vertex->x += gizmo.out.x;
+								editor->entity.selected_vertex->y += gizmo.out.y;
 
 								// Reject if the polygon is not convex
-								Fixture &fixture = fixtures[editor->fixture.selected_fixture_index];
+								Fixture &fixture = editor->entity.fixtures[editor->entity.selected_index];
 								if (fixture.shape == Fixture_Shape_Polygon) {
-									if (!is_polygon_convex(*fixture_get_shape(&fixture, Polygon))) {
-										editor->fixture.selected_vertex_ptr->x = gizmo_transform.p.x;
-										editor->fixture.selected_vertex_ptr->y = gizmo_transform.p.y;
+									if (!is_polygon_convex(*fixture_get_shape(&fixture, Polygon_Pt))) {
+										editor->entity.selected_vertex->x = p.x;
+										editor->entity.selected_vertex->y = p.y;
 									}
 								}
 							} break;
 
 							case Gizmo_Type_SCALE_X:
 							case Gizmo_Type_SCALE_Y: {
-								Fixture &fixture = fixtures[editor->fixture.selected_fixture_index];
+								Fixture &fixture = editor->entity.fixtures[editor->entity.selected_index];
 								if (fixture.shape == Fixture_Shape_Circle) {
 									auto circle = fixture_get_shape(&fixture, Circle);
 									circle->radius *= ((gizmo.type == Gizmo_Type_SCALE_X) ? gizmo.out.x : gizmo.out.y);
@@ -638,33 +794,18 @@ void editor_update(Scene *scene, Editor *editor) {
 							case Gizmo_Type_ROTOR: {
 								invalid_code_path();
 							} break;
+
+							case Gizmo_Type_NONE: {
+								ieditor_try_select_fixture(editor, cursor);
+							} break;
 						}
-					}
-
-					if (gizmo.type == Gizmo_Type_NONE) {
-						// If we are not using Gizmo and Press left button,
-						// then hovered vertex is selected
-						if (io.MouseClicked[ImGuiMouseButton_Left]) {
-							editor->fixture.selected_vertex_ptr = editor->fixture.hovered_vertex_ptr;
-							editor->fixture.selected_fixture_index = editor->fixture.hovered_fixture_index;
-
-							Fixture &fixture = fixtures[editor->fixture.selected_fixture_index];
-
-							if (gizmo.render_type == Gizmo_Render_Type_NONE) {
-								gizmo.render_type = Gizmo_Render_Type_TRANSLATE;
-							} else if (editor->fixture.selected_vertex_ptr &&
-									   (fixture.shape == Fixture_Shape_Mm_Rect || fixture.shape == Fixture_Shape_Polygon)) {
-								gizmo.render_type = Gizmo_Render_Type_TRANSLATE;
-							}
-						}
-					}
-
-					if (editor->fixture.selected_vertex_ptr == nullptr) {
-						gizmo.render_type = Gizmo_Render_Type_NONE;
-					}
-
+					} break;
 				}
-				#endif
+
+				if (editor->entity.selected_vertex == nullptr) {
+					gizmo.render_type = Gizmo_Render_Type_NONE;
+				}
+
 			} break;
 
 		}
@@ -679,74 +820,6 @@ void editor_update(Scene *scene, Editor *editor) {
 		camera->distance = lerp(camera->distance, camera->target_distance, 1.0f - powf(1.0f - camera->zoom_factor, dt));
 	}
 }
-
-#if 0
-template <typename Shape>
-bool ieditor_fixture_shape(Shape &s, const char *name) {
-	bool result = false;
-	ImGui::PushID((void *)&s);
-	if (ImGui::CollapsingHeader(name)) {
-		ImGui::Indent();
-		result |= editor_widget<Shape>(s, name);
-		ImGui::Unindent();
-	}
-	ImGui::PopID();
-	return result;
-}
-
-bool ieditor_fixture(Fixture *fixture, u32 count) {
-	bool result = false;
-
-	for (u32 index = 0; index < count; ++index) {
-		auto f = fixture + index;
-
-		switch (f->shape) {
-			case Fixture_Shape_Circle: {
-				auto shape = fixture_get_shape(f, Circle);
-				result |= ieditor_fixture_shape(*shape, "Circle");
-			} break;
-
-			case Fixture_Shape_Mm_Rect: {
-				auto shape = fixture_get_shape(f, Mm_Rect);
-				result |= ieditor_fixture_shape(*shape, "Mm_Rect");
-			} break;
-
-			case Fixture_Shape_Capsule: {
-				auto shape = fixture_get_shape(f, Capsule);
-				result |= ieditor_fixture_shape(*shape, "Capsule");
-			} break;
-
-			case Fixture_Shape_Polygon: {
-				auto shape = fixture_get_shape(f, Polygon);
-				u32 count = shape->vertex_count;
-				Vec2 *vertices = shape->vertices;
-
-				ImGui::PushID((void *)(vertices + index));
-
-				char label[5];
-				if (ImGui::CollapsingHeader("Vertices")) {
-					for (u32 index = 0; index < count; ++index) {
-						snprintf(label, sizeof(label), "%u", index);
-						Vec2 v = vertices[index];
-						if (ImGui::DragFloat2(label, vertices[index].m, 0.01f, 0.0f, 0.0f, "%.4f", 0)) {
-							if (!is_polygon_convex(*shape)) {
-								vertices[index] = v;
-							}
-							result = true;
-						}
-					}
-				}
-
-				ImGui::PopID();
-			} break;
-
-				invalid_default_case();
-		}
-	}
-
-	return result;
-}
-#endif
 
 void ieditor_fixture_group(Scene *scene, Editor *editor, Rigid_Body *body) {
 	if (ImGui::CollapsingHeader("Fixtures")) {
@@ -797,7 +870,7 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 	if (ImGui::CollapsingHeader("Cameras")) {
 		const Array_View<Camera> cameras = scene_cameras(scene);
 		int count = (int)cameras.count;
-		int selected = editor->map.select_camera_index;
+		int selected = editor->level.select_camera_index;
 		for (int index = 0; index < count; index++) {
 			auto &c = cameras[index];
 			ImGui::PushID((void *)&c);
@@ -841,9 +914,9 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 	ImGui::Begin("Entity", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
 
 	Entity *entity = nullptr;
-	if (editor->map.selected_body) {
-		entity = scene_find_entity(scene, editor->map.selected_body->entity_id);
-	} else if (editor->map.select_camera_index >= 0) {
+	if (editor->level.selected_body) {
+		entity = scene_find_entity(scene, editor->level.selected_body->entity_id);
+	} else if (editor->level.select_camera_index >= 0) {
 		entity = ieditor_get_selected_camera(scene, editor);
 	}
 
@@ -893,28 +966,73 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 	return result;
 }
 
+bool ieditor_fixture(Fixture &fixture) {
+	bool result = false;
+
+	switch (fixture.shape) {
+		case Fixture_Shape_Circle: {
+			auto shape = fixture_get_shape(&fixture, Circle);
+			result = editor_widget(*shape, "Circle");
+		} break;
+
+		case Fixture_Shape_Mm_Rect: {
+			auto shape = fixture_get_shape(&fixture, Mm_Rect);
+			result = editor_widget(*shape, "Mm_Rect");
+		} break;
+
+		case Fixture_Shape_Capsule: {
+			auto shape = fixture_get_shape(&fixture, Capsule);
+			result = editor_widget(*shape, "Capsule");
+		} break;
+
+		case Fixture_Shape_Polygon: {
+			auto shape = fixture_get_shape(&fixture, Polygon_Pt);
+			u32 count = shape->vertex_count;
+			Vec2 *vertices = shape->vertices;
+
+			char label[5];
+			for (u32 index = 0; index < count; ++index) {
+				snprintf(label, sizeof(label), "%u", index);
+				Vec2 v = vertices[index];
+				if (ImGui::DragFloat2(label, vertices[index].m, 0.01f, 0.0f, 0.0f, "%.4f", 0)) {
+					if (!is_polygon_convex(*shape)) {
+						vertices[index] = v;
+					}
+					result = true;
+				}
+			}
+
+		} break;
+
+			invalid_default_case();
+	}
+
+	return result;
+}
+
 bool ieditor_gui_entity_editor(Scene *scene, Editor *editor) {
 	bool result = false;
-	#if 0
-	bool open_fixture = true;
 
 	ImGui::SetNextWindowSize(ImVec2(500, 440), ImGuiCond_FirstUseEver);
-	if (ImGui::Begin("Fixture Editor", &open_fixture)) {
-		int selected = (int)editor->fixture.index;
+	if (ImGui::Begin("Properties")) {
 
 		// Left
 		{
-			ImGui::BeginChild("Fixtures", ImVec2(200, 0), true);
+			ImGui::BeginChild("Fixtures", ImVec2(100, 0), true);
 
-			int count = (int)scene->resource_fixtures.count;
-			auto &fixtures = scene->resource_fixtures;
-			for (int index = 0; index < count; index++) {
-				auto &f = fixtures[index];
-				ImGui::PushID((void *)&f);
-				if (ImGui::Selectable(f.name, selected == index)) {
-					selected = index;
-					editor->fixture.selected_vertex_ptr = nullptr;
+			int count = editor->entity.fixture_count;
+			auto fixtures = editor->entity.fixtures;
+			int selected = editor->entity.selected_index;
+
+			for (int index = 0; index < count; ++index) {
+				Fixture *f = fixtures + index;
+				ImGui::PushID((void *)f);
+
+				const char *name = (char *)enum_string(f->shape).data + sizeof("Fixture_Shape");
+				if (ImGui::Selectable(name, selected == index)) {
+					ieditor_select_fixture(editor, index);
 				}
+
 				ImGui::PopID();
 			}
 
@@ -922,27 +1040,69 @@ bool ieditor_gui_entity_editor(Scene *scene, Editor *editor) {
 		}
 		ImGui::SameLine();
 
-		editor->fixture.index = selected;
-
 		// Right
 		{
 			ImGui::BeginGroup();
-			ImGui::BeginChild("Resource View");
+			ImGui::BeginChild("Resource View", ImVec2(0, -ImGui::GetFrameHeightWithSpacing()));
 
-			auto &resource = scene->resource_fixtures[selected];
-			editor_widget<Resource_Fixture>(resource, "Resource");
-			editor_fixture(resource.fixtures, resource.fixture_count);
+			if (editor->entity.selected_index >= 0) {
+				Fixture &f = editor->entity.fixtures[editor->entity.selected_index];
+				ieditor_fixture(f);
+				if (ImGui::Button("Remove##Shape")) {
+					ieditor_remove_fixture(editor, editor->entity.selected_index);
+				}
+			}
 
 			ImGui::EndChild();
+
+			if (ImGui::Button("Save")) {
+
+			}
+			ImGui::SameLine();
+
+			if (editor->entity.fixture_count < MAXIMUM_FIXTURE_COUNT) {
+				if (ImGui::Button("New Shape##FixtureShape")) {
+					ImGui::OpenPopup("Create New Fixture");
+				}
+			}
+
+			if (ImGui::BeginPopupModal("Create New Fixture", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+				ImGui::Text("Select Shape Type\n\n");
+
+				auto strings = enum_string_array<Fixture_Shape>();
+				if (ImGui::BeginCombo("Shape##Fixture_Shape", strings[editor->entity.new_shape])) {
+					for (u32 i = 0; i < Fixture_Shape_Count; ++i) {
+						if (ImGui::Selectable(strings[i], i == editor->entity.new_shape)) {
+							editor->entity.new_shape = (Fixture_Shape)i;
+						}
+					}
+					ImGui::EndCombo();
+				}
+
+				if (editor->entity.new_shape != Fixture_Shape_Count) {
+					if (ImGui::Button("Create", ImVec2(120, 0))) {
+						ieditor_add_fixture(editor);
+						ImGui::CloseCurrentPopup();
+					}
+				} else {
+					ImGui::SetNextItemWidth(120);
+					ImGui::TextColored(ImVec4(0.3f, 0.3f, 0.3f, 1.0f), "Create");
+				}
+
+				ImGui::SetItemDefaultFocus();
+				ImGui::SameLine();
+
+				if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+					ImGui::CloseCurrentPopup();
+				}
+
+				ImGui::EndPopup();
+			}
+
 			ImGui::EndGroup();
 		}
 	}
 	ImGui::End();
-
-	if (!open_fixture) {
-		iscene_set_editor_mode_map(scene);
-	}
-	#endif
 
 	return result;
 }
@@ -1037,7 +1197,7 @@ void editor_render(Scene *scene, Editor *editor, r32 aspect_ratio) {
 		case Editor_Mode_LEVEL_EDITOR: {
 			if (editor->gizmo.render_type != Gizmo_Render_Type_NONE) {
 				Camera *camera = editor_rendering_camera(scene, editor);
-				auto selected_body = editor->map.selected_body;
+				auto selected_body = editor->level.selected_body;
 
 				if (selected_body) {
 					Vec2 p = selected_body->transform.p - camera->position;
@@ -1061,6 +1221,93 @@ void editor_render(Scene *scene, Editor *editor, r32 aspect_ratio) {
 		} break;
 
 		case Editor_Mode_ENTITY_EDITOR: {
+			r32 view_height = SCENE_VIEW_HEIGHT_HALF;
+			r32 view_width = aspect_ratio * view_height;
+
+			Camera_View view = orthographic_view(-view_width, view_width, view_height, -view_height);
+
+			Camera *camera = editor_rendering_camera(scene, editor);
+			r32 scale = camera_distance_to_scale(camera);
+			Mat4 transform = mat4_translation(vec3(camera->position, 0)) * mat4_scalar(scale, scale, 1.0f);
+
+			im2d_begin(view, transform);
+
+			r32 thickness = 0.003f;
+
+			im2d_set_stroke_weight(thickness);
+
+			auto shade0 = vec4(0.0f, 1.0f, 1.0f, 1.0f);
+			auto shade1 = vec4(1.0f, 0.0f, 0.3f, 0.2f);
+			auto outline = vec4(1);
+
+			int count = editor->entity.fixture_count;
+			int selected = editor->entity.selected_index;
+			auto fixtures = editor->entity.fixtures;
+			for (int index = 0; index < count; ++index) {
+				auto f = fixtures + index;
+				bool draw_vertices = (selected == index);
+				auto shade = draw_vertices ? shade0 : shade1;
+
+				switch (f->shape) {
+					case Fixture_Shape_Circle: {
+						auto shape = fixture_get_shape(f, Circle);
+						scene_render_shape(*shape, shade, outline);
+						if (draw_vertices) {
+							im2d_circle(shape->center, EDITOR_VERTEX_RADIUS, EDITOR_VERTEX_COLOR);
+						}
+					} break;
+
+					case Fixture_Shape_Mm_Rect: {
+						auto shape = fixture_get_shape(f, Mm_Rect);
+						scene_render_shape(*shape, shade, outline);
+						if (draw_vertices) {
+							im2d_circle(shape->min, EDITOR_VERTEX_RADIUS, EDITOR_VERTEX_COLOR);
+							im2d_circle(shape->max, EDITOR_VERTEX_RADIUS, EDITOR_VERTEX_COLOR);
+						}
+					} break;
+
+					case Fixture_Shape_Capsule: {
+						auto shape = fixture_get_shape(f, Capsule);
+						scene_render_shape(*shape, shade, outline);
+						if (draw_vertices) {
+							im2d_circle(shape->a, EDITOR_VERTEX_RADIUS, EDITOR_VERTEX_COLOR);
+							im2d_circle(shape->b, EDITOR_VERTEX_RADIUS, EDITOR_VERTEX_COLOR);
+						}
+					} break;
+
+					case Fixture_Shape_Polygon: {
+						auto shape = fixture_get_shape(f, Polygon_Pt);
+						scene_render_shape(*shape, shade, outline);
+						if (draw_vertices) {
+							u32 count = shape->vertex_count;
+							auto v = shape->vertices;
+							for (u32 index = 0; index < count; ++index, ++v) {
+								im2d_circle(*v, EDITOR_VERTEX_RADIUS, EDITOR_VERTEX_COLOR);
+							}
+						}
+					} break;
+
+						invalid_default_case();
+				}
+			}
+
+			// Center
+			im2d_line(vec2(0.0f, -0.1f), vec2(0.0f, 0.1f), vec4(1));
+			im2d_line(vec2(-0.1f, 0.0f), vec2(0.1f, 0.0f), vec4(1));
+
+			if (editor->entity.hovered_vertex) {
+				im2d_circle(*editor->entity.hovered_vertex, EDITOR_VERTEX_RADIUS, EDITOR_SELECTED_VERTEX_COLOR);
+			}
+
+			if (editor->entity.selected_vertex) {
+				im2d_push_matrix(mat4_translation(vec3(*editor->entity.selected_vertex, 0)));
+				ieditor_gizmo_render(editor->gizmo, mat2_identity());
+				im2d_pop_matrix();
+			}
+
+			im2d_end();
+
+
 			ieditor_gui_entity_editor(scene, editor);
 		} break;
 	}

@@ -113,6 +113,12 @@ void scene_update(Scene *scene);
 //
 //
 
+void scene_render_shape(const Circle &circle, Vec4 shade, Vec4 outline);
+void scene_render_shape(const Mm_Rect &mm_rect, Vec4 shade, Vec4 outline);
+void scene_render_shape(const Capsule &capsule, Vec4 shade, Vec4 outline);
+void scene_render_shape(const Polygon &polyon, Vec4 shade, Vec4 outline);
+void scene_render_shape(const Polygon_Pt &polyon, Vec4 shade, Vec4 outline);
+
 void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio);
 
 //

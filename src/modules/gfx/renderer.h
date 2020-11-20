@@ -179,6 +179,8 @@ void im2d_bezier_cubic(Vec2 a, Vec2 b, Vec2 c, Vec2 d, Color4 color, r32 thickne
 
 void im2d_polygon(const Polygon &polygon, r32 z, Color4 color);
 void im2d_polygon(const Polygon &polygon, Color4 color);
+void im2d_polygon(const Polygon_Pt &polygon, r32 z, Color4 color);
+void im2d_polygon(const Polygon_Pt &polygon, Color4 color);
 
 void im2d_triangle_outline(Vec3 a, Vec3 b, Vec3 c, Color4 color, r32 thickness = im2d_stroke_weight);
 void im2d_triangle_outline(Vec2 a, Vec2 b, Vec2 c, Color4 color, r32 thickness = im2d_stroke_weight);
@@ -203,6 +205,8 @@ void im2d_arc_outline(Vec2 position, r32 radius, r32 theta_a, r32 theta_b, Color
 
 void im2d_polygon_outline(const Polygon &polygon, r32 z, Color4 color, r32 thickness = im2d_stroke_weight);
 void im2d_polygon_outline(const Polygon &polygon, Color4 color, r32 thickness = im2d_stroke_weight);
+void im2d_polygon_outline(const Polygon_Pt &polygon, r32 z, Color4 color, r32 thickness = im2d_stroke_weight);
+void im2d_polygon_outline(const Polygon_Pt &polygon, Color4 color, r32 thickness = im2d_stroke_weight);
 
 void im2d_text(Vec3 position, r32 scale, Monospaced_Font_Info &font, const String string, Color4 color);
 void im2d_text(Vec2 position, r32 scale, Monospaced_Font_Info &font, const String string, Color4 color);

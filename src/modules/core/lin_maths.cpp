@@ -2013,10 +2013,7 @@ bool is_quad_convex(Vec3 a, Vec3 b, Vec3 c, Vec3 d) {
 	return vec3_dot(acd, acb) < 0.0f;
 }
 
-bool is_polygon_convex(const Polygon &polygon) {
-	u32 count = polygon.vertex_count;
-	const Vec2 *vertices = polygon.vertices;
-
+bool is_polygon_convex(const Vec2 *vertices, u32 count) {
 	Vec2 a, b, c;
 
 	for (u32 outer = 0; outer < count; ++outer) {
@@ -2029,6 +2026,14 @@ bool is_polygon_convex(const Polygon &polygon) {
 	}
 
 	return true;
+}
+
+bool is_polygon_convex(const Polygon &polygon) {
+	return is_polygon_convex(polygon.vertices, polygon.vertex_count);
+}
+
+bool is_polygon_convex(const Polygon_Pt &polygon) {
+	return is_polygon_convex(polygon.vertices, polygon.vertex_count);
 }
 
 Mm_Rect enclosing_mm_rect_mm_rect(const Mm_Rect &a0, const Mm_Rect &a1) {
@@ -2875,21 +2880,21 @@ Vec2 support(const Capsule &c, Vec2 dir) {
 	return s + c.radius * n;
 }
 
-Vec2 support(const Polygon &shape, Vec2 dir) {
+inline Vec2 support_polygon(const Vec2 *vertices, u32 count, Vec2 dir) {
 	s32 index = 0;
-	r32 p = vec2_dot(dir, shape.vertices[index]);
+	r32 p = vec2_dot(dir, vertices[index]);
 
 	s32 adj_index;
 	r32 adj_p;
 	while (true) {
-		adj_index = (index + 1 == shape.vertex_count ? 0 : index + 1);
-		adj_p = vec2_dot(dir, shape.vertices[adj_index]);
+		adj_index = (index + 1 == count ? 0 : index + 1);
+		adj_p = vec2_dot(dir, vertices[adj_index]);
 		if (adj_p > p) {
 			p = adj_p;
 			index = adj_index;
 		} else {
-			adj_index = (index - 1 == -1 ? shape.vertex_count - 1 : index - 1);
-			adj_p = vec2_dot(dir, shape.vertices[adj_index]);
+			adj_index = (index - 1 == -1 ? count - 1 : index - 1);
+			adj_p = vec2_dot(dir, vertices[adj_index]);
 			if (adj_p > p) {
 				p = adj_p;
 				index = adj_index;
@@ -2899,7 +2904,15 @@ Vec2 support(const Polygon &shape, Vec2 dir) {
 		}
 	}
 
-	return shape.vertices[index];
+	return vertices[index];
+}
+
+Vec2 support(const Polygon &shape, Vec2 dir) {
+	return support_polygon(shape.vertices, shape.vertex_count, dir);
+}
+
+Vec2 support(const Polygon_Pt &shape, Vec2 dir) {
+	return support_polygon(shape.vertices, shape.vertex_count, dir);
 }
 
 Vec2 support(const Circle &a, const Circle &b, Vec2 dir) {

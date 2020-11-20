@@ -342,7 +342,7 @@ Resource_Id scene_create_new_resource_fixture(Scene *scene, String name, Fixture
 			case Fixture_Shape_Circle:	size = sizeof(Circle); break;
 			case Fixture_Shape_Mm_Rect: size = sizeof(Mm_Rect); break;
 			case Fixture_Shape_Capsule: size = sizeof(Capsule); break;
-			case Fixture_Shape_Polygon: size = sizeof(Polygon) + sizeof(Vec2) * ((Polygon *)src->handle)->vertex_count; break;
+			case Fixture_Shape_Polygon: size = sizeof(Polygon) + sizeof(Vec2) * (((Polygon *)src->handle)->vertex_count - 3); break;
 
 				invalid_default_case();
 		}
@@ -674,23 +674,28 @@ void scene_update(Scene *scene) {
 //
 //
 
-static void iscene_render_shape(const Circle &circle, Vec4 shade, Vec4 outline) {
+void scene_render_shape(const Circle &circle, Vec4 shade, Vec4 outline) {
 	im2d_circle(circle.center, circle.radius, shade);
 	im2d_circle_outline(circle.center, circle.radius, outline);
 }
 
-static void iscene_render_shape(const Mm_Rect &mm_rect, Vec4 shade, Vec4 outline) {
+void scene_render_shape(const Mm_Rect &mm_rect, Vec4 shade, Vec4 outline) {
 	auto dim = mm_rect.max - mm_rect.min;
 	im2d_rect(mm_rect.min, dim, shade);
 	im2d_rect_outline(mm_rect.min, dim, outline);
 }
 
-static void iscene_render_shape(const Polygon &polygon, Vec4 shade, Vec4 outline) {
+void scene_render_shape(const Polygon &polygon, Vec4 shade, Vec4 outline) {
 	im2d_polygon(polygon, shade);
 	im2d_polygon_outline(polygon, outline);
 }
 
-static void iscene_render_shape(const Capsule &capsule, Vec4 shade, Vec4 outline) {
+void scene_render_shape(const Polygon_Pt &polygon, Vec4 shade, Vec4 outline) {
+	im2d_polygon(polygon, shade);
+	im2d_polygon_outline(polygon, outline);
+}
+
+void scene_render_shape(const Capsule &capsule, Vec4 shade, Vec4 outline) {
 	Vec2 capsule_dir = capsule.b - capsule.a;
 	Vec2 capsule_norm = vec2_normalize(vec2(-capsule_dir.y, capsule_dir.x)) * capsule.radius;
 
@@ -728,22 +733,22 @@ static void iscene_render_shape_transformed(Fixture &fixture, const Transform &t
 	switch (fixture.shape) {
 		case Fixture_Shape_Circle: {
 			auto circle = fixture_get_shape(&fixture, Circle);
-			iscene_render_shape(*circle, shade, outline);
+			scene_render_shape(*circle, shade, outline);
 		} break;
 
 		case Fixture_Shape_Mm_Rect: {
 			auto mm_rect = fixture_get_shape(&fixture, Mm_Rect);
-			iscene_render_shape(*mm_rect, shade, outline);
+			scene_render_shape(*mm_rect, shade, outline);
 		} break;
 
 		case Fixture_Shape_Polygon: {
 			auto polygon = fixture_get_shape(&fixture, Polygon);
-			iscene_render_shape(*polygon, shade, outline);
+			scene_render_shape(*polygon, shade, outline);
 		} break;
 
 		case Fixture_Shape_Capsule: {
 			auto capsule = fixture_get_shape(&fixture, Capsule);
-			iscene_render_shape(*capsule, shade, outline);
+			scene_render_shape(*capsule, shade, outline);
 		} break;
 
 			invalid_default_case();
@@ -810,7 +815,7 @@ void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio) {
 
 	u32 type;
 	if (iscene_render_fixture_enabled(scene, &type)) {
-		Rigid_Body *body_hovered = scene->editor.map.hovered_body;
+		Rigid_Body *body_hovered = scene->editor.level.hovered_body;
 		Vec4 color;
 		for_list(Rigid_Body, ptr, &scene->rigid_bodies) {
 			auto &body = ptr->data;
