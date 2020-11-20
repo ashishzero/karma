@@ -80,17 +80,22 @@ Editor editor_create(Scene *scene) {
 	editor.camera.zoom_factor = 0.99f;
 	editor.camera.behaviour = 0;
 
-	editor_set_mode_map(scene, &editor);
+	editor_set_mode_level_editor(scene, &editor);
+
+	editor.flags = Editor_Flag_Bit_RENDER_WORLD | Editor_Flag_Bit_RENDER_FIXTURE;
 
 	return editor;
 }
 
 bool editor_handle_event(const Event &event, Editor *editor) {
+	if (editor->mode == Editor_Mode_GAME || editor->mode == Editor_Mode_GAME_DEVELOPER)
+		return false;
+
 	auto mode = editor->mode;
 	auto &gizmo = editor->gizmo;
 
 	if ((event.type & Event_Type_KEY_UP) && gizmo.render_type != Gizmo_Render_Type_NONE) {
-		if (mode == Editor_Mode_MAP) {
+		if (mode == Editor_Mode_LEVEL_EDITOR) {
 			switch (event.key.symbol) {
 				case Key_T: {
 					gizmo.render_type = Gizmo_Render_Type_TRANSLATE;
@@ -108,7 +113,7 @@ bool editor_handle_event(const Event &event, Editor *editor) {
 					return true;
 				} break;
 			}
-		} else if (mode == Editor_Mode_ENTITY) {
+		} else if (mode == Editor_Mode_ENTITY_EDITOR) {
 
 		}
 	}
@@ -116,18 +121,96 @@ bool editor_handle_event(const Event &event, Editor *editor) {
 	return false;
 }
 
-void editor_set_mode_map(Scene *scene, Editor *editor) {
+void editor_set_mode_game(Scene *scene, Editor *editor) {
 	scene_refresh_rigid_bodies(scene);
-	editor->mode = Editor_Mode_MAP;
+	editor->mode = Editor_Mode_GAME;
 	editor->map.hovered_body = nullptr;
 	editor->map.selected_body = nullptr;
 	editor->map.select_camera_index = -1;
 	editor->gizmo.render_type = Gizmo_Render_Type_NONE;
 	editor->gizmo.type = Gizmo_Type_NONE;
+	editor->camera.behaviour = 0;
 }
 
-void editor_set_mode_fixture(Scene *scene, Editor *editor) {
-	editor->mode = Editor_Mode_ENTITY;
+void editor_set_mode_game_developer(Scene *scene, Editor *editor) {
+	scene_refresh_rigid_bodies(scene);
+	editor->mode = Editor_Mode_GAME_DEVELOPER;
+	editor->map.hovered_body = nullptr;
+	editor->map.selected_body = nullptr;
+	editor->map.select_camera_index = -1;
+	editor->gizmo.render_type = Gizmo_Render_Type_NONE;
+	editor->gizmo.type = Gizmo_Type_NONE;
+	editor->camera.behaviour = 0;
+}
+
+void editor_set_mode_level_editor(Scene *scene, Editor *editor) {
+	scene_refresh_rigid_bodies(scene);
+	editor->mode = Editor_Mode_LEVEL_EDITOR;
+	editor->map.hovered_body = nullptr;
+	editor->map.selected_body = nullptr;
+	editor->map.select_camera_index = -1;
+	editor->gizmo.render_type = Gizmo_Render_Type_NONE;
+	editor->gizmo.type = Gizmo_Type_NONE;
+	editor->camera.behaviour = 0;
+}
+
+void editor_set_mode_entity_editor(Scene *scene, Editor *editor) {
+	editor->mode = Editor_Mode_ENTITY_EDITOR;
+	editor->camera.behaviour = 0;
+}
+
+Camera *ieditor_get_selected_camera(Scene *scene, Editor *editor) {
+	int index = editor->map.select_camera_index;
+	auto cameras = scene_cameras(scene);
+	if (index >= 0 && index < cameras.count) {
+		return &cameras[index];
+	} else {
+		editor->map.select_camera_index = -1;
+	}
+	return nullptr;
+}
+
+void ieditor_select_camera(Editor *editor, int index) {
+	editor->map.selected_body = nullptr;
+	editor->map.select_camera_index = index;
+}
+
+void ieditor_deselect_camera(Scene *scene, Editor *editor) {
+	auto src = ieditor_get_selected_camera(scene, editor);
+	if (src) {
+		editor->camera.behaviour = 0;
+		editor->camera.position = src->position;
+		editor->camera.distance = src->distance;
+		editor->map.select_camera_index = -1;
+	}
+}
+
+Camera *editor_rendering_camera(Scene *scene, Editor *editor) {
+	switch (editor->mode) {
+		case Editor_Mode_GAME: {
+			return scene_primary_camera(scene);
+		} break;
+
+		case Editor_Mode_GAME_DEVELOPER: {
+			if (editor->map.select_camera_index >= 0)
+				return ieditor_get_selected_camera(scene, editor);
+			return scene_primary_camera(scene);
+		} break;
+
+		case Editor_Mode_LEVEL_EDITOR: {
+			if (editor->map.select_camera_index >= 0)
+				return ieditor_get_selected_camera(scene, editor);
+			return &editor->camera;
+		} break;
+
+		case Editor_Mode_ENTITY_EDITOR: {
+			return &editor->camera;
+		} break;
+
+			invalid_default_case();
+	}
+
+	return nullptr;
 }
 
 //
@@ -276,6 +359,8 @@ void ieditor_gizmo_action(Gizmo *gizmo, const Transform &gizmo_transform, Vec2 c
 }
 
 void editor_update(Scene *scene, Editor *editor) {
+	if (editor->mode == Editor_Mode_GAME) return;
+
 	ImGui::GetStyle().Alpha = 1.0f;
 
 	if (!ImGui_IsUsingCursor()) {
@@ -284,38 +369,53 @@ void editor_update(Scene *scene, Editor *editor) {
 		Gizmo &gizmo = editor->gizmo;
 		auto &io = ImGui::GetIO();
 
+		Camera *camera = editor_rendering_camera(scene, editor);
+
+		Vec2s client_size = system_get_client_size();
+		r32 window_w = (r32)client_size.x;
+		r32 window_h = (r32)client_size.y;
+
+		r32 view_height = SCENE_VIEW_HEIGHT_HALF;
+		r32 view_width = (window_w / window_h) * view_height;
+
+		r32 scale = powf(0.5f, camera->distance);
+		r32 iscale = 1.0f / scale;
+
+		Vec2 cursor = io.MousePos;
+		Vec2 delta = io.MouseDelta;
+
+		// Convert cursor and delta value from window space into world space
+		cursor.x /= window_w;
+		cursor.y /= window_h;
+		cursor.y = 1.0f - cursor.y;
+		cursor = 2.0f * cursor - vec2(1);
+
+		cursor.x *= iscale * view_width;
+		cursor.y *= iscale * view_height;
+		cursor += camera->position;
+
+		delta.x /= window_w;
+		delta.y /= (-window_h);
+
+		delta.x *= 2 * iscale * view_width;
+		delta.y *= 2 * iscale * view_height;
+
 		switch (editor->mode) {
-			case Editor_Mode_MAP: {
-				Camera *camera = &editor->camera;
+			case Editor_Mode_GAME_DEVELOPER: {
+				// Get the Rigid_Body under the mouse cursor, nullptr if mouse doesn't hover over any Rigid_Body
+				editor->map.hovered_body = scene_collide_point(scene, cursor);
 
-				Vec2s client_size = system_get_client_size();
-				r32 window_w = (r32)client_size.x;
-				r32 window_h = (r32)client_size.y;
+				if (io.MouseClicked[ImGuiMouseButton_Left]) {
+					editor->map.selected_body = editor->map.hovered_body;
 
-				r32 view_height = SCENE_VIEW_HEIGHT_HALF;
-				r32 view_width = (window_w / window_h) * view_height;
+					// Deselect Camera if pressed on empty world
+					ieditor_deselect_camera(scene, editor);
+				}
+			} break;
 
-				r32 scale = powf(0.5f, camera->distance);
-				r32 iscale = 1.0f / scale;
-
-				Vec2 cursor = io.MousePos;
-				Vec2 delta = io.MouseDelta;
-
-				// Convert cursor and delta value from window space into world space
-				cursor.x /= window_w;
-				cursor.y /= window_h;
-				cursor.y = 1.0f - cursor.y;
-				cursor = 2.0f * cursor - vec2(1);
-
-				cursor.x *= iscale * view_width;
-				cursor.y *= iscale * view_height;
-				cursor += camera->position;
-
-				delta.x /= window_w;
-				delta.y /= (-window_h);
-
-				delta.x *= 2 * iscale * view_width;
-				delta.y *= 2 * iscale * view_height;
+			case Editor_Mode_LEVEL_EDITOR: {
+				// Get the Rigid_Body under the mouse cursor, nullptr if mouse doesn't hover over any Rigid_Body
+				editor->map.hovered_body = scene_collide_point(scene, cursor);
 
 				// Movement of the view of the world when editing
 				if (io.MouseDown[ImGuiMouseButton_Right]) {
@@ -328,9 +428,6 @@ void editor_update(Scene *scene, Editor *editor) {
 					camera->behaviour |= Camera_Behaviour_ANIMATE_FOCUS;
 					camera->target_distance -= io.DeltaTime * io.MouseWheel * 7;
 				}
-
-				// Get the Rigid_Body under the mouse cursor, nullptr if mouse doesn't hover over any Rigid_Body
-				editor->map.hovered_body = scene_collide_point(scene, cursor);
 
 				if (editor->map.selected_body) {
 					Transform gizmo_transform;
@@ -368,16 +465,17 @@ void editor_update(Scene *scene, Editor *editor) {
 					// then hovered body is selected
 					if (io.MouseClicked[ImGuiMouseButton_Left]) {
 						editor->map.selected_body = editor->map.hovered_body;
-						editor->map.select_camera_index = -1;
 						if (gizmo.render_type == Gizmo_Render_Type_NONE)
 							gizmo.render_type = Gizmo_Render_Type_TRANSLATE;
+
+						// Deselect Camera if pressed on empty world
+						ieditor_deselect_camera(scene, editor);
 					}
 
 					// If we are not using Gizmo and Double click left button,
 					// then hovered body is selected and focused
 					if (editor->map.hovered_body && io.MouseDoubleClicked[ImGuiMouseButton_Left]) {
 						editor->map.selected_body = editor->map.hovered_body;
-						editor->map.select_camera_index = -1;
 						if (gizmo.render_type == Gizmo_Render_Type_NONE)
 							gizmo.render_type = Gizmo_Render_Type_TRANSLATE;
 
@@ -392,21 +490,18 @@ void editor_update(Scene *scene, Editor *editor) {
 						r32 s = maximum(sx, sy);
 
 						camera->target_distance = log2f(s);
+												
+						// Deselect Camera if pressed on empty world
+						ieditor_deselect_camera(scene, editor);
 					}
 				}
 
 				if (editor->map.selected_body == nullptr) {
 					gizmo.render_type = Gizmo_Render_Type_NONE;
 				}
-
-				if (editor->map.select_camera_index >= 0) {
-					auto dst = scene_primary_camera(scene);
-					dst->position = camera->position;
-					dst->distance = camera->distance;
-				}
 			} break;
 
-			case Editor_Mode_ENTITY: {
+			case Editor_Mode_ENTITY_EDITOR: {
 				#if 0
 				if (editor->fixture.index >= 0) {
 					Transform p_transform;
@@ -553,17 +648,17 @@ void editor_update(Scene *scene, Editor *editor) {
 				}
 				#endif
 			} break;
-		}
 
+		}
 	}
 
 	r32 dt = ImGui::GetIO().DeltaTime;
-	Camera &camera = editor->camera;
-	if (camera.behaviour & Camera_Behaviour_ANIMATE_MOVEMENT) {
-		camera.position = lerp(camera.position, camera.target_position, 1.0f - powf(1.0f - camera.follow_factor, dt));
+	Camera *camera = editor_rendering_camera(scene, editor);
+	if (camera->behaviour & Camera_Behaviour_ANIMATE_MOVEMENT) {
+		camera->position = lerp(camera->position, camera->target_position, 1.0f - powf(1.0f - camera->follow_factor, dt));
 	}
-	if (camera.behaviour & Camera_Behaviour_ANIMATE_FOCUS) {
-		camera.distance = lerp(camera.distance, camera.target_distance, 1.0f - powf(1.0f - camera.zoom_factor, dt));
+	if (camera->behaviour & Camera_Behaviour_ANIMATE_FOCUS) {
+		camera->distance = lerp(camera->distance, camera->target_distance, 1.0f - powf(1.0f - camera->zoom_factor, dt));
 	}
 }
 
@@ -659,159 +754,171 @@ void ieditor_fixture_group(Scene *scene, Editor *editor, Rigid_Body *body) {
 	}
 }
 
-bool ieditor_gui(Scene *scene, Editor *editor) {
+bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 	bool result = false;
 
-	switch (editor->mode) {
-		case Editor_Mode_MAP: {
-			// Level
-			Level *level = scene_current_level_pointer(scene);
+	// Level
+	Level *level = scene_current_level_pointer(scene);
 
-			ImGui::Begin("Level");
+	ImGui::Begin("Level");
 
-			Level_Name level_name;
-			u32 level_name_count = level->name_count;
-			memcpy(level_name, level->name, sizeof(Level_Name));
-			if (editor_widget<Level>(*level, "Level Editor")) {
-				String old_path = tprintf("resources/levels/%s", level_name);
-				String new_path = tprintf("resources/levels/%s", level->name);
-				if (system_rename_directory(old_path, new_path)) {
-					level->name_count = (u32)strlen(level->name);
+	Level_Name level_name;
+	u32 level_name_count = level->name_count;
+	memcpy(level_name, level->name, sizeof(Level_Name));
+	if (editor_widget<Level>(*level, "Level Editor")) {
+		String old_path = tprintf("resources/levels/%s", level_name);
+		String new_path = tprintf("resources/levels/%s", level->name);
+		if (system_rename_directory(old_path, new_path)) {
+			level->name_count = (u32)strlen(level->name);
+		} else {
+			// TODO: Failed to rename, log error somewhere
+			memcpy(level->name, level_name, sizeof(Level_Name));
+		}
+	}
+
+	if (ImGui::CollapsingHeader("Cameras")) {
+		const Array_View<Camera> cameras = scene_cameras(scene);
+		int count = (int)cameras.count;
+		int selected = editor->map.select_camera_index;
+		for (int index = 0; index < count; index++) {
+			auto &c = cameras[index];
+			ImGui::PushID((void *)&c);
+			if (ImGui::Selectable(null_tprintf("%d Camera", index), selected == index)) {
+				if (selected == index) {
+					ieditor_deselect_camera(scene, editor);
 				} else {
-					// TODO: Failed to rename, log error somewhere
-					memcpy(level->name, level_name, sizeof(Level_Name));
+					ieditor_select_camera(editor, index);
 				}
 			}
+			ImGui::PopID();
+		}
+	}
 
-			if (ImGui::CollapsingHeader("Cameras")) {
-				const Array_View<Camera> cameras = scene_cameras(scene);
-				int count = (int)cameras.count;
-				int selected = editor->map.select_camera_index;
-				for (int index = 0; index < count; index++) {
-					auto &c = cameras[index];
-					ImGui::PushID((void *)&c);
-					if (ImGui::Selectable(null_tprintf("%d Camera", index), selected == index)) {
-						selected = (selected == index) ? -1 : index;
-					}
-					ImGui::PopID();
-				}
-				editor->map.select_camera_index = selected;
-			}
+	if (ImGui::CollapsingHeader("Tools")) {
+		u32 *flags = &editor->flags;
+		ImGui::CheckboxFlags("Render World", flags, Editor_Flag_Bit_RENDER_WORLD);
+		ImGui::CheckboxFlags("Render Fixture", flags, Editor_Flag_Bit_RENDER_FIXTURE);
+		ImGui::CheckboxFlags("Render Collision", flags, Editor_Flag_Bit_RENDER_COLLISION);
+	}
 
-			if (ImGui::Button("Save##Level")) {
-				scene_save_level(scene);
-			}
+	if (editor->mode == Editor_Mode_GAME_DEVELOPER) {
+		if (ImGui::Button("Edit##Level")) {
+			editor_set_mode_level_editor(scene, editor);
+		}
+	} else {
+		if (ImGui::Button("Save##Level")) {
+			scene_save_level(scene);
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Close##Level")) {
+			editor_set_mode_game_developer(scene, editor);
+		}
+	}
 
-			ImGui::End();
+	ImGui::End();
 
-			// Entity Properties
-			ImGui::Begin("Entity", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
+	// Entity Properties
+	ImGui::Begin("Entity", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
 
-			Entity *entity = nullptr;
-			if (editor->map.selected_body) {
-				entity = scene_find_entity(scene, editor->map.selected_body->entity_id);
-			} else if (editor->map.select_camera_index >= 0) {
-				entity = &scene_cameras(scene)[editor->map.select_camera_index];
-			}
+	Entity *entity = nullptr;
+	if (editor->map.selected_body) {
+		entity = scene_find_entity(scene, editor->map.selected_body->entity_id);
+	} else if (editor->map.select_camera_index >= 0) {
+		entity = ieditor_get_selected_camera(scene, editor);
+	}
 
-			if (entity == nullptr) {
-				ImGui::LabelText("type", "Entity_Type_Null");
-				ImGui::End();
-				return false;
-			}
+	if (entity == nullptr) {
+		ImGui::LabelText("type", "Entity_Type_Null");
+		ImGui::End();
+		return false;
+	}
 
-			Rigid_Body *body = nullptr;
+	Rigid_Body *body = nullptr;
 
-			switch (entity->type) {
-				case Entity_Type_Camera: {
-					result = editor_widget<Camera>(*(Camera *)entity, "Camera Entity");
-					if (result) {
-						Camera *src = (Camera *)entity;
-						editor->camera.position = src->position;
-						editor->camera.distance = src->distance;
-					}
-				} break;
-
-				case Entity_Type_Character: {
-					Character *c = (Character *)entity;
-					result = editor_widget<Character>(*c, "Character Entity");
-					body = c->rigid_body;
-				} break;
-
-				case Entity_Type_Obstacle: {
-					Obstacle *o = (Obstacle *)entity;
-					result = editor_widget<Obstacle>(*o, "Obstacle Entity");
-					if (result) {
-						o->rigid_body->transform.p = entity->position;
-						scene_rigid_body_update_bounding_box(o->rigid_body, 0);
-					}
-
-					body = o->rigid_body;
-				} break;
-
-					invalid_default_case();
-			}
-
-			if (body) {
-				ieditor_fixture_group(scene, editor, body);
-			}
-
-			ImGui::End();
+	switch (entity->type) {
+		case Entity_Type_Camera: {
+			result = editor_widget<Camera>(*(Camera *)entity, "Camera Entity");
 		} break;
 
-		case Editor_Mode_ENTITY: {
-			#if 0
-			bool open_fixture = true;
+		case Entity_Type_Character: {
+			Character *c = (Character *)entity;
+			result = editor_widget<Character>(*c, "Character Entity");
+			body = c->rigid_body;
+		} break;
 
-			ImGui::SetNextWindowSize(ImVec2(500, 440), ImGuiCond_FirstUseEver);
-			if (ImGui::Begin("Fixture Editor", &open_fixture)) {
-				int selected = (int)editor->fixture.index;
-
-				// Left
-				{
-					ImGui::BeginChild("Fixtures", ImVec2(200, 0), true);
-
-					int count = (int)scene->resource_fixtures.count;
-					auto &fixtures = scene->resource_fixtures;
-					for (int index = 0; index < count; index++) {
-						auto &f = fixtures[index];
-						ImGui::PushID((void *)&f);
-						if (ImGui::Selectable(f.name, selected == index)) {
-							selected = index;
-							editor->fixture.selected_vertex_ptr = nullptr;
-						}
-						ImGui::PopID();
-					}
-
-					ImGui::EndChild();
-				}
-				ImGui::SameLine();
-
-				editor->fixture.index = selected;
-
-				// Right
-				{
-					ImGui::BeginGroup();
-					ImGui::BeginChild("Resource View");
-
-					auto &resource = scene->resource_fixtures[selected];
-					editor_widget<Resource_Fixture>(resource, "Resource");
-					editor_fixture(resource.fixtures, resource.fixture_count);
-
-					ImGui::EndChild();
-					ImGui::EndGroup();
-				}
+		case Entity_Type_Obstacle: {
+			Obstacle *o = (Obstacle *)entity;
+			result = editor_widget<Obstacle>(*o, "Obstacle Entity");
+			if (result) {
+				o->rigid_body->transform.p = entity->position;
+				scene_rigid_body_update_bounding_box(o->rigid_body, 0);
 			}
-			ImGui::End();
 
-			if (!open_fixture) {
-				iscene_set_editor_mode_map(scene);
-			}
-			#endif
+			body = o->rigid_body;
 		} break;
 
 			invalid_default_case();
 	}
+
+	if (body) {
+		ieditor_fixture_group(scene, editor, body);
+	}
+
+	ImGui::End();
+
+	return result;
+}
+
+bool ieditor_gui_entity_editor(Scene *scene, Editor *editor) {
+	bool result = false;
+	#if 0
+	bool open_fixture = true;
+
+	ImGui::SetNextWindowSize(ImVec2(500, 440), ImGuiCond_FirstUseEver);
+	if (ImGui::Begin("Fixture Editor", &open_fixture)) {
+		int selected = (int)editor->fixture.index;
+
+		// Left
+		{
+			ImGui::BeginChild("Fixtures", ImVec2(200, 0), true);
+
+			int count = (int)scene->resource_fixtures.count;
+			auto &fixtures = scene->resource_fixtures;
+			for (int index = 0; index < count; index++) {
+				auto &f = fixtures[index];
+				ImGui::PushID((void *)&f);
+				if (ImGui::Selectable(f.name, selected == index)) {
+					selected = index;
+					editor->fixture.selected_vertex_ptr = nullptr;
+				}
+				ImGui::PopID();
+			}
+
+			ImGui::EndChild();
+		}
+		ImGui::SameLine();
+
+		editor->fixture.index = selected;
+
+		// Right
+		{
+			ImGui::BeginGroup();
+			ImGui::BeginChild("Resource View");
+
+			auto &resource = scene->resource_fixtures[selected];
+			editor_widget<Resource_Fixture>(resource, "Resource");
+			editor_fixture(resource.fixtures, resource.fixture_count);
+
+			ImGui::EndChild();
+			ImGui::EndGroup();
+		}
+	}
+	ImGui::End();
+
+	if (!open_fixture) {
+		iscene_set_editor_mode_map(scene);
+	}
+	#endif
 
 	return result;
 }
@@ -896,10 +1003,16 @@ void ieditor_gizmo_render(const Gizmo &gizmo, const Mat2 &t) {
 }
 
 void editor_render(Scene *scene, Editor *editor, r32 aspect_ratio) {
+	if (editor->mode == Editor_Mode_GAME) return;
+
 	switch (editor->mode) {
-		case Editor_Mode_MAP: {
+		case Editor_Mode_GAME_DEVELOPER: {
+			ieditor_gui_developer_editor(scene, editor);
+		} break;
+
+		case Editor_Mode_LEVEL_EDITOR: {
 			if (editor->gizmo.render_type != Gizmo_Render_Type_NONE) {
-				Camera *camera = &editor->camera;
+				Camera *camera = editor_rendering_camera(scene, editor);
 				auto selected_body = editor->map.selected_body;
 
 				if (selected_body) {
@@ -919,12 +1032,13 @@ void editor_render(Scene *scene, Editor *editor, r32 aspect_ratio) {
 					im2d_end();
 				}
 			}
+
+			ieditor_gui_developer_editor(scene, editor);
 		} break;
 
-		case Editor_Mode_ENTITY: {
-
+		case Editor_Mode_ENTITY_EDITOR: {
+			ieditor_gui_entity_editor(scene, editor);
 		} break;
 	}
 
-	ieditor_gui(scene, editor);
 }

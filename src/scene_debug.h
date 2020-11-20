@@ -31,8 +31,16 @@ struct Gizmo {
 };
 
 enum Editor_Mode {
-	Editor_Mode_MAP,
-	Editor_Mode_ENTITY
+	Editor_Mode_GAME, 
+	Editor_Mode_GAME_DEVELOPER, 
+	Editor_Mode_LEVEL_EDITOR, 
+	Editor_Mode_ENTITY_EDITOR
+};
+
+enum Editor_Flags : u32 {
+	Editor_Flag_Bit_RENDER_WORLD		= bit(0),
+	Editor_Flag_Bit_RENDER_FIXTURE		= bit(1),
+	Editor_Flag_Bit_RENDER_COLLISION	= bit(2),
 };
 
 struct Editor_Map {
@@ -50,6 +58,8 @@ struct Editor {
 
 	Camera		camera;
 	Editor_Mode	mode;
+	u32			flags;
+
 	union {
 		Editor_Map		map;
 		Editor_Fixture	fixture;
@@ -60,8 +70,11 @@ struct Scene;
 
 Editor editor_create(Scene *scene);
 bool editor_handle_event(const Event &event, Editor *editor);
-void editor_set_mode_map(Scene *scene, Editor *editor);
-void editor_set_mode_fixture(Scene *scene, Editor *editor);
+void editor_set_mode_game(Scene *scene, Editor *editor);
+void editor_set_mode_game_developer(Scene *scene, Editor *editor);
+void editor_set_mode_level_editor(Scene *scene, Editor *editor);
+void editor_set_mode_entity_editor(Scene *scene, Editor *editor);
+Camera *editor_rendering_camera(Scene *scene, Editor *editor);
 
 //
 //

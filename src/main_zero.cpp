@@ -251,8 +251,7 @@ int karma_user_zero() {
 	while (running) {
 		Dev_TimedFrameBegin();
 
-		static u32 primary_player_index = 0;
-		auto primary_player = &scene->by_type.character[primary_player_index];
+		auto primary_player = &scene->by_type.character[0];
 
 		Dev_TimedBlockBegin(EventHandling);
 		auto events = system_poll_events();
@@ -293,17 +292,8 @@ int karma_user_zero() {
 				break;
 			}
 
-			if ((event.type & Event_Type_KEY_UP) && event.key.symbol == Key_F1) {
-				Dev_TogglePresentationState();
-				continue;
-			}
 			if ((event.type & Event_Type_KEY_UP) && event.key.symbol == Key_F11) {
 				system_fullscreen_state(SYSTEM_TOGGLE);
-				continue;
-			}
-
-			if ((event.type & Event_Type_KEY_UP) && event.key.symbol == Key_TAB) {
-				primary_player_index = (primary_player_index + 1) % (u32)(scene->by_type.character.count);
 				continue;
 			}
 

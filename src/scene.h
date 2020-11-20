@@ -53,23 +53,6 @@ struct Scene {
 	Random_Series	id_series;
 
 	#ifdef ENABLE_DEVELOPER_OPTIONS
-	struct State {
-		enum Type {
-			GAME, GAME_DEVELOPER, LEVEL_EDITOR, ENTITY_EDITOR
-		};
-
-		enum Flags : u32 {
-			RENDER_WORLD = bit(0),
-			RENDER_FIXTURE = bit(1),
-			RENDER_COLLISION = bit(2),
-			RENDER_EDITOR = bit(3),
-		};
-
-		Type type;
-		u32 flags;
-	};
-
-	State state;
 	Array<Contact_Manifold> manifolds;
 
 	Editor editor;

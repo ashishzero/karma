@@ -3,6 +3,7 @@
 
 #include "modules/core/systems.h"
 #include "modules/gfx/renderer.h"
+#include "modules/imgui/dev.h"
 
 #include ".generated/entity.typeinfo"
 
@@ -283,10 +284,6 @@ Scene *scene_create() {
 	scene->id_series = random_init(context.id, system_get_counter());
 
 	#ifdef ENABLE_DEVELOPER_OPTIONS
-	scene->state.type = Scene::State::Type::LEVEL_EDITOR;
-	scene->state.flags = Scene::State::Flags::RENDER_COLLISION | Scene::State::Flags::RENDER_EDITOR |
-		Scene::State::Flags::RENDER_FIXTURE | Scene::State::Flags::RENDER_WORLD;
-
 	scene->manifolds.count = scene->manifolds.capacity = 0;
 	scene->manifolds.data = nullptr;
 	scene->manifolds.allocator = TEMPORARY_ALLOCATOR;
@@ -540,7 +537,24 @@ Camera *scene_primary_camera(Scene *scene) {
 
 bool scene_handle_event(Scene *scene, const Event &event) {
 	#ifdef ENABLE_DEVELOPER_OPTIONS
-	editor_handle_event(event, &scene->editor);
+	if (editor_handle_event(event, &scene->editor))
+		return true;
+	if (event.type & Event_Type_KEY_UP) {
+		switch (event.key.symbol) {
+			case Key_F1: {
+				Dev_TogglePresentationState();
+				return true;
+			} break;
+
+			case Key_F2: {
+				if (scene->editor.mode == Editor_Mode_GAME)
+					editor_set_mode_level_editor(scene, &scene->editor);
+				else
+					editor_set_mode_game(scene, &scene->editor);
+				return true;
+			} break;
+		}
+	}
 	#endif
 
 	return false;
@@ -555,11 +569,16 @@ void scene_pre_simulate(Scene *scene) {
 }
 
 bool iscene_simulate_world_enabled(Scene *scene) {
-	return scene->state.type == Scene::State::Type::GAME || scene->state.type == Scene::State::Type::GAME_DEVELOPER;
+	return scene->editor.mode == Editor_Mode_GAME || scene->editor.mode == Editor_Mode_GAME_DEVELOPER;
 }
 
 void scene_simulate(Scene *scene, r32 dt) {
 	if (iscene_simulate_world_enabled(scene)) {
+		auto primary_player = &scene->by_type.character[0];
+
+		auto camera = scene_primary_camera(scene);
+		camera->behaviour = Camera_Behaviour_ANIMATE_MOVEMENT;
+		camera->target_position = primary_player->position;
 
 		Contact_Manifold manifold;
 		manifold.penetration = 0;
@@ -747,31 +766,31 @@ static void iscene_render_shape_transformed(Fixture &fixture, const Transform &t
 }
 
 inline Camera *iscene_get_rendering_camera(Scene *scene) {
-	if (scene->state.type == Scene::State::Type::LEVEL_EDITOR) {
-		return &scene->editor.camera;
-	}
-	return scene_primary_camera(scene);
+	return editor_rendering_camera(scene, &scene->editor);
 }
 
 inline bool iscene_render_world_enabled(Scene *scene) {
-	return scene->state.type == Scene::State::Type::GAME ||
-		scene->state.type == Scene::State::Type::GAME_DEVELOPER ||
-		(scene->state.type == Scene::State::Type::LEVEL_EDITOR && (scene->state.flags & Scene::State::Flags::RENDER_WORLD));
+	auto mode = scene->editor.mode;
+	auto flags = scene->editor.flags;
+
+	return (flags & Editor_Flag_Bit_RENDER_WORLD) && (
+		mode == Editor_Mode_GAME || mode == Editor_Mode_GAME_DEVELOPER || mode == Editor_Mode_LEVEL_EDITOR
+		);
 }
 
 inline bool iscene_render_fixture_enabled(Scene *scene) {
-	return (scene->state.type == Scene::State::Type::GAME_DEVELOPER || scene->state.type == Scene::State::Type::LEVEL_EDITOR) &&
-		(scene->state.flags & Scene::State::Flags::RENDER_FIXTURE);
+	auto mode = scene->editor.mode;
+	auto flags = scene->editor.flags;
+	if (mode == Editor_Mode_GAME) return false;
+	return (flags & Editor_Flag_Bit_RENDER_FIXTURE) && (mode == Editor_Mode_GAME_DEVELOPER || mode == Editor_Mode_LEVEL_EDITOR);
 }
 
 inline bool iscene_render_collision_enabled(Scene *scene) {
-	return (scene->state.type == Scene::State::Type::GAME_DEVELOPER || scene->state.type == Scene::State::Type::LEVEL_EDITOR) &&
-		(scene->state.flags & Scene::State::Flags::RENDER_COLLISION);
-}
+	auto mode = scene->editor.mode;
+	auto flags = scene->editor.flags;
 
-inline bool iscene_render_editor_enabled(Scene *scene) {
-	return scene->state.type == Scene::State::Type::LEVEL_EDITOR ||
-		scene->state.type == Scene::State::Type::ENTITY_EDITOR;
+	if (mode == Editor_Mode_GAME) return false;
+	return (flags & Editor_Flag_Bit_RENDER_COLLISION) && (mode == Editor_Mode_GAME_DEVELOPER || mode == Editor_Mode_LEVEL_EDITOR);
 }
 
 // TODO: Use the alpha
@@ -834,10 +853,7 @@ void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio) {
 	}
 	im2d_end();
 
-	if (iscene_render_editor_enabled(scene)) {
-		editor_render(scene, &scene->editor, aspect_ratio);
-	}
-
+	editor_render(scene, &scene->editor, aspect_ratio);
 }
 
 //
