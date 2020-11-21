@@ -943,18 +943,43 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 
 	ImGui::Begin("Level");
 
-	Level_Name level_name;
-	u32 level_name_count = level->name_count;
-	memcpy(level_name, level->name, sizeof(Level_Name));
-	if (editor_widget<Level>(*level, "Level Editor")) {
-		String old_path = tprintf("resources/levels/%s", level_name);
-		String new_path = tprintf("resources/levels/%s", level->name);
-		if (system_rename_directory(old_path, new_path)) {
-			level->name_count = (u32)strlen(level->name);
-		} else {
-			// TODO: Failed to rename, log error somewhere
-			memcpy(level->name, level_name, sizeof(Level_Name));
+	ImGui::Text(level->name);
+	ImGui::SameLine();
+	if (ImGui::Button(":##EditLevelName")) {
+		ImGui::OpenPopup("Edit Level Name");
+		memcpy(editor->level.name_storage, level->name, sizeof(Level_Name));
+		editor->level.name_is_valid = true;
+	}
+
+	if (ImGui::BeginPopupModal("Edit Level Name", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+		if (ImGui::InputText("Name", editor->level.name_storage, sizeof(Level_Name))) {
+			editor->level.name_is_valid = true;
 		}
+
+		if (!editor->level.name_is_valid) {
+			ImGui::TextColored(ImVec4(0.8f, 0.1f, 0.1f, 1.0f), "Level name already exist!");
+		}
+
+		if (ImGui::Button("Change", ImVec2(120, 0))) {
+			String old_path = tprintf("resources/levels/%s", level->name);
+			String new_path = tprintf("resources/levels/%s", editor->level.name_storage);
+			if (system_rename_directory(old_path, new_path)) {
+				memcpy(level->name, editor->level.name_storage, sizeof(Level_Name));
+				level->name_count = (u32)strlen(level->name);
+				ImGui::CloseCurrentPopup();
+			} else {
+				editor->level.name_is_valid = false;
+			}
+		}
+
+		ImGui::SetItemDefaultFocus();
+		ImGui::SameLine();
+
+		if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::EndPopup();
 	}
 
 	if (ImGui::CollapsingHeader("Cameras")) {
