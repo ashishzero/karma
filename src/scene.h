@@ -76,9 +76,9 @@ void scene_destroy(Scene *scene);
 
 Resource_Id			scene_create_new_resource_fixture(Scene *scene, String name, Fixture *fixtures, u32 fixture_count);
 Resource_Fixture *	scene_find_resource_fixture(Scene *scene, Resource_Id id);
-Resource_Id			scene_find_resource_fixture_from_fixture(Scene *scene, Fixture *fixture);
+Resource_Fixture *	scene_find_resource_fixture_from_fixture(Scene *scene, Fixture *fixture);
 
-Entity *scene_create_new_entity(Scene *scene, Entity *entity, Vec2 p);
+Entity *scene_clone_entity(Scene *scene, Entity *entity, Vec2 p);
 Entity *scene_find_entity(Scene *scene, Entity_Id id);
 
 const Array_View<Camera> scene_cameras(Scene *scene);
@@ -125,8 +125,10 @@ void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio);
 //
 //
 
+bool scene_save_resource(Scene *scene, Resource_Fixture &r, bool pt_polygon);
 void scene_save_resources(Scene *scene);
 void scene_load_resources(Scene *scene);
+void scene_reload_resources(Scene *scene);
 void scene_clean_resources(Scene *scene);
 void scene_clean_entities(Scene *scene);
 

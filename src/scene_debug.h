@@ -62,6 +62,9 @@ struct Editor_Entity {
 		EDITING
 	};
 
+	Resource_Id		fixture_id;
+	Resource_Name	fixture_name;
+
 	Fixture fixtures[MAXIMUM_FIXTURE_COUNT];
 	int		fixture_count;
 
@@ -101,7 +104,7 @@ bool editor_handle_event(const Event &event, Scene *scene, Editor *editor);
 void editor_set_mode_game(Scene *scene, Editor *editor);
 void editor_set_mode_game_developer(Scene *scene, Editor *editor);
 void editor_set_mode_level_editor(Scene *scene, Editor *editor);
-void editor_set_mode_entity_editor(Scene *scene, Editor *editor);
+void editor_set_mode_entity_editor(Scene *scene, Editor *editor, Resource_Id id, const Resource_Name &name, Fixture *fixtures, u32 fixture_count);
 Camera *editor_rendering_camera(Scene *scene, Editor *editor);
 
 //

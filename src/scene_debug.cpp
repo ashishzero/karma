@@ -167,49 +167,92 @@ bool editor_handle_event(const Event &event, Scene *scene, Editor *editor) {
 	return true;
 }
 
-inline void ieditor_reset(Editor *editor) {
+inline void ieditor_reset(Scene *scene, Editor *editor, Editor_Mode new_mode) {
 	editor->level.hovered_body = nullptr;
 	editor->level.selected_body = nullptr;
 	editor->level.select_camera_index = -1;
 	editor->gizmo.render_type = Gizmo_Render_Type_NONE;
 	editor->gizmo.type = Gizmo_Type_NONE;
 	editor->camera.behaviour = 0;
+
+	if (editor->mode == Editor_Mode_ENTITY_EDITOR) {
+		scene_reload_resources(scene);
+	} 
+	
+	if (editor->mode != Editor_Mode_ENTITY_EDITOR && new_mode != Editor_Mode_ENTITY_EDITOR) {
+		scene_reload_level(scene);
+	}
+
+	editor->mode = new_mode;
 }
 
 void editor_set_mode_game(Scene *scene, Editor *editor) {
-	scene_reload_level(scene);
-	editor->mode = Editor_Mode_GAME;
+	ieditor_reset(scene, editor, Editor_Mode_GAME);
 	editor->entity.added_vertex_index = -1;
 	editor->entity.vertex_is_valid = false;
-	ieditor_reset(editor);
 }
 
 void editor_set_mode_game_developer(Scene *scene, Editor *editor) {
-	scene_reload_level(scene);
-	editor->mode = Editor_Mode_GAME_DEVELOPER;
+	ieditor_reset(scene, editor, Editor_Mode_GAME_DEVELOPER);
 	editor->entity.added_vertex_index = -1;
 	editor->entity.vertex_is_valid = false;
-	ieditor_reset(editor);
 }
 
 void editor_set_mode_level_editor(Scene *scene, Editor *editor) {
-	scene_reload_level(scene);
-	editor->mode = Editor_Mode_LEVEL_EDITOR;
+	ieditor_reset(scene, editor, Editor_Mode_LEVEL_EDITOR);
 	editor->entity.added_vertex_index = -1;
 	editor->entity.vertex_is_valid = false;
-	ieditor_reset(editor);
 }
 
-void editor_set_mode_entity_editor(Scene *scene, Editor *editor) {
-	editor->mode = Editor_Mode_ENTITY_EDITOR;
+void editor_set_mode_entity_editor(Scene *scene, Editor *editor, Resource_Id id, const Resource_Name &name, Fixture *fixtures, u32 fixture_count) {
+	assert(fixture_count < MAXIMUM_FIXTURE_COUNT);
+	ieditor_reset(scene, editor, Editor_Mode_ENTITY_EDITOR);
+
+	editor->entity.fixture_id = id;
+	memcpy(editor->entity.fixture_name, name, sizeof(Resource_Name));
+	editor->entity.fixture_count = fixture_count;
+
+	Fixture *src = fixtures;
+	Fixture *dst = editor->entity.fixtures;
+
+	for (u32 index = 0; index < fixture_count; ++index, ++src, ++dst) {
+		switch (src->shape) {
+			case Fixture_Shape_Circle: {
+				dst->shape = Fixture_Shape_Circle;
+				dst->handle = &editor->entity.circle_storage[index];
+				memcpy(dst->handle, src->handle, sizeof(Circle));
+			} break;
+
+			case Fixture_Shape_Mm_Rect: {
+				dst->shape = Fixture_Shape_Mm_Rect;
+				dst->handle = &editor->entity.mm_rect_storage[index];
+				memcpy(dst->handle, src->handle, sizeof(Mm_Rect));
+			} break;
+
+			case Fixture_Shape_Capsule: {
+				dst->shape = Fixture_Shape_Capsule;
+				dst->handle = &editor->entity.capsule_storage[index];
+				memcpy(dst->handle, src->handle, sizeof(Capsule));
+			} break;
+
+			case Fixture_Shape_Polygon: {
+				Polygon *polygon_src = fixture_get_shape(src, Polygon);
+				Polygon_Pt *polygon_dst = &editor->entity.polygon_storage[index];
+				dst->shape = Fixture_Shape_Polygon;
+				dst->handle = polygon_dst;
+				polygon_dst->vertex_count = polygon_src->vertex_count;
+				polygon_dst->vertices = editor->entity.polygon_vertices[index];
+				memcpy(polygon_dst->vertices, polygon_src->vertices, sizeof(Vec2) * polygon_src->vertex_count);
+			} break;
+		}
+	}
+
 	editor->entity.added_vertex_index = -1;
 	editor->entity.vertex_is_valid = false;
 	editor->camera.position = vec2(0);
 	editor->camera.distance = 0;
 	editor->camera.target_position = vec2(0);
 	editor->camera.target_distance = 0;
-	editor->entity.fixture_count = 0;
-	ieditor_reset(editor);
 }
 
 Camera *ieditor_get_selected_camera(Scene *scene, Editor *editor) {
@@ -1074,6 +1117,10 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 
 	if (body) {
 		ieditor_fixture_group(scene, editor, body);
+		if (ImGui::Button("Edit##EntityEditor")) {
+			Resource_Fixture *r = scene_find_resource_fixture_from_fixture(scene, body->fixtures);
+			editor_set_mode_entity_editor(scene, editor, r->id, r->name, r->fixtures, r->fixture_count);
+		}
 	}
 
 	ImGui::End();
@@ -1154,7 +1201,8 @@ bool ieditor_gui_entity_editor(Scene *scene, Editor *editor) {
 	bool result = false;
 
 	ImGui::SetNextWindowSize(ImVec2(500, 440), ImGuiCond_FirstUseEver);
-	if (ImGui::Begin("Properties")) {
+	bool open = (editor->mode == Editor_Mode_ENTITY_EDITOR);
+	if (ImGui::Begin("Properties", &open)) {
 
 		// Left
 		{
@@ -1185,6 +1233,13 @@ bool ieditor_gui_entity_editor(Scene *scene, Editor *editor) {
 			ImGui::BeginGroup();
 			ImGui::BeginChild("Resource View", ImVec2(0, -ImGui::GetFrameHeightWithSpacing()));
 
+			ImGui::LabelText("id", "%zu", editor->entity.fixture_id);
+			ImGui::InputText("name", editor->entity.fixture_name, sizeof(Resource_Name));
+
+			ImGui::Separator();
+
+			ImGui::TextColored(ImVec4(0.2f, 0.3f, 0.7f, 1.0f), "Shape");
+
 			if (editor->entity.selected_index >= 0) {
 				Fixture &f = editor->entity.fixtures[editor->entity.selected_index];
 				ieditor_fixture(editor, f);
@@ -1196,7 +1251,12 @@ bool ieditor_gui_entity_editor(Scene *scene, Editor *editor) {
 			ImGui::EndChild();
 
 			if (ImGui::Button("Save")) {
-
+				Resource_Fixture r;
+				r.id = editor->entity.fixture_id;
+				memcpy(r.name, editor->entity.fixture_name, sizeof(Resource_Name));
+				r.fixtures = editor->entity.fixtures;
+				r.fixture_count = editor->entity.fixture_count;
+				scene_save_resource(scene, r, true);
 			}
 			ImGui::SameLine();
 
@@ -1223,6 +1283,10 @@ bool ieditor_gui_entity_editor(Scene *scene, Editor *editor) {
 		}
 	}
 	ImGui::End();
+
+	if (!open) {
+		editor_set_mode_level_editor(scene, editor);
+	}
 
 	return result;
 }

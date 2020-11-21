@@ -88,8 +88,6 @@ int karma_user_zero() {
 	bool loaded = scene_load_level(scene, "test_level");
 	assert(loaded);
 
-	//editor_set_mode_entity_editor(scene, &scene->editor);
-
 	Physics_State physics_state = Physics_State_RUNNING;
 
 	#if 0

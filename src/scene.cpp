@@ -363,13 +363,13 @@ Resource_Fixture *scene_find_resource_fixture(Scene *scene, Resource_Id id) {
 	return nullptr;
 }
 
-Resource_Id scene_find_resource_fixture_from_fixture(Scene *scene, Fixture *fixture) {
+Resource_Fixture* scene_find_resource_fixture_from_fixture(Scene *scene, Fixture *fixture) {
 	s64 index = array_find(&scene->resource_fixtures, [](const Resource_Fixture &f, Fixture *ptr) { return f.fixtures == ptr; }, fixture);
 	assert(index >= 0);
-	return scene->resource_fixtures[index].id;
+	return &scene->resource_fixtures[index];
 }
 
-Entity *scene_create_new_entity(Scene *scene, Entity *src, Vec2 p) {
+Entity *scene_clone_entity(Scene *scene, Entity *src, Vec2 p) {
 	Entity_Id id = { iscene_generate_unique_id(scene) };
 
 	Entity *result = nullptr;
@@ -389,7 +389,7 @@ Entity *scene_create_new_entity(Scene *scene, Entity *src, Vec2 p) {
 
 			Resource_Entity resource;
 			resource.id = id;
-			resource.fixture_id = scene_find_resource_fixture_from_fixture(scene, character->rigid_body->fixtures);
+			resource.fixture_id = scene_find_resource_fixture_from_fixture(scene, character->rigid_body->fixtures)->id;
 
 			Level *level = scene_current_level_pointer(scene);
 			array_add(&level->resources, resource);
@@ -405,7 +405,7 @@ Entity *scene_create_new_entity(Scene *scene, Entity *src, Vec2 p) {
 
 			Resource_Entity resource;
 			resource.id = id;
-			resource.fixture_id = scene_find_resource_fixture_from_fixture(scene, obstacle->rigid_body->fixtures);
+			resource.fixture_id = scene_find_resource_fixture_from_fixture(scene, obstacle->rigid_body->fixtures)->id;
 			
 			Level *level = scene_current_level_pointer(scene);
 			array_add(&level->resources, resource);
@@ -859,7 +859,7 @@ void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio) {
 //
 //
 
-void iscene_serialize_fixture(Scene *scene, Fixture *fixture, Ostream *out) {
+void iscene_serialize_fixture(Scene *scene, Fixture *fixture, Ostream *out, bool pt_polygon) {
 	serialize_fmt_text(out, "shape", reflect_info<Fixture_Shape>(), (char *)&fixture->shape);
 	serialize_fmt_text_next(out);
 
@@ -877,10 +877,16 @@ void iscene_serialize_fixture(Scene *scene, Fixture *fixture, Ostream *out) {
 		} break;
 
 		case Fixture_Shape_Polygon: {
-			Polygon *polygon = fixture_get_shape(fixture, Polygon);
 			Array_View<Vec2> points;
-			points.count = polygon->vertex_count;
-			points.data = polygon->vertices;
+			if (pt_polygon) {
+				Polygon_Pt *polygon = fixture_get_shape(fixture, Polygon_Pt);
+				points.count = polygon->vertex_count;
+				points.data = polygon->vertices;
+			} else {
+				Polygon *polygon = fixture_get_shape(fixture, Polygon);
+				points.count = polygon->vertex_count;
+				points.data = polygon->vertices;
+			}
 			serialize_fmt_text(out, "shape_data", reflect_info(points), (char *)&points);
 		} break;
 
@@ -888,7 +894,7 @@ void iscene_serialize_fixture(Scene *scene, Fixture *fixture, Ostream *out) {
 	}
 }
 
-void iscene_serialize_fixture_resource(Scene *scene, Resource_Fixture &resource, Ostream *out) {
+void iscene_serialize_fixture_resource(Scene *scene, Resource_Fixture &resource, Ostream *out, bool pt_polygon) {
 	serialize_fmt_text(out, "resource", reflect_info<Resource_Fixture>(), (char *)&resource);
 	serialize_fmt_text_next(out);
 	serialize_fmt_text(out, "fixture_count", reflect_info(resource.fixture_count), (char *)&resource.fixture_count);
@@ -897,7 +903,7 @@ void iscene_serialize_fixture_resource(Scene *scene, Resource_Fixture &resource,
 	auto fixture = resource.fixtures;
 	for (u32 index = 0; index < count; ++index, ++fixture) {
 		serialize_fmt_text_next(out);
-		iscene_serialize_fixture(scene, fixture, out);
+		iscene_serialize_fixture(scene, fixture, out, pt_polygon);
 	}
 }
 
@@ -971,6 +977,25 @@ bool iscene_deserialize_fixture_resource(Scene *scene, Resource_Fixture *resourc
 //
 //
 
+bool scene_save_resource(Scene *scene, Resource_Fixture &r, bool pt_polygon) {
+	auto mark = push_temporary_allocator();
+	defer{ pop_temporary_allocator(mark); };
+
+	Ostream out;
+	System_File file;
+	iscene_serialize_fixture_resource(scene, r, &out, pt_polygon);
+
+	String file_name = tprintf("resources/fixtures/%zu.fixture", r.id);
+	if (system_open_file(file_name, File_Operation_NEW, &file)) {
+		ostream_build_out_file(&out, &file);
+		system_close_file(&file);
+	} else {
+		return false;
+	}
+
+	return true;
+}
+
 void scene_save_resources(Scene *scene) {
 	auto &resources = scene->resource_fixtures;
 
@@ -978,7 +1003,7 @@ void scene_save_resources(Scene *scene) {
 	Ostream out;
 	for (auto &r : resources) {
 		scoped_temporary_allocation();
-		iscene_serialize_fixture_resource(scene, r, &out);
+		iscene_serialize_fixture_resource(scene, r, &out, false);
 		String file_name = tprintf("resources/fixtures/%zu.fixture", r.id);
 		if (system_open_file(file_name, File_Operation_NEW, &file)) {
 			ostream_build_out_file(&out, &file);
@@ -1026,6 +1051,30 @@ void scene_load_resources(Scene *scene) {
 			}
 		} else {
 			system_log(LOG_ERROR, "Scene", "Failed opening file %s.", tto_cstring(f.name));
+		}
+	}
+}
+
+Resource_Entity *iscene_level_find_resource(Level *level, Entity_Id id) {
+	auto index = array_find(&level->resources, [](const Resource_Entity &e, Entity_Id id) { return  e.id.handle == id.handle; }, id);
+	if (index >= 0)
+		return level->resources.data + index;
+	return nullptr;
+}
+
+void scene_reload_resources(Scene *scene) {
+	scene_clean_resources(scene);
+	scene_load_resources(scene);
+
+	if (scene->loaded_level != -1) {
+		Level *level = scene_current_level_pointer(scene);
+	
+		for_list(Rigid_Body, ptr, &scene->rigid_bodies) {
+			Rigid_Body &body = ptr->data;
+			Resource_Entity *r = iscene_level_find_resource(level, body.entity_id);
+			Resource_Fixture *f = scene_find_resource_fixture(scene, r->fixture_id);
+			body.fixtures = f->fixtures;
+			body.fixture_count = f->fixture_count;
 		}
 	}
 }
@@ -1158,13 +1207,6 @@ bool iscene_deserialize_entity(Scene *scene, Deserialize_State *state) {
 	}
 
 	return true;
-}
-
-Resource_Entity *iscene_level_find_resource(Level *level, Entity_Id id) {
-	auto index = array_find(&level->resources, [](const Resource_Entity &e, Entity_Id id) { return  e.id.handle == id.handle; }, id);
-	if (index >= 0)
-		return level->resources.data + index;
-	return nullptr;
 }
 
 //
