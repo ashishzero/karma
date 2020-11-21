@@ -142,7 +142,22 @@ bool editor_handle_event(const Event &event, Scene *scene, Editor *editor) {
 				} break;
 			}
 		} else if (mode == Editor_Mode_ENTITY_EDITOR) {
-
+			switch (event.key.symbol) {
+				case Key_T: {
+					gizmo.render_type = Gizmo_Render_Type_TRANSLATE;
+					gizmo.type = Gizmo_Type_NONE;
+					return true;
+				} break;
+				case Key_S: {
+					assert(editor->entity.selected_index >= 0);
+					Fixture *fixture = editor->entity.fixtures + editor->entity.selected_index;
+					if (fixture->shape == Fixture_Shape_Circle || fixture->shape == Fixture_Shape_Capsule) {
+						gizmo.render_type = Gizmo_Render_Type_SCALE;
+						gizmo.type = Gizmo_Type_NONE;
+					}
+					return true;
+				} break;
+			}
 		}
 	}
 
