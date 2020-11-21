@@ -1051,6 +1051,37 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 		ImGui::CheckboxFlags("Render Collision", flags, Editor_Flag_Bit_RENDER_COLLISION);
 	}
 
+	if (ImGui::Button("Add Entity")) {
+		ImGui::OpenPopup("Create New Entity");
+	}
+
+	if (ImGui::BeginPopup("Create New Entity")) {
+		auto strings = enum_string_array<Entity_Type>();
+		for (u32 index = 0; index < Entity_Type_Count; ++index) {
+			if (ImGui::Selectable(strings[index])) {
+				Camera *pcamera = scene_primary_camera(scene);
+
+				switch ((Entity_Type)index) {
+					case Entity_Type_Camera: {
+						Camera camera;
+						entity_init_camera(&camera, pcamera->position, pcamera->distance);
+						scene_clone_entity(scene, &camera, pcamera->position);
+					} break;
+
+					case Entity_Type_Character: {
+
+					} break;
+
+					case Entity_Type_Obstacle: {
+
+					} break;
+				}
+			}
+		}
+
+		ImGui::EndPopup();
+	}
+
 	if (editor->mode == Editor_Mode_GAME_DEVELOPER) {
 		if (ImGui::Button("Edit##Level")) {
 			editor_set_mode_level_editor(scene, editor);

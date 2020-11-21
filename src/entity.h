@@ -114,6 +114,39 @@ struct attribute(no_serialize_base) Obstacle : public Entity {
 //
 //
 
+inline void entity_init_camera(Camera *camera, Vec2 p, r32 distance) {
+	camera->id.handle = 0;
+	camera->type = Entity_Type_Camera;
+	camera->position = p;
+	camera->target_position = p;
+	camera->distance = distance;
+	camera->target_distance = distance;
+	camera->follow_factor = 1;
+	camera->zoom_factor = 1;
+	camera->behaviour = 0;
+}
+
+inline void entity_init_character(Character *character, Vec2 p, r32 radius) {
+	character->id.handle = 0;
+	character->type = Entity_Type_Character;
+	character->position = p;
+	character->radius = radius;
+	character->color = vec4(1);
+	character->rigid_body = nullptr;
+}
+
+inline void entity_init_obstacle(Obstacle *obstable, Vec2 p) {
+	obstable->id.handle = 0;
+	obstable->type = Entity_Type_Obstacle;
+	obstable->position = p;
+	obstable->color = vec4(1);
+	obstable->rigid_body = nullptr;
+}
+
+//
+//
+//
+
 typedef char Level_Name[125];
 struct Level {
 	attribute(no_serialize, text)		Level_Name				name;
