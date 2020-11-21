@@ -598,7 +598,7 @@ void ieditor_try_select_vertex(Editor *editor, Vec2 cursor) {
 		}
 	}
 
-	if (editor->entity.mode == Editor_Entity::SELECTED) {
+	if (!vertex_hovered && (editor->entity.mode == Editor_Entity::SELECTED || editor->entity.mode == Editor_Entity::EDITING)) {
 		ieditor_try_select_fixture(editor, cursor);
 	}
 }
@@ -747,6 +747,21 @@ void editor_update(Scene *scene, Editor *editor) {
 			} break;
 
 			case Editor_Mode_ENTITY_EDITOR: {
+				cursor -= camera->position;
+				cursor += iscale * camera->position;
+
+				// Movement of the view of the world when editing
+				if (io.MouseDown[ImGuiMouseButton_Right]) {
+					clear_bit(camera->behaviour, Camera_Behaviour_ANIMATE_MOVEMENT);
+					camera->position -= delta;
+				}
+
+				// Zoom in and out of the world when editing
+				if (io.MouseWheel) {
+					camera->behaviour |= Camera_Behaviour_ANIMATE_FOCUS;
+					camera->target_distance -= io.DeltaTime * io.MouseWheel * 7;
+				}
+
 				switch (editor->entity.mode) {
 					case Editor_Entity::UNSELECTED: {
 						ieditor_try_select_fixture(editor, cursor);
@@ -757,7 +772,11 @@ void editor_update(Scene *scene, Editor *editor) {
 					} break;
 
 					case Editor_Entity::EDITING: {
-						ieditor_gizmo_action(&editor->gizmo, cursor - *editor->entity.selected_vertex, delta, vec2(0));
+						Transform gizmo_transform;
+						gizmo_transform.p = vec2(0);
+						gizmo_transform.xform = mat2_scalar(iscale, iscale);
+						
+						ieditor_gizmo_action(&editor->gizmo, cursor - *editor->entity.selected_vertex, delta, vec2(0), gizmo_transform);
 
 						switch (gizmo.type) {
 							case Gizmo_Type_TRANSLATE_X:
@@ -796,7 +815,7 @@ void editor_update(Scene *scene, Editor *editor) {
 							} break;
 
 							case Gizmo_Type_NONE: {
-								ieditor_try_select_fixture(editor, cursor);
+								ieditor_try_select_vertex(editor, cursor);
 							} break;
 						}
 					} break;
@@ -1228,7 +1247,9 @@ void editor_render(Scene *scene, Editor *editor, r32 aspect_ratio) {
 
 			Camera *camera = editor_rendering_camera(scene, editor);
 			r32 scale = camera_distance_to_scale(camera);
-			Mat4 transform = mat4_translation(vec3(camera->position, 0)) * mat4_scalar(scale, scale, 1.0f);
+			r32 iscale = 1.0f / scale;
+
+			Mat4 transform = mat4_translation(vec3(-camera->position, 0)) * mat4_scalar(scale, scale, 1.0f);
 
 			im2d_begin(view, transform);
 
@@ -1291,21 +1312,29 @@ void editor_render(Scene *scene, Editor *editor, r32 aspect_ratio) {
 				}
 			}
 
-			// Center
-			im2d_line(vec2(0.0f, -0.1f), vec2(0.0f, 0.1f), vec4(1));
-			im2d_line(vec2(-0.1f, 0.0f), vec2(0.1f, 0.0f), vec4(1));
-
 			if (editor->entity.hovered_vertex) {
 				im2d_circle(*editor->entity.hovered_vertex, EDITOR_VERTEX_RADIUS, EDITOR_SELECTED_VERTEX_COLOR);
 			}
 
-			if (editor->entity.selected_vertex) {
-				im2d_push_matrix(mat4_translation(vec3(*editor->entity.selected_vertex, 0)));
-				ieditor_gizmo_render(editor->gizmo, mat2_identity());
-				im2d_pop_matrix();
-			}
+			// Center
+			im2d_line(vec2(0.0f, -0.1f), vec2(0.0f, 0.1f), vec4(1));
+			im2d_line(vec2(-0.1f, 0.0f), vec2(0.1f, 0.0f), vec4(1));
 
 			im2d_end();
+
+			if (editor->entity.selected_vertex) {
+				transform = 
+					mat4_translation(vec3(-camera->position, 0)) *
+					mat4_scalar(scale, scale, 1.0f) *
+					mat4_translation(vec3(*editor->entity.selected_vertex, 0)) *
+					mat4_scalar(iscale, iscale, 1.0f);
+
+				im2d_begin(view, transform);
+
+				ieditor_gizmo_render(editor->gizmo, mat2_identity());
+
+				im2d_end();
+			}
 
 
 			ieditor_gui_entity_editor(scene, editor);
