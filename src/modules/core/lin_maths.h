@@ -1032,6 +1032,7 @@ inline Support_Ex support_ex(const ShapeA &a, const ShapeB &b, Vec2 dir, const T
 }
 
 bool next_simplex(Vec2 *simplex, Vec2 *dir, u32 *n);
+Nearest_Edge nearest_edge_point_polygon(const Vec2 *vertices, u32 vertex_count, Vec2 point);
 Nearest_Edge nearest_edge_origin_polygon(const Vec2 *vertices, u32 vertex_count);
 
 bool next_simplex_ex(Support_Ex *simplex, Vec2 *dir, u32 *n);

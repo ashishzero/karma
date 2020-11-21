@@ -71,6 +71,9 @@ struct Editor_Entity {
 
 	Fixture_Shape	new_shape;
 	Mode			mode;
+	int				added_vertex_index;
+	bool			vertex_is_valid;
+	r32				vertex_pointer_angle;
 
 	Circle		circle_storage[MAXIMUM_FIXTURE_COUNT];
 	Mm_Rect		mm_rect_storage[MAXIMUM_FIXTURE_COUNT];

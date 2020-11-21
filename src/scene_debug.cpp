@@ -9,10 +9,11 @@
 #include ".generated/entity.typeinfo"
 
 const r32  EDITOR_VERTEX_RADIUS = 0.02f;
-const r32  EDITOR_VERTEX_SELECTOR_RADIUS = 0.3f;
-const r32  EDITOR_VERTEX_SELECTOR_THICKNESS = 0.1f;
+const r32  EDITOR_VERTEX_SELECTOR_RADIUS = 0.04f;
+const r32  EDITOR_VERTEX_SELECTOR_THICKNESS = 0.02f;
 const Vec4 EDITOR_VERTEX_COLOR = vec4(1, 0, 0);
 const Vec4 EDITOR_SELECTED_VERTEX_COLOR = vec4(0, 3, 3);
+const Vec4 EDITOR_INVALID_SELECTED_VERTEX_COLOR = vec4(6, 0, 0);
 
 const r32 GIZMO_LINE_THICKNESS = 0.022f;
 const r32 GIZMO_LINE_HALF_THICKNESS = 0.5f * GIZMO_LINE_THICKNESS;
@@ -92,6 +93,9 @@ Editor editor_create(Scene *scene) {
 
 	editor.entity.new_shape = Fixture_Shape_Circle;
 	editor.entity.mode = Editor_Entity::UNSELECTED;
+	editor.entity.added_vertex_index = -1;
+	editor.entity.vertex_is_valid = false;
+	editor.entity.vertex_pointer_angle = 0;
 
 	editor.flags = Editor_Flag_Bit_RENDER_WORLD | Editor_Flag_Bit_RENDER_FIXTURE;
 
@@ -176,23 +180,31 @@ inline void ieditor_reset(Editor *editor) {
 void editor_set_mode_game(Scene *scene, Editor *editor) {
 	scene_reload_level(scene);
 	editor->mode = Editor_Mode_GAME;
+	editor->entity.added_vertex_index = -1;
+	editor->entity.vertex_is_valid = false;
 	ieditor_reset(editor);
 }
 
 void editor_set_mode_game_developer(Scene *scene, Editor *editor) {
 	scene_reload_level(scene);
 	editor->mode = Editor_Mode_GAME_DEVELOPER;
+	editor->entity.added_vertex_index = -1;
+	editor->entity.vertex_is_valid = false;
 	ieditor_reset(editor);
 }
 
 void editor_set_mode_level_editor(Scene *scene, Editor *editor) {
 	scene_reload_level(scene);
 	editor->mode = Editor_Mode_LEVEL_EDITOR;
+	editor->entity.added_vertex_index = -1;
+	editor->entity.vertex_is_valid = false;
 	ieditor_reset(editor);
 }
 
 void editor_set_mode_entity_editor(Scene *scene, Editor *editor) {
 	editor->mode = Editor_Mode_ENTITY_EDITOR;
+	editor->entity.added_vertex_index = -1;
+	editor->entity.vertex_is_valid = false;
 	editor->camera.position = vec2(0);
 	editor->camera.distance = 0;
 	editor->camera.target_position = vec2(0);
@@ -263,6 +275,8 @@ void ieditor_select_fixture(Editor *editor, int index) {
 	editor->entity.selected_index = index;
 	editor->entity.hovered_vertex = nullptr;
 	editor->entity.selected_vertex = nullptr;
+	editor->entity.added_vertex_index = -1;
+	editor->entity.vertex_is_valid = false;
 	if (index < 0)
 		editor->entity.mode = Editor_Entity::UNSELECTED;
 	else
@@ -286,6 +300,8 @@ void ieditor_deselect_fixture(Editor *editor) {
 	editor->entity.hovered_vertex = nullptr;
 	editor->entity.selected_index = -1;
 	editor->entity.hovered_index = -1;
+	editor->entity.added_vertex_index = -1;
+	editor->entity.vertex_is_valid = false;
 	editor->entity.mode = Editor_Entity::UNSELECTED;
 }
 
@@ -296,6 +312,9 @@ void ieditor_add_fixture(Editor *editor) {
 	Fixture *f = &editor->entity.fixtures[index];
 	editor->entity.fixture_count += 1;
 	f->shape = editor->entity.new_shape;
+
+	editor->entity.added_vertex_index = -1;
+	editor->entity.vertex_is_valid = false;
 
 	switch (f->shape) {
 		case Fixture_Shape_Circle: {
@@ -330,7 +349,7 @@ void ieditor_add_fixture(Editor *editor) {
 			f->handle = polygon;
 		} break;
 
-		invalid_default_case();
+			invalid_default_case();
 	}
 }
 
@@ -783,14 +802,52 @@ void editor_update(Scene *scene, Editor *editor) {
 					} break;
 
 					case Editor_Entity::SELECTED: {
-						ieditor_try_select_vertex(editor, cursor);
+						Fixture *f = editor->entity.fixtures + editor->entity.selected_index;
+
+						if (editor->entity.added_vertex_index >= 0) {
+							assert(f->shape == Fixture_Shape_Polygon);
+							Polygon_Pt *polygon = fixture_get_shape(f, Polygon_Pt);
+							auto vertices = polygon->vertices;
+							auto count = polygon->vertex_count;
+							int index = editor->entity.added_vertex_index;
+							memmove(vertices + index, vertices + index + 1, sizeof(Vec2) * (count - index));
+							editor->entity.added_vertex_index = -1;
+							editor->entity.vertex_is_valid = false;
+						}
+
+						if (io.KeyCtrl && f->shape == Fixture_Shape_Polygon) {
+							Polygon_Pt *polygon = fixture_get_shape(f, Polygon_Pt);
+							if (polygon->vertex_count < MAXIMUM_POLYGON_VERTICES - 1) {
+								auto vertices = polygon->vertices;
+								auto count = polygon->vertex_count;
+								Nearest_Edge edge = nearest_edge_point_polygon(vertices, count, cursor);
+								memmove(vertices + edge.b_index + 1, vertices + edge.b_index, sizeof(Vec2) * (count - edge.b_index));
+								vertices[edge.b_index] = cursor;
+								editor->entity.added_vertex_index = edge.b_index;
+								editor->entity.vertex_is_valid = is_polygon_convex(vertices, count + 1);
+
+								editor->entity.vertex_pointer_angle += io.DeltaTime * 5;
+								while (editor->entity.vertex_pointer_angle >= 2 * MATH_PI)
+									editor->entity.vertex_pointer_angle -= 2 * MATH_PI;
+							}
+						} else {
+							ieditor_try_select_vertex(editor, cursor);
+						}
+
+						if (io.MouseClicked[ImGuiMouseButton_Left] && editor->entity.added_vertex_index >= 0 && editor->entity.vertex_is_valid) {
+							assert(f->shape == Fixture_Shape_Polygon);
+							Polygon_Pt *polygon = fixture_get_shape(f, Polygon_Pt);
+							polygon->vertex_count += 1;
+							editor->entity.added_vertex_index = -1;
+							editor->entity.vertex_is_valid = false;
+						}
 					} break;
 
 					case Editor_Entity::EDITING: {
 						Transform gizmo_transform;
 						gizmo_transform.p = vec2(0);
 						gizmo_transform.xform = mat2_scalar(iscale, iscale);
-						
+
 						ieditor_gizmo_action(&editor->gizmo, cursor - *editor->entity.selected_vertex, delta, vec2(0), gizmo_transform);
 
 						switch (gizmo.type) {
@@ -1000,7 +1057,7 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 	return result;
 }
 
-bool ieditor_fixture(Fixture &fixture) {
+bool ieditor_fixture(Editor *editor, Fixture &fixture) {
 	bool result = false;
 
 	switch (fixture.shape) {
@@ -1020,20 +1077,45 @@ bool ieditor_fixture(Fixture &fixture) {
 		} break;
 
 		case Fixture_Shape_Polygon: {
-			auto shape = fixture_get_shape(&fixture, Polygon_Pt);
-			u32 count = shape->vertex_count;
-			Vec2 *vertices = shape->vertices;
+			if (editor->entity.added_vertex_index == -1) {
+				auto shape = fixture_get_shape(&fixture, Polygon_Pt);
+				int count = (int)shape->vertex_count;
+				Vec2 *vertices = shape->vertices;
 
-			char label[5];
-			for (u32 index = 0; index < count; ++index) {
-				snprintf(label, sizeof(label), "%u", index);
-				Vec2 v = vertices[index];
-				if (ImGui::DragFloat2(label, vertices[index].m, 0.01f, 0.0f, 0.0f, "%.4f", 0)) {
-					if (!is_polygon_convex(*shape)) {
-						vertices[index] = v;
+				Array<int> to_be_removed;
+				to_be_removed.allocator = TEMPORARY_ALLOCATOR;
+
+				char label[5];
+				for (int index = 0; index < count; ++index) {
+					ImGui::PushID((void *)(vertices + index));
+					snprintf(label, sizeof(label), "%u", index);
+					Vec2 v = vertices[index];
+					if (ImGui::DragFloat2(label, vertices[index].m, 0.01f, 0.0f, 0.0f, "%.4f", 0)) {
+						if (!is_polygon_convex(*shape)) {
+							vertices[index] = v;
+						}
+						result = true;
 					}
-					result = true;
+
+					if (count > 3) {
+						ImGui::SameLine();
+						if (ImGui::Button("-")) {
+							array_add(&to_be_removed, index);
+						}
+					}
+					ImGui::PopID();
 				}
+
+				count = (int)to_be_removed.count;
+				if (count) {
+					ieditor_deselect_vertex(editor);
+					for (int index = count - 1; index >= 0; --index) {
+						int remove_index = to_be_removed[index];
+						memmove(vertices + remove_index, vertices + remove_index + 1, sizeof(Vec2) * (shape->vertex_count - remove_index - 1));
+						shape->vertex_count -= 1;
+					}
+				}
+
 			}
 
 		} break;
@@ -1081,7 +1163,7 @@ bool ieditor_gui_entity_editor(Scene *scene, Editor *editor) {
 
 			if (editor->entity.selected_index >= 0) {
 				Fixture &f = editor->entity.fixtures[editor->entity.selected_index];
-				ieditor_fixture(f);
+				ieditor_fixture(editor, f);
 				if (ImGui::Button("Remove##Shape")) {
 					ieditor_remove_fixture(editor, editor->entity.selected_index);
 				}
@@ -1272,58 +1354,95 @@ void editor_render(Scene *scene, Editor *editor, r32 aspect_ratio) {
 
 			im2d_set_stroke_weight(thickness);
 
-			auto shade0 = vec4(0.0f, 1.0f, 1.0f, 1.0f);
-			auto shade1 = vec4(1.0f, 0.0f, 0.3f, 0.2f);
+			auto shade = vec4(1.0f, 0.0f, 0.3f, 0.2f);
 			auto outline = vec4(1);
 
 			int count = editor->entity.fixture_count;
-			int selected = editor->entity.selected_index;
 			auto fixtures = editor->entity.fixtures;
+
 			for (int index = 0; index < count; ++index) {
 				auto f = fixtures + index;
-				bool draw_vertices = (selected == index);
-				auto shade = draw_vertices ? shade0 : shade1;
 
 				switch (f->shape) {
 					case Fixture_Shape_Circle: {
 						auto shape = fixture_get_shape(f, Circle);
 						scene_render_shape(*shape, shade, outline);
-						if (draw_vertices) {
-							im2d_circle(shape->center, EDITOR_VERTEX_RADIUS, EDITOR_VERTEX_COLOR);
-						}
+						scene_render_shape(*shape, shade, outline);
 					} break;
 
 					case Fixture_Shape_Mm_Rect: {
 						auto shape = fixture_get_shape(f, Mm_Rect);
 						scene_render_shape(*shape, shade, outline);
-						if (draw_vertices) {
-							im2d_circle(shape->min, EDITOR_VERTEX_RADIUS, EDITOR_VERTEX_COLOR);
-							im2d_circle(shape->max, EDITOR_VERTEX_RADIUS, EDITOR_VERTEX_COLOR);
-						}
 					} break;
 
 					case Fixture_Shape_Capsule: {
 						auto shape = fixture_get_shape(f, Capsule);
 						scene_render_shape(*shape, shade, outline);
-						if (draw_vertices) {
-							im2d_circle(shape->a, EDITOR_VERTEX_RADIUS, EDITOR_VERTEX_COLOR);
-							im2d_circle(shape->b, EDITOR_VERTEX_RADIUS, EDITOR_VERTEX_COLOR);
-						}
 					} break;
 
 					case Fixture_Shape_Polygon: {
 						auto shape = fixture_get_shape(f, Polygon_Pt);
-						scene_render_shape(*shape, shade, outline);
-						if (draw_vertices) {
-							u32 count = shape->vertex_count;
-							auto v = shape->vertices;
-							for (u32 index = 0; index < count; ++index, ++v) {
-								im2d_circle(*v, EDITOR_VERTEX_RADIUS, EDITOR_VERTEX_COLOR);
-							}
-						}
+						Polygon_Pt polygon;
+						polygon.vertex_count = shape->vertex_count + (int)(editor->entity.added_vertex_index != -1);
+						polygon.vertices = shape->vertices;
+
+						auto color = shade;
+						if ((editor->entity.added_vertex_index != -1) && !editor->entity.vertex_is_valid)
+							color.w = 0;
+
+						scene_render_shape(polygon, color, outline);
 					} break;
 
 						invalid_default_case();
+				}
+			}
+
+			int selected = editor->entity.selected_index;
+			if (selected >= 0) {
+				Fixture *f = editor->entity.fixtures + selected;
+
+				switch (f->shape) {
+					case Fixture_Shape_Circle: {
+						auto shape = fixture_get_shape(f, Circle);
+						im2d_circle(shape->center, EDITOR_VERTEX_RADIUS, EDITOR_VERTEX_COLOR);
+					} break;
+
+					case Fixture_Shape_Mm_Rect: {
+						auto shape = fixture_get_shape(f, Mm_Rect);
+						im2d_circle(shape->min, EDITOR_VERTEX_RADIUS, EDITOR_VERTEX_COLOR);
+						im2d_circle(shape->max, EDITOR_VERTEX_RADIUS, EDITOR_VERTEX_COLOR);
+					} break;
+
+					case Fixture_Shape_Capsule: {
+						auto shape = fixture_get_shape(f, Capsule);
+						im2d_circle(shape->a, EDITOR_VERTEX_RADIUS, EDITOR_VERTEX_COLOR);
+						im2d_circle(shape->b, EDITOR_VERTEX_RADIUS, EDITOR_VERTEX_COLOR);
+					} break;
+
+					case Fixture_Shape_Polygon: {
+						auto shape = fixture_get_shape(f, Polygon_Pt);
+						u32 count = shape->vertex_count + (int)(editor->entity.added_vertex_index != -1);
+						auto v = shape->vertices;
+
+						for (u32 index = 0; index < count; ++index, ++v) {
+							im2d_circle(*v, EDITOR_VERTEX_RADIUS, EDITOR_VERTEX_COLOR);
+						}
+
+						if (editor->entity.added_vertex_index >= 0) {
+							const auto color = editor->entity.vertex_is_valid ? EDITOR_SELECTED_VERTEX_COLOR : EDITOR_INVALID_SELECTED_VERTEX_COLOR;
+							Vec2 p = shape->vertices[editor->entity.added_vertex_index];
+							r32 a, b, c, d;
+							a = editor->entity.vertex_pointer_angle;
+							b = a + 0.5f * MATH_TAU;
+							while (b >= 2 * MATH_PI) b -= 2 * MATH_PI;
+							c = a + MATH_PI;
+							while (c >= 2 * MATH_PI) c -= 2 * MATH_PI;
+							d = c + 0.5f * MATH_TAU;
+							while (d >= 2 * MATH_PI) d -= 2 * MATH_PI;
+							im2d_pie_part(p, EDITOR_VERTEX_SELECTOR_RADIUS, EDITOR_VERTEX_SELECTOR_RADIUS + EDITOR_VERTEX_SELECTOR_THICKNESS, a, b, color);
+							im2d_pie_part(p, EDITOR_VERTEX_SELECTOR_RADIUS, EDITOR_VERTEX_SELECTOR_RADIUS + EDITOR_VERTEX_SELECTOR_THICKNESS, c, d, color);
+						}
+					} break;
 				}
 			}
 
@@ -1338,7 +1457,7 @@ void editor_render(Scene *scene, Editor *editor, r32 aspect_ratio) {
 			im2d_end();
 
 			if (editor->entity.selected_vertex) {
-				transform = 
+				transform =
 					mat4_translation(vec3(-camera->position, 0)) *
 					mat4_scalar(scale, scale, 1.0f) *
 					mat4_translation(vec3(*editor->entity.selected_vertex, 0)) *

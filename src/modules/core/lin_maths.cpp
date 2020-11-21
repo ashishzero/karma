@@ -3067,6 +3067,31 @@ bool next_simplex(Vec2 *simplex, Vec2 *dir, u32 *n) {
 	return false;
 }
 
+Nearest_Edge nearest_edge_point_polygon(const Vec2 *vertices, u32 vertex_count, Vec2 point) {
+	Nearest_Edge edge;
+	edge.distance = MAX_FLOAT;
+
+	for (u32 p_index = 0; p_index < vertex_count; p_index += 1) {
+		u32 q_index = ((p_index + 1) == vertex_count) ? 0 : p_index + 1;
+
+		auto a = vertices[p_index];
+		auto b = vertices[q_index];
+		auto e = b - a;
+
+		Vec2 n = vec2_normalize_check(vec2(-e.y, e.x));
+
+		r32 d = vec2_dot(n, a - point);
+		if (d < edge.distance) {
+			edge.normal = n;
+			edge.distance = d;
+			edge.a_index = p_index;
+			edge.b_index = q_index;
+		}
+	}
+
+	return edge;
+}
+
 Nearest_Edge nearest_edge_origin_polygon(const Vec2 *vertices, u32 vertex_count) {
 	Nearest_Edge edge;
 	edge.distance = MAX_FLOAT;
