@@ -69,7 +69,6 @@ struct Editor_Entity {
 	Vec2 *		hovered_vertex;
 	Vec2 *		selected_vertex;
 
-	Fixture_Shape	new_shape;
 	Mode			mode;
 	int				added_vertex_index;
 	bool			vertex_is_valid;

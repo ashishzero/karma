@@ -91,7 +91,6 @@ Editor editor_create(Scene *scene) {
 	editor.entity.hovered_vertex = nullptr;
 	editor.entity.selected_vertex = nullptr;
 
-	editor.entity.new_shape = Fixture_Shape_Circle;
 	editor.entity.mode = Editor_Entity::UNSELECTED;
 	editor.entity.added_vertex_index = -1;
 	editor.entity.vertex_is_valid = false;
@@ -305,13 +304,13 @@ void ieditor_deselect_fixture(Editor *editor) {
 	editor->entity.mode = Editor_Entity::UNSELECTED;
 }
 
-void ieditor_add_fixture(Editor *editor) {
+void ieditor_add_fixture(Editor *editor, Fixture_Shape shape) {
 	assert(editor->mode == Editor_Mode_ENTITY_EDITOR);
 
 	u32 index = editor->entity.fixture_count;
 	Fixture *f = &editor->entity.fixtures[index];
 	editor->entity.fixture_count += 1;
-	f->shape = editor->entity.new_shape;
+	f->shape = shape;
 
 	editor->entity.added_vertex_index = -1;
 	editor->entity.vertex_is_valid = false;
@@ -1180,36 +1179,16 @@ bool ieditor_gui_entity_editor(Scene *scene, Editor *editor) {
 				if (ImGui::Button("New Shape##FixtureShape")) {
 					ImGui::OpenPopup("Create New Fixture");
 				}
+			} else {
+				ImGui::Text("New Shape");
 			}
 
-			if (ImGui::BeginPopupModal("Create New Fixture", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
-				ImGui::Text("Select Shape Type\n\n");
-
+			if (ImGui::BeginPopup("Create New Fixture")) {
 				auto strings = enum_string_array<Fixture_Shape>();
-				if (ImGui::BeginCombo("Shape##Fixture_Shape", strings[editor->entity.new_shape])) {
-					for (u32 i = 0; i < Fixture_Shape_Count; ++i) {
-						if (ImGui::Selectable(strings[i], i == editor->entity.new_shape)) {
-							editor->entity.new_shape = (Fixture_Shape)i;
-						}
+				for (u32 i = 0; i < Fixture_Shape_Count; ++i) {
+					if (ImGui::Selectable(strings[i])) {
+						ieditor_add_fixture(editor, (Fixture_Shape)i);
 					}
-					ImGui::EndCombo();
-				}
-
-				if (editor->entity.new_shape != Fixture_Shape_Count) {
-					if (ImGui::Button("Create", ImVec2(120, 0))) {
-						ieditor_add_fixture(editor);
-						ImGui::CloseCurrentPopup();
-					}
-				} else {
-					ImGui::SetNextItemWidth(120);
-					ImGui::TextColored(ImVec4(0.3f, 0.3f, 0.3f, 1.0f), "Create");
-				}
-
-				ImGui::SetItemDefaultFocus();
-				ImGui::SameLine();
-
-				if (ImGui::Button("Cancel", ImVec2(120, 0))) {
-					ImGui::CloseCurrentPopup();
 				}
 
 				ImGui::EndPopup();
@@ -1359,6 +1338,7 @@ void editor_render(Scene *scene, Editor *editor, r32 aspect_ratio) {
 
 			int count = editor->entity.fixture_count;
 			auto fixtures = editor->entity.fixtures;
+			int selected = editor->entity.selected_index;
 
 			for (int index = 0; index < count; ++index) {
 				auto f = fixtures + index;
@@ -1383,11 +1363,11 @@ void editor_render(Scene *scene, Editor *editor, r32 aspect_ratio) {
 					case Fixture_Shape_Polygon: {
 						auto shape = fixture_get_shape(f, Polygon_Pt);
 						Polygon_Pt polygon;
-						polygon.vertex_count = shape->vertex_count + (int)(editor->entity.added_vertex_index != -1);
+						polygon.vertex_count = shape->vertex_count + (int)(index == selected && editor->entity.added_vertex_index != -1);
 						polygon.vertices = shape->vertices;
 
 						auto color = shade;
-						if ((editor->entity.added_vertex_index != -1) && !editor->entity.vertex_is_valid)
+						if (index == selected && (editor->entity.added_vertex_index != -1) && !editor->entity.vertex_is_valid)
 							color.w = 0;
 
 						scene_render_shape(polygon, color, outline);
@@ -1397,7 +1377,6 @@ void editor_render(Scene *scene, Editor *editor, r32 aspect_ratio) {
 				}
 			}
 
-			int selected = editor->entity.selected_index;
 			if (selected >= 0) {
 				Fixture *f = editor->entity.fixtures + selected;
 
