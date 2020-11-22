@@ -1,5 +1,5 @@
 level: #0
-   resources: { 12, [ #0
+   resources: { 17, [ #0
       id: #0
          handle: 6896376797931232889
       fixture_id: #0
@@ -47,4 +47,24 @@ level: #0
       id: #0
          handle: 6897848727639841119
       fixture_id: #0
-         handle: 6897848728381671121 ] }
+         handle: 6897848728381671121, #0
+      id: #0
+         handle: 6897857788481072604
+      fixture_id: #0
+         handle: 6895733817534399694, #0
+      id: #0
+         handle: 6897859546532608503
+      fixture_id: #0
+         handle: 6895733820213089775, #0
+      id: #0
+         handle: 6897859781682519993
+      fixture_id: #0
+         handle: 6895733818091600993, #0
+      id: #0
+         handle: 6897859892542079296
+      fixture_id: #0
+         handle: 6895733818091600993, #0
+      id: #0
+         handle: 6897860001364576255
+      fixture_id: #0
+         handle: 6895733818091600993 ] }

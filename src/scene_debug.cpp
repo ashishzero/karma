@@ -686,6 +686,12 @@ void ieditor_try_select_vertex(Editor *editor, Vec2 cursor) {
 	}
 }
 
+void ieditor_select_body(Scene *scene, Editor *editor, Rigid_Body *body) {
+	editor->level.selected_body = body;
+	// Deselect Camera if pressed on empty world
+	ieditor_deselect_camera(scene, editor);
+}
+
 void editor_update(Scene *scene, Editor *editor) {
 	if (editor->mode == Editor_Mode_GAME) return;
 
@@ -734,10 +740,7 @@ void editor_update(Scene *scene, Editor *editor) {
 				editor->level.hovered_body = scene_collide_point(scene, cursor);
 
 				if (io.MouseClicked[ImGuiMouseButton_Left]) {
-					editor->level.selected_body = editor->level.hovered_body;
-
-					// Deselect Camera if pressed on empty world
-					ieditor_deselect_camera(scene, editor);
+					ieditor_select_body(scene, editor, editor->level.hovered_body);
 				}
 			} break;
 
@@ -792,18 +795,15 @@ void editor_update(Scene *scene, Editor *editor) {
 					// If we are not using Gizmo and Press left button,
 					// then hovered body is selected
 					if (io.MouseClicked[ImGuiMouseButton_Left]) {
-						editor->level.selected_body = editor->level.hovered_body;
+						ieditor_select_body(scene, editor, editor->level.hovered_body);
 						if (gizmo.render_type == Gizmo_Render_Type_NONE)
 							gizmo.render_type = Gizmo_Render_Type_TRANSLATE;
-
-						// Deselect Camera if pressed on empty world
-						ieditor_deselect_camera(scene, editor);
 					}
 
 					// If we are not using Gizmo and Double click left button,
 					// then hovered body is selected and focused
 					if (editor->level.hovered_body && io.MouseDoubleClicked[ImGuiMouseButton_Left]) {
-						editor->level.selected_body = editor->level.hovered_body;
+						ieditor_select_body(scene, editor, editor->level.hovered_body);
 						if (gizmo.render_type == Gizmo_Render_Type_NONE)
 							gizmo.render_type = Gizmo_Render_Type_TRANSLATE;
 
@@ -818,9 +818,6 @@ void editor_update(Scene *scene, Editor *editor) {
 						r32 s = maximum(sx, sy);
 
 						camera->target_distance = log2f(s);
-
-						// Deselect Camera if pressed on empty world
-						ieditor_deselect_camera(scene, editor);
 					}
 				}
 
@@ -985,7 +982,7 @@ void ieditor_fixture_group(Scene *scene, Editor *editor, Rigid_Body *body) {
 	}
 }
 
-inline void ieditor_create_new_entity(Scene *scene, Editor *editor, Entity_Type type, Resource_Fixture &resource) {
+inline void ieditor_create_new_entity(Scene *scene, Editor *editor, Entity_Type type, Resource_Fixture &resource, bool select) {
 	Camera *camera = editor_rendering_camera(scene, editor);
 
 	switch (type) {
@@ -993,14 +990,20 @@ inline void ieditor_create_new_entity(Scene *scene, Editor *editor, Entity_Type 
 			Character character;
 			Rigid_Body body;
 			ent_init_character(&character, camera->position, &body, resource);
-			scene_clone_entity(scene, &character, camera->position);
+			Character *ent = (Character *)scene_clone_entity(scene, &character, camera->position);
+			if (select) {
+				ieditor_select_body(scene, editor, ent->rigid_body);
+			}
 		} break;
 
 		case Entity_Type_Obstacle: {
 			Obstacle obstacle;
 			Rigid_Body body;
 			ent_init_obstacle(&obstacle, camera->position, &body, resource);
-			scene_clone_entity(scene, &obstacle, camera->position);
+			Obstacle *ent = (Obstacle *)scene_clone_entity(scene, &obstacle, camera->position);
+			if (select) {
+				ieditor_select_body(scene, editor, ent->rigid_body);
+			}
 		} break;
 
 			invalid_default_case();
@@ -1209,7 +1212,7 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 		ImGui::SetCursorPosX(250);
 
 		if (ImGui::Button("Select", ImVec2(120, 0))) {
-			ieditor_create_new_entity(scene, editor, new_entity_type, resources[editor->level.selected_resource_index]);
+			ieditor_create_new_entity(scene, editor, new_entity_type, resources[editor->level.selected_resource_index], true);
 			ImGui::CloseCurrentPopup();
 		}
 
@@ -1218,7 +1221,7 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 
 		if (ImGui::Button("Create New...", ImVec2(120, 0))) {
 			Resource_Fixture *resource = scene_create_new_resource_fixture(scene, "(unnamed)", nullptr, 0);
-			ieditor_create_new_entity(scene, editor, new_entity_type, *resource);
+			ieditor_create_new_entity(scene, editor, new_entity_type, *resource, false);
 			editor_set_mode_entity_editor(scene, editor, resource->id, resource->name, resource->fixtures, resource->fixture_count);
 			ImGui::CloseCurrentPopup();
 		}
@@ -1356,6 +1359,25 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 		if (ImGui::Button("Edit##EntityEditor")) {
 			Resource_Fixture *r = scene_find_resource_fixture_from_fixture(scene, body->fixtures);
 			editor_set_mode_entity_editor(scene, editor, r->id, r->name, r->fixtures, r->fixture_count);
+		}
+	}
+
+	ImGui::SameLine();
+
+	if (ImGui::Button("Clone##Entity")) {
+		Camera *camera = editor_rendering_camera(scene, editor);
+		Entity *new_ent = scene_clone_entity(scene, entity, camera->position);
+
+		switch (new_ent->type) {
+			case Entity_Type_Character: {
+				Character *ent = (Character *)new_ent;
+				ieditor_select_body(scene, editor, ent->rigid_body);
+			} break;
+
+			case Entity_Type_Obstacle: {
+				Obstacle *ent = (Obstacle *)new_ent;
+				ieditor_select_body(scene, editor, ent->rigid_body);
+			} break;
 		}
 	}
 
