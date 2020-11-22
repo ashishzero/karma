@@ -142,3 +142,54 @@ bool scene_reload_level(Scene *scene);
 void scene_unload_current_level(Scene *scene);
 Level *scene_current_level_pointer(Scene *scene);
 const String scene_current_level(Scene *scene);
+
+//
+//
+//
+
+inline void ent_rigid_body_init(Entity *entity, Rigid_Body *body, Rigid_Body_Type type, Resource_Fixture &resource) {
+	body->type = type;
+	body->flags = 0;
+	body->imass = ((type == Rigid_Body_Type_Static) ? 0.0f : 1.0f);
+	body->drag = 5;
+	body->restitution = 0;
+	body->velocity = vec2(0);
+	body->force = vec2(0);
+	body->transform.p = entity->position;
+	body->transform.xform = mat2_identity();
+	body->fixtures = resource.fixtures;
+	body->fixture_count = resource.fixture_count;
+	body->entity_id = entity->id;
+	body->bounding_box = scene_rigid_body_bounding_box(body, 0);
+}
+
+inline void ent_init_camera(Camera *camera, Vec2 p, r32 distance) {
+	camera->id.handle = 0;
+	camera->type = Entity_Type_Camera;
+	camera->position = p;
+	camera->target_position = p;
+	camera->distance = distance;
+	camera->target_distance = distance;
+	camera->follow_factor = 1;
+	camera->zoom_factor = 1;
+	camera->behaviour = 0;
+}
+
+inline void ent_init_character(Character *character, Vec2 p, r32 radius, Rigid_Body *body, Resource_Fixture &resource) {
+	character->id.handle = 0;
+	character->type = Entity_Type_Character;
+	character->position = p;
+	character->radius = radius;
+	character->color = vec4(1);
+	ent_rigid_body_init(character, body, Rigid_Body_Type_Dynamic, resource);
+	character->rigid_body = body;
+}
+
+inline void ent_init_obstacle(Obstacle *obstable, Vec2 p, Rigid_Body *body, Resource_Fixture &resource) {
+	obstable->id.handle = 0;
+	obstable->type = Entity_Type_Obstacle;
+	obstable->position = p;
+	obstable->color = vec4(1);
+	ent_rigid_body_init(obstable, body, Rigid_Body_Type_Static, resource);
+	obstable->rigid_body = body;
+}

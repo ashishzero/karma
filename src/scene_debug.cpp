@@ -202,6 +202,7 @@ void editor_set_mode_level_editor(Scene *scene, Editor *editor) {
 	ieditor_reset(scene, editor, Editor_Mode_LEVEL_EDITOR);
 	editor->entity.added_vertex_index = -1;
 	editor->entity.vertex_is_valid = false;
+	editor->level.new_entity_type = Entity_Type_Character;
 }
 
 void editor_set_mode_entity_editor(Scene *scene, Editor *editor, Resource_Id id, const Resource_Name &name, Fixture *fixtures, u32 fixture_count) {
@@ -984,7 +985,108 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 	// Level
 	Level *level = scene_current_level_pointer(scene);
 
-	ImGui::Begin("Level");
+	ImGui::Begin("Level", nullptr, ImGuiWindowFlags_MenuBar);
+
+	int new_entity_type_index = -1;
+
+	if (ImGui::BeginMenuBar()) {
+		if (ImGui::BeginMenu("File")) {
+
+			if (editor->mode == Editor_Mode_GAME_DEVELOPER) {
+				if (ImGui::MenuItem("Edit##Level")) {
+					editor_set_mode_level_editor(scene, editor);
+				}
+			} else {
+				if (ImGui::MenuItem("Save##Level")) {
+					scene_save_level(scene);
+				}
+
+				if (ImGui::MenuItem("Close##Level")) {
+					// TODO: Save changes??
+					editor_set_mode_game_developer(scene, editor);
+				}
+			}
+
+			ImGui::EndMenu();
+		}
+
+		if (editor->mode == Editor_Mode_LEVEL_EDITOR) {
+			if (ImGui::BeginMenu("Add")) {
+				auto type_strings = enum_string_array<Entity_Type>();
+
+				for (u32 index = 0; index < Entity_Type_Count; ++index) {
+					if (ImGui::MenuItem(type_strings[index])) {
+						new_entity_type_index = (int)index;
+						break;
+					}
+				}
+
+				ImGui::EndMenu();
+			}
+		}
+
+		ImGui::EndMenuBar();
+	}
+
+	if (new_entity_type_index != -1) {
+		editor->level.new_entity_type = (Entity_Type)new_entity_type_index;
+		ImGui::OpenPopup("Resource Selection");
+	}
+
+	ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+
+	if (ImGui::BeginPopupModal("Resource Selection", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+		Entity_Type new_entity_type = editor->level.new_entity_type;
+
+		ImGui::Text("Entity: %s", enum_string(new_entity_type).data);
+
+		if (new_entity_type == Entity_Type_Camera) {
+			Camera camera;
+			Camera *src = scene_primary_camera(scene);
+			ent_init_camera(&camera, src->position, src->distance);
+			scene_clone_entity(scene, &camera, src->position);
+			ImGui::CloseCurrentPopup();
+		}
+
+		#if 0
+		// Left
+		{
+			ImGui::BeginChild("Resources", ImVec2(100, 0), true);
+
+			ImGui::EndChild();
+		}
+		ImGui::SameLine();
+
+		// Right
+		{
+			ImGui::BeginGroup();
+			ImGui::BeginChild("Resource View", ImVec2(0, -ImGui::GetFrameHeightWithSpacing()));
+
+			ImGui::EndChild();
+			ImGui::EndGroup();
+		}
+		#endif
+
+		if (ImGui::Button("Select", ImVec2(120, 0))) {
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::SetItemDefaultFocus();
+		ImGui::SameLine();
+
+		if (ImGui::Button("Create New...", ImVec2(120, 0))) {
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::SameLine();
+
+		if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::EndPopup();
+	}
 
 	ImGui::Text(level->name);
 	ImGui::SameLine();
@@ -993,6 +1095,9 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 		memcpy(editor->level.name_storage, level->name, sizeof(Level_Name));
 		editor->level.name_is_valid = true;
 	}
+
+	center = ImGui::GetMainViewport()->GetCenter();
+	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
 
 	if (ImGui::BeginPopupModal("Edit Level Name", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
 		if (ImGui::InputText("Name", editor->level.name_storage, sizeof(Level_Name))) {
@@ -1026,6 +1131,8 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 	}
 
 	if (ImGui::CollapsingHeader("Cameras")) {
+		ImGui::Indent();
+
 		const Array_View<Camera> cameras = scene_cameras(scene);
 		int count = (int)cameras.count;
 		int selected = editor->level.select_camera_index;
@@ -1041,61 +1148,15 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 			}
 			ImGui::PopID();
 		}
+
+		ImGui::Unindent();
 	}
 
-	if (ImGui::CollapsingHeader("Tools")) {
-		u32 *flags = &editor->flags;
-		ImGui::CheckboxFlags("Render World", flags, Editor_Flag_Bit_RENDER_WORLD);
-		ImGui::CheckboxFlags("Render Fixture", flags, Editor_Flag_Bit_RENDER_FIXTURE);
-		ImGui::CheckboxFlags("Render Bounding Box", flags, Editor_Flag_Bit_RENDER_BOUNDING_BOX);
-		ImGui::CheckboxFlags("Render Collision", flags, Editor_Flag_Bit_RENDER_COLLISION);
-	}
-
-	if (ImGui::Button("Add Entity")) {
-		ImGui::OpenPopup("Create New Entity");
-	}
-
-	if (ImGui::BeginPopup("Create New Entity")) {
-		auto strings = enum_string_array<Entity_Type>();
-		for (u32 index = 0; index < Entity_Type_Count; ++index) {
-			if (ImGui::Selectable(strings[index])) {
-				Camera *pcamera = scene_primary_camera(scene);
-
-				switch ((Entity_Type)index) {
-					case Entity_Type_Camera: {
-						Camera camera;
-						entity_init_camera(&camera, pcamera->position, pcamera->distance);
-						scene_clone_entity(scene, &camera, pcamera->position);
-					} break;
-
-					case Entity_Type_Character: {
-
-					} break;
-
-					case Entity_Type_Obstacle: {
-
-					} break;
-				}
-			}
-		}
-
-		ImGui::EndPopup();
-	}
-
-	if (editor->mode == Editor_Mode_GAME_DEVELOPER) {
-		if (ImGui::Button("Edit##Level")) {
-			editor_set_mode_level_editor(scene, editor);
-		}
-	} else {
-		if (ImGui::Button("Save##Level")) {
-			scene_save_level(scene);
-		}
-		ImGui::SameLine();
-		if (ImGui::Button("Close##Level")) {
-			// TODO: Save changes??
-			editor_set_mode_game_developer(scene, editor);
-		}
-	}
+	u32 *flags = &editor->flags;
+	ImGui::CheckboxFlags("Render World", flags, Editor_Flag_Bit_RENDER_WORLD);
+	ImGui::CheckboxFlags("Render Fixture", flags, Editor_Flag_Bit_RENDER_FIXTURE);
+	ImGui::CheckboxFlags("Render Bounding Box", flags, Editor_Flag_Bit_RENDER_BOUNDING_BOX);
+	ImGui::CheckboxFlags("Render Collision", flags, Editor_Flag_Bit_RENDER_COLLISION);
 
 	ImGui::End();
 
