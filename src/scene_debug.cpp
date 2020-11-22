@@ -982,6 +982,28 @@ void ieditor_fixture_group(Scene *scene, Editor *editor, Rigid_Body *body) {
 	}
 }
 
+inline void ieditor_create_new_entity(Scene *scene, Editor *editor, Entity_Type type, Resource_Fixture &resource) {
+	Camera *camera = editor_rendering_camera(scene, editor);
+
+	switch (type) {
+		case Entity_Type_Character: {
+			Character character;
+			Rigid_Body body;
+			ent_init_character(&character, camera->position, &body, resource);
+			scene_clone_entity(scene, &character, camera->position);
+		} break;
+
+		case Entity_Type_Obstacle: {
+			Obstacle obstacle;
+			Rigid_Body body;
+			ent_init_obstacle(&obstacle, camera->position, &body, resource);
+			scene_clone_entity(scene, &obstacle, camera->position);
+		} break;
+
+			invalid_default_case();
+	}
+}
+
 bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 	bool result = false;
 
@@ -1184,26 +1206,7 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 		ImGui::SetCursorPosX(250);
 
 		if (ImGui::Button("Select", ImVec2(120, 0))) {
-			Camera *camera = editor_rendering_camera(scene, editor);
-
-			switch (new_entity_type) {
-				case Entity_Type_Character: {
-					Character character;
-					Rigid_Body body;
-					ent_init_character(&character, camera->position, &body, resources[editor->level.selected_resource_index]);
-					scene_clone_entity(scene, &character, camera->position);
-				} break;
-
-				case Entity_Type_Obstacle: {
-					Obstacle obstacle;
-					Rigid_Body body;
-					ent_init_obstacle(&obstacle, camera->position, &body, resources[editor->level.selected_resource_index]);
-					scene_clone_entity(scene, &obstacle, camera->position);
-				} break;
-
-				invalid_default_case();
-			}
-
+			ieditor_create_new_entity(scene, editor, new_entity_type, resources[editor->level.selected_resource_index]);
 			ImGui::CloseCurrentPopup();
 		}
 
@@ -1211,6 +1214,9 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 		ImGui::SameLine();
 
 		if (ImGui::Button("Create New...", ImVec2(120, 0))) {
+			Resource_Fixture *resource = scene_create_new_resource_fixture(scene, "(unnamed)", nullptr, 0);
+			ieditor_create_new_entity(scene, editor, new_entity_type, *resource);
+			editor_set_mode_entity_editor(scene, editor, resource->id, resource->name, resource->fixtures, resource->fixture_count);
 			ImGui::CloseCurrentPopup();
 		}
 

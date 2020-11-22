@@ -74,7 +74,7 @@ void scene_destroy(Scene *scene);
 //
 //
 
-Resource_Id			scene_create_new_resource_fixture(Scene *scene, String name, Fixture *fixtures, u32 fixture_count);
+Resource_Fixture *	scene_create_new_resource_fixture(Scene *scene, String name, Fixture *fixtures, u32 fixture_count);
 Resource_Fixture *	scene_find_resource_fixture(Scene *scene, Resource_Id id);
 Resource_Fixture *	scene_find_resource_fixture_from_fixture(Scene *scene, Fixture *fixture);
 

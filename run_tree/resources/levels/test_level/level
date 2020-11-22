@@ -1,5 +1,5 @@
 level: #0
-   resources: { 10, [ #0
+   resources: { 11, [ #0
       id: #0
          handle: 6896376797931232889
       fixture_id: #0
@@ -39,4 +39,8 @@ level: #0
       id: #0
          handle: 6897844977624121273
       fixture_id: #0
-         handle: 6895733818091600993 ] }
+         handle: 6895733818091600993, #0
+      id: #0
+         handle: 6897847142745340565
+      fixture_id: #0
+         handle: 6897847144059561968 ] }

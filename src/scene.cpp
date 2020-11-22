@@ -320,7 +320,7 @@ void scene_destroy(Scene *scene) {
 //
 //
 
-Resource_Id scene_create_new_resource_fixture(Scene *scene, String name, Fixture *fixtures, u32 fixture_count) {
+Resource_Fixture *scene_create_new_resource_fixture(Scene *scene, String name, Fixture *fixtures, u32 fixture_count) {
 	Resource_Fixture *resource = array_add(&scene->resource_fixtures);
 
 	assert(name.count < (sizeof(Resource_Name) - 1));
@@ -331,7 +331,11 @@ Resource_Id scene_create_new_resource_fixture(Scene *scene, String name, Fixture
 	resource->name[name.count] = 0;
 
 	resource->fixture_count = fixture_count;
-	resource->fixtures = new (scene->pool_allocator) Fixture[resource->fixture_count];
+	if (fixture_count) {
+		resource->fixtures = new (scene->pool_allocator) Fixture[resource->fixture_count];
+	} else {
+		resource->fixtures = nullptr;
+	}
 
 	Fixture *dst = resource->fixtures;
 	Fixture *src;
@@ -355,7 +359,7 @@ Resource_Id scene_create_new_resource_fixture(Scene *scene, String name, Fixture
 		dst += 1;
 	}
 
-	return resource->id;
+	return resource;
 }
 
 Resource_Fixture *scene_find_resource_fixture(Scene *scene, Resource_Id id) {
