@@ -72,15 +72,17 @@ Editor editor_create(Scene *scene) {
 	editor.gizmo.values[0] = 0;
 	editor.gizmo.values[1] = 0;
 
-	editor.camera.id = { 0 };
-	editor.camera.type = Entity_Type_Camera;
-	editor.camera.position = vec2(0);
-	editor.camera.distance = 0;
-	editor.camera.target_position = vec2(0);
-	editor.camera.target_distance = 0;
-	editor.camera.follow_factor = 0.99f;
-	editor.camera.zoom_factor = 0.99f;
-	editor.camera.behaviour = 0;
+	editor.level_camera.id = { 0 };
+	editor.level_camera.type = Entity_Type_Camera;
+	editor.level_camera.position = vec2(0);
+	editor.level_camera.distance = 0;
+	editor.level_camera.target_position = vec2(0);
+	editor.level_camera.target_distance = 0;
+	editor.level_camera.follow_factor = 0.99f;
+	editor.level_camera.zoom_factor = 0.99f;
+	editor.level_camera.behaviour = 0;
+
+	editor.entity_camera = editor.level_camera;
 
 	editor_set_mode_level_editor(scene, &editor);
 
@@ -173,7 +175,8 @@ inline void ieditor_reset(Scene *scene, Editor *editor, Editor_Mode new_mode) {
 	editor->level.selected_camera_index = -1;
 	editor->gizmo.render_type = Gizmo_Render_Type_NONE;
 	editor->gizmo.type = Gizmo_Type_NONE;
-	editor->camera.behaviour = 0;
+	editor->level_camera.behaviour = 0;
+	editor->entity_camera.behaviour = 0;
 
 	if (editor->mode == Editor_Mode_ENTITY_EDITOR) {
 		scene_reload_resources(scene);
@@ -253,10 +256,10 @@ void editor_set_mode_entity_editor(Scene *scene, Editor *editor, Resource_Id id,
 
 	editor->entity.added_vertex_index = -1;
 	editor->entity.vertex_is_valid = false;
-	editor->camera.position = vec2(0);
-	editor->camera.distance = 0;
-	editor->camera.target_position = vec2(0);
-	editor->camera.target_distance = 0;
+	editor->entity_camera.position = vec2(0);
+	editor->entity_camera.distance = 0;
+	editor->entity_camera.target_position = vec2(0);
+	editor->entity_camera.target_distance = 0;
 }
 
 Camera *ieditor_get_selected_camera(Scene *scene, Editor *editor) {
@@ -278,9 +281,9 @@ void ieditor_select_camera(Editor *editor, int index) {
 void ieditor_deselect_camera(Scene *scene, Editor *editor) {
 	auto src = ieditor_get_selected_camera(scene, editor);
 	if (src) {
-		editor->camera.behaviour = 0;
-		editor->camera.position = src->position;
-		editor->camera.distance = src->distance;
+		editor->level_camera.behaviour = 0;
+		editor->level_camera.position = src->position;
+		editor->level_camera.distance = src->distance;
 		editor->level.selected_camera_index = -1;
 	}
 }
@@ -300,11 +303,11 @@ Camera *editor_rendering_camera(Scene *scene, Editor *editor) {
 		case Editor_Mode_LEVEL_EDITOR: {
 			if (editor->level.selected_camera_index >= 0)
 				return ieditor_get_selected_camera(scene, editor);
-			return &editor->camera;
+			return &editor->level_camera;
 		} break;
 
 		case Editor_Mode_ENTITY_EDITOR: {
-			return &editor->camera;
+			return &editor->entity_camera;
 		} break;
 
 			invalid_default_case();

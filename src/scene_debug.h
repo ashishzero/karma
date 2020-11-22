@@ -94,7 +94,8 @@ struct Editor_Entity {
 struct Editor {
 	Gizmo		gizmo;
 
-	Camera		camera;
+	Camera		level_camera;
+	Camera		entity_camera;
 	Editor_Mode	mode;
 	u32			flags;
 
