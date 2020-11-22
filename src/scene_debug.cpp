@@ -691,6 +691,7 @@ void ieditor_select_body(Scene *scene, Editor *editor, Rigid_Body *body) {
 	// Deselect Camera if pressed on empty world
 	ieditor_deselect_camera(scene, editor);
 }
+#define ieditor_deselect_body(scene, editor) ieditor_select_body(scene, editor, nullptr);
 
 void editor_update(Scene *scene, Editor *editor) {
 	if (editor->mode == Editor_Mode_GAME) return;
@@ -771,7 +772,7 @@ void editor_update(Scene *scene, Editor *editor) {
 						case Gizmo_Type_TRANSLATE_X:
 						case Gizmo_Type_TRANSLATE_Y:
 						case Gizmo_Type_CENTER: {
-							Entity *entity = scene_find_entity(scene, editor->level.selected_body->entity_id);
+							Entity *entity = scene_entity_pointer(scene, scene_get_entity(scene, editor->level.selected_body->entity_id));
 							entity->position += gizmo.out;
 							editor->level.selected_body->transform.p = entity->position;
 							scene_rigid_body_update_bounding_box(editor->level.selected_body, 0);
@@ -1310,11 +1311,15 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 	// Entity Properties
 	ImGui::Begin("Entity", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse);
 
+	Entity_Reference entity_ref;
 	Entity *entity = nullptr;
 	if (editor->level.selected_body) {
-		entity = scene_find_entity(scene, editor->level.selected_body->entity_id);
+		if (scene_find_entity(scene, editor->level.selected_body->entity_id, &entity_ref)) {
+			entity = scene_entity_pointer(scene, entity_ref);
+		}
 	} else if (editor->level.selected_camera_index >= 0) {
 		entity = ieditor_get_selected_camera(scene, editor);
+		entity_ref = scene_get_entity(scene, entity->id);
 	}
 
 	if (entity == nullptr) {
@@ -1379,6 +1384,11 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 				ieditor_select_body(scene, editor, ent->rigid_body);
 			} break;
 		}
+	}
+
+	if (ImGui::Button("Remove##Entity")) {
+		scene_remove_entity(scene, entity_ref);
+		ieditor_deselect_body(scene, editor);
 	}
 
 	ImGui::End();

@@ -26,6 +26,7 @@ using Rigid_Body_List = Circular_Linked_List<Rigid_Body>;
 struct Entity_Reference {
 	Entity_Id	id;
 	Entity_Type type;
+	u32			index;
 	u32			offset;
 };
 
@@ -51,6 +52,8 @@ struct Scene {
 
 	s32				loaded_level;
 	Array<Level>	levels;
+
+	Array<u32>		removed_entity[Entity_Type_Count];
 
 	Random_Series	id_series;
 
@@ -79,7 +82,9 @@ Resource_Fixture *	scene_find_resource_fixture(Scene *scene, Resource_Id id);
 Resource_Fixture *	scene_find_resource_fixture_from_fixture(Scene *scene, Fixture *fixture);
 
 Entity *scene_clone_entity(Scene *scene, Entity *entity, Vec2 p);
-Entity *scene_find_entity(Scene *scene, Entity_Id id);
+Entity_Reference scene_get_entity(Scene *scene, Entity_Id id);
+bool scene_find_entity(Scene *scene, Entity_Id id, Entity_Reference *ref);
+Entity *scene_entity_pointer(Scene *scene, Entity_Reference &reference);
 
 const Array_View<Camera>			scene_cameras(Scene *scene);
 const Array_View<Resource_Fixture>	scene_resources(Scene *scene);
@@ -104,11 +109,19 @@ Camera *scene_primary_camera(Scene *scene);
 //
 //
 
+void scene_remove_entity(Scene *scene, Entity_Reference &ref);
+void scene_remove_entity(Scene *scene, Entity_Id id);
+
+//
+//
+//
+
 bool scene_handle_event(Scene *scene, const Event &event);
 
-void scene_pre_simulate(Scene *scene);
+void scene_begin(Scene *scene);
 void scene_simulate(Scene *scene, r32 dt);
 void scene_update(Scene *scene);
+void scene_end(Scene *scene);
 
 //
 //

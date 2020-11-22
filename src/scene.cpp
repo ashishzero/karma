@@ -187,41 +187,42 @@ static u64 iscene_generate_unique_id(Scene *scene) {
 	return id;
 }
 
-static void iscene_add_entity(Scene *scene, Entity_Id id, Entity_Type type, u32 offset) {
+static void iscene_add_entity(Scene *scene, Entity_Id id, Entity_Type type, u32 offset, u32 index) {
 	Entity_Reference ref;
 	ref.id = id;
 	ref.type = type;
 	ref.offset = offset;
+	ref.index = index;
 	array_add(&scene->entity, ref);
 }
 
 static Camera *iscene_add_camera(Scene *scene, Entity_Id id, Vec2 p) {
-	u32 offset = (u32)scene->by_type.camera.count * sizeof(Camera);
+	u32 index = (u32)scene->by_type.camera.count;
 	Camera *camera = array_add(&scene->by_type.camera);
 	camera->type = Entity_Type_Camera;
 	camera->id = id;
 	camera->position = p;
-	iscene_add_entity(scene, id, Entity_Type_Camera, offset);
+	iscene_add_entity(scene, id, Entity_Type_Camera, index * sizeof(Camera), index);
 	return camera;
 }
 
 static Character *iscene_add_character(Scene *scene, Entity_Id id, Vec2 p) {
-	u32 offset = (u32)scene->by_type.character.count * sizeof(Character);
+	u32 index = (u32)scene->by_type.character.count;
 	Character *character = array_add(&scene->by_type.character);
 	character->type = Entity_Type_Character;
 	character->id = id;
 	character->position = p;
-	iscene_add_entity(scene, id, Entity_Type_Character, offset);
+	iscene_add_entity(scene, id, Entity_Type_Character, index * sizeof(Character), index);
 	return character;
 }
 
 static Obstacle *iscene_add_obstacle(Scene *scene, Entity_Id id, Vec2 p) {
-	u32 offset = (u32)scene->by_type.obstacle.count * sizeof(Obstacle);
+	u32 index = (u32)scene->by_type.obstacle.count;
 	Obstacle *obstacle = array_add(&scene->by_type.obstacle);
 	obstacle->type = Entity_Type_Obstacle;
 	obstacle->id = id;
 	obstacle->position = p;
-	iscene_add_entity(scene, id, Entity_Type_Obstacle, offset);
+	iscene_add_entity(scene, id, Entity_Type_Obstacle, index * sizeof(Obstacle), index);
 	return obstacle;
 }
 
@@ -282,6 +283,14 @@ Scene *scene_create() {
 	array_resize(&scene->levels, 5);
 
 	scene->id_series = random_init(context.id, system_get_counter());
+
+	for (s64 index = 0; index < Entity_Type_Count; ++index) {
+		auto &rm = scene->removed_entity[index];
+		rm.capacity = 0;
+		rm.count = 0;
+		rm.data = nullptr;
+		rm.allocator = TEMPORARY_ALLOCATOR;
+	}
 
 	#ifdef ENABLE_DEVELOPER_OPTIONS
 	scene->manifolds.count = scene->manifolds.capacity = 0;
@@ -424,15 +433,23 @@ Entity *scene_clone_entity(Scene *scene, Entity *src, Vec2 p) {
 	return result;
 }
 
-Entity *scene_find_entity(Scene *scene, Entity_Id id) {
+Entity_Reference scene_get_entity(Scene *scene, Entity_Id id) {
 	auto res = array_find(&scene->entity, [](const Entity_Reference &a, Entity_Id id) { return a.id.handle == id.handle; }, id);
+	assert(res >= 0);
+	return scene->entity[res];
+}
 
+bool scene_find_entity(Scene *scene, Entity_Id id, Entity_Reference *ref) {
+	auto res = array_find(&scene->entity, [](const Entity_Reference &a, Entity_Id id) { return a.id.handle == id.handle; }, id);
 	if (res >= 0) {
-		Entity_Reference &ref = scene->entity[res];
-		return (Entity *)(scene->by_type.data[ref.type].data + ref.offset);
+		*ref = scene->entity[res];
+		return true;
 	}
+	return false;
+}
 
-	return nullptr;
+Entity *scene_entity_pointer(Scene *scene, Entity_Reference &ref) {	
+	return (Entity *)(scene->by_type.data[ref.type].data + ref.offset);
 }
 
 const Array_View<Camera> scene_cameras(Scene *scene) {
@@ -543,6 +560,19 @@ Camera *scene_primary_camera(Scene *scene) {
 //
 //
 
+void scene_remove_entity(Scene *scene, Entity_Reference &ref) {
+	array_add(&scene->removed_entity[ref.type], ref.index);
+}
+
+void scene_remove_entity(Scene *scene, Entity_Id id) {
+	Entity_Reference ref = scene_get_entity(scene, id);
+	scene_remove_entity(scene, ref);	
+}
+
+//
+//
+//
+
 bool scene_handle_event(Scene *scene, const Event &event) {
 	#ifdef ENABLE_DEVELOPER_OPTIONS
 	if (editor_handle_event(event, scene, &scene->editor))
@@ -552,7 +582,14 @@ bool scene_handle_event(Scene *scene, const Event &event) {
 	return false;
 }
 
-void scene_pre_simulate(Scene *scene) {
+void scene_begin(Scene *scene) {
+	for (s64 index = 0; index < Entity_Type_Count; ++index) {
+		auto &rm = scene->removed_entity[index];
+		rm.capacity = 0;
+		rm.count = 0;
+		rm.data = nullptr;
+	}
+
 	#ifdef ENABLE_DEVELOPER_OPTIONS
 	scene->manifolds.capacity = 0;
 	scene->manifolds.count = 0;
@@ -677,6 +714,43 @@ void scene_update(Scene *scene) {
 	}
 
 	editor_update(scene, &scene->editor);
+}
+
+void scene_end(Scene *scene) {
+	Array<u32> *rma;
+	s64 count;
+
+	{
+		rma = scene->removed_entity + Entity_Type_Camera;
+		count = rma->count;
+		auto &cameras = scene->by_type.camera;
+		for (s64 index = 0; index < count; ++index) {
+			auto rm_index = rma->data[index];
+			array_remove(&cameras, rm_index);
+		}
+	}
+
+	{
+		rma = scene->removed_entity + Entity_Type_Character;
+		count = rma->count;
+		auto &characters = scene->by_type.character;
+		for (s64 index = 0; index < count; ++index) {
+			auto rm_index = rma->data[index];
+			iscene_destroy_rigid_body(scene, characters[rm_index].rigid_body);
+			array_remove(&characters, rm_index);
+		}
+	}
+
+	{
+		rma = scene->removed_entity + Entity_Type_Obstacle;
+		count = rma->count;
+		auto &osbtacles = scene->by_type.obstacle;
+		for (s64 index = 0; index < count; ++index) {
+			auto rm_index = rma->data[index];
+			iscene_destroy_rigid_body(scene, osbtacles[rm_index].rigid_body);
+			array_remove(&osbtacles, rm_index);
+		}
+	}
 }
 
 //
