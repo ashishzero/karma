@@ -187,11 +187,10 @@ static u64 iscene_generate_unique_id(Scene *scene) {
 	return id;
 }
 
-static void iscene_add_entity(Scene *scene, Entity_Id id, Entity_Type type, u32 offset, u32 index) {
+static void iscene_add_entity(Scene *scene, Entity_Id id, Entity_Type type, u32 index) {
 	Entity_Reference ref;
 	ref.id = id;
 	ref.type = type;
-	ref.offset = offset;
 	ref.index = index;
 	array_add(&scene->entity, ref);
 }
@@ -202,7 +201,7 @@ static Camera *iscene_add_camera(Scene *scene, Entity_Id id, Vec2 p) {
 	camera->type = Entity_Type_Camera;
 	camera->id = id;
 	camera->position = p;
-	iscene_add_entity(scene, id, Entity_Type_Camera, index * sizeof(Camera), index);
+	iscene_add_entity(scene, id, Entity_Type_Camera, index);
 	return camera;
 }
 
@@ -212,7 +211,7 @@ static Character *iscene_add_character(Scene *scene, Entity_Id id, Vec2 p) {
 	character->type = Entity_Type_Character;
 	character->id = id;
 	character->position = p;
-	iscene_add_entity(scene, id, Entity_Type_Character, index * sizeof(Character), index);
+	iscene_add_entity(scene, id, Entity_Type_Character, index);
 	return character;
 }
 
@@ -222,7 +221,7 @@ static Obstacle *iscene_add_obstacle(Scene *scene, Entity_Id id, Vec2 p) {
 	obstacle->type = Entity_Type_Obstacle;
 	obstacle->id = id;
 	obstacle->position = p;
-	iscene_add_entity(scene, id, Entity_Type_Obstacle, index * sizeof(Obstacle), index);
+	iscene_add_entity(scene, id, Entity_Type_Obstacle, index);
 	return obstacle;
 }
 
@@ -448,8 +447,15 @@ bool scene_find_entity(Scene *scene, Entity_Id id, Entity_Reference *ref) {
 	return false;
 }
 
-Entity *scene_entity_pointer(Scene *scene, Entity_Reference &ref) {	
-	return (Entity *)(scene->by_type.data[ref.type].data + ref.offset);
+Entity *scene_entity_pointer(Scene *scene, Entity_Reference &ref) {
+	static constexpr ptrsize ENTITY_TYPE_SIZE[] = {
+		sizeof(Camera),
+		sizeof(Character),
+		sizeof(Obstacle)
+	};
+	static_assert(static_count(ENTITY_TYPE_SIZE) == Entity_Type_Count);
+
+	return (Entity *)(scene->by_type.data[ref.type].data + ref.index * ENTITY_TYPE_SIZE[ref.type]);
 }
 
 const Array_View<Camera> scene_cameras(Scene *scene) {

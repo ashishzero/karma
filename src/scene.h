@@ -5,6 +5,7 @@
 #include "modules/core/data_structures.h"
 #include "entity.h"
 
+constexpr u32 SCENE_MAX_ENTITY_COUNT = 50000;
 constexpr r32 SCENE_VIEW_HEIGHT_HALF = 1;
 constexpr int SCENE_SIMULATION_MAX_ITERATION = 5;
 constexpr r32 SCENE_SIMULATION_CORRECTION_ALPHA = 0.8f;
@@ -27,7 +28,6 @@ struct Entity_Reference {
 	Entity_Id	id;
 	Entity_Type type;
 	u32			index;
-	u32			offset;
 };
 
 struct Scene {
