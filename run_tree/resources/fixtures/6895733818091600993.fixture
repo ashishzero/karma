@@ -1,7 +1,7 @@
 resource: #0
    id: #0
       handle: 6895733818091600993
-   name: "Ploygon"
+   name: "Polygon"
 fixture_count: 1
 shape: 3
 shape_data: { 11, [ #0

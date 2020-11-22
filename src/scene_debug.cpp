@@ -170,15 +170,15 @@ bool editor_handle_event(const Event &event, Scene *scene, Editor *editor) {
 inline void ieditor_reset(Scene *scene, Editor *editor, Editor_Mode new_mode) {
 	editor->level.hovered_body = nullptr;
 	editor->level.selected_body = nullptr;
-	editor->level.select_camera_index = -1;
+	editor->level.selected_camera_index = -1;
 	editor->gizmo.render_type = Gizmo_Render_Type_NONE;
 	editor->gizmo.type = Gizmo_Type_NONE;
 	editor->camera.behaviour = 0;
 
 	if (editor->mode == Editor_Mode_ENTITY_EDITOR) {
 		scene_reload_resources(scene);
-	} 
-	
+	}
+
 	if (editor->mode != Editor_Mode_ENTITY_EDITOR && new_mode != Editor_Mode_ENTITY_EDITOR) {
 		scene_reload_level(scene);
 	}
@@ -203,6 +203,9 @@ void editor_set_mode_level_editor(Scene *scene, Editor *editor) {
 	editor->entity.added_vertex_index = -1;
 	editor->entity.vertex_is_valid = false;
 	editor->level.new_entity_type = Entity_Type_Character;
+	editor->level.selected_resource_index = 0;
+	editor->level.preview_shape_scale = 150.0f;
+	editor->level.preview_shapes = true;
 }
 
 void editor_set_mode_entity_editor(Scene *scene, Editor *editor, Resource_Id id, const Resource_Name &name, Fixture *fixtures, u32 fixture_count) {
@@ -257,19 +260,19 @@ void editor_set_mode_entity_editor(Scene *scene, Editor *editor, Resource_Id id,
 }
 
 Camera *ieditor_get_selected_camera(Scene *scene, Editor *editor) {
-	int index = editor->level.select_camera_index;
+	int index = editor->level.selected_camera_index;
 	auto cameras = scene_cameras(scene);
 	if (index >= 0 && index < cameras.count) {
 		return &cameras[index];
 	} else {
-		editor->level.select_camera_index = -1;
+		editor->level.selected_camera_index = -1;
 	}
 	return nullptr;
 }
 
 void ieditor_select_camera(Editor *editor, int index) {
 	editor->level.selected_body = nullptr;
-	editor->level.select_camera_index = index;
+	editor->level.selected_camera_index = index;
 }
 
 void ieditor_deselect_camera(Scene *scene, Editor *editor) {
@@ -278,7 +281,7 @@ void ieditor_deselect_camera(Scene *scene, Editor *editor) {
 		editor->camera.behaviour = 0;
 		editor->camera.position = src->position;
 		editor->camera.distance = src->distance;
-		editor->level.select_camera_index = -1;
+		editor->level.selected_camera_index = -1;
 	}
 }
 
@@ -289,13 +292,13 @@ Camera *editor_rendering_camera(Scene *scene, Editor *editor) {
 		} break;
 
 		case Editor_Mode_GAME_DEVELOPER: {
-			if (editor->level.select_camera_index >= 0)
+			if (editor->level.selected_camera_index >= 0)
 				return ieditor_get_selected_camera(scene, editor);
 			return scene_primary_camera(scene);
 		} break;
 
 		case Editor_Mode_LEVEL_EDITOR: {
-			if (editor->level.select_camera_index >= 0)
+			if (editor->level.selected_camera_index >= 0)
 				return ieditor_get_selected_camera(scene, editor);
 			return &editor->camera;
 		} break;
@@ -1030,6 +1033,9 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 
 	if (new_entity_type_index != -1) {
 		editor->level.new_entity_type = (Entity_Type)new_entity_type_index;
+		editor->level.selected_resource_index = 0;
+		editor->level.preview_shape_scale = 150.0f;
+		editor->level.preview_shapes = true;
 		ImGui::OpenPopup("Resource Selection");
 	}
 
@@ -1043,16 +1049,41 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 
 		if (new_entity_type == Entity_Type_Camera) {
 			Camera camera;
-			Camera *src = scene_primary_camera(scene);
+			Camera *src = editor_rendering_camera(scene, editor);
 			ent_init_camera(&camera, src->position, src->distance);
 			scene_clone_entity(scene, &camera, src->position);
 			ImGui::CloseCurrentPopup();
 		}
 
-		#if 0
+		const Array_View<Resource_Fixture> resources_view = scene_resources(scene);
+		auto resources = resources_view.data;
+		int resource_count = (int)resources_view.count;
+
 		// Left
 		{
-			ImGui::BeginChild("Resources", ImVec2(100, 0), true);
+			static ImGuiTextFilter filter;
+			filter.Draw();
+
+			ImGui::BeginChild("Resource", ImVec2(200, 500), true);
+
+			int selected = editor->level.selected_resource_index;
+
+			for (int index = 0; index < resource_count; ++index) {
+				Resource_Fixture *r = resources + index;
+				ImGui::PushID((void *)r);
+
+				const char *name = r->name;
+
+				if (filter.PassFilter(name)) {
+					if (ImGui::Selectable(name, selected == index)) {
+						selected = index;
+					}
+				}
+
+				ImGui::PopID();
+			}
+
+			editor->level.selected_resource_index = selected;
 
 			ImGui::EndChild();
 		}
@@ -1060,15 +1091,119 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 
 		// Right
 		{
-			ImGui::BeginGroup();
-			ImGui::BeginChild("Resource View", ImVec2(0, -ImGui::GetFrameHeightWithSpacing()));
+			ImGui::BeginChild("Resource View", ImVec2(500, 500), true);
+
+			int selected = editor->level.selected_resource_index;
+
+			if (resource_count && selected >= 0) {
+				Resource_Fixture *r = resources + selected;
+
+				ImVec2 canvas_p0 = ImGui::GetCursorScreenPos();
+				ImVec2 canvas_sz = ImGui::GetContentRegionAvail();
+				if (canvas_sz.x < 50.0f) canvas_sz.x = 50.0f;
+				if (canvas_sz.y < 50.0f) canvas_sz.y = 50.0f;
+				ImVec2 canvas_p1 = ImVec2(canvas_p0.x + canvas_sz.x, canvas_p0.y + canvas_sz.y);
+
+				ImGuiIO &io = ImGui::GetIO();
+
+				if (io.MouseWheel) {
+					editor->level.preview_shape_scale *= powf(0.5f, -io.DeltaTime * io.MouseWheel * 7);
+				}
+
+				ImDrawList *draw_list = ImGui::GetWindowDrawList();
+
+				ImU32 grid_color = IM_COL32(200, 200, 200, 40);
+				ImU32 shape_color = IM_COL32(255, 255, 0, 255);
+				r32   scale_scalar = editor->level.preview_shape_scale;
+				Vec2  shape_scale = vec2(scale_scalar, -scale_scalar);
+
+				if (editor->level.preview_shapes) {
+					Fixture *f = r->fixtures;
+					int fixture_count = r->fixture_count;
+
+					const ImVec2 origin(0.5f * (canvas_p0.x + canvas_p1.x), 0.5f * (canvas_p0.y + canvas_p1.y));
+
+					for (int index = 0; index < fixture_count; ++index, ++f) {
+						switch (f->shape) {
+							case Fixture_Shape_Circle: {
+								auto shape = fixture_get_shape(f, Circle);
+								draw_list->AddCircle(origin + vec2_hadamard(shape_scale, shape->center), scale_scalar * shape->radius, shape_color);
+							} break;
+
+							case Fixture_Shape_Mm_Rect: {
+								auto shape = fixture_get_shape(f, Mm_Rect);
+								draw_list->AddRect(origin + vec2_hadamard(shape_scale, shape->min), origin + vec2_hadamard(shape_scale, shape->max), shape_color);
+							} break;
+
+							case Fixture_Shape_Capsule: {
+								auto shape = fixture_get_shape(f, Capsule);
+								Vec2 capsule_dir = shape->b - shape->a;
+								Vec2 capsule_norm = vec2_normalize(vec2(capsule_dir.y, capsule_dir.x)) * shape->radius * scale_scalar;
+
+								Vec2 a, b, c, d;
+								a = origin + vec2_hadamard(shape_scale, shape->a) - capsule_norm;
+								b = origin + vec2_hadamard(shape_scale, shape->a) + capsule_norm;
+								c = origin + vec2_hadamard(shape_scale, shape->b) + capsule_norm;
+								d = origin + vec2_hadamard(shape_scale, shape->b) - capsule_norm;
+
+								r32 radius = shape->radius * scale_scalar;
+								draw_list->AddCircle(origin + vec2_hadamard(shape->a, shape_scale), radius, shape_color);
+								draw_list->AddCircle(origin + vec2_hadamard(shape->b, shape_scale), radius, shape_color);
+
+								draw_list->AddLine(a, d, shape_color);
+								draw_list->AddLine(b, c, shape_color);
+							} break;
+
+							case Fixture_Shape_Polygon: {
+								auto shape = fixture_get_shape(f, Polygon);
+								const Vec2 *p, *q;
+								p = shape->vertices;
+								u32 vertex_count = shape->vertex_count;
+
+								for (u32 index = 0; index < vertex_count - 1; ++index) {
+									q = p + 1;
+									draw_list->AddLine(origin + vec2_hadamard(*p, shape_scale), origin + vec2_hadamard(*q, shape_scale), shape_color);
+									p = q;
+								}
+								draw_list->AddLine(origin + vec2_hadamard(*shape->vertices, shape_scale), origin + vec2_hadamard(*p, shape_scale), shape_color);
+							} break;
+						}
+					}
+				}
+
+				ImGui::Text("id: %zu | name: %s", r->id, r->name);
+				ImGui::Checkbox("Shapes##Preview", &editor->level.preview_shapes);
+
+			} else {
+				ImGui::TextColored(ImVec4(0.2f, 0.8f, 0.3f, 1.0f), "No resource selected!");
+			}
 
 			ImGui::EndChild();
-			ImGui::EndGroup();
 		}
-		#endif
+
+		ImGui::SetCursorPosX(250);
 
 		if (ImGui::Button("Select", ImVec2(120, 0))) {
+			Camera *camera = editor_rendering_camera(scene, editor);
+
+			switch (new_entity_type) {
+				case Entity_Type_Character: {
+					Character character;
+					Rigid_Body body;
+					ent_init_character(&character, camera->position, &body, resources[editor->level.selected_resource_index]);
+					scene_clone_entity(scene, &character, camera->position);
+				} break;
+
+				case Entity_Type_Obstacle: {
+					Obstacle obstacle;
+					Rigid_Body body;
+					ent_init_obstacle(&obstacle, camera->position, &body, resources[editor->level.selected_resource_index]);
+					scene_clone_entity(scene, &obstacle, camera->position);
+				} break;
+
+				invalid_default_case();
+			}
+
 			ImGui::CloseCurrentPopup();
 		}
 
@@ -1135,7 +1270,7 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 
 		const Array_View<Camera> cameras = scene_cameras(scene);
 		int count = (int)cameras.count;
-		int selected = editor->level.select_camera_index;
+		int selected = editor->level.selected_camera_index;
 		for (int index = 0; index < count; index++) {
 			auto &c = cameras[index];
 			ImGui::PushID((void *)&c);
@@ -1166,7 +1301,7 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 	Entity *entity = nullptr;
 	if (editor->level.selected_body) {
 		entity = scene_find_entity(scene, editor->level.selected_body->entity_id);
-	} else if (editor->level.select_camera_index >= 0) {
+	} else if (editor->level.selected_camera_index >= 0) {
 		entity = ieditor_get_selected_camera(scene, editor);
 	}
 

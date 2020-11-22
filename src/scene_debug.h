@@ -47,11 +47,14 @@ enum Editor_Flags : u32 {
 struct Editor_Level {
 	Rigid_Body *hovered_body;
 	Rigid_Body *selected_body;
-	int			select_camera_index;
+	int			selected_camera_index;
 	Level_Name	name_storage;
 	bool		name_is_valid;
 
-	Entity_Type new_entity_type;
+	Entity_Type		new_entity_type;
+	int				selected_resource_index;
+	r32				preview_shape_scale;
+	bool			preview_shapes;
 };
 
 constexpr u32 MAXIMUM_POLYGON_VERTICES	= 100;

@@ -81,7 +81,8 @@ Resource_Fixture *	scene_find_resource_fixture_from_fixture(Scene *scene, Fixtur
 Entity *scene_clone_entity(Scene *scene, Entity *entity, Vec2 p);
 Entity *scene_find_entity(Scene *scene, Entity_Id id);
 
-const Array_View<Camera> scene_cameras(Scene *scene);
+const Array_View<Camera>			scene_cameras(Scene *scene);
+const Array_View<Resource_Fixture>	scene_resources(Scene *scene);
 
 //
 //
@@ -175,11 +176,11 @@ inline void ent_init_camera(Camera *camera, Vec2 p, r32 distance) {
 	camera->behaviour = 0;
 }
 
-inline void ent_init_character(Character *character, Vec2 p, r32 radius, Rigid_Body *body, Resource_Fixture &resource) {
+inline void ent_init_character(Character *character, Vec2 p, Rigid_Body *body, Resource_Fixture &resource) {
 	character->id.handle = 0;
 	character->type = Entity_Type_Character;
 	character->position = p;
-	character->radius = radius;
+	character->radius = 0.1f;
 	character->color = vec4(1);
 	ent_rigid_body_init(character, body, Rigid_Body_Type_Dynamic, resource);
 	character->rigid_body = body;

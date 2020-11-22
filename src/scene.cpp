@@ -231,6 +231,7 @@ static Rigid_Body *iscene_create_new_rigid_body(Scene *scene, Entity_Id entity_i
 	if (src) {
 		memcpy(body, src, sizeof(Rigid_Body));
 	}
+	body->entity_id = entity_id;
 	return body;
 }
 
@@ -432,6 +433,10 @@ Entity *scene_find_entity(Scene *scene, Entity_Id id) {
 
 const Array_View<Camera> scene_cameras(Scene *scene) {
 	return scene->by_type.camera;
+}
+
+const Array_View<Resource_Fixture> scene_resources(Scene *scene) {
+	return scene->resource_fixtures;
 }
 
 //
