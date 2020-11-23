@@ -187,195 +187,104 @@ static u64 iscene_generate_unique_id(Scene *scene) {
 	return id;
 }
 
-inline u32 entity_hash_function(Entity_Id id) {
+inline u32 entity_hash_index(Entity_Id id) {
 	// same as this, but only works when SCENE_MAX_ENTITY_COUNT is the power of 2
 	// return id.handle % SCENE_MAX_ENTITY_COUNT;
 	return (u32)(id.handle & (SCENE_MAX_ENTITY_COUNT - 1));
 }
 
-inline u32 iscene_search_entity_reference(Entity_Hash_Table *table, Entity_Id id) {
-	u32 index = entity_hash_function(id);
-
-	Entity_Hash_Table::Key *key;
-	Entity_Hash_Table::Key *keys = table->keys;
-
-	for (; index < SCENE_MAX_ENTITY_COUNT; ++index) {
-		key = keys + index;
-		if (key->slot == Entity_Hash_Table::Slot_EMPTY || key->id.handle == id.handle)
-			return index;
-	}
-
-	u32 count = index;
-	for (index = 0; index < count; ++index) {
-		key = keys + index;
-		if (key->slot == Entity_Hash_Table::Slot_EMPTY || key->id.handle == id.handle)
-			return  index;
-	}
-
-	invalid_code_path();
-
-	return SCENE_MAX_ENTITY_COUNT;
+inline u32 entity_hash_index_probe(u32 hash_index) {
+	return (hash_index + 1) & (SCENE_MAX_ENTITY_COUNT - 1);
 }
 
 inline u32 iscene_search_if_entity_reference_is_present(Entity_Hash_Table *table, Entity_Id id) {
-	u32 index = entity_hash_function(id);
+	u32 hash_index = entity_hash_index(id);
 
-	Entity_Hash_Table::Key *key;
 	Entity_Hash_Table::Key *keys = table->keys;
 
-	for (; index < SCENE_MAX_ENTITY_COUNT; ++index) {
-		key = keys + index;
-		if (key->slot == Entity_Hash_Table::Slot_EMPTY || key->id.handle == id.handle)
-			return index;
-	}
+	u32 index = hash_index;
+	Entity_Hash_Table::Key *key = keys + index;
 
-	u32 count = index;
-	for (index = 0; index < count; ++index) {
+	while (key->slot != Entity_Hash_Table::Slot::EMPTY && entity_hash_index(key->id) <= hash_index) {
+		if (key->id.handle == id.handle)
+			return index;
+		index = entity_hash_index_probe(index);
 		key = keys + index;
-		if (key->slot == Entity_Hash_Table::Slot_EMPTY || key->id.handle == id.handle)
-			return  index;
 	}
 
 	return SCENE_MAX_ENTITY_COUNT;
 }
 
-inline Entity_Reference *iscene_insert_entity_reference(Entity_Hash_Table *table, Entity_Id id, Entity_Type ent_type, u32 ent_index) {
+inline u32 iscene_search_entity_reference(Entity_Hash_Table *table, Entity_Id id) {
+	u32 index = iscene_search_if_entity_reference_is_present(table, id);
+	assert(index != SCENE_MAX_ENTITY_COUNT);
+	return index;
+}
+
+inline Entity_Reference *iscene_get_entity_reference(Entity_Hash_Table *table, Entity_Id id) {
+	u32 index = iscene_search_entity_reference(table, id);
+	Entity_Reference *slot = table->slots + index;
+	return slot;
+}
+
+inline void iscene_insert_entity_reference(Entity_Hash_Table *table, Entity_Id id, Entity_Reference ref) {
 	assert(table->count < SCENE_MAX_ENTITY_COUNT);
 
-	u32 index = iscene_search_entity_reference(table, id);
-	Entity_Hash_Table::Key *key = table->keys + index;
-	Entity_Reference *slot = table->slots + index;
-	slot->type = ent_type;
-	slot->index = ent_index;
+	u32 hash_index = entity_hash_index(id);
 
-	if (key->slot == Entity_Hash_Table::Slot_EMPTY) {
-		key->id = id;
-		key->slot = Entity_Hash_Table::Slot_OCCUPIED;
-		table->count += 1;
+	Entity_Hash_Table::Key *keys = table->keys;
+
+	u32 index = hash_index;
+	Entity_Hash_Table::Key *key = keys + index;
+	u32 next_hash_index = entity_hash_index(key->id);
+
+	while (true) {
+		while (key->slot == Entity_Hash_Table::Slot::OCCUPIED && next_hash_index <= hash_index) {
+			if (key->id.handle == id.handle) {
+				key->id = id;
+				key->slot = Entity_Hash_Table::Slot::OCCUPIED;
+				table->slots[index] = ref;
+				table->count += 1;
+				return;
+			}
+			index = entity_hash_index_probe(index);
+			key = keys + index;
+			next_hash_index = entity_hash_index(key->id);
+		}
+
+		if (key->slot != Entity_Hash_Table::Slot::EMPTY) {
+			Entity_Reference temp_ref;
+			temp_ref = table->slots[index];
+			table->slots[index] = ref;
+			ref = temp_ref;
+
+			Entity_Id temp_id;
+			temp_id = key->id;
+			key->id = id;
+			id = temp_id;
+
+			hash_index = next_hash_index;
+
+			index = entity_hash_index_probe(index);
+			key = keys + index;
+			next_hash_index = entity_hash_index(key->id);
+		} else {
+			key->id = id;
+			key->slot = Entity_Hash_Table::Slot::OCCUPIED;
+			table->slots[index] = ref;
+			table->count += 1;
+			return;
+		}
 	}
-
-	return slot;
 }
 
 inline void iscene_delete_entity_reference(Entity_Hash_Table *table, Entity_Id id) {
 	assert(table->count > 0);
 
-	u32 index = iscene_search_entity_reference(table, id);
-	Entity_Hash_Table::Key *key = table->keys + index;
-	Entity_Reference *slot = table->slots + index;
 
-	assert(key->slot == Entity_Hash_Table::Slot_OCCUPIED);
-
-	key->slot = Entity_Hash_Table::Slot_EMPTY;
-	table->count -= 1;
-
-	Entity_Hash_Table::Key *next_key;
-	Entity_Reference *next_slot;
-	u32 next_index;
-
-	bool continue_searching = true;
-	Entity_Hash_Table::Key *keys = table->keys;
-
-	for (; index < SCENE_MAX_ENTITY_COUNT; ++index) {
-		next_key = keys + index;
-		if (next_key->slot == Entity_Hash_Table::Slot_EMPTY) {
-			continue_searching = false;
-			break;
-		}
-
-		next_index = entity_hash_function(next_key->id);
-		if (next_index <= index) {
-			next_slot = table->slots + index;
-			*key = *next_key;
-			*slot = *next_slot;
-			slot = next_slot;
-			
-			key->slot = Entity_Hash_Table::Slot_EMPTY;
-		}
-	}
-
-	if (continue_searching) {
-		u32 count = index;
-		for (index = 0; index < count; ++index) {
-			next_key = keys + index;
-			if (next_key->slot == Entity_Hash_Table::Slot_EMPTY) {
-				continue_searching = false;
-				break;
-			}
-
-			next_index = entity_hash_function(next_key->id);
-			if (next_index <= index) {
-				next_slot = table->slots + index;
-				*key = *next_key;
-				*slot = *next_slot;
-				slot = next_slot;
-
-				key->slot = Entity_Hash_Table::Slot_EMPTY;
-			}
-		}
-	}
 }
 
 inline bool iscene_delete_entity_reference_if_present(Entity_Hash_Table *table, Entity_Id id, Entity_Reference *data) {
-	u32 index = iscene_search_entity_reference(table, id);
-	Entity_Hash_Table::Key *key = table->keys + index;
-	Entity_Reference *slot = table->slots + index;
-
-	if (key->slot == Entity_Hash_Table::Slot_OCCUPIED) {
-		*data = *slot;
-
-		key->slot = Entity_Hash_Table::Slot_EMPTY;
-		table->count -= 1;
-
-		Entity_Hash_Table::Key *next_key;
-		Entity_Reference *next_slot;
-		u32 next_index;
-
-		bool continue_searching = true;
-		Entity_Hash_Table::Key *keys = table->keys;
-
-		for (; index < SCENE_MAX_ENTITY_COUNT; ++index) {
-			next_key = keys + index;
-			if (next_key->slot == Entity_Hash_Table::Slot_EMPTY) {
-				continue_searching = false;
-				break;
-			}
-
-			next_index = entity_hash_function(next_key->id);
-			if (next_index <= index) {
-				next_slot = table->slots + index;
-				*key = *next_key;
-				*slot = *next_slot;
-				slot = next_slot;
-
-				key->slot = Entity_Hash_Table::Slot_EMPTY;
-			}
-		}
-
-		if (continue_searching) {
-			u32 count = index;
-			for (index = 0; index < count; ++index) {
-				next_key = keys + index;
-				if (next_key->slot == Entity_Hash_Table::Slot_EMPTY) {
-					continue_searching = false;
-					break;
-				}
-
-				next_index = entity_hash_function(next_key->id);
-				if (next_index <= index) {
-					next_slot = table->slots + index;
-					*key = *next_key;
-					*slot = *next_slot;
-					slot = next_slot;
-
-					key->slot = Entity_Hash_Table::Slot_EMPTY;
-				}
-			}
-		}
-
-		return true;
-	}
-
 	return false;
 }
 
@@ -385,7 +294,7 @@ inline Camera *iscene_add_camera(Scene *scene, Entity_Id id, Vec2 p) {
 	camera->type = Entity_Type_Camera;
 	camera->id = id;
 	camera->position = p;
-	iscene_insert_entity_reference(&scene->entity_table, id, Entity_Type_Camera, index);
+	iscene_insert_entity_reference(&scene->entity_table, id, { Entity_Type_Camera, index });
 	return camera;
 }
 
@@ -395,7 +304,7 @@ inline Character *iscene_add_character(Scene *scene, Entity_Id id, Vec2 p) {
 	character->type = Entity_Type_Character;
 	character->id = id;
 	character->position = p;
-	iscene_insert_entity_reference(&scene->entity_table, id, Entity_Type_Character, index);
+	iscene_insert_entity_reference(&scene->entity_table, id, { Entity_Type_Character, index });
 	return character;
 }
 
@@ -405,7 +314,7 @@ inline Obstacle *iscene_add_obstacle(Scene *scene, Entity_Id id, Vec2 p) {
 	obstacle->type = Entity_Type_Obstacle;
 	obstacle->id = id;
 	obstacle->position = p;
-	iscene_insert_entity_reference(&scene->entity_table, id, Entity_Type_Obstacle, index);
+	iscene_insert_entity_reference(&scene->entity_table, id, { Entity_Type_Obstacle, index });
 	return obstacle;
 }
 
@@ -448,7 +357,7 @@ Scene *scene_create() {
 	scene->entity_table.slots = (Entity_Reference *)memory_allocate(sizeof(Entity_Reference) * SCENE_MAX_ENTITY_COUNT);
 	scene->entity_table.count = 0;
 
-	memset(scene->entity_table.keys, 0, sizeof(sizeof(Entity_Hash_Table::Key) * SCENE_MAX_ENTITY_COUNT));
+	memset(scene->entity_table.keys, 0, sizeof(Entity_Hash_Table::Key) * SCENE_MAX_ENTITY_COUNT);
 
 	circular_linked_list_init(&scene->rigid_bodies, context.allocator);
 
@@ -619,8 +528,7 @@ Entity *scene_clone_entity(Scene *scene, Entity *src, Vec2 p) {
 }
 
 Entity_Reference scene_get_entity(Scene *scene, Entity_Id id) {
-	u32 index = iscene_search_entity_reference(&scene->entity_table, id);
-	return scene->entity_table.slots[index];
+	return *iscene_get_entity_reference(&scene->entity_table, id);
 }
 
 bool scene_find_entity(Scene *scene, Entity_Id id, Entity_Reference *ref) {
@@ -751,13 +659,13 @@ Camera *scene_primary_camera(Scene *scene) {
 //
 //
 
-void scene_remove_entity(Scene *scene, Entity_Reference &ref) {
-	array_add(&scene->removed_entity[ref.type], ref.index);
+void scene_remove_entity(Scene *scene, Entity_Reference &ref, Entity_Id id) {
+	array_add(&scene->removed_entity[ref.type], id);
 }
 
 void scene_remove_entity(Scene *scene, Entity_Id id) {
 	Entity_Reference ref = scene_get_entity(scene, id);
-	scene_remove_entity(scene, ref);
+	scene_remove_entity(scene, ref, id);
 }
 
 //
@@ -908,16 +816,26 @@ void scene_update(Scene *scene) {
 }
 
 void scene_end(Scene *scene) {
-	Array<u32> *rma;
+	Array<Entity_Id> *rma;
 	s64 count;
+
+	Entity_Reference ref;
+	Entity_Id id;
 
 	{
 		rma = scene->removed_entity + Entity_Type_Camera;
 		count = rma->count;
 		auto &cameras = scene->by_type.camera;
 		for (s64 index = 0; index < count; ++index) {
-			auto rm_index = rma->data[index];
-			array_remove(&cameras, rm_index);
+			id = rma->data[index];
+			if (iscene_delete_entity_reference_if_present(&scene->entity_table, id, &ref)) {
+				cameras[ref.index] = cameras[cameras.count - 1];
+				cameras.count -= 1;
+				if (ref.index < cameras.count) {
+					auto data = iscene_get_entity_reference(&scene->entity_table, cameras[ref.index].id);
+					data->index = ref.index;
+				}
+			}
 		}
 	}
 
@@ -926,20 +844,34 @@ void scene_end(Scene *scene) {
 		count = rma->count;
 		auto &characters = scene->by_type.character;
 		for (s64 index = 0; index < count; ++index) {
-			auto rm_index = rma->data[index];
-			iscene_destroy_rigid_body(scene, characters[rm_index].rigid_body);
-			array_remove(&characters, rm_index);
+			id = rma->data[index];
+			if (iscene_delete_entity_reference_if_present(&scene->entity_table, id, &ref)) {
+				iscene_destroy_rigid_body(scene, characters[ref.index].rigid_body);
+				characters[ref.index] = characters[characters.count - 1];
+				characters.count -= 1;
+				if (ref.index < characters.count) {
+					auto data = iscene_get_entity_reference(&scene->entity_table, characters[ref.index].id);
+					data->index = ref.index;
+				}
+			}
 		}
 	}
 
 	{
 		rma = scene->removed_entity + Entity_Type_Obstacle;
 		count = rma->count;
-		auto &osbtacles = scene->by_type.obstacle;
+		auto &obstacles = scene->by_type.obstacle;
 		for (s64 index = 0; index < count; ++index) {
-			auto rm_index = rma->data[index];
-			iscene_destroy_rigid_body(scene, osbtacles[rm_index].rigid_body);
-			array_remove(&osbtacles, rm_index);
+			id = rma->data[index];
+			if (iscene_delete_entity_reference_if_present(&scene->entity_table, id, &ref)) {
+				iscene_destroy_rigid_body(scene, obstacles[ref.index].rigid_body);
+				obstacles[ref.index] = obstacles[obstacles.count - 1];
+				obstacles.count -= 1;
+				if (ref.index < obstacles.count) {
+					auto data = iscene_get_entity_reference(&scene->entity_table, obstacles[ref.index].id);
+					data->index = ref.index;
+				}
+			}
 		}
 	}
 }

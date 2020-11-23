@@ -1314,9 +1314,8 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 	Entity_Reference entity_ref;
 	Entity *entity = nullptr;
 	if (editor->level.selected_body) {
-		if (scene_find_entity(scene, editor->level.selected_body->entity_id, &entity_ref)) {
-			entity = scene_entity_pointer(scene, entity_ref);
-		}
+		entity_ref = scene_get_entity(scene, editor->level.selected_body->entity_id);
+		entity = scene_entity_pointer(scene, entity_ref);
 	} else if (editor->level.selected_camera_index >= 0) {
 		entity = ieditor_get_selected_camera(scene, editor);
 		entity_ref = scene_get_entity(scene, entity->id);
@@ -1387,7 +1386,7 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 	}
 
 	if (ImGui::Button("Remove##Entity")) {
-		scene_remove_entity(scene, entity_ref);
+		scene_remove_entity(scene, entity_ref, entity->id);
 		ieditor_deselect_body(scene, editor);
 	}
 
