@@ -1386,7 +1386,7 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 	}
 
 	if (ImGui::Button("Remove##Entity")) {
-		scene_remove_entity(scene, entity_ref, entity->id);
+		scene_remove_entity_from_level(scene, entity_ref, entity->id);
 		ieditor_deselect_body(scene, editor);
 	}
 

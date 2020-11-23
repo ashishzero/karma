@@ -741,6 +741,22 @@ void scene_remove_entity(Scene *scene, Entity_Id id) {
 	scene_remove_entity(scene, ref, id);
 }
 
+void scene_remove_entity_from_level(Scene *scene, Entity_Reference &ref, Entity_Id id) {
+	scene_remove_entity(scene, ref, id);
+	Level *level = scene_current_level_pointer(scene);
+	s64 index = array_find(&level->resources, [](const Resource_Entity &r, Entity_Id id) { return r.id.handle == id.handle; }, id);
+	if (index >= 0) {
+		array_remove(&level->resources, index);
+		system_remove_file(tprintf("resources/levels/%s/%zu.ent", level->name, id.handle));
+	}
+}
+
+void scene_remove_entity_from_level(Scene *scene, Entity_Id id) {
+	Entity_Reference ref = scene_get_entity(scene, id);
+	scene_remove_entity_from_level(scene, ref, id);
+}
+
+
 //
 //
 //

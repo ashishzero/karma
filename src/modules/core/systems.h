@@ -434,6 +434,8 @@ void system_close_file(System_File *file);
 
 Array_View<System_Find_File_Info> system_find_files(const String directory, const String extension, bool recursive);
 
+void system_remove_file(const String path);
+
 enum Create_Directory {
 	Create_Directory_SUCCESS,
 	Create_Directory_ALREADY_EXIST,

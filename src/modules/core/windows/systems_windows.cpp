@@ -1132,6 +1132,15 @@ Array_View<System_Find_File_Info> system_find_files(const String directory, cons
 	return items;
 }
 
+void system_remove_file(const String path) {
+	int      length = MultiByteToWideChar(CP_UTF8, 0, (char *)path.data, (int)path.count, 0, 0);
+	wchar_t *wpath = (wchar_t *)tallocate((length + 1) * sizeof(wchar_t));
+	MultiByteToWideChar(CP_UTF8, 0, (char *)path.data, (int)path.count, wpath, length);
+	wpath[length] = 0;
+
+	DeleteFileW(wpath);
+}
+
 Create_Directory system_create_directory(const String path) {
 	int      length = MultiByteToWideChar(CP_UTF8, 0, (char *)path.data, (int)path.count, 0, 0);
 	wchar_t *wpath = (wchar_t *)tallocate((length + 1) * sizeof(wchar_t));
