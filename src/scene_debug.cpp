@@ -1022,7 +1022,7 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 	int new_entity_type_index = -1;
 	bool create_new_level = false;
 	bool open_another_level = false;
-
+	
 	if (ImGui::BeginMenuBar()) {
 		if (ImGui::BeginMenu("File")) {
 
