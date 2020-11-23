@@ -5,7 +5,7 @@
 #include "modules/core/data_structures.h"
 #include "entity.h"
 
-constexpr u32 SCENE_MAX_ENTITY_COUNT = 50000;
+constexpr u32 SCENE_MAX_ENTITY_COUNT = 524288; // NOTE: This must be power of 2 (2^19)
 constexpr r32 SCENE_VIEW_HEIGHT_HALF = 1;
 constexpr int SCENE_SIMULATION_MAX_ITERATION = 5;
 constexpr r32 SCENE_SIMULATION_CORRECTION_ALPHA = 0.8f;
@@ -25,9 +25,24 @@ typedef bool(*Collision_Detector)(Fixture &a, Fixture &b, const Transform &ta, c
 using Rigid_Body_List = Circular_Linked_List<Rigid_Body>;
 
 struct Entity_Reference {
-	Entity_Id	id;
 	Entity_Type type;
 	u32			index;
+};
+
+struct Entity_Hash_Table {
+	enum Slot : u32 {
+		Slot_EMPTY,
+		Slot_OCCUPIED
+	};
+
+	struct Key {
+		Entity_Id	id;
+		Slot		slot;
+	};
+
+	Key *				keys;
+	Entity_Reference *	slots;
+	u32				count;
 };
 
 struct Scene {
@@ -42,7 +57,7 @@ struct Scene {
 		};
 	};
 
-	Array<Entity_Reference> entity;
+	Entity_Hash_Table entity_table;
 
 	Entity_By_Type	by_type;
 	Rigid_Body_List rigid_bodies;

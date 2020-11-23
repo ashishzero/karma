@@ -187,45 +187,229 @@ static u64 iscene_generate_unique_id(Scene *scene) {
 	return id;
 }
 
-static void iscene_add_entity(Scene *scene, Entity_Id id, Entity_Type type, u32 index) {
-	Entity_Reference ref;
-	ref.id = id;
-	ref.type = type;
-	ref.index = index;
-	array_add(&scene->entity, ref);
+inline u32 entity_hash_function(Entity_Id id) {
+	// same as this, but only works when SCENE_MAX_ENTITY_COUNT is the power of 2
+	// return id.handle % SCENE_MAX_ENTITY_COUNT;
+	return (u32)(id.handle & (SCENE_MAX_ENTITY_COUNT - 1));
 }
 
-static Camera *iscene_add_camera(Scene *scene, Entity_Id id, Vec2 p) {
+inline u32 iscene_search_entity_reference(Entity_Hash_Table *table, Entity_Id id) {
+	u32 index = entity_hash_function(id);
+
+	Entity_Hash_Table::Key *key;
+	Entity_Hash_Table::Key *keys = table->keys;
+
+	for (; index < SCENE_MAX_ENTITY_COUNT; ++index) {
+		key = keys + index;
+		if (key->slot == Entity_Hash_Table::Slot_EMPTY || key->id.handle == id.handle)
+			return index;
+	}
+
+	u32 count = index;
+	for (index = 0; index < count; ++index) {
+		key = keys + index;
+		if (key->slot == Entity_Hash_Table::Slot_EMPTY || key->id.handle == id.handle)
+			return  index;
+	}
+
+	invalid_code_path();
+
+	return SCENE_MAX_ENTITY_COUNT;
+}
+
+inline u32 iscene_search_if_entity_reference_is_present(Entity_Hash_Table *table, Entity_Id id) {
+	u32 index = entity_hash_function(id);
+
+	Entity_Hash_Table::Key *key;
+	Entity_Hash_Table::Key *keys = table->keys;
+
+	for (; index < SCENE_MAX_ENTITY_COUNT; ++index) {
+		key = keys + index;
+		if (key->slot == Entity_Hash_Table::Slot_EMPTY || key->id.handle == id.handle)
+			return index;
+	}
+
+	u32 count = index;
+	for (index = 0; index < count; ++index) {
+		key = keys + index;
+		if (key->slot == Entity_Hash_Table::Slot_EMPTY || key->id.handle == id.handle)
+			return  index;
+	}
+
+	return SCENE_MAX_ENTITY_COUNT;
+}
+
+inline Entity_Reference *iscene_insert_entity_reference(Entity_Hash_Table *table, Entity_Id id, Entity_Type ent_type, u32 ent_index) {
+	assert(table->count < SCENE_MAX_ENTITY_COUNT);
+
+	u32 index = iscene_search_entity_reference(table, id);
+	Entity_Hash_Table::Key *key = table->keys + index;
+	Entity_Reference *slot = table->slots + index;
+	slot->type = ent_type;
+	slot->index = ent_index;
+
+	if (key->slot == Entity_Hash_Table::Slot_EMPTY) {
+		key->id = id;
+		key->slot = Entity_Hash_Table::Slot_OCCUPIED;
+		table->count += 1;
+	}
+
+	return slot;
+}
+
+inline void iscene_delete_entity_reference(Entity_Hash_Table *table, Entity_Id id) {
+	assert(table->count > 0);
+
+	u32 index = iscene_search_entity_reference(table, id);
+	Entity_Hash_Table::Key *key = table->keys + index;
+	Entity_Reference *slot = table->slots + index;
+
+	assert(key->slot == Entity_Hash_Table::Slot_OCCUPIED);
+
+	key->slot = Entity_Hash_Table::Slot_EMPTY;
+	table->count -= 1;
+
+	Entity_Hash_Table::Key *next_key;
+	Entity_Reference *next_slot;
+	u32 next_index;
+
+	bool continue_searching = true;
+	Entity_Hash_Table::Key *keys = table->keys;
+
+	for (; index < SCENE_MAX_ENTITY_COUNT; ++index) {
+		next_key = keys + index;
+		if (next_key->slot == Entity_Hash_Table::Slot_EMPTY) {
+			continue_searching = false;
+			break;
+		}
+
+		next_index = entity_hash_function(next_key->id);
+		if (next_index <= index) {
+			next_slot = table->slots + index;
+			*key = *next_key;
+			*slot = *next_slot;
+			slot = next_slot;
+			
+			key->slot = Entity_Hash_Table::Slot_EMPTY;
+		}
+	}
+
+	if (continue_searching) {
+		u32 count = index;
+		for (index = 0; index < count; ++index) {
+			next_key = keys + index;
+			if (next_key->slot == Entity_Hash_Table::Slot_EMPTY) {
+				continue_searching = false;
+				break;
+			}
+
+			next_index = entity_hash_function(next_key->id);
+			if (next_index <= index) {
+				next_slot = table->slots + index;
+				*key = *next_key;
+				*slot = *next_slot;
+				slot = next_slot;
+
+				key->slot = Entity_Hash_Table::Slot_EMPTY;
+			}
+		}
+	}
+}
+
+inline bool iscene_delete_entity_reference_if_present(Entity_Hash_Table *table, Entity_Id id, Entity_Reference *data) {
+	u32 index = iscene_search_entity_reference(table, id);
+	Entity_Hash_Table::Key *key = table->keys + index;
+	Entity_Reference *slot = table->slots + index;
+
+	if (key->slot == Entity_Hash_Table::Slot_OCCUPIED) {
+		*data = *slot;
+
+		key->slot = Entity_Hash_Table::Slot_EMPTY;
+		table->count -= 1;
+
+		Entity_Hash_Table::Key *next_key;
+		Entity_Reference *next_slot;
+		u32 next_index;
+
+		bool continue_searching = true;
+		Entity_Hash_Table::Key *keys = table->keys;
+
+		for (; index < SCENE_MAX_ENTITY_COUNT; ++index) {
+			next_key = keys + index;
+			if (next_key->slot == Entity_Hash_Table::Slot_EMPTY) {
+				continue_searching = false;
+				break;
+			}
+
+			next_index = entity_hash_function(next_key->id);
+			if (next_index <= index) {
+				next_slot = table->slots + index;
+				*key = *next_key;
+				*slot = *next_slot;
+				slot = next_slot;
+
+				key->slot = Entity_Hash_Table::Slot_EMPTY;
+			}
+		}
+
+		if (continue_searching) {
+			u32 count = index;
+			for (index = 0; index < count; ++index) {
+				next_key = keys + index;
+				if (next_key->slot == Entity_Hash_Table::Slot_EMPTY) {
+					continue_searching = false;
+					break;
+				}
+
+				next_index = entity_hash_function(next_key->id);
+				if (next_index <= index) {
+					next_slot = table->slots + index;
+					*key = *next_key;
+					*slot = *next_slot;
+					slot = next_slot;
+
+					key->slot = Entity_Hash_Table::Slot_EMPTY;
+				}
+			}
+		}
+
+		return true;
+	}
+
+	return false;
+}
+
+inline Camera *iscene_add_camera(Scene *scene, Entity_Id id, Vec2 p) {
 	u32 index = (u32)scene->by_type.camera.count;
 	Camera *camera = array_add(&scene->by_type.camera);
 	camera->type = Entity_Type_Camera;
 	camera->id = id;
 	camera->position = p;
-	iscene_add_entity(scene, id, Entity_Type_Camera, index);
+	iscene_insert_entity_reference(&scene->entity_table, id, Entity_Type_Camera, index);
 	return camera;
 }
 
-static Character *iscene_add_character(Scene *scene, Entity_Id id, Vec2 p) {
+inline Character *iscene_add_character(Scene *scene, Entity_Id id, Vec2 p) {
 	u32 index = (u32)scene->by_type.character.count;
 	Character *character = array_add(&scene->by_type.character);
 	character->type = Entity_Type_Character;
 	character->id = id;
 	character->position = p;
-	iscene_add_entity(scene, id, Entity_Type_Character, index);
+	iscene_insert_entity_reference(&scene->entity_table, id, Entity_Type_Character, index);
 	return character;
 }
 
-static Obstacle *iscene_add_obstacle(Scene *scene, Entity_Id id, Vec2 p) {
+inline Obstacle *iscene_add_obstacle(Scene *scene, Entity_Id id, Vec2 p) {
 	u32 index = (u32)scene->by_type.obstacle.count;
 	Obstacle *obstacle = array_add(&scene->by_type.obstacle);
 	obstacle->type = Entity_Type_Obstacle;
 	obstacle->id = id;
 	obstacle->position = p;
-	iscene_add_entity(scene, id, Entity_Type_Obstacle, index);
+	iscene_insert_entity_reference(&scene->entity_table, id, Entity_Type_Obstacle, index);
 	return obstacle;
 }
 
-static Rigid_Body *iscene_create_new_rigid_body(Scene *scene, Entity_Id entity_id, const Rigid_Body *src) {
+inline Rigid_Body *iscene_create_new_rigid_body(Scene *scene, Entity_Id entity_id, const Rigid_Body *src) {
 	auto node = circular_linked_list_add(&scene->rigid_bodies);
 	Rigid_Body *body = &node->data;
 	if (src) {
@@ -235,7 +419,7 @@ static Rigid_Body *iscene_create_new_rigid_body(Scene *scene, Entity_Id entity_i
 	return body;
 }
 
-static void iscene_destroy_rigid_body(Scene *scene, Rigid_Body *rigid_body) {
+inline void iscene_destroy_rigid_body(Scene *scene, Rigid_Body *rigid_body) {
 	auto node = circular_linked_list_node_from_data(rigid_body);
 	circular_linked_list_remove(&scene->rigid_bodies, node);
 }
@@ -259,11 +443,11 @@ Scene *scene_create() {
 	array_resize(&scene->by_type.character, 100);
 	array_resize(&scene->by_type.obstacle, 1000);
 
-	scene->entity.count = scene->entity.capacity = 0;
-	scene->entity.data = nullptr;
-	scene->entity.allocator = context.allocator;
-	
-	array_resize(&scene->entity, 5000);
+	scene->entity_table.keys = (Entity_Hash_Table::Key *)memory_allocate(sizeof(Entity_Hash_Table::Key) * SCENE_MAX_ENTITY_COUNT);
+	scene->entity_table.slots = (Entity_Reference *)memory_allocate(sizeof(Entity_Reference) * SCENE_MAX_ENTITY_COUNT);
+	scene->entity_table.count = 0;
+
+	memset(scene->entity_table.keys, 0, sizeof(sizeof(Entity_Hash_Table::Key) * SCENE_MAX_ENTITY_COUNT));
 
 	circular_linked_list_init(&scene->rigid_bodies, context.allocator);
 
@@ -314,7 +498,8 @@ void scene_destroy(Scene *scene) {
 
 	circular_linked_list_clear(&scene->rigid_bodies);
 
-	array_free(&scene->entity);
+	memory_free(scene->entity_table.keys);
+	memory_free(scene->entity_table.slots);
 
 	for (u32 index = 0; index < Entity_Type_Count - 1; ++index) {
 		auto &data = scene->by_type.data[index];
@@ -376,7 +561,7 @@ Resource_Fixture *scene_find_resource_fixture(Scene *scene, Resource_Id id) {
 	return nullptr;
 }
 
-Resource_Fixture* scene_find_resource_fixture_from_fixture(Scene *scene, Fixture *fixture) {
+Resource_Fixture *scene_find_resource_fixture_from_fixture(Scene *scene, Fixture *fixture) {
 	s64 index = array_find(&scene->resource_fixtures, [](const Resource_Fixture &f, Fixture *ptr) { return f.fixtures == ptr; }, fixture);
 	assert(index >= 0);
 	return &scene->resource_fixtures[index];
@@ -414,34 +599,33 @@ Entity *scene_clone_entity(Scene *scene, Entity *src, Vec2 p) {
 			auto obstacle = iscene_add_obstacle(scene, id, p);
 			memcpy((u8 *)obstacle + sizeof(Entity), (u8 *)src + sizeof(Entity), sizeof(Obstacle) - sizeof(Entity));
 
-			obstacle->rigid_body = iscene_create_new_rigid_body(scene, id, ((Obstacle*)src)->rigid_body);
+			obstacle->rigid_body = iscene_create_new_rigid_body(scene, id, ((Obstacle *)src)->rigid_body);
 
 			Resource_Entity resource;
 			resource.id = id;
 			resource.fixture_id = scene_find_resource_fixture_from_fixture(scene, obstacle->rigid_body->fixtures)->id;
-			
+
 			Level *level = scene_current_level_pointer(scene);
 			array_add(&level->resources, resource);
 
 			result = obstacle;
 		} break;
 
-		invalid_code_path();
+			invalid_code_path();
 	}
 
 	return result;
 }
 
 Entity_Reference scene_get_entity(Scene *scene, Entity_Id id) {
-	auto res = array_find(&scene->entity, [](const Entity_Reference &a, Entity_Id id) { return a.id.handle == id.handle; }, id);
-	assert(res >= 0);
-	return scene->entity[res];
+	u32 index = iscene_search_entity_reference(&scene->entity_table, id);
+	return scene->entity_table.slots[index];
 }
 
 bool scene_find_entity(Scene *scene, Entity_Id id, Entity_Reference *ref) {
-	auto res = array_find(&scene->entity, [](const Entity_Reference &a, Entity_Id id) { return a.id.handle == id.handle; }, id);
-	if (res >= 0) {
-		*ref = scene->entity[res];
+	u32 index = iscene_search_if_entity_reference_is_present(&scene->entity_table, id);
+	if (index != SCENE_MAX_ENTITY_COUNT) {
+		*ref = scene->entity_table.slots[index];
 		return true;
 	}
 	return false;
@@ -572,7 +756,7 @@ void scene_remove_entity(Scene *scene, Entity_Reference &ref) {
 
 void scene_remove_entity(Scene *scene, Entity_Id id) {
 	Entity_Reference ref = scene_get_entity(scene, id);
-	scene_remove_entity(scene, ref);	
+	scene_remove_entity(scene, ref);
 }
 
 //
@@ -864,7 +1048,7 @@ inline bool iscene_render_fixture_enabled(Scene *scene, u32 *type) {
 	auto flags = scene->editor.flags;
 	if (mode == Editor_Mode_GAME) return false;
 	*type = (flags & (Editor_Flag_Bit_RENDER_FIXTURE | Editor_Flag_Bit_RENDER_BOUNDING_BOX));
-	return ((flags & Editor_Flag_Bit_RENDER_FIXTURE) || (flags & Editor_Flag_Bit_RENDER_BOUNDING_BOX) ) && 
+	return ((flags & Editor_Flag_Bit_RENDER_FIXTURE) || (flags & Editor_Flag_Bit_RENDER_BOUNDING_BOX)) &&
 		(mode == Editor_Mode_GAME_DEVELOPER || mode == Editor_Mode_LEVEL_EDITOR);
 }
 
@@ -929,7 +1113,7 @@ void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio) {
 			}
 		}
 	}
-	
+
 	if (iscene_render_collision_enabled(scene)) {
 		auto manifolds = scene->manifolds;
 		for (auto &m : manifolds) {
@@ -1157,7 +1341,7 @@ void scene_reload_resources(Scene *scene) {
 
 	if (scene->loaded_level != -1) {
 		Level *level = scene_current_level_pointer(scene);
-	
+
 		for_list(Rigid_Body, ptr, &scene->rigid_bodies) {
 			Rigid_Body &body = ptr->data;
 			Resource_Entity *r = iscene_level_find_resource(level, body.entity_id);
@@ -1179,7 +1363,6 @@ void scene_clean_resources(Scene *scene) {
 }
 
 void scene_clean_entities(Scene *scene) {
-	scene->entity.count = 0;
 	for (auto &character : scene->by_type.character) {
 		iscene_destroy_rigid_body(scene, character.rigid_body);
 	}
@@ -1189,7 +1372,9 @@ void scene_clean_entities(Scene *scene) {
 	scene->by_type.camera.count = 0;
 	scene->by_type.character.count = 0;
 	scene->by_type.obstacle.count = 0;
-	scene->entity.count = 0;
+
+	scene->entity_table.count = 0;
+	memset(scene->entity_table.keys, 0, sizeof(sizeof(Entity_Hash_Table::Key) * SCENE_MAX_ENTITY_COUNT));
 }
 
 void iscene_serialize_entity(Entity *entity, Resource_Entity *resource, Ostream *out) {
@@ -1415,17 +1600,17 @@ bool scene_save_level(Scene *scene) {
 
 bool scene_load_level(Scene *scene, const String name) {
 	scene_unload_current_level(scene);
-	
+
 	assert(name.count < sizeof(Level_Name) - 1);
 
 	// First search if the level if already loaded
 	u32 key = murmur3_32(name.data, name.count, 5656);
 	s32 index = (s32)array_find(&scene->levels, [](const Level &l, u32 key, const String name) {
 		return l.key == key && string_match(name, String(l.name, l.name_count));
-							}, key, name);
+								}, key, name);
 
 	const char *cname = tto_cstring(name);
-	
+
 	// Load from file is the level is not already loaded
 	if (index < 0) {
 		Level *level = iscene_add_new_level(scene, name, &index);
