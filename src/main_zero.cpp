@@ -95,8 +95,6 @@ int karma_user_zero() {
 	u64 frequency = system_get_frequency();
 	u64 counter = system_get_counter();
 
-	static r32 gravity = 0.0f;
-
 	while (running) {
 		Dev_TimedFrameBegin();
 

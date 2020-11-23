@@ -409,13 +409,14 @@ inline Obstacle *iscene_add_obstacle(Scene *scene, Entity_Id id, Vec2 p) {
 	return obstacle;
 }
 
-inline Rigid_Body *iscene_create_new_rigid_body(Scene *scene, Entity_Id entity_id, const Rigid_Body *src) {
+inline Rigid_Body *iscene_create_new_rigid_body(Scene *scene, Entity *entity, const Rigid_Body *src) {
 	auto node = circular_linked_list_add(&scene->rigid_bodies);
 	Rigid_Body *body = &node->data;
 	if (src) {
 		memcpy(body, src, sizeof(Rigid_Body));
 	}
-	body->entity_id = entity_id;
+	body->transform.p = entity->position;
+	body->entity_id = entity->id;
 	return body;
 }
 
@@ -583,7 +584,7 @@ Entity *scene_clone_entity(Scene *scene, Entity *src, Vec2 p) {
 			auto character = iscene_add_character(scene, id, p);
 			memcpy((u8 *)character + sizeof(Entity), (u8 *)src + sizeof(Entity), sizeof(Character) - sizeof(Entity));
 
-			character->rigid_body = iscene_create_new_rigid_body(scene, character->id, ((Character *)src)->rigid_body);
+			character->rigid_body = iscene_create_new_rigid_body(scene, character, ((Character *)src)->rigid_body);
 
 			Resource_Entity resource;
 			resource.id = id;
@@ -599,7 +600,7 @@ Entity *scene_clone_entity(Scene *scene, Entity *src, Vec2 p) {
 			auto obstacle = iscene_add_obstacle(scene, id, p);
 			memcpy((u8 *)obstacle + sizeof(Entity), (u8 *)src + sizeof(Entity), sizeof(Obstacle) - sizeof(Entity));
 
-			obstacle->rigid_body = iscene_create_new_rigid_body(scene, id, ((Obstacle *)src)->rigid_body);
+			obstacle->rigid_body = iscene_create_new_rigid_body(scene, obstacle, ((Obstacle *)src)->rigid_body);
 
 			Resource_Entity resource;
 			resource.id = id;
@@ -1424,7 +1425,7 @@ bool iscene_deserialize_entity(Scene *scene, Deserialize_State *state) {
 
 		case Entity_Type_Character: {
 			Character *character = iscene_add_character(scene, entity.id, entity.position);
-			character->rigid_body = iscene_create_new_rigid_body(scene, entity.id, nullptr);
+			character->rigid_body = iscene_create_new_rigid_body(scene, &entity, nullptr);
 			Resource_Entity resource;
 			if (deserialize_fmt_text(state, "resource", reflect_info<Resource_Entity>(), (char *)&resource) &&
 				deserialize_fmt_text(state, "data", reflect_info<Character>(), (char *)character) &&
@@ -1452,7 +1453,7 @@ bool iscene_deserialize_entity(Scene *scene, Deserialize_State *state) {
 
 		case Entity_Type_Obstacle: {
 			Obstacle *obstacle = iscene_add_obstacle(scene, entity.id, entity.position);
-			obstacle->rigid_body = iscene_create_new_rigid_body(scene, entity.id, nullptr);
+			obstacle->rigid_body = iscene_create_new_rigid_body(scene, &entity, nullptr);
 			Resource_Entity resource;
 
 			if (deserialize_fmt_text(state, "resource", reflect_info<Resource_Entity>(), (char *)&resource) &&
