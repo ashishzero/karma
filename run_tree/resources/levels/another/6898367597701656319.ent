@@ -1,0 +1,34 @@
+header: #0
+   id: #0
+      handle: 6898367597701656319
+   type: 1
+   position: #0
+      x: 0.000000
+      y: 0.000000
+resource: #0
+   id: #0
+      handle: 6898367597701656319
+   fixture_id: #0
+      handle: 6895733820386901951
+data: #0
+   radius: 0.100000
+   color: #0
+      x: 0.000000
+      y: 1.000000
+      z: 1.000000
+      w: 1.000000
+body: #0
+   type: 1
+   imass: 1.000000
+   drag: 5.000000
+   restitution: 0.000000
+   transform: #0
+      p: #0
+         x: 0.000000
+         y: 0.000000
+      xform: 
+         rows: [ #0
+            x: 1.000000
+            y: 0.000000, #0
+            x: 0.000000
+            y: 1.000000 ]

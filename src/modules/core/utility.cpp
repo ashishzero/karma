@@ -688,7 +688,8 @@ void serialize_text_basic(Ostream *out, Type *data, s64 count, const char *fmt) 
 			ostream_write_formatted(out, ", ");
 			data += i;
 		}
-		ostream_write_formatted(out, fmt, (Cast)*data);
+		if (count)
+			ostream_write_formatted(out, fmt, (Cast)*data);
 		ostream_write_formatted(out, " ]");
 	}
 }
@@ -718,7 +719,8 @@ void serialize_text_basic(Ostream *out, String *string, s64 count) {
 			string += i;
 		}
 		ostream_write_formatted(out, "\"");
-		ostream_write_buffer(out, string->data, string->count);
+		if (count)
+			ostream_write_buffer(out, string->data, string->count);
 		ostream_write_formatted(out, "\"");
 		ostream_write_formatted(out, " ]");
 	}
@@ -844,7 +846,8 @@ void serialize_text_recursive(Proc proc, Ostream *out, const Type_Info *info, ch
 			ostream_write_formatted(out, ", ");
 			data += info->size;
 		}
-		proc(out, (Cast_Info *)info, data, tab_count);
+		if (array_count)
+			proc(out, (Cast_Info *)info, data, tab_count);
 		ostream_write_formatted(out, " ]");
 	}
 }
@@ -1016,7 +1019,11 @@ bool parse_basic_array(Proc proc, Deserialize_State *w, Type *data, s64 count, E
 				}
 				data += 1;
 			}
-			return proc(w, data, params...) && parse_require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET);
+			if (count) {
+				if (!proc(w, data, params...))
+					return false;
+			}
+			return parse_require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET);
 		}
 	}
 	return false;
@@ -1176,7 +1183,11 @@ bool parse_recursive_array(Proc proc, Deserialize_State *w, const Type_Info *inf
 				}
 				data += info->size;
 			}
-			return proc(w, (const Cast_Info *)info, data) && parse_require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET);
+			if (array_count) {
+				if (!proc(w, (const Cast_Info *)info, data))
+					return false;
+			}
+			return parse_require_token(w, Token_Kind_CLOSE_SQUARE_BRACKET);
 		}
 	}
 	return false;

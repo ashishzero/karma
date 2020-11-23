@@ -1529,25 +1529,41 @@ Level *iscene_add_new_level(Scene *scene, const String name, s32 *index) {
 	level->key = murmur3_32(level->name, level->name_count, 5656);
 	level->resources.count = level->resources.capacity = 0;
 	level->resources.data = nullptr;
+	level->resources.allocator = context.allocator;
 	return level;
 }
 
 Level *iscene_create_new_level(Scene *scene, const String name, s32 *index) {
-	auto mark = push_temporary_allocator();
-	auto dirs = system_find_files("resources/levels", "*", false);
-	pop_temporary_allocator(mark);
-
-	for (auto &d : dirs) {
-		if (d.is_dir) {
-			if (string_match(d.name, ".") || string_match(d.name, ".."))
-				continue;
-
-			if (string_match(d.name, name))
-				return nullptr;
-		}
+	String path = tprintf("resources/levels/%s", tto_cstring(name));
+	if (system_create_directory(path) == Create_Directory_SUCCESS) {
+		return iscene_add_new_level(scene, name, index);
 	}
+	return nullptr;
+}
 
-	return iscene_add_new_level(scene, name, index);
+bool scene_create_new_level(Scene *scene, const String name) {
+	s32 index;
+	Level *level = iscene_create_new_level(scene, name, &index);
+	if (level) {
+		push_scoped_temporary_allocator();
+
+		Ostream out;
+		defer{ ostream_free(&out); };
+
+		serialize_fmt_text(&out, "level", reflect_info<Level>(), (char *)level);
+
+		System_File file;
+		if (!system_open_file(tprintf("resources/levels/%s/level", level->name), File_Operation_NEW, &file)) {
+			system_log(LOG_ERROR, "Scene", "%s level file could not be created. Failed to save level.", null_tprintf("resources/levels/%s", level->name));
+			return false;
+		}
+
+		ostream_build_out_file(&out, &file);
+		system_close_file(&file);
+
+		return true;
+	}
+	return false;
 }
 
 bool scene_save_level(Scene *scene) {

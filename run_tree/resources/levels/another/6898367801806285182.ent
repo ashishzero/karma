@@ -1,0 +1,16 @@
+header: #0
+   id: #0
+      handle: 6898367801806285182
+   type: 0
+   position: #0
+      x: 0.000000
+      y: 0.000000
+data: #0
+   distance: -0.711739
+   target_position: #0
+      x: 0.000000
+      y: 0.000000
+   target_distance: -0.711739
+   follow_factor: 1.000000
+   zoom_factor: 1.000000
+   behaviour: 2

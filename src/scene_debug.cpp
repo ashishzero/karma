@@ -1020,6 +1020,8 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 	ImGui::Begin("Level", nullptr, ImGuiWindowFlags_MenuBar);
 
 	int new_entity_type_index = -1;
+	bool create_new_level = false;
+	bool open_another_level = false;
 
 	if (ImGui::BeginMenuBar()) {
 		if (ImGui::BeginMenu("File")) {
@@ -1029,6 +1031,14 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 					editor_set_mode_level_editor(scene, editor);
 				}
 			} else {
+				if (ImGui::MenuItem("New##Level")) {
+					create_new_level = true;
+				}
+
+				if (ImGui::MenuItem("Open##Level")) {
+					open_another_level = true;
+				}
+
 				if (ImGui::MenuItem("Save##Level")) {
 					scene_save_level(scene);
 				}
@@ -1058,6 +1068,108 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 		}
 
 		ImGui::EndMenuBar();
+	}
+
+	if (create_new_level) {
+		editor->level.name_storage[0] = 0;
+		ImGui::OpenPopup("Create New Level");
+	}
+
+	if (ImGui::BeginPopupModal("Create New Level", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+		if (ImGui::InputText("Name", editor->level.name_storage, sizeof(Level_Name))) {
+			editor->level.name_is_valid = true;
+		}
+
+		if (!editor->level.name_is_valid) {
+			ImGui::TextColored(ImVec4(0.8f, 0.1f, 0.1f, 1.0f), "Level name already exist!");
+		}
+
+		if (editor->level.name_storage[0]) {
+			if (ImGui::Button("Create##New Level", ImVec2(120, 0))) {
+				String level_name = String(editor->level.name_storage, strlen(editor->level.name_storage));
+				if (scene_create_new_level(scene, level_name)) {
+					scene_load_level(scene, level_name);
+					ieditor_deselect_body(scene, editor);
+					ImGui::CloseCurrentPopup();
+				} else {
+					editor->level.name_is_valid = false;
+				}
+			}
+		} else {
+			ImGui::SetNextItemWidth(120);
+			ImGui::Text("Create");
+		}
+
+		ImGui::SetItemDefaultFocus();
+		ImGui::SameLine();
+
+		if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::EndPopup();
+	}
+
+	if (open_another_level) {
+		editor->level.name_storage[0] = 0;
+		ImGui::OpenPopup("Open Another Level");
+	}
+
+	if (ImGui::BeginPopupModal("Open Another Level", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+		ImGui::Text("Selected: %s", editor->level.name_storage);
+
+		static ImGuiTextFilter filter;
+		filter.Draw();
+
+		auto mark = push_temporary_allocator();
+		auto dirs = system_find_files("resources/levels", "*", false);
+		pop_temporary_allocator(mark);
+
+		int count = (int)dirs.count;
+		for (int index = 0; index < count; ++index) {
+			auto &d = dirs[index];
+			if (string_match(d.name, ".") || string_match(d.name, "..") || d.extension.count)
+				continue;
+
+			ImGui::PushID((char *)d.name.data, (char *)d.name.data + d.name.count);
+
+			const char *name = (char *)d.name.data;
+
+			if (filter.PassFilter(name)) {
+				if (ImGui::Selectable(name, strcmp(editor->level.name_storage, name) == 0, ImGuiSelectableFlags_DontClosePopups)) {
+					strcpy(editor->level.name_storage, name);
+				}
+			}
+
+			ImGui::PopID();
+		}
+
+		if (!editor->level.name_is_valid) {
+			ImGui::TextColored(ImVec4(0.8f, 0.1f, 0.1f, 1.0f), "Level could not be loaded!");
+		}
+
+		if (editor->level.name_storage[0]) {
+			if (ImGui::Button("Open##Another Level", ImVec2(120, 0))) {
+				if (scene_load_level(scene, String(editor->level.name_storage, strlen(editor->level.name_storage)))) {
+					ieditor_deselect_body(scene, editor);
+					ImGui::CloseCurrentPopup();
+				} else {
+					editor->level.name_is_valid = false;
+				}
+			}
+		} else {
+			ImGui::SetNextItemWidth(120);
+			ImGui::Text("Open");
+		}
+
+		ImGui::SetItemDefaultFocus();
+		ImGui::SameLine();
+
+		if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::EndPopup();
 	}
 
 	if (new_entity_type_index != -1) {

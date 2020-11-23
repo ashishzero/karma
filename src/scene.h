@@ -169,6 +169,7 @@ void scene_clean_entities(Scene *scene);
 //
 //
 
+bool scene_create_new_level(Scene *scene, const String name);
 bool scene_save_level(Scene *scene);
 bool scene_load_level(Scene *scene, const String name);
 bool scene_reload_level(Scene *scene);
