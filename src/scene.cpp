@@ -725,7 +725,15 @@ Rigid_Body *scene_collide_point(Scene *scene, Vec2 point, r32 size) {
 //
 
 Camera *scene_primary_camera(Scene *scene) {
+	#ifdef ENABLE_DEVELOPER_OPTIONS
+	static Camera null_camera;
+	if (scene->by_type.camera.count) {
+		return &scene->by_type.camera[0];
+	}
+	return &null_camera;
+	#else
 	return &scene->by_type.camera[0];
+	#endif
 }
 
 //
@@ -791,11 +799,14 @@ bool iscene_simulate_world_enabled(Scene *scene) {
 
 void scene_simulate(Scene *scene, r32 dt) {
 	if (iscene_simulate_world_enabled(scene)) {
-		auto primary_player = &scene->by_type.character[0];
+		// TODO: DEBUG CODE!!
+		if (scene->by_type.character.count) {
+			auto primary_player = &scene->by_type.character[0];
 
-		auto camera = scene_primary_camera(scene);
-		camera->behaviour = Camera_Behaviour_ANIMATE_MOVEMENT;
-		camera->target_position = primary_player->position;
+			auto camera = scene_primary_camera(scene);
+			camera->behaviour = Camera_Behaviour_ANIMATE_MOVEMENT;
+			camera->target_position = primary_player->position;
+		}
 
 		Contact_Manifold manifold;
 		manifold.penetration = 0;

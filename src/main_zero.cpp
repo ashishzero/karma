@@ -98,6 +98,7 @@ int karma_user_zero() {
 	while (running) {
 		Dev_TimedFrameBegin();
 
+		// TODO: DEBUG CODE
 		Character *primary_player = nullptr;
 		if (scene->by_type.character.count)
 			primary_player = &scene->by_type.character[0];
@@ -193,7 +194,7 @@ int karma_user_zero() {
 			dir.y = controller.y / len;
 		}
 
-		if (len) {
+		if (len && primary_player) {
 			primary_player->rigid_body->force += movement_force * dir;
 			//set_bit(primary_player->rigid_body->colliders->flags, Collision_Bit_MOTION);
 		}
