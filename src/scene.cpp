@@ -280,11 +280,74 @@ inline void iscene_insert_entity_reference(Entity_Hash_Table *table, Entity_Id i
 
 inline void iscene_delete_entity_reference(Entity_Hash_Table *table, Entity_Id id) {
 	assert(table->count > 0);
+	u32 hash_index = iscene_search_entity_reference(table, id);
 
+	Entity_Hash_Table::Key *key = table->keys + hash_index;
+	Entity_Reference *slot = table->slots + hash_index;
 
+	u32 index = entity_hash_index_probe(hash_index);
+	Entity_Hash_Table::Key *nxt_key = table->keys + index;
+	Entity_Reference *nxt_slot;
+
+	while (nxt_key->slot != Entity_Hash_Table::Slot::EMPTY && entity_hash_index(nxt_key->id) <= hash_index) {
+		nxt_slot = table->slots + index;
+
+		*key = *nxt_key;
+		*slot = *nxt_slot;
+
+		key = nxt_key;
+		slot = nxt_slot;
+
+		hash_index = index;
+		index = entity_hash_index_probe(hash_index);
+		nxt_key = table->keys + index;
+	}
+
+	key->slot = Entity_Hash_Table::Slot::EMPTY;
 }
 
 inline bool iscene_delete_entity_reference_if_present(Entity_Hash_Table *table, Entity_Id id, Entity_Reference *data) {
+	u32 search_index = iscene_search_if_entity_reference_is_present(table, id);
+
+	if (search_index < SCENE_MAX_ENTITY_COUNT) {
+		Entity_Hash_Table::Key *key = table->keys + search_index;
+		Entity_Reference *slot = table->slots + search_index;
+
+		*data = *slot;
+
+		Entity_Hash_Table::Key *nxt_key;
+		u32 nxt_hash_index;
+		Entity_Reference *nxt_slot;
+
+		u32 put_index = search_index;
+
+		for (u32 index = entity_hash_index_probe(search_index); index != search_index; index = entity_hash_index_probe(index)) {
+			nxt_key = table->keys + index;
+
+			if (nxt_key->slot == Entity_Hash_Table::Slot::EMPTY) {
+				break;
+			}
+
+			nxt_hash_index = entity_hash_index(nxt_key->id);
+
+			if ((index > nxt_hash_index && put_index > nxt_hash_index && put_index < index) ||
+				(index < nxt_hash_index && (put_index > nxt_hash_index || put_index < index))) {
+				nxt_slot = table->slots + index;
+
+				*key = *nxt_key;
+				*slot = *nxt_slot;
+
+				key = nxt_key;
+				slot = nxt_slot;
+				put_index = index;
+			}
+		}
+
+		key->slot = Entity_Hash_Table::Slot::EMPTY;
+
+		return true;
+	}
+
 	return false;
 }
 
