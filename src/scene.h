@@ -128,6 +128,9 @@ Camera *scene_primary_camera(Scene *scene);
 void scene_remove_entity(Scene *scene, Entity_Reference &ref, Entity_Id id);
 void scene_remove_entity(Scene *scene, Entity_Id id);
 
+void scene_remove_entity_from_level(Scene *scene, Entity_Reference &ref, Entity_Id id);
+void scene_remove_entity_from_level(Scene *scene, Entity_Id id);
+
 //
 //
 //
