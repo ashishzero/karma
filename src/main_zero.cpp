@@ -185,7 +185,7 @@ int karma_user_zero() {
 
 		scene_begin(scene);
 
-		static r32 movement_force = 6;
+		static r32 movement_force = 10;
 
 		r32 len = sqrtf(controller.x * controller.x + controller.y * controller.y);
 		Vec2 dir = vec2(0);
@@ -216,9 +216,6 @@ int karma_user_zero() {
 		}
 
 		scene_update(scene);
-
-		if (primary_player)
-			primary_player->color = vec4(0, 1, 1);
 
 		ImGui_UpdateFrame(real_dt);
 

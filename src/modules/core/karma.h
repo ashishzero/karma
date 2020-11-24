@@ -474,50 +474,68 @@ inline void *temporary_allocator_proc(Allocation_Type type, ptrsize size, const 
 
 		return nullptr;
 	} else if (type == Allocation_Type_RESIZE) {
-		Temp_Header *header = (Temp_Header *)ptr - 1;
+		if (ptr) {
+			Temp_Header *header = (Temp_Header *)ptr - 1;
 
-		u8 *nxtptr;
-		u8 *endptr = temp->base + temp->capacity;
+			u8 *nxtptr;
+			u8 *endptr = temp->base + temp->capacity;
 
-		// Move not required
-		if (ptr == (temp->ptr - header->size)) {
-			header->size = size;
-			nxtptr = (u8 *)ptr + header->size;
-			
-			if (nxtptr <= endptr) {
-				temp->ptr = nxtptr;
+			// Move not required
+			if (ptr == (temp->ptr - header->size)) {
+				header->size = size;
+				nxtptr = (u8 *)ptr + header->size;
+
+				if (nxtptr <= endptr) {
+					temp->ptr = nxtptr;
+					return (void *)ptr;
+				}
+
+				return nullptr;
+			}
+
+			// No reallocation required
+			if (size <= header->size) {
+				header->size = size;
 				return (void *)ptr;
+			}
+
+			// Move required
+			ptrsize padding = (MEMORY_ALIGNMENT - ((ptrsize)temp->ptr % MEMORY_ALIGNMENT)) % MEMORY_ALIGNMENT;
+
+			nxtptr = temp->ptr + size + padding + sizeof(Temp_Header);
+
+			if (nxtptr <= endptr) {
+				Temp_Header *result = (Temp_Header *)(temp->ptr + padding);
+				memmove(result + 1, ptr, header->size);
+				result->size = size;
+				temp->ptr = nxtptr;
+				return result + 1;
+			}
+
+			return nullptr;
+		} else {
+			ptrsize padding = (MEMORY_ALIGNMENT - ((ptrsize)temp->ptr % MEMORY_ALIGNMENT)) % MEMORY_ALIGNMENT;
+
+			u8 *nxtptr = temp->ptr + size + padding + sizeof(Temp_Header);
+			u8 *endptr = temp->base + temp->capacity;
+
+			if (nxtptr <= endptr) {
+				Temp_Header *result = (Temp_Header *)(temp->ptr + padding);
+				result->size = size;
+				temp->ptr = nxtptr;
+				return result + 1;
 			}
 
 			return nullptr;
 		}
-
-		// No reallocation required
-		if (size <= header->size) {
-			header->size = size;
-			return (void *)ptr;
-		}
-
-		// Move required
-		ptrsize padding = (MEMORY_ALIGNMENT - ((ptrsize)temp->ptr % MEMORY_ALIGNMENT)) % MEMORY_ALIGNMENT;
-
-		nxtptr = temp->ptr + size + padding + sizeof(Temp_Header);
-		
-		if (nxtptr <= endptr) {
-			Temp_Header *result = (Temp_Header *)(temp->ptr + padding);
-			memmove(result + 1, ptr, header->size);
-			result->size = size;
-			temp->ptr    = nxtptr;
-			return result + 1;
-		}
-
-		return nullptr;
 	} else if (type == Allocation_Type_FREE) {
-		Temp_Header *header = (Temp_Header *)ptr - 1;
+		if (ptr) {
+			Temp_Header *header = (Temp_Header *)ptr - 1;
 
-		// Can be popped
-		if (ptr == (temp->ptr - header->size)) {
-			temp->ptr = (u8 *)header;
+			// Can be popped
+			if (ptr == (temp->ptr - header->size)) {
+				temp->ptr = (u8 *)header;
+			}
 		}
 
 		return nullptr;

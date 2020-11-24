@@ -5,17 +5,25 @@ header: #0
    position: #0
       x: 2.687366
       y: 21.778757
-resource: #0
+resource: #1
    id: #0
       handle: 6898567529327484580
    fixture_id: #0
       handle: 6898544449330201717
-data: #0
+   texture_name: ""
+data: #1
    color: #0
       x: 1.000000
       y: 1.000000
       z: 1.000000
       w: 1.000000
+   texture_rect: #0
+      min: #0
+         x: 0.000000
+         y: 0.000000
+      max: #0
+         x: 0.000000
+         y: 0.000000
 body: #0
    type: 0
    imass: 0.000000

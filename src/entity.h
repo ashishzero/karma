@@ -8,6 +8,10 @@ struct Entity_Id {
 	u64 handle;
 };
 
+struct Texture_Id {
+	u32 index;
+};
+
 enum Fixture_Shape : u32 {
 	Fixture_Shape_Circle,
 	Fixture_Shape_Mm_Rect,
@@ -36,9 +40,10 @@ struct Resource_Fixture {
 	attribute(no_serialize, no_display)	u32				fixture_count;
 };
 
-struct Resource_Entity {
-	Entity_Id	id;
-	Resource_Id fixture_id;
+struct attribute(v:1) Resource_Entity {
+					Entity_Id		id;
+					Resource_Id		fixture_id;
+	attribute(v:1)	Resource_Name	texture_name;
 };
 
 enum Rigid_Body_Type : u16 {
@@ -99,14 +104,18 @@ struct attribute(no_serialize_base) Camera : public Entity {
 
 #define camera_distance_to_scale(camera) powf(0.5f, camera->distance)
 
-struct attribute(no_serialize_base) Character : public Entity {
-	attribute(min:0)		r32 radius;
-	attribute(color)		Vec4 color;
-	attribute(no_serialize)	Rigid_Body *rigid_body;
+struct attribute(no_serialize_base, v:1) Character : public Entity {
+	attribute(min:0)				r32 radius;
+	attribute(color)				Vec4 color;
+	attribute(v:1)					Mm_Rect	texture_rect;
+	attribute(no_serialize, v:1)	Texture_Id texture;
+	attribute(no_serialize)			Rigid_Body *rigid_body;
 };
 
-struct attribute(no_serialize_base) Obstacle : public Entity {
-	attribute(color)		Vec4 color;
+struct attribute(no_serialize_base, v:1) Obstacle : public Entity {
+	attribute(color)				Vec4 color;
+	attribute(v:1)					Mm_Rect	texture_rect;
+	attribute(no_serialize, v:1)	Texture_Id texture;
 	attribute(no_serialize)	Rigid_Body *rigid_body;
 };
 

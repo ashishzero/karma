@@ -45,6 +45,12 @@ struct Entity_Hash_Table {
 	u32				count;
 };
 
+struct Resource_Texture {
+	Resource_Name		name;
+	u32					name_count;
+	u32					key;
+};
+
 struct Scene {
 	union Entity_By_Type {
 		struct {
@@ -60,6 +66,10 @@ struct Scene {
 	Entity_Hash_Table entity_table;
 
 	Entity_By_Type	by_type;
+
+	Array<Resource_Texture> resource_textures;
+	Array<Texture2d_Handle> handle_textures;
+
 	Rigid_Body_List rigid_bodies;
 
 	Array<Resource_Fixture>		resource_fixtures;
@@ -95,6 +105,9 @@ void scene_destroy(Scene *scene);
 Resource_Fixture *	scene_create_new_resource_fixture(Scene *scene, String name, Fixture *fixtures, u32 fixture_count);
 Resource_Fixture *	scene_find_resource_fixture(Scene *scene, Resource_Id id);
 Resource_Fixture *	scene_find_resource_fixture_from_fixture(Scene *scene, Fixture *fixture);
+
+Resource_Texture *scene_find_resource_texture_from_index(Scene *scene, Texture_Id id);
+bool scene_find_resource_texture(Scene *scene, const String name, Texture_Id *id);
 
 Entity *scene_clone_entity(Scene *scene, Entity *entity, Vec2 p);
 Entity_Reference scene_get_entity(Scene *scene, Entity_Id id);

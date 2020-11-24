@@ -1094,13 +1094,17 @@ bool parse_struct(Deserialize_State *w, const Type_Info_Struct *info, char *data
 			}
 		}
 
-		if (!no_serialize && mem_version <= parsing_verion) {
-			if (string_match(mem->name, "anonymous")) {
-				if (!deserialize_fmt_text(w, "", mem->info, data + mem->offset, -1))
-					return false;
+		if (!no_serialize) {
+			if (mem_version <= parsing_verion) {
+				if (string_match(mem->name, "anonymous")) {
+					if (!deserialize_fmt_text(w, "", mem->info, data + mem->offset, -1))
+						return false;
+				} else {
+					if (!deserialize_fmt_text(w, mem->name, mem->info, data + mem->offset, -1))
+						return false;
+				}
 			} else {
-				if (!deserialize_fmt_text(w, mem->name, mem->info, data + mem->offset, -1))
-					return false;
+				memset(data + mem->offset, 0, mem->info->size);
 			}
 		}
 	}
