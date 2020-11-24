@@ -1,7 +1,7 @@
 resource: #0
    id: #0
       handle: 6895733820574158072
-   name: "Rect"
+   name: "Block"
 fixture_count: 1
 shape: 1
 shape_data: #0
