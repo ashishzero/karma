@@ -4,7 +4,7 @@ level: #0
          handle: 6898543709760815511
       fixture_id: #0
          handle: 6895733819830550519
-      texture_name: "", #1
+      texture_name: "player.png", #1
       id: #0
          handle: 6898544009606095358
       fixture_id: #0

@@ -5,18 +5,20 @@ header: #0
    position: #0
       x: -0.183394
       y: 0.665142
-resource: #0
-   id: #0
-      handle: 6896376797931232889
-   fixture_id: #0
-      handle: 6895733819830550519
-data: #0
+data: #1
    radius: 0.260000
    color: #0
       x: 0.000000
       y: 1.000000
       z: 1.000000
       w: 1.000000
+   texture_rect: #0
+      min: #0
+         x: 0.000000
+         y: 0.000000
+      max: #0
+         x: 0.000000
+         y: 0.000000
 body: #0
    type: 1
    imass: 1.000000

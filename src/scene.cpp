@@ -1517,7 +1517,7 @@ void scene_clean_entities(Scene *scene) {
 	memset(scene->entity_table.keys, 0, sizeof(sizeof(Entity_Hash_Table::Key) * SCENE_MAX_ENTITY_COUNT));
 }
 
-void iscene_serialize_entity(Entity *entity, Resource_Entity *resource, Ostream *out) {
+void iscene_serialize_entity(Entity *entity, Ostream *out) {
 	serialize_fmt_text(out, "header", reflect_info<Entity>(), (char *)entity);
 	serialize_fmt_text_next(out);
 
@@ -1527,16 +1527,12 @@ void iscene_serialize_entity(Entity *entity, Resource_Entity *resource, Ostream 
 		} break;
 
 		case Entity_Type_Character: {
-			serialize_fmt_text(out, "resource", reflect_info<Resource_Entity>(), (char *)resource);
-			serialize_fmt_text_next(out);
 			serialize_fmt_text(out, "data", reflect_info<Character>(), (char *)entity);
 			serialize_fmt_text_next(out);
 			serialize_fmt_text(out, "body", reflect_info<Rigid_Body>(), (char *)((Character *)entity)->rigid_body);
 		} break;
 
 		case Entity_Type_Obstacle: {
-			serialize_fmt_text(out, "resource", reflect_info<Resource_Entity>(), (char *)resource);
-			serialize_fmt_text_next(out);
 			serialize_fmt_text(out, "data", reflect_info<Obstacle>(), (char *)entity);
 			serialize_fmt_text_next(out);
 			serialize_fmt_text(out, "body", reflect_info<Rigid_Body>(), (char *)((Obstacle *)entity)->rigid_body);
@@ -1546,7 +1542,7 @@ void iscene_serialize_entity(Entity *entity, Resource_Entity *resource, Ostream 
 	}
 }
 
-bool iscene_deserialize_entity(Scene *scene, Deserialize_State *state) {
+bool iscene_deserialize_entity(Scene *scene, Level *level, Deserialize_State *state) {
 	Entity entity;
 	if (!deserialize_fmt_text(state, "header", reflect_info<Entity>(), (char *)&entity))
 		return false;
@@ -1565,23 +1561,23 @@ bool iscene_deserialize_entity(Scene *scene, Deserialize_State *state) {
 		case Entity_Type_Character: {
 			Character *character = iscene_add_character(scene, entity.id, entity.position);
 			character->rigid_body = iscene_create_new_rigid_body(scene, &entity, nullptr);
-			Resource_Entity resource;
-			if (deserialize_fmt_text(state, "resource", reflect_info<Resource_Entity>(), (char *)&resource) &&
-				deserialize_fmt_text(state, "data", reflect_info<Character>(), (char *)character) &&
+			Resource_Entity *resource = iscene_level_find_resource(level, character->id);
+
+			if (deserialize_fmt_text(state, "data", reflect_info<Character>(), (char *)character) &&
 				deserialize_fmt_text(state, "body", reflect_info<Rigid_Body>(), (char *)(character->rigid_body))) {
 				auto body = character->rigid_body;
-				Resource_Fixture *res_fixture = scene_find_resource_fixture(scene, resource.fixture_id);
+				Resource_Fixture *res_fixture = scene_find_resource_fixture(scene, resource->fixture_id);
 				if (res_fixture) {
 					body->fixtures = res_fixture->fixtures;
 					body->fixture_count = res_fixture->fixture_count;
 				} else {
-					system_log(LOG_ERROR, "Scene", "Unable to find fixture: %zu", resource.fixture_id);
+					system_log(LOG_ERROR, "Scene", "Unable to find fixture: %zu", resource->fixture_id);
 					body->fixture_count = 0;
 					body->fixtures = 0;
 				}
 
-				if (!scene_find_resource_texture(scene, String(resource.texture_name, strlen(resource.texture_name)), &character->texture)) {
-					system_log(LOG_ERROR, "Scene", "Unable to find texture: %s", resource.texture_name);
+				if (!scene_find_resource_texture(scene, String(resource->texture_name, strlen(resource->texture_name)), &character->texture)) {
+					system_log(LOG_ERROR, "Scene", "Unable to find texture: %s", resource->texture_name);
 				}
 
 				body->entity_id = entity.id;
@@ -1597,24 +1593,23 @@ bool iscene_deserialize_entity(Scene *scene, Deserialize_State *state) {
 		case Entity_Type_Obstacle: {
 			Obstacle *obstacle = iscene_add_obstacle(scene, entity.id, entity.position);
 			obstacle->rigid_body = iscene_create_new_rigid_body(scene, &entity, nullptr);
-			Resource_Entity resource;
+			Resource_Entity *resource = iscene_level_find_resource(level, obstacle->id);
 
-			if (deserialize_fmt_text(state, "resource", reflect_info<Resource_Entity>(), (char *)&resource) &&
-				deserialize_fmt_text(state, "data", reflect_info<Obstacle>(), (char *)obstacle) &&
+			if (deserialize_fmt_text(state, "data", reflect_info<Obstacle>(), (char *)obstacle) &&
 				deserialize_fmt_text(state, "body", reflect_info<Rigid_Body>(), (char *)(obstacle->rigid_body))) {
 				auto body = obstacle->rigid_body;
-				Resource_Fixture *res_fixture = scene_find_resource_fixture(scene, resource.fixture_id);
+				Resource_Fixture *res_fixture = scene_find_resource_fixture(scene, resource->fixture_id);
 				if (res_fixture) {
 					body->fixtures = res_fixture->fixtures;
 					body->fixture_count = res_fixture->fixture_count;
 				} else {
-					system_log(LOG_ERROR, "Scene", "Unable to find fixture: %zu", resource.fixture_id);
+					system_log(LOG_ERROR, "Scene", "Unable to find fixture: %zu", resource->fixture_id);
 					body->fixture_count = 0;
 					body->fixtures = 0;
 				}
 
-				if (!scene_find_resource_texture(scene, String(resource.texture_name, strlen(resource.texture_name)), &obstacle->texture)) {
-					system_log(LOG_ERROR, "Scene", "Unable to find texture: %s", resource.texture_name);
+				if (!scene_find_resource_texture(scene, String(resource->texture_name, strlen(resource->texture_name)), &obstacle->texture)) {
+					system_log(LOG_ERROR, "Scene", "Unable to find texture: %s", resource->texture_name);
 				}
 
 				body->entity_id = entity.id;
@@ -1714,7 +1709,7 @@ bool scene_save_level(Scene *scene) {
 		count = scene->by_type.camera.count;
 		auto camera = scene->by_type.camera.data;
 		for (s64 index = 0; index < count; ++index, ++camera) {
-			iscene_serialize_entity(camera, nullptr, &out);
+			iscene_serialize_entity(camera, &out);
 			if (system_open_file(tprintf("%s/%zu.ent", level_dir, camera->id), File_Operation_NEW, &file)) {
 				ostream_build_out_file(&out, &file);
 				system_close_file(&file);
@@ -1729,9 +1724,9 @@ bool scene_save_level(Scene *scene) {
 		count = scene->by_type.character.count;
 		auto character = scene->by_type.character.data;
 		for (s64 index = 0; index < count; ++index, ++character) {
-			auto resource = iscene_level_find_resource(level, character->id);
-			assert(resource);
-			iscene_serialize_entity(character, resource, &out);
+			//auto resource = iscene_level_find_resource(level, character->id);
+			//assert(resource);
+			iscene_serialize_entity(character, &out);
 			if (system_open_file(tprintf("%s/%zu.ent", level_dir, character->id), File_Operation_NEW, &file)) {
 				ostream_build_out_file(&out, &file);
 				system_close_file(&file);
@@ -1746,9 +1741,9 @@ bool scene_save_level(Scene *scene) {
 		count = scene->by_type.obstacle.count;
 		auto obstacle = scene->by_type.obstacle.data;
 		for (s64 index = 0; index < count; ++index, ++obstacle) {
-			auto resource = iscene_level_find_resource(level, obstacle->id);
-			assert(resource);
-			iscene_serialize_entity(obstacle, resource, &out);
+			//auto resource = iscene_level_find_resource(level, obstacle->id);
+			//assert(resource);
+			iscene_serialize_entity(obstacle, &out);
 			if (system_open_file(tprintf("%s/%zu.ent", level_dir, obstacle->id), File_Operation_NEW, &file)) {
 				ostream_build_out_file(&out, &file);
 				system_close_file(&file);
@@ -1819,6 +1814,8 @@ bool scene_load_level(Scene *scene, const String name) {
 	String content;
 	System_File file;
 
+	Level *level = &scene->levels[index];
+
 	for (auto &f : files) {
 		scoped_temporary_allocation();
 		content = system_read_entire_file(f.path);
@@ -1832,7 +1829,7 @@ bool scene_load_level(Scene *scene, const String name) {
 
 			if (status.result == Tokenization_Result_SUCCESS) {
 				auto state = deserialize_begin(tokens);
-				if (!iscene_deserialize_entity(scene, &state)) {
+				if (!iscene_deserialize_entity(scene, level, &state)) {
 					system_log(LOG_ERROR, "Scene", "Failed loading %s. Invalid file: %s", tto_cstring(f.path), state.error.string);
 				}
 				deserialize_end(&state);

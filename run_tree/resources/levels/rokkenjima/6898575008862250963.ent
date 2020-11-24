@@ -5,12 +5,6 @@ header: #0
    position: #0
       x: 21.304609
       y: 10.645952
-resource: #1
-   id: #0
-      handle: 6898575008862250963
-   fixture_id: #0
-      handle: 6898570255059646053
-   texture_name: ""
 data: #1
    color: #0
       x: 1.000000
