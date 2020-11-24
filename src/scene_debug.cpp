@@ -211,7 +211,7 @@ void editor_set_mode_level_editor(Scene *scene, Editor *editor) {
 	editor->level.preview_shapes = true;
 }
 
-void editor_set_mode_entity_editor(Scene *scene, Editor *editor, Resource_Id id, const Resource_Name &name, Fixture *fixtures, u32 fixture_count) {
+void editor_set_mode_entity_editor(Scene *scene, Editor *editor, Resource_Id id, const Resource_Name &name, Fixture *fixtures, u32 fixture_count, const Resource_Name &texture_name) {
 	assert(fixture_count < MAXIMUM_FIXTURE_COUNT);
 	ieditor_reset(scene, editor, Editor_Mode_ENTITY_EDITOR);
 
@@ -253,6 +253,8 @@ void editor_set_mode_entity_editor(Scene *scene, Editor *editor, Resource_Id id,
 			} break;
 		}
 	}
+
+	memcpy(editor->entity.texture_name, texture_name, sizeof(Resource_Name));
 
 	editor->entity.added_vertex_index = -1;
 	editor->entity.vertex_is_valid = false;
@@ -987,14 +989,14 @@ void ieditor_fixture_group(Scene *scene, Editor *editor, Rigid_Body *body) {
 	}
 }
 
-inline void ieditor_create_new_entity(Scene *scene, Editor *editor, Entity_Type type, Resource_Fixture &resource, bool select) {
+inline void ieditor_create_new_entity(Scene *scene, Editor *editor, Entity_Type type, Resource_Fixture &resource, const String texture, bool select) {
 	Camera *camera = editor_rendering_camera(scene, editor);
 
 	switch (type) {
 		case Entity_Type_Character: {
 			Character character;
 			Rigid_Body body;
-			ent_init_character(&character, camera->position, &body, resource);
+			ent_init_character(&character, scene, camera->position, &body, resource, texture);
 			Character *ent = (Character *)scene_clone_entity(scene, &character, camera->position);
 			if (select) {
 				ieditor_select_body(scene, editor, ent->rigid_body);
@@ -1004,7 +1006,7 @@ inline void ieditor_create_new_entity(Scene *scene, Editor *editor, Entity_Type 
 		case Entity_Type_Obstacle: {
 			Obstacle obstacle;
 			Rigid_Body body;
-			ent_init_obstacle(&obstacle, camera->position, &body, resource);
+			ent_init_obstacle(&obstacle, scene, camera->position, &body, resource, texture);
 			Obstacle *ent = (Obstacle *)scene_clone_entity(scene, &obstacle, camera->position);
 			if (select) {
 				ieditor_select_body(scene, editor, ent->rigid_body);
@@ -1048,7 +1050,7 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 				}
 
 				if (ImGui::MenuItem("Close##Level")) {
-					// TODO: Save changes??
+					scene_save_level(scene);
 					editor_set_mode_game_developer(scene, editor);
 				}
 			}
@@ -1203,7 +1205,7 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 			ImGui::CloseCurrentPopup();
 		}
 
-		const Array_View<Resource_Fixture> resources_view = scene_resources(scene);
+		const Array_View<Resource_Entity> resources_view = scene_resources(scene);
 		auto resources = resources_view.data;
 		int resource_count = (int)resources_view.count;
 
@@ -1217,10 +1219,10 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 			int selected = editor->level.selected_resource_index;
 
 			for (int index = 0; index < resource_count; ++index) {
-				Resource_Fixture *r = resources + index;
+				Resource_Entity *r = resources + index;
 				ImGui::PushID((void *)r);
 
-				const char *name = r->name;
+				const char *name = r->texture_name;
 
 				if (filter.PassFilter(name)) {
 					if (ImGui::Selectable(name, selected == index)) {
@@ -1244,7 +1246,7 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 			int selected = editor->level.selected_resource_index;
 
 			if (resource_count && selected >= 0) {
-				Resource_Fixture *r = resources + selected;
+				Resource_Entity *r = resources + selected;
 
 				ImVec2 canvas_p0 = ImGui::GetCursorScreenPos();
 				ImVec2 canvas_sz = ImGui::GetContentRegionAvail();
@@ -1266,8 +1268,10 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 				Vec2  shape_scale = vec2(scale_scalar, -scale_scalar);
 
 				if (editor->level.preview_shapes) {
-					Fixture *f = r->fixtures;
-					int fixture_count = r->fixture_count;
+					Resource_Fixture *res_fix = scene_find_resource_fixture(scene, r->fixture_id);
+
+					Fixture *f = res_fix->fixtures;
+					int fixture_count = res_fix->fixture_count;
 
 					const ImVec2 origin(0.5f * (canvas_p0.x + canvas_p1.x), 0.5f * (canvas_p0.y + canvas_p1.y));
 
@@ -1319,7 +1323,7 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 					}
 				}
 
-				ImGui::Text("id: %zu | name: %s", r->id, r->name);
+				ImGui::Text("id: %zu | name: %s", r->id, r->texture_name);
 				ImGui::Checkbox("Shapes##Preview", &editor->level.preview_shapes);
 
 			} else {
@@ -1332,7 +1336,8 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 		ImGui::SetCursorPosX(250);
 
 		if (ImGui::Button("Select", ImVec2(120, 0))) {
-			ieditor_create_new_entity(scene, editor, new_entity_type, resources[editor->level.selected_resource_index], true);
+			auto r = &resources[editor->level.selected_resource_index];
+			ieditor_create_new_entity(scene, editor, new_entity_type, *scene_find_resource_fixture(scene, r->fixture_id), String(r->texture_name, strlen(r->texture_name)), true);
 			ImGui::CloseCurrentPopup();
 		}
 
@@ -1340,9 +1345,10 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 		ImGui::SameLine();
 
 		if (ImGui::Button("Create New...", ImVec2(120, 0))) {
+			auto r = &resources[editor->level.selected_resource_index];
 			Resource_Fixture *resource = scene_create_new_resource_fixture(scene, "(unnamed)", nullptr, 0);
-			ieditor_create_new_entity(scene, editor, new_entity_type, *resource, false);
-			editor_set_mode_entity_editor(scene, editor, resource->id, resource->name, resource->fixtures, resource->fixture_count);
+			ieditor_create_new_entity(scene, editor, new_entity_type, *resource, String(r->texture_name, strlen(r->texture_name)), false);
+			editor_set_mode_entity_editor(scene, editor, resource->id, resource->name, resource->fixtures, resource->fixture_count, r->texture_name);
 			ImGui::CloseCurrentPopup();
 		}
 
@@ -1481,7 +1487,22 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 		ieditor_fixture_group(scene, editor, body);
 		if (ImGui::Button("Edit##EntityEditor")) {
 			Resource_Fixture *r = scene_find_resource_fixture_from_fixture(scene, body->fixtures);
-			editor_set_mode_entity_editor(scene, editor, r->id, r->name, r->fixtures, r->fixture_count);
+			Entity *ent = scene_entity_pointer(scene, scene_get_entity(scene, body->entity_id));
+
+			Texture_Id id;
+			switch (ent->type) {
+				case Entity_Type_Character: {
+					id = ((Character *)ent)->texture;
+				} break;
+				case Entity_Type_Obstacle: {
+					id = ((Obstacle *)ent)->texture;
+				} break;
+
+				invalid_default_case();
+			}
+
+			Resource_Texture *tex = scene_find_resource_texture_from_index(scene, id);
+			editor_set_mode_entity_editor(scene, editor, r->id, r->name, r->fixtures, r->fixture_count, tex->name);
 		}
 	}
 
@@ -1671,6 +1692,12 @@ bool ieditor_gui_entity_editor(Scene *scene, Editor *editor) {
 	ImGui::End();
 
 	if (!open) {
+		Resource_Fixture r;
+		r.id = editor->entity.fixture_id;
+		memcpy(r.name, editor->entity.fixture_name, sizeof(Resource_Name));
+		r.fixtures = editor->entity.fixtures;
+		r.fixture_count = editor->entity.fixture_count;
+		scene_save_resource(scene, r, true);
 		editor_set_mode_level_editor(scene, editor);
 	}
 

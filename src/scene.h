@@ -115,7 +115,7 @@ bool scene_find_entity(Scene *scene, Entity_Id id, Entity_Reference *ref);
 Entity *scene_entity_pointer(Scene *scene, Entity_Reference &reference);
 
 const Array_View<Camera>			scene_cameras(Scene *scene);
-const Array_View<Resource_Fixture>	scene_resources(Scene *scene);
+const Array_View<Resource_Entity>	scene_resources(Scene *scene);
 
 //
 //
@@ -221,7 +221,7 @@ inline void ent_init_camera(Camera *camera, Vec2 p, r32 distance) {
 	camera->behaviour = 0;
 }
 
-inline void ent_init_character(Character *character, Vec2 p, Rigid_Body *body, Resource_Fixture &resource) {
+inline void ent_init_character(Character *character, Scene *scene, Vec2 p, Rigid_Body *body, Resource_Fixture &resource, const String texture) {
 	character->id.handle = 0;
 	character->type = Entity_Type_Character;
 	character->position = p;
@@ -229,13 +229,17 @@ inline void ent_init_character(Character *character, Vec2 p, Rigid_Body *body, R
 	character->color = vec4(1);
 	ent_rigid_body_init(character, body, Rigid_Body_Type_Dynamic, resource);
 	character->rigid_body = body;
+	assert(scene_find_resource_texture(scene, texture, &character->texture));
+	character->texture_rect = mm_rect(0, 0, 1, 1);
 }
 
-inline void ent_init_obstacle(Obstacle *obstable, Vec2 p, Rigid_Body *body, Resource_Fixture &resource) {
+inline void ent_init_obstacle(Obstacle *obstable, Scene *scene, Vec2 p, Rigid_Body *body, Resource_Fixture &resource, const String texture) {
 	obstable->id.handle = 0;
 	obstable->type = Entity_Type_Obstacle;
 	obstable->position = p;
 	obstable->color = vec4(1);
 	ent_rigid_body_init(obstable, body, Rigid_Body_Type_Static, resource);
 	obstable->rigid_body = body;
+	assert(scene_find_resource_texture(scene, texture, &obstable->texture));
+	obstable->texture_rect = mm_rect(0, 0, 1, 1);
 }

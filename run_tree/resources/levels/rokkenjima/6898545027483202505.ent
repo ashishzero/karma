@@ -6,11 +6,11 @@ header: #0
       x: 14.417696
       y: 8.676922
 data: #0
-   distance: 4.700000
+   distance: 0.700000
    target_position: #0
       x: 1.142880
       y: 1.228158
-   target_distance: 2.700000
+   target_distance: 8.700000
    follow_factor: 0.971400
    zoom_factor: 0.800000
    behaviour: 0

@@ -674,8 +674,8 @@ const Array_View<Camera> scene_cameras(Scene *scene) {
 	return scene->by_type.camera;
 }
 
-const Array_View<Resource_Fixture> scene_resources(Scene *scene) {
-	return scene->resource_fixtures;
+const Array_View<Resource_Entity> scene_resources(Scene *scene) {
+	return scene_current_level_pointer(scene)->resources;
 }
 
 //
