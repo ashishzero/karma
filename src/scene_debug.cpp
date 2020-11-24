@@ -1072,6 +1072,7 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 
 	if (create_new_level) {
 		editor->level.name_storage[0] = 0;
+		editor->level.name_is_valid = true;
 		ImGui::OpenPopup("Create New Level");
 	}
 
