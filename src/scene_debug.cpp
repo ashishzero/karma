@@ -1112,6 +1112,7 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 
 	if (open_another_level) {
 		editor->level.name_storage[0] = 0;
+		editor->level.name_is_valid = true;
 		ImGui::OpenPopup("Open Another Level");
 	}
 
@@ -1138,6 +1139,7 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 			if (filter.PassFilter(name)) {
 				if (ImGui::Selectable(name, strcmp(editor->level.name_storage, name) == 0, ImGuiSelectableFlags_DontClosePopups)) {
 					strcpy(editor->level.name_storage, name);
+					editor->level.name_is_valid = true;
 				}
 			}
 
