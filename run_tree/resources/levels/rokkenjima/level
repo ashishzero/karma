@@ -1,327 +1,426 @@
 level: #0
-   resources: { 65, [ #1
+   resources: { 106, [ #0
       id: #0
          handle: 6898543709760815511
       fixture_id: #0
-         handle: 6895733819830550519
-      texture_name: "player.png", #1
+         handle: 6895733819830550519, #0
       id: #0
          handle: 6898544009606095358
       fixture_id: #0
-         handle: 6898544011384827759
-      texture_name: "", #1
+         handle: 6898544011384827759, #0
       id: #0
          handle: 6898544450746570615
       fixture_id: #0
-         handle: 6898544449330201717
-      texture_name: "", #1
+         handle: 6898544449330201717, #0
       id: #0
          handle: 6898544746344312574
       fixture_id: #0
-         handle: 6898544449330201717
-      texture_name: "", #1
+         handle: 6898544449330201717, #0
       id: #0
          handle: 6898544782909956319
       fixture_id: #0
-         handle: 6898544449330201717
-      texture_name: "", #1
+         handle: 6898544449330201717, #0
       id: #0
          handle: 6898544820277214718
       fixture_id: #0
-         handle: 6898544449330201717
-      texture_name: "", #1
+         handle: 6898544449330201717, #0
       id: #0
          handle: 6898546243245520074
       fixture_id: #0
-         handle: 6898546243903842155
-      texture_name: "", #1
+         handle: 6898546243903842155, #0
       id: #0
          handle: 6898547373001142271
       fixture_id: #0
-         handle: 6898546243903842155
-      texture_name: "", #1
+         handle: 6898546243903842155, #0
       id: #0
          handle: 6898547583325036535
       fixture_id: #0
-         handle: 6898546243903842155
-      texture_name: "", #1
+         handle: 6898546243903842155, #0
       id: #0
          handle: 6898547742599744148
       fixture_id: #0
-         handle: 6898546243903842155
-      texture_name: "", #1
+         handle: 6898546243903842155, #0
       id: #0
          handle: 6898548210331487501
       fixture_id: #0
-         handle: 6898544449330201717
-      texture_name: "", #1
+         handle: 6898544449330201717, #0
       id: #0
          handle: 6898548268064872223
       fixture_id: #0
-         handle: 6898544449330201717
-      texture_name: "", #1
+         handle: 6898544449330201717, #0
       id: #0
          handle: 6898548327379159959
       fixture_id: #0
-         handle: 6898544449330201717
-      texture_name: "", #1
+         handle: 6898544449330201717, #0
       id: #0
          handle: 6898548444566810238
       fixture_id: #0
-         handle: 6898544449330201717
-      texture_name: "", #1
+         handle: 6898544449330201717, #0
       id: #0
          handle: 6898548621536101078
       fixture_id: #0
-         handle: 6898544449330201717
-      texture_name: "", #1
+         handle: 6898544449330201717, #0
       id: #0
          handle: 6898552929041496557
       fixture_id: #0
-         handle: 6898544449330201717
-      texture_name: "", #1
+         handle: 6898544449330201717, #0
       id: #0
          handle: 6898552957245432590
       fixture_id: #0
-         handle: 6898544449330201717
-      texture_name: "", #1
+         handle: 6898544449330201717, #0
       id: #0
          handle: 6898552992245743452
       fixture_id: #0
-         handle: 6898544449330201717
-      texture_name: "", #1
+         handle: 6898544449330201717, #0
       id: #0
          handle: 6898553151028051382
       fixture_id: #0
-         handle: 6898544449330201717
-      texture_name: "", #1
+         handle: 6898544449330201717, #0
       id: #0
          handle: 6898553257784102697
       fixture_id: #0
-         handle: 6898544449330201717
-      texture_name: "", #1
+         handle: 6898544449330201717, #0
       id: #0
          handle: 6898553341410219770
       fixture_id: #0
-         handle: 6898544449330201717
-      texture_name: "", #1
+         handle: 6898544449330201717, #0
       id: #0
          handle: 6898553381975454579
       fixture_id: #0
-         handle: 6898544449330201717
-      texture_name: "", #1
+         handle: 6898544449330201717, #0
       id: #0
          handle: 6898553631339183075
       fixture_id: #0
-         handle: 6898544449330201717
-      texture_name: "", #1
+         handle: 6898544449330201717, #0
       id: #0
          handle: 6898553775539531438
       fixture_id: #0
-         handle: 6898544449330201717
-      texture_name: "", #1
+         handle: 6898544449330201717, #0
       id: #0
          handle: 6898554890276044415
       fixture_id: #0
-         handle: 6898544449330201717
-      texture_name: "", #1
+         handle: 6898544449330201717, #0
       id: #0
          handle: 6898555176920022959
       fixture_id: #0
-         handle: 6898544449330201717
-      texture_name: "", #1
+         handle: 6898544449330201717, #0
       id: #0
          handle: 6898555281043470262
       fixture_id: #0
-         handle: 6898544449330201717
-      texture_name: "", #1
+         handle: 6898544449330201717, #0
       id: #0
          handle: 6898556006201496859
       fixture_id: #0
-         handle: 6898544449330201717
-      texture_name: "", #1
+         handle: 6898544449330201717, #0
       id: #0
          handle: 6898556134630095462
       fixture_id: #0
-         handle: 6898544449330201717
-      texture_name: "", #1
+         handle: 6898544449330201717, #0
       id: #0
          handle: 6898556219310751850
       fixture_id: #0
-         handle: 6898544449330201717
-      texture_name: "", #1
+         handle: 6898544449330201717, #0
       id: #0
          handle: 6898556876243331022
       fixture_id: #0
-         handle: 6898544449330201717
-      texture_name: "", #1
+         handle: 6898544449330201717, #0
       id: #0
          handle: 6898556974300634994
       fixture_id: #0
-         handle: 6898544449330201717
-      texture_name: "", #1
+         handle: 6898544449330201717, #0
       id: #0
          handle: 6898557698963363837
       fixture_id: #0
-         handle: 6898544449330201717
-      texture_name: "", #1
+         handle: 6898544449330201717, #0
       id: #0
          handle: 6898557808479419563
       fixture_id: #0
-         handle: 6898544449330201717
-      texture_name: "", #1
+         handle: 6898544449330201717, #0
       id: #0
          handle: 6898557996155354365
       fixture_id: #0
-         handle: 6898544449330201717
-      texture_name: "", #1
+         handle: 6898544449330201717, #0
       id: #0
          handle: 6898558123384892415
       fixture_id: #0
-         handle: 6898544449330201717
-      texture_name: "", #1
+         handle: 6898544449330201717, #0
       id: #0
          handle: 6898558347427493112
       fixture_id: #0
-         handle: 6898544449330201717
-      texture_name: "", #1
+         handle: 6898544449330201717, #0
       id: #0
          handle: 6898558521606306557
       fixture_id: #0
-         handle: 6898544449330201717
-      texture_name: "", #1
+         handle: 6898544449330201717, #0
       id: #0
          handle: 6898558622830165942
       fixture_id: #0
-         handle: 6898544449330201717
-      texture_name: "", #1
+         handle: 6898544449330201717, #0
       id: #0
          handle: 6898558803445282783
       fixture_id: #0
-         handle: 6898544449330201717
-      texture_name: "", #1
+         handle: 6898544449330201717, #0
       id: #0
          handle: 6898558920374463630
       fixture_id: #0
-         handle: 6898544449330201717
-      texture_name: "", #1
+         handle: 6898544449330201717, #0
       id: #0
          handle: 6898559938133441506
       fixture_id: #0
-         handle: 6898544449330201717
-      texture_name: "", #1
+         handle: 6898544449330201717, #0
       id: #0
          handle: 6898560214761098750
       fixture_id: #0
-         handle: 6898544449330201717
-      texture_name: "", #1
+         handle: 6898544449330201717, #0
       id: #0
          handle: 6898566997476835327
       fixture_id: #0
-         handle: 6898544449330201717
-      texture_name: "", #1
+         handle: 6898544449330201717, #0
       id: #0
          handle: 6898567218925293951
       fixture_id: #0
-         handle: 6898544449330201717
-      texture_name: "", #1
+         handle: 6898544449330201717, #0
       id: #0
          handle: 6898567352377448975
       fixture_id: #0
-         handle: 6898544449330201717
-      texture_name: "", #1
+         handle: 6898544449330201717, #0
       id: #0
          handle: 6898567421074866154
       fixture_id: #0
-         handle: 6898544449330201717
-      texture_name: "", #1
+         handle: 6898544449330201717, #0
       id: #0
          handle: 6898567529327484580
       fixture_id: #0
-         handle: 6898544449330201717
-      texture_name: "", #1
+         handle: 6898544449330201717, #0
       id: #0
          handle: 6898567572777238469
       fixture_id: #0
-         handle: 6898544449330201717
-      texture_name: "", #1
+         handle: 6898544449330201717, #0
       id: #0
          handle: 6898567617548385338
       fixture_id: #0
-         handle: 6898544449330201717
-      texture_name: "", #1
+         handle: 6898544449330201717, #0
       id: #0
          handle: 6898568105243915135
       fixture_id: #0
-         handle: 6898544449330201717
-      texture_name: "", #1
+         handle: 6898544449330201717, #0
       id: #0
          handle: 6898568253964928796
       fixture_id: #0
-         handle: 6898544449330201717
-      texture_name: "", #1
+         handle: 6898544449330201717, #0
       id: #0
          handle: 6898568676001392575
       fixture_id: #0
-         handle: 6898544449330201717
-      texture_name: "", #1
+         handle: 6898544449330201717, #0
       id: #0
          handle: 6898570253264897921
       fixture_id: #0
-         handle: 6898570255059646053
-      texture_name: "", #1
+         handle: 6898570255059646053, #0
       id: #0
          handle: 6898570911584564692
       fixture_id: #0
-         handle: 6898570255059646053
-      texture_name: "", #1
+         handle: 6898570255059646053, #0
       id: #0
          handle: 6898571027077316351
       fixture_id: #0
-         handle: 6898571029000383523
-      texture_name: "", #1
+         handle: 6898571029000383523, #0
       id: #0
          handle: 6898572041783850997
       fixture_id: #0
-         handle: 6898571029000383523
-      texture_name: "", #1
+         handle: 6898571029000383523, #0
       id: #0
          handle: 6898577055523238613
       fixture_id: #0
-         handle: 6898573268526036990
-      texture_name: "", #1
+         handle: 6898573268526036990, #0
       id: #0
-         handle: 6898576910495994815
+         handle: 6898573645450796927
       fixture_id: #0
-         handle: 6898573268526036990
-      texture_name: "", #1
+         handle: 6898573268526036990, #0
       id: #0
          handle: 6898573774562544481
       fixture_id: #0
-         handle: 6898570255059646053
-      texture_name: "", #1
+         handle: 6898570255059646053, #0
       id: #0
          handle: 6898574639010147196
       fixture_id: #0
-         handle: 6898573268526036990
-      texture_name: "", #1
+         handle: 6898573268526036990, #0
       id: #0
          handle: 6898574762388780984
       fixture_id: #0
-         handle: 6898570255059646053
-      texture_name: "", #1
+         handle: 6898570255059646053, #0
       id: #0
          handle: 6898575008862250963
       fixture_id: #0
-         handle: 6898570255059646053
-      texture_name: "", #1
+         handle: 6898570255059646053, #0
       id: #0
          handle: 6898575203801758184
       fixture_id: #0
-         handle: 6898571029000383523
-      texture_name: "", #1
+         handle: 6898571029000383523, #0
       id: #0
          handle: 6898576847965252602
       fixture_id: #0
-         handle: 6898570255059646053
-      texture_name: "" ] }
+         handle: 6898570255059646053, #0
+      id: #0
+         handle: 6898576910495994815
+      fixture_id: #0
+         handle: 6898573268526036990, #0
+      id: #0
+         handle: 6898594313843694789
+      fixture_id: #0
+         handle: 6895733819830550519, #0
+      id: #0
+         handle: 6898594501962481125
+      fixture_id: #0
+         handle: 6898578698044177885, #0
+      id: #0
+         handle: 6898594746102837295
+      fixture_id: #0
+         handle: 6898571029000383523, #0
+      id: #0
+         handle: 6898594936064047038
+      fixture_id: #0
+         handle: 6898571029000383523, #0
+      id: #0
+         handle: 6898595069832742638
+      fixture_id: #0
+         handle: 6898571029000383523, #0
+      id: #0
+         handle: 6898595072397516362
+      fixture_id: #0
+         handle: 6898571029000383523, #0
+      id: #0
+         handle: 6898595078435982584
+      fixture_id: #0
+         handle: 6898571029000383523, #0
+      id: #0
+         handle: 6898595084264402901
+      fixture_id: #0
+         handle: 6898571029000383523, #0
+      id: #0
+         handle: 6898595083193310183
+      fixture_id: #0
+         handle: 6898571029000383523, #0
+      id: #0
+         handle: 6898595086918891558
+      fixture_id: #0
+         handle: 6898571029000383523, #0
+      id: #0
+         handle: 6898595932908281852
+      fixture_id: #0
+         handle: 6898578698044177885, #0
+      id: #0
+         handle: 6898595936177781368
+      fixture_id: #0
+         handle: 6898578698044177885, #0
+      id: #0
+         handle: 6898595942123492315
+      fixture_id: #0
+         handle: 6898578698044177885, #0
+      id: #0
+         handle: 6898595942212959231
+      fixture_id: #0
+         handle: 6898578698044177885, #0
+      id: #0
+         handle: 6898595941099260883
+      fixture_id: #0
+         handle: 6898578698044177885, #0
+      id: #0
+         handle: 6898595945089300949
+      fixture_id: #0
+         handle: 6898578698044177885, #0
+      id: #0
+         handle: 6898596164017315836
+      fixture_id: #0
+         handle: 6898571029000383523, #0
+      id: #0
+         handle: 6898596178222764902
+      fixture_id: #0
+         handle: 6898571029000383523, #0
+      id: #0
+         handle: 6898596178297769968
+      fixture_id: #0
+         handle: 6898571029000383523, #0
+      id: #0
+         handle: 6898596180557504666
+      fixture_id: #0
+         handle: 6898571029000383523, #0
+      id: #0
+         handle: 6898596180724651935
+      fixture_id: #0
+         handle: 6898571029000383523, #0
+      id: #0
+         handle: 6898596183263870447
+      fixture_id: #0
+         handle: 6898571029000383523, #0
+      id: #0
+         handle: 6898596186790279402
+      fixture_id: #0
+         handle: 6898571029000383523, #0
+      id: #0
+         handle: 6898596185787334267
+      fixture_id: #0
+         handle: 6898571029000383523, #0
+      id: #0
+         handle: 6898596192668351113
+      fixture_id: #0
+         handle: 6898571029000383523, #0
+      id: #0
+         handle: 6898597737425771449
+      fixture_id: #0
+         handle: 6898597736559341565, #0
+      id: #0
+         handle: 6898598895442480218
+      fixture_id: #0
+         handle: 6898597736559341565, #0
+      id: #0
+         handle: 6898598993420549951
+      fixture_id: #0
+         handle: 6898597736559341565, #0
+      id: #0
+         handle: 6898599541109424057
+      fixture_id: #0
+         handle: 6898571029000383523, #0
+      id: #0
+         handle: 6898599558955837325
+      fixture_id: #0
+         handle: 6898571029000383523, #0
+      id: #0
+         handle: 6898599735581982463
+      fixture_id: #0
+         handle: 6898578698044177885, #0
+      id: #0
+         handle: 6898599736095082493
+      fixture_id: #0
+         handle: 6898578698044177885, #0
+      id: #0
+         handle: 6898599739238891246
+      fixture_id: #0
+         handle: 6898578698044177885, #0
+      id: #0
+         handle: 6898599737575322532
+      fixture_id: #0
+         handle: 6898578698044177885, #0
+      id: #0
+         handle: 6898599743151697784
+      fixture_id: #0
+         handle: 6898578698044177885, #0
+      id: #0
+         handle: 6898600123630215766
+      fixture_id: #0
+         handle: 6898571029000383523, #0
+      id: #0
+         handle: 6898600125595275500
+      fixture_id: #0
+         handle: 6898571029000383523, #0
+      id: #0
+         handle: 6898600131328600937
+      fixture_id: #0
+         handle: 6898571029000383523, #0
+      id: #0
+         handle: 6898600131690261567
+      fixture_id: #0
+         handle: 6898571029000383523, #0
+      id: #0
+         handle: 6898600133944883071
+      fixture_id: #0
+         handle: 6898571029000383523 ] }
