@@ -804,7 +804,7 @@ void scene_simulate(Scene *scene, r32 dt) {
 			auto primary_player = &scene->by_type.character[0];
 
 			auto camera = scene_primary_camera(scene);
-			camera->behaviour = Camera_Behaviour_ANIMATE_MOVEMENT;
+			camera->behaviour |= Camera_Behaviour_ANIMATE_MOVEMENT;
 			camera->target_position = primary_player->position;
 		}
 
@@ -1732,6 +1732,11 @@ bool scene_load_level(Scene *scene, const String name) {
 	scene_refresh_rigid_bodies(scene);
 
 	scene->loaded_level = index;
+
+	Camera *camera = scene_primary_camera(scene);
+	camera->target_distance = camera->distance;
+	camera->distance += 2;
+	camera->behaviour |= Camera_Behaviour_ANIMATE_FOCUS;
 
 	return true;
 }

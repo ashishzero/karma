@@ -256,6 +256,10 @@ void editor_set_mode_entity_editor(Scene *scene, Editor *editor, Resource_Id id,
 
 	editor->entity.added_vertex_index = -1;
 	editor->entity.vertex_is_valid = false;
+	editor->entity.hovered_index = -1;
+	editor->entity.hovered_vertex = nullptr;
+	editor->entity.selected_index = -1;
+	editor->entity.selected_vertex = nullptr;
 	editor->entity_camera.position = vec2(0);
 	editor->entity_camera.distance = 0;
 	editor->entity_camera.target_position = vec2(0);
