@@ -85,7 +85,7 @@ int karma_user_zero() {
 
 	scene_load_resources(scene);
 
-	bool loaded = scene_load_level(scene, "test_level");
+	bool loaded = scene_load_level(scene, "rokkenjima");
 	assert(loaded);
 
 	Physics_State physics_state = Physics_State_RUNNING;

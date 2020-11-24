@@ -5,8 +5,7 @@
 #include "modules/core/data_structures.h"
 #include "entity.h"
 
-//constexpr u32 SCENE_MAX_ENTITY_COUNT = 524288; // NOTE: This must be power of 2 (2^19)
-constexpr u32 SCENE_MAX_ENTITY_COUNT = 32;
+constexpr u32 SCENE_MAX_ENTITY_COUNT = 524288; // NOTE: This must be power of 2 (2^19)
 constexpr r32 SCENE_VIEW_HEIGHT_HALF = 1;
 constexpr int SCENE_SIMULATION_MAX_ITERATION = 5;
 constexpr r32 SCENE_SIMULATION_CORRECTION_ALPHA = 0.8f;
