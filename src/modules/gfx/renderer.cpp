@@ -621,6 +621,10 @@ void gfx_viewport(r32 x, r32 y, r32 w, r32 h) {
 	gfx->cmd_set_viewport(x, y, w, h);
 }
 
+Texture2d_Handle im_white_texture() {
+	return white_texture;
+}
+
 void im2d_begin(const Mat4 &transform) {
 	im_context2d.draw_cmd       = 0;
 	im_context2d.vertex         = 0;

@@ -179,7 +179,7 @@ inline void ieditor_reset(Scene *scene, Editor *editor, Editor_Mode new_mode) {
 	editor->entity_camera.behaviour = 0;
 
 	if (editor->mode == Editor_Mode_ENTITY_EDITOR) {
-		scene_reload_resources(scene);
+		scene_reload_resources(scene, editor->entity.fixture_id);
 	}
 
 	if (editor->mode != Editor_Mode_ENTITY_EDITOR && new_mode != Editor_Mode_ENTITY_EDITOR) {
@@ -989,6 +989,7 @@ void ieditor_fixture_group(Scene *scene, Editor *editor, Rigid_Body *body) {
 	}
 }
 
+#if 0
 inline void ieditor_create_new_entity(Scene *scene, Editor *editor, Entity_Type type, Resource_Fixture &resource, const String texture, bool select) {
 	Camera *camera = editor_rendering_camera(scene, editor);
 
@@ -1016,6 +1017,7 @@ inline void ieditor_create_new_entity(Scene *scene, Editor *editor, Entity_Type 
 			invalid_default_case();
 	}
 }
+#endif
 
 bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 	bool result = false;
@@ -1192,6 +1194,7 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 	ImVec2 center = ImGui::GetMainViewport()->GetCenter();
 	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
 
+	#if 0
 	if (ImGui::BeginPopupModal("Resource Selection", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
 		Entity_Type new_entity_type = editor->level.new_entity_type;
 
@@ -1261,6 +1264,12 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 				}
 
 				ImDrawList *draw_list = ImGui::GetWindowDrawList();
+
+				Texture_Id id;
+				if (scene_find_resource_texture(scene, String(r->texture_name, strlen(r->texture_name)), &id)) {
+					auto tex = scene_get_texture(scene, id);
+					draw_list->AddImage(tex.view.id.hptr, canvas_p0, canvas_p1);
+				}
 
 				ImU32 grid_color = IM_COL32(200, 200, 200, 40);
 				ImU32 shape_color = IM_COL32(255, 255, 0, 255);
@@ -1360,6 +1369,7 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 
 		ImGui::EndPopup();
 	}
+	#endif
 
 	ImGui::Text(level->name);
 	ImGui::SameLine();
@@ -1483,6 +1493,7 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 			invalid_default_case();
 	}
 
+	#if 0
 	if (body) {
 		ieditor_fixture_group(scene, editor, body);
 		if (ImGui::Button("Edit##EntityEditor")) {
@@ -1505,6 +1516,7 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 			editor_set_mode_entity_editor(scene, editor, r->id, r->name, r->fixtures, r->fixture_count, tex->name);
 		}
 	}
+	#endif
 
 	ImGui::SameLine();
 
@@ -1657,15 +1669,25 @@ bool ieditor_gui_entity_editor(Scene *scene, Editor *editor) {
 
 			ImGui::EndChild();
 
+			#if 0
 			if (ImGui::Button("Save")) {
 				Resource_Fixture r;
 				r.id = editor->entity.fixture_id;
 				memcpy(r.name, editor->entity.fixture_name, sizeof(Resource_Name));
 				r.fixtures = editor->entity.fixtures;
 				r.fixture_count = editor->entity.fixture_count;
-				scene_save_resource(scene, r, true);
+				Texture_Group texture;
+				texture.handle.buffer.id.hptr = nullptr;
+				texture.handle.view.id.hptr = nullptr;
+				texture.uv = mm_rect(0, 0, 1, 1);
+				Resource_Header header;
+				header.id = r.id;
+				memcpy(header.name, r.name, sizeof(Resource_Name));
+				header.texture[0] = 0;
+				scene_save_resource(scene, header, texture, r, true);
 			}
 			ImGui::SameLine();
+			#endif
 
 			if (editor->entity.fixture_count < MAXIMUM_FIXTURE_COUNT) {
 				if (ImGui::Button("New Shape##FixtureShape")) {
@@ -1691,13 +1713,25 @@ bool ieditor_gui_entity_editor(Scene *scene, Editor *editor) {
 	}
 	ImGui::End();
 
+	
 	if (!open) {
+		#if 0
 		Resource_Fixture r;
 		r.id = editor->entity.fixture_id;
 		memcpy(r.name, editor->entity.fixture_name, sizeof(Resource_Name));
 		r.fixtures = editor->entity.fixtures;
 		r.fixture_count = editor->entity.fixture_count;
-		scene_save_resource(scene, r, true);
+		Texture_Group texture;
+		texture.handle.buffer.id.hptr = nullptr;
+		texture.handle.view.id.hptr = nullptr;
+		texture.uv = mm_rect(0, 0, 1, 1);
+		Resource_Header header;
+		header.id = r.id;
+		memcpy(header.name, r.name, sizeof(Resource_Name));
+		header.texture[0] = 0;
+		scene_save_resource(scene, header, texture, r, true);
+		#endif
+
 		editor_set_mode_level_editor(scene, editor);
 	}
 

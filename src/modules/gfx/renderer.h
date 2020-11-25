@@ -82,6 +82,8 @@ void gfx_end_drawing();
 
 void gfx_viewport(r32 x, r32 y, r32 w, r32 h);
 
+Texture2d_Handle im_white_texture();
+
 void im2d_begin(const Mat4 &transform = mat4_identity());
 void im2d_begin(Camera_View &view, const Mat4 &transform = mat4_identity());
 void im2d_end();

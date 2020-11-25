@@ -1,0 +1,29 @@
+header: #0
+   id: #0
+      handle: 6898546243903842155
+   name: "l_block"
+   texture: ""
+uv: #0
+   min: #0
+      x: 0.000000
+      y: 0.000000
+   max: #0
+      x: 1.000000
+      y: 1.000000
+fixture_count: 2
+shape: 1
+shape_data: #0
+   min: #0
+      x: -0.500000
+      y: -0.200000
+   max: #0
+      x: 0.200000
+      y: 0.000000
+shape: 1
+shape_data: #0
+   min: #0
+      x: 0.000000
+      y: -0.100000
+   max: #0
+      x: 0.200000
+      y: 0.500000

@@ -226,11 +226,17 @@ inline u32 iscene_search_entity_reference(Entity_Hash_Table *table, Entity_Id id
 
 inline Entity_Reference *iscene_get_entity_reference(Entity_Hash_Table *table, Entity_Id id) {
 	u32 index = iscene_search_entity_reference(table, id);
-	Entity_Reference *slot = table->slots + index;
+	Entity_Reference *slot = table->references + index;
 	return slot;
 }
 
-inline void iscene_insert_entity_reference(Entity_Hash_Table *table, Entity_Id id, Entity_Reference ref) {
+inline Resource_Id iscene_get_entity_resource(Entity_Hash_Table *table, Entity_Id id) {
+	u32 index = iscene_search_entity_reference(table, id);
+	Resource_Id *slot = table->resources + index;
+	return *slot;
+}
+
+inline void iscene_insert_entity_reference(Entity_Hash_Table *table, Entity_Id id, Entity_Reference ref, Resource_Id resource) {
 	assert(table->count < SCENE_MAX_ENTITY_COUNT);
 
 	u32 hash_index = entity_hash_index(id);
@@ -246,7 +252,8 @@ inline void iscene_insert_entity_reference(Entity_Hash_Table *table, Entity_Id i
 			if (key->id.handle == id.handle) {
 				key->id = id;
 				key->slot = Entity_Hash_Table::Slot::OCCUPIED;
-				table->slots[index] = ref;
+				table->references[index] = ref;
+				table->resources[index] = resource;
 				table->count += 1;
 				return;
 			}
@@ -257,9 +264,14 @@ inline void iscene_insert_entity_reference(Entity_Hash_Table *table, Entity_Id i
 
 		if (key->slot != Entity_Hash_Table::Slot::EMPTY) {
 			Entity_Reference temp_ref;
-			temp_ref = table->slots[index];
-			table->slots[index] = ref;
+			temp_ref = table->references[index];
+			table->references[index] = ref;
 			ref = temp_ref;
+
+			Resource_Id temp_res;
+			temp_res = table->resources[index];
+			table->resources[index] = resource;
+			resource = temp_res;
 
 			Entity_Id temp_id;
 			temp_id = key->id;
@@ -274,7 +286,8 @@ inline void iscene_insert_entity_reference(Entity_Hash_Table *table, Entity_Id i
 		} else {
 			key->id = id;
 			key->slot = Entity_Hash_Table::Slot::OCCUPIED;
-			table->slots[index] = ref;
+			table->references[index] = ref;
+			table->resources[index] = resource;
 			table->count += 1;
 			return;
 		}
@@ -286,11 +299,13 @@ inline void iscene_delete_entity_reference(Entity_Hash_Table *table, Entity_Id i
 	assert(search_index < SCENE_MAX_ENTITY_COUNT);
 
 	Entity_Hash_Table::Key *key = table->keys + search_index;
-	Entity_Reference *slot = table->slots + search_index;
+	Entity_Reference *ref = table->references + search_index;
+	Resource_Id *res = table->resources + search_index;
 
 	Entity_Hash_Table::Key *nxt_key;
 	u32 nxt_hash_index;
-	Entity_Reference *nxt_slot;
+	Entity_Reference *nxt_ref;
+	Resource_Id *nxt_res;
 
 	u32 put_index = search_index;
 
@@ -305,13 +320,16 @@ inline void iscene_delete_entity_reference(Entity_Hash_Table *table, Entity_Id i
 
 		if ((index > nxt_hash_index && put_index >= nxt_hash_index && put_index < index) ||
 			(index < nxt_hash_index && (put_index >= nxt_hash_index || put_index < index))) {
-			nxt_slot = table->slots + index;
+			nxt_ref = table->references + index;
+			nxt_res = table->resources + index;
 
 			*key = *nxt_key;
-			*slot = *nxt_slot;
+			*ref = *nxt_ref;
+			*res = *nxt_res;
 
 			key = nxt_key;
-			slot = nxt_slot;
+			ref = nxt_ref;
+			res = nxt_res;
 			put_index = index;
 		}
 	}
@@ -324,13 +342,13 @@ inline bool iscene_delete_entity_reference_if_present(Entity_Hash_Table *table, 
 
 	if (search_index < SCENE_MAX_ENTITY_COUNT) {
 		Entity_Hash_Table::Key *key = table->keys + search_index;
-		Entity_Reference *slot = table->slots + search_index;
-
-		*data = *slot;
+		Entity_Reference *ref = table->references + search_index;
+		Resource_Id *res = table->resources + search_index;
 
 		Entity_Hash_Table::Key *nxt_key;
 		u32 nxt_hash_index;
-		Entity_Reference *nxt_slot;
+		Entity_Reference *nxt_ref;
+		Resource_Id *nxt_res;
 
 		u32 put_index = search_index;
 
@@ -345,13 +363,16 @@ inline bool iscene_delete_entity_reference_if_present(Entity_Hash_Table *table, 
 
 			if ((index > nxt_hash_index && put_index >= nxt_hash_index && put_index < index) ||
 				(index < nxt_hash_index && (put_index >= nxt_hash_index || put_index < index))) {
-				nxt_slot = table->slots + index;
+				nxt_ref = table->references + index;
+				nxt_res = table->resources + index;
 
 				*key = *nxt_key;
-				*slot = *nxt_slot;
+				*ref = *nxt_ref;
+				*res = *nxt_res;
 
 				key = nxt_key;
-				slot = nxt_slot;
+				ref = nxt_ref;
+				res = nxt_res;
 				put_index = index;
 			}
 		}
@@ -370,27 +391,27 @@ inline Camera *iscene_add_camera(Scene *scene, Entity_Id id, Vec2 p) {
 	camera->type = Entity_Type_Camera;
 	camera->id = id;
 	camera->position = p;
-	iscene_insert_entity_reference(&scene->entity_table, id, { Entity_Type_Camera, index });
+	iscene_insert_entity_reference(&scene->entity_table, id, { Entity_Type_Camera, index }, { 0 });
 	return camera;
 }
 
-inline Character *iscene_add_character(Scene *scene, Entity_Id id, Vec2 p) {
+inline Character *iscene_add_character(Scene *scene, Entity_Id id, Vec2 p, Resource_Id resource) {
 	u32 index = (u32)scene->by_type.character.count;
 	Character *character = array_add(&scene->by_type.character);
 	character->type = Entity_Type_Character;
 	character->id = id;
 	character->position = p;
-	iscene_insert_entity_reference(&scene->entity_table, id, { Entity_Type_Character, index });
+	iscene_insert_entity_reference(&scene->entity_table, id, { Entity_Type_Character, index }, resource);
 	return character;
 }
 
-inline Obstacle *iscene_add_obstacle(Scene *scene, Entity_Id id, Vec2 p) {
+inline Obstacle *iscene_add_obstacle(Scene *scene, Entity_Id id, Vec2 p, Resource_Id resource) {
 	u32 index = (u32)scene->by_type.obstacle.count;
 	Obstacle *obstacle = array_add(&scene->by_type.obstacle);
 	obstacle->type = Entity_Type_Obstacle;
 	obstacle->id = id;
 	obstacle->position = p;
-	iscene_insert_entity_reference(&scene->entity_table, id, { Entity_Type_Obstacle, index });
+	iscene_insert_entity_reference(&scene->entity_table, id, { Entity_Type_Obstacle, index }, resource);
 	return obstacle;
 }
 
@@ -430,30 +451,32 @@ Scene *scene_create() {
 	array_resize(&scene->by_type.obstacle, 1000);
 
 	scene->entity_table.keys = (Entity_Hash_Table::Key *)memory_allocate(sizeof(Entity_Hash_Table::Key) * SCENE_MAX_ENTITY_COUNT);
-	scene->entity_table.slots = (Entity_Reference *)memory_allocate(sizeof(Entity_Reference) * SCENE_MAX_ENTITY_COUNT);
+	scene->entity_table.references = (Entity_Reference *)memory_allocate(sizeof(Entity_Reference) * SCENE_MAX_ENTITY_COUNT);
+	scene->entity_table.resources = (Resource_Id *)memory_allocate(sizeof(Resource_Id) * SCENE_MAX_ENTITY_COUNT);
 	scene->entity_table.count = 0;
 
 	memset(scene->entity_table.keys, 0, sizeof(Entity_Hash_Table::Key) * SCENE_MAX_ENTITY_COUNT);
 
-	scene->resource_textures.count = 0;
-	scene->resource_textures.capacity = 0;
-	scene->resource_textures.data = nullptr;
-	scene->resource_textures.allocator = context.allocator;
+	scene->resource_header.count = 0;
+	scene->resource_header.capacity = 0;
+	scene->resource_header.data = nullptr;
+	scene->resource_header.allocator = context.allocator;
 
-	scene->handle_textures.count = 0;
-	scene->handle_textures.capacity = 0;
-	scene->handle_textures.data = nullptr;
-	scene->handle_textures.allocator = context.allocator;
+	scene->fixture_group.count = 0;
+	scene->fixture_group.capacity = 0;
+	scene->fixture_group.data = nullptr;
+	scene->fixture_group.allocator = context.allocator;
 
-	array_resize(&scene->resource_textures, 100);
-	array_resize(&scene->handle_textures, 100);
+	scene->texture_group.count = 0;
+	scene->texture_group.capacity = 0;
+	scene->texture_group.data = nullptr;
+	scene->texture_group.allocator = context.allocator;
+
+	array_resize(&scene->resource_header, 100);
+	array_resize(&scene->fixture_group, 100);
+	array_resize(&scene->texture_group, 100);
 
 	circular_linked_list_init(&scene->rigid_bodies, context.allocator);
-
-	scene->resource_fixtures.count = scene->resource_fixtures.capacity = 0;
-	scene->resource_fixtures.data = nullptr;
-	scene->resource_fixtures.allocator = context.allocator;
-	array_resize(&scene->resource_fixtures, 500);
 
 	scene->pool_allocator = context.allocator;
 
@@ -493,12 +516,14 @@ void scene_destroy(Scene *scene) {
 
 	array_free(&scene->levels);
 
-	array_free(&scene->resource_fixtures);
+	array_free(&scene->resource_header);
+	array_free(&scene->fixture_group);
+	array_free(&scene->texture_group);
 
 	circular_linked_list_clear(&scene->rigid_bodies);
 
 	memory_free(scene->entity_table.keys);
-	memory_free(scene->entity_table.slots);
+	memory_free(scene->entity_table.references);
 
 	for (u32 index = 0; index < Entity_Type_Count - 1; ++index) {
 		auto &data = scene->by_type.data[index];
@@ -512,24 +537,54 @@ void scene_destroy(Scene *scene) {
 //
 //
 
-Resource_Fixture *scene_create_new_resource_fixture(Scene *scene, String name, Fixture *fixtures, u32 fixture_count) {
-	Resource_Fixture *resource = array_add(&scene->resource_fixtures);
+Texture2d_Handle iscene_load_texture(Scene *scene, const Resource_Name &name) {
+	scoped_temporary_allocation();
+	Texture2d_Handle handle;
+	if (name[0]) {
+		String path = tprintf("resources/textures/%s", name);
 
-	assert(name.count < (sizeof(Resource_Name) - 1));
+		int w, h, n;
+		String content = system_read_entire_file(path);
+		if (content.count) {
+			u8 *pixels = stbi_load_from_memory(content.data, (int)content.count, &w, &h, &n, 4);
+			if (pixels) {
+				handle = gfx_create_texture2d((u32)w, (u32)h, 4, Data_Format_RGBA8_UNORM_SRGB, (const u8 **)&pixels, Buffer_Usage_IMMUTABLE, 1);
+				stbi_image_free(pixels);
+			} else {
+				system_log(LOG_ERROR, "Scene", "Failed to parse texture: %s", tto_cstring(path));
+				return im_white_texture();
+			}
+		} else {
+			system_log(LOG_ERROR, "Scene", "Failed to load file: %s", tto_cstring(path));
+			return im_white_texture();
+		}
 
-	resource->id.handle = iscene_generate_unique_id(scene);
-
-	memcpy(resource->name, name.data, name.count);
-	resource->name[name.count] = 0;
-
-	resource->fixture_count = fixture_count;
-	if (fixture_count) {
-		resource->fixtures = new (scene->pool_allocator) Fixture[resource->fixture_count];
-	} else {
-		resource->fixtures = nullptr;
+		return handle;
 	}
 
-	Fixture *dst = resource->fixtures;
+	return im_white_texture();
+}
+
+const Resource_Header *scene_create_new_resource(Scene *scene, Resource_Name &name, Fixture *fixtures, u32 fixture_count, const Resource_Name &tex_name, const Mm_Rect &uv) {
+	auto header = array_add(&scene->resource_header);
+	auto fixture = array_add(&scene->fixture_group);
+	auto texture = array_add(&scene->texture_group);
+
+	header->id.handle = iscene_generate_unique_id(scene);
+	memcpy(header->name, name, sizeof(Resource_Name));
+	memcpy(header->texture, tex_name, sizeof(Resource_Name));
+
+	texture->handle = iscene_load_texture(scene, tex_name);
+	texture->uv = uv;
+
+	fixture->count = fixture_count;
+	if (fixture_count) {
+		fixture->fixtures = new (scene->pool_allocator) Fixture[fixture->count];
+	} else {
+		fixture->fixtures = nullptr;
+	}
+
+	Fixture *dst = fixture->fixtures;
 	Fixture *src;
 	ptrsize size = 0;
 	for (u32 index = 0; index < fixture_count; ++index) {
@@ -551,43 +606,20 @@ Resource_Fixture *scene_create_new_resource_fixture(Scene *scene, String name, F
 		dst += 1;
 	}
 
-	return resource;
+	return header;
 }
 
-Resource_Fixture *scene_find_resource_fixture(Scene *scene, Resource_Id id) {
-	auto res = array_find(&scene->resource_fixtures, [](const Resource_Fixture &f, Resource_Id id) { return f.id.handle == id.handle; }, id);
-	if (res >= 0) return scene->resource_fixtures.data + res;
-	return nullptr;
+Resource_Id	scene_find_entity_resource_id(Scene *scene, Entity_Id id) {
+	return iscene_get_entity_resource(&scene->entity_table, id);
 }
 
-Resource_Fixture *scene_find_resource_fixture_from_fixture(Scene *scene, Fixture *fixture) {
-	s64 index = array_find(&scene->resource_fixtures, [](const Resource_Fixture &f, Fixture *ptr) { return f.fixtures == ptr; }, fixture);
-	assert(index >= 0);
-	return &scene->resource_fixtures[index];
-}
-
-Resource_Texture *scene_find_resource_texture_from_index(Scene *scene, Texture_Id id) {
-	return &scene->resource_textures[id.index];
-}
-
-bool scene_find_resource_texture(Scene *scene, const String name, Texture_Id *id) {
-	u32 key;
-	if (name.count) {
-		key = murmur3_32(name.data, name.count, 5656);
-	} else {
-		key = 0;
-	}
-
-	s64 index = array_find(&scene->resource_textures, [](const Resource_Texture &t, const String name, u32 key) { 
-		return t.key == key && string_match(name, String(t.name, t.name_count));
-	}, name, key);
+const Resource_Collection scene_find_resource(Scene *scene, Resource_Id id) {
+	s64 index = array_find(&scene->resource_header, [](const Resource_Header &header, Resource_Id id) {
+		return header.id.handle == id.handle;}, id);
 	if (index >= 0) {
-		id->index = (u32)index;
-		return true;
-	} else {
-		id->index = 0;
-		return false;
+		return  { &scene->resource_header[index], &scene->fixture_group[index], &scene->texture_group[index], (u32)index };
 	}
+	return  { nullptr, nullptr, nullptr, MAX_UINT32 };
 }
 
 Entity *scene_clone_entity(Scene *scene, Entity *src, Vec2 p) {
@@ -603,40 +635,16 @@ Entity *scene_clone_entity(Scene *scene, Entity *src, Vec2 p) {
 		} break;
 
 		case Entity_Type_Character: {
-			auto character = iscene_add_character(scene, id, p);
+			auto character = iscene_add_character(scene, id, p, iscene_get_entity_resource(&scene->entity_table, src->id));
 			memcpy((u8 *)character + sizeof(Entity), (u8 *)src + sizeof(Entity), sizeof(Character) - sizeof(Entity));
-
 			character->rigid_body = iscene_create_new_rigid_body(scene, character, ((Character *)src)->rigid_body);
-
-			Resource_Entity resource;
-			resource.id = id;
-			resource.fixture_id = scene_find_resource_fixture_from_fixture(scene, character->rigid_body->fixtures)->id;
-
-			Resource_Texture *tex = scene_find_resource_texture_from_index(scene, character->texture);
-			memcpy(resource.texture_name, tex->name, sizeof(Resource_Name));
-
-			Level *level = scene_current_level_pointer(scene);
-			array_add(&level->resources, resource);
-
 			result = character;
 		} break;
 
 		case Entity_Type_Obstacle: {
-			auto obstacle = iscene_add_obstacle(scene, id, p);
+			auto obstacle = iscene_add_obstacle(scene, id, p, iscene_get_entity_resource(&scene->entity_table, src->id));
 			memcpy((u8 *)obstacle + sizeof(Entity), (u8 *)src + sizeof(Entity), sizeof(Obstacle) - sizeof(Entity));
-
 			obstacle->rigid_body = iscene_create_new_rigid_body(scene, obstacle, ((Obstacle *)src)->rigid_body);
-
-			Resource_Entity resource;
-			resource.id = id;
-			resource.fixture_id = scene_find_resource_fixture_from_fixture(scene, obstacle->rigid_body->fixtures)->id;
-
-			Resource_Texture *tex = scene_find_resource_texture_from_index(scene, obstacle->texture);
-			memcpy(resource.texture_name, tex->name, sizeof(Resource_Name));
-
-			Level *level = scene_current_level_pointer(scene);
-			array_add(&level->resources, resource);
-
 			result = obstacle;
 		} break;
 
@@ -653,7 +661,7 @@ Entity_Reference scene_get_entity(Scene *scene, Entity_Id id) {
 bool scene_find_entity(Scene *scene, Entity_Id id, Entity_Reference *ref) {
 	u32 index = iscene_search_if_entity_reference_is_present(&scene->entity_table, id);
 	if (index != SCENE_MAX_ENTITY_COUNT) {
-		*ref = scene->entity_table.slots[index];
+		*ref = scene->entity_table.references[index];
 		return true;
 	}
 	return false;
@@ -672,10 +680,6 @@ Entity *scene_entity_pointer(Scene *scene, Entity_Reference &ref) {
 
 const Array_View<Camera> scene_cameras(Scene *scene) {
 	return scene->by_type.camera;
-}
-
-const Array_View<Resource_Entity> scene_resources(Scene *scene) {
-	return scene_current_level_pointer(scene)->resources;
 }
 
 //
@@ -798,10 +802,6 @@ void scene_remove_entity(Scene *scene, Entity_Id id) {
 void scene_remove_entity_from_level(Scene *scene, Entity_Reference &ref, Entity_Id id) {
 	scene_remove_entity(scene, ref, id);
 	Level *level = scene_current_level_pointer(scene);
-	s64 index = array_find(&level->resources, [](const Resource_Entity &r, Entity_Id id) { return r.id.handle == id.handle; }, id);
-	if (index >= 0) {
-		array_remove(&level->resources, index);
-	}
 	system_remove_file(tprintf("resources/levels/%s/%zu.ent", level->name, id.handle));
 }
 
@@ -1156,14 +1156,12 @@ void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio) {
 	im2d_begin(view, transform);
 
 	if (iscene_render_world_enabled(scene)) {
-		auto &textures = scene->handle_textures;
-
 		s64 count = scene->by_type.character.count;
 		auto &characters = scene->by_type.character;
 		for (s64 index = 0; index < count; ++index) {
 			Character &c = characters[index];
 
-			im2d_bind_texture(textures[c.texture.index]);
+			im2d_bind_texture(scene->texture_group[c.texture.index].handle);
 
 			auto v = c.rigid_body->velocity;
 			r32 angle = atan2f(v.y, v.x) - MATH_TAU;
@@ -1255,16 +1253,18 @@ void iscene_serialize_fixture(Scene *scene, Fixture *fixture, Ostream *out, bool
 	}
 }
 
-void iscene_serialize_fixture_resource(Scene *scene, Resource_Fixture &resource, Ostream *out, bool pt_polygon) {
-	serialize_fmt_text(out, "resource", reflect_info<Resource_Fixture>(), (char *)&resource);
+void iscene_serialize_resource(Scene *scene, Resource_Header &header, Texture_Group &texture, Fixture_Group &fixture, Ostream *out, bool pt_polygon) {
+	serialize_fmt_text(out, "header", reflect_info<Resource_Header>(), (char *)&header);
 	serialize_fmt_text_next(out);
-	serialize_fmt_text(out, "fixture_count", reflect_info(resource.fixture_count), (char *)&resource.fixture_count);
+	serialize_fmt_text(out, "uv", reflect_info<Mm_Rect>(), (char *)&texture.uv);
+	serialize_fmt_text_next(out);
+	serialize_fmt_text(out, "fixture_count", reflect_info(fixture.count), (char *)&fixture.count);
 
-	u32 count = resource.fixture_count;
-	auto fixture = resource.fixtures;
-	for (u32 index = 0; index < count; ++index, ++fixture) {
+	u32 count = fixture.count;
+	auto f = fixture.fixtures;
+	for (u32 index = 0; index < count; ++index, ++f) {
 		serialize_fmt_text_next(out);
-		iscene_serialize_fixture(scene, fixture, out, pt_polygon);
+		iscene_serialize_fixture(scene, f, out, pt_polygon);
 	}
 }
 
@@ -1312,24 +1312,30 @@ bool iscene_deserialize_fixture(Fixture *fixture, Deserialize_State *state) {
 	return result;
 }
 
-bool iscene_deserialize_fixture_resource(Scene *scene, Resource_Fixture *resource, Deserialize_State *state) {
+bool iscene_deserialize_resource(Scene *scene, Resource_Header *header, Texture_Group *texture, Fixture_Group *fixture, Deserialize_State *state) {
 	auto mark = push_allocator(scene->pool_allocator);
 	defer{ pop_allocator(mark); };
 
-	if (!deserialize_fmt_text(state, "resource", reflect_info<Resource_Fixture>(), (char *)resource))
+	if (!deserialize_fmt_text(state, "header", reflect_info<Resource_Header>(), (char *)header))
 		return false;
 
-	if (!deserialize_fmt_text(state, "fixture_count", reflect_info(resource->fixture_count), (char *)&resource->fixture_count))
+	deserialize_fmt_text(state, "uv", reflect_info<Mm_Rect>(), (char *)&texture->uv);
+
+	if (!deserialize_fmt_text(state, "fixture_count", reflect_info(fixture->count), (char *)&fixture->count))
 		return false;
 
-	u32 count = resource->fixture_count;
-	resource->fixtures = (Fixture *)memory_allocate(count * sizeof(Fixture));
+	u32 count = fixture->count;
+	fixture->fixtures = (Fixture *)memory_allocate(count * sizeof(Fixture));
 
-	auto fixture = resource->fixtures;
-	for (u32 index = 0; index < count; ++index, ++fixture) {
-		if (!iscene_deserialize_fixture(fixture, state))
+	auto f = fixture->fixtures;
+	for (u32 index = 0; index < count; ++index, ++f) {
+		if (!iscene_deserialize_fixture(f, state)) {
+			memory_free(fixture->fixtures);
 			return false;
+		}
 	}
+
+	texture->handle = iscene_load_texture(scene, header->texture);
 
 	return true;
 }
@@ -1338,15 +1344,15 @@ bool iscene_deserialize_fixture_resource(Scene *scene, Resource_Fixture *resourc
 //
 //
 
-bool scene_save_resource(Scene *scene, Resource_Fixture &r, bool pt_polygon) {
+bool scene_save_resource(Scene *scene, Resource_Header &header, Texture_Group &texture, Fixture_Group &fixture, bool pt_polygon) {
 	auto mark = push_temporary_allocator();
 	defer{ pop_temporary_allocator(mark); };
 
 	Ostream out;
 	System_File file;
-	iscene_serialize_fixture_resource(scene, r, &out, pt_polygon);
+	iscene_serialize_resource(scene, header, texture, fixture, &out, pt_polygon);
 
-	String file_name = tprintf("resources/fixtures/%zu.fixture", r.id);
+	String file_name = tprintf("resources/sprites/%zu.sprite", header.id);
 	if (system_open_file(file_name, File_Operation_NEW, &file)) {
 		ostream_build_out_file(&out, &file);
 		system_close_file(&file);
@@ -1358,14 +1364,15 @@ bool scene_save_resource(Scene *scene, Resource_Fixture &r, bool pt_polygon) {
 }
 
 void scene_save_resources(Scene *scene) {
-	auto &resources = scene->resource_fixtures;
-
 	System_File file;
 	Ostream out;
-	for (auto &r : resources) {
+
+	s64 count = scene->resource_header.count;
+
+	for (s64 index = 0; index < count; ++index) {
 		scoped_temporary_allocation();
-		iscene_serialize_fixture_resource(scene, r, &out, false);
-		String file_name = tprintf("resources/fixtures/%zu.fixture", r.id);
+		iscene_serialize_resource(scene, scene->resource_header[index], scene->texture_group[index], scene->fixture_group[index], &out, false);
+		String file_name = tprintf("resources/sprites/%zu.sprite", scene->resource_header[index].id);
 		if (system_open_file(file_name, File_Operation_NEW, &file)) {
 			ostream_build_out_file(&out, &file);
 			system_close_file(&file);
@@ -1378,6 +1385,36 @@ void scene_save_resources(Scene *scene) {
 	ostream_free(&out);
 }
 
+bool iscene_load_resource(Scene *scene, const String path, Resource_Header *header, Texture_Group *texture, Fixture_Group *fixture) {
+	scoped_temporary_allocation();
+	String content = system_read_entire_file(path);
+	if (content.count) {
+		Tokenization_Status status;
+		auto tokens = tokenize(content, &status);
+		defer{
+			memory_free(content.data);
+			memory_free(tokens.data);
+		};
+
+		if (status.result == Tokenization_Result_SUCCESS) {
+			auto state = deserialize_begin(tokens);
+			if (!iscene_deserialize_resource(scene, header, texture, fixture, &state)) {
+				system_log(LOG_ERROR, "Scene", "Failed loading %s. Invalid file: %s", tto_cstring(path), state.error.string);
+				return false;
+			}
+			deserialize_end(&state);
+		} else {
+			system_log(LOG_ERROR, "Scene", "Tokenization of file %s failed at %zu:%zu.", tto_cstring(path), status.row, status.column);
+			return false;
+		}
+	} else {
+		system_log(LOG_ERROR, "Scene", "Failed opening file %s.", tto_cstring(path));
+		return false;
+	}
+
+	return true;
+}
+
 void scene_load_resources(Scene *scene) {
 	scene_clean_resources(scene);
 
@@ -1385,121 +1422,94 @@ void scene_load_resources(Scene *scene) {
 	defer{ pop_temporary_allocator(mark); };
 
 	{
-		auto files = system_find_files("resources/fixtures", ".fixture", false);
+		auto files = system_find_files("resources/sprites", ".sprite", false);
 		defer{ memory_free(files.data); };
 
 		System_File file;
-		array_resize(&scene->resource_fixtures, files.count);
-		for (auto &f : files) {
-			scoped_temporary_allocation();
-			String content = system_read_entire_file(f.path);
-			if (content.count) {
-				Tokenization_Status status;
-				auto tokens = tokenize(content, &status);
-				defer{
-					memory_free(content.data);
-					memory_free(tokens.data);
-				};
+		array_resize(&scene->resource_header, files.count);
+		array_resize(&scene->texture_group, files.count);
+		array_resize(&scene->fixture_group, files.count);
 
-				if (status.result == Tokenization_Result_SUCCESS) {
-					auto state = deserialize_begin(tokens);
-					if (!iscene_deserialize_fixture_resource(scene, array_add(&scene->resource_fixtures), &state)) {
-						system_log(LOG_ERROR, "Scene", "Failed loading %s. Invalid file: %s", tto_cstring(f.name), state.error.string);
-						scene->resource_fixtures.count -= 1;
-					}
-					deserialize_end(&state);
-				} else {
-					system_log(LOG_ERROR, "Scene", "Tokenization of file %s failed at %zu:%zu.", tto_cstring(f.name), status.row, status.column);
-				}
-			} else {
-				system_log(LOG_ERROR, "Scene", "Failed opening file %s.", tto_cstring(f.name));
-			}
-		}
-	}
-
-	{
-		auto files = system_find_files("resources/textures", ".png", false);
-		defer{ memory_free(files.data); };
-
-		int w, h, n;
-
-		System_File file;
-		array_resize(&scene->resource_textures, files.count + 1);
-		array_resize(&scene->handle_textures, files.count + 1);
-
-		u8 white_pixels[] = { 0xff,0xff,0xff,0xff };
-		const u8 *pixels[] = { white_pixels };
-		auto handle_tex = array_add(&scene->handle_textures);
-		auto resource_tex = array_add(&scene->resource_textures);
-		*handle_tex = gfx_create_texture2d(1, 1, 1, Data_Format_RGBA8_UNORM_SRGB, pixels, Buffer_Usage_IMMUTABLE, 1);
-		resource_tex->name[0] = 0;
-		resource_tex->name_count = 0;
-		resource_tex->key = 0;
 
 		for (auto &f : files) {
-			scoped_temporary_allocation();
-			String content = system_read_entire_file(f.path);
-			if (content.count) {
-				u8 *pixels = stbi_load_from_memory(content.data, (int)content.count, &w, &h, &n, 4);
-				if (pixels) {
-					auto handle_tex = array_add(&scene->handle_textures);
-					auto resource_tex = array_add(&scene->resource_textures);
-					*handle_tex = gfx_create_texture2d((u32)w, (u32)h, 4, Data_Format_RGBA8_UNORM_SRGB, (const u8 **)&pixels, Buffer_Usage_IMMUTABLE, 1);
-					u32 count = minimum((u32)f.name.count, (u32)sizeof(Resource_Name) - 1);
-					memcpy(resource_tex->name, f.name.data, count);
-					resource_tex->name[count] = 0;
-					resource_tex->name_count = count;
-					resource_tex->key = murmur3_32(resource_tex->name, resource_tex->name_count, 5656);
-					stbi_image_free(pixels);
-				} else {
-					system_log(LOG_ERROR, "Scene", "Failed to parse PNG file %s.", stbi_failure_reason());
-				}
-			} else {
-				system_log(LOG_ERROR, "Scene", "Failed opening file %s.", tto_cstring(f.name));
+			if (!iscene_load_resource(scene, f.path, array_add(&scene->resource_header), array_add(&scene->texture_group), array_add(&scene->fixture_group))) {
+				scene->resource_header.count -= 1;
+				scene->texture_group.count -= 1;
+				scene->fixture_group.count -= 1;
 			}
-		}
-	}
-}
-
-Resource_Entity *iscene_level_find_resource(Level *level, Entity_Id id) {
-	auto index = array_find(&level->resources, [](const Resource_Entity &e, Entity_Id id) { return  e.id.handle == id.handle; }, id);
-	if (index >= 0)
-		return level->resources.data + index;
-	return nullptr;
-}
-
-void scene_reload_resources(Scene *scene) {
-	scene_clean_resources(scene);
-	scene_load_resources(scene);
-
-	if (scene->loaded_level != -1) {
-		Level *level = scene_current_level_pointer(scene);
-
-		for_list(Rigid_Body, ptr, &scene->rigid_bodies) {
-			Rigid_Body &body = ptr->data;
-			Resource_Entity *r = iscene_level_find_resource(level, body.entity_id);
-			Resource_Fixture *f = scene_find_resource_fixture(scene, r->fixture_id);
-			body.fixtures = f->fixtures;
-			body.fixture_count = f->fixture_count;
 		}
 	}
 }
 
 void scene_clean_resources(Scene *scene) {
-	auto &resources = scene->resource_fixtures;
-	for (auto &r : resources) {
-		for (u32 i = 0; i < r.fixture_count; ++i)
-			memory_free(r.fixtures[i].handle, scene->pool_allocator);
-		memory_free(r.fixtures, scene->pool_allocator);
-	}
-	scene->resource_fixtures.count = 0;
-
-	auto &textures = scene->handle_textures;
+	auto &textures = scene->texture_group;
 	for (auto &t : textures) {
-		gfx_destroy_texture2d(t);
+		gfx_destroy_texture2d(t.handle);
 	}
 	textures.count = 0;
-	scene->resource_textures.count = 0;
+
+	auto &fixtures = scene->fixture_group;
+	for (auto &f : fixtures) {
+		for (u32 i = 0; i < f.count; ++i)
+			memory_free(f.fixtures[i].handle, scene->pool_allocator);
+		memory_free(f.fixtures, scene->pool_allocator);
+	}
+	scene->fixture_group.count = 0;
+
+	scene->resource_header.count = 0;
+}
+
+void scene_reload_resources(Scene *scene, Resource_Id id) {
+	scene_clean_resources(scene);
+	scene_load_resources(scene);
+
+	auto resource = scene_find_resource(scene, id);
+	
+	Resource_Header header;
+	Texture_Group texture;
+	Fixture_Group fixture;
+	if (!iscene_load_resource(scene, tprintf("resources/sprites/%zu.sprite", resource.header->id), &header, &texture, &fixture)) {
+		return;
+	}
+
+	u32 count = resource.fixture->count;
+	for (u32 i = 0; i < count; ++i)
+		memory_free(resource.fixture->fixtures[i].handle, scene->pool_allocator);
+	resource.fixture->count = 0;
+	resource.fixture->fixtures = nullptr;
+
+	gfx_destroy_texture2d(resource.texture->handle);
+
+	*resource.header = header;
+	*resource.fixture = fixture;
+	*resource.texture = texture;
+
+	auto keys = scene->entity_table.keys;
+	auto resources = scene->entity_table.resources;
+	for (u32 index = 0; index < SCENE_MAX_ENTITY_COUNT; ++index) {
+		auto k = keys + index;
+		auto r = resources + index;
+		if (k->slot == Entity_Hash_Table::Slot::OCCUPIED && r->handle == resource.header->id.handle) {
+			auto ent_ref = scene->entity_table.references + index;
+			switch (ent_ref->type) {
+				case Entity_Type_Character: {
+					Character *ent = &scene->by_type.character[ent_ref->index];
+					ent->rigid_body->fixture_count = resource.fixture->count;
+					ent->rigid_body->fixtures = resource.fixture->fixtures;
+					ent->texture.index = resource.index;
+				} break;
+
+				case Entity_Type_Obstacle: {
+					Obstacle *ent = &scene->by_type.obstacle[ent_ref->index];
+					ent->rigid_body->fixture_count = resource.fixture->count;
+					ent->rigid_body->fixtures = resource.fixture->fixtures;
+					ent->texture.index = resource.index;
+				} break;
+
+				invalid_default_case();
+			}
+		}
+	}
 }
 
 void scene_clean_entities(Scene *scene) {
@@ -1517,7 +1527,7 @@ void scene_clean_entities(Scene *scene) {
 	memset(scene->entity_table.keys, 0, sizeof(sizeof(Entity_Hash_Table::Key) * SCENE_MAX_ENTITY_COUNT));
 }
 
-void iscene_serialize_entity(Entity *entity, Ostream *out) {
+void iscene_serialize_entity(Scene *scene, Entity *entity, Ostream *out) {
 	serialize_fmt_text(out, "header", reflect_info<Entity>(), (char *)entity);
 	serialize_fmt_text_next(out);
 
@@ -1527,12 +1537,18 @@ void iscene_serialize_entity(Entity *entity, Ostream *out) {
 		} break;
 
 		case Entity_Type_Character: {
+			Resource_Id id = scene_find_entity_resource_id(scene, entity->id);
+			serialize_fmt_text(out, "resource", reflect_info<Resource_Id>(), (char *)&id);
+			serialize_fmt_text_next(out);
 			serialize_fmt_text(out, "data", reflect_info<Character>(), (char *)entity);
 			serialize_fmt_text_next(out);
 			serialize_fmt_text(out, "body", reflect_info<Rigid_Body>(), (char *)((Character *)entity)->rigid_body);
 		} break;
 
 		case Entity_Type_Obstacle: {
+			Resource_Id id = scene_find_entity_resource_id(scene, entity->id);
+			serialize_fmt_text(out, "resource", reflect_info<Resource_Id>(), (char *)&id);
+			serialize_fmt_text_next(out);
 			serialize_fmt_text(out, "data", reflect_info<Obstacle>(), (char *)entity);
 			serialize_fmt_text_next(out);
 			serialize_fmt_text(out, "body", reflect_info<Rigid_Body>(), (char *)((Obstacle *)entity)->rigid_body);
@@ -1559,65 +1575,59 @@ bool iscene_deserialize_entity(Scene *scene, Level *level, Deserialize_State *st
 		} break;
 
 		case Entity_Type_Character: {
-			Character *character = iscene_add_character(scene, entity.id, entity.position);
-			character->rigid_body = iscene_create_new_rigid_body(scene, &entity, nullptr);
-			Resource_Entity *resource = iscene_level_find_resource(level, character->id);
+			Resource_Id id;
+			if (deserialize_fmt_text(state, "resource", reflect_info<Resource_Id>(), (char *)&id)) {
+				Character *character = iscene_add_character(scene, entity.id, entity.position, id);
+				character->rigid_body = iscene_create_new_rigid_body(scene, &entity, nullptr);
 
-			if (deserialize_fmt_text(state, "data", reflect_info<Character>(), (char *)character) &&
-				deserialize_fmt_text(state, "body", reflect_info<Rigid_Body>(), (char *)(character->rigid_body))) {
-				auto body = character->rigid_body;
-				Resource_Fixture *res_fixture = scene_find_resource_fixture(scene, resource->fixture_id);
-				if (res_fixture) {
-					body->fixtures = res_fixture->fixtures;
-					body->fixture_count = res_fixture->fixture_count;
+				if (deserialize_fmt_text(state, "data", reflect_info<Character>(), (char *)character) &&
+					deserialize_fmt_text(state, "body", reflect_info<Rigid_Body>(), (char *)(character->rigid_body))) {
+					auto r = scene_find_resource(scene, id);
+
+					character->texture.index = r.index;
+
+					auto body = character->rigid_body;
+					body->fixture_count = r.fixture->count;
+					body->fixtures = r.fixture->fixtures;
+					body->entity_id = entity.id;
+					result = character;
 				} else {
-					system_log(LOG_ERROR, "Scene", "Unable to find fixture: %zu", resource->fixture_id);
-					body->fixture_count = 0;
-					body->fixtures = 0;
+					scene->by_type.character.count -= 1;
+					iscene_destroy_rigid_body(scene, character->rigid_body);
+					return false;
 				}
 
-				if (!scene_find_resource_texture(scene, String(resource->texture_name, strlen(resource->texture_name)), &character->texture)) {
-					system_log(LOG_ERROR, "Scene", "Unable to find texture: %s", resource->texture_name);
-				}
-
-				body->entity_id = entity.id;
-
-				result = character;
+				return true;
 			} else {
-				scene->by_type.character.count -= 1;
-				iscene_destroy_rigid_body(scene, character->rigid_body);
 				return false;
 			}
 		} break;
 
 		case Entity_Type_Obstacle: {
-			Obstacle *obstacle = iscene_add_obstacle(scene, entity.id, entity.position);
-			obstacle->rigid_body = iscene_create_new_rigid_body(scene, &entity, nullptr);
-			Resource_Entity *resource = iscene_level_find_resource(level, obstacle->id);
+			Resource_Id id;
+			if (deserialize_fmt_text(state, "resource", reflect_info<Resource_Id>(), (char *)&id)) {
+				Obstacle *obstacle = iscene_add_obstacle(scene, entity.id, entity.position, id);
+				obstacle->rigid_body = iscene_create_new_rigid_body(scene, &entity, nullptr);
 
-			if (deserialize_fmt_text(state, "data", reflect_info<Obstacle>(), (char *)obstacle) &&
-				deserialize_fmt_text(state, "body", reflect_info<Rigid_Body>(), (char *)(obstacle->rigid_body))) {
-				auto body = obstacle->rigid_body;
-				Resource_Fixture *res_fixture = scene_find_resource_fixture(scene, resource->fixture_id);
-				if (res_fixture) {
-					body->fixtures = res_fixture->fixtures;
-					body->fixture_count = res_fixture->fixture_count;
+				if (deserialize_fmt_text(state, "data", reflect_info<Obstacle>(), (char *)obstacle) &&
+					deserialize_fmt_text(state, "body", reflect_info<Rigid_Body>(), (char *)(obstacle->rigid_body))) {
+					auto r = scene_find_resource(scene, id);
+
+					obstacle->texture.index = r.index;
+
+					auto body = obstacle->rigid_body;
+					body->fixture_count = r.fixture->count;
+					body->fixtures = r.fixture->fixtures;
+					body->entity_id = entity.id;
+					result = obstacle;
 				} else {
-					system_log(LOG_ERROR, "Scene", "Unable to find fixture: %zu", resource->fixture_id);
-					body->fixture_count = 0;
-					body->fixtures = 0;
+					scene->by_type.obstacle.count -= 1;
+					iscene_destroy_rigid_body(scene, obstacle->rigid_body);
+					return false;
 				}
 
-				if (!scene_find_resource_texture(scene, String(resource->texture_name, strlen(resource->texture_name)), &obstacle->texture)) {
-					system_log(LOG_ERROR, "Scene", "Unable to find texture: %s", resource->texture_name);
-				}
-
-				body->entity_id = entity.id;
-
-				result = obstacle;
+				return true;
 			} else {
-				scene->by_type.obstacle.count -= 1;
-				iscene_destroy_rigid_body(scene, obstacle->rigid_body);
 				return false;
 			}
 		} break;
@@ -1637,9 +1647,9 @@ Level *iscene_add_new_level(Scene *scene, const String name, s32 *index) {
 	memcpy(level->name, name.data, level->name_count);
 	level->name[level->name_count] = 0;
 	level->key = murmur3_32(level->name, level->name_count, 5656);
-	level->resources.count = level->resources.capacity = 0;
-	level->resources.data = nullptr;
-	level->resources.allocator = context.allocator;
+	//level->resources.count = level->resources.capacity = 0;
+	//level->resources.data = nullptr;
+	//level->resources.allocator = context.allocator;
 	return level;
 }
 
@@ -1709,7 +1719,7 @@ bool scene_save_level(Scene *scene) {
 		count = scene->by_type.camera.count;
 		auto camera = scene->by_type.camera.data;
 		for (s64 index = 0; index < count; ++index, ++camera) {
-			iscene_serialize_entity(camera, &out);
+			iscene_serialize_entity(scene, camera, &out);
 			if (system_open_file(tprintf("%s/%zu.ent", level_dir, camera->id), File_Operation_NEW, &file)) {
 				ostream_build_out_file(&out, &file);
 				system_close_file(&file);
@@ -1726,7 +1736,7 @@ bool scene_save_level(Scene *scene) {
 		for (s64 index = 0; index < count; ++index, ++character) {
 			//auto resource = iscene_level_find_resource(level, character->id);
 			//assert(resource);
-			iscene_serialize_entity(character, &out);
+			iscene_serialize_entity(scene, character, &out);
 			if (system_open_file(tprintf("%s/%zu.ent", level_dir, character->id), File_Operation_NEW, &file)) {
 				ostream_build_out_file(&out, &file);
 				system_close_file(&file);
@@ -1743,7 +1753,7 @@ bool scene_save_level(Scene *scene) {
 		for (s64 index = 0; index < count; ++index, ++obstacle) {
 			//auto resource = iscene_level_find_resource(level, obstacle->id);
 			//assert(resource);
-			iscene_serialize_entity(obstacle, &out);
+			iscene_serialize_entity(scene, obstacle, &out);
 			if (system_open_file(tprintf("%s/%zu.ent", level_dir, obstacle->id), File_Operation_NEW, &file)) {
 				ostream_build_out_file(&out, &file);
 				system_close_file(&file);
@@ -1772,38 +1782,7 @@ bool scene_load_level(Scene *scene, const String name) {
 
 	// Load from file is the level is not already loaded
 	if (index < 0) {
-		Level *level = iscene_add_new_level(scene, name, &index);
-
-		auto point = begin_temporary_allocation();
-
-		auto mark = push_temporary_allocator();
-		String content = system_read_entire_file(tprintf("resources/levels/%s/level", cname));
-
-		if (!content.count) {
-			system_log(LOG_ERROR, "Scene", "Failed to load level: %s", cname);
-			scene->levels.count -= 1;
-			return false;
-		}
-
-		Tokenization_Status status;
-		auto tokens = tokenize(content, &status);
-		pop_temporary_allocator(mark);
-
-		if (status.result != Tokenization_Result_SUCCESS) {
-			system_log(LOG_ERROR, "Scene", "Failed to parse file: resources/levels/%s/level. Invalid file", cname);
-			scene->levels.count -= 1;
-			return false;
-		}
-
-		auto state = deserialize_begin(tokens);
-		if (!deserialize_fmt_text(&state, "level", reflect_info<Level>(), (char *)level)) {
-			system_log(LOG_ERROR, "Scene", "Failed to parse file: resources/levels/%s/level", cname);
-			scene->levels.count -= 1;
-			return false;
-		}
-		deserialize_end(&state);
-
-		end_temporary_allocation(point);
+		iscene_add_new_level(scene, name, &index);
 	}
 
 	// Load entities

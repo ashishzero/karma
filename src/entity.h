@@ -33,17 +33,20 @@ struct Resource_Id {
 };
 typedef char Resource_Name[125];
 
-struct Resource_Fixture {
-	attribute(read_only)				Resource_Id		id;
-	attribute(text)						Resource_Name	name;
-	attribute(no_serialize, no_display)	Fixture *		fixtures;
-	attribute(no_serialize, no_display)	u32				fixture_count;
+struct Resource_Header {
+	Resource_Id		id;
+	Resource_Name	name;
+	Resource_Name	texture;
 };
 
-struct attribute(v:1) Resource_Entity {
-					Entity_Id		id;
-					Resource_Id		fixture_id;
-	attribute(v:1)	Resource_Name	texture_name;
+struct Fixture_Group {
+	Fixture *fixtures;
+	u32		 count;
+};
+
+struct Texture_Group {
+	Texture2d_Handle handle;
+	Mm_Rect			 uv;
 };
 
 enum Rigid_Body_Type : u16 {
@@ -104,19 +107,17 @@ struct attribute(no_serialize_base) Camera : public Entity {
 
 #define camera_distance_to_scale(camera) powf(0.5f, camera->distance)
 
-struct attribute(no_serialize_base, v:1) Character : public Entity {
+struct attribute(no_serialize_base) Character : public Entity {
 	attribute(min:0)				r32 radius;
 	attribute(color)				Vec4 color;
-	attribute(v:1)					Mm_Rect	texture_rect;
-	attribute(no_serialize, v:1)	Texture_Id texture;
+	attribute(no_serialize)			Texture_Id texture;
 	attribute(no_serialize)			Rigid_Body *rigid_body;
 };
 
-struct attribute(no_serialize_base, v:1) Obstacle : public Entity {
+struct attribute(no_serialize_base) Obstacle : public Entity {
 	attribute(color)				Vec4 color;
-	attribute(v:1)					Mm_Rect	texture_rect;
-	attribute(no_serialize, v:1)	Texture_Id texture;
-	attribute(no_serialize)	Rigid_Body *rigid_body;
+	attribute(no_serialize)			Texture_Id texture;
+	attribute(no_serialize)			Rigid_Body *rigid_body;
 };
 
 //
@@ -125,8 +126,7 @@ struct attribute(no_serialize_base, v:1) Obstacle : public Entity {
 
 typedef char Level_Name[125];
 struct Level {
-	attribute(no_serialize, text)		Level_Name				name;
-	attribute(no_serialize, no_display) u32						name_count;
-	attribute(no_serialize, no_display) u32						key;
-	attribute(no_display)				Array<Resource_Entity>	resources;
+	attribute(text)		Level_Name	name;
+	attribute(no_display) u32		name_count;
+	attribute(no_display) u32		key;
 };

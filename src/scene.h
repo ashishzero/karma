@@ -41,14 +41,9 @@ struct Entity_Hash_Table {
 	};
 
 	Key *				keys;
-	Entity_Reference *	slots;
+	Entity_Reference *	references;
+	Resource_Id *		resources;
 	u32				count;
-};
-
-struct Resource_Texture {
-	Resource_Name		name;
-	u32					name_count;
-	u32					key;
 };
 
 struct Scene {
@@ -67,12 +62,12 @@ struct Scene {
 
 	Entity_By_Type	by_type;
 
-	Array<Resource_Texture> resource_textures;
-	Array<Texture2d_Handle> handle_textures;
-
 	Rigid_Body_List rigid_bodies;
 
-	Array<Resource_Fixture>		resource_fixtures;
+	Array<Resource_Header>	resource_header;
+	Array<Fixture_Group>	fixture_group;
+	Array<Texture_Group>	texture_group;
+
 	Allocator					pool_allocator;
 
 	s32				loaded_level;
@@ -102,12 +97,17 @@ void scene_destroy(Scene *scene);
 //
 //
 
-Resource_Fixture *	scene_create_new_resource_fixture(Scene *scene, String name, Fixture *fixtures, u32 fixture_count);
-Resource_Fixture *	scene_find_resource_fixture(Scene *scene, Resource_Id id);
-Resource_Fixture *	scene_find_resource_fixture_from_fixture(Scene *scene, Fixture *fixture);
+const Resource_Header *scene_create_new_resource(Scene *scene, Resource_Name &name, Fixture *fixtures, u32 fixture_count, const Resource_Name &tex_name, const Mm_Rect &uv);
 
-Resource_Texture *scene_find_resource_texture_from_index(Scene *scene, Texture_Id id);
-bool scene_find_resource_texture(Scene *scene, const String name, Texture_Id *id);
+struct Resource_Collection {
+	Resource_Header *	header;
+	Fixture_Group *		fixture;
+	Texture_Group *		texture;
+	u32					index;
+};
+
+Resource_Id					scene_find_entity_resource_id(Scene *scene, Entity_Id id);
+const Resource_Collection	scene_find_resource(Scene *scene, Resource_Id id);
 
 Entity *scene_clone_entity(Scene *scene, Entity *entity, Vec2 p);
 Entity_Reference scene_get_entity(Scene *scene, Entity_Id id);
@@ -115,7 +115,6 @@ bool scene_find_entity(Scene *scene, Entity_Id id, Entity_Reference *ref);
 Entity *scene_entity_pointer(Scene *scene, Entity_Reference &reference);
 
 const Array_View<Camera>			scene_cameras(Scene *scene);
-const Array_View<Resource_Entity>	scene_resources(Scene *scene);
 
 //
 //
@@ -170,10 +169,10 @@ void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio);
 //
 //
 
-bool scene_save_resource(Scene *scene, Resource_Fixture &r, bool pt_polygon);
+bool scene_save_resource(Scene *scene, Resource_Header &h, Texture_Group &texture, Fixture_Group &fixture, bool pt_polygon);
 void scene_save_resources(Scene *scene);
 void scene_load_resources(Scene *scene);
-void scene_reload_resources(Scene *scene);
+void scene_reload_resources(Scene *scene, Resource_Id id);
 void scene_clean_resources(Scene *scene);
 void scene_clean_entities(Scene *scene);
 
@@ -193,7 +192,7 @@ const String scene_current_level(Scene *scene);
 //
 //
 
-inline void ent_rigid_body_init(Entity *entity, Rigid_Body *body, Rigid_Body_Type type, Resource_Fixture &resource) {
+inline void ent_rigid_body_init(Entity *entity, Rigid_Body *body, Rigid_Body_Type type, Fixture_Group &fixture) {
 	body->type = type;
 	body->flags = 0;
 	body->imass = ((type == Rigid_Body_Type_Static) ? 0.0f : 1.0f);
@@ -203,8 +202,8 @@ inline void ent_rigid_body_init(Entity *entity, Rigid_Body *body, Rigid_Body_Typ
 	body->force = vec2(0);
 	body->transform.p = entity->position;
 	body->transform.xform = mat2_identity();
-	body->fixtures = resource.fixtures;
-	body->fixture_count = resource.fixture_count;
+	body->fixtures = fixture.fixtures;
+	body->fixture_count = fixture.count;
 	body->entity_id = entity->id;
 	body->bounding_box = scene_rigid_body_bounding_box(body, 0);
 }
@@ -221,25 +220,25 @@ inline void ent_init_camera(Camera *camera, Vec2 p, r32 distance) {
 	camera->behaviour = 0;
 }
 
-inline void ent_init_character(Character *character, Scene *scene, Vec2 p, Rigid_Body *body, Resource_Fixture &resource, const String texture) {
+// TODO: dont take in index
+inline void ent_init_character(Character *character, Scene *scene, Vec2 p, Rigid_Body *body, Fixture_Group &fixture, Texture_Group &texture, u32 index) {
 	character->id.handle = 0;
 	character->type = Entity_Type_Character;
 	character->position = p;
 	character->radius = 0.1f;
 	character->color = vec4(1);
-	ent_rigid_body_init(character, body, Rigid_Body_Type_Dynamic, resource);
+	character->texture.index = index;
+	ent_rigid_body_init(character, body, Rigid_Body_Type_Dynamic, fixture);
 	character->rigid_body = body;
-	assert(scene_find_resource_texture(scene, texture, &character->texture));
-	character->texture_rect = mm_rect(0, 0, 1, 1);
 }
 
-inline void ent_init_obstacle(Obstacle *obstable, Scene *scene, Vec2 p, Rigid_Body *body, Resource_Fixture &resource, const String texture) {
+// TODO: dont take in index
+inline void ent_init_obstacle(Obstacle *obstable, Scene *scene, Vec2 p, Rigid_Body *body, Fixture_Group &fixture, Texture_Group &texture, u32 index) {
 	obstable->id.handle = 0;
 	obstable->type = Entity_Type_Obstacle;
 	obstable->position = p;
 	obstable->color = vec4(1);
-	ent_rigid_body_init(obstable, body, Rigid_Body_Type_Static, resource);
+	obstable->texture.index = index;
+	ent_rigid_body_init(obstable, body, Rigid_Body_Type_Static, fixture);
 	obstable->rigid_body = body;
-	assert(scene_find_resource_texture(scene, texture, &obstable->texture));
-	obstable->texture_rect = mm_rect(0, 0, 1, 1);
 }

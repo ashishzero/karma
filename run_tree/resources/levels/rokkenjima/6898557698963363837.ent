@@ -5,19 +5,14 @@ header: #0
    position: #0
       x: -1.362687
       y: 8.784350
-data: #1
+resource: #0
+   handle: 6898544449330201717
+data: #0
    color: #0
       x: 1.000000
       y: 1.000000
       z: 1.000000
       w: 1.000000
-   texture_rect: #0
-      min: #0
-         x: 0.000000
-         y: 0.000000
-      max: #0
-         x: 0.000000
-         y: 0.000000
 body: #0
    type: 0
    imass: 0.000000

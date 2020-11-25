@@ -84,9 +84,12 @@ int karma_user_zero() {
 	Scene *scene = scene_create();
 
 	scene_load_resources(scene);
+	scene_save_resources(scene);
 
 	bool loaded = scene_load_level(scene, "rokkenjima");
 	assert(loaded);
+
+	scene_save_level(scene);
 
 	Physics_State physics_state = Physics_State_RUNNING;
 
