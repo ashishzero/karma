@@ -4,6 +4,7 @@ int karma_user_zero();
 int karma_user_atish();
 int karma_user_shankar() { return 0; }
 int karma_user_pujan();
+int karma_main_template();
 
 int main() {
 	auto user = system_read_entire_file("dev/local.karma");
@@ -20,6 +21,8 @@ int main() {
 		return karma_user_shankar();
 	} else if (string_match(user, "leopujan")) {
 		return karma_user_pujan();
+	} else if (string_match(user, "template")) {
+		return karma_main_template();
 	}
 
 	return 0;
