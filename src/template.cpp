@@ -3,6 +3,8 @@
 #include "modules/core/systems.h"
 #include "modules/imgui/imconfig.h"
 #include "modules/core/random.h"
+#include "modules/gfx/renderer.h"
+#include "modules/imgui/imgui.h"
 
 enum Tile_Type {
 	TILE_TYPE_EMPTY,
@@ -21,24 +23,29 @@ enum Action {
 	ACTION_COUNT
 };
 
-constexpr u32 WORLD_SIZE_X = 3;
-constexpr u32 WORLD_SIZE_Y = 3;
+constexpr u32 WORLD_SIZE_X = 9;
+constexpr u32 WORLD_SIZE_Y = 9;
 constexpr u32 WORLD_SIZE = WORLD_SIZE_X * WORLD_SIZE_Y;
 constexpr u32 QTABLE_SIZE = WORLD_SIZE * ACTION_COUNT;
 
 struct Game {
 	Tile_Type tiles[WORLD_SIZE];
-	int actor_x, actor_y;
+	int visited[WORLD_SIZE];
+	int p_x, p_y;
 	int win_x, win_y;
 };
 
 struct Qtable {
 	float scores[QTABLE_SIZE];
+	float epsilon[WORLD_SIZE];
 };
 
 void qtable_init(Qtable *table) {
 	for (int i = 0; i < QTABLE_SIZE; ++i) {
 		table->scores[i] = 0;
+	}
+	for (int i = 0; i < WORLD_SIZE; ++i) {
+		table->epsilon[i] = 1;
 	}
 }
 
@@ -47,11 +54,15 @@ int hash_position(int x, int y) {
 	return index;
 }
 
-Action get_action(Qtable *table, float epsilon, int x, int y, int *out_index) {
+Action get_action(Qtable *table, float min_epsilon, float depsilon, int x, int y, int *out_index) {
 	float p = random_get_zero_to_one();
 
 	int index = hash_position(x, y);
 	auto action_scores = &table->scores[index];
+
+	float &epsilon = table->epsilon[y * WORLD_SIZE_X + x];
+	epsilon -= depsilon;
+	epsilon = maximum(min_epsilon, epsilon);
 
 	if (p >= epsilon) {
 
@@ -97,27 +108,36 @@ Action get_action(Qtable *table, float epsilon, int x, int y, int *out_index) {
 // [S] [ ] [ ]
 
 void game_init(Game *game) {
-	game->tiles[0 * WORLD_SIZE_X + 0] = TILE_TYPE_EMPTY;
-	game->tiles[0 * WORLD_SIZE_X + 1] = TILE_TYPE_EMPTY;
-	game->tiles[0 * WORLD_SIZE_X + 2] = TILE_TYPE_EMPTY;
+	memset(game->tiles, 0, sizeof(game->tiles));
+	memset(game->visited, 0, sizeof(game->visited));
 
-	game->tiles[1 * WORLD_SIZE_X + 0] = TILE_TYPE_EMPTY;
-	game->tiles[1 * WORLD_SIZE_X + 1] = TILE_TYPE_BLOCK;
-	game->tiles[1 * WORLD_SIZE_X + 2] = TILE_TYPE_EMPTY;
+	game->tiles[WORLD_SIZE - 1] = TILE_TYPE_WIN;
+	game->win_x = WORLD_SIZE_X - 1;
+	game->win_y = WORLD_SIZE_Y - 1;
 
-	game->tiles[2 * WORLD_SIZE_X + 0] = TILE_TYPE_EMPTY;
-	game->tiles[2 * WORLD_SIZE_X + 1] = TILE_TYPE_EMPTY;
-	game->tiles[2 * WORLD_SIZE_X + 2] = TILE_TYPE_WIN;
+	game->p_x = 0;
+	game->p_y = 0;
+	game->visited[0] = 1;
+}
 
-	game->actor_x = 0;
-	game->actor_y = 0;
+void game_restart(Game *game) {
+	memset(game->visited, 0, sizeof(game->visited));
+	game->p_x = 0;
+	game->p_y = 0;
+	game->visited[0] = 1;
+}
 
-	game->win_x = 2;
-	game->win_y = 2;
+void move_player(Game *game, int x, int y) {
+	if (x >= 0 && x < WORLD_SIZE_X && y >= 0 && y < WORLD_SIZE_Y) {
+		int index = y * WORLD_SIZE_X + x;
+		game->visited[index] = 1;
+		game->p_x = x;
+		game->p_y = y;
+	}
 }
 
 Tile_Type get_tile_print(Game *game, int x, int y) {
-	if (x == game->actor_x && y == game->actor_y) {
+	if (x == game->p_x && y == game->p_y) {
 		return TILE_TYPE_COUNT;
 	}
 
@@ -132,6 +152,12 @@ Tile_Type get_tile(Game *game, int x, int y) {
 	return game->tiles[index];
 }
 
+void set_tile(Game *game, int x, int y, Tile_Type tile) {
+	assert(x >= 0 && x < WORLD_SIZE_X &&y >= 0 && y < WORLD_SIZE_Y);
+	int index = y * WORLD_SIZE_X + x;
+	game->tiles[index] = tile;
+}
+
 float get_reward(Game *game, int x, int y) {
 	if (x >= 0 && x < WORLD_SIZE_X && y >= 0 && y < WORLD_SIZE_Y) {
 		int index = y * WORLD_SIZE_X + x;
@@ -140,27 +166,23 @@ float get_reward(Game *game, int x, int y) {
 
 		switch (tile) {
 			case TILE_TYPE_BLOCK: {
-				return -10;
+				return -100;
 			} break;
 
 			case TILE_TYPE_EMPTY: {
-				int d0 = (game->win_x - x) * (game->win_x - x) + (game->win_y - y) * (game->win_y - y);
-				int d1 = (game->win_x - game->actor_x) * (game->win_x - game->actor_x) + (game->win_y - game->actor_y) * (game->win_y - game->actor_y);
-				if (d0 < d1)
-					return 1;
-				else
-					return -1;
+				if (game->visited[index]) return -100;
+				return 0;
 			} break;
 
 			case TILE_TYPE_WIN: {
-				return 10;
+				return 100;
 			} break;
 
 				invalid_default_case();
 		}
 	}
 
-	return -10;
+	return -100;
 }
 
 float get_max_optimal_future_reward_estimate(Qtable *table, int x, int y) {
@@ -168,9 +190,11 @@ float get_max_optimal_future_reward_estimate(Qtable *table, int x, int y) {
 		int index = hash_position(x, y);
 		auto action_scores = &table->scores[index];
 
+		int high_score_index = 0;
 		float high_score = action_scores[0];
 		for (int i = 1; i < ACTION_COUNT; ++i) {
 			if (action_scores[i] > high_score) {
+				high_score_index = i;
 				high_score = action_scores[i];
 			}
 		}
@@ -178,102 +202,365 @@ float get_max_optimal_future_reward_estimate(Qtable *table, int x, int y) {
 		return high_score;
 	}
 
-	return -1;
+	return -100;
 }
 
 bool game_is_over(Game *game) {
-	if (game->actor_x >= 0 && game->actor_x < WORLD_SIZE_X && game->actor_y >= 0 && game->actor_y < WORLD_SIZE_Y) {
-		auto tile = get_tile(game, game->actor_x, game->actor_y);
+	if (game->p_x >= 0 && game->p_x < WORLD_SIZE_X && game->p_y >= 0 && game->p_y < WORLD_SIZE_Y) {
+		auto tile = get_tile(game, game->p_x, game->p_y);
 		return tile == TILE_TYPE_WIN || tile == TILE_TYPE_BLOCK;
 	}
 	return true;
 }
 
 bool game_win(Game *game) {
-	if (game->actor_x >= 0 && game->actor_x < WORLD_SIZE_X && game->actor_y >= 0 && game->actor_y < WORLD_SIZE_Y) {
-		auto tile = get_tile(game, game->actor_x, game->actor_y);
+	if (game->p_x >= 0 && game->p_x < WORLD_SIZE_X && game->p_y >= 0 && game->p_y < WORLD_SIZE_Y) {
+		auto tile = get_tile(game, game->p_x, game->p_y);
 		return tile == TILE_TYPE_WIN;
 	}
 	return false;
 }
 
+static const s32 SIMULATION_SPEED_FACTORS[] = {
+	-12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20
+};
+static const u32 SIMULATION_SPEED_1X = 11;
+
+struct Simulation_Speed {
+	u32 index;
+	s32 x;
+	r32 factor;
+};
+
+static Simulation_Speed simulation_speed(u32 index) {
+	assert(index < static_count(SIMULATION_SPEED_FACTORS));
+	Simulation_Speed speed;
+	speed.index = index;
+	speed.x = SIMULATION_SPEED_FACTORS[speed.index];
+	if (speed.x < 0)
+		speed.factor = -1.0f / (r32)speed.x;
+	else
+		speed.factor = (r32)speed.x;
+	return speed;
+}
+
+enum Actor_State {
+	ACTOR_STATE_MOVING,
+	ACTOR_STATE_STOPPED
+};
+
+struct Actor {
+	Actor_State state;
+	Vec2 p;
+	Vec2 tp;
+};
+
 int karma_main_template() {
+	r32    framebuffer_w = 1280;
+	r32    framebuffer_h = 720;
+	Handle platform = system_create_window(u8"Karma", 1280, 720, System_Window_Show_NORMAL);
+	gfx_create_context(platform, Render_Backend_DIRECTX11, Vsync_ADAPTIVE, 2, (u32)framebuffer_w, (u32)framebuffer_h);
+
+	ImGui_Initialize();
+
 	random_init_global(context.id, system_get_counter());
 
 	float learning_rate = 0.1f;
-	float discount_factor = 0;
-	float epsilon = 0;
-	float depsilon = 0.01f;
+	float discount_factor = 0.2f;
+	float min_epsilon = 0;
+	float depsilon = 0.1f;
+	int generation = 0;
 
 	Game game;
+	game_init(&game);
 
 	Qtable table;
 	qtable_init(&table);
 
-	for (int iter = 0; ; ++iter) {
-		game_init(&game);
+	Actor actor;
+	actor.state = ACTOR_STATE_STOPPED;
+	actor.p = vec2((r32)game.p_x, (r32)game.p_y);
+	actor.tp = actor.p;
 
-		system_trace("Iter: %d", iter);
+	bool running = true;
 
-		while (!game_is_over(&game)) {
-			system_trace("[%d] [%d] [%d]", get_tile_print(&game, 0, 2), get_tile_print(&game, 1, 2), get_tile_print(&game, 2, 2));
-			system_trace("[%d] [%d] [%d]", get_tile_print(&game, 0, 1), get_tile_print(&game, 1, 1), get_tile_print(&game, 2, 1));
-			system_trace("[%d] [%d] [%d]", get_tile_print(&game, 0, 0), get_tile_print(&game, 1, 0), get_tile_print(&game, 2, 0));
+	r32 aspect_ratio = framebuffer_w / framebuffer_h;
 
-			int old_score_index;
-			Action action = get_action(&table, epsilon, game.actor_x, game.actor_y, &old_score_index);
+	Simulation_Speed sim_speed = simulation_speed(SIMULATION_SPEED_1X);
 
-			int new_player_x = game.actor_x;
-			int new_player_y = game.actor_y;
+	r32 const dt = 1.0f / 60.0f;
+	r32       game_dt = dt * sim_speed.factor;
+	r32       real_dt = dt;
+	r32       game_t = 0.0f;
+	r32       real_t = 0.0f;
+	r32       accumulator_t = dt;
 
-			switch (action) {
-				case ACTION_EAST: {
-					new_player_x += 1;
-				} break;
+	r32 window_w = 0, window_h = 0;
 
-				case ACTION_WEST: {
-					new_player_x -= 1;
-				} break;
+	u64 frequency = system_get_frequency();
+	u64 counter = system_get_counter();
 
-				case ACTION_NORTH: {
-					new_player_y += 1;
-				} break;
+	while (running) {
+		auto events = system_poll_events();
+		for (s64 event_index = 0; event_index < events.count; ++event_index) {
+			Event &event = events[event_index];
 
-				case ACTION_SOUTH: {
-					new_player_y -= 1;
-				} break;
-
-					invalid_default_case();
+			if (event.type & Event_Type_EXIT) {
+				running = false;
+				break;
 			}
 
-			float reward = get_reward(&game, new_player_x, new_player_y);
+			if (event.type & Event_Type_WINDOW_RESIZE) {
+				s32 w = event.window.dimension.x;
+				s32 h = event.window.dimension.y;
 
-			float estimate_of_optimal_future_value = get_max_optimal_future_reward_estimate(&table, game.actor_x, game.actor_y);
+				gfx_on_client_resize(w, h);
+				window_w = (r32)w;
+				window_h = (r32)h;
 
-			float old_score = table.scores[old_score_index];
+				if (window_w && window_h) {
+					aspect_ratio = window_w / window_h;
+					gfx_resize_framebuffer(w, h, lroundf(512 * aspect_ratio), 512);
+					framebuffer_w = window_w;
+					framebuffer_h = window_h;
+				}
 
-			float dq = old_score + learning_rate * (reward + discount_factor * estimate_of_optimal_future_value * old_score);
-			table.scores[old_score_index] = old_score + dq;
+				continue;
+			}
 
-			system_trace("reward: %f", reward);
-			system_trace("estimate: %f", estimate_of_optimal_future_value);
-			system_trace("");
+			if (ImGui_HandleEvent(event))
+				continue;
 
-			game.actor_x = new_player_x;
-			game.actor_y = new_player_y;
+			if ((event.type & Event_Type_KEY_UP) && event.key.symbol == Key_ESCAPE) {
+				system_request_quit();
+				break;
+			}
+
+			if ((event.type & Event_Type_KEY_UP) && event.key.symbol == Key_F11) {
+				system_fullscreen_state(SYSTEM_TOGGLE);
+				continue;
+			}
 		}
 
-		if (game_win(&game)) {
-			break;
+		while (accumulator_t >= dt) {
+			if (actor.state == ACTOR_STATE_MOVING) {
+				actor.p = lerp(actor.p, actor.tp, 1.0f - powf(1.0f - 0.977f, dt));
+				if (vec2_length2(actor.tp - actor.p) < 0.01f) {
+					actor.state = ACTOR_STATE_STOPPED;
+
+					if (game_is_over(&game)) {
+						game_restart(&game);
+						generation += 1;
+						actor.state = ACTOR_STATE_STOPPED;
+						actor.p = vec2((r32)game.p_x, (r32)game.p_y);
+						actor.tp = actor.p;
+					}
+				}
+			} else {
+				int old_score_index;
+				Action action = get_action(&table, min_epsilon, depsilon, game.p_x, game.p_y, &old_score_index);
+
+				int new_player_x = game.p_x;
+				int new_player_y = game.p_y;
+
+				switch (action) {
+					case ACTION_EAST: {
+						new_player_x += 1;
+					} break;
+
+					case ACTION_WEST: {
+						new_player_x -= 1;
+					} break;
+
+					case ACTION_NORTH: {
+						new_player_y += 1;
+					} break;
+
+					case ACTION_SOUTH: {
+						new_player_y -= 1;
+					} break;
+
+						invalid_default_case();
+				}
+
+				float reward = get_reward(&game, new_player_x, new_player_y);
+
+				float estimate_of_optimal_future_value = get_max_optimal_future_reward_estimate(&table, game.p_x, game.p_y);
+
+				float old_score = table.scores[old_score_index];
+
+				float new_score = old_score + learning_rate * (reward + discount_factor * estimate_of_optimal_future_value - old_score);
+				table.scores[old_score_index] = new_score;
+
+				move_player(&game, new_player_x, new_player_y);
+
+				actor.tp = vec2((r32)game.p_x, (r32)game.p_y);
+				actor.state = ACTOR_STATE_MOVING;
+			}
+
+			accumulator_t -= dt;
 		}
 
-		epsilon -= depsilon;
-		epsilon = maximum(0, epsilon);
+		r32 view_height = 1;
+		r32 view_width = aspect_ratio * view_height;
+
+		r32 tile_size = 1;
+
+		r32 sx = 0.6f * WORLD_SIZE_X * tile_size;
+		r32 sy = 0.6f * WORLD_SIZE_Y * tile_size;
+		sx /= view_width;
+		sy /= view_height;
+		r32 iscale = maximum(sx, sy);
+		r32 scale = 1.0f / iscale;
+
+		auto &io = ImGui::GetIO();
+
+		Vec2 cursor = io.MousePos;
+
+		// Convert cursor and delta value from window space into world space
+		cursor.x /= window_w;
+		cursor.y /= window_h;
+		cursor.y = 1.0f - cursor.y;
+		cursor = 2.0f * cursor - vec2(1);
+
+		cursor.x *= iscale * view_width;
+		cursor.y *= iscale * view_height;
+
+		bool draw_hovering = false;
+		int pos_x = (int)(cursor.x + 0.5f * (r32)WORLD_SIZE_X);
+		int pos_y = (int)(cursor.y + 0.5f * (r32)WORLD_SIZE_Y);
+
+		if (pos_x >= 0 && pos_x < WORLD_SIZE_X && pos_y >= 0 && pos_y < WORLD_SIZE_Y) {
+			draw_hovering = true;
+
+			if (io.MouseClicked[ImGuiMouseButton_Left] && (pos_x > 0 || pos_y > 0)) {
+				auto tile = get_tile(&game, pos_x, pos_y);
+				if (tile == TILE_TYPE_EMPTY) {
+					set_tile(&game, pos_x, pos_y, TILE_TYPE_BLOCK);
+				} else if (tile == TILE_TYPE_BLOCK) {
+					set_tile(&game, pos_x, pos_y, TILE_TYPE_EMPTY);
+				}
+			}
+		}
+
+		ImGui_UpdateFrame(real_dt);
+
+		gfx_begin_drawing(Framebuffer_Type_HDR, Clear_ALL, vec4(0.05f, 0.05f, 0.05f, 1.0f));
+		gfx_viewport(0, 0, window_w, window_h);
+
+		Camera_View view = orthographic_view(-view_width, view_width, view_height, -view_height);
+		Mat4 transform = mat4_scalar(scale, scale, 1.0f);
+
+		im2d_begin(view, transform);
+
+		r32 draw_x, draw_y;
+
+		draw_y = -0.5f * (r32)WORLD_SIZE_Y + 0.5f;
+		for (int y = 0; y < WORLD_SIZE_Y; ++y) {
+			draw_x = -0.5f * (r32)WORLD_SIZE_X + 0.5f;
+			for (int x = 0; x < WORLD_SIZE_X; ++x) {
+				auto tile = get_tile(&game, x, y);
+				switch (tile) {
+					case TILE_TYPE_BLOCK: {
+						im2d_rect_centered(vec2(draw_x, draw_y), vec2(0.9f * tile_size), vec4(0.8f, 0.7f, 0.7f));
+					} break;
+
+					case TILE_TYPE_EMPTY: {
+						r32 inten = 1.0f - table.epsilon[y * WORLD_SIZE_X + x] + 0.01f;
+						im2d_rect_centered(vec2(draw_x, draw_y), vec2(0.9f * tile_size), vec4(inten * vec3(0, 1, 1), 1));
+					} break;
+
+					case TILE_TYPE_WIN: {
+						im2d_rect_centered(vec2(draw_x, draw_y), vec2(0.9f * tile_size), vec4(1.2f, 1.2f, 0.1f));
+					} break;
+
+						invalid_default_case();
+				}
+
+				draw_x += 1;
+			}
+			draw_y += 1;
+		}
+
+		im2d_circle(vec2(actor.p.x - 0.5f * (r32)WORLD_SIZE_X + 0.5f, (r32)actor.p.y - 0.5f * (r32)WORLD_SIZE_Y + 0.5f), 0.4f, vec4(1, 0, 1));
+		im2d_rect_centered_outline(vec2((r32)game.p_x - 0.5f * (r32)WORLD_SIZE_X + 0.5f, 
+										(r32)game.p_y - 0.5f * (r32)WORLD_SIZE_Y + 0.5f), 
+								   vec2(1), vec4(1, 1, 0), 0.02f);
+
+		if (draw_hovering) {
+			im2d_rect_centered_outline(vec2((r32)pos_x - 0.5f * (r32)WORLD_SIZE_X + 0.5f,
+											(r32)pos_y - 0.5f * (r32)WORLD_SIZE_Y + 0.5f),
+									   vec2(1), vec4(1.2f, 1.2f, 1.2f), 0.02f);
+
+		}
+
+		im2d_end();
+
+		gfx_end_drawing();
+
+		gfx_apply_bloom(2);
+
+		gfx_begin_drawing(Framebuffer_Type_DEFAULT, Clear_COLOR, vec4(0.0f));
+		gfx_blit_hdr(0, 0, window_w, window_h);
+		gfx_viewport(0, 0, window_w, window_h);
+
+		ImGui::Begin("Configuration");
+		ImGui::Text("Generation: %d", generation);
+		ImGui::SliderFloat("Min Epsilon", &min_epsilon, 0, 1, "%.6f");
+		ImGui::SliderFloat("Learning Rate", &learning_rate, 0, 1, "%.6f");
+		ImGui::SliderFloat("Discount Factor", &discount_factor, 0, 1, "%.6f");
+		ImGui::DragFloat("Decay Rate", &depsilon, 0.001f, 0, 1, "%.6f");
+		if (ImGui::Button("Reset")) {
+			qtable_init(&table);
+			game_restart(&game);
+			generation = 0;
+
+			actor.state = ACTOR_STATE_STOPPED;
+			actor.p = vec2((r32)game.p_x, (r32)game.p_y);
+			actor.tp = actor.p;
+		}
+
+		ImGui::Text("Speed: x%d", SIMULATION_SPEED_FACTORS[sim_speed.index]);
+		ImGui::SameLine();
+		if (ImGui::Button("-")) {
+			if (sim_speed.index > 0) {
+				sim_speed.index -= 1;
+			}
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("+")) {
+			if (sim_speed.index < static_count(SIMULATION_SPEED_FACTORS) - 1) {
+				sim_speed.index += 1;
+			}
+		}
+
+		sim_speed = simulation_speed(sim_speed.index);
+		
+		ImGui::End();
+
+		ImGui_RenderFrame();
+
+		gfx_end_drawing();
+
+		gfx_present();
+
+		reset_temporary_memory();
+
+		auto new_counter = system_get_counter();
+		auto counts = new_counter - counter;
+		counter = new_counter;
+
+		real_dt = ((1000000.0f * (r32)counts) / (r32)frequency) / 1000000.0f;
+		real_t += real_dt;
+
+		game_dt = real_dt * sim_speed.factor;
+
+		accumulator_t += game_dt;
+		accumulator_t = minimum(accumulator_t, 0.2f);
 	}
 
-	system_trace("[%d] [%d] [%d]", get_tile_print(&game, 0, 2), get_tile_print(&game, 1, 2), get_tile_print(&game, 2, 2));
-	system_trace("[%d] [%d] [%d]", get_tile_print(&game, 0, 1), get_tile_print(&game, 1, 1), get_tile_print(&game, 2, 1));
-	system_trace("[%d] [%d] [%d]", get_tile_print(&game, 0, 0), get_tile_print(&game, 1, 0), get_tile_print(&game, 2, 0));
+	ImGui_Shutdown();
+	gfx_destroy_context();
 
 	return 0;
 }
