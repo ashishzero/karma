@@ -39,6 +39,7 @@
     <ClCompile Include="src\modules\core\null\gfx_null.cpp" />
     <ClCompile Include="src\modules\imgui\editor.cpp" />
     <ClCompile Include="src\scene_debug.cpp" />
+    <ClCompile Include="src\template.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\modules\core\directx\dx_error.h" />

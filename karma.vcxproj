@@ -345,6 +345,7 @@ popd
     </ClCompile>
     <ClCompile Include="src\scene.cpp" />
     <ClCompile Include="src\scene_debug.cpp" />
+    <ClCompile Include="src\template.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\asset_loader.h" />
