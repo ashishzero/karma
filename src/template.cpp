@@ -37,8 +37,7 @@ struct Game {
 
 struct Qtable {
 	float scores[QTABLE_SIZE];
-	float epsilon[WORLD_SIZE];
-	float f[QTABLE_SIZE];
+	int generation[WORLD_SIZE];
 };
 
 void qtable_init(Qtable *table) {
@@ -46,10 +45,7 @@ void qtable_init(Qtable *table) {
 		table->scores[i] = 0;
 	}
 	for (int i = 0; i < WORLD_SIZE; ++i) {
-		table->epsilon[i] = 1;
-	}
-	for (int i = 0; i < QTABLE_SIZE; ++i) {
-		table->f[i] = 1.0f / (r32)ACTION_COUNT;
+		table->generation[i] = 0;
 	}
 }
 
@@ -58,76 +54,39 @@ int hash_position(int x, int y) {
 	return index;
 }
 
-Action get_action(Qtable *table, float min_epsilon, float depsilon, int x, int y, int *out_index) {
+Action get_action(Qtable *table, float min_epsilon, float max_epsilon, float depsilon, int x, int y, int *out_index) {
 	float p = random_get_zero_to_one();
 
 	int index = hash_position(x, y);
 	auto action_scores = &table->scores[index];
 
-	float &epsilon = table->epsilon[y * WORLD_SIZE_X + x];
-	epsilon -= depsilon;
-	epsilon = maximum(min_epsilon, epsilon);
+	float generation = (float)table->generation[y * WORLD_SIZE_X + x];
+	table->generation[y * WORLD_SIZE_X + x] += 1;
+
+	r32 epsilon = min_epsilon + (max_epsilon - min_epsilon) * expf(-depsilon * generation);
 
 	if (p >= epsilon) {
 		int high_score_index = 0;
 		float high_score = action_scores[0];
 
+		Action equals[ACTION_COUNT];
+		equals[0] = (Action)0;
 		u32 equal_count = 1;
 
 		for (int i = 1; i < ACTION_COUNT; ++i) {
 			if (action_scores[i] > high_score) {
 				high_score_index = i;
 				high_score = action_scores[i];
+				equals[0] = (Action)high_score_index;
 				equal_count = 1;
 			} else if (action_scores[i] == high_score) {
-				equal_count += 1;
+				equals[equal_count++] = (Action)i;
 			}
 		}
 
 		if (equal_count > 1) {
-			float cf[ACTION_COUNT];
-
-			auto f = &table->f[index];
-
-			float sum = 0;
-			for (int i = 0; i < ACTION_COUNT; ++i) {
-				sum += f[i];
-			}
-
-			float isum = 1.0f / sum;
-			for (int i = 0; i < ACTION_COUNT; ++i) {
-				f[i] *= isum;
-			}
-
-			cf[0] = f[0];
-			for (int i = 1; i < ACTION_COUNT; ++i) {
-				cf[i] = cf[i - 1] + f[i];
-			}
-
-			p = random_get_zero_to_one();
-
-			int n = -1;
-
-			if (p <= cf[0]) {
-				n = 0;
-			} else {
-				for (int j = 1; j < ACTION_COUNT - 1; ++j) {
-					if (p > cf[j] && p <= cf[j + 1]) {
-						n = j + 1;
-						break;
-					}
-				}
-			}
-
-			// floating point error, last cf is not exactly 1
-			if (n == -1) n = ACTION_COUNT - 1;
-			assert(n >= 0 && n < ACTION_COUNT);
-
-			for (int i = 0; i < ACTION_COUNT; ++i) {
-				f[i] += (r32)(n == i) ? 0 : 4;
-			}
-
-			high_score_index = n;
+			u32 rand_index = (random_get() % equal_count);
+			high_score_index = equals[rand_index];
 		}
 
 		assert(high_score_index >= 0);
@@ -137,56 +96,13 @@ Action get_action(Qtable *table, float min_epsilon, float depsilon, int x, int y
 		return (Action)high_score_index;
 	}
 
-	float cf[ACTION_COUNT];
-
-	auto f = &table->f[index];
-
-	float sum = 0;
-	for (int i = 0; i < ACTION_COUNT; ++i) {
-		sum += f[i];
-	}
-
-	float isum = 1.0f / sum;
-	for (int i = 0; i < ACTION_COUNT; ++i) {
-		f[i] *= isum;
-	}
-
-	cf[0] = f[0];
-	for (int i = 1; i < ACTION_COUNT; ++i) {
-		cf[i] = cf[i - 1] + f[i];
-	}
-
-	p = random_get_zero_to_one();
-	
-	int n = -1;
-
-	if (p <= cf[0]) {
-		n = 0;
-	} else {
-		for (int j = 1; j < ACTION_COUNT - 1; ++j) {
-			if (p > cf[j] && p <= cf[j + 1]) {
-				n = j + 1;
-				break;
-			}
-		}
-	}
-
-	// floating point error, last cf is not exactly 1
-	if (n == -1) n = ACTION_COUNT - 1;
+	int n = (int)lroundf(p * (ACTION_COUNT - 1));
 	assert(n >= 0 && n < ACTION_COUNT);
-
-	for (int i = 0; i < ACTION_COUNT; ++i) {
-		f[i] += (r32)(n == i) ? 0 : 4;
-	}
 
 	*out_index = index + n;
 
 	return (Action)n;
 }
-
-// [ ] [ ] [O]
-// [ ] [X] [ ]
-// [S] [ ] [ ]
 
 void game_init(Game *game) {
 	memset(game->tiles, 0, sizeof(game->tiles));
@@ -247,23 +163,23 @@ float get_reward(Game *game, int x, int y) {
 
 		switch (tile) {
 			case TILE_TYPE_BLOCK: {
-				return -100;
+				return -1;
 			} break;
 
 			case TILE_TYPE_EMPTY: {
-				if (game->visited[index]) return -100;
+				if (game->visited[index]) return -0.5f;
 				return 0;
 			} break;
 
 			case TILE_TYPE_WIN: {
-				return 100;
+				return 1;
 			} break;
 
 				invalid_default_case();
 		}
 	}
 
-	return -100;
+	return -1;
 }
 
 float get_max_optimal_future_reward_estimate(Qtable *table, int x, int y) {
@@ -283,7 +199,7 @@ float get_max_optimal_future_reward_estimate(Qtable *table, int x, int y) {
 		return high_score;
 	}
 
-	return -100;
+	return -1;
 }
 
 bool game_is_over(Game *game) {
@@ -347,11 +263,17 @@ int karma_main_template() {
 	random_init_global(context.id, system_get_counter());
 
 	float learning_rate = 0.1f;
-	float discount_factor = 0.2f;
+	float discount_factor = 0.88f;
+
 	float min_epsilon = 0;
+	float max_epsilon = 1;
 	float depsilon = 0.1f;
+
 	int generation = 0;
 	int win_count = 0;
+	int steps = 0;
+
+	const int max_steps = 500;
 	const int max_win_count = 15;
 
 	Game game;
@@ -431,9 +353,11 @@ int karma_main_template() {
 				if (vec2_length2(actor.tp - actor.p) < 0.01f) {
 					actor.state = ACTOR_STATE_STOPPED;
 
-					if (game_is_over(&game)) {
+					if (game_is_over(&game) || steps == max_steps) {
 						win_count += game_win(&game);
 						generation += 1;
+
+						steps = 0;
 
 						game_restart(&game);
 						actor.state = ACTOR_STATE_STOPPED;
@@ -443,7 +367,7 @@ int karma_main_template() {
 				}
 			} else {
 				int old_score_index;
-				Action action = get_action(&table, min_epsilon, depsilon, game.p_x, game.p_y, &old_score_index);
+				Action action = get_action(&table, min_epsilon, max_epsilon, depsilon, game.p_x, game.p_y, &old_score_index);
 
 				int new_player_x = game.p_x;
 				int new_player_y = game.p_y;
@@ -470,7 +394,7 @@ int karma_main_template() {
 
 				float reward = get_reward(&game, new_player_x, new_player_y);
 
-				float estimate_of_optimal_future_value = get_max_optimal_future_reward_estimate(&table, game.p_x, game.p_y);
+				float estimate_of_optimal_future_value = get_max_optimal_future_reward_estimate(&table, new_player_x, new_player_y);
 
 				float old_score = table.scores[old_score_index];
 
@@ -481,6 +405,8 @@ int karma_main_template() {
 
 				actor.tp = vec2((r32)game.p_x, (r32)game.p_y);
 				actor.state = ACTOR_STATE_MOVING;
+
+				steps += 1;
 			}
 
 			accumulator_t -= dt;
@@ -551,12 +477,57 @@ int karma_main_template() {
 					} break;
 
 					case TILE_TYPE_EMPTY: {
-						r32 inten = 1.0f - table.epsilon[y * WORLD_SIZE_X + x] + 0.01f;
+						r32 inten = mmclamp(0.01f, 1.2f, (r32)table.generation[y * WORLD_SIZE_X + x] / 80.0f);
 						im2d_rect_centered(vec2(draw_x, draw_y), vec2(0.9f * tile_size), vec4(inten * vec3(0, 1, 1), 1));
+
+						int index = hash_position(x, y);
+						auto action_scores = &table.scores[index];
+
+						int high_score_index = 0;
+						float high_score = action_scores[0];
+
+						u32 equal_count = 1;
+
+						for (int i = 1; i < ACTION_COUNT; ++i) {
+							if (action_scores[i] > high_score) {
+								high_score_index = i;
+								high_score = action_scores[i];
+								equal_count = 1;
+							} else if (action_scores[i] == high_score) {
+								equal_count++;
+								break;
+							}
+						}
+
+						if (equal_count == 1) {
+							inten = mmclamp(0.01f, 1.2f, action_scores[high_score_index]);
+							auto color = vec4(inten * vec3(1.3f, 0.2f, 0.2f), 1);
+
+							switch (high_score_index) {
+								case ACTION_EAST: {
+									im2d_rect_centered(vec2(draw_x + 0.4f, draw_y), vec2(0.05f, 0.8f * tile_size), color);
+								} break;
+
+								case ACTION_WEST: {
+									im2d_rect_centered(vec2(draw_x - 0.4f, draw_y), vec2(0.05f, 0.8f * tile_size), color);
+								} break;
+
+								case ACTION_NORTH: {
+									im2d_rect_centered(vec2(draw_x, draw_y + 0.4f), vec2(0.8f * tile_size, 0.05f), color);
+								} break;
+
+								case ACTION_SOUTH: {
+									im2d_rect_centered(vec2(draw_x, draw_y - 0.4f), vec2(0.8f * tile_size, 0.05f), color);
+								} break;
+
+									invalid_default_case();
+							}
+						}
+
 					} break;
 
 					case TILE_TYPE_WIN: {
-						im2d_rect_centered(vec2(draw_x, draw_y), vec2(0.9f * tile_size), 
+						im2d_rect_centered(vec2(draw_x, draw_y), vec2(0.9f * tile_size),
 										   win_count == 0 ? vec4(1.2f, 1.2f, 0.1f) : vec4(0.1f, (r32)minimum(win_count, 4) * 1.0f, 0.1f));
 					} break;
 
@@ -569,8 +540,8 @@ int karma_main_template() {
 		}
 
 		im2d_circle(vec2(actor.p.x - 0.5f * (r32)WORLD_SIZE_X + 0.5f, (r32)actor.p.y - 0.5f * (r32)WORLD_SIZE_Y + 0.5f), 0.4f, vec4(1, 0, 1));
-		im2d_rect_centered_outline(vec2((r32)game.p_x - 0.5f * (r32)WORLD_SIZE_X + 0.5f, 
-										(r32)game.p_y - 0.5f * (r32)WORLD_SIZE_Y + 0.5f), 
+		im2d_rect_centered_outline(vec2((r32)game.p_x - 0.5f * (r32)WORLD_SIZE_X + 0.5f,
+										(r32)game.p_y - 0.5f * (r32)WORLD_SIZE_Y + 0.5f),
 								   vec2(1), vec4(1, 1, 0), 0.02f);
 
 		if (draw_hovering) {
@@ -593,15 +564,20 @@ int karma_main_template() {
 		ImGui::Begin("Configuration");
 		ImGui::Text("Generation: %d", generation);
 		ImGui::Text("Win Count: %d", win_count);
+		ImGui::Text("Steps: %d", steps);
+
 		ImGui::SliderFloat("Min Epsilon", &min_epsilon, 0, 1, "%.6f");
+		ImGui::SliderFloat("Max Epsilon", &max_epsilon, 0, 1, "%.6f");
 		ImGui::SliderFloat("Learning Rate", &learning_rate, 0, 1, "%.6f");
 		ImGui::SliderFloat("Discount Factor", &discount_factor, 0, 1, "%.6f");
 		ImGui::DragFloat("Decay Rate", &depsilon, 0.001f, 0, 1, "%.6f");
+
 		if (ImGui::Button("Reset")) {
 			qtable_init(&table);
 			game_restart(&game);
 			generation = 0;
 			win_count = 0;
+			steps = 0;
 
 			actor.state = ACTOR_STATE_STOPPED;
 			actor.p = vec2((r32)game.p_x, (r32)game.p_y);
@@ -623,7 +599,7 @@ int karma_main_template() {
 		}
 
 		sim_speed = simulation_speed(sim_speed.index);
-		
+
 		ImGui::End();
 
 		ImGui_RenderFrame();
