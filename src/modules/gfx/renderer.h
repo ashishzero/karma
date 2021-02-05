@@ -82,6 +82,8 @@ void gfx_end_drawing();
 
 void gfx_viewport(r32 x, r32 y, r32 w, r32 h);
 
+Texture2d_Handle im_white_texture();
+
 void im2d_begin(const Mat4 &transform = mat4_identity());
 void im2d_begin(Camera_View &view, const Mat4 &transform = mat4_identity());
 void im2d_end();
@@ -155,6 +157,11 @@ void im2d_pie(Vec2 pos, r32 radius_a, r32 radius_b, r32 theta_a, r32 theta_b, Co
 void im2d_pie(Vec3 pos, r32 radius, r32 theta_a, r32 theta_b, Color4 color, int segments = IM_DEFAULT_CIRCLE_SEGMENTS);
 void im2d_pie(Vec2 pos, r32 radius, r32 theta_a, r32 theta_b, Color4 color, int segments = IM_DEFAULT_CIRCLE_SEGMENTS);
 
+void im2d_pie_part(Vec3 pos, r32 radius_a_min, r32 radius_b_min, r32 radius_a_max, r32 radius_b_max, r32 theta_a, r32 theta_b, Color4 color, int segments = IM_DEFAULT_CIRCLE_SEGMENTS);
+void im2d_pie_part(Vec2 pos, r32 radius_a_min, r32 radius_b_min, r32 radius_a_max, r32 radius_b_max, r32 theta_a, r32 theta_b, Color4 color, int segments = IM_DEFAULT_CIRCLE_SEGMENTS);
+void im2d_pie_part(Vec3 pos, r32 radius_min, r32 radius_max, r32 theta_a, r32 theta_b, Color4 color, int segments = IM_DEFAULT_CIRCLE_SEGMENTS);
+void im2d_pie_part(Vec2 pos, r32 radius_min, r32 radius_max, r32 theta_a, r32 theta_b, Color4 color, int segments = IM_DEFAULT_CIRCLE_SEGMENTS);
+
 void im2d_cube(Vec3 position, Quat rotation, Vec3 scale,
 			 Mm_Rect rect0, Mm_Rect rect1, Mm_Rect rect2,
 			 Mm_Rect rect3, Mm_Rect rect4, Mm_Rect rect5, Color4 color);
@@ -174,6 +181,8 @@ void im2d_bezier_cubic(Vec2 a, Vec2 b, Vec2 c, Vec2 d, Color4 color, r32 thickne
 
 void im2d_polygon(const Polygon &polygon, r32 z, Color4 color);
 void im2d_polygon(const Polygon &polygon, Color4 color);
+void im2d_polygon(const Polygon_Pt &polygon, r32 z, Color4 color);
+void im2d_polygon(const Polygon_Pt &polygon, Color4 color);
 
 void im2d_triangle_outline(Vec3 a, Vec3 b, Vec3 c, Color4 color, r32 thickness = im2d_stroke_weight);
 void im2d_triangle_outline(Vec2 a, Vec2 b, Vec2 c, Color4 color, r32 thickness = im2d_stroke_weight);
@@ -198,6 +207,8 @@ void im2d_arc_outline(Vec2 position, r32 radius, r32 theta_a, r32 theta_b, Color
 
 void im2d_polygon_outline(const Polygon &polygon, r32 z, Color4 color, r32 thickness = im2d_stroke_weight);
 void im2d_polygon_outline(const Polygon &polygon, Color4 color, r32 thickness = im2d_stroke_weight);
+void im2d_polygon_outline(const Polygon_Pt &polygon, r32 z, Color4 color, r32 thickness = im2d_stroke_weight);
+void im2d_polygon_outline(const Polygon_Pt &polygon, Color4 color, r32 thickness = im2d_stroke_weight);
 
 void im2d_text(Vec3 position, r32 scale, Monospaced_Font_Info &font, const String string, Color4 color);
 void im2d_text(Vec2 position, r32 scale, Monospaced_Font_Info &font, const String string, Color4 color);

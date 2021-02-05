@@ -25,7 +25,6 @@
     <ClCompile Include="src\modules\imgui\imgui_widgets.cpp" />
     <ClCompile Include="src\modules\pcg\pcg_basic.c" />
     <ClCompile Include="src\audio.cpp" />
-    <ClCompile Include="src\editor.cpp" />
     <ClCompile Include="src\modules\gfx\renderer.cpp" />
     <ClCompile Include="src\modules\imgui\dev.cpp" />
     <ClCompile Include="src\first.cpp" />
@@ -38,8 +37,14 @@
     <ClCompile Include="src\modules\core\stb.cpp" />
     <ClCompile Include="src\scene.cpp" />
     <ClCompile Include="src\modules\core\null\gfx_null.cpp" />
+<<<<<<< HEAD
     <ClCompile Include="src\main_shankar.cpp" />
     <ClCompile Include="src\broad_phase.cpp" />
+=======
+    <ClCompile Include="src\modules\imgui\editor.cpp" />
+    <ClCompile Include="src\scene_debug.cpp" />
+    <ClCompile Include="src\template.cpp" />
+>>>>>>> 0f5d5c9172ae1cd0a855ee40b371df264f6d7978
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\modules\core\directx\dx_error.h" />
@@ -73,7 +78,6 @@
     <ClInclude Include="src\modules\imgui\imstb_truetype.h" />
     <ClInclude Include="src\modules\pcg\pcg_basic.h" />
     <ClInclude Include="src\audio.h" />
-    <ClInclude Include="src\editor.h" />
     <ClInclude Include="src\entity.h" />
     <ClInclude Include="src\opentype.h" />
     <ClInclude Include="src\particle_system.h" />
@@ -86,7 +90,12 @@
     <ClInclude Include="src\modules\core\stb_rect_pack.h" />
     <ClInclude Include="src\scene.h" />
     <ClInclude Include="src\modules\core\data_structures.h" />
+<<<<<<< HEAD
     <ClInclude Include="src\broad_phase.h" />
+=======
+    <ClInclude Include="src\modules\imgui\editor.h" />
+    <ClInclude Include="src\scene_debug.h" />
+>>>>>>> 0f5d5c9172ae1cd0a855ee40b371df264f6d7978
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitattributes" />

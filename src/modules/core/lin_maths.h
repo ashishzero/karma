@@ -865,6 +865,9 @@ Vec3 barycentric(Vec3 a, Vec3 b, Vec3 c, Vec3 p);
 
 bool is_quad_convex(Vec2 a, Vec2 b, Vec2 c, Vec2 d);
 bool is_quad_convex(Vec3 a, Vec3 b, Vec3 c, Vec3 d);
+bool is_polygon_convex(const Vec2 *vertices, u32 count);
+bool is_polygon_convex(const Polygon &polygon);
+bool is_polygon_convex(const Polygon_Pt &polygon);
 
 Mm_Rect enclosing_mm_rect_mm_rect(const Mm_Rect &a0, const Mm_Rect &a1);
 Circle enclosing_circle_circle(const Circle &c0, const Circle &c1);
@@ -876,10 +879,14 @@ void most_seperated_points_on_aabb(Vec2 *pt, s32 n, s32 *min, s32 *max);
 Circle circle_from_distant_points(Vec2 *pt, s32 n);
 r32 min_area_rect(Vec2 *pt, s32 num_pts, Vec2 *center, Vec2 u[2]);
 
-Mm_Rect mm_rect_enclosing_circle(const Circle &cirlce);
-Mm_Rect mm_rect_enclosing_capsule(const Capsule &capsule);
-Mm_Rect mm_rect_enclosing_polygon(const Polygon &polygon);
 Mm_Rect mm_rect_enclosing_quad(Vec2 a, Vec2 b, Vec2 c, Vec2 d);
+Mm_Rect mm_rect_enclosing_mm_rect(const Mm_Rect &mm_rect, const Transform &t);
+Mm_Rect mm_rect_enclosing_circle(const Circle &cirlce);
+Mm_Rect mm_rect_enclosing_circle(const Circle &cirlce, const Transform &t);
+Mm_Rect mm_rect_enclosing_capsule(const Capsule &capsule);
+Mm_Rect mm_rect_enclosing_capsule(const Capsule &capsule, const Transform &t);
+Mm_Rect mm_rect_enclosing_polygon(const Polygon &polygon);
+Mm_Rect mm_rect_enclosing_polygon(const Polygon &polygon, const Transform &t);
 
 Mm_Rect transform_mmrect(const Mm_Rect &a, const Mat2 &mat, Vec2 t);
 Mm_Rect transform_mmrect(const Mm_Rect &a, r32 rot, Vec2 t);
@@ -925,8 +932,9 @@ bool dynamic_mm_rect_vs_mm_rect(const Mm_Rect &a, const Mm_Rect &b, Vec2 va, Vec
 
 Vec2 support(const Circle &c, Vec2 dir);
 Vec2 support(const Mm_Rect &m, Vec2 dir);
-Vec2 support(const Polygon &p, Vec2 dir);
 Vec2 support(const Capsule &c, Vec2 dir);
+Vec2 support(const Polygon &p, Vec2 dir);
+Vec2 support(const Polygon_Pt &p, Vec2 dir);
 
 Vec2 support(const Circle &a, const Circle &b, Vec2 dir);
 Vec2 support(const Circle &a, const Capsule &b, Vec2 dir);
@@ -937,6 +945,13 @@ Vec2 support(const Mm_Rect &a, const Mm_Rect &b, Vec2 dir);
 template <typename ShapeA, typename ShapeB>
 inline Vec2 support(const ShapeA &a, const ShapeB &b, Vec2 dir) {
 	return support(a, dir) - support(b, -dir);
+}
+
+template <typename Shape>
+inline Vec2 support(const Shape &s, const Transform &t, Vec2 dir) {
+	Vec2 p = support(s, vec2_mat2_mul(dir, t.xform));
+	p = mat2_vec2_mul(t.xform, p) + t.p;
+	return p;
 }
 
 template <typename ShapeA, typename ShapeB>
@@ -1017,6 +1032,7 @@ inline Support_Ex support_ex(const ShapeA &a, const ShapeB &b, Vec2 dir, const T
 }
 
 bool next_simplex(Vec2 *simplex, Vec2 *dir, u32 *n);
+Nearest_Edge nearest_edge_point_polygon(const Vec2 *vertices, u32 vertex_count, Vec2 point);
 Nearest_Edge nearest_edge_origin_polygon(const Vec2 *vertices, u32 vertex_count);
 
 bool next_simplex_ex(Support_Ex *simplex, Vec2 *dir, u32 *n);
@@ -1047,6 +1063,23 @@ bool gjk(const ShapeA &sa, const ShapeB &sb, const Args & ...args) {
 	return false;
 }
 
+template <typename Shape>
+bool test_shape_vs_point(const Shape &s, Vec2 point, r32 size, const Transform &t) {
+	Circle circle = { point, size };
+
+	Transform tc;
+	tc.p = vec2(0);
+	tc.xform = mat2_identity();
+
+	return gjk(s, circle, t, tc);
+}
+
+template <typename Shape>
+bool test_shape_vs_point(const Shape &s, Vec2 point, r32 size) {
+	Circle circle = { point, size };
+	return gjk(s, circle);
+}
+
 template <typename ShapeA, typename ShapeB, typename ...Args>
 bool gjk_nearest_points(const ShapeA &sa, const ShapeB &sb, Nearest_Points *nearest_points, const Args &...args) {
 	Support_Ex simplex[2];
@@ -1063,7 +1096,7 @@ bool gjk_nearest_points(const ShapeA &sa, const ShapeB &sb, Nearest_Points *near
 	r32 min_dist = MAX_FLOAT;
 
 	while (min_dist - dist > EPSILON_FLOAT_SQ) {
-		if (vec2_null(d)) return false;
+		if (vec2_null(d)) break;
 
 		c = support_ex(sa, sb, -d, args...);
 

@@ -2013,6 +2013,29 @@ bool is_quad_convex(Vec3 a, Vec3 b, Vec3 c, Vec3 d) {
 	return vec3_dot(acd, acb) < 0.0f;
 }
 
+bool is_polygon_convex(const Vec2 *vertices, u32 count) {
+	Vec2 a, b, c;
+
+	for (u32 outer = 0; outer < count; ++outer) {
+		a = vertices[outer];
+		b = vertices[(outer + 1) % count];
+		c = vertices[(outer + 2) % count];
+
+		if (!triangle_is_cw(a, b, c))
+			return false;
+	}
+
+	return true;
+}
+
+bool is_polygon_convex(const Polygon &polygon) {
+	return is_polygon_convex(polygon.vertices, polygon.vertex_count);
+}
+
+bool is_polygon_convex(const Polygon_Pt &polygon) {
+	return is_polygon_convex(polygon.vertices, polygon.vertex_count);
+}
+
 Mm_Rect enclosing_mm_rect_mm_rect(const Mm_Rect &a0, const Mm_Rect &a1) {
 	Mm_Rect a;
 	for (s32 i = 0; i < 2; i++) {
@@ -2158,12 +2181,53 @@ r32 min_area_rect(Vec2 *pt, s32 num_pts, Vec2 *center, Vec2 u[2]) {
 	return min_area;
 }
 
+Mm_Rect mm_rect_enclosing_quad(Vec2 a, Vec2 b, Vec2 c, Vec2 d) {
+	Vec2 points[] = { a, b, c, d };
+
+	Mm_Rect rect;
+	rect.min = points[0];
+	rect.max = points[0];
+
+	for (u32 index = 1; index < static_count(points); ++index) {
+		Vec2 *p = points + index;
+		rect.min = vec2_min(rect.min, *p);
+		rect.max = vec2_max(rect.max, *p);
+	}
+
+	return rect;
+}
+
+Mm_Rect mm_rect_enclosing_mm_rect(const Mm_Rect &mm_rect, const Transform &t) {
+	Vec2 a = mat2_vec2_mul(t.xform, mm_rect.min);
+	Vec2 b = mat2_vec2_mul(t.xform, vec2(mm_rect.min.x, mm_rect.max.y));
+	Vec2 c = mat2_vec2_mul(t.xform, mm_rect.max);
+	Vec2 d = mat2_vec2_mul(t.xform, vec2(mm_rect.max.x, mm_rect.min.y));
+	Mm_Rect result = mm_rect_enclosing_quad(a, b, c, d);
+	result.min += t.p;
+	result.max += t.p;
+	return result;
+}
+
 Mm_Rect mm_rect_enclosing_circle(const Circle &circle) {
 	Mm_Rect rect;
 	rect.min = vec2(-circle.radius);
 	rect.max = vec2( circle.radius);
 	rect.min += circle.center;
 	rect.max += circle.center;
+	return rect;
+}
+
+Mm_Rect mm_rect_enclosing_circle(const Circle &circle, const Transform &t) {
+	Mm_Rect rect;
+	
+	Vec2 a = support(circle, t, vec2(1, 0));
+	Vec2 b = support(circle, t, vec2(0, 1));
+	Vec2 c = support(circle, t, vec2(-1, 0));
+	Vec2 d = support(circle, t, vec2(0, -1));
+
+	rect.min = vec2(c.x, d.y);
+	rect.max = vec2(a.x, b.y);
+	
 	return rect;
 }
 
@@ -2192,6 +2256,20 @@ Mm_Rect mm_rect_enclosing_capsule(const Capsule &capsule) {
 	return rect;
 }
 
+Mm_Rect mm_rect_enclosing_capsule(const Capsule &capsule, const Transform &t) {
+	Mm_Rect rect;
+
+	Vec2 a = support(capsule, t, vec2(1, 0));
+	Vec2 b = support(capsule, t, vec2(0, 1));
+	Vec2 c = support(capsule, t, vec2(-1, 0));
+	Vec2 d = support(capsule, t, vec2(0, -1));
+
+	rect.min = vec2(c.x, d.y);
+	rect.max = vec2(a.x, b.y);
+
+	return rect;
+}
+
 Mm_Rect mm_rect_enclosing_polygon(const Polygon &polygon) {
 	Mm_Rect rect;
 	rect.min = polygon.vertices[0];
@@ -2206,18 +2284,19 @@ Mm_Rect mm_rect_enclosing_polygon(const Polygon &polygon) {
 	return rect;
 }
 
-Mm_Rect mm_rect_enclosing_quad(Vec2 a, Vec2 b, Vec2 c, Vec2 d) {
-	Vec2 points[] = { a, b, c, d };
-
+Mm_Rect mm_rect_enclosing_polygon(const Polygon &polygon, const Transform &t) {
 	Mm_Rect rect;
-	rect.min = points[0];
-	rect.max = points[0];
+	rect.min = mat2_vec2_mul(t.xform, polygon.vertices[0]);
+	rect.max = mat2_vec2_mul(t.xform, polygon.vertices[0]);
 
-	for (u32 index = 1; index < static_count(points); ++index) {
-		Vec2 *p = points + index;
-		rect.min = vec2_min(rect.min, *p);
-		rect.max = vec2_max(rect.max, *p);
+	for (u32 index = 1; index < polygon.vertex_count; ++index) {
+		const Vec2 *p = polygon.vertices + index;
+		rect.min = vec2_min(rect.min, mat2_vec2_mul(t.xform, *p));
+		rect.max = vec2_max(rect.max, mat2_vec2_mul(t.xform, *p));
 	}
+
+	rect.min += t.p;
+	rect.max += t.p;
 
 	return rect;
 }
@@ -2801,21 +2880,21 @@ Vec2 support(const Capsule &c, Vec2 dir) {
 	return s + c.radius * n;
 }
 
-Vec2 support(const Polygon &shape, Vec2 dir) {
+inline Vec2 support_polygon(const Vec2 *vertices, u32 count, Vec2 dir) {
 	s32 index = 0;
-	r32 p = vec2_dot(dir, shape.vertices[index]);
+	r32 p = vec2_dot(dir, vertices[index]);
 
 	s32 adj_index;
 	r32 adj_p;
 	while (true) {
-		adj_index = (index + 1 == shape.vertex_count ? 0 : index + 1);
-		adj_p = vec2_dot(dir, shape.vertices[adj_index]);
+		adj_index = (index + 1 == count ? 0 : index + 1);
+		adj_p = vec2_dot(dir, vertices[adj_index]);
 		if (adj_p > p) {
 			p = adj_p;
 			index = adj_index;
 		} else {
-			adj_index = (index - 1 == -1 ? shape.vertex_count - 1 : index - 1);
-			adj_p = vec2_dot(dir, shape.vertices[adj_index]);
+			adj_index = (index - 1 == -1 ? count - 1 : index - 1);
+			adj_p = vec2_dot(dir, vertices[adj_index]);
 			if (adj_p > p) {
 				p = adj_p;
 				index = adj_index;
@@ -2825,7 +2904,15 @@ Vec2 support(const Polygon &shape, Vec2 dir) {
 		}
 	}
 
-	return shape.vertices[index];
+	return vertices[index];
+}
+
+Vec2 support(const Polygon &shape, Vec2 dir) {
+	return support_polygon(shape.vertices, shape.vertex_count, dir);
+}
+
+Vec2 support(const Polygon_Pt &shape, Vec2 dir) {
+	return support_polygon(shape.vertices, shape.vertex_count, dir);
 }
 
 Vec2 support(const Circle &a, const Circle &b, Vec2 dir) {
@@ -2978,6 +3065,31 @@ bool next_simplex(Vec2 *simplex, Vec2 *dir, u32 *n) {
 	}
 
 	return false;
+}
+
+Nearest_Edge nearest_edge_point_polygon(const Vec2 *vertices, u32 vertex_count, Vec2 point) {
+	Nearest_Edge edge;
+	edge.distance = MAX_FLOAT;
+
+	for (u32 p_index = 0; p_index < vertex_count; p_index += 1) {
+		u32 q_index = ((p_index + 1) == vertex_count) ? 0 : p_index + 1;
+
+		auto a = vertices[p_index];
+		auto b = vertices[q_index];
+		auto e = b - a;
+
+		Vec2 n = vec2_normalize_check(vec2(-e.y, e.x));
+
+		r32 d = vec2_dot(n, a - point);
+		if (d < edge.distance) {
+			edge.normal = n;
+			edge.distance = d;
+			edge.a_index = p_index;
+			edge.b_index = q_index;
+		}
+	}
+
+	return edge;
 }
 
 Nearest_Edge nearest_edge_origin_polygon(const Vec2 *vertices, u32 vertex_count) {

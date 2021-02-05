@@ -131,7 +131,7 @@ void ImGuiEx::Initialize() {
 	colors[ImGuiCol_ScrollbarGrab] = srgb_to_linear(vec4(0.80f, 0.80f, 0.83f, 0.31f));
 	colors[ImGuiCol_ScrollbarGrabHovered] = srgb_to_linear(vec4(0.56f, 0.56f, 0.58f, 1.00f));
 	colors[ImGuiCol_ScrollbarGrabActive] = srgb_to_linear(vec4(0.06f, 0.05f, 0.07f, 1.00f));
-	colors[ImGuiCol_CheckMark] = srgb_to_linear(vec4(0.80f, 0.80f, 0.83f, 0.31f));
+	colors[ImGuiCol_CheckMark] = srgb_to_linear(vec4(0.80f, 0.80f, 1.0f, 1.0f));
 	colors[ImGuiCol_SliderGrab] = srgb_to_linear(vec4(0.80f, 0.80f, 0.83f, 0.31f));
 	colors[ImGuiCol_SliderGrabActive] = srgb_to_linear(vec4(0.06f, 0.05f, 0.07f, 1.00f));
 	colors[ImGuiCol_Button] = srgb_to_linear(vec4(0.10f, 0.09f, 0.12f, 1.00f));
@@ -288,7 +288,7 @@ bool ImGuiEx::HandleEvent(const Event &event) {
 		case Event_Type_KEY_DOWN: {
 			auto key = event.key.symbol;
 			IM_ASSERT(key >= 0 && key < IM_ARRAYSIZE(io.KeysDown));
-			io.KeysDown[key] = event.type == Event_Type_KEY_DOWN;
+			io.KeysDown[key] = (event.type & Event_Type_KEY_DOWN);
 			io.KeyShift      = ((system_get_key_mods() & Key_Mod_SHIFT) != 0);
 			io.KeyCtrl       = ((system_get_key_mods() & Key_Mod_CTRL) != 0);
 			io.KeyAlt        = ((system_get_key_mods() & Key_Mod_ALT) != 0);
@@ -351,4 +351,178 @@ void ImGuiEx::UpdateFrame(r32 dt) {
 void ImGuiEx::RenderFrame() {
 	ImGui::Render();
 	imgui_render_frame(ImGui::GetDrawData());
+}
+
+//
+//
+//
+#include "imgui_internal.h"
+
+Vec2 ImGuiEx::MouseCursorReverse() {
+	Vec2 c = ImGui::GetIO().MousePos;
+	r32 y = (r32)system_get_client_size().y;
+	c.y = y - c.y;
+	return c;
+}
+
+bool ImGuiEx::LabelCheckbox(const char *label, bool *v, bool enabled) {
+	ImGuiWindow *window = ImGui::GetCurrentWindow();
+	if (window->SkipItems)
+		return false;
+
+	ImGuiContext &g = *GImGui;
+	const ImGuiStyle &style = g.Style;
+	const float w = ImGui::CalcItemWidth();
+
+	const ImVec2 label_size = ImGui::CalcTextSize(label, NULL, true);
+	const ImRect value_bb(window->DC.CursorPos, window->DC.CursorPos + ImVec2(w, label_size.y + style.FramePadding.y * 2));
+	const ImRect total_bb(window->DC.CursorPos, window->DC.CursorPos + ImVec2(w + (label_size.x > 0.0f ? style.ItemInnerSpacing.x : 0.0f), style.FramePadding.y * 2) + label_size);
+	ImGui::ItemSize(total_bb, style.FramePadding.y);
+	if (!ImGui::ItemAdd(total_bb, 0))
+		return false;
+
+	const float square_sz = ImGui::GetFrameHeight();
+	const ImRect check_bb(value_bb.Min, value_bb.Min + ImVec2(square_sz, square_sz));
+	ImGuiID id = window->GetID(null_tprintf("%s##button_checkbox", label));
+
+	if (!ImGui::ItemAdd(check_bb, id))
+		return false;
+
+	bool hovered, held;
+	bool pressed = ImGui::ButtonBehavior(check_bb, id, &hovered, &held);
+	if (pressed && enabled)
+	{
+		*v = !(*v);
+		ImGui::MarkItemEdited(id);
+	}
+
+	ImU32 button_color;
+	if (enabled) {
+		button_color = ImGui::GetColorU32((held && hovered) ? ImGuiCol_FrameBgActive : hovered ? ImGuiCol_FrameBgHovered : ImGuiCol_FrameBg);
+	} else {
+		button_color = ImGui::GetColorU32(ImGuiCol_TextDisabled);
+	}
+
+	ImGui::RenderNavHighlight(check_bb, id);
+	ImGui::RenderFrame(check_bb.Min, check_bb.Max, button_color, true, style.FrameRounding);
+	ImU32 check_col = ImGui::GetColorU32(ImGuiCol_CheckMark);
+	bool mixed_value = (window->DC.ItemFlags & ImGuiItemFlags_MixedValue) != 0;
+	if (mixed_value)
+	{
+		// Undocumented tristate/mixed/indeterminate checkbox (#2644)
+		ImVec2 pad(ImMax(1.0f, IM_FLOOR(square_sz / 3.6f)), ImMax(1.0f, IM_FLOOR(square_sz / 3.6f)));
+		window->DrawList->AddRectFilled(check_bb.Min + pad, check_bb.Max - pad, check_col, style.FrameRounding);
+	}
+	else if (*v)
+	{
+		const float pad = ImMax(1.0f, IM_FLOOR(square_sz / 6.0f));
+		ImGui::RenderCheckMark(window->DrawList, check_bb.Min + ImVec2(pad, pad), check_col, square_sz - pad * 2.0f);
+	}
+
+	if (g.LogEnabled)
+		ImGui::LogRenderedText(&check_bb.Min, mixed_value ? "[~]" : *v ? "[x]" : "[ ]");
+
+	if (label_size.x > 0.0f)
+		ImGui::RenderText(ImVec2(value_bb.Max.x + style.ItemInnerSpacing.x, value_bb.Min.y + style.FramePadding.y), label);
+
+	IMGUI_TEST_ENGINE_ITEM_INFO(id, label, window->DC.ItemFlags | ImGuiItemStatusFlags_Checkable | (*v ? ImGuiItemStatusFlags_Checked : 0));
+	return pressed && enabled;
+}
+
+void ImGuiEx::LabelColor(const char *label, const Vec4 &color, int color_flags) {
+	ImGuiWindow *window = ImGui::GetCurrentWindow();
+	if (window->SkipItems)
+		return;
+
+	ImGuiContext &g = *GImGui;
+	const ImGuiStyle &style = g.Style;
+	const float w = ImGui::CalcItemWidth();
+
+	const ImVec2 label_size = ImGui::CalcTextSize(label, NULL, true);
+	const ImRect value_bb(window->DC.CursorPos, window->DC.CursorPos + ImVec2(w, label_size.y + style.FramePadding.y * 2));
+	const ImRect total_bb(window->DC.CursorPos, window->DC.CursorPos + ImVec2(w + (label_size.x > 0.0f ? style.ItemInnerSpacing.x : 0.0f), style.FramePadding.y * 2) + label_size);
+	ImGui::ItemSize(total_bb, style.FramePadding.y);
+	if (!ImGui::ItemAdd(total_bb, 0))
+		return;
+
+	ImU32 ucolor = ImGui::ColorConvertFloat4ToU32(color);
+
+	const char *desc_id = null_tprintf("%s##button_color", label);
+	const ImGuiID id = window->GetID(desc_id);
+	float default_size = ImGui::GetFrameHeight();
+	ImVec2 size(default_size, default_size);
+
+	const ImRect bb(value_bb.Min, value_bb.Min + size);
+	const ImRect next_value_bb(ImVec2(value_bb.Min.x + default_size, value_bb.Min.y), value_bb.Max);
+	if (!ImGui::ItemAdd(bb, id))
+		return;
+
+	bool hovered, held;
+	bool pressed = ImGui::ButtonBehavior(bb, id, &hovered, &held);
+
+	if (color_flags & ImGuiColorEditFlags_NoAlpha)
+		color_flags &= ~(ImGuiColorEditFlags_AlphaPreview | ImGuiColorEditFlags_AlphaPreviewHalf);
+
+	ImVec4 col_rgb = color;
+	if (color_flags & ImGuiColorEditFlags_InputHSV)
+		ImGui::ColorConvertHSVtoRGB(col_rgb.x, col_rgb.y, col_rgb.z, col_rgb.x, col_rgb.y, col_rgb.z);
+
+	ImVec4 col_rgb_without_alpha(col_rgb.x, col_rgb.y, col_rgb.z, 1.0f);
+	float grid_step = ImMin(size.x, size.y) / 2.99f;
+	float rounding = ImMin(g.Style.FrameRounding, grid_step * 0.5f);
+	ImRect bb_inner = bb;
+	float off = 0.0f;
+	if ((color_flags & ImGuiColorEditFlags_NoBorder) == 0)
+	{
+		off = -0.75f; // The border (using Col_FrameBg) tends to look off when color is near-opaque and rounding is enabled. This offset seemed like a good middle ground to reduce those artifacts.
+		bb_inner.Expand(off);
+	}
+	if ((color_flags & ImGuiColorEditFlags_AlphaPreviewHalf) && col_rgb.w < 1.0f)
+	{
+		float mid_x = IM_ROUND((bb_inner.Min.x + bb_inner.Max.x) * 0.5f);
+		ImGui::RenderColorRectWithAlphaCheckerboard(window->DrawList, ImVec2(bb_inner.Min.x + grid_step, bb_inner.Min.y), bb_inner.Max, ImGui::GetColorU32(col_rgb), grid_step, ImVec2(-grid_step + off, off), rounding, ImDrawCornerFlags_TopRight | ImDrawCornerFlags_BotRight);
+		window->DrawList->AddRectFilled(bb_inner.Min, ImVec2(mid_x, bb_inner.Max.y), ImGui::GetColorU32(col_rgb_without_alpha), rounding, ImDrawCornerFlags_TopLeft | ImDrawCornerFlags_BotLeft);
+	}
+	else
+	{
+		// Because GetColorU32() multiplies by the global style Alpha and we don't want to display a checkerboard if the source code had no alpha
+		ImVec4 col_source = (color_flags & ImGuiColorEditFlags_AlphaPreview) ? col_rgb : col_rgb_without_alpha;
+		if (col_source.w < 1.0f)
+			ImGui::RenderColorRectWithAlphaCheckerboard(window->DrawList, bb_inner.Min, bb_inner.Max, ImGui::GetColorU32(col_source), grid_step, ImVec2(off, off), rounding);
+		else
+			window->DrawList->AddRectFilled(bb_inner.Min, bb_inner.Max, ImGui::GetColorU32(col_source), rounding, ImDrawCornerFlags_All);
+	}
+	ImGui::RenderNavHighlight(bb, id);
+	if ((color_flags & ImGuiColorEditFlags_NoBorder) == 0)
+	{
+		if (g.Style.FrameBorderSize > 0.0f)
+			ImGui::RenderFrameBorder(bb.Min, bb.Max, rounding);
+		else
+			window->DrawList->AddRect(bb.Min, bb.Max, ImGui::GetColorU32(ImGuiCol_FrameBg), rounding); // Color button are often in need of some sort of border
+	}
+
+	// Drag and Drop Source
+	// NB: The ActiveId test is merely an optional micro-optimization, BeginDragDropSource() does the same test.
+	if (g.ActiveId == id && !(color_flags & ImGuiColorEditFlags_NoDragDrop) && ImGui::BeginDragDropSource())
+	{
+		if (color_flags & ImGuiColorEditFlags_NoAlpha)
+			ImGui::SetDragDropPayload(IMGUI_PAYLOAD_TYPE_COLOR_3F, &col_rgb, sizeof(float) * 3, ImGuiCond_Once);
+		else
+			ImGui::SetDragDropPayload(IMGUI_PAYLOAD_TYPE_COLOR_4F, &col_rgb, sizeof(float) * 4, ImGuiCond_Once);
+		ImGui::ColorButton(desc_id, color, color_flags);
+		ImGui::SameLine();
+		ImGui::TextEx("Color");
+		ImGui::EndDragDropSource();
+	}
+
+	// Tooltip
+	if (!(color_flags & ImGuiColorEditFlags_NoTooltip) && hovered)
+		ImGui::ColorTooltip(desc_id, &color.x, color_flags & (ImGuiColorEditFlags__InputMask | ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_AlphaPreview | ImGuiColorEditFlags_AlphaPreviewHalf));
+
+	// Render
+	const char *value_text_begin = &g.TempBuffer[0];
+	const char *value_text_end = value_text_begin + ImFormatString(g.TempBuffer, IM_ARRAYSIZE(g.TempBuffer), " #%08x", ucolor);
+	ImGui::RenderTextClipped(next_value_bb.Min, next_value_bb.Max, value_text_begin, value_text_end, NULL, ImVec2(0.0f, 0.5f));
+	if (label_size.x > 0.0f)
+		ImGui::RenderText(ImVec2(next_value_bb.Max.x + style.ItemInnerSpacing.x, next_value_bb.Min.y + style.FramePadding.y), label);
 }

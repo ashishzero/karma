@@ -14,10 +14,6 @@
 #pragma once
 #include "modules/core/karma.h"
 
-#if defined(BUILD_DEBUG) || defined(BUILD_DEBUG_FAST) || defined(BUILD_DEVELOPER)
-#define BUILD_IMGUI
-#endif
-
 //---- Define assertion handler. Defaults to calling assert().
 // If your macro uses multiple statements, make sure is enclosed in a 'do { .. } while (0)' block so it can be used as a single statement.
 #if defined(BUILD_DEBUG) || defined(BUILD_DEBUG_FAST)
@@ -130,9 +126,12 @@ void Shutdown();
 bool HandleEvent(const Event &event);
 void UpdateFrame(r32 dt);
 void RenderFrame();
+Vec2 MouseCursorReverse();
+void LabelColor(const char *label, const Vec4 &color, int flags);
+bool LabelCheckbox(const char *label, bool *v, bool enabled);
 };
 
-#ifdef BUILD_IMGUI
+#ifdef ENABLE_DEVELOPER_OPTIONS
 
 #define ImGui_RefreshRenderingContext()	ImGuiEx::RefreshRenderingContext()
 #define ImGui_Initialize()				ImGuiEx::Initialize()

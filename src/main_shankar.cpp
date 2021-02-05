@@ -667,8 +667,12 @@ int karma_user_shankar() {
 				player.color = vec4(1);
 				player.rigid_body->transform.p = player.position;
 				player.rigid_body->transform.xform = mat2_scalar(player.radius, player.radius);
+<<<<<<< HEAD
 				player.rigid_body->bounding_box = rigid_body_bounding_box(player.rigid_body);
 				hgrid_move_body(&hgrid, player.rigid_body);
+=======
+				player.rigid_body->bounding_box = rigid_body_bounding_box(player.rigid_body, 0);
+>>>>>>> 0f5d5c9172ae1cd0a855ee40b371df264f6d7978
 			}
 
 			primary_player->color = vec4(0, 1, 1);

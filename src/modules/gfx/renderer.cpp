@@ -621,6 +621,10 @@ void gfx_viewport(r32 x, r32 y, r32 w, r32 h) {
 	gfx->cmd_set_viewport(x, y, w, h);
 }
 
+Texture2d_Handle im_white_texture() {
+	return white_texture;
+}
+
 void im2d_begin(const Mat4 &transform) {
 	im_context2d.draw_cmd       = 0;
 	im_context2d.vertex         = 0;
@@ -1012,7 +1016,7 @@ void im2d_pie(Vec3 pos, r32 radius_a, r32 radius_b, r32 theta_a, r32 theta_b, Co
 	int first_index = (int)((0.5f * theta_a * MATH_PI_INVERSE) * (r32)(IM_MAX_CIRCLE_SEGMENTS) + 0.5f);
 	int last_index  = (int)((0.5f * theta_b * MATH_PI_INVERSE) * (r32)(IM_MAX_CIRCLE_SEGMENTS) + 0.5f);
 
-	if (first_index >= last_index)
+	while (first_index >= last_index)
 		last_index += IM_MAX_CIRCLE_SEGMENTS;
 
 	auto value_count = last_index - first_index;
@@ -1046,6 +1050,59 @@ void im2d_pie(Vec3 pos, r32 radius, r32 theta_a, r32 theta_b, Color4 color, int 
 
 void im2d_pie(Vec2 pos, r32 radius, r32 theta_a, r32 theta_b, Color4 color, int segments) {
 	im2d_pie(vec3(pos, 1), radius, radius, theta_a, theta_b, color, segments);
+}
+
+void im2d_pie_part(Vec3 pos, r32 radius_a_min, r32 radius_b_min, r32 radius_a_max, r32 radius_b_max, r32 theta_a, r32 theta_b, Color4 color, int segments) {
+	assert(theta_a >= 0 && theta_a <= MATH_PI * 2 && theta_b >= 0 && theta_b <= MATH_PI * 2);
+
+	int first_index = (int)((0.5f * theta_a * MATH_PI_INVERSE) * (r32)(IM_MAX_CIRCLE_SEGMENTS)+0.5f);
+	int last_index = (int)((0.5f * theta_b * MATH_PI_INVERSE) * (r32)(IM_MAX_CIRCLE_SEGMENTS)+0.5f);
+
+	while (first_index >= last_index)
+		last_index += IM_MAX_CIRCLE_SEGMENTS;
+
+	auto value_count = last_index - first_index;
+	segments = minimum(segments, value_count);
+
+	r32 min_px = im_unit_circle_cos[first_index] * radius_a_min;
+	r32 min_py = im_unit_circle_sin[first_index] * radius_b_min;
+	r32 max_px = im_unit_circle_cos[first_index] * radius_a_max;
+	r32 max_py = im_unit_circle_sin[first_index] * radius_b_max;
+
+	r32 min_npx, min_npy;
+	r32 max_npx, max_npy;
+	for (int index = 1; index <= segments; ++index) {
+		auto lookup = first_index + (int)((r32)index / (r32)segments * (r32)value_count + 0.5f);
+		lookup = lookup % IM_MAX_CIRCLE_SEGMENTS;
+
+		min_npx = im_unit_circle_cos[lookup] * radius_a_min;
+		min_npy = im_unit_circle_sin[lookup] * radius_b_min;
+		max_npx = im_unit_circle_cos[lookup] * radius_a_max;
+		max_npy = im_unit_circle_sin[lookup] * radius_b_max;
+
+		im2d_quad(pos + vec3(min_npx, min_npy, 0),
+			pos + vec3(max_npx, max_npy, 0),
+			pos + vec3(max_px, max_py, 0),
+			pos + vec3(min_px, min_py, 0),
+			color);
+
+		min_px = min_npx;
+		min_py = min_npy;
+		max_px = max_npx;
+		max_py = max_npy;
+	}
+}
+
+void im2d_pie_part(Vec2 pos, r32 radius_a_min, r32 radius_b_min, r32 radius_a_max, r32 radius_b_max, r32 theta_a, r32 theta_b, Color4 color, int segments) {
+	im2d_pie_part(vec3(pos, 1), radius_a_min, radius_b_min, radius_a_max, radius_b_max, theta_a, theta_b, color, segments);
+}
+
+void im2d_pie_part(Vec3 pos, r32 radius_min, r32 radius_max, r32 theta_a, r32 theta_b, Color4 color, int segments) {
+	im2d_pie_part(pos, radius_min, radius_min, radius_max, radius_max, theta_a, theta_b, color, segments);
+}
+
+void im2d_pie_part(Vec2 pos, r32 radius_min, r32 radius_max, r32 theta_a, r32 theta_b, Color4 color, int segments) {
+	im2d_pie_part(vec3(pos, 1), radius_min, radius_min, radius_max, radius_max, theta_a, theta_b, color, segments);
 }
 
 void im2d_cube(Vec3 position, Quat rotation, Vec3 scale,
@@ -1162,6 +1219,17 @@ void im2d_polygon(const Polygon &polygon, Color4 color) {
 	im2d_polygon(polygon, 1, color);
 }
 
+void im2d_polygon(const Polygon_Pt &polygon, r32 z, Color4 color) {
+	u32 triangle_count = polygon.vertex_count - 2;
+	for (u32 triangle_index = 0; triangle_index < triangle_count; ++triangle_index) {
+		im2d_triangle(vec3(polygon.vertices[0], z), vec3(polygon.vertices[triangle_index + 1], z), vec3(polygon.vertices[triangle_index + 2], z), color);
+	}
+}
+
+void im2d_polygon(const Polygon_Pt &polygon, Color4 color) {
+	im2d_polygon(polygon, 1, color);
+}
+
 void im2d_triangle_outline(Vec3 a, Vec3 b, Vec3 c, Color4 color, r32 thickness) {
 	im2d_line(a, b, color, thickness);
 	im2d_line(b, c, color, thickness);
@@ -1258,7 +1326,7 @@ void im2d_arc_outline(Vec3 position, r32 radius_a, r32 radius_b, r32 theta_a, r3
 	int first_index = (int)((0.5f * theta_a * MATH_PI_INVERSE) * (r32)(IM_MAX_CIRCLE_SEGMENTS) + 0.5f);
 	int last_index  = (int)((0.5f * theta_b * MATH_PI_INVERSE) * (r32)(IM_MAX_CIRCLE_SEGMENTS) + 0.5f);
 
-	if (first_index >= last_index)
+	while (first_index >= last_index)
 		last_index += IM_MAX_CIRCLE_SEGMENTS;
 
 	auto value_count = last_index - first_index;
@@ -1314,6 +1382,21 @@ void im2d_polygon_outline(const Polygon &polygon, r32 z, Color4 color, r32 thick
 }
 
 void im2d_polygon_outline(const Polygon &polygon, Color4 color, r32 thickness) {
+	im2d_polygon_outline(polygon, 1, color, thickness);
+}
+
+void im2d_polygon_outline(const Polygon_Pt &polygon, r32 z, Color4 color, r32 thickness) {
+	const Vec2 *p, *q;
+	p = polygon.vertices;
+	for (u32 index = 0; index < polygon.vertex_count - 1; ++index) {
+		q = p + 1;
+		im2d_line(vec3(*p, z), vec3(*q, z), color, thickness);
+		p = q;
+	}
+	im2d_line(vec3(*polygon.vertices, z), vec3(*p, z), color, thickness);
+}
+
+void im2d_polygon_outline(const Polygon_Pt &polygon, Color4 color, r32 thickness) {
 	im2d_polygon_outline(polygon, 1, color, thickness);
 }
 

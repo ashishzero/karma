@@ -1047,8 +1047,6 @@ u32 windows_find_files_count(const wchar_t *root_dir, int root_dir_len, const wc
 }
 
 u32 windows_find_files_info(System_Find_File_Info *info, const System_Find_File_Info *info_one_past_end, const wchar_t *root_dir, int root_dir_len, const wchar_t *extension, bool recursive) {
-	scoped_temporary_allocation();
-
 	wchar_t *search = (wchar_t *)tallocate((root_dir_len + 3) * sizeof(wchar_t));
 	memcpy(search, root_dir, root_dir_len * sizeof(wchar_t));
 	search[root_dir_len + 0] = '/';
@@ -1089,7 +1087,7 @@ u32 windows_find_files_info(System_Find_File_Info *info, const System_Find_File_
 			utf_full_file_name[found_full_file_len] = 0;
 
 			info->path.data = (u8 *)utf_full_file_name;
-			info->path.count = root_dir_len + 1;
+			info->path.count = found_full_file_len;
 			info->name.data = (u8 *)utf_full_file_name + root_dir_len + 1;
 			info->name.count = found_file_len;
 
@@ -1101,6 +1099,7 @@ u32 windows_find_files_info(System_Find_File_Info *info, const System_Find_File_
 			}
 
 			info->size = (find_data.nFileSizeHigh * ((u64)MAXDWORD + 1)) + find_data.nFileSizeLow;
+			info->is_dir = ((find_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY);
 
 			ULARGE_INTEGER ul;
 			ul.HighPart = find_data.ftLastWriteTime.dwHighDateTime;
@@ -1116,8 +1115,6 @@ u32 windows_find_files_info(System_Find_File_Info *info, const System_Find_File_
 }
 
 Array_View<System_Find_File_Info> system_find_files(const String directory, const String extension, bool recursive) {
-	scoped_temporary_allocation();
-
 	int      length = MultiByteToWideChar(CP_UTF8, 0, (char *)directory.data, (int)directory.count, 0, 0);
 	wchar_t *wsearch = (wchar_t *)tallocate((length + 1) * sizeof(wchar_t));
 	MultiByteToWideChar(CP_UTF8, 0, (char *)directory.data, (int)directory.count, wsearch, length);
@@ -1133,6 +1130,48 @@ Array_View<System_Find_File_Info> system_find_files(const String directory, cons
 	items.count = windows_find_files_info(items.data, items.data + items_count, wsearch, length, wextension, recursive);
 
 	return items;
+}
+
+void system_remove_file(const String path) {
+	int      length = MultiByteToWideChar(CP_UTF8, 0, (char *)path.data, (int)path.count, 0, 0);
+	wchar_t *wpath = (wchar_t *)tallocate((length + 1) * sizeof(wchar_t));
+	MultiByteToWideChar(CP_UTF8, 0, (char *)path.data, (int)path.count, wpath, length);
+	wpath[length] = 0;
+
+	DeleteFileW(wpath);
+}
+
+Create_Directory system_create_directory(const String path) {
+	int      length = MultiByteToWideChar(CP_UTF8, 0, (char *)path.data, (int)path.count, 0, 0);
+	wchar_t *wpath = (wchar_t *)tallocate((length + 1) * sizeof(wchar_t));
+	MultiByteToWideChar(CP_UTF8, 0, (char *)path.data, (int)path.count, wpath, length);
+	wpath[length] = 0;
+
+	BOOL result = CreateDirectoryW(wpath, nullptr);
+	if (result) return Create_Directory_SUCCESS;
+	DWORD error = GetLastError();
+	if (error == ERROR_ALREADY_EXISTS)
+		return Create_Directory_ALREADY_EXIST;
+	else if (error == ERROR_PATH_NOT_FOUND)
+		return Create_Directory_PATH_NOT_FOUND;
+	else
+		return Create_Directory_SYSTEM_ERROR;
+}
+
+bool system_rename_directory(const String existing_path, const String new_path) {
+	int length;
+
+	length = MultiByteToWideChar(CP_UTF8, 0, (char *)existing_path.data, (int)existing_path.count, 0, 0);
+	wchar_t *wexisting_path = (wchar_t *)tallocate((length + 1) * sizeof(wchar_t));
+	MultiByteToWideChar(CP_UTF8, 0, (char *)existing_path.data, (int)existing_path.count, wexisting_path, length);
+	wexisting_path[length] = 0;
+
+	length = MultiByteToWideChar(CP_UTF8, 0, (char *)new_path.data, (int)new_path.count, 0, 0);
+	wchar_t *wnew_path = (wchar_t *)tallocate((length + 1) * sizeof(wchar_t));
+	MultiByteToWideChar(CP_UTF8, 0, (char *)new_path.data, (int)new_path.count, wnew_path, length);
+	wnew_path[length] = 0;
+
+	return MoveFileW(wexisting_path, wnew_path);
 }
 
 //

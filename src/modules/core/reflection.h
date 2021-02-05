@@ -63,6 +63,7 @@ void foo(const My_Struct &data) {
 
 enum Type_Id {
 	Type_Id_UNKNOWN,
+	Type_Id_BOOL,
 	Type_Id_S8,
 	Type_Id_S16,
 	Type_Id_S32,
@@ -297,6 +298,15 @@ struct Reflect {
 	static const Type_Info *const info() {
 		static const Type_Info i(id, 0, "-unknown-");
 		assert(!"File not added for reflection!");
+		return &i;
+	}
+};
+
+template <>
+struct Reflect<bool> {
+	static constexpr Type_Id      id = Type_Id_BOOL;
+	static const Type_Info *const info() {
+		static const Type_Info i(id, sizeof(bool), "bool");
 		return &i;
 	}
 };

@@ -58,8 +58,11 @@ void ostream_write_buffer(Ostream *stream, const void *ptr, s64 size) {
 		memcpy(stream->tail->data + stream->tail->filled, data + size - left, write);
 		stream->tail->filled += write;
 		left -= write;
-		stream->tail->next       = new (stream->allocator) Ostream::Bucket;
-		stream->tail->next->prev = stream->tail;
+
+		if (stream->tail->next == nullptr) {
+			stream->tail->next = new (stream->allocator) Ostream::Bucket;
+			stream->tail->next->prev = stream->tail;
+		}
 		stream->tail             = stream->tail->next;
 		stream->size += write;
 	}
@@ -113,8 +116,22 @@ void ostream_build_out_file(Ostream *stream, System_File *file) {
 	}, file);
 }
 
-void ostream_free(Ostream *stream) {
+void ostream_reset(Ostream *stream) {
 	assert(stream->tail->next == 0);
+
+	for (auto buk = stream->tail; buk != &stream->head;) {
+		buk->filled = 0;
+		buk = buk->prev;
+	}
+
+	stream->tail = &stream->head;
+	stream->head.filled = 0;
+}
+
+void ostream_free(Ostream *stream) {
+	while (stream->tail->next != 0) {
+		stream->tail = stream->tail->next;
+	}
 
 	for (auto buk = stream->tail; buk != &stream->head;) {
 		auto prev = buk->prev;
@@ -123,5 +140,7 @@ void ostream_free(Ostream *stream) {
 	}
 
 	stream->tail        = &stream->head;
+	stream->tail->next  = nullptr;
+	stream->tail->prev  = nullptr;
 	stream->head.filled = 0;
 }

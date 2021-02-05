@@ -1,12 +1,18 @@
 #pragma once
 
 #include "modules/core/lin_maths.h"
+#include "modules/core/gfx_types.h"
 #include "modules/core/reflection.h"
 
-typedef u64 Entity_Id;
+struct Entity_Id {
+	u64 handle;
+};
+
+struct Texture_Id {
+	u32 index;
+};
 
 enum Fixture_Shape : u32 {
-	Fixture_Shape_Null,
 	Fixture_Shape_Circle,
 	Fixture_Shape_Mm_Rect,
 	Fixture_Shape_Capsule,
@@ -22,6 +28,27 @@ struct Fixture {
 
 #define fixture_get_shape(fixture, type) ((type *)((fixture)->handle))
 
+struct Resource_Id {
+	u64 handle;
+};
+typedef char Resource_Name[125];
+
+struct Resource_Header {
+	Resource_Id		id;
+	Resource_Name	name;
+	Resource_Name	texture;
+};
+
+struct Fixture_Group {
+	Fixture *fixtures;
+	u32		 count;
+};
+
+struct Texture_Group {
+	Texture2d_Handle handle;
+	Mm_Rect			 uv;
+};
+
 enum Rigid_Body_Type : u16 {
 	Rigid_Body_Type_Static,
 	Rigid_Body_Type_Dynamic
@@ -35,27 +62,25 @@ enum Rigid_Body_Flag_Bit : u16 {
 };
 
 struct Rigid_Body {
-	Rigid_Body_Type		type;
-	Rigid_Body_Flags	flags;
-	r32					imass;
-	r32					drag;
-	u32					grid_index;
-	Vec2				velocity;
-	Vec2				force;
-	Transform			transform;
-	r32					stiffness;
-	r32					restitution;
-	u32					fixture_count;
-	Fixture *			fixtures;
-	Mm_Rect				bounding_box;
-	Entity_Id			entity_id;
-	Rigid_Body* next;
+	attribute(read_only)						Rigid_Body_Type		type;
+	attribute(no_serialize, no_display)			Rigid_Body_Flags	flags;
+	attribute(min:0)							r32					imass;
+	attribute(min:0)							r32					drag;
+	attribute(slider, min:0, max:1)				r32					restitution;
+	attribute(no_serialize, read_only)			Vec2				velocity;
+	attribute(no_serialize, read_only)			Vec2				force;
+												Transform			transform;
+	attribute(no_serialize, no_display)			u32					fixture_count;
+	attribute(no_serialize, no_display)			Fixture *			fixtures;
+	attribute(no_serialize, read_only)			Mm_Rect				bounding_box;
+	attribute(no_serialize, no_display)			Entity_Id			entity_id;
+	attribute(no_serialize, no_display)	        void*			next;
+	attribute(no_serialize, no_display)			u32				grid_index;
 };
 
-enum Entity_Type {
-	Entity_Type_Null,
+enum Entity_Type : u32 {
 	Entity_Type_Camera,
-	Entity_Type_Player,
+	Entity_Type_Character,
 	Entity_Type_Obstacle,
 
 	Entity_Type_Count
@@ -63,22 +88,47 @@ enum Entity_Type {
 
 struct Entity {
 	attribute(read_only)				Entity_Id	id;
-	attribute(read_only, no_serialize)  Entity_Type type;
+	attribute(read_only)				Entity_Type type;
 										Vec2 position;
 };
 
-struct Camera : Entity {
-	r32 distance;
+enum Camera_Behaviour : u32 {
+	Camera_Behaviour_STILL = 0,
+	Camera_Behaviour_ANIMATE_MOVEMENT = bit(0),
+	Camera_Behaviour_ANIMATE_FOCUS = bit(1),
 };
 
-struct Player : public Entity {
-	attribute(min:0, max:5)				r32 radius;
-	attribute(color)					Vec4 color;
-										r32 intensity;
-	attribute(no_serialize)				Rigid_Body *rigid_body;
+struct attribute(no_serialize_base) Camera : public Entity {
+									r32					distance;
+	attribute(no_display)			Vec2				target_position;
+	attribute(no_display)			r32					target_distance;
+	attribute(slider, min:0, max:1)	r32					follow_factor;
+	attribute(slider, min:0, max:1)	r32					zoom_factor;
+	attribute(no_display)			u32					behaviour;
 };
 
-struct Obstacle : public Entity {
-	attribute(color)		Vec4 color;
-	attribute(no_serialize) Rigid_Body *rigid_body;
+#define camera_distance_to_scale(camera) powf(0.5f, camera->distance)
+
+struct attribute(no_serialize_base) Character : public Entity {
+	attribute(min:0)				r32 radius;
+	attribute(color)				Vec4 color;
+	attribute(no_serialize)			Texture_Id texture;
+	attribute(no_serialize)			Rigid_Body *rigid_body;
+};
+
+struct attribute(no_serialize_base) Obstacle : public Entity {
+	attribute(color)				Vec4 color;
+	attribute(no_serialize)			Texture_Id texture;
+	attribute(no_serialize)			Rigid_Body *rigid_body;
+};
+
+//
+//
+//
+
+typedef char Level_Name[125];
+struct Level {
+	attribute(text)		Level_Name	name;
+	attribute(no_display) u32		name_count;
+	attribute(no_display) u32		key;
 };
