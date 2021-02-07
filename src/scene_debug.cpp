@@ -1442,6 +1442,8 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 	ImGui::CheckboxFlags("Render Collision", flags, Editor_Flag_Bit_RENDER_COLLISION);
 	ImGui::CheckboxFlags("Render Broadphase", flags, Editor_Flag_Bit_RENDER_BROADPHASE);
 
+	editor_widget(scene->physics, "Physics");
+
 	ImGui::End();
 
 	// Entity Properties
@@ -1518,8 +1520,6 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 		}
 	}
 	#endif
-
-	ImGui::SameLine();
 
 	if (ImGui::Button("Clone##Entity")) {
 		Camera *camera = editor_rendering_camera(scene, editor);

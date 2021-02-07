@@ -8,7 +8,7 @@ bool hgrid_fully_fits(Vec2 R1, r32 dimension, Mm_Rect rect) {
 	return false;
 }
 
-void hgrid_add_body_to_grid(HGrid* hgrid, Rigid_Body* body) {
+void hgrid_add_body_to_grid(HGrid *hgrid, Rigid_Body *body) {
 
 	auto grids = hgrid->grids;
 	auto count = hgrid->count;
@@ -29,7 +29,7 @@ void hgrid_add_body_to_grid(HGrid* hgrid, Rigid_Body* body) {
 	}
 
 
-	struct Rigid_Body* temp;
+	struct Rigid_Body *temp;
 	auto grid = grids + parent_index;
 	temp = grid->next_member;
 	if (temp == NULL) {
@@ -38,10 +38,9 @@ void hgrid_add_body_to_grid(HGrid* hgrid, Rigid_Body* body) {
 		grid->next_member = body;
 		body->grid_index = parent_index;
 		body->next = NULL;
-	}
-	else {
+	} else {
 		while (temp->next != NULL) {
-			temp = (Rigid_Body*)temp->next;
+			temp = (Rigid_Body *)temp->next;
 		}
 		temp->next = body;
 		grid->no_of_object++;
@@ -51,29 +50,28 @@ void hgrid_add_body_to_grid(HGrid* hgrid, Rigid_Body* body) {
 
 }
 
-void iterate_and_remove_linklist(Grid* start, Rigid_Body* body) {
-	struct Rigid_Body* temp, * prev = NULL;
+void iterate_and_remove_linklist(Grid *start, Rigid_Body *body) {
+	struct Rigid_Body *temp, *prev = NULL;
 	temp = start->next_member;
 	start->no_of_object--;
 	while (temp != body) {
 		prev = temp;
-		temp = (Rigid_Body*)temp->next;
+		temp = (Rigid_Body *)temp->next;
 	}
 	if (prev == NULL) {
-		start->next_member = (Rigid_Body*)temp->next;
-	}
-	else {
+		start->next_member = (Rigid_Body *)temp->next;
+	} else {
 		prev->next = temp->next;
 	}
 }
 
-void hgrid_remove_body_from_grid(HGrid* hgrid, Rigid_Body* body) {
+void hgrid_remove_body_from_grid(HGrid *hgrid, Rigid_Body *body) {
 	assert(body->grid_index < hgrid->count);
 	iterate_and_remove_linklist(hgrid->grids + body->grid_index, body);
 }
 
 
-void hgrid_collision_check_objects(HGrid* hgrid, Rigid_Body* body, u32 index) {
+void hgrid_collision_check_objects(HGrid *hgrid, Rigid_Body *body, u32 index) {
 	auto start = hgrid->grids;
 	auto count = hgrid->count;
 
@@ -94,8 +92,7 @@ void hgrid_collision_check_objects(HGrid* hgrid, Rigid_Body* body, u32 index) {
 			indexes[top] = child_index * 4 + 2;
 			top++;
 			indexes[top] = child_index * 4 + 1;
-		}
-		else {
+		} else {
 			top--;
 		}
 
@@ -104,7 +101,7 @@ void hgrid_collision_check_objects(HGrid* hgrid, Rigid_Body* body, u32 index) {
 
 		while (temp != NULL) {
 			if (temp == body) {
-				temp = (Rigid_Body*)temp->next;
+				temp = (Rigid_Body *)temp->next;
 				continue;
 			}
 			if (test_mmrect_vs_mmrect(temp->bounding_box, body->bounding_box)) {
@@ -112,19 +109,19 @@ void hgrid_collision_check_objects(HGrid* hgrid, Rigid_Body* body, u32 index) {
 				set_bit(body->flags, Rigid_Body_BOUNDING_BOX_COLLIDING);
 
 			}
-			temp = (Rigid_Body*)temp->next;
+			temp = (Rigid_Body *)temp->next;
 		}
 	}
 
 }
 
-void hgrid_check_collision(HGrid* start, Rigid_Body* body) {
+void hgrid_check_collision(HGrid *start, Rigid_Body *body) {
 
 	hgrid_collision_check_objects(start, body, body->grid_index);
 }
 
 
-void initialize_grid(Grid* grids, u32 index, u32 count, r32 dimension, Vec2 position) {
+void initialize_grid(Grid *grids, u32 index, u32 count, r32 dimension, Vec2 position) {
 
 	auto grid = grids + index;
 
@@ -147,12 +144,16 @@ HGrid hgrid_create(u32 level, float dimension) {
 	for (u32 i = 0; i < level; i++)
 		total_grids += (int)powf(4.0f, (float)i);
 
-	struct Grid* start = new Grid[total_grids];
+	struct Grid *start = new Grid[total_grids];
 	initialize_grid(&start[0], 0, total_grids, dimension, vec2(-dimension / 2));
 	return { start,total_grids,dimension,level };
 }
 
-void hgrid_move_body(HGrid* start, Rigid_Body* rigid_body) {
+void hgrid_move_body(HGrid *start, Rigid_Body *rigid_body) {
 	hgrid_remove_body_from_grid(start, rigid_body);
 	hgrid_add_body_to_grid(start, rigid_body);
+}
+
+bool hgrid_test_collision(HGrid *hgrid, Rigid_Body *a, Rigid_Body *b) {
+	return true;
 }

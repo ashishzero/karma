@@ -59,9 +59,13 @@ struct Scene {
 		};
 	};
 
+	Physics physics;
+
 	Entity_Hash_Table entity_table;
 
 	Entity_By_Type	by_type;
+
+	Entity_Id player_id;
 
 	Rigid_Body_List rigid_bodies;
 	HGrid hgrid;
@@ -111,7 +115,7 @@ struct Resource_Collection {
 Resource_Id					scene_find_entity_resource_id(Scene *scene, Entity_Id id);
 const Resource_Collection	scene_find_resource(Scene *scene, Resource_Id id);
 
-Entity *scene_clone_entity(Scene *scene, Entity *entity, Vec2 p);
+Entity *scene_clone_entity(Scene *scene, Entity *entity, Vec2 p, Resource_Id *resource = nullptr);
 Entity_Reference scene_get_entity(Scene *scene, Entity_Id id);
 bool scene_find_entity(Scene *scene, Entity_Id id, Entity_Reference *ref);
 Entity *scene_entity_pointer(Scene *scene, Entity_Reference &reference);
@@ -133,6 +137,9 @@ Rigid_Body *scene_collide_point(Scene *scene, Vec2 point, r32 size = 0);
 //
 
 Camera *scene_primary_camera(Scene *scene);
+Character *scene_get_player(Scene *scene);
+
+Character *scene_spawn_player(Scene *scene, Vec2 p = vec2(0), Vec4 color = vec4(1));
 
 //
 //
@@ -223,13 +230,15 @@ inline void ent_init_camera(Camera *camera, Vec2 p, r32 distance) {
 }
 
 // TODO: dont take in index
-inline void ent_init_character(Character *character, Scene *scene, Vec2 p, Rigid_Body *body, Fixture_Group &fixture, Texture_Group &texture, u32 index) {
+inline void ent_init_character(Character *character, Scene *scene, Vec2 p, Vec4 color, Rigid_Body *body, Fixture_Group &fixture, Texture_Group &texture, u32 index) {
 	character->id.handle = 0;
 	character->type = Entity_Type_Character;
 	character->position = p;
 	character->radius = 0.1f;
-	character->color = vec4(1);
+	character->color = color;
 	character->texture.index = index;
+	character->controller.boost = 0;
+	character->controller.axis = 0;
 	ent_rigid_body_init(character, body, Rigid_Body_Type_Dynamic, fixture);
 	character->rigid_body = body;
 }

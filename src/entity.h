@@ -4,6 +4,10 @@
 #include "modules/core/gfx_types.h"
 #include "modules/core/reflection.h"
 
+struct Physics {
+	r32 gravity = 0.1f;
+};
+
 struct Entity_Id {
 	u64 handle;
 };
@@ -86,10 +90,35 @@ enum Entity_Type : u32 {
 	Entity_Type_Count
 };
 
+struct Character;
+struct Obstacle;
+
 struct Entity {
 	attribute(read_only)				Entity_Id	id;
 	attribute(read_only)				Entity_Type type;
 										Vec2 position;
+
+										template <typename T>
+										T *as() {
+											return nullptr;
+										}
+
+										template <>
+										Character *as() {
+											assert(type == Entity_Type_Character);
+											return (Character *)this;
+										}
+
+										template <>
+										Obstacle *as() {
+											assert(type == Entity_Type_Character);
+											return (Obstacle *)this;
+										}
+};
+
+struct Entity_Controller {
+	r32 boost;
+	r32 axis;
 };
 
 enum Camera_Behaviour : u32 {
@@ -109,11 +138,12 @@ struct attribute(no_serialize_base) Camera : public Entity {
 
 #define camera_distance_to_scale(camera) powf(0.5f, camera->distance)
 
-struct attribute(no_serialize_base) Character : public Entity {
-	attribute(min:0)				r32 radius;
-	attribute(color)				Vec4 color;
-	attribute(no_serialize)			Texture_Id texture;
-	attribute(no_serialize)			Rigid_Body *rigid_body;
+struct attribute(no_serialize_base, v:1) Character : public Entity {
+	attribute(min:0)						r32 radius;
+	attribute(color)						Vec4 color;
+	attribute(no_serialize)					Texture_Id texture;
+	attribute(no_display, no_serialize)		Entity_Controller controller;
+	attribute(no_serialize)					Rigid_Body *rigid_body;
 };
 
 struct attribute(no_serialize_base) Obstacle : public Entity {

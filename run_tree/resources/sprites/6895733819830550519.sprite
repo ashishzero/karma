@@ -2,7 +2,7 @@ header: #0
    id: #0
       handle: 6895733819830550519
    name: "Player Shape"
-   texture: ""
+   texture: "ship.png"
 uv: #0
    min: #0
       x: 0.000000

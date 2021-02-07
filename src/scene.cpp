@@ -345,6 +345,8 @@ inline bool iscene_delete_entity_reference_if_present(Entity_Hash_Table *table, 
 		Entity_Reference *ref = table->references + search_index;
 		Resource_Id *res = table->resources + search_index;
 
+		*data = *ref;
+
 		Entity_Hash_Table::Key *nxt_key;
 		u32 nxt_hash_index;
 		Entity_Reference *nxt_ref;
@@ -443,6 +445,8 @@ inline void iscene_destroy_rigid_body(Scene *scene, Rigid_Body *rigid_body) {
 Scene *scene_create() {
 	Scene *scene = (Scene *)memory_allocate(sizeof(Scene));
 	
+	scene->physics = Physics{};
+	scene->player_id = {};
 
 	for (u32 index = 0; index < Entity_Type_Count; ++index) {
 		auto &data = scene->by_type.data[index];
@@ -630,7 +634,7 @@ const Resource_Collection scene_find_resource(Scene *scene, Resource_Id id) {
 	return  { nullptr, nullptr, nullptr, MAX_UINT32 };
 }
 
-Entity *scene_clone_entity(Scene *scene, Entity *src, Vec2 p) {
+Entity *scene_clone_entity(Scene *scene, Entity *src, Vec2 p, Resource_Id *resource) {
 	Entity_Id id = { iscene_generate_unique_id(scene) };
 
 	Entity *result = nullptr;
@@ -643,15 +647,31 @@ Entity *scene_clone_entity(Scene *scene, Entity *src, Vec2 p) {
 		} break;
 
 		case Entity_Type_Character: {
-			auto character = iscene_add_character(scene, id, p, iscene_get_entity_resource(&scene->entity_table, src->id));
+			Resource_Id resource_id;
+			if (resource == nullptr) {
+				resource_id = iscene_get_entity_resource(&scene->entity_table, src->id);
+			} else {
+				resource_id = *resource;
+			}
+
+			auto character = iscene_add_character(scene, id, p, resource_id);
 			memcpy((u8 *)character + sizeof(Entity), (u8 *)src + sizeof(Entity), sizeof(Character) - sizeof(Entity));
 			character->rigid_body = iscene_create_new_rigid_body(scene, character, ((Character *)src)->rigid_body);
 			hgrid_add_body_to_grid(&scene->hgrid, character->rigid_body);
+			character->controller.boost = 0;
+			character->controller.axis = 0;
 			result = character;
 		} break;
 
 		case Entity_Type_Obstacle: {
-			auto obstacle = iscene_add_obstacle(scene, id, p, iscene_get_entity_resource(&scene->entity_table, src->id));
+			Resource_Id resource_id;
+			if (resource == nullptr) {
+				resource_id = iscene_get_entity_resource(&scene->entity_table, src->id);
+			} else {
+				resource_id = *resource;
+			}
+
+			auto obstacle = iscene_add_obstacle(scene, id, p, resource_id);
 			memcpy((u8 *)obstacle + sizeof(Entity), (u8 *)src + sizeof(Entity), sizeof(Obstacle) - sizeof(Entity));
 			obstacle->rigid_body = iscene_create_new_rigid_body(scene, obstacle, ((Obstacle *)src)->rigid_body);
 			hgrid_add_body_to_grid(&scene->hgrid, obstacle->rigid_body);
@@ -795,6 +815,32 @@ Camera *scene_primary_camera(Scene *scene) {
 	#endif
 }
 
+Character *scene_get_player(Scene *scene) {
+	if (scene->player_id.handle) {
+		return scene_entity_pointer(scene, scene_get_entity(scene, scene->player_id))->as<Character>();
+	}
+
+	return nullptr;
+}
+
+Character *scene_spawn_player(Scene *scene, Vec2 p, Vec4 color) {
+	if (!scene->player_id.handle) {
+		Resource_Id id = { 6895733819830550519 }; // TODO: hard coded resource id
+		Resource_Collection resource = scene_find_resource(scene, id);
+
+		Rigid_Body body;
+		Character src;
+		ent_init_character(&src, scene, p, color, &body, *resource.fixture, *resource.texture, resource.index);
+		auto player = scene_clone_entity(scene, &src, p, &id)->as<Character>();
+		scene->player_id = player->id;
+		player->radius = 0.65f;
+		player->rigid_body->transform.xform = mat2_scalar(2, 2);
+		return player;
+	}
+
+	return scene_get_player(scene);
+}
+
 //
 //
 //
@@ -841,6 +887,16 @@ void scene_begin(Scene *scene) {
 		rm.data = nullptr;
 	}
 
+	constexpr r32 PLAYER_BOOST_FORCE = 15;
+	constexpr r32 PLAYER_AXIS_FORCE = 10;
+
+	auto count = scene->by_type.character.count;
+	auto &characters = scene->by_type.character;
+	for (auto index = 0; index < count; ++index) {
+		auto &character = characters[index];
+		character.rigid_body->force += vec2_hadamard(vec2(PLAYER_AXIS_FORCE, PLAYER_BOOST_FORCE), vec2(character.controller.axis, character.controller.boost));
+	}
+
 	#ifdef ENABLE_DEVELOPER_OPTIONS
 	scene->manifolds.capacity = 0;
 	scene->manifolds.count = 0;
@@ -854,13 +910,13 @@ bool iscene_simulate_world_enabled(Scene *scene) {
 
 void scene_simulate(Scene *scene, r32 dt) {
 	if (iscene_simulate_world_enabled(scene)) {
-		// TODO: DEBUG CODE!!
 		if (scene->by_type.character.count) {
-			auto primary_player = &scene->by_type.character[0];
-
-			auto camera = scene_primary_camera(scene);
-			camera->behaviour |= Camera_Behaviour_ANIMATE_MOVEMENT;
-			camera->target_position = primary_player->position;
+			auto player = scene_get_player(scene);
+			if (player) {
+				auto camera = scene_primary_camera(scene);
+				camera->behaviour |= Camera_Behaviour_ANIMATE_MOVEMENT;
+				camera->target_position = player->position;
+			}
 		}
 
 		Contact_Manifold manifold;
@@ -870,13 +926,12 @@ void scene_simulate(Scene *scene, r32 dt) {
 		auto &characters = scene->by_type.character;
 		for (auto index = 0; index < count; ++index) {
 			auto &character = characters[index];
-			character.color = vec4(1);
 			character.rigid_body->transform.p = character.position;
 		}
 
 		for_list(Rigid_Body, ptr, &scene->rigid_bodies) {
 			if (ptr->data.type == Rigid_Body_Type_Dynamic) {
-				ptr->data.velocity += dt * ptr->data.force;
+				ptr->data.velocity += dt * ptr->data.force - vec2(0, scene->physics.gravity);
 				ptr->data.velocity *= powf(0.5f, ptr->data.drag * dt);
 				ptr->data.transform.p += dt * ptr->data.velocity;
 				ptr->data.bounding_box = scene_rigid_body_bounding_box(&ptr->data, 0);
@@ -896,47 +951,50 @@ void scene_simulate(Scene *scene, r32 dt) {
 						continue;
 					}
 
-					if (test_mmrect_vs_mmrect(a.bounding_box, b.bounding_box)) {
-						set_bit(a.flags, Rigid_Body_BOUNDING_BOX_COLLIDING);
-						set_bit(b.flags, Rigid_Body_BOUNDING_BOX_COLLIDING);
+					if (hgrid_test_collision(&scene->hgrid, &a, &b)) {
 
-						for (u32 a_index = 0; a_index < a.fixture_count; ++a_index) {
-							for (u32 b_index = 0; b_index < b.fixture_count; ++b_index) {
-								Fixture *a_fixture = scene_rigid_body_get_fixture(&a, a_index);
-								Fixture *b_fixture = scene_rigid_body_get_fixture(&b, b_index);
+						if (test_mmrect_vs_mmrect(a.bounding_box, b.bounding_box)) {
+							set_bit(a.flags, Rigid_Body_BOUNDING_BOX_COLLIDING);
+							set_bit(b.flags, Rigid_Body_BOUNDING_BOX_COLLIDING);
 
-								if (fixture_vs_fixture(a_fixture, b_fixture, a.transform, b.transform, &manifold)) {
-									set_bit(a.flags, Rigid_Body_COLLIDING);
-									set_bit(b.flags, Rigid_Body_COLLIDING);
+							for (u32 a_index = 0; a_index < a.fixture_count; ++a_index) {
+								for (u32 b_index = 0; b_index < b.fixture_count; ++b_index) {
+									Fixture *a_fixture = scene_rigid_body_get_fixture(&a, a_index);
+									Fixture *b_fixture = scene_rigid_body_get_fixture(&b, b_index);
 
-									// Resolve velocity
-									r32 restitution = minimum(a.restitution, b.restitution);
-									r32 j = -(1 + restitution) * vec2_dot(b.velocity - a.velocity, manifold.normal);
-									j /= (a.imass + b.imass);
-									j = maximum(0, j);
+									if (fixture_vs_fixture(a_fixture, b_fixture, a.transform, b.transform, &manifold)) {
+										set_bit(a.flags, Rigid_Body_COLLIDING);
+										set_bit(b.flags, Rigid_Body_COLLIDING);
 
-									r32 alpha = SCENE_SIMULATION_CORRECTION_ALPHA;
+										// Resolve velocity
+										r32 restitution = minimum(a.restitution, b.restitution);
+										r32 j = -(1 + restitution) * vec2_dot(b.velocity - a.velocity, manifold.normal);
+										j /= (a.imass + b.imass);
+										j = maximum(0, j);
 
-									a.velocity -= alpha * j * a.imass * manifold.normal;
-									b.velocity += alpha * j * b.imass * manifold.normal;
+										r32 alpha = SCENE_SIMULATION_CORRECTION_ALPHA;
 
-									// Fix position
-									Vec2 correction = maximum(manifold.penetration, 0.0f) / (a.imass + b.imass) * manifold.normal;
-									a.transform.p -= a.imass * correction;
-									b.transform.p += b.imass * correction;
-									a.bounding_box = scene_rigid_body_bounding_box(&a, 0);
-									b.bounding_box = scene_rigid_body_bounding_box(&b, 0);
-									hgrid_move_body(&scene->hgrid, &a);
-									hgrid_move_body(&scene->hgrid, &b);
+										a.velocity -= alpha * j * a.imass * manifold.normal;
+										b.velocity += alpha * j * b.imass * manifold.normal;
 
-									#ifdef ENABLE_DEVELOPER_OPTIONS
-									array_add(&scene->manifolds, manifold);
-									#endif
+										// Fix position
+										Vec2 correction = maximum(manifold.penetration, 0.0f) / (a.imass + b.imass) * manifold.normal;
+										a.transform.p -= a.imass * correction;
+										b.transform.p += b.imass * correction;
+										a.bounding_box = scene_rigid_body_bounding_box(&a, 0);
+										b.bounding_box = scene_rigid_body_bounding_box(&b, 0);
+										hgrid_move_body(&scene->hgrid, &a);
+										hgrid_move_body(&scene->hgrid, &b);
+
+										#ifdef ENABLE_DEVELOPER_OPTIONS
+										array_add(&scene->manifolds, manifold);
+										#endif
+									}
 								}
 							}
 						}
-					}
 
+					}
 				}
 			}
 		}
@@ -1003,6 +1061,9 @@ void scene_end(Scene *scene) {
 		auto &characters = scene->by_type.character;
 		for (s64 index = 0; index < count; ++index) {
 			id = rma->data[index];
+			if (id.handle == scene->player_id.handle) {
+				scene->player_id = { 0 };
+			}
 			if (iscene_delete_entity_reference_if_present(&scene->entity_table, id, &ref)) {
 				iscene_destroy_rigid_body(scene, characters[ref.index].rigid_body);
 				characters[ref.index] = characters[characters.count - 1];
@@ -1184,7 +1245,8 @@ void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio) {
 			im2d_bind_texture(scene->texture_group[c.texture.index].handle);
 
 			auto v = c.rigid_body->velocity;
-			r32 angle = atan2f(v.y, v.x) - MATH_TAU;
+			v.y = v.y < 0 ? 0 : v.y;
+			r32 angle = atan2f(1, v.x) - MATH_TAU;
 
 			im2d_rect_centered_rotated(c.position, vec2(c.radius), angle, c.color);
 		}
@@ -1760,6 +1822,7 @@ bool scene_save_level(Scene *scene) {
 		}
 	}
 
+	#if 0 // no need to save players
 	{
 		count = scene->by_type.character.count;
 		auto character = scene->by_type.character.data;
@@ -1776,6 +1839,7 @@ bool scene_save_level(Scene *scene) {
 			ostream_reset(&out);
 		}
 	}
+	#endif
 
 	{
 		count = scene->by_type.obstacle.count;
@@ -1859,14 +1923,18 @@ bool scene_load_level(Scene *scene, const String name) {
 	scene->loaded_level = index;
 
 	Camera *camera = scene_primary_camera(scene);
-	camera->target_distance = camera->distance;
+	camera->target_distance = 0.5f;
 	camera->distance += 2;
 	camera->behaviour |= Camera_Behaviour_ANIMATE_FOCUS;
+
+	scene_spawn_player(scene);
 
 	return true;
 }
 
 bool scene_reload_level(Scene *scene) {
+	scene->player_id = { 0 };
+
 	if (scene->loaded_level >= 0) {
 		String name = scene_current_level(scene);
 		scene_unload_current_level(scene);

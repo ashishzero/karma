@@ -14,10 +14,6 @@
 
 #include ".generated/entity.typeinfo"
 
-struct Player_Controller {
-	r32 x, y;
-};
-
 enum Physics_State {
 	Physics_State_RUNNING,
 	Physics_State_PAUSED,
@@ -93,19 +89,14 @@ int karma_user_zero() {
 
 	Physics_State physics_state = Physics_State_RUNNING;
 
-	Player_Controller controller = {};
-
 	u64 frequency = system_get_frequency();
 	u64 counter = system_get_counter();
 
 	while (running) {
 		Dev_TimedFrameBegin();
 
-		// TODO: DEBUG CODE
-		Character *primary_player = nullptr;
-		if (scene->by_type.character.count)
-			primary_player = &scene->by_type.character[0];
-
+		Character *player = scene_get_player(scene);
+		
 		Dev_TimedBlockBegin(EventHandling);
 		auto events = system_poll_events();
 		for (s64 event_index = 0; event_index < events.count; ++event_index) {
@@ -150,34 +141,40 @@ int karma_user_zero() {
 			if (scene_handle_event(scene, event))
 				continue;
 
-			if (event.type & Event_Type_KEYBOARD) {
-				float value = (float)(event.key.state == Key_State_DOWN);
-				switch (event.key.symbol) {
-					case Key_D:
-					case Key_RIGHT:
-						controller.x = value;
-						break;
-					case Key_A:
-					case Key_LEFT:
-						controller.x = -value;
-						break;
+			if (player) {
+				auto &controller = player->controller;
 
-					case Key_W:
-					case Key_UP:
-						controller.y = value;
-						break;
-					case Key_S:
-					case Key_DOWN:
-						controller.y = -value;
-						break;
+				if (event.type & Event_Type_KEYBOARD) {
+					float value = (float)(event.key.state == Key_State_DOWN);
+					switch (event.key.symbol) {
+						case Key_D:
+						case Key_RIGHT:
+							controller.axis = value;
+							break;
+						case Key_A:
+						case Key_LEFT:
+							controller.axis = -value;
+							break;
+
+						case Key_W:
+						case Key_UP:
+							controller.boost = value;
+							break;
+
+						case Key_S:
+						case Key_DOWN:
+							if (event.key.state == Key_State_DOWN)
+								controller.boost = 0;
+							break;
+					}
 				}
-			}
 
-			if (event.type & Event_Type_CONTROLLER_AXIS) {
-				if (event.controller_axis.symbol == Controller_Axis_LTHUMB_X)
-					controller.x = event.controller_axis.value;
-				else if (event.controller_axis.symbol == Controller_Axis_LTHUMB_Y)
-					controller.y = event.controller_axis.value;
+				if (event.type & Event_Type_CONTROLLER_AXIS) {
+					if (event.controller_axis.symbol == Controller_Axis_LTHUMB_X)
+						controller.axis = event.controller_axis.value;
+					else if (event.controller_axis.symbol == Controller_Axis_LTHUMB_Y)
+						controller.boost = event.controller_axis.value < 0 ? 0 : event.controller_axis.value;
+				}
 			}
 
 		}
@@ -187,20 +184,6 @@ int karma_user_zero() {
 		Dev_TimedBlockBegin(Simulation);
 
 		scene_begin(scene);
-
-		static r32 movement_force = 10;
-
-		r32 len = sqrtf(controller.x * controller.x + controller.y * controller.y);
-		Vec2 dir = vec2(0);
-		if (len) {
-			dir.x = controller.x / len;
-			dir.y = controller.y / len;
-		}
-
-		if (len && primary_player) {
-			primary_player->rigid_body->force += movement_force * dir;
-			//set_bit(primary_player->rigid_body->colliders->flags, Collision_Bit_MOTION);
-		}
 
 		while (accumulator_t >= dt) {
 			if (physics_state == Physics_State_PAUSED)
@@ -212,6 +195,7 @@ int karma_user_zero() {
 
 			// TODO: Do broad phase collision detection and narrow collision detection
 			// TODO: Continuous collision detection
+			
 
 			scene_simulate(scene, dt);
 
