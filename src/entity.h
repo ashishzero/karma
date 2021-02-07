@@ -80,6 +80,7 @@ struct Rigid_Body {
 	attribute(no_serialize, no_display)			Entity_Id			entity_id;
 	attribute(no_serialize, no_display)	        void*			next;
 	attribute(no_serialize, no_display)			u32				grid_index;
+	attribute(no_serialize, no_display)			u32				level;
 };
 
 enum Entity_Type : u32 {

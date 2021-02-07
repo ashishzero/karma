@@ -15,6 +15,7 @@ void hgrid_add_body_to_grid(HGrid *hgrid, Rigid_Body *body) {
 	assert(hgrid_fully_fits(grids->position, grids->dimension, body->bounding_box));
 	bool collided_with_parent = true;
 	u32 parent_index = 0;
+	u32 my_grid_level = 0;
 
 	while ((parent_index * 4 + 1) < count && collided_with_parent) {
 		collided_with_parent = false;
@@ -23,6 +24,7 @@ void hgrid_add_body_to_grid(HGrid *hgrid, Rigid_Body *body) {
 			if (hgrid_fully_fits(child->position, child->dimension, body->bounding_box)) {
 				collided_with_parent = true;
 				parent_index = 4 * parent_index + i;
+				my_grid_level++;
 				break;
 			}
 		}
@@ -38,6 +40,7 @@ void hgrid_add_body_to_grid(HGrid *hgrid, Rigid_Body *body) {
 		grid->next_member = body;
 		body->grid_index = parent_index;
 		body->next = NULL;
+		body->level = my_grid_level;
 	} else {
 		while (temp->next != NULL) {
 			temp = (Rigid_Body *)temp->next;
@@ -46,6 +49,7 @@ void hgrid_add_body_to_grid(HGrid *hgrid, Rigid_Body *body) {
 		grid->no_of_object++;
 		body->grid_index = parent_index;
 		body->next = NULL;
+		body->level = my_grid_level;
 	}
 
 }
@@ -155,5 +159,38 @@ void hgrid_move_body(HGrid *start, Rigid_Body *rigid_body) {
 }
 
 bool hgrid_test_collision(HGrid *hgrid, Rigid_Body *a, Rigid_Body *b) {
-	return true;
+	u32 min_level;
+	u32 max_level;
+	bool need_checking = false;
+	Rigid_Body* temp = new Rigid_Body;
+	u32 left_most_index;
+	u32 right_most_index;
+	if (a->level == b->level) {
+		if (a->grid_index != b->grid_index)
+			return false;
+		else
+			return true;
+	}
+	if (a->level < b->level) {
+		min_level = a->level;
+		temp = b;
+		left_most_index = a->grid_index;
+		max_level = b->level;
+	}
+	else {
+		min_level = b->level;
+		temp = a;
+		left_most_index = b->grid_index;
+		max_level = a->level;
+	}
+	right_most_index = left_most_index;
+	for (u32 i = min_level; i <= max_level; i++) {
+		if (temp->grid_index >= (4 * left_most_index + 1) && temp->grid_index <= (4 * right_most_index + 4))
+			need_checking = true;
+		if (need_checking)
+			return true;
+		left_most_index = 4 * left_most_index + 1;
+		right_most_index = 4 * right_most_index + 4;
+	}
+	return false;
 }
