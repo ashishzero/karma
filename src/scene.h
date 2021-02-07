@@ -202,6 +202,47 @@ const String scene_current_level(Scene *scene);
 //
 //
 
+inline Particle_Emitter_Property particle_system_default_property() {
+	Particle_Emitter_Property props;
+	props.kind = Particle_Emitter_Property::POINT;
+	props.control = Distribution_Control_UNIFORM;
+	props.a = vec2(0);
+	props.b = vec2(0);
+	props.c = vec2(0);
+	props.density = random_distribution(Distribution_Control_UNIFORM, 0.07f, 0.07f);
+	props.volume_factor = 0.05f;
+	props.scale_a = random_distribution(Distribution_Control_UNIFORM, 0.1f, 0.1f);
+	props.scale_b = random_distribution(Distribution_Control_UNIFORM, 0.1f, 0.1f);
+	props.spin = random_distribution(Distribution_Control_UNIFORM, 0.1f, 0.5f);
+	props.rotation = random_distribution(Distribution_Control_UNIFORM, 0.0f, 0.0f);
+	props.initial_velocity_x = random_distribution(Distribution_Control_UNIFORM, -0.4f, 0.4f);
+	props.initial_velocity_y = random_distribution(Distribution_Control_UNIFORM, -0.7f, -1.0f);
+	props.force_x = random_distribution(Distribution_Control_UNIFORM, 0, 0);
+	props.force_y = random_distribution(Distribution_Control_UNIFORM, 0, 0);
+	props.drag = random_distribution(Distribution_Control_UNIFORM, 0.0f, 0.0f);
+	props.color_a = vec4(0.2f, 1.0f, 1.0f, 0.0f);
+	props.color_b = vec4(0.0f, 1.0f, 1.0f, 1.0f);
+	props.opacity = 1;
+	props.intensity = 4.5f;
+	props.life_span = random_distribution(Distribution_Control_UNIFORM, 0.1f, 0.3f);
+	props.emission_rate = 5;
+	props.fade_in = 0.06f;
+	props.fade_out = 0.03f;
+
+	return props;
+}
+
+inline void particle_system_init(Particle_System *system, Vec2 p, Texture_Group &texture, u32 index, u32 max_particles) {
+	system->position = p;
+	system->texture = { index };
+	system->properties = particle_system_default_property();
+	system->particles_count = max_particles;
+	system->emit_count = 0;
+	system->loop = -1;
+	system->particles = nullptr;
+	system->time_elapsed = 0;
+}
+
 inline void ent_rigid_body_init(Entity *entity, Rigid_Body *body, Rigid_Body_Type type, Fixture_Group &fixture) {
 	body->type = type;
 	body->flags = 0;
@@ -232,7 +273,7 @@ inline void ent_init_camera(Camera *camera, Vec2 p, r32 distance) {
 }
 
 // TODO: dont take in index
-inline void ent_init_character(Character *character, Scene *scene, Vec2 p, Vec4 color, Rigid_Body *body, Fixture_Group &fixture, Texture_Group &texture, u32 index) {
+inline void ent_init_character(Character *character, Scene *scene, Vec2 p, Vec4 color, Rigid_Body *body, Fixture_Group &fixture, Texture_Group &texture, u32 index, Texture_Group &particle, u32 particle_index) {
 	character->id.handle = 0;
 	character->type = Entity_Type_Character;
 	character->position = p;
@@ -244,6 +285,7 @@ inline void ent_init_character(Character *character, Scene *scene, Vec2 p, Vec4 
 	character->controller.pointer = vec2(0, 1);
 	character->controller.attack = 0;
 	character->controller.cool_down = 0;
+	particle_system_init(&character->particle_system, p, particle, particle_index, 1000);
 	ent_rigid_body_init(character, body, Rigid_Body_Type_Dynamic, fixture);
 	character->rigid_body = body;
 }

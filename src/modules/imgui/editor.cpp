@@ -51,8 +51,10 @@ void scan_element_attributes(const String *attrs, ptrsize count, Element_Attribu
 			out->flags |= Attr_SLIDER;
 		} else if (string_match(name, "color")) {
 			out->flags |= Attr_COLOR;
+		} else if (string_match(name, "hsv")) {
+			out->flags |= Attr_COLOR_HSV;
 		} else if (string_match(name, "use")) {
-			out->flags |= Attr_COLOR;
+			out->flags |= Attr_UNION_DISPLAY;
 		} else if (string_match(name, "text")) {
 			out->flags |= Attr_TEXT;
 		} else if (string_starts_with(name, "step")) {
@@ -86,11 +88,21 @@ static bool editor_widget_basic_slider(const char *label, ImGuiDataType type, T 
 	} else if (components == 3) {
 		if (flags & Attr_COLOR) {
 			int color_flags = ImGuiColorEditFlags_DisplayHSV | ImGuiColorEditFlags_HDR;
+
 			ImVec4 color;
-			color.x = (r32)data[0];
-			color.y = (r32)data[1];
-			color.z = (r32)data[2];
-			color.w = 1;
+			if (flags & Attr_COLOR_HSV) {
+				auto c = hsv_to_rgb(vec3((r32)data[0], (r32)data[1], (r32)data[2]));
+				color.x = c.x;
+				color.y = c.y;
+				color.z = c.z;
+				color.w = 1;
+			} else {
+				color.x = (r32)data[0];
+				color.y = (r32)data[1];
+				color.z = (r32)data[2];
+				color.w = 1;
+			}
+
 			ImGuiEx::LabelColor(label, color, color_flags);
 		} else {
 			const char *fmt = MAP_DATA_FORMAT[type];
@@ -99,11 +111,21 @@ static bool editor_widget_basic_slider(const char *label, ImGuiDataType type, T 
 	} else if (components == 4) {
 		if (flags & Attr_COLOR) {
 			int color_flags = ImGuiColorEditFlags_DisplayHSV | ImGuiColorEditFlags_AlphaBar | ImGuiColorEditFlags_HDR | ImGuiColorEditFlags_AlphaPreview;
+
 			ImVec4 color;
-			color.x = (r32)data[0];
-			color.y = (r32)data[1];
-			color.z = (r32)data[2];
-			color.w = (r32)data[3];
+			if (flags & Attr_COLOR_HSV) {
+				auto c = hsv_to_rgb(vec3((r32)data[0], (r32)data[1], (r32)data[2]));
+				color.x = c.x;
+				color.y = c.y;
+				color.z = c.z;
+				color.w = (r32)data[3];
+			} else {
+				color.x = (r32)data[0];
+				color.y = (r32)data[1];
+				color.z = (r32)data[2];
+				color.w = (r32)data[3];
+			}
+
 			ImGuiEx::LabelColor(label, color, color_flags);
 		} else {
 			const char *fmt = MAP_DATA_FORMAT[type];
@@ -146,15 +168,17 @@ static bool editor_widget_slider(ptrsize uid, const char *label, void *data, u32
 		return editor_widget_basic_slider<r32>(label, ImGuiDataType_Float, (r32 *)data, 2, speed, min, max, flags);
 	} else if (uid == TYPE_UID_VEC3) {
 		if ((flags & Attr_COLOR) && !(flags & Attr_READ_ONLY)) {
-			int flags = ImGuiColorEditFlags_DisplayHSV | ImGuiColorEditFlags_HDR;
-			return ImGui::ColorEdit3(label, (r32 *)data, flags);
+			int col_flags = ImGuiColorEditFlags_DisplayHSV | ImGuiColorEditFlags_HDR;
+			if (flags & Attr_COLOR_HSV) col_flags |= ImGuiColorEditFlags_InputHSV;
+			return ImGui::ColorEdit3(label, (r32 *)data, col_flags);
 		} else {
 			return editor_widget_basic_slider<r32>(label, ImGuiDataType_Float, (r32 *)data, 3, speed, min, max, flags);
 		}
 	} else if (uid == TYPE_UID_VEC4) {
 		if ((flags & Attr_COLOR) && !(flags & Attr_READ_ONLY)) {
-			int flags = ImGuiColorEditFlags_DisplayHSV | ImGuiColorEditFlags_AlphaBar | ImGuiColorEditFlags_HDR | ImGuiColorEditFlags_AlphaPreview;
-			return ImGui::ColorEdit4(label, (r32 *)data, flags);
+			int col_flags = ImGuiColorEditFlags_DisplayHSV | ImGuiColorEditFlags_AlphaBar | ImGuiColorEditFlags_HDR | ImGuiColorEditFlags_AlphaPreview;
+			if (flags & Attr_COLOR_HSV) col_flags |= ImGuiColorEditFlags_InputHSV;
+			return ImGui::ColorEdit4(label, (r32 *)data, col_flags);
 		} else {
 			return editor_widget_basic_slider<r32>(label, ImGuiDataType_Float, (r32 *)data, 4, speed, min, max, flags);
 		}
@@ -231,6 +255,11 @@ bool editor_expanding_widget(const Type_Info *info) {
 }
 
 bool editor_widget_draw(const Type_Info *base_info, char *data, const Element_Attribute &attr, const char *name) {
+	ImGui::PushID((void *)data);
+	defer{
+		ImGui::PopID();
+	};
+
 	switch (base_info->id) {
 	case Type_Id_POINTER: {
 		auto info = (Type_Info_Pointer *)base_info;

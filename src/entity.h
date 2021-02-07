@@ -3,6 +3,7 @@
 #include "modules/core/lin_maths.h"
 #include "modules/core/gfx_types.h"
 #include "modules/core/reflection.h"
+#include "modules/core/random.h"
 
 struct Physics {
 	r32 gravity = 0.1f;
@@ -141,6 +142,80 @@ struct Entity_Controller {
 	r32 cool_down;
 };
 
+struct Particle_Emitter_Property {
+	enum Kind {
+		POINT,
+		LINE,
+		ELLIPSE,
+		TRIANGLE,
+		RECT,
+	};
+	/*
+	 * If kind is POINT, a is used
+	 * if kind is LINE, a and b are used
+	 * if kind is ELLIPSE, a and b are used where b.x and b.y gives x-radius and y-radius of ellipse
+	 * if kind is TRIANGLE, a, b, c are used as 3 corner of the triangle around the origin
+	 * if kind is RECT, then a is used as width and height of the rectangle
+	*/
+	Kind                 kind;
+	Distribution_Control control;
+	Vec2                 a, b, c; // TODO: Perhaps we can remove TRIANGLE, that way we only have to store 'a'
+
+						Random_Distribution density;
+	attribute(min:0)	r32                 volume_factor;
+
+	Random_Distribution scale_a;
+	Random_Distribution scale_b;
+
+	Random_Distribution spin;
+	Random_Distribution rotation;
+
+	Random_Distribution initial_velocity_x;
+	Random_Distribution initial_velocity_y;
+	Random_Distribution force_x;
+	Random_Distribution force_y;
+
+	Random_Distribution drag;
+
+	attribute(color, hsv)	Color4 color_a;
+	attribute(color, hsv)	Color4 color_b;
+	attribute(min:0, max:1)	r32    opacity;
+	attribute(min:0, max:1)	r32    intensity; // TODO: Make this per particle!
+
+	Random_Distribution life_span;
+	
+	attribute(min:0)		u32                 emission_rate; // in particles per 60-milli secs
+	attribute(min:0, max:1)	r32                 fade_in;       // in secs
+	attribute(min:0, max:1)	r32                 fade_out;      // in secs
+};
+
+struct Particle {
+	r32    density;
+	Vec2   position;
+	r32    scale_a;
+	r32    scale_b;
+	r32    rotation;
+	Vec2   velocity;
+	r32    drag;
+	r32    spin;
+	Color4 color_a;
+	Color4 color_b;
+	r32    life_span; // in secs
+	r32    life;      // in secs
+	Vec2   external_force;
+};
+
+struct Particle_System {
+										Vec2						position;
+	attribute(no_display, no_serialize) Texture_Id					texture;
+										Particle_Emitter_Property	properties;
+	attribute(no_display, no_serialize)	Particle *					particles;
+										u32							particles_count;
+										s32							loop;
+	attribute(no_display, no_serialize)	u32							emit_count; // counts per sec
+	attribute(no_display, no_serialize)	r32							time_elapsed; // in milli-secs
+};
+
 enum Camera_Behaviour : u32 {
 	Camera_Behaviour_STILL = 0,
 	Camera_Behaviour_ANIMATE_MOVEMENT = bit(0),
@@ -158,10 +233,11 @@ struct attribute(no_serialize_base) Camera : public Entity {
 
 #define camera_distance_to_scale(camera) powf(0.5f, camera->distance)
 
-struct attribute(no_serialize_base, v:1) Character : public Entity {
+struct attribute(no_serialize_base, v:2) Character : public Entity {
 	attribute(min:0)						r32 radius;
 	attribute(color)						Vec4 color;
 	attribute(no_serialize)					Texture_Id texture;
+											Particle_System particle_system;
 	attribute(no_display, no_serialize)		Entity_Controller controller;
 	attribute(no_serialize)					Rigid_Body *rigid_body;
 };

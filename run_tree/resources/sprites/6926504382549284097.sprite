@@ -1,0 +1,13 @@
+header: #0
+   id: #0
+      handle: 6926504382549284097
+   name: "Particle"
+   texture: "circle.png"
+uv: #0
+   min: #0
+      x: 0.000000
+      y: 0.000000
+   max: #0
+      x: 1.000000
+      y: 1.000000
+fixture_count: 0

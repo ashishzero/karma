@@ -138,12 +138,19 @@ union Vec4 {
 		r32 x, y, z, w;
 	};
 	struct {
+		r32 r, g, b, a;
+	};
+	struct {
 		Vec2 xy;
 		Vec2 zw;
 	};
 	struct {
 		Vec3 xyz;
 		r32  _ignorew;
+	};
+	struct {
+		Vec3 rgb;
+		r32  alpha;
 	};
 	struct {
 		r32  _ignorex;

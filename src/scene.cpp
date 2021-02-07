@@ -432,8 +432,7 @@ inline Rigid_Body *iscene_create_new_rigid_body(Scene *scene, Entity *entity, co
 	Rigid_Body *body = &node->data;
 	if (src) {
 		memcpy(body, src, sizeof(Rigid_Body));
-	}
-	else {
+	} else {
 		memset(body, 0, sizeof(Rigid_Body));
 	}
 	body->transform.p = entity->position;
@@ -454,7 +453,7 @@ inline void iscene_destroy_rigid_body(Scene *scene, Rigid_Body *rigid_body) {
 
 Scene *scene_create() {
 	Scene *scene = (Scene *)memory_allocate(sizeof(Scene));
-	
+
 	scene->physics = Physics{};
 	scene->player_id = {};
 
@@ -498,8 +497,8 @@ Scene *scene_create() {
 	array_resize(&scene->texture_group, 100);
 
 	circular_linked_list_init(&scene->rigid_bodies, context.allocator);
-	
-	scene->hgrid = hgrid_create(8,512);
+
+	scene->hgrid = hgrid_create(8, 512);
 
 	scene->pool_allocator = context.allocator;
 
@@ -638,7 +637,7 @@ Resource_Id	scene_find_entity_resource_id(Scene *scene, Entity_Id id) {
 
 const Resource_Collection scene_find_resource(Scene *scene, Resource_Id id) {
 	s64 index = array_find(&scene->resource_header, [](const Resource_Header &header, Resource_Id id) {
-		return header.id.handle == id.handle;}, id);
+		return header.id.handle == id.handle; }, id);
 	if (index >= 0) {
 		return  { &scene->resource_header[index], &scene->fixture_group[index], &scene->texture_group[index], (u32)index };
 	}
@@ -667,6 +666,7 @@ Entity *scene_clone_entity(Scene *scene, Entity *src, Vec2 p, Resource_Id *resou
 
 			auto character = iscene_add_character(scene, id, p, resource_id);
 			memcpy((u8 *)character + sizeof(Entity), (u8 *)src + sizeof(Entity), sizeof(Character) - sizeof(Entity));
+			character->particle_system.particles = (Particle *)memory_allocate(sizeof(Particle) * character->particle_system.particles_count);
 			character->rigid_body = iscene_create_new_rigid_body(scene, character, ((Character *)src)->rigid_body);
 			hgrid_add_body_to_grid(&scene->hgrid, character->rigid_body);
 			character->controller.boost = 0;
@@ -704,7 +704,7 @@ Entity *scene_clone_entity(Scene *scene, Entity *src, Vec2 p, Resource_Id *resou
 			result = bullet;
 		} break;
 
-		invalid_code_path();
+			invalid_code_path();
 	}
 
 	return result;
@@ -855,9 +855,12 @@ Character *scene_spawn_player(Scene *scene, Vec2 p, Vec4 color) {
 		Resource_Id id = { 6895733819830550519 }; // TODO: hard coded resource id
 		Resource_Collection resource = scene_find_resource(scene, id);
 
+		Resource_Id particle_id = { 6926504382549284097 };
+		Resource_Collection particle_resource = scene_find_resource(scene, particle_id);
+
 		Rigid_Body body;
 		Character src;
-		ent_init_character(&src, scene, p, color, &body, *resource.fixture, *resource.texture, resource.index);
+		ent_init_character(&src, scene, p, color, &body, *resource.fixture, *resource.texture, resource.index, *particle_resource.texture, particle_resource.index);
 		auto player = scene_clone_entity(scene, &src, p, &id)->as<Character>();
 		scene->player_id = player->id;
 		player->radius = 0.65f;
@@ -936,14 +939,26 @@ void scene_begin(Scene *scene) {
 		rm.data = nullptr;
 	}
 
-	constexpr r32 PLAYER_BOOST_FORCE = 15;
-	constexpr r32 PLAYER_AXIS_FORCE = 10;
+	{
+		constexpr r32 PLAYER_BOOST_FORCE = 15;
+		constexpr r32 PLAYER_AXIS_FORCE = 10;
 
-	auto count = scene->by_type.character.count;
-	auto &characters = scene->by_type.character;
-	for (auto index = 0; index < count; ++index) {
-		auto &character = characters[index];
-		character.rigid_body->force += vec2_hadamard(vec2(PLAYER_AXIS_FORCE, PLAYER_BOOST_FORCE), vec2(character.controller.axis, character.controller.boost));
+		auto count = scene->by_type.character.count;
+		auto &characters = scene->by_type.character;
+		for (auto index = 0; index < count; ++index) {
+			auto &character = characters[index];
+			character.rigid_body->force = vec2(0);
+			character.rigid_body->force += vec2_hadamard(vec2(PLAYER_AXIS_FORCE, PLAYER_BOOST_FORCE), vec2(character.controller.axis, character.controller.boost));
+		}
+	}
+
+	{
+		auto count = scene->by_type.bullet.count;
+		auto &bullets = scene->by_type.bullet;
+		for (auto index = 0; index < count; ++index) {
+			auto &bullet = bullets[index];
+			bullet.rigid_body->force = vec2(0);
+		}
 	}
 
 	#ifdef ENABLE_DEVELOPER_OPTIONS
@@ -955,6 +970,120 @@ void scene_begin(Scene *scene) {
 
 bool iscene_simulate_world_enabled(Scene *scene) {
 	return scene->editor.mode == Editor_Mode_GAME || scene->editor.mode == Editor_Mode_GAME_DEVELOPER;
+}
+
+void particle_system_emit_particle(Particle_System *system) {
+	// TODO: reallocate particles or use the last one??
+	if (system->emit_count == system->particles_count) {
+		system->emit_count -= 1;
+	}
+
+	Particle *particle = system->particles + system->emit_count;
+	system->emit_count += 1;
+
+	const Particle_Emitter_Property &properties = system->properties;
+
+	switch (properties.kind) {
+		case Particle_Emitter_Property::POINT: {
+			particle->position = properties.a;
+		} break;
+
+		case Particle_Emitter_Property::LINE: {
+			auto value = random_get_zero_to_one(properties.control);
+			particle->position = value * (properties.a) + properties.b;
+		} break;
+
+		case Particle_Emitter_Property::ELLIPSE: {
+			auto value_a = random_get_zero_to_one(properties.control);
+			auto value_b = random_get_zero_to_one(properties.control) * MATH_PI * 2;
+			particle->position.x = sqrtf(value_a) * properties.b.x * cosf(value_b) + properties.a.x;
+			particle->position.y = sqrtf(value_a) * properties.b.y * sinf(value_b) + properties.a.y;
+		} break;
+
+		case Particle_Emitter_Property::TRIANGLE: {
+			// https://www.cs.princeton.edu/~funk/tog02.pdf, Section 4.2
+			auto value_a = sqrtf(random_get_zero_to_one(properties.control));
+			auto value_b = random_get_zero_to_one(properties.control);
+			particle->position = (1 - value_a) * properties.a + (value_a * (1 - value_b)) * properties.b + (value_a * value_b) * properties.c;
+		} break;
+
+		case Particle_Emitter_Property::RECT: {
+			auto value_x = random_get_zero_to_one(properties.control);
+			auto value_y = random_get_zero_to_one(properties.control);
+			particle->position.x = value_x * properties.a.x;
+			particle->position.y = value_y * properties.a.y;
+		} break;
+
+			invalid_default_case();
+	}
+
+	particle->density = random_get_range(properties.density);
+	particle->scale_a = random_get_range(properties.scale_a);
+	particle->scale_b = random_get_range(properties.scale_b);
+	particle->rotation = random_get_range(properties.rotation);
+	particle->velocity.x = random_get_range(properties.initial_velocity_x);
+	particle->velocity.y = random_get_range(properties.initial_velocity_y);
+	particle->drag = random_get_range(properties.drag);
+	particle->spin = random_get_range(properties.spin);
+	particle->color_a = properties.color_a;
+	particle->color_b = properties.color_b;
+	particle->life_span = random_get_range(properties.life_span);
+	particle->life = 0;
+	particle->external_force = vec2(0);
+
+	assert(particle->life_span != 0);
+}
+
+void simulate_particle_system(Particle_System *system, r32 dt) {
+	for (u32 particle_index = 0; particle_index < system->emit_count; ++particle_index) {
+		auto particle = system->particles + particle_index;
+
+		particle->life += dt;
+
+		if (particle->life >= particle->life_span) {
+			system->particles[particle_index] = system->particles[system->emit_count - 1];
+			system->emit_count -= 1;
+			particle_index -= 1;
+		} else {
+			r32 t = particle->life / particle->life_span;
+
+			// TODO: Perhaps we should store the inverse of density and volume, instead of just density and volumne
+			r32  scale = lerp(particle->scale_a, particle->scale_b, t) + 0.001f; // TODO: Should we do this to prevent division by 0?
+			r32  volume = scale * system->properties.volume_factor;
+			r32  mass = (particle->density * volume);
+			r32  imass = 1.0f / mass;
+			Vec2 force;
+			force.x = random_get_range(system->properties.force_x);
+			force.y = random_get_range(system->properties.force_y);
+			force += particle->external_force;
+			Vec2 acceleration = force * imass;
+			particle->velocity += dt * acceleration;
+			particle->velocity *= powf(0.5f, particle->drag * dt); // TODO: powf is expensive!
+			particle->position += dt * particle->velocity;
+			particle->rotation += dt * particle->spin;
+		}
+	}
+
+	if (system->loop < 0) {
+		auto dt_milli = dt * 1000.0f;
+		system->time_elapsed += dt_milli;
+		while (system->time_elapsed >= 60.0f) {
+			for (u32 i = 0; i < system->properties.emission_rate; ++i) {
+				particle_system_emit_particle(system);
+			}
+			system->time_elapsed -= 60.0f;
+		}
+	} else if (system->loop > 0) {
+		auto dt_milli = dt * 1000.0f;
+		system->time_elapsed += dt_milli;
+		while (system->time_elapsed >= 60.0f && system->loop > 0) {
+			for (u32 i = 0; i < system->properties.emission_rate; ++i) {
+				particle_system_emit_particle(system);
+			}
+			system->time_elapsed -= 60.0f;
+			system->loop -= 1;
+		}
+	}
 }
 
 void scene_simulate(Scene *scene, r32 dt) {
@@ -980,6 +1109,18 @@ void scene_simulate(Scene *scene, r32 dt) {
 				auto &character = characters[index];
 				character.rigid_body->transform.p = character.position;
 
+				auto dir = -vec2_normalize_check(vec2(character.rigid_body->velocity.x, 1));
+				character.particle_system.position = character.position + 0.5f * dir * character.radius;
+
+				character.particle_system.properties.initial_velocity_x.min = -0.8f + dir.x;
+				character.particle_system.properties.initial_velocity_x.max = +0.8f + dir.x;
+
+				if (character.controller.boost > 0 || character.controller.axis != 0) {
+					character.particle_system.loop = 1;
+				} else {
+					character.particle_system.loop = 0;
+				}
+
 				if (character.controller.attack) {
 					if (character.controller.cool_down <= 0) {
 						auto dir = vec2_normalize_check(character.controller.pointer);
@@ -991,7 +1132,11 @@ void scene_simulate(Scene *scene, r32 dt) {
 				} else {
 					character.controller.cool_down = 0;
 				}
+			}
 
+			for (auto index = 0; index < count; ++index) {
+				auto &character = characters[index];
+				simulate_particle_system(&character.particle_system, dt);
 			}
 		}
 
@@ -1134,24 +1279,6 @@ void scene_simulate(Scene *scene, r32 dt) {
 }
 
 void scene_update(Scene *scene) {
-	{
-		auto count = scene->by_type.character.count;
-		auto &characters = scene->by_type.character;
-		for (auto index = 0; index < count; ++index) {
-			auto &character = characters[index];
-			character.rigid_body->force = vec2(0);
-		}
-	}
-
-	{
-		auto count = scene->by_type.bullet.count;
-		auto &bullets = scene->by_type.bullet;
-		for (auto index = 0; index < count; ++index) {
-			auto &bullet = bullets[index];
-			bullet.rigid_body->force = vec2(0);
-		}
-	}
-
 	editor_update(scene, &scene->editor);
 }
 
@@ -1190,6 +1317,7 @@ void scene_end(Scene *scene) {
 			}
 			if (iscene_delete_entity_reference_if_present(&scene->entity_table, id, &ref)) {
 				iscene_destroy_rigid_body(scene, characters[ref.index].rigid_body);
+				memory_free(characters[ref.index].particle_system.particles);
 				characters[ref.index] = characters[characters.count - 1];
 				characters.count -= 1;
 				if (ref.index < characters.count) {
@@ -1217,7 +1345,7 @@ void scene_end(Scene *scene) {
 			}
 		}
 	}
-	
+
 	{
 		rma = scene->removed_entity + Entity_Type_Bullet;
 		count = rma->count;
@@ -1354,12 +1482,35 @@ inline bool iscene_render_collision_enabled(Scene *scene) {
 	return (flags & Editor_Flag_Bit_RENDER_COLLISION) && (mode == Editor_Mode_GAME_DEVELOPER || mode == Editor_Mode_LEVEL_EDITOR);
 }
 
-inline bool iscene_render_broadphase_enabled(Scene* scene) {
+inline bool iscene_render_broadphase_enabled(Scene *scene) {
 	auto mode = scene->editor.mode;
 	auto flags = scene->editor.flags;
 
 	if (mode == Editor_Mode_GAME) return false;
 	return (flags & Editor_Flag_Bit_RENDER_BROADPHASE) && (mode == Editor_Mode_GAME_DEVELOPER || mode == Editor_Mode_LEVEL_EDITOR);
+}
+
+void iscene_render_particles(Scene *scene, Particle_System *system) {
+	auto text = scene->texture_group[system->texture.index];
+	im2d_bind_texture(text.handle);
+
+	Vec2 c = system->position;
+	for (u32 index = 0; index < system->emit_count; ++index) {
+		auto p = system->particles + index;
+		r32 t = p->life / p->life_span;
+
+		r32 fade_t = 1;
+		if (p->life < system->properties.fade_in) {
+			fade_t *= p->life / system->properties.fade_in;
+		} else if (p->life_span - p->life < system->properties.fade_out) {
+			fade_t *= (p->life_span - p->life) / system->properties.fade_out;
+		}
+
+		Vec4 color = hsv_to_rgb(lerp(p->color_a, p->color_b, t));
+		color.rgb *= system->properties.intensity;
+		color.alpha *= fade_t * system->properties.opacity;
+		im2d_rect_rotated(c + p->position, vec2(p->scale_a, p->scale_b), p->rotation, text.uv, color);
+	}
 }
 
 // TODO: Use the alpha
@@ -1385,13 +1536,19 @@ void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio) {
 			for (s64 index = 0; index < count; ++index) {
 				Character &c = characters[index];
 
-				im2d_bind_texture(scene->texture_group[c.texture.index].handle);
+				auto text = scene->texture_group[c.texture.index];
 
-				auto v = c.rigid_body->velocity;
-				v.y = v.y < 0 ? 0 : v.y;
-				r32 angle = atan2f(1, v.x) - MATH_TAU;
+				im2d_bind_texture(text.handle);
 
-				im2d_rect_centered_rotated(c.position, vec2(c.radius), angle, c.color);
+				r32 v = c.rigid_body->velocity.x;
+				r32 angle = atan2f(1, v) - MATH_TAU;
+
+				im2d_rect_centered_rotated(c.position, vec2(c.radius), angle, text.uv, c.color);
+			}
+
+			for (s64 index = 0; index < count; ++index) {
+				Character &c = characters[index];
+				iscene_render_particles(scene, &c.particle_system);
 			}
 
 			im2d_unbind_texture();
@@ -1720,7 +1877,7 @@ void scene_reload_resources(Scene *scene, Resource_Id id) {
 	scene_load_resources(scene);
 
 	auto resource = scene_find_resource(scene, id);
-	
+
 	Resource_Header header;
 	Texture_Group texture;
 	Fixture_Group fixture;
@@ -1762,7 +1919,7 @@ void scene_reload_resources(Scene *scene, Resource_Id id) {
 					ent->texture.index = resource.index;
 				} break;
 
-				invalid_default_case();
+					invalid_default_case();
 			}
 		}
 	}
@@ -2080,7 +2237,7 @@ bool scene_load_level(Scene *scene, const String name) {
 
 	scene_refresh_rigid_bodies(scene);
 	for (auto ptr = iter_begin(&scene->rigid_bodies); iter_continue(&scene->rigid_bodies, ptr); ptr = iter_next<Rigid_Body>(ptr)) {
-		Rigid_Body* body = &ptr->data;
+		Rigid_Body *body = &ptr->data;
 		hgrid_add_body_to_grid(&scene->hgrid, body);
 	}
 
@@ -2093,7 +2250,6 @@ bool scene_load_level(Scene *scene, const String name) {
 	camera->target_distance = 0.75f;
 	camera->distance = camera->target_distance + 1;
 	camera->behaviour |= Camera_Behaviour_ANIMATE_FOCUS;
-
 
 	return true;
 }
