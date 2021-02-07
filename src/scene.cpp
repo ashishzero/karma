@@ -417,6 +417,16 @@ inline Obstacle *iscene_add_obstacle(Scene *scene, Entity_Id id, Vec2 p, Resourc
 	return obstacle;
 }
 
+inline Bullet *iscene_add_bullet(Scene *scene, Entity_Id id, Vec2 p, Resource_Id resource) {
+	u32 index = (u32)scene->by_type.bullet.count;
+	Bullet *bullet = array_add(&scene->by_type.bullet);
+	bullet->type = Entity_Type_Bullet;
+	bullet->id = id;
+	bullet->position = p;
+	iscene_insert_entity_reference(&scene->entity_table, id, { Entity_Type_Bullet, index }, resource);
+	return bullet;
+}
+
 inline Rigid_Body *iscene_create_new_rigid_body(Scene *scene, Entity *entity, const Rigid_Body *src) {
 	auto node = circular_linked_list_add(&scene->rigid_bodies);
 	Rigid_Body *body = &node->data;
@@ -459,6 +469,7 @@ Scene *scene_create() {
 	array_resize(&scene->by_type.camera, 8);
 	array_resize(&scene->by_type.character, 100);
 	array_resize(&scene->by_type.obstacle, 1000);
+	array_resize(&scene->by_type.bullet, 10000);
 
 	scene->entity_table.keys = (Entity_Hash_Table::Key *)memory_allocate(sizeof(Entity_Hash_Table::Key) * SCENE_MAX_ENTITY_COUNT);
 	scene->entity_table.references = (Entity_Reference *)memory_allocate(sizeof(Entity_Reference) * SCENE_MAX_ENTITY_COUNT);
@@ -678,7 +689,22 @@ Entity *scene_clone_entity(Scene *scene, Entity *src, Vec2 p, Resource_Id *resou
 			result = obstacle;
 		} break;
 
-			invalid_code_path();
+		case Entity_Type_Bullet: {
+			Resource_Id resource_id;
+			if (resource == nullptr) {
+				resource_id = iscene_get_entity_resource(&scene->entity_table, src->id);
+			} else {
+				resource_id = *resource;
+			}
+
+			auto bullet = iscene_add_bullet(scene, id, p, resource_id);
+			memcpy((u8 *)bullet + sizeof(Entity), (u8 *)src + sizeof(Entity), sizeof(Bullet) - sizeof(Entity));
+			bullet->rigid_body = iscene_create_new_rigid_body(scene, bullet, ((Bullet *)src)->rigid_body);
+			hgrid_add_body_to_grid(&scene->hgrid, bullet->rigid_body);
+			result = bullet;
+		} break;
+
+		invalid_code_path();
 	}
 
 	return result;
@@ -701,7 +727,8 @@ Entity *scene_entity_pointer(Scene *scene, Entity_Reference &ref) {
 	static constexpr ptrsize ENTITY_TYPE_SIZE[] = {
 		sizeof(Camera),
 		sizeof(Character),
-		sizeof(Obstacle)
+		sizeof(Obstacle),
+		sizeof(Bullet),
 	};
 	static_assert(static_count(ENTITY_TYPE_SIZE) == Entity_Type_Count);
 
@@ -835,10 +862,32 @@ Character *scene_spawn_player(Scene *scene, Vec2 p, Vec4 color) {
 		scene->player_id = player->id;
 		player->radius = 0.65f;
 		player->rigid_body->transform.xform = mat2_scalar(2, 2);
+		player->rigid_body->gravity = 1;
 		return player;
 	}
 
 	return scene_get_player(scene);
+}
+
+Bullet *scene_spawn_bullet(Scene *scene, Vec2 p, Vec4 color, Vec2 dir) {
+	Resource_Id id = { 6926438366305714858 }; // TODO: hard coded resource id
+	Resource_Collection resource = scene_find_resource(scene, id);
+
+	Rigid_Body body;
+	Bullet src;
+
+	r32 radius = 0.03f * random_r32_range_r32(0.8f, 1.0f);
+	r32 intensity = 1.5f;
+	r32 life_span = 1 * random_r32_range_r32(0.6f, 1.0f);
+	r32 initial_velocity = 10 * random_r32_range_r32(0.7f, 1.0f);
+
+	ent_init_bullet(&src, scene, p, radius, intensity, color, life_span, &body, *resource.fixture);
+	auto bullet = scene_clone_entity(scene, &src, p, &id)->as<Bullet>();
+	bullet->rigid_body->transform.xform = mat2_scalar(radius, radius);
+	bullet->rigid_body->velocity = initial_velocity * dir;
+	bullet->rigid_body->drag = 0;
+
+	return bullet;
 }
 
 //
@@ -922,16 +971,45 @@ void scene_simulate(Scene *scene, r32 dt) {
 		Contact_Manifold manifold;
 		manifold.penetration = 0;
 
-		auto count = scene->by_type.character.count;
-		auto &characters = scene->by_type.character;
-		for (auto index = 0; index < count; ++index) {
-			auto &character = characters[index];
-			character.rigid_body->transform.p = character.position;
+		{
+			constexpr r32 BULLET_SPAWN = 0.1f;
+
+			auto count = scene->by_type.character.count;
+			auto &characters = scene->by_type.character;
+			for (auto index = 0; index < count; ++index) {
+				auto &character = characters[index];
+				character.rigid_body->transform.p = character.position;
+
+				if (character.controller.attack) {
+					if (character.controller.cool_down <= 0) {
+						auto dir = vec2_normalize_check(character.controller.pointer);
+						scene_spawn_bullet(scene, character.position + 0.5f * character.radius * dir, character.color, dir);
+						character.controller.cool_down = BULLET_SPAWN;
+					} else {
+						character.controller.cool_down -= dt;
+					}
+				} else {
+					character.controller.cool_down = 0;
+				}
+
+			}
+		}
+
+		{
+			auto count = scene->by_type.bullet.count;
+			auto &bullets = scene->by_type.bullet;
+			for (auto index = 0; index < count; ++index) {
+				auto &bullet = bullets[index];
+				if (bullet.age >= bullet.life_span) {
+					scene_remove_entity(scene, bullet.id);
+				}
+				bullet.age += dt;
+			}
 		}
 
 		for_list(Rigid_Body, ptr, &scene->rigid_bodies) {
 			if (ptr->data.type == Rigid_Body_Type_Dynamic) {
-				ptr->data.velocity += dt * ptr->data.force - vec2(0, scene->physics.gravity);
+				ptr->data.velocity += dt * ptr->data.force - vec2(0, scene->physics.gravity * ptr->data.gravity);
 				ptr->data.velocity *= powf(0.5f, ptr->data.drag * dt);
 				ptr->data.transform.p += dt * ptr->data.velocity;
 				ptr->data.bounding_box = scene_rigid_body_bounding_box(&ptr->data, 0);
@@ -966,29 +1044,50 @@ void scene_simulate(Scene *scene, r32 dt) {
 										set_bit(a.flags, Rigid_Body_COLLIDING);
 										set_bit(b.flags, Rigid_Body_COLLIDING);
 
-										// Resolve velocity
-										r32 restitution = minimum(a.restitution, b.restitution);
-										r32 j = -(1 + restitution) * vec2_dot(b.velocity - a.velocity, manifold.normal);
-										j /= (a.imass + b.imass);
-										j = maximum(0, j);
+										auto entt_a = scene_get_entity(scene, a.entity_id);
+										auto entt_b = scene_get_entity(scene, b.entity_id);
 
-										r32 alpha = SCENE_SIMULATION_CORRECTION_ALPHA;
+										if (entt_a.type == Entity_Type_Bullet) {
+											if (entt_b.type == Entity_Type_Character) {
+												// TODO: reduce health
+												auto character = (Character *)scene_entity_pointer(scene, entt_b);
+											} else if (entt_b.type == Entity_Type_Bullet) {
+												scene_remove_entity(scene, b.entity_id);
+											}
+											scene_remove_entity(scene, b.entity_id);
+										} else if (entt_b.type == Entity_Type_Bullet) {
+											if (entt_a.type == Entity_Type_Character) {
+												// TODO: reduce health
+												auto character = (Character *)scene_entity_pointer(scene, entt_a);
+											} else if (entt_a.type == Entity_Type_Bullet) {
+												scene_remove_entity(scene, a.entity_id);
+											}
+											scene_remove_entity(scene, b.entity_id);
+										} else {
+											// Resolve velocity
+											r32 restitution = minimum(a.restitution, b.restitution);
+											r32 j = -(1 + restitution) * vec2_dot(b.velocity - a.velocity, manifold.normal);
+											j /= (a.imass + b.imass);
+											j = maximum(0, j);
 
-										a.velocity -= alpha * j * a.imass * manifold.normal;
-										b.velocity += alpha * j * b.imass * manifold.normal;
+											r32 alpha = SCENE_SIMULATION_CORRECTION_ALPHA;
 
-										// Fix position
-										Vec2 correction = maximum(manifold.penetration, 0.0f) / (a.imass + b.imass) * manifold.normal;
-										a.transform.p -= a.imass * correction;
-										b.transform.p += b.imass * correction;
-										a.bounding_box = scene_rigid_body_bounding_box(&a, 0);
-										b.bounding_box = scene_rigid_body_bounding_box(&b, 0);
-										hgrid_move_body(&scene->hgrid, &a);
-										hgrid_move_body(&scene->hgrid, &b);
+											a.velocity -= alpha * j * a.imass * manifold.normal;
+											b.velocity += alpha * j * b.imass * manifold.normal;
 
-										#ifdef ENABLE_DEVELOPER_OPTIONS
-										array_add(&scene->manifolds, manifold);
-										#endif
+											// Fix position
+											Vec2 correction = maximum(manifold.penetration, 0.0f) / (a.imass + b.imass) * manifold.normal;
+											a.transform.p -= a.imass * correction;
+											b.transform.p += b.imass * correction;
+											a.bounding_box = scene_rigid_body_bounding_box(&a, 0);
+											b.bounding_box = scene_rigid_body_bounding_box(&b, 0);
+											hgrid_move_body(&scene->hgrid, &a);
+											hgrid_move_body(&scene->hgrid, &b);
+
+											#ifdef ENABLE_DEVELOPER_OPTIONS
+											array_add(&scene->manifolds, manifold);
+											#endif
+										}
 									}
 								}
 							}
@@ -1000,32 +1099,57 @@ void scene_simulate(Scene *scene, r32 dt) {
 		}
 
 		// Update positions
-		for (auto index = 0; index < count; ++index) {
-			auto &character = characters[index];
-			character.position = character.rigid_body->transform.p;
+		{
+			auto count = scene->by_type.character.count;
+			auto &characters = scene->by_type.character;
+			for (auto index = 0; index < count; ++index) {
+				auto &character = characters[index];
+				character.position = character.rigid_body->transform.p;
+			}
+		}
+		{
+			auto count = scene->by_type.bullet.count;
+			auto &bullets = scene->by_type.bullet;
+			for (auto index = 0; index < count; ++index) {
+				auto &bullet = bullets[index];
+				bullet.position = bullet.rigid_body->transform.p;
+			}
 		}
 
 		// Simulate camera
-		count = scene->by_type.camera.count;
-		auto &cameras = scene->by_type.camera;
-		for (s64 index = 0; index < count; ++index) {
-			Camera &camera = cameras[index];
-			if (camera.behaviour & Camera_Behaviour_ANIMATE_MOVEMENT) {
-				camera.position = lerp(camera.position, camera.target_position, 1.0f - powf(1.0f - camera.follow_factor, dt));
-			}
-			if (camera.behaviour & Camera_Behaviour_ANIMATE_FOCUS) {
-				camera.distance = lerp(camera.distance, camera.target_distance, 1.0f - powf(1.0f - camera.zoom_factor, dt));
+		{
+			auto count = scene->by_type.camera.count;
+			auto &cameras = scene->by_type.camera;
+			for (s64 index = 0; index < count; ++index) {
+				Camera &camera = cameras[index];
+				if (camera.behaviour & Camera_Behaviour_ANIMATE_MOVEMENT) {
+					camera.position = lerp(camera.position, camera.target_position, 1.0f - powf(1.0f - camera.follow_factor, dt));
+				}
+				if (camera.behaviour & Camera_Behaviour_ANIMATE_FOCUS) {
+					camera.distance = lerp(camera.distance, camera.target_distance, 1.0f - powf(1.0f - camera.zoom_factor, dt));
+				}
 			}
 		}
 	}
 }
 
 void scene_update(Scene *scene) {
-	auto count = scene->by_type.character.count;
-	auto &characters = scene->by_type.character;
-	for (auto index = 0; index < count; ++index) {
-		auto &character = characters[index];
-		character.rigid_body->force = vec2(0);
+	{
+		auto count = scene->by_type.character.count;
+		auto &characters = scene->by_type.character;
+		for (auto index = 0; index < count; ++index) {
+			auto &character = characters[index];
+			character.rigid_body->force = vec2(0);
+		}
+	}
+
+	{
+		auto count = scene->by_type.bullet.count;
+		auto &bullets = scene->by_type.bullet;
+		for (auto index = 0; index < count; ++index) {
+			auto &bullet = bullets[index];
+			bullet.rigid_body->force = vec2(0);
+		}
 	}
 
 	editor_update(scene, &scene->editor);
@@ -1088,6 +1212,24 @@ void scene_end(Scene *scene) {
 				obstacles.count -= 1;
 				if (ref.index < obstacles.count) {
 					auto data = iscene_get_entity_reference(&scene->entity_table, obstacles[ref.index].id);
+					data->index = ref.index;
+				}
+			}
+		}
+	}
+	
+	{
+		rma = scene->removed_entity + Entity_Type_Bullet;
+		count = rma->count;
+		auto &bullets = scene->by_type.bullet;
+		for (s64 index = 0; index < count; ++index) {
+			id = rma->data[index];
+			if (iscene_delete_entity_reference_if_present(&scene->entity_table, id, &ref)) {
+				iscene_destroy_rigid_body(scene, bullets[ref.index].rigid_body);
+				bullets[ref.index] = bullets[bullets.count - 1];
+				bullets.count -= 1;
+				if (ref.index < bullets.count) {
+					auto data = iscene_get_entity_reference(&scene->entity_table, bullets[ref.index].id);
 					data->index = ref.index;
 				}
 			}
@@ -1237,21 +1379,43 @@ void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio) {
 	im2d_begin(view, transform);
 
 	if (iscene_render_world_enabled(scene)) {
-		s64 count = scene->by_type.character.count;
-		auto &characters = scene->by_type.character;
-		for (s64 index = 0; index < count; ++index) {
-			Character &c = characters[index];
+		{
+			s64 count = scene->by_type.character.count;
+			auto &characters = scene->by_type.character;
+			for (s64 index = 0; index < count; ++index) {
+				Character &c = characters[index];
 
-			im2d_bind_texture(scene->texture_group[c.texture.index].handle);
+				im2d_bind_texture(scene->texture_group[c.texture.index].handle);
 
-			auto v = c.rigid_body->velocity;
-			v.y = v.y < 0 ? 0 : v.y;
-			r32 angle = atan2f(1, v.x) - MATH_TAU;
+				auto v = c.rigid_body->velocity;
+				v.y = v.y < 0 ? 0 : v.y;
+				r32 angle = atan2f(1, v.x) - MATH_TAU;
 
-			im2d_rect_centered_rotated(c.position, vec2(c.radius), angle, c.color);
+				im2d_rect_centered_rotated(c.position, vec2(c.radius), angle, c.color);
+			}
+
+			im2d_unbind_texture();
+
+			for (s64 index = 0; index < count; ++index) {
+				Character &c = characters[index];
+				Vec2 point = vec2_normalize_check(c.controller.pointer);
+				if (!vec2_null(point)) {
+					im2d_circle(c.position + 0.50f * point * c.radius, 0.020f, 2.00f * c.color);
+					im2d_circle(c.position + 0.65f * point * c.radius, 0.010f, 1.75f * c.color);
+					im2d_circle(c.position + 0.75f * point * c.radius, 0.008f, 1.50f * c.color);
+					im2d_circle(c.position + 0.85f * point * c.radius, 0.006f, 1.00f * c.color);
+				}
+			}
 		}
 
-		im2d_unbind_texture();
+		{
+			s64 count = scene->by_type.bullet.count;
+			auto &bullets = scene->by_type.bullet;
+			for (s64 index = 0; index < count; ++index) {
+				Bullet &b = bullets[index];
+				im2d_circle(b.position, b.radius, b.color * map(0, b.life_span, 1, b.intensity, b.age));
+			}
+		}
 	}
 
 	u32 type;
@@ -1922,12 +2086,14 @@ bool scene_load_level(Scene *scene, const String name) {
 
 	scene->loaded_level = index;
 
+	auto player = scene_spawn_player(scene);
+
 	Camera *camera = scene_primary_camera(scene);
-	camera->target_distance = 0.5f;
-	camera->distance += 2;
+	camera->position = player->position;
+	camera->target_distance = 0.75f;
+	camera->distance = camera->target_distance + 1;
 	camera->behaviour |= Camera_Behaviour_ANIMATE_FOCUS;
 
-	scene_spawn_player(scene);
 
 	return true;
 }

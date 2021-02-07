@@ -53,6 +53,7 @@ struct Scene {
 			Array<Camera>		camera;
 			Array<Character>	character;
 			Array<Obstacle>		obstacle;
+			Array<Bullet>		bullet;
 		};
 		struct {
 			Array<u8>	data[Entity_Type_Count];
@@ -207,6 +208,7 @@ inline void ent_rigid_body_init(Entity *entity, Rigid_Body *body, Rigid_Body_Typ
 	body->imass = ((type == Rigid_Body_Type_Static) ? 0.0f : 1.0f);
 	body->drag = 5;
 	body->restitution = 0;
+	body->gravity = 0;
 	body->velocity = vec2(0);
 	body->force = vec2(0);
 	body->transform.p = entity->position;
@@ -239,6 +241,9 @@ inline void ent_init_character(Character *character, Scene *scene, Vec2 p, Vec4 
 	character->texture.index = index;
 	character->controller.boost = 0;
 	character->controller.axis = 0;
+	character->controller.pointer = vec2(0, 1);
+	character->controller.attack = 0;
+	character->controller.cool_down = 0;
 	ent_rigid_body_init(character, body, Rigid_Body_Type_Dynamic, fixture);
 	character->rigid_body = body;
 }
@@ -252,4 +257,17 @@ inline void ent_init_obstacle(Obstacle *obstable, Scene *scene, Vec2 p, Rigid_Bo
 	obstable->texture.index = index;
 	ent_rigid_body_init(obstable, body, Rigid_Body_Type_Static, fixture);
 	obstable->rigid_body = body;
+}
+
+inline void ent_init_bullet(Bullet *bullet, Scene *scene, Vec2 p, r32 radius, r32 intensity, Vec4 color, r32 life_span, Rigid_Body *body, Fixture_Group &fixture) {
+	bullet->id.handle = 0;
+	bullet->type = Entity_Type_Bullet;
+	bullet->position = p;
+	bullet->radius = radius;
+	bullet->intensity = intensity;
+	bullet->color = color;
+	bullet->age = 0;
+	bullet->life_span = life_span;
+	ent_rigid_body_init(bullet, body, Rigid_Body_Type_Dynamic, fixture);
+	bullet->rigid_body = body;
 }

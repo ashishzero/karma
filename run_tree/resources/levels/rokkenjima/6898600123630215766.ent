@@ -13,11 +13,12 @@ data: #0
       y: 1.000000
       z: 1.000000
       w: 1.000000
-body: #0
+body: #1
    type: 0
    imass: 0.000000
    drag: 5.000000
    restitution: 0.000000
+   gravity: 0.000000
    transform: #0
       p: #0
          x: -25.900742

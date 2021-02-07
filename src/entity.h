@@ -65,12 +65,13 @@ enum Rigid_Body_Flag_Bit : u16 {
 	Rigid_Body_BOUNDING_BOX_COLLIDING = bit(1)
 };
 
-struct Rigid_Body {
+struct attribute(v:1) Rigid_Body {
 	attribute(read_only)						Rigid_Body_Type		type;
 	attribute(no_serialize, no_display)			Rigid_Body_Flags	flags;
 	attribute(min:0)							r32					imass;
 	attribute(min:0)							r32					drag;
 	attribute(slider, min:0, max:1)				r32					restitution;
+	attribute(slider, min:0, max:1, v:1)		r32					gravity;
 	attribute(no_serialize, read_only)			Vec2				velocity;
 	attribute(no_serialize, read_only)			Vec2				force;
 												Transform			transform;
@@ -86,12 +87,15 @@ enum Entity_Type : u32 {
 	Entity_Type_Camera,
 	Entity_Type_Character,
 	Entity_Type_Obstacle,
+	Entity_Type_Bullet,
 
 	Entity_Type_Count
 };
 
+struct Camera;
 struct Character;
 struct Obstacle;
+struct Bullet;
 
 struct Entity {
 	attribute(read_only)				Entity_Id	id;
@@ -101,6 +105,12 @@ struct Entity {
 										template <typename T>
 										T *as() {
 											return nullptr;
+										}
+
+										template <>
+										Camera *as() {
+											assert(type == Entity_Type_Camera);
+											return (Camera *)this;
 										}
 
 										template <>
@@ -114,11 +124,20 @@ struct Entity {
 											assert(type == Entity_Type_Character);
 											return (Obstacle *)this;
 										}
+
+										template <>
+										Bullet *as() {
+											assert(type == Entity_Type_Bullet);
+											return (Bullet *)this;
+										}
 };
 
 struct Entity_Controller {
 	r32 boost;
 	r32 axis;
+	Vec2 pointer;
+	booli attack;
+	r32 cool_down;
 };
 
 enum Camera_Behaviour : u32 {
@@ -149,6 +168,15 @@ struct attribute(no_serialize_base, v:1) Character : public Entity {
 struct attribute(no_serialize_base) Obstacle : public Entity {
 	attribute(color)				Vec4 color;
 	attribute(no_serialize)			Texture_Id texture;
+	attribute(no_serialize)			Rigid_Body *rigid_body;
+};
+
+struct attribute(no_serialize_base) Bullet : public Entity {
+	attribute(min:0)				r32 radius;
+	attribute(min:0)				r32 intensity;
+	attribute(color)				Vec4 color;
+	attribute(min:0)				r32 age;
+	attribute(min:0)				r32 life_span;
 	attribute(no_serialize)			Rigid_Body *rigid_body;
 };
 

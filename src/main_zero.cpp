@@ -144,6 +144,12 @@ int karma_user_zero() {
 			if (player) {
 				auto &controller = player->controller;
 
+				if (event.type & Event_Type_MOUSE_CURSOR) {
+					controller.pointer.x = (r32)event.mouse_cursor.x / window_w;
+					controller.pointer.y = (r32)event.mouse_cursor.y / window_h;
+					controller.pointer = 2 * controller.pointer - vec2(1);
+				}
+
 				if (event.type & Event_Type_KEYBOARD) {
 					float value = (float)(event.key.state == Key_State_DOWN);
 					switch (event.key.symbol) {
@@ -166,6 +172,10 @@ int karma_user_zero() {
 							if (event.key.state == Key_State_DOWN)
 								controller.boost = 0;
 							break;
+
+						case Key_SPACE:
+							controller.attack = (event.key.state == Key_State_DOWN);
+							break;
 					}
 				}
 
@@ -174,6 +184,16 @@ int karma_user_zero() {
 						controller.axis = event.controller_axis.value;
 					else if (event.controller_axis.symbol == Controller_Axis_LTHUMB_Y)
 						controller.boost = event.controller_axis.value < 0 ? 0 : event.controller_axis.value;
+					else if (event.controller_axis.symbol == Controller_Axis_LTRIGGER)
+						controller.attack = (event.controller_axis.value > 0);
+					else if (event.controller_axis.symbol == Controller_Axis_RTHUMB_X) {
+						controller.pointer.x += event.controller_axis.value;
+						controller.pointer = vec2_normalize_check(controller.pointer);
+					}
+					else if (event.controller_axis.symbol == Controller_Axis_RTHUMB_Y) {
+						controller.pointer.y += event.controller_axis.value;
+						controller.pointer = vec2_normalize_check(controller.pointer);
+					}
 				}
 			}
 
