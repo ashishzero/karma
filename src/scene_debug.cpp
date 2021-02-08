@@ -96,6 +96,7 @@ Editor editor_create(Scene *scene) {
 	editor.entity.added_vertex_index = -1;
 	editor.entity.vertex_is_valid = false;
 	editor.entity.vertex_pointer_angle = 0;
+	editor.entity.selected_texture = -1;
 	memset(&editor.entity.texture, 0, sizeof(editor.entity.texture));
 
 	editor.flags = Editor_Flag_Bit_RENDER_WORLD | Editor_Flag_Bit_RENDER_FIXTURE;
@@ -182,6 +183,24 @@ bool editor_handle_event(const Event &event, Scene *scene, Editor *editor) {
 	return true;
 }
 
+void ieditor_save_resource(Scene *scene, Editor *editor) {
+	Fixture_Group fixture;
+	fixture.fixtures = editor->entity.fixtures;
+	fixture.count = editor->entity.fixture_count;
+
+	Texture_Group texture;
+	texture.handle.buffer.id.hptr = nullptr;
+	texture.handle.view.id.hptr = nullptr;
+	texture.uv = editor->entity.texture_uv;
+
+	Resource_Header header;
+	header.id = editor->entity.id;
+	memcpy(header.name, editor->entity.name, sizeof(Resource_Name));
+	memcpy(header.texture, editor->entity.texture_name, sizeof(Resource_Name));
+
+	scene_save_resource(scene, header, texture, fixture, true);
+}
+
 inline void ieditor_reset(Scene *scene, Editor *editor, Editor_Mode new_mode) {
 	editor->level.hovered_body = nullptr;
 	editor->level.selected_body = nullptr;
@@ -197,7 +216,9 @@ inline void ieditor_reset(Scene *scene, Editor *editor, Editor_Mode new_mode) {
 			memset(&editor->entity.texture, 0, sizeof(editor->entity.texture));
 		}
 
-		scene_reload_resources(scene, editor->entity.id);
+		ieditor_save_resource(scene, editor);
+
+		scene_reload_resource(scene, editor->entity.id);
 		editor->entity.id = { 0 };
 	}
 
@@ -228,6 +249,7 @@ void editor_set_mode_level_editor(Scene *scene, Editor *editor) {
 	editor->level.selected_resource_index = 0;
 	editor->level.preview_shapes = true;
 	editor->level.preview_shape_scale = 1;
+	editor->entity.selected_texture = -1;
 }
 
 void editor_set_mode_entity_editor(Scene *scene, Editor *editor, Resource_Collection *r) {
@@ -265,7 +287,7 @@ void editor_set_mode_entity_editor(Scene *scene, Editor *editor, Resource_Collec
 			memory_free(content.data);
 		}
 	}
-	
+
 	if (!loaded) {
 		memset(editor->entity.texture_name, 0, sizeof(Resource_Name));
 		editor->entity.texture_uv = mm_rect(0, 0, 1, 1);
@@ -1120,7 +1142,7 @@ inline void ieditor_create_new_entity(Scene *scene, Editor *editor, Entity_Type 
 			}
 		} break;
 
-		invalid_default_case();
+			invalid_default_case();
 	}
 }
 
@@ -1135,7 +1157,7 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 	int new_entity_type_index = -1;
 	bool create_new_level = false;
 	bool open_another_level = false;
-	
+
 	if (ImGui::BeginMenuBar()) {
 		if (ImGui::BeginMenu("File")) {
 
@@ -1317,7 +1339,7 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 			ImGui::CloseCurrentPopup();
 		}
 
-		
+
 		auto resource_headers = scene_resource_headers(scene);
 
 		auto resources = resource_headers.data;
@@ -1384,11 +1406,11 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 				Vec2  shape_scale = vec2(scale_scalar, -scale_scalar);
 
 				const ImVec2 origin(0.5f * (canvas_p0.x + canvas_p1.x), 0.5f * (canvas_p0.y + canvas_p1.y));
-				
+
 				if (resource_group.texture) {
 					auto tex = resource_group.texture;
 					auto scale = shape_scale;
-					draw_list->AddImage(tex->handle.view.id.hptr, 
+					draw_list->AddImage(tex->handle.view.id.hptr,
 										origin + vec2_hadamard(scale, canvas_p0 - origin), origin + vec2_hadamard(scale, canvas_p1 - origin),
 										tex->uv.min, tex->uv.max);
 				}
@@ -1554,7 +1576,9 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 	ImGui::CheckboxFlags("Render Collision", flags, Editor_Flag_Bit_RENDER_COLLISION);
 	ImGui::CheckboxFlags("Render Broadphase", flags, Editor_Flag_Bit_RENDER_BROADPHASE);
 
-	editor_widget(scene->physics, "Physics");
+	if (ImGui::CollapsingHeader("Physics")) {
+		editor_widget(scene->physics, "Physics");
+	}
 
 	ImGui::End();
 
@@ -1713,22 +1737,36 @@ bool ieditor_fixture(Editor *editor, Fixture &fixture) {
 	return result;
 }
 
-void ieditor_save_resource(Scene *scene, Editor *editor) {
-	Fixture_Group fixture;
-	fixture.fixtures = editor->entity.fixtures;
-	fixture.count = editor->entity.fixture_count;
+void ieditor_load_new_texture(Editor *editor) {
+	if (editor->entity.texture.view.id) {
+		gfx_destroy_texture2d(editor->entity.texture);
+	}
 
-	Texture_Group texture;
-	texture.handle.buffer.id.hptr = nullptr;
-	texture.handle.view.id.hptr = nullptr;
-	texture.uv = editor->entity.texture_uv;
+	bool loaded = false;
 
-	Resource_Header header;
-	header.id = editor->entity.id;
-	memcpy(header.name, editor->entity.name, sizeof(Resource_Name));
-	memcpy(header.texture, editor->entity.texture_name, sizeof(Resource_Name));
+	if (editor->entity.texture_name[0]) {
+		String path = tprintf("resources/textures/%s", editor->entity.texture_name);
 
-	scene_save_resource(scene, header, texture, fixture, true);
+		int w, h, n;
+		String content = system_read_entire_file(path);
+
+		if (content.count) {
+			u8 *pixels = stbi_load_from_memory(content.data, (int)content.count, &w, &h, &n, 4);
+			if (pixels) {
+				editor->entity.texture = gfx_create_texture2d((u32)w, (u32)h, 4, Data_Format_RGBA8_UNORM_SRGB, (const u8 **)&pixels, Buffer_Usage_IMMUTABLE, 1);
+				stbi_image_free(pixels);
+				loaded = true;
+			}
+
+			memory_free(content.data);
+		}
+	}
+
+	if (!loaded) {
+		memset(editor->entity.texture_name, 0, sizeof(Resource_Name));
+		editor->entity.texture_uv = mm_rect(0, 0, 1, 1);
+		memset(&editor->entity.texture, 0, sizeof(editor->entity.texture));
+	}
 }
 
 bool ieditor_gui_entity_editor(Scene *scene, Editor *editor) {
@@ -1769,11 +1807,53 @@ bool ieditor_gui_entity_editor(Scene *scene, Editor *editor) {
 
 			ImGui::LabelText("id", "%zu", editor->entity.id);
 			ImGui::InputText("name", editor->entity.name, sizeof(Resource_Name));
-			
+
 			ImGui::LabelText("texture", "%s", editor->entity.texture_name);
 			ImGui::SameLine();
 			if (ImGui::Button("X##Change Texture")) {
-				//ImGui::OpenPopup("Open Change Texture Window");
+				ImGui::OpenPopup("Select Texture");
+			}
+
+			if (ImGui::BeginPopupModal("Select Texture", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+
+				int selected = editor->entity.selected_texture;
+
+				auto files = system_find_files("resources/textures/", ".png", false);
+				defer{ memory_free(files.data); };
+
+				for (auto index = 0; index < files.count; ++index) {
+					if (ImGui::Selectable((char *)files[index].name.data, selected == index, ImGuiSelectableFlags_DontClosePopups)) {
+						selected = index;
+					}
+				}
+
+				editor->entity.selected_texture = selected;
+
+				if (selected >= 0) {
+					if (ImGui::Button("Select")) {
+						int length = (int)minimum(files[selected].name.count, sizeof(Resource_Name) - 1);
+						memcpy(editor->entity.texture_name, files[selected].name.data, length);
+						editor->entity.texture_name[length] = 0;
+						ieditor_load_new_texture(editor);
+						ImGui::CloseCurrentPopup();
+					}
+				} else {
+					ImGui::TextDisabled("Select");
+				}
+				ImGui::SameLine();
+
+				if (ImGui::Button("Remove")) {
+					editor->entity.texture_name[0] = 0;
+					ieditor_load_new_texture(editor);
+					ImGui::CloseCurrentPopup();
+				}
+
+				ImGui::SameLine();
+				if (ImGui::Button("Close")) {
+					ImGui::CloseCurrentPopup();
+				}
+
+				ImGui::EndPopup();
 			}
 
 			ImGui::Separator();
@@ -1819,9 +1899,8 @@ bool ieditor_gui_entity_editor(Scene *scene, Editor *editor) {
 	}
 	ImGui::End();
 
-	
+
 	if (!open) {
-		ieditor_save_resource(scene, editor);
 		editor_set_mode_level_editor(scene, editor);
 	}
 

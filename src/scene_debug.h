@@ -75,6 +75,8 @@ struct Editor_Entity {
 
 	Texture2d_Handle	texture;
 
+	int				selected_texture;
+
 	Fixture fixtures[MAXIMUM_FIXTURE_COUNT];
 	int		fixture_count;
 

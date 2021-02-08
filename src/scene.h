@@ -184,7 +184,7 @@ void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio);
 bool scene_save_resource(Scene *scene, Resource_Header &h, Texture_Group &texture, Fixture_Group &fixture, bool pt_polygon);
 void scene_save_resources(Scene *scene);
 void scene_load_resources(Scene *scene);
-void scene_reload_resources(Scene *scene, Resource_Id id);
+void scene_reload_resource(Scene *scene, Resource_Id id);
 void scene_clean_resources(Scene *scene);
 void scene_clean_entities(Scene *scene);
 

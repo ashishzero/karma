@@ -1623,6 +1623,7 @@ void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio) {
 			im2d_circle(m.contacts[1], 0.02f, vec4(1, 0, 1));
 		}
 	}
+
 	if (iscene_render_broadphase_enabled(scene)) {
 		r32 size = scene->hgrid.size / 2;
 		r32 inc = scene->hgrid.size / (powf(2, (float)(scene->hgrid.level - 1)));
@@ -1882,23 +1883,25 @@ void scene_clean_resources(Scene *scene) {
 	scene->resource_header.count = 0;
 }
 
-void scene_reload_resources(Scene *scene, Resource_Id id) {
+void scene_reload_resource(Scene *scene, Resource_Id id) {
 	auto resource = scene_find_resource(scene, id);
 
 	Resource_Header header;
 	Texture_Group texture;
 	Fixture_Group fixture;
-	if (!iscene_load_resource(scene, tprintf("resources/sprites/%zu.sprite", resource.header->id), &header, &texture, &fixture)) {
+	if (!iscene_load_resource(scene, tprintf("resources/sprites/%zu.sprite", id), &header, &texture, &fixture)) {
 		return;
 	}
 
 	u32 count = resource.fixture->count;
 	for (u32 i = 0; i < count; ++i)
 		memory_free(resource.fixture->fixtures[i].handle, scene->pool_allocator);
-	resource.fixture->count = 0;
-	resource.fixture->fixtures = nullptr;
 
-	gfx_destroy_texture2d(resource.texture->handle);
+	auto white_texture = im_white_texture();
+
+	if (resource.texture->handle != white_texture) {
+		gfx_destroy_texture2d(resource.texture->handle);
+	}
 
 	*resource.header = header;
 	*resource.fixture = fixture;

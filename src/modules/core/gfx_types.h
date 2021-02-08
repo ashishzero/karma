@@ -469,6 +469,13 @@ struct Texture2d_Handle {
 	Texture2d    buffer;
 };
 
+inline bool operator==(Texture2d_Handle a, Texture2d_Handle b) {
+	return a.buffer.id == b.buffer.id && a.view.id == b.view.id;
+}
+inline bool operator !=(Texture2d_Handle a, Texture2d_Handle b) {
+	return !(a == b);
+}
+
 enum Framebuffer_Type {
 	Framebuffer_Type_DEFAULT,
 	Framebuffer_Type_HDR,
