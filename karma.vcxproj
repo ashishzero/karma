@@ -373,7 +373,6 @@ popd
     <ClInclude Include="src\modules\imgui\imstb_truetype.h" />
     <ClInclude Include="src\modules\core\intrinsics.h" />
     <ClInclude Include="src\opentype.h" />
-    <ClInclude Include="src\particle_system.h" />
     <ClInclude Include="src\modules\core\random.h" />
     <ClInclude Include="src\modules\core\reflection.h" />
     <FxCompile Include="src\shaders\debug.hlsl">
