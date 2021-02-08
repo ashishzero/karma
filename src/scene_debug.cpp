@@ -296,38 +296,40 @@ void editor_set_mode_entity_editor(Scene *scene, Editor *editor, Resource_Collec
 
 	editor->entity.fixture_count = fixture_count;
 
-	Fixture *src = r->fixture->fixtures;
-	Fixture *dst = editor->entity.fixtures;
+	if (fixture_count) {
+		Fixture *src = r->fixture->fixtures;
+		Fixture *dst = editor->entity.fixtures;
 
-	for (u32 index = 0; index < fixture_count; ++index, ++src, ++dst) {
-		switch (src->shape) {
-			case Fixture_Shape_Circle: {
-				dst->shape = Fixture_Shape_Circle;
-				dst->handle = &editor->entity.circle_storage[index];
-				memcpy(dst->handle, src->handle, sizeof(Circle));
-			} break;
+		for (u32 index = 0; index < fixture_count; ++index, ++src, ++dst) {
+			switch (src->shape) {
+				case Fixture_Shape_Circle: {
+					dst->shape = Fixture_Shape_Circle;
+					dst->handle = &editor->entity.circle_storage[index];
+					memcpy(dst->handle, src->handle, sizeof(Circle));
+				} break;
 
-			case Fixture_Shape_Mm_Rect: {
-				dst->shape = Fixture_Shape_Mm_Rect;
-				dst->handle = &editor->entity.mm_rect_storage[index];
-				memcpy(dst->handle, src->handle, sizeof(Mm_Rect));
-			} break;
+				case Fixture_Shape_Mm_Rect: {
+					dst->shape = Fixture_Shape_Mm_Rect;
+					dst->handle = &editor->entity.mm_rect_storage[index];
+					memcpy(dst->handle, src->handle, sizeof(Mm_Rect));
+				} break;
 
-			case Fixture_Shape_Capsule: {
-				dst->shape = Fixture_Shape_Capsule;
-				dst->handle = &editor->entity.capsule_storage[index];
-				memcpy(dst->handle, src->handle, sizeof(Capsule));
-			} break;
+				case Fixture_Shape_Capsule: {
+					dst->shape = Fixture_Shape_Capsule;
+					dst->handle = &editor->entity.capsule_storage[index];
+					memcpy(dst->handle, src->handle, sizeof(Capsule));
+				} break;
 
-			case Fixture_Shape_Polygon: {
-				Polygon *polygon_src = fixture_get_shape(src, Polygon);
-				Polygon_Pt *polygon_dst = &editor->entity.polygon_storage[index];
-				dst->shape = Fixture_Shape_Polygon;
-				dst->handle = polygon_dst;
-				polygon_dst->vertex_count = polygon_src->vertex_count;
-				polygon_dst->vertices = editor->entity.polygon_vertices[index];
-				memcpy(polygon_dst->vertices, polygon_src->vertices, sizeof(Vec2) * polygon_src->vertex_count);
-			} break;
+				case Fixture_Shape_Polygon: {
+					Polygon *polygon_src = fixture_get_shape(src, Polygon);
+					Polygon_Pt *polygon_dst = &editor->entity.polygon_storage[index];
+					dst->shape = Fixture_Shape_Polygon;
+					dst->handle = polygon_dst;
+					polygon_dst->vertex_count = polygon_src->vertex_count;
+					polygon_dst->vertices = editor->entity.polygon_vertices[index];
+					memcpy(polygon_dst->vertices, polygon_src->vertices, sizeof(Vec2) * polygon_src->vertex_count);
+				} break;
+			}
 		}
 	}
 
@@ -1113,7 +1115,7 @@ inline void ieditor_create_new_entity(Scene *scene, Editor *editor, Entity_Type 
 			Rigid_Body body;
 			auto r0 = resource_collection[0];
 			auto r1 = resource_collection[1];
-			ent_init_character(&character, scene, camera->position, vec4(1), &body, *r0.fixture, *r0.texture, r0.index, *r1.texture, r1.index);
+			ent_init_character(&character, scene, camera->position, vec4(1), &body, r0.fixture, r0.texture, r0.index, r1.texture, r1.index);
 			Character *ent = scene_clone_entity(scene, &character, camera->position, &r0.header->id)->as<Character>();
 			if (select) {
 				ieditor_select_body(scene, editor, ent->rigid_body);
@@ -1124,7 +1126,7 @@ inline void ieditor_create_new_entity(Scene *scene, Editor *editor, Entity_Type 
 			Obstacle obstacle;
 			Rigid_Body body;
 			auto r0 = resource_collection[0];
-			ent_init_obstacle(&obstacle, scene, camera->position, &body, *r0.fixture, *r0.texture, r0.index);
+			ent_init_obstacle(&obstacle, scene, camera->position, &body, r0.fixture, r0.texture, r0.index);
 			Obstacle *ent = scene_clone_entity(scene, &obstacle, camera->position, &r0.header->id)->as<Obstacle>();
 			if (select) {
 				ieditor_select_body(scene, editor, ent->rigid_body);
@@ -1135,7 +1137,7 @@ inline void ieditor_create_new_entity(Scene *scene, Editor *editor, Entity_Type 
 			Bullet bullet;
 			Rigid_Body body;
 			auto r0 = resource_collection[0];
-			ent_init_bullet(&bullet, scene, camera->position, 0.1f, 1, vec4(1), 0.1f, &body, *r0.fixture);
+			ent_init_bullet(&bullet, scene, camera->position, 0.1f, 1, vec4(1), 0.1f, &body, r0.fixture);
 			Bullet *ent = scene_clone_entity(scene, &bullet, camera->position, &r0.header->id)->as<Bullet>();
 			if (select) {
 				ieditor_select_body(scene, editor, ent->rigid_body);
@@ -1489,10 +1491,18 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 		ImGui::SameLine();
 
 		if (ImGui::Button("Create New...", ImVec2(120, 0))) {
-			//auto r = &resources[editor->level.selected_resource_index];
-			//Resource_Fixture *resource = scene_create_new_resource_fixture(scene, "(unnamed)", nullptr, 0);
-			//ieditor_create_new_entity(scene, editor, new_entity_type, *resource, String(r->texture_name, strlen(r->texture_name)), false);
-			//editor_set_mode_entity_editor(scene, editor, resource->id, resource->name, resource->fixtures, resource->fixture_count, r->texture_name);
+			Resource_Name name, tex;
+			tex[0] = 0;
+			strncpy(name, "(unnamed)", sizeof(Resource_Name));
+
+			Resource_Collection resource_collection;
+			resource_collection.fixture = nullptr;
+			resource_collection.texture = nullptr;
+			resource_collection.index = MAX_UINT32;
+			resource_collection.header = (Resource_Header *)scene_create_new_resource(scene, name, nullptr, 0, tex, mm_rect(0, 0, 1, 1));
+
+			ieditor_create_new_entity(scene, editor, new_entity_type, &resource_collection, false);
+			editor_set_mode_entity_editor(scene, editor, &resource_collection);
 			ImGui::CloseCurrentPopup();
 		}
 

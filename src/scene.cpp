@@ -864,7 +864,7 @@ Character *scene_spawn_player(Scene *scene, Vec2 p, Vec4 color) {
 
 		Rigid_Body body;
 		Character src;
-		ent_init_character(&src, scene, p, color, &body, *resource.fixture, *resource.texture, resource.index, *particle_resource.texture, particle_resource.index);
+		ent_init_character(&src, scene, p, color, &body, resource.fixture, resource.texture, resource.index, particle_resource.texture, particle_resource.index);
 		auto player = scene_clone_entity(scene, &src, p, &id)->as<Character>();
 		scene->player_id = player->id;
 		player->size = vec2(0.5f);
@@ -888,7 +888,7 @@ Bullet *scene_spawn_bullet(Scene *scene, Vec2 p, Vec4 color, Vec2 dir) {
 	r32 life_span = 1 * random_r32_range_r32(0.6f, 1.0f);
 	r32 initial_velocity = 10 * random_r32_range_r32(0.7f, 1.0f);
 
-	ent_init_bullet(&src, scene, p, radius, intensity, color, life_span, &body, *resource.fixture);
+	ent_init_bullet(&src, scene, p, radius, intensity, color, life_span, &body, resource.fixture);
 	auto bullet = scene_clone_entity(scene, &src, p, &id)->as<Bullet>();
 	bullet->rigid_body->transform.xform = mat2_scalar(radius, radius);
 	bullet->rigid_body->velocity = initial_velocity * dir;

@@ -234,7 +234,7 @@ inline Particle_Emitter_Property particle_system_default_property() {
 	return props;
 }
 
-inline void particle_system_init(Particle_System *system, Vec2 p, Texture_Group &texture, u32 index, u32 max_particles) {
+inline void particle_system_init(Particle_System *system, Vec2 p, Texture_Group *texture, u32 index, u32 max_particles) {
 	system->position = p;
 	system->texture = { index };
 	system->properties = particle_system_default_property();
@@ -245,7 +245,7 @@ inline void particle_system_init(Particle_System *system, Vec2 p, Texture_Group 
 	system->time_elapsed = 0;
 }
 
-inline void ent_rigid_body_init(Entity *entity, Rigid_Body *body, Rigid_Body_Type type, Fixture_Group &fixture) {
+inline void ent_rigid_body_init(Entity *entity, Rigid_Body *body, Rigid_Body_Type type, Fixture_Group *fixture) {
 	body->type = type;
 	body->flags = 0;
 	body->imass = ((type == Rigid_Body_Type_Static) ? 0.0f : 1.0f);
@@ -256,8 +256,8 @@ inline void ent_rigid_body_init(Entity *entity, Rigid_Body *body, Rigid_Body_Typ
 	body->force = vec2(0);
 	body->transform.p = entity->position;
 	body->transform.xform = mat2_identity();
-	body->fixtures = fixture.fixtures;
-	body->fixture_count = fixture.count;
+	body->fixtures = fixture ? fixture->fixtures : nullptr;
+	body->fixture_count = fixture ? fixture->count : 0;
 	body->entity_id = entity->id;
 	body->bounding_box = scene_rigid_body_bounding_box(body, 0);
 }
@@ -275,7 +275,7 @@ inline void ent_init_camera(Camera *camera, Vec2 p, r32 distance) {
 }
 
 // TODO: dont take in index
-inline void ent_init_character(Character *character, Scene *scene, Vec2 p, Vec4 color, Rigid_Body *body, Fixture_Group &fixture, Texture_Group &texture, u32 index, Texture_Group &particle, u32 particle_index) {
+inline void ent_init_character(Character *character, Scene *scene, Vec2 p, Vec4 color, Rigid_Body *body, Fixture_Group *fixture, Texture_Group *texture, u32 index, Texture_Group *particle, u32 particle_index) {
 	character->id.handle = 0;
 	character->type = Entity_Type_Character;
 	character->position = p;
@@ -294,7 +294,7 @@ inline void ent_init_character(Character *character, Scene *scene, Vec2 p, Vec4 
 }
 
 // TODO: dont take in index
-inline void ent_init_obstacle(Obstacle *obstable, Scene *scene, Vec2 p, Rigid_Body *body, Fixture_Group &fixture, Texture_Group &texture, u32 index) {
+inline void ent_init_obstacle(Obstacle *obstable, Scene *scene, Vec2 p, Rigid_Body *body, Fixture_Group *fixture, Texture_Group *texture, u32 index) {
 	obstable->id.handle = 0;
 	obstable->type = Entity_Type_Obstacle;
 	obstable->position = p;
@@ -306,7 +306,7 @@ inline void ent_init_obstacle(Obstacle *obstable, Scene *scene, Vec2 p, Rigid_Bo
 	obstable->rigid_body = body;
 }
 
-inline void ent_init_bullet(Bullet *bullet, Scene *scene, Vec2 p, r32 radius, r32 intensity, Vec4 color, r32 life_span, Rigid_Body *body, Fixture_Group &fixture) {
+inline void ent_init_bullet(Bullet *bullet, Scene *scene, Vec2 p, r32 radius, r32 intensity, Vec4 color, r32 life_span, Rigid_Body *body, Fixture_Group *fixture) {
 	bullet->id.handle = 0;
 	bullet->type = Entity_Type_Bullet;
 	bullet->position = p;
