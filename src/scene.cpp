@@ -1583,6 +1583,22 @@ void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio) {
 				im2d_circle(b.position, b.radius, b.color * map(0, b.life_span, 1, b.intensity, b.age));
 			}
 		}
+
+		{
+			s64 count = scene->by_type.obstacle.count;
+			auto &obs = scene->by_type.obstacle;
+			for (s64 index = 0; index < count; ++index) {
+				Obstacle &o = obs[index];
+
+				auto text = scene->texture_group[o.texture.index];
+
+				im2d_bind_texture(text.handle);
+
+				im2d_rect_centered(o.position, o.size, text.uv, vec4(1));
+			}
+		}
+
+		im2d_unbind_texture();
 	}
 
 	u32 type;
