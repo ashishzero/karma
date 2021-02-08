@@ -1594,7 +1594,7 @@ void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio) {
 
 				im2d_bind_texture(text.handle);
 
-				im2d_rect_centered(o.position, o.size, text.uv, vec4(1));
+				im2d_rect_centered_rotated(o.position, o.size, o.rotation, text.uv, vec4(1));
 			}
 		}
 

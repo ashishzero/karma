@@ -1,0 +1,21 @@
+header: #0
+   id: #0
+      handle: 6926860746509991135
+   name: "big_ice_block"
+   texture: "big_ice_block.png"
+uv: #0
+   min: #0
+      x: 0.000000
+      y: 0.000000
+   max: #0
+      x: 1.000000
+      y: 1.000000
+fixture_count: 1
+shape: 1
+shape_data: #0
+   min: #0
+      x: -0.494326
+      y: -0.497163
+   max: #0
+      x: 0.488653
+      y: 0.480142

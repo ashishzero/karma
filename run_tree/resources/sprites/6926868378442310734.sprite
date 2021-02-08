@@ -1,0 +1,21 @@
+header: #0
+   id: #0
+      handle: 6926868378442310734
+   name: "long_ice_block"
+   texture: "long_ice_block.png"
+uv: #0
+   min: #0
+      x: 0.000000
+      y: 0.000000
+   max: #0
+      x: 1.000000
+      y: 1.000000
+fixture_count: 1
+shape: 1
+shape_data: #0
+   min: #0
+      x: -0.502558
+      y: -0.489779
+   max: #0
+      x: 0.489779
+      y: 0.480194

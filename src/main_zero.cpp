@@ -169,14 +169,15 @@ int karma_user_zero() {
 
 						case Key_S:
 						case Key_DOWN:
+						case Key_SPACE:
 							if (event.key.state == Key_State_DOWN)
 								controller.boost = 0;
 							break;
-
-						case Key_SPACE:
-							controller.attack = (event.key.state == Key_State_DOWN);
-							break;
 					}
+				}
+
+				if (event.type & Event_Type_MOUSE_BUTTON) {
+					controller.attack = (event.mouse_button.state == Key_State_DOWN);
 				}
 
 				if (event.type & Event_Type_CONTROLLER_AXIS) {
