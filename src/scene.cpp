@@ -631,6 +631,10 @@ const Resource_Header *scene_create_new_resource(Scene *scene, Resource_Name &na
 	return header;
 }
 
+const Array_View<Resource_Header> scene_resource_headers(Scene *scene) {
+	return scene->resource_header;
+}
+
 Resource_Id	scene_find_entity_resource_id(Scene *scene, Entity_Id id) {
 	return iscene_get_entity_resource(&scene->entity_table, id);
 }
@@ -863,8 +867,8 @@ Character *scene_spawn_player(Scene *scene, Vec2 p, Vec4 color) {
 		ent_init_character(&src, scene, p, color, &body, *resource.fixture, *resource.texture, resource.index, *particle_resource.texture, particle_resource.index);
 		auto player = scene_clone_entity(scene, &src, p, &id)->as<Character>();
 		scene->player_id = player->id;
-		player->radius = 0.65f;
-		player->rigid_body->transform.xform = mat2_scalar(2, 2);
+		player->size = vec2(0.5f);
+		player->rigid_body->transform.xform = mat2_scalar(0.5f, 0.5f);
 		player->rigid_body->gravity = 1;
 		return player;
 	}
@@ -1109,8 +1113,10 @@ void scene_simulate(Scene *scene, r32 dt) {
 				auto &character = characters[index];
 				character.rigid_body->transform.p = character.position;
 
+				r32 radius = sqrtf(character.size.x * character.size.x + character.size.y * character.size.y);
+
 				auto dir = -vec2_normalize_check(vec2(character.rigid_body->velocity.x, 1));
-				character.particle_system.position = character.position + 0.5f * dir * character.radius;
+				character.particle_system.position = character.position + 0.5f * dir * radius;
 
 				character.particle_system.properties.initial_velocity_x.min = -0.8f + dir.x;
 				character.particle_system.properties.initial_velocity_x.max = +0.8f + dir.x;
@@ -1124,7 +1130,7 @@ void scene_simulate(Scene *scene, r32 dt) {
 				if (character.controller.attack) {
 					if (character.controller.cool_down <= 0) {
 						auto dir = vec2_normalize_check(character.controller.pointer);
-						scene_spawn_bullet(scene, character.position + 0.5f * character.radius * dir, character.color, dir);
+						scene_spawn_bullet(scene, character.position + 0.5f * radius * dir, character.color, dir);
 						character.controller.cool_down = BULLET_SPAWN;
 					} else {
 						character.controller.cool_down -= dt;
@@ -1164,6 +1170,7 @@ void scene_simulate(Scene *scene, r32 dt) {
 			clear_bit(ptr->data.flags, Rigid_Body_BOUNDING_BOX_COLLIDING);
 		}
 
+		// TODO: Continuous collision detection
 		for (int iteration = 0; iteration < SCENE_SIMULATION_MAX_ITERATION; ++iteration) {
 			for_list(Rigid_Body, a_ptr, &scene->rigid_bodies) {
 				for_list_offset(Rigid_Body, b_ptr, a_ptr, &scene->rigid_bodies) {
@@ -1542,8 +1549,9 @@ void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio) {
 
 				r32 v = c.rigid_body->velocity.x;
 				r32 angle = atan2f(1, v) - MATH_TAU;
+				r32 radius = sqrtf(c.size.x * c.size.x + c.size.y * c.size.y);
 
-				im2d_rect_centered_rotated(c.position, vec2(c.radius), angle, text.uv, c.color);
+				im2d_rect_centered_rotated(c.position, c.size, angle, text.uv, c.color);
 			}
 
 			for (s64 index = 0; index < count; ++index) {
@@ -1557,10 +1565,12 @@ void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio) {
 				Character &c = characters[index];
 				Vec2 point = vec2_normalize_check(c.controller.pointer);
 				if (!vec2_null(point)) {
-					im2d_circle(c.position + 0.50f * point * c.radius, 0.020f, 2.00f * c.color);
-					im2d_circle(c.position + 0.65f * point * c.radius, 0.010f, 1.75f * c.color);
-					im2d_circle(c.position + 0.75f * point * c.radius, 0.008f, 1.50f * c.color);
-					im2d_circle(c.position + 0.85f * point * c.radius, 0.006f, 1.00f * c.color);
+					r32 radius = sqrtf(c.size.x * c.size.x + c.size.y * c.size.y);
+
+					im2d_circle(c.position + 0.50f * point * radius, 0.020f, 2.00f * c.color);
+					im2d_circle(c.position + 0.65f * point * radius, 0.010f, 1.75f * c.color);
+					im2d_circle(c.position + 0.75f * point * radius, 0.008f, 1.50f * c.color);
+					im2d_circle(c.position + 0.85f * point * radius, 0.006f, 1.00f * c.color);
 				}
 			}
 		}
@@ -1873,9 +1883,6 @@ void scene_clean_resources(Scene *scene) {
 }
 
 void scene_reload_resources(Scene *scene, Resource_Id id) {
-	scene_clean_resources(scene);
-	scene_load_resources(scene);
-
 	auto resource = scene_find_resource(scene, id);
 
 	Resource_Header header;
@@ -1919,7 +1926,13 @@ void scene_reload_resources(Scene *scene, Resource_Id id) {
 					ent->texture.index = resource.index;
 				} break;
 
-					invalid_default_case();
+				case Entity_Type_Bullet: {
+					Bullet *ent = &scene->by_type.bullet[ent_ref->index];
+					ent->rigid_body->fixture_count = resource.fixture->count;
+					ent->rigid_body->fixtures = resource.fixture->fixtures;
+				} break;
+
+				invalid_default_case();
 			}
 		}
 	}

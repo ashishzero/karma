@@ -47,7 +47,6 @@ void hgrid_add_body_to_grid(HGrid *hgrid, Rigid_Body *body) {
 		body->next = NULL;
 		body->level = my_grid_level;
 	}
-
 }
 
 void iterate_and_remove_linklist(Grid *start, Rigid_Body *body) {

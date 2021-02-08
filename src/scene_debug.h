@@ -68,9 +68,12 @@ struct Editor_Entity {
 		EDITING
 	};
 
-	Resource_Id		fixture_id;
-	Resource_Name	fixture_name;
+	Resource_Id		id;
+	Resource_Name	name;
 	Resource_Name	texture_name;
+	Mm_Rect			texture_uv;
+
+	Texture2d_Handle	texture;
 
 	Fixture fixtures[MAXIMUM_FIXTURE_COUNT];
 	int		fixture_count;

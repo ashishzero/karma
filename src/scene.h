@@ -113,6 +113,8 @@ struct Resource_Collection {
 	u32					index;
 };
 
+const Array_View<Resource_Header> scene_resource_headers(Scene *scene);
+
 Resource_Id					scene_find_entity_resource_id(Scene *scene, Entity_Id id);
 const Resource_Collection	scene_find_resource(Scene *scene, Resource_Id id);
 
@@ -277,7 +279,8 @@ inline void ent_init_character(Character *character, Scene *scene, Vec2 p, Vec4 
 	character->id.handle = 0;
 	character->type = Entity_Type_Character;
 	character->position = p;
-	character->radius = 0.1f;
+	character->size = vec2(1);
+	character->rotation = 0;
 	character->color = color;
 	character->texture.index = index;
 	character->controller.boost = 0;
@@ -295,6 +298,8 @@ inline void ent_init_obstacle(Obstacle *obstable, Scene *scene, Vec2 p, Rigid_Bo
 	obstable->id.handle = 0;
 	obstable->type = Entity_Type_Obstacle;
 	obstable->position = p;
+	obstable->size = vec2(1);
+	obstable->rotation = 0;
 	obstable->color = vec4(1);
 	obstable->texture.index = index;
 	ent_rigid_body_init(obstable, body, Rigid_Body_Type_Static, fixture);

@@ -213,10 +213,6 @@ int karma_user_zero() {
 
 			Dev_TimedScope(SimulationFrame);
 
-			// TODO: Do broad phase collision detection and narrow collision detection
-			// TODO: Continuous collision detection
-			
-
 			scene_simulate(scene, dt);
 
 			accumulator_t -= dt;

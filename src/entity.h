@@ -123,7 +123,7 @@ struct Entity {
 
 										template <>
 										Obstacle *as() {
-											assert(type == Entity_Type_Character);
+											assert(type == Entity_Type_Obstacle);
 											return (Obstacle *)this;
 										}
 
@@ -234,7 +234,8 @@ struct attribute(no_serialize_base) Camera : public Entity {
 #define camera_distance_to_scale(camera) powf(0.5f, camera->distance)
 
 struct attribute(no_serialize_base, v:2) Character : public Entity {
-	attribute(min:0)						r32 radius;
+											r32 rotation;
+											Vec2 size;
 	attribute(color)						Vec4 color;
 	attribute(no_serialize)					Texture_Id texture;
 											Particle_System particle_system;
@@ -242,7 +243,9 @@ struct attribute(no_serialize_base, v:2) Character : public Entity {
 	attribute(no_serialize)					Rigid_Body *rigid_body;
 };
 
-struct attribute(no_serialize_base) Obstacle : public Entity {
+struct attribute(no_serialize_base, v:1) Obstacle : public Entity {
+	attribute(v:1)					r32  rotation;
+	attribute(v:1)					Vec2 size;
 	attribute(color)				Vec4 color;
 	attribute(no_serialize)			Texture_Id texture;
 	attribute(no_serialize)			Rigid_Body *rigid_body;
