@@ -48,8 +48,10 @@ Audio *audio_mixer_add_audio(Audio_Mixer *mixer, Audio_Stream *stream, bool star
 
 	node->data.stream = stream;
 	node->data.sample_count = stream->data.size / sizeof(s16) / stream->fmt.channels_count;
+	node->data.remove = false;
 	node->data.playing = start_playing;
 	node->data.loop = loop;
+	node->data.attenuation = 0;
 	node->data.pitch_factor = 1;
 	node->data.volume = 1;
 	node->data.dvolume = 0;
@@ -60,8 +62,7 @@ Audio *audio_mixer_add_audio(Audio_Mixer *mixer, Audio_Stream *stream, bool star
 }
 
 void audio_mixer_remove_audio(Audio_Mixer *mixer, Audio *audio) {
-	auto node = circular_linked_list_node_from_data(audio);
-	circular_linked_list_remove(&mixer->audio_list, node);
+	audio->remove = true;
 }
 
 void system_refresh_audio_device(u32 sample_rate, u32 channel_count, void *user_data) {
@@ -120,7 +121,7 @@ void system_update_audio(const System_Audio &sys_audio, void *user_data) {
 					audio.samples_played += audio.buffered_pitch_factor * (r32)sample_count;
 					while ((u32)lroundf(audio.samples_played) >= audio.sample_count) {
 						audio.samples_played -= audio.sample_count;
-						audio.playing = audio.loop;
+						audio.playing = audio.loop && !audio.remove;
 					}
 					if (!audio.playing) {
 						audio.samples_played = 0;
@@ -150,6 +151,8 @@ void audio_mixer_update(Audio_Mixer *mixer) {
 			Audio &audio = ptr->data;
 			audio.buffered_pitch_factor = audio.pitch_factor * mixer->pitch_factor;
 
+			r32 attenuation = 1.0f / (1.0f + audio.attenuation);
+
 			r32 *write_ptr = mixer->buffer;
 			r32  read_cursor = audio.samples_played;
 			r32  volume_position = mixer->volume_position;
@@ -171,7 +174,7 @@ void audio_mixer_update(Audio_Mixer *mixer) {
 					r32 real_sample_index = read_cursor + sample_mix_index * audio.buffered_pitch_factor;
 					u32 sample_index_0 = (u32)(real_sample_index);
 					assert(sample_index_0 < audio.stream->sample_count);
-					u32 sample_index_1 = (sample_index_0 + 1 == audio.stream->sample_count) ? sample_index_0 : sample_index_0 + 1;
+					u32 sample_index_1 = (sample_index_0 + 1 == audio.sample_count) ? sample_index_0 : sample_index_0 + 1;
 
 					r32 sampled_left_0 = INVERSE_RANGE_S16 * ((r32)audio.stream->samples[2 * sample_index_0 + 0] - (r32)MIN_INT16) - 1.0f;
 					r32 sampled_right_0 = INVERSE_RANGE_S16 * ((r32)audio.stream->samples[2 * sample_index_0 + 1] - (r32)MIN_INT16) - 1.0f;
@@ -181,7 +184,7 @@ void audio_mixer_update(Audio_Mixer *mixer) {
 
 					r32 sample_t = real_sample_index - (r32)sample_index_0;
 
-					effective_volume = maximum(audio.volume - audio.dvolume * (r32)sample_counter, 0.0f) * lerp(mixer->volume_a, mixer->volume_b, clamp01((volume_position + sample_mix_index * mixer->pitch_factor) / mixer->volume_span));
+					effective_volume = attenuation * maximum(audio.volume - audio.dvolume * (r32)sample_counter, 0.0f) * lerp(mixer->volume_a, mixer->volume_b, clamp01((volume_position + sample_mix_index * mixer->pitch_factor) / mixer->volume_span));
 
 					write_ptr[0] += lerp(sampled_left_0, sampled_left_1, sample_t) * effective_volume;
 					write_ptr[1] += lerp(sampled_right_0, sampled_right_1, sample_t) * effective_volume;
@@ -194,7 +197,7 @@ void audio_mixer_update(Audio_Mixer *mixer) {
 					r32 sampled_left = INVERSE_RANGE_S16 * ((r32)audio.stream->samples[2 * sample_index + 0] - (r32)MIN_INT16) - 1.0f;
 					r32 sampled_right = INVERSE_RANGE_S16 * ((r32)audio.stream->samples[2 * sample_index + 1] - (r32)MIN_INT16) - 1.0f;
 
-					effective_volume = maximum(audio.volume - audio.dvolume * sample_counter, 0.0f) * lerp(mixer->volume_a, mixer->volume_b, clamp01((volume_position + sample_mix_index * mixer->pitch_factor) / mixer->volume_span));
+					effective_volume = attenuation * maximum(audio.volume - audio.dvolume * sample_counter, 0.0f) * lerp(mixer->volume_a, mixer->volume_b, clamp01((volume_position + sample_mix_index * mixer->pitch_factor) / mixer->volume_span));
 
 					write_ptr[0] += sampled_left * effective_volume;
 					write_ptr[1] += sampled_right * effective_volume;
@@ -221,6 +224,8 @@ void audio_mixer_update(Audio_Mixer *mixer) {
 					}
 				}
 			}
+		} else if (ptr->data.remove) {
+			ptr = circular_linked_list_loop_remove(&mixer->audio_list, ptr);
 		}
 	}
 

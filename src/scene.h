@@ -61,6 +61,7 @@ struct Scene {
 			Array<Character>	character;
 			Array<Obstacle>		obstacle;
 			Array<Bullet>		bullet;
+			Array<Particle_Emitter>	emitter;
 		};
 		struct {
 			Array<u8>	data[Entity_Type_Count];
@@ -83,6 +84,8 @@ struct Scene {
 	Array<Texture_Group>	texture_group;
 
 	Array<Audio_Group>		audio_group;
+	Audio_Stream *fire;
+	Audio_Stream *hit;
 
 	Allocator					pool_allocator;
 
@@ -136,6 +139,7 @@ bool scene_find_entity(Scene *scene, Entity_Id id, Entity_Reference *ref);
 Entity *scene_entity_pointer(Scene *scene, Entity_Reference &reference);
 
 const Array_View<Camera>			scene_cameras(Scene *scene);
+const Array_View<Particle_Emitter> scene_emitters(Scene *scene);
 
 //
 //
@@ -295,12 +299,12 @@ inline void ent_init_character(Character *character, Scene *scene, Vec2 p, Vec4 
 	character->rotation = 0;
 	character->color = color;
 	character->texture.index = index;
-	character->controller.boost = 0;
-	character->controller.axis = 0;
+	character->controller.axis = vec2(0);
 	character->controller.pointer = vec2(0, 1);
 	character->controller.attack = 0;
 	character->controller.cool_down = 0;
-	character->audio = nullptr;
+	character->boost = nullptr;
+	character->fall = nullptr;
 	particle_system_init(&character->particle_system, p, particle, particle_index, 1000);
 	ent_rigid_body_init(character, body, Rigid_Body_Type_Dynamic, fixture);
 	character->rigid_body = body;
@@ -330,4 +334,12 @@ inline void ent_init_bullet(Bullet *bullet, Scene *scene, Vec2 p, r32 radius, r3
 	bullet->life_span = life_span;
 	ent_rigid_body_init(bullet, body, Rigid_Body_Type_Dynamic, fixture);
 	bullet->rigid_body = body;
+}
+
+inline void ent_init_particle_emitter(Particle_Emitter *emitter, Vec2 p, Texture_Group *particle, u32 particle_index) {
+	emitter->id.handle = 0;
+	emitter->type = Entity_Type_Particle_Emitter;
+	emitter->position = p;
+	emitter->remove_on_finish = false;
+	particle_system_init(&emitter->particle_system, p, particle, particle_index, 500);
 }

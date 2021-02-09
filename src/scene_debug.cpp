@@ -104,6 +104,7 @@ Editor editor_create(Scene *scene) {
 	editor.level.hovered_body = nullptr;
 	editor.level.selected_body = nullptr;
 	editor.level.selected_camera_index = -1;
+	editor.level.selected_emitter_index = -1;
 	memset(editor.level.name_storage, 0, sizeof(Level_Name));
 	editor.level.name_is_valid = false;
 
@@ -205,6 +206,7 @@ inline void ieditor_reset(Scene *scene, Editor *editor, Editor_Mode new_mode) {
 	editor->level.hovered_body = nullptr;
 	editor->level.selected_body = nullptr;
 	editor->level.selected_camera_index = -1;
+	editor->level.selected_emitter_index = -1;
 	editor->gizmo.render_type = Gizmo_Render_Type_NONE;
 	editor->gizmo.type = Gizmo_Type_NONE;
 	editor->level_camera.behaviour = 0;
@@ -356,9 +358,32 @@ Camera *ieditor_get_selected_camera(Scene *scene, Editor *editor) {
 	return nullptr;
 }
 
+Particle_Emitter *ieditor_get_selected_emitter(Scene *scene, Editor *editor) {
+	int index = editor->level.selected_emitter_index;
+	auto emitters = scene_emitters(scene);
+	if (index >= 0 && index < emitters.count) {
+		return &emitters[index];
+	} else {
+		editor->level.selected_emitter_index = -1;
+	}
+	return nullptr;
+}
+
+
 void ieditor_select_camera(Editor *editor, int index) {
 	editor->level.selected_body = nullptr;
 	editor->level.selected_camera_index = index;
+	editor->level.selected_emitter_index = -1;
+}
+
+void ieditor_select_emitter(Editor *editor, int index) {
+	editor->level.selected_body = nullptr;
+	editor->level.selected_camera_index = -1;
+	editor->level.selected_emitter_index = index;
+}
+
+void ieditor_deselect_emitter(Scene *scene, Editor *editor) {
+	editor->level.selected_emitter_index = -1;
 }
 
 void ieditor_deselect_camera(Scene *scene, Editor *editor) {
@@ -1579,6 +1604,28 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 		ImGui::Unindent();
 	}
 
+	if (ImGui::CollapsingHeader("Particle Emitters")) {
+		ImGui::Indent();
+
+		const auto emitters = scene_emitters(scene);
+		int count = (int)emitters.count;
+		int selected = editor->level.selected_emitter_index;
+		for (int index = 0; index < count; index++) {
+			auto &e = emitters[index];
+			ImGui::PushID((void *)&e);
+			if (ImGui::Selectable(null_tprintf("%d Emitter", index), selected == index)) {
+				if (selected == index) {
+					ieditor_deselect_emitter(scene, editor);
+				} else {
+					ieditor_select_emitter(editor, index);
+				}
+			}
+			ImGui::PopID();
+		}
+
+		ImGui::Unindent();
+	}
+
 	u32 *flags = &editor->flags;
 	ImGui::CheckboxFlags("Render World", flags, Editor_Flag_Bit_RENDER_WORLD);
 	ImGui::CheckboxFlags("Render Fixture", flags, Editor_Flag_Bit_RENDER_FIXTURE);
@@ -1602,6 +1649,9 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 		entity = scene_entity_pointer(scene, entity_ref);
 	} else if (editor->level.selected_camera_index >= 0) {
 		entity = ieditor_get_selected_camera(scene, editor);
+		entity_ref = scene_get_entity(scene, entity->id);
+	} else if (editor->level.selected_emitter_index >= 0) {
+		entity = ieditor_get_selected_emitter(scene, editor);
 		entity_ref = scene_get_entity(scene, entity->id);
 	}
 
@@ -1637,6 +1687,10 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 			}
 
 			body = o->rigid_body;
+		} break;
+
+		case Entity_Type_Particle_Emitter: {
+			editor_widget<Particle_Emitter>(*entity->as<Particle_Emitter>(), "Particle Emitter");
 		} break;
 
 			invalid_default_case();

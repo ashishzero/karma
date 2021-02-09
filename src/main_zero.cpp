@@ -155,21 +155,22 @@ int karma_user_zero() {
 					switch (event.key.symbol) {
 						case Key_D:
 						case Key_RIGHT:
-							controller.axis = value;
+							controller.axis.x = value;
 							break;
+
 						case Key_A:
 						case Key_LEFT:
-							controller.axis = -value;
+							controller.axis.x = -value;
 							break;
 
 						case Key_W:
 						case Key_UP:
-							controller.boost = value;
+							controller.axis.y = value;
 							break;
 
 						case Key_S:
 						case Key_DOWN:
-							controller.boost = (event.key.state == Key_State_DOWN);
+							controller.axis.y = -value;
 							break;
 
 						case Key_SPACE:
@@ -178,15 +179,11 @@ int karma_user_zero() {
 					}
 				}
 
-				if (event.type & Event_Type_MOUSE_BUTTON) {
-					controller.attack = (event.mouse_button.state == Key_State_DOWN);
-				}
-
 				if (event.type & Event_Type_CONTROLLER_AXIS) {
 					if (event.controller_axis.symbol == Controller_Axis_LTHUMB_X)
-						controller.axis = event.controller_axis.value;
+						controller.axis.x = event.controller_axis.value;
 					else if (event.controller_axis.symbol == Controller_Axis_LTHUMB_Y)
-						controller.boost = event.controller_axis.value < 0 ? 0 : event.controller_axis.value;
+						controller.axis.y = event.controller_axis.value;
 					else if (event.controller_axis.symbol == Controller_Axis_LTRIGGER)
 						controller.attack = (event.controller_axis.value > 0);
 					else if (event.controller_axis.symbol == Controller_Axis_RTHUMB_X) {

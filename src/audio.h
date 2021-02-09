@@ -47,8 +47,10 @@ struct Audio_Stream {
 struct Audio {
 	Audio_Stream *stream;
 	u32			  sample_count;
+	booli		  remove;
 	booli		  playing;
 	booli         loop;
+	r32			  attenuation;
 	r32           pitch_factor;
 	r32           volume;
 	r32			  dvolume;

@@ -49,6 +49,7 @@ struct Editor_Level {
 	Rigid_Body *hovered_body;
 	Rigid_Body *selected_body;
 	int			selected_camera_index;
+	int			selected_emitter_index;
 	Level_Name	name_storage;
 	bool		name_is_valid;
 

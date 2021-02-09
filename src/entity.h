@@ -90,6 +90,7 @@ enum Entity_Type : u32 {
 	Entity_Type_Character,
 	Entity_Type_Obstacle,
 	Entity_Type_Bullet,
+	Entity_Type_Particle_Emitter,
 
 	Entity_Type_Count
 };
@@ -100,6 +101,7 @@ struct Camera;
 struct Character;
 struct Obstacle;
 struct Bullet;
+struct Particle_Emitter;
 
 struct Entity {
 	attribute(read_only)				Entity_Id	id;
@@ -134,11 +136,16 @@ struct Entity {
 											assert(type == Entity_Type_Bullet);
 											return (Bullet *)this;
 										}
+
+										template <>
+										Particle_Emitter *as() {
+											assert(type == Entity_Type_Particle_Emitter);
+											return (Particle_Emitter *)this;
+										}
 };
 
 struct Entity_Controller {
-	r32 boost;
-	r32 axis;
+	Vec2 axis;
 	Vec2 pointer;
 	booli attack;
 	r32 cool_down;
@@ -242,7 +249,8 @@ struct attribute(no_serialize_base, v:2) Character : public Entity {
 	attribute(no_serialize)					Texture_Id texture;
 											Particle_System particle_system;
 	attribute(no_display, no_serialize)		Entity_Controller controller;
-	attribute(no_display, no_serialize)		Audio *audio;
+	attribute(no_display, no_serialize)		Audio *boost;
+	attribute(no_display, no_serialize)		Audio *fall;
 	attribute(no_serialize)					Rigid_Body *rigid_body;
 };
 
@@ -262,6 +270,11 @@ struct attribute(no_serialize_base) Bullet : public Entity {
 	attribute(min:0)						r32 life_span;
 	attribute(no_display, no_serialize)		Audio *audio;
 	attribute(no_serialize)					Rigid_Body *rigid_body;
+};
+
+struct attribute(no_serialize_base) Particle_Emitter : public Entity {
+	Particle_System particle_system;
+	booli			remove_on_finish;
 };
 
 //

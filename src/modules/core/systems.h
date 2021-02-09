@@ -414,7 +414,7 @@ constexpr int SYSTEM_DISABLE = 0;
 constexpr int SYSTEM_TOGGLE  = 2;
 constexpr int SYSTEM_QUERY   = -1;
 
-constexpr u32 SYSTEM_AUDIO_BUFFER_SIZE_IN_MILLISECS = 1000;
+constexpr u32 SYSTEM_AUDIO_BUFFER_SIZE_IN_MILLISECS = 4000;
 
 enum {
 	LOG_INFO,

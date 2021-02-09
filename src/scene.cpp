@@ -408,6 +408,16 @@ inline Character *iscene_add_character(Scene *scene, Entity_Id id, Vec2 p, Resou
 	return character;
 }
 
+inline Particle_Emitter *iscene_add_particle_emitter(Scene *scene, Entity_Id id, Vec2 p) {
+	u32 index = (u32)scene->by_type.emitter.count;
+	Particle_Emitter *emitter = array_add(&scene->by_type.emitter);
+	emitter->type = Entity_Type_Particle_Emitter;
+	emitter->id = id;
+	emitter->position = p;
+	iscene_insert_entity_reference(&scene->entity_table, id, { Entity_Type_Particle_Emitter, index }, { 0 });
+	return emitter;
+}
+
 inline Obstacle *iscene_add_obstacle(Scene *scene, Entity_Id id, Vec2 p, Resource_Id resource) {
 	u32 index = (u32)scene->by_type.obstacle.count;
 	Obstacle *obstacle = array_add(&scene->by_type.obstacle);
@@ -470,6 +480,7 @@ Scene *scene_create() {
 	array_resize(&scene->by_type.character, 100);
 	array_resize(&scene->by_type.obstacle, 1000);
 	array_resize(&scene->by_type.bullet, 10000);
+	array_resize(&scene->by_type.emitter, 10000);
 
 	scene->entity_table.keys = (Entity_Hash_Table::Key *)memory_allocate(sizeof(Entity_Hash_Table::Key) * SCENE_MAX_ENTITY_COUNT);
 	scene->entity_table.references = (Entity_Reference *)memory_allocate(sizeof(Entity_Reference) * SCENE_MAX_ENTITY_COUNT);
@@ -693,11 +704,11 @@ Entity *scene_clone_entity(Scene *scene, Entity *src, Vec2 p, Resource_Id *resou
 			auto character = iscene_add_character(scene, id, p, resource_id);
 			memcpy((u8 *)character + sizeof(Entity), (u8 *)src + sizeof(Entity), sizeof(Character) - sizeof(Entity));
 			character->particle_system.particles = (Particle *)memory_allocate(sizeof(Particle) * character->particle_system.particles_count);
-			character->audio = audio_mixer_add_audio(&scene->audio_mixer, scene_find_audio_stream(scene, "engine.wav"), false, true);
+			character->boost = audio_mixer_add_audio(&scene->audio_mixer, scene_find_audio_stream(scene, "engine.wav"), false, true);
+			character->fall = audio_mixer_add_audio(&scene->audio_mixer, scene_find_audio_stream(scene, "vacuum.wav"), false, true);
 			character->rigid_body = iscene_create_new_rigid_body(scene, character, ((Character *)src)->rigid_body);
 			hgrid_add_body_to_grid(&scene->hgrid, character->rigid_body);
-			character->controller.boost = 0;
-			character->controller.axis = 0;
+			character->controller.axis = vec2(0);
 			result = character;
 		} break;
 
@@ -726,10 +737,17 @@ Entity *scene_clone_entity(Scene *scene, Entity *src, Vec2 p, Resource_Id *resou
 
 			auto bullet = iscene_add_bullet(scene, id, p, resource_id);
 			memcpy((u8 *)bullet + sizeof(Entity), (u8 *)src + sizeof(Entity), sizeof(Bullet) - sizeof(Entity));
-			bullet->audio = audio_mixer_add_audio(&scene->audio_mixer, scene_find_audio_stream(scene, "bullet.wav"), false, false);
+			bullet->audio = audio_mixer_add_audio(&scene->audio_mixer, scene->fire, false, false);
 			bullet->rigid_body = iscene_create_new_rigid_body(scene, bullet, ((Bullet *)src)->rigid_body);
 			hgrid_add_body_to_grid(&scene->hgrid, bullet->rigid_body);
 			result = bullet;
+		} break;
+
+		case Entity_Type_Particle_Emitter: {
+			auto emitter = iscene_add_particle_emitter(scene, id, p);
+			memcpy((u8 *)emitter + sizeof(Entity), (u8 *)src + sizeof(Entity), sizeof(Particle_Emitter) - sizeof(Entity));
+			emitter->particle_system.particles = (Particle *)memory_allocate(sizeof(Particle) * emitter->particle_system.particles_count);
+			result = emitter;
 		} break;
 
 			invalid_code_path();
@@ -757,6 +775,7 @@ Entity *scene_entity_pointer(Scene *scene, Entity_Reference &ref) {
 		sizeof(Character),
 		sizeof(Obstacle),
 		sizeof(Bullet),
+		sizeof(Particle_Emitter),
 	};
 	static_assert(static_count(ENTITY_TYPE_SIZE) == Entity_Type_Count);
 
@@ -765,6 +784,10 @@ Entity *scene_entity_pointer(Scene *scene, Entity_Reference &ref) {
 
 const Array_View<Camera> scene_cameras(Scene *scene) {
 	return scene->by_type.camera;
+}
+
+const Array_View<Particle_Emitter> scene_emitters(Scene *scene) {
+	return scene->by_type.emitter;
 }
 
 //
@@ -900,6 +923,35 @@ Character *scene_spawn_player(Scene *scene, Vec2 p, Vec4 color) {
 	return scene_get_player(scene);
 }
 
+Particle_Emitter *scene_spawn_emitter(Scene *scene, Vec2 p, Vec4 color) {
+	Resource_Id particle_id = { 6926504382549284097 };
+	Resource_Collection particle_resource = scene_find_resource(scene, particle_id);
+
+	Particle_Emitter src;
+	ent_init_particle_emitter(&src, p, particle_resource.texture, particle_resource.index);
+
+	auto emitter = scene_clone_entity(scene, &src, p)->as<Particle_Emitter>();
+	emitter->particle_system.properties.density.min = 0.1f;
+	emitter->particle_system.properties.density.max = 0.1f;
+	emitter->particle_system.properties.initial_velocity_x.min = -0.5f;
+	emitter->particle_system.properties.initial_velocity_x.max = +0.5f;
+	emitter->particle_system.properties.initial_velocity_x.control = Distribution_Control_EXTREMES;
+	emitter->particle_system.properties.initial_velocity_y.min = -0.5f;
+	emitter->particle_system.properties.initial_velocity_y.max = +0.5f;
+	emitter->particle_system.properties.initial_velocity_y.control = Distribution_Control_EXTREMES;
+	emitter->particle_system.properties.life_span.min = 0.5f;
+	emitter->particle_system.properties.life_span.max = 0.7f;
+	emitter->particle_system.properties.emission_rate = 7;
+	emitter->particle_system.properties.fade_in = 0.1f;
+	emitter->particle_system.properties.fade_out = 0.1f;
+	emitter->particle_system.properties.color_a = rgb_to_hsv(vec4(color.rgb, 0));
+	emitter->particle_system.properties.color_b = rgb_to_hsv(color);
+	emitter->particle_system.loop = 4;
+	emitter->remove_on_finish = true;
+
+	return emitter;
+}
+
 Bullet *scene_spawn_bullet(Scene *scene, Vec2 p, Vec4 color, Vec2 dir) {
 	Resource_Id id = { 6926438366305714858 }; // TODO: hard coded resource id
 	Resource_Collection resource = scene_find_resource(scene, id);
@@ -907,15 +959,16 @@ Bullet *scene_spawn_bullet(Scene *scene, Vec2 p, Vec4 color, Vec2 dir) {
 	Rigid_Body body;
 	Bullet src;
 
-	r32 radius = 0.04f * random_r32_range_r32(0.8f, 1.0f);
+	r32 radius = 0.05f * random_r32_range_r32(0.9f, 1.0f);
 	r32 intensity = 1.5f;
-	r32 life_span = 1 * random_r32_range_r32(0.6f, 1.0f);
+	r32 life_span = 1.0f * random_r32_range_r32(0.6f, 1.0f);
 	r32 initial_velocity = 5 * random_r32_range_r32(0.7f, 1.0f);
 
 	ent_init_bullet(&src, scene, p, radius, intensity, color, life_span, &body, resource.fixture);
 	auto bullet = scene_clone_entity(scene, &src, p, &id)->as<Bullet>();
 	bullet->rigid_body->transform.xform = mat2_scalar(radius, radius);
 	bullet->rigid_body->velocity = initial_velocity * dir;
+	bullet->rigid_body->restitution = 1;
 	bullet->rigid_body->drag = 0;
 
 	audio_pitch_factor(bullet->audio, random_r32_range_r32(0.9f, 1.0f));
@@ -963,23 +1016,15 @@ bool scene_handle_event(Scene *scene, const Event &event) {
 }
 
 void scene_begin(Scene *scene) {
-	for (s64 index = 0; index < Entity_Type_Count; ++index) {
-		auto &rm = scene->removed_entity[index];
-		rm.capacity = 0;
-		rm.count = 0;
-		rm.data = nullptr;
-	}
-
 	{
-		constexpr r32 PLAYER_BOOST_FORCE = 15;
-		constexpr r32 PLAYER_AXIS_FORCE = 10;
+		constexpr r32 PLAYER_FORCE = 10;
 
 		auto count = scene->by_type.character.count;
 		auto &characters = scene->by_type.character;
 		for (auto index = 0; index < count; ++index) {
 			auto &character = characters[index];
 			character.rigid_body->force = vec2(0);
-			character.rigid_body->force += vec2_hadamard(vec2(PLAYER_AXIS_FORCE, PLAYER_BOOST_FORCE), vec2(character.controller.axis, character.controller.boost));
+			character.rigid_body->force += PLAYER_FORCE * vec2_normalize_check(character.controller.axis);
 		}
 	}
 
@@ -1117,6 +1162,10 @@ void simulate_particle_system(Particle_System *system, r32 dt) {
 	}
 }
 
+void iscene_clean_particle_system(Particle_System *system) {
+	memory_free(system->particles);
+}
+
 void iscene_post_simulate(Scene *scene) {
 	Array<Entity_Id> *rma;
 	s64 count;
@@ -1151,7 +1200,9 @@ void iscene_post_simulate(Scene *scene) {
 				scene->player_id = { 0 };
 			}
 			if (iscene_delete_entity_reference_if_present(&scene->entity_table, id, &ref)) {
-				audio_mixer_remove_audio(&scene->audio_mixer, characters[ref.index].audio);
+				audio_mixer_remove_audio(&scene->audio_mixer, characters[ref.index].boost);
+				audio_mixer_remove_audio(&scene->audio_mixer, characters[ref.index].fall);
+				iscene_clean_particle_system(&characters[ref.index].particle_system);
 				iscene_destroy_rigid_body(scene, characters[ref.index].rigid_body);
 				memory_free(characters[ref.index].particle_system.particles);
 				characters[ref.index] = characters[characters.count - 1];
@@ -1200,9 +1251,34 @@ void iscene_post_simulate(Scene *scene) {
 			}
 		}
 	}
+	
+	{
+		rma = scene->removed_entity + Entity_Type_Particle_Emitter;
+		count = rma->count;
+		auto &emitters = scene->by_type.emitter;
+		for (s64 index = 0; index < count; ++index) {
+			id = rma->data[index];
+			if (iscene_delete_entity_reference_if_present(&scene->entity_table, id, &ref)) {
+				iscene_clean_particle_system(&emitters[ref.index].particle_system);
+				emitters[ref.index] = emitters[emitters.count - 1];
+				emitters.count -= 1;
+				if (ref.index < emitters.count) {
+					auto data = iscene_get_entity_reference(&scene->entity_table, emitters[ref.index].id);
+					data->index = ref.index;
+				}
+			}
+		}
+	}
 }
 
 void scene_simulate(Scene *scene, r32 dt) {
+	for (s64 index = 0; index < Entity_Type_Count; ++index) {
+		auto &rm = scene->removed_entity[index];
+		rm.capacity = 0;
+		rm.count = 0;
+		rm.data = nullptr;
+	}
+
 	if (iscene_simulate_world_enabled(scene)) {
 		if (scene->by_type.character.count) {
 			auto player = scene_get_player(scene);
@@ -1213,62 +1289,47 @@ void scene_simulate(Scene *scene, r32 dt) {
 			}
 		}
 
-		Contact_Manifold manifold;
-		manifold.penetration = 0;
-
 		{
-			constexpr r32 BULLET_SPAWN = 0.13f;
-
 			auto count = scene->by_type.character.count;
 			auto &characters = scene->by_type.character;
 			for (auto index = 0; index < count; ++index) {
 				auto &character = characters[index];
 				character.rigid_body->transform.p = character.position;
-
-				r32 radius = sqrtf(character.size.x * character.size.x + character.size.y * character.size.y);
-
-				auto dir = -vec2_normalize_check(vec2(character.rigid_body->velocity.x, 1));
-				character.particle_system.position = character.position + 0.5f * dir * radius;
-
-				character.particle_system.properties.initial_velocity_x.min = -0.8f + dir.x;
-				character.particle_system.properties.initial_velocity_x.max = +0.8f + dir.x;
-
-				if (character.controller.boost > 0 || character.controller.axis != 0) {
-					character.particle_system.loop = 1;
-					audio_play(character.audio, 0.3f);
-				} else {
-					character.particle_system.loop = 0;
-					audio_vanish(character.audio, 0.8f);
-				}
-
-				if (character.controller.attack) {
-					if (character.controller.cool_down <= 0) {
-						auto dir = vec2_normalize_check(character.controller.pointer);
-						scene_spawn_bullet(scene, character.position + 0.5f * radius * dir, character.color, dir);
-						character.controller.cool_down = BULLET_SPAWN;
-					} else {
-						character.controller.cool_down -= dt;
-					}
-				} else {
-					character.controller.cool_down = 0;
-				}
-			}
-
-			for (auto index = 0; index < count; ++index) {
-				auto &character = characters[index];
 				simulate_particle_system(&character.particle_system, dt);
 			}
 		}
+
+		auto player = scene_get_player(scene);
+		auto src = player->position;
 
 		{
 			auto count = scene->by_type.bullet.count;
 			auto &bullets = scene->by_type.bullet;
 			for (auto index = 0; index < count; ++index) {
 				auto &bullet = bullets[index];
+				bullet.rigid_body->transform.p = bullet.position;
+
 				if (bullet.age >= bullet.life_span) {
 					scene_remove_entity(scene, bullet.id);
 				}
 				bullet.age += dt;
+
+				auto d = bullet.position - src;
+				bullet.audio->attenuation = vec2_dot(d, d);
+			}
+		}
+
+		{
+			auto count = scene->by_type.emitter.count;
+			auto &emitters = scene->by_type.emitter;
+			for (auto index = 0; index < count; ++index) {
+				auto &emitter = emitters[index];
+				
+				if (emitter.remove_on_finish && emitter.particle_system.loop == 0) {
+					scene_remove_entity(scene, emitter.id);
+				}
+				
+				simulate_particle_system(&emitter.particle_system, dt);
 			}
 		}
 
@@ -1283,6 +1344,50 @@ void scene_simulate(Scene *scene, r32 dt) {
 			clear_bit(ptr->data.flags, Rigid_Body_COLLIDING);
 			clear_bit(ptr->data.flags, Rigid_Body_BOUNDING_BOX_COLLIDING);
 		}
+
+		{
+			constexpr r32 BULLET_SPAWN = 0.15f;
+
+			auto count = scene->by_type.character.count;
+			auto &characters = scene->by_type.character;
+			for (auto index = 0; index < count; ++index) {
+				auto &character = characters[index];
+
+				r32 radius = sqrtf(character.size.x * character.size.x + character.size.y * character.size.y);
+
+				r32 v = character.rigid_body->velocity.x;
+				character.rotation = atan2f(1, v) - MATH_TAU;
+
+				auto dir = -vec2_normalize_check(vec2(v, 1));
+				character.particle_system.position = character.position + 0.5f * dir * radius;
+
+				character.particle_system.properties.initial_velocity_x.min = -0.8f + dir.x;
+				character.particle_system.properties.initial_velocity_x.max = +0.8f + dir.x;
+
+				if (character.controller.axis.x || character.controller.axis.y > 0) {
+					character.particle_system.loop = 1;
+					audio_play(character.boost, 0.8f);
+				} else {
+					character.particle_system.loop = 0;
+					audio_vanish(character.boost, 0.8f);
+				}
+
+				if (character.controller.attack) {
+					if (character.controller.cool_down <= 0) {
+						auto dir = vec2_normalize_check(character.controller.pointer);
+						scene_spawn_bullet(scene, character.position + 0.5f * radius * dir, character.color, dir);
+						character.controller.cool_down = BULLET_SPAWN;
+					} else {
+						character.controller.cool_down -= dt;
+					}
+				} else {
+					character.controller.cool_down = 0;
+				}
+			}
+		}
+
+		Contact_Manifold manifold;
+		manifold.penetration = 0;
 
 		// TODO: Continuous collision detection
 		for (int iteration = 0; iteration < SCENE_SIMULATION_MAX_ITERATION; ++iteration) {
@@ -1313,21 +1418,41 @@ void scene_simulate(Scene *scene, r32 dt) {
 										auto entt_a = scene_get_entity(scene, a.entity_id);
 										auto entt_b = scene_get_entity(scene, b.entity_id);
 
-										if (entt_a.type == Entity_Type_Bullet) {
+										if (entt_a.type == Entity_Type_Bullet && entt_b.type != Entity_Type_Bullet) {
 											if (entt_b.type == Entity_Type_Character) {
 												// TODO: reduce health
 												auto character = (Character *)scene_entity_pointer(scene, entt_b);
-											} else if (entt_b.type == Entity_Type_Bullet) {
-												scene_remove_entity(scene, entt_b, b.entity_id);
 											}
+
+											scene_spawn_emitter(scene, manifold.contacts[0], vec4(0, 1, 1));
+											auto audio = audio_mixer_add_audio(&scene->audio_mixer, scene->hit, false, false);
+
+											auto player = scene_get_player(scene);
+											auto src = player->position;
+
+											auto d = src - manifold.contacts[0];
+											audio->attenuation = vec2_dot(d, d);
+											audio_play(audio, 0.5f);
+											audio_mixer_remove_audio(&scene->audio_mixer, audio);
+
 											scene_remove_entity(scene, entt_a, a.entity_id);
-										} else if (entt_b.type == Entity_Type_Bullet) {
+										} else if (entt_b.type == Entity_Type_Bullet && entt_a.type != Entity_Type_Bullet) {
 											if (entt_a.type == Entity_Type_Character) {
 												// TODO: reduce health
 												auto character = (Character *)scene_entity_pointer(scene, entt_a);
-											} else if (entt_a.type == Entity_Type_Bullet) {
-												scene_remove_entity(scene, entt_a, a.entity_id);
 											}
+
+											scene_spawn_emitter(scene, manifold.contacts[0], vec4(0, 1, 1));
+											auto audio = audio_mixer_add_audio(&scene->audio_mixer, scene->hit, false, false);
+
+											auto player = scene_get_player(scene);
+											auto src = player->position;
+
+											auto d = src - manifold.contacts[0];
+											audio->attenuation = vec2_dot(d, d);
+											audio_play(audio, 0.5f);
+											audio_mixer_remove_audio(&scene->audio_mixer, audio);
+
 											scene_remove_entity(scene, entt_b, b.entity_id);
 										} else {
 											// Resolve velocity
@@ -1370,6 +1495,15 @@ void scene_simulate(Scene *scene, r32 dt) {
 			auto &characters = scene->by_type.character;
 			for (auto index = 0; index < count; ++index) {
 				auto &character = characters[index];
+
+				auto new_p = character.rigid_body->transform.p;
+
+				if ((new_p.y - character.position.y < -0.001f) && character.controller.axis.y < 0) {
+					audio_play(character.fall, 0.3f);
+				} else {
+					audio_vanish(character.fall, 0.8f);
+				}
+
 				character.position = character.rigid_body->transform.p;
 			}
 		}
@@ -1589,11 +1723,7 @@ void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio) {
 
 				im2d_bind_texture(text.handle);
 
-				r32 v = c.rigid_body->velocity.x;
-				r32 angle = atan2f(1, v) - MATH_TAU;
-				r32 radius = sqrtf(c.size.x * c.size.x + c.size.y * c.size.y);
-
-				im2d_rect_centered_rotated(c.position, c.size, angle, text.uv, c.color);
+				im2d_rect_centered_rotated(c.position, c.size, c.rotation, text.uv, c.color);
 			}
 
 			for (s64 index = 0; index < count; ++index) {
@@ -1623,6 +1753,15 @@ void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio) {
 			for (s64 index = 0; index < count; ++index) {
 				Bullet &b = bullets[index];
 				im2d_circle(b.position, b.radius, b.color * map(0, b.life_span, 1, b.intensity, b.age));
+			}
+		}
+
+		{
+			s64 count = scene->by_type.emitter.count;
+			auto &emitters = scene->by_type.emitter;
+			for (s64 index = 0; index < count; ++index) {
+				Particle_Emitter &e = emitters[index];
+				iscene_render_particles(scene, &e.particle_system);
 			}
 		}
 
@@ -1935,6 +2074,9 @@ void scene_load_resources(Scene *scene) {
 			memcpy(group->name, f.name.data, length);
 			group->name[length] = 0;
 		}
+
+		scene->fire = scene_find_audio_stream(scene, "bullet.wav");
+		scene->hit = scene_find_audio_stream(scene, "hit.wav");
 	}
 }
 
@@ -2022,7 +2164,9 @@ void scene_reload_resource(Scene *scene, Resource_Id id) {
 
 void scene_clean_entities(Scene *scene) {
 	for (auto &character : scene->by_type.character) {
-		audio_mixer_remove_audio(&scene->audio_mixer, character.audio);
+		audio_mixer_remove_audio(&scene->audio_mixer, character.boost);
+		audio_mixer_remove_audio(&scene->audio_mixer, character.fall);
+		iscene_clean_particle_system(&character.particle_system);
 		iscene_destroy_rigid_body(scene, character.rigid_body);
 	}
 	for (auto &obstable : scene->by_type.obstacle) {
@@ -2032,10 +2176,15 @@ void scene_clean_entities(Scene *scene) {
 		audio_mixer_remove_audio(&scene->audio_mixer, bullet.audio);
 		iscene_destroy_rigid_body(scene, bullet.rigid_body);
 	}
+	for (auto &emitter : scene->by_type.emitter) {
+		iscene_clean_particle_system(&emitter.particle_system);
+	}
+
 	scene->by_type.camera.count = 0;
 	scene->by_type.character.count = 0;
 	scene->by_type.obstacle.count = 0;
 	scene->by_type.bullet.count = 0;
+	scene->by_type.emitter.count = 0;
 
 	scene->entity_table.count = 0;
 	memset(scene->entity_table.keys, 0, sizeof(sizeof(Entity_Hash_Table::Key) * SCENE_MAX_ENTITY_COUNT));
