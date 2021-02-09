@@ -279,6 +279,7 @@ popd
     <ClCompile Include="src\first.cpp" />
     <ClCompile Include="src\main_atish.cpp" />
     <ClCompile Include="src\main_pujan.cpp" />
+    <ClCompile Include="src\main_shankar.cpp" />
     <ClCompile Include="src\modules\core\null\gfx_null.cpp" />
     <ClCompile Include="src\modules\core\stb.cpp" />
     <ClCompile Include="src\modules\core\thread_pool.cpp" />

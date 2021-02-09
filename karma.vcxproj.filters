@@ -1,0 +1,115 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <FxCompile Include="src\shaders\debug.hlsl" />
+    <FxCompile Include="src\shaders\blur.hlsl" />
+    <FxCompile Include="src\shaders\hdr.hlsl" />
+    <FxCompile Include="src\shaders\im3d.hlsl" />
+    <FxCompile Include="src\shaders\quad.hlsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\audio.cpp" />
+    <ClCompile Include="src\broad_phase.cpp" />
+    <ClCompile Include="src\first.cpp" />
+    <ClCompile Include="src\main_atish.cpp" />
+    <ClCompile Include="src\main_pujan.cpp" />
+    <ClCompile Include="src\modules\core\null\gfx_null.cpp" />
+    <ClCompile Include="src\modules\core\stb.cpp" />
+    <ClCompile Include="src\modules\core\thread_pool.cpp" />
+    <ClCompile Include="src\modules\core\utility.cpp" />
+    <ClCompile Include="src\modules\imgui\dev.cpp" />
+    <ClCompile Include="src\modules\core\directx\gfx_d3d11.cpp" />
+    <ClCompile Include="src\modules\imgui\editor.cpp" />
+    <ClCompile Include="src\modules\imgui\imgui_impl_dx11.cpp" />
+    <ClCompile Include="src\modules\imgui\imconfig.cpp" />
+    <ClCompile Include="src\modules\imgui\imgui.cpp" />
+    <ClCompile Include="src\modules\imgui\imgui_demo.cpp" />
+    <ClCompile Include="src\modules\imgui\imgui_draw.cpp" />
+    <ClCompile Include="src\modules\imgui\imgui_impl_opengl3.cpp" />
+    <ClCompile Include="src\modules\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="src\main_zero.cpp" />
+    <ClCompile Include="src\modules\core\opengl\gfx_opengl.cpp" />
+    <ClCompile Include="src\modules\gfx\renderer.cpp" />
+    <ClCompile Include="src\modules\core\opengl\glad\src\glad.c" />
+    <ClCompile Include="src\modules\core\lin_maths.cpp" />
+    <ClCompile Include="src\modules\core\stream.cpp" />
+    <ClCompile Include="src\modules\pcg\pcg_basic.c" />
+    <ClCompile Include="src\modules\core\karma_shared.cpp" />
+    <ClCompile Include="src\modules\core\length_string.cpp" />
+    <ClCompile Include="src\modules\core\unicode.cpp" />
+    <ClCompile Include="src\modules\core\windows\systems_windows.cpp" />
+    <ClCompile Include="src\scene.cpp" />
+    <ClCompile Include="src\scene_debug.cpp" />
+    <ClCompile Include="src\template.cpp" />
+    <ClCompile Include="src\main_shankar.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\asset_loader.h" />
+    <ClInclude Include="src\asset.h" />
+    <ClInclude Include="src\audio.h" />
+    <ClInclude Include="src\broad_phase.h" />
+    <ClInclude Include="src\modules\core\data_structures.h" />
+    <ClInclude Include="src\modules\core\stb_rect_pack.h" />
+    <ClInclude Include="src\modules\core\thread_pool.h" />
+    <ClInclude Include="src\modules\imgui\dev.h" />
+    <ClInclude Include="src\modules\core\directx\dx_error.h" />
+    <ClInclude Include="src\modules\imgui\editor.h" />
+    <ClInclude Include="src\entity.h" />
+    <ClInclude Include="src\scene.h" />
+    <ClInclude Include="src\scene_debug.h" />
+    <ClInclude Include="src\shaders\gfx_shaders.h" />
+    <ClInclude Include="src\modules\imgui\imconfig.h" />
+    <ClInclude Include="src\modules\imgui\imgui.h" />
+    <ClInclude Include="src\modules\imgui\imgui_impl_dx11.h" />
+    <ClInclude Include="src\modules\imgui\imgui_impl_opengl3.h" />
+    <ClInclude Include="src\modules\imgui\imgui_internal.h" />
+    <ClInclude Include="src\modules\imgui\imstb_rectpack.h" />
+    <ClInclude Include="src\modules\imgui\imstb_textedit.h" />
+    <ClInclude Include="src\modules\imgui\imstb_truetype.h" />
+    <ClInclude Include="src\modules\core\intrinsics.h" />
+    <ClInclude Include="src\opentype.h" />
+    <ClInclude Include="src\particle_system.h" />
+    <ClInclude Include="src\modules\core\random.h" />
+    <ClInclude Include="src\modules\core\reflection.h" />
+    <ClInclude Include="src\modules\core\unicode.h" />
+    <ClInclude Include="src\modules\core\windows\resource.h" />
+    <ClInclude Include="src\modules\core\gfx_platform.h" />
+    <ClInclude Include="src\modules\gfx\renderer.h" />
+    <ClInclude Include="src\modules\core\gfx_types.h" />
+    <ClInclude Include="src\modules\core\opengl\glad\include\glad\glad.h" />
+    <ClInclude Include="src\modules\core\opengl\glad\include\KHR\khrplatform.h" />
+    <ClInclude Include="src\modules\core\lin_maths.h" />
+    <ClInclude Include="src\modules\core\lin_maths_types.h" />
+    <ClInclude Include="src\modules\pcg\pcg_basic.h" />
+    <ClInclude Include="src\modules\core\karma.h" />
+    <ClInclude Include="src\modules\core\karma_crt_impl.hpp" />
+    <ClInclude Include="src\modules\core\stb_image.h" />
+    <ClInclude Include="src\modules\core\stb_sprintf.h" />
+    <ClInclude Include="src\modules\core\stream.h" />
+    <ClInclude Include="src\modules\core\length_string.h" />
+    <ClInclude Include="src\modules\core\systems.h" />
+    <ClInclude Include="src\modules\core\stb_truetype.h" />
+    <ClInclude Include="src\modules\core\utility.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="src\modules\core\windows\resource.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="src\modules\core\windows\karma.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include=".gitattributes" />
+    <None Include=".gitignore" />
+    <None Include="readme.md" />
+    <None Include="src\shaders\blur.glsl" />
+    <None Include="src\shaders\debug.glsl" />
+    <None Include="src\shaders\hdr.glsl" />
+    <None Include="src\shaders\im3d.glsl" />
+    <None Include="src\shaders\quad.glsl" />
+    <None Include="src\prebuild.bat" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="src\.generated\readme.txt" />
+    <Text Include="todo.txt" />
+  </ItemGroup>
+</Project>
