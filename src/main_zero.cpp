@@ -66,7 +66,7 @@ int karma_user_zero() {
 
 	Simulation_Speed sim_speed = simulation_speed(SIMULATION_SPEED_1X);
 
-	r32 const dt = 1.0f / 60.0f;
+	r32 const dt = 1.0f / 30.0f;
 	r32       game_dt = dt * sim_speed.factor;
 	r32       real_dt = dt;
 	r32       game_t = 0.0f;
@@ -169,9 +169,11 @@ int karma_user_zero() {
 
 						case Key_S:
 						case Key_DOWN:
+							controller.boost = (event.key.state == Key_State_DOWN);
+							break;
+
 						case Key_SPACE:
-							if (event.key.state == Key_State_DOWN)
-								controller.boost = 0;
+							controller.attack = (event.key.state == Key_State_DOWN);
 							break;
 					}
 				}
@@ -219,7 +221,7 @@ int karma_user_zero() {
 			accumulator_t -= dt;
 		}
 
-		scene_update(scene);
+		scene_update(scene, sim_speed.factor);
 
 		ImGui_UpdateFrame(real_dt);
 

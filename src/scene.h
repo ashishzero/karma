@@ -1,10 +1,12 @@
 #pragma once
+
 #include "modules/core/karma.h"
 #include "modules/core/utility.h"
 #include "modules/core/random.h"
 #include "modules/core/data_structures.h"
 #include "entity.h"
 #include "broad_phase.h"
+#include "audio.h"
 
 constexpr u32 SCENE_MAX_ENTITY_COUNT = 524288; // NOTE: This must be power of 2 (2^19)
 constexpr r32 SCENE_VIEW_HEIGHT_HALF = 1;
@@ -47,6 +49,11 @@ struct Entity_Hash_Table {
 	u32				count;
 };
 
+struct Audio_Group {
+	Resource_Name name;
+	Audio_Stream *stream;
+};
+
 struct Scene {
 	union Entity_By_Type {
 		struct {
@@ -75,12 +82,16 @@ struct Scene {
 	Array<Fixture_Group>	fixture_group;
 	Array<Texture_Group>	texture_group;
 
+	Array<Audio_Group>		audio_group;
+
 	Allocator					pool_allocator;
 
 	s32				loaded_level;
 	Array<Level>	levels;
 
 	Array<Entity_Id>	removed_entity[Entity_Type_Count];
+
+	Audio_Mixer audio_mixer;
 
 	Random_Series	id_series;
 
@@ -117,6 +128,7 @@ const Array_View<Resource_Header> scene_resource_headers(Scene *scene);
 
 Resource_Id					scene_find_entity_resource_id(Scene *scene, Entity_Id id);
 const Resource_Collection	scene_find_resource(Scene *scene, Resource_Id id);
+Audio_Stream *				scene_find_audio_stream(Scene *scene, const char *name);
 
 Entity *scene_clone_entity(Scene *scene, Entity *entity, Vec2 p, Resource_Id *resource = nullptr);
 Entity_Reference scene_get_entity(Scene *scene, Entity_Id id);
@@ -162,7 +174,7 @@ bool scene_handle_event(Scene *scene, const Event &event);
 
 void scene_begin(Scene *scene);
 void scene_simulate(Scene *scene, r32 dt);
-void scene_update(Scene *scene);
+void scene_update(Scene *scene, r32 sim_factor);
 void scene_end(Scene *scene);
 
 //
@@ -288,6 +300,7 @@ inline void ent_init_character(Character *character, Scene *scene, Vec2 p, Vec4 
 	character->controller.pointer = vec2(0, 1);
 	character->controller.attack = 0;
 	character->controller.cool_down = 0;
+	character->audio = nullptr;
 	particle_system_init(&character->particle_system, p, particle, particle_index, 1000);
 	ent_rigid_body_init(character, body, Rigid_Body_Type_Dynamic, fixture);
 	character->rigid_body = body;

@@ -94,6 +94,8 @@ enum Entity_Type : u32 {
 	Entity_Type_Count
 };
 
+struct Audio;
+
 struct Camera;
 struct Character;
 struct Obstacle;
@@ -240,6 +242,7 @@ struct attribute(no_serialize_base, v:2) Character : public Entity {
 	attribute(no_serialize)					Texture_Id texture;
 											Particle_System particle_system;
 	attribute(no_display, no_serialize)		Entity_Controller controller;
+	attribute(no_display, no_serialize)		Audio *audio;
 	attribute(no_serialize)					Rigid_Body *rigid_body;
 };
 
@@ -252,12 +255,13 @@ struct attribute(no_serialize_base, v:1) Obstacle : public Entity {
 };
 
 struct attribute(no_serialize_base) Bullet : public Entity {
-	attribute(min:0)				r32 radius;
-	attribute(min:0)				r32 intensity;
-	attribute(color)				Vec4 color;
-	attribute(min:0)				r32 age;
-	attribute(min:0)				r32 life_span;
-	attribute(no_serialize)			Rigid_Body *rigid_body;
+	attribute(min:0)						r32 radius;
+	attribute(min:0)						r32 intensity;
+	attribute(color)						Vec4 color;
+	attribute(min:0)						r32 age;
+	attribute(min:0)						r32 life_span;
+	attribute(no_display, no_serialize)		Audio *audio;
+	attribute(no_serialize)					Rigid_Body *rigid_body;
 };
 
 //

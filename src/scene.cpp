@@ -4,6 +4,7 @@
 #include "modules/core/systems.h"
 #include "modules/gfx/renderer.h"
 #include "modules/core/stb_image.h"
+#include "modules/imgui/dev.h"
 
 #include ".generated/entity.typeinfo"
 
@@ -492,9 +493,15 @@ Scene *scene_create() {
 	scene->texture_group.data = nullptr;
 	scene->texture_group.allocator = context.allocator;
 
+	scene->audio_group.count = 0;
+	scene->audio_group.capacity = 0;
+	scene->audio_group.data = nullptr;
+	scene->audio_group.allocator = context.allocator;
+
 	array_resize(&scene->resource_header, 100);
 	array_resize(&scene->fixture_group, 100);
 	array_resize(&scene->texture_group, 100);
+	array_resize(&scene->audio_group, 100);
 
 	circular_linked_list_init(&scene->rigid_bodies, context.allocator);
 
@@ -517,6 +524,12 @@ Scene *scene_create() {
 		rm.count = 0;
 		rm.data = nullptr;
 		rm.allocator = TEMPORARY_ALLOCATOR;
+	}
+
+	audio_mixer(&scene->audio_mixer);
+
+	if (!system_audio(system_update_audio, system_refresh_audio_device, &scene->audio_mixer)) {
+		system_display_critical_message("Failed to load audio!");
 	}
 
 	#ifdef ENABLE_DEVELOPER_OPTIONS
@@ -648,6 +661,15 @@ const Resource_Collection scene_find_resource(Scene *scene, Resource_Id id) {
 	return  { nullptr, nullptr, nullptr, MAX_UINT32 };
 }
 
+Audio_Stream *scene_find_audio_stream(Scene *scene, const char *name) {
+	for (auto &a : scene->audio_group) {
+		if (strcmp(a.name, name) == 0) {
+			return a.stream;
+		}
+	}
+	return nullptr;
+}
+
 Entity *scene_clone_entity(Scene *scene, Entity *src, Vec2 p, Resource_Id *resource) {
 	Entity_Id id = { iscene_generate_unique_id(scene) };
 
@@ -671,6 +693,7 @@ Entity *scene_clone_entity(Scene *scene, Entity *src, Vec2 p, Resource_Id *resou
 			auto character = iscene_add_character(scene, id, p, resource_id);
 			memcpy((u8 *)character + sizeof(Entity), (u8 *)src + sizeof(Entity), sizeof(Character) - sizeof(Entity));
 			character->particle_system.particles = (Particle *)memory_allocate(sizeof(Particle) * character->particle_system.particles_count);
+			character->audio = audio_mixer_add_audio(&scene->audio_mixer, scene_find_audio_stream(scene, "engine.wav"), false, true);
 			character->rigid_body = iscene_create_new_rigid_body(scene, character, ((Character *)src)->rigid_body);
 			hgrid_add_body_to_grid(&scene->hgrid, character->rigid_body);
 			character->controller.boost = 0;
@@ -703,6 +726,7 @@ Entity *scene_clone_entity(Scene *scene, Entity *src, Vec2 p, Resource_Id *resou
 
 			auto bullet = iscene_add_bullet(scene, id, p, resource_id);
 			memcpy((u8 *)bullet + sizeof(Entity), (u8 *)src + sizeof(Entity), sizeof(Bullet) - sizeof(Entity));
+			bullet->audio = audio_mixer_add_audio(&scene->audio_mixer, scene_find_audio_stream(scene, "bullet.wav"), false, false);
 			bullet->rigid_body = iscene_create_new_rigid_body(scene, bullet, ((Bullet *)src)->rigid_body);
 			hgrid_add_body_to_grid(&scene->hgrid, bullet->rigid_body);
 			result = bullet;
@@ -883,16 +907,19 @@ Bullet *scene_spawn_bullet(Scene *scene, Vec2 p, Vec4 color, Vec2 dir) {
 	Rigid_Body body;
 	Bullet src;
 
-	r32 radius = 0.03f * random_r32_range_r32(0.8f, 1.0f);
+	r32 radius = 0.04f * random_r32_range_r32(0.8f, 1.0f);
 	r32 intensity = 1.5f;
 	r32 life_span = 1 * random_r32_range_r32(0.6f, 1.0f);
-	r32 initial_velocity = 10 * random_r32_range_r32(0.7f, 1.0f);
+	r32 initial_velocity = 5 * random_r32_range_r32(0.7f, 1.0f);
 
 	ent_init_bullet(&src, scene, p, radius, intensity, color, life_span, &body, resource.fixture);
 	auto bullet = scene_clone_entity(scene, &src, p, &id)->as<Bullet>();
 	bullet->rigid_body->transform.xform = mat2_scalar(radius, radius);
 	bullet->rigid_body->velocity = initial_velocity * dir;
 	bullet->rigid_body->drag = 0;
+
+	audio_pitch_factor(bullet->audio, random_r32_range_r32(0.9f, 1.0f));
+	audio_play(bullet->audio);
 
 	return bullet;
 }
@@ -1090,6 +1117,91 @@ void simulate_particle_system(Particle_System *system, r32 dt) {
 	}
 }
 
+void iscene_post_simulate(Scene *scene) {
+	Array<Entity_Id> *rma;
+	s64 count;
+
+	Entity_Reference ref;
+	Entity_Id id;
+
+	{
+		rma = scene->removed_entity + Entity_Type_Camera;
+		count = rma->count;
+		auto &cameras = scene->by_type.camera;
+		for (s64 index = 0; index < count; ++index) {
+			id = rma->data[index];
+			if (iscene_delete_entity_reference_if_present(&scene->entity_table, id, &ref)) {
+				cameras[ref.index] = cameras[cameras.count - 1];
+				cameras.count -= 1;
+				if (ref.index < cameras.count) {
+					auto data = iscene_get_entity_reference(&scene->entity_table, cameras[ref.index].id);
+					data->index = ref.index;
+				}
+			}
+		}
+	}
+
+	{
+		rma = scene->removed_entity + Entity_Type_Character;
+		count = rma->count;
+		auto &characters = scene->by_type.character;
+		for (s64 index = 0; index < count; ++index) {
+			id = rma->data[index];
+			if (id.handle == scene->player_id.handle) {
+				scene->player_id = { 0 };
+			}
+			if (iscene_delete_entity_reference_if_present(&scene->entity_table, id, &ref)) {
+				audio_mixer_remove_audio(&scene->audio_mixer, characters[ref.index].audio);
+				iscene_destroy_rigid_body(scene, characters[ref.index].rigid_body);
+				memory_free(characters[ref.index].particle_system.particles);
+				characters[ref.index] = characters[characters.count - 1];
+				characters.count -= 1;
+				if (ref.index < characters.count) {
+					auto data = iscene_get_entity_reference(&scene->entity_table, characters[ref.index].id);
+					data->index = ref.index;
+				}
+			}
+		}
+	}
+
+	{
+		rma = scene->removed_entity + Entity_Type_Obstacle;
+		count = rma->count;
+		auto &obstacles = scene->by_type.obstacle;
+		for (s64 index = 0; index < count; ++index) {
+			id = rma->data[index];
+			if (iscene_delete_entity_reference_if_present(&scene->entity_table, id, &ref)) {
+				iscene_destroy_rigid_body(scene, obstacles[ref.index].rigid_body);
+				obstacles[ref.index] = obstacles[obstacles.count - 1];
+				obstacles.count -= 1;
+				if (ref.index < obstacles.count) {
+					auto data = iscene_get_entity_reference(&scene->entity_table, obstacles[ref.index].id);
+					data->index = ref.index;
+				}
+			}
+		}
+	}
+
+	{
+		rma = scene->removed_entity + Entity_Type_Bullet;
+		count = rma->count;
+		auto &bullets = scene->by_type.bullet;
+		for (s64 index = 0; index < count; ++index) {
+			id = rma->data[index];
+			if (iscene_delete_entity_reference_if_present(&scene->entity_table, id, &ref)) {
+				audio_mixer_remove_audio(&scene->audio_mixer, bullets[ref.index].audio);
+				iscene_destroy_rigid_body(scene, bullets[ref.index].rigid_body);
+				bullets[ref.index] = bullets[bullets.count - 1];
+				bullets.count -= 1;
+				if (ref.index < bullets.count) {
+					auto data = iscene_get_entity_reference(&scene->entity_table, bullets[ref.index].id);
+					data->index = ref.index;
+				}
+			}
+		}
+	}
+}
+
 void scene_simulate(Scene *scene, r32 dt) {
 	if (iscene_simulate_world_enabled(scene)) {
 		if (scene->by_type.character.count) {
@@ -1105,7 +1217,7 @@ void scene_simulate(Scene *scene, r32 dt) {
 		manifold.penetration = 0;
 
 		{
-			constexpr r32 BULLET_SPAWN = 0.1f;
+			constexpr r32 BULLET_SPAWN = 0.13f;
 
 			auto count = scene->by_type.character.count;
 			auto &characters = scene->by_type.character;
@@ -1123,8 +1235,10 @@ void scene_simulate(Scene *scene, r32 dt) {
 
 				if (character.controller.boost > 0 || character.controller.axis != 0) {
 					character.particle_system.loop = 1;
+					audio_play(character.audio, 0.3f);
 				} else {
 					character.particle_system.loop = 0;
+					audio_vanish(character.audio, 0.8f);
 				}
 
 				if (character.controller.attack) {
@@ -1204,17 +1318,17 @@ void scene_simulate(Scene *scene, r32 dt) {
 												// TODO: reduce health
 												auto character = (Character *)scene_entity_pointer(scene, entt_b);
 											} else if (entt_b.type == Entity_Type_Bullet) {
-												scene_remove_entity(scene, b.entity_id);
+												scene_remove_entity(scene, entt_b, b.entity_id);
 											}
-											scene_remove_entity(scene, b.entity_id);
+											scene_remove_entity(scene, entt_a, a.entity_id);
 										} else if (entt_b.type == Entity_Type_Bullet) {
 											if (entt_a.type == Entity_Type_Character) {
 												// TODO: reduce health
 												auto character = (Character *)scene_entity_pointer(scene, entt_a);
 											} else if (entt_a.type == Entity_Type_Bullet) {
-												scene_remove_entity(scene, a.entity_id);
+												scene_remove_entity(scene, entt_a, a.entity_id);
 											}
-											scene_remove_entity(scene, b.entity_id);
+											scene_remove_entity(scene, entt_b, b.entity_id);
 										} else {
 											// Resolve velocity
 											r32 restitution = minimum(a.restitution, b.restitution);
@@ -1283,93 +1397,21 @@ void scene_simulate(Scene *scene, r32 dt) {
 			}
 		}
 	}
+
+	iscene_post_simulate(scene);
 }
 
-void scene_update(Scene *scene) {
+void scene_update(Scene *scene, r32 sim_factor) {
+	Dev_TimedBlockBegin(AudioUpdate);
+	scene->audio_mixer.pitch_factor = sim_factor;
+	audio_mixer_update(&scene->audio_mixer);
+	Dev_TimedBlockEnd(AudioUpdate);
+
 	editor_update(scene, &scene->editor);
 }
 
 void scene_end(Scene *scene) {
-	Array<Entity_Id> *rma;
-	s64 count;
-
-	Entity_Reference ref;
-	Entity_Id id;
-
-	{
-		rma = scene->removed_entity + Entity_Type_Camera;
-		count = rma->count;
-		auto &cameras = scene->by_type.camera;
-		for (s64 index = 0; index < count; ++index) {
-			id = rma->data[index];
-			if (iscene_delete_entity_reference_if_present(&scene->entity_table, id, &ref)) {
-				cameras[ref.index] = cameras[cameras.count - 1];
-				cameras.count -= 1;
-				if (ref.index < cameras.count) {
-					auto data = iscene_get_entity_reference(&scene->entity_table, cameras[ref.index].id);
-					data->index = ref.index;
-				}
-			}
-		}
-	}
-
-	{
-		rma = scene->removed_entity + Entity_Type_Character;
-		count = rma->count;
-		auto &characters = scene->by_type.character;
-		for (s64 index = 0; index < count; ++index) {
-			id = rma->data[index];
-			if (id.handle == scene->player_id.handle) {
-				scene->player_id = { 0 };
-			}
-			if (iscene_delete_entity_reference_if_present(&scene->entity_table, id, &ref)) {
-				iscene_destroy_rigid_body(scene, characters[ref.index].rigid_body);
-				memory_free(characters[ref.index].particle_system.particles);
-				characters[ref.index] = characters[characters.count - 1];
-				characters.count -= 1;
-				if (ref.index < characters.count) {
-					auto data = iscene_get_entity_reference(&scene->entity_table, characters[ref.index].id);
-					data->index = ref.index;
-				}
-			}
-		}
-	}
-
-	{
-		rma = scene->removed_entity + Entity_Type_Obstacle;
-		count = rma->count;
-		auto &obstacles = scene->by_type.obstacle;
-		for (s64 index = 0; index < count; ++index) {
-			id = rma->data[index];
-			if (iscene_delete_entity_reference_if_present(&scene->entity_table, id, &ref)) {
-				iscene_destroy_rigid_body(scene, obstacles[ref.index].rigid_body);
-				obstacles[ref.index] = obstacles[obstacles.count - 1];
-				obstacles.count -= 1;
-				if (ref.index < obstacles.count) {
-					auto data = iscene_get_entity_reference(&scene->entity_table, obstacles[ref.index].id);
-					data->index = ref.index;
-				}
-			}
-		}
-	}
-
-	{
-		rma = scene->removed_entity + Entity_Type_Bullet;
-		count = rma->count;
-		auto &bullets = scene->by_type.bullet;
-		for (s64 index = 0; index < count; ++index) {
-			id = rma->data[index];
-			if (iscene_delete_entity_reference_if_present(&scene->entity_table, id, &ref)) {
-				iscene_destroy_rigid_body(scene, bullets[ref.index].rigid_body);
-				bullets[ref.index] = bullets[bullets.count - 1];
-				bullets.count -= 1;
-				if (ref.index < bullets.count) {
-					auto data = iscene_get_entity_reference(&scene->entity_table, bullets[ref.index].id);
-					data->index = ref.index;
-				}
-			}
-		}
-	}
+	
 }
 
 //
@@ -1858,10 +1900,10 @@ bool iscene_load_resource(Scene *scene, const String path, Resource_Header *head
 void scene_load_resources(Scene *scene) {
 	scene_clean_resources(scene);
 
-	auto mark = push_temporary_allocator();
-	defer{ pop_temporary_allocator(mark); };
-
 	{
+		auto mark = push_temporary_allocator();
+		defer{ pop_temporary_allocator(mark); };
+
 		auto files = system_find_files("resources/sprites", ".sprite", false);
 		defer{ memory_free(files.data); };
 
@@ -1870,13 +1912,28 @@ void scene_load_resources(Scene *scene) {
 		array_resize(&scene->texture_group, files.count);
 		array_resize(&scene->fixture_group, files.count);
 
-
 		for (auto &f : files) {
 			if (!iscene_load_resource(scene, f.path, array_add(&scene->resource_header), array_add(&scene->texture_group), array_add(&scene->fixture_group))) {
 				scene->resource_header.count -= 1;
 				scene->texture_group.count -= 1;
 				scene->fixture_group.count -= 1;
 			}
+		}
+	}
+
+	{
+		auto files = system_find_files("resources/audios", ".wav", false);
+		defer{ memory_free(files.data); };
+
+		array_resize(&scene->audio_group, files.count);
+
+		for (auto &f : files) {
+			auto content = system_read_entire_file(f.path);
+			auto group = array_add(&scene->audio_group);
+			group->stream = (Audio_Stream *)content.data;
+			int length = (int)minimum(f.name.count, sizeof(Resource_Name) - 1);
+			memcpy(group->name, f.name.data, length);
+			group->name[length] = 0;
 		}
 	}
 }
@@ -1897,6 +1954,12 @@ void scene_clean_resources(Scene *scene) {
 	scene->fixture_group.count = 0;
 
 	scene->resource_header.count = 0;
+
+	auto &audios = scene->audio_group;
+	for (auto &a : audios) {
+		memory_free(a.stream);
+	}
+	scene->audio_group.count = 0;
 }
 
 void scene_reload_resource(Scene *scene, Resource_Id id) {
@@ -1951,7 +2014,7 @@ void scene_reload_resource(Scene *scene, Resource_Id id) {
 					ent->rigid_body->fixtures = resource.fixture->fixtures;
 				} break;
 
-				invalid_default_case();
+					invalid_default_case();
 			}
 		}
 	}
@@ -1959,14 +2022,20 @@ void scene_reload_resource(Scene *scene, Resource_Id id) {
 
 void scene_clean_entities(Scene *scene) {
 	for (auto &character : scene->by_type.character) {
+		audio_mixer_remove_audio(&scene->audio_mixer, character.audio);
 		iscene_destroy_rigid_body(scene, character.rigid_body);
 	}
 	for (auto &obstable : scene->by_type.obstacle) {
 		iscene_destroy_rigid_body(scene, obstable.rigid_body);
 	}
+	for (auto &bullet : scene->by_type.bullet) {
+		audio_mixer_remove_audio(&scene->audio_mixer, bullet.audio);
+		iscene_destroy_rigid_body(scene, bullet.rigid_body);
+	}
 	scene->by_type.camera.count = 0;
 	scene->by_type.character.count = 0;
 	scene->by_type.obstacle.count = 0;
+	scene->by_type.bullet.count = 0;
 
 	scene->entity_table.count = 0;
 	memset(scene->entity_table.keys, 0, sizeof(sizeof(Entity_Hash_Table::Key) * SCENE_MAX_ENTITY_COUNT));
@@ -2190,8 +2259,8 @@ bool scene_save_level(Scene *scene) {
 				system_log(LOG_ERROR, "Scene", "%s/%zu.ent file could not be opened. Failed to save entity.", level_dir, character->id);
 			}
 			ostream_reset(&out);
-		}
 	}
+}
 	#endif
 
 	{
