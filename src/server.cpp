@@ -1,9 +1,12 @@
 #include "modules/core/systems.h"
 #include "modules/core/utility.h"
+#include "message.h"
+
 #include <winsock2.h>
 #pragma comment(lib, "Winmm.lib")
 
 #define SOCKET_BUFFER_SIZE kilo_bytes(1)
+
 
 
 const r32 TURN_SPEED = 0.01f;	// how fast player turns
@@ -33,7 +36,7 @@ enum  Server_Message : u8
 	START,
 };
 
-bool operator==(const Ip_Endpoint& a, const Ip_Endpoint& b) { return a.address == b.address && a.port == b.port; }
+bool operator==(const Ip_Endpoint &a, const Ip_Endpoint &b) { return a.address == b.address && a.port == b.port; }
 
 struct Player_State
 {
@@ -49,7 +52,7 @@ static s32 time_since(LARGE_INTEGER t, LARGE_INTEGER frequency)
 {
 	LARGE_INTEGER now;
 	QueryPerformanceCounter(&now);
-
+    
 	return s32(now.QuadPart - t.QuadPart) / s32(frequency.QuadPart);
 }
 
@@ -57,8 +60,8 @@ static s32 time_since(LARGE_INTEGER t, LARGE_INTEGER frequency)
 int system_main() {
 	Ip_Endpoint address = ip_endpoint_local(9999);
 	Socket socket = system_net_open_udp_server(address);
-
-
+    
+    
 	if (socket != SOCKET_INVALID) {
 		int d = (address.address & 0x000000ff) >> 0;
 		int c = (address.address & 0x0000ff00) >> 8;
@@ -66,136 +69,168 @@ int system_main() {
 		int a = (address.address & 0xff000000) >> 24;
 		printf("Server Launched: %d.%d.%d.%d:%d\n", a, b, c, d, address.port);
 	}
-
-	system_net_set_socket_nonblocking(socket);
-
-
+    
+	//system_net_set_socket_nonblocking(socket);
+    
+    
 	UINT sleep_granularity_ms = 1;
 	bool sleep_granularity_was_set = timeBeginPeriod(sleep_granularity_ms) == TIMERR_NOERROR;  //bool 32
 	LARGE_INTEGER clock_frequency;
 	QueryPerformanceFrequency(&clock_frequency);
-
-
+    
+    
 	u8 buffer[SOCKET_BUFFER_SIZE];
 	Ip_Endpoint client_endpoints[MAX_CLIENTS];
-	r32 time_since_heard_from_clients[MAX_CLIENTS];
-	Player_State client_objects[MAX_CLIENTS];
-	Player_Input client_inputs[MAX_CLIENTS];
+	//r32 time_since_heard_from_clients[MAX_CLIENTS];
+	//Player_State client_objects[MAX_CLIENTS];
+	//Player_Input client_inputs[MAX_CLIENTS];
 	u16 CLIENT_READY_BITS[MAX_CLIENTS];
-
+    
 	for (u16 i = 0; i < MAX_CLIENTS; ++i)
 	{
 		client_endpoints[i] = {};
 		CLIENT_READY_BITS[0] = 0;
 	}
-
-
+    
+    
 	//char buffer[SOCKET_BUFFER_SIZE];
 	bool running = true;
-	int flags;
+	//int flags;
 	bool start = false;
 	while (running) {
-
+        
 		Ip_Endpoint from;
-		int bytes_received = system_net_receive_from(socket, buffer, SOCKET_BUFFER_SIZE, &from);
+		int bytes_received = system_net_receive_from(socket, buffer, sizeof(Message_Input), &from);
 		if (bytes_received < 0) {
 			continue;
+		} else {
+			//printf("sth received\n");
 		}
-		else {
-			printf("sth received\n");
-		}
-
+        
 		Ip_Endpoint from_endpoint = from;
 		//from_endpoint.address = from.address;
 		//from_endpoint.port = (from.address & 0xff000000) >> 24;
-
+        
 		int d = (from.address & 0x000000ff) >> 0;
 		int c = (from.address & 0x0000ff00) >> 8;
 		int b = (from.address & 0x00ff0000) >> 16;
 		int a = (from.address & 0xff000000) >> 24;
-
+        
 		char client_input = buffer[0];
 		//printf("%d.%d.%d.%d:%d - %c\n", a, b, c, d, from.port, client_input);
 		printf("client %d.%d.%d.%d:%d \n", a, b, c, d, from.port);
+        
+		if (bytes_received != sizeof(Message_Input)) {
+			printf("Bytes received: %d\n", bytes_received);
+		} else {
+			auto in = (Message_Input *)buffer;
 
+			system_net_send_to(socket, buffer, sizeof(Message_Input), from);
+            
+			switch (in->type) {
+				case Message_Input::X_POINTER: {
+					printf("x pointer: %f\n", in->real_value);
+				} break;
+                
+				case Message_Input::Y_POINTER: {
+					printf("y pointer: %f\n", in->real_value);
+				} break;
+                
+				case Message_Input::X_AXIS: {
+					printf("x axis: %f\n", in->real_value);
+				} break;
+                
+				case Message_Input::Y_AXIS: {
+					printf("x axis: %f\n", in->real_value);
+				} break;
+                
+				case Message_Input::ATTACK: {
+					printf("attack: %d\n", in->signed_value);
+				} break;
+			}
+		}
+	}
+    
+	{
+#if 0
 		switch (buffer[0]) {
-		case Client_Message::JOIN:
-		{
-			system_trace("Client_Message::Join from %u:%hu\n", from_endpoint.address, from_endpoint.port);
-
-			u16 slot = u16(-1);
-			for (u16 i = 0; i < MAX_CLIENTS; ++i)
+			case Client_Message::JOIN:
 			{
-				if (client_endpoints[i].address == 0)
+				system_trace("Client_Message::Join from %u:%hu\n", from_endpoint.address, from_endpoint.port);
+                
+				u16 slot = u16(-1);
+				for (u16 i = 0; i < MAX_CLIENTS; ++i)
 				{
-					slot = i;
-					break;
+					if (client_endpoints[i].address == 0)
+					{
+						slot = i;
+						break;
+					}
+				}
+                
+				buffer[0] = (s8)Server_Message::JOIN_RESULT;
+				if (slot != u16(-1))
+				{
+					printf("client will be assigned to slot %hu\n", slot);
+					buffer[1] = 1;
+					memcpy(&buffer[2], &slot, 2);
+                    
+					flags = 0;
+					if (system_net_send_to(socket, buffer, SOCKET_BUFFER_SIZE, from) != SOCKET_ERROR)
+					{
+						client_endpoints[slot] = from_endpoint;
+						time_since_heard_from_clients[slot] = 0.0f;
+						client_objects[slot] = {};
+						client_inputs[slot] = {};
+					} else
+					{
+						printf("sendto failed: %d\n", WSAGetLastError());
+					}
+				} else
+				{
+					printf("could not find a slot for player\n");
+					buffer[1] = 0;
+                    
+					flags = 0;
+					if (system_net_send_to(socket, buffer, sizeof(buffer), from) != SOCKET_ERROR)
+					{
+						printf("sendto failed: %d\n", WSAGetLastError());
+					}
 				}
 			}
-
-			buffer[0] = (s8)Server_Message::JOIN_RESULT;
-			if (slot != u16(-1))
+			break;
+            
+			case Client_Message::READY:
 			{
-				printf("client will be assigned to slot %hu\n", slot);
-				buffer[1] = 1;
-				memcpy(&buffer[2], &slot, 2);
-
-				flags = 0;
-				if (system_net_send_to(socket, buffer, SOCKET_BUFFER_SIZE, from) != SOCKET_ERROR)
-				{
-					client_endpoints[slot] = from_endpoint;
-					time_since_heard_from_clients[slot] = 0.0f;
-					client_objects[slot] = {};
-					client_inputs[slot] = {};
-				}
-				else
-				{
-					printf("sendto failed: %d\n", WSAGetLastError());
+				u16 slot;
+				memcpy(&slot, &buffer[1], 2);
+                
+				if (client_endpoints[slot] == from_endpoint) {
+					CLIENT_READY_BITS[slot] = 1;
 				}
 			}
-			else
-			{
-				printf("could not find a slot for player\n");
-				buffer[1] = 0;
-
-				flags = 0;
-				if (system_net_send_to(socket, buffer, sizeof(buffer), from) != SOCKET_ERROR)
-				{
-					printf("sendto failed: %d\n", WSAGetLastError());
-				}
-			}
+			break;
 		}
-		break;
-
-		case Client_Message::READY:
-		{
-			u16 slot;
-			memcpy(&slot, &buffer[1], 2);
-
-			if (client_endpoints[slot] == from_endpoint) {
-				CLIENT_READY_BITS[slot] = 1;
-			}
-		}
-		break;
-		}
-
+#endif
+        
+#if 0
 		bool ready_to_start = true;
 		for (u16 i = 0; i < MAX_CLIENTS; ++i)
 		{
 			if (CLIENT_READY_BITS[i] == 0)
 				ready_to_start = false;
 		}
-
+        
 		Ip_Endpoint to;
 		s32 bytes_written = 1;
 		if (ready_to_start) {
 			buffer[0] = (u8)Server_Message::START;
-			for (u16 i = 0; i < MAX_CLIENTS; ++i){
+			for (u16 i = 0; i < MAX_CLIENTS; ++i) {
 				if (client_endpoints[i].address)
 				{
 					to.address = client_endpoints[i].address;
 					to.port = client_endpoints[i].port;
-
+                    
 					if (system_net_send_to(socket, buffer, bytes_written, to) == SOCKET_ERROR)
 					{
 						printf("sendto failed: %d\n", WSAGetLastError());
@@ -204,92 +239,89 @@ int system_main() {
 			}
 			start = true;
 		}
-
+        
 		while (start) {
 			LARGE_INTEGER tick_start_time;
 			QueryPerformanceCounter(&tick_start_time);
-
-				//Ip_Endpoint from;
-				int bytes_received = system_net_receive_from(socket, buffer, SOCKET_BUFFER_SIZE, &from);
-				if(bytes_received < 0) {
-					continue;
-				}
-				else{
-					printf("sth received\n");
-				}
-
-				//Ip_Endpoint from_endpoint;
-				from_endpoint.address = from.address;
-				from_endpoint.port = (from.address & 0xff000000) >> 24;
-
-				d = (from.address & 0x000000ff) >> 0;
-				c = (from.address & 0x0000ff00) >> 8;
-				b = (from.address & 0x00ff0000) >> 16;
-				a = (from.address & 0xff000000) >> 24;
-
-				client_input = buffer[0];
-				//printf("%d.%d.%d.%d:%d - %c\n", a, b, c, d, from.port, client_input);
-				printf("client %d.%d.%d.%d:%d \n", a, b, c, d, from.port);
-
-
+            
+			//Ip_Endpoint from;
+			int bytes_received = system_net_receive_from(socket, buffer, SOCKET_BUFFER_SIZE, &from);
+			if (bytes_received < 0) {
+				continue;
+			} else {
+				printf("sth received\n");
+			}
+            
+			//Ip_Endpoint from_endpoint;
+			from_endpoint.address = from.address;
+			from_endpoint.port = (from.address & 0xff000000) >> 24;
+            
+			d = (from.address & 0x000000ff) >> 0;
+			c = (from.address & 0x0000ff00) >> 8;
+			b = (from.address & 0x00ff0000) >> 16;
+			a = (from.address & 0xff000000) >> 24;
+            
+			client_input = buffer[0];
+			//printf("%d.%d.%d.%d:%d - %c\n", a, b, c, d, from.port, client_input);
+			printf("client %d.%d.%d.%d:%d \n", a, b, c, d, from.port);
+            
+            
 			switch (buffer[0]) {
-			case Client_Message::LEAVE:
-			{
-				u16 slot;
-				memcpy(&slot, &buffer[1], 2);
-
-				if (client_endpoints[slot] == from_endpoint)
+				case Client_Message::LEAVE:
 				{
-					client_endpoints[slot] = {};
-					CLIENT_READY_BITS[slot] = 0;
-					printf("Client_Message::Leave from %hu(%u:%hu)\n", slot, from_endpoint.address, from_endpoint.port);
+					u16 slot;
+					memcpy(&slot, &buffer[1], 2);
+                    
+					if (client_endpoints[slot] == from_endpoint)
+					{
+						client_endpoints[slot] = {};
+						CLIENT_READY_BITS[slot] = 0;
+						printf("Client_Message::Leave from %hu(%u:%hu)\n", slot, from_endpoint.address, from_endpoint.port);
+					}
 				}
-			}
-			break;
-
-			case Client_Message::INPUTS:
-			{
-				u32 received_crc, generated_crc;
-				char compare[SOCKET_BUFFER_SIZE];
-
-				memcpy(&compare, &buffer[0], 5);
-				memcpy(&received_crc, &buffer[5], 4);
-				generated_crc = murmur3_32(compare, 5, 0);
-
-				if (generated_crc != received_crc)
+				break;
+                
+				case Client_Message::INPUTS:
 				{
-					system_trace("hash discarded\n");
-					continue;
+					u32 received_crc, generated_crc;
+					char compare[SOCKET_BUFFER_SIZE];
+                    
+					memcpy(&compare, &buffer[0], 5);
+					memcpy(&received_crc, &buffer[5], 4);
+					generated_crc = murmur3_32(compare, 5, 0);
+                    
+					if (generated_crc != received_crc)
+					{
+						system_trace("hash discarded\n");
+						continue;
+					} else
+					{
+						system_trace("hash matched\n");
+                        
+					}
+					u16 slot;
+					memcpy(&slot, &buffer[2], 2);
+                    
+					printf("%d %hu\n", bytes_received, slot);
+                    
+					if (client_endpoints[slot] == from_endpoint)
+					{
+						u8 input = buffer[4];
+                        
+						client_inputs[slot].up = input & 0x1;
+						client_inputs[slot].down = input & 0x2;
+						client_inputs[slot].left = input & 0x4;
+						client_inputs[slot].right = input & 0x8;
+                        
+						time_since_heard_from_clients[slot] = 0.0f;
+                        
+						printf("Client_Message::Input from %hu:%d\n", slot, (input));
+					} else
+					{
+						printf("Client_Message::Input discarded, was from %u:%hu but expected %u:%hu\n", from_endpoint.address, from_endpoint.port, client_endpoints[slot].address, client_endpoints[slot].port);
+					}
 				}
-				else
-				{
-					system_trace("hash matched\n");
-
-				}
-				u16 slot;
-				memcpy(&slot, &buffer[2], 2);
-
-				printf("%d %hu\n", bytes_received, slot);
-
-				if (client_endpoints[slot] == from_endpoint)
-				{
-					u8 input = buffer[4];
-
-					client_inputs[slot].up = input & 0x1;
-					client_inputs[slot].down = input & 0x2;
-					client_inputs[slot].left = input & 0x4;
-					client_inputs[slot].right = input & 0x8;
-
-					time_since_heard_from_clients[slot] = 0.0f;
-
-					printf("Client_Message::Input from %hu:%d\n", slot, (input));
-				}
-				else
-				{
-					printf("Client_Message::Input discarded, was from %u:%hu but expected %u:%hu\n", from_endpoint.address, from_endpoint.port, client_endpoints[slot].address, client_endpoints[slot].port);
-				}
-			}
-			break;
+				break;
 			}
 			// process input and update state
 			for (u16 i = 0; i < MAX_CLIENTS; ++i)
@@ -324,10 +356,10 @@ int system_main() {
 						printf("key :d\n");
 						client_objects[i].facing += TURN_SPEED * SECONDS_PER_TICK;
 					}
-
+                    
 					client_objects[i].x += client_objects[i].speed * SECONDS_PER_TICK * sinf(client_objects[i].facing);
 					client_objects[i].y += client_objects[i].speed * SECONDS_PER_TICK * cosf(client_objects[i].facing);
-
+                    
 					time_since_heard_from_clients[i] += SECONDS_PER_TICK;
 					if (time_since_heard_from_clients[i] > CLIENT_TIMEOUT)
 					{
@@ -336,7 +368,7 @@ int system_main() {
 					}
 				}
 			}
-
+            
 			// create state packet
 			buffer[0] = (s8)Server_Message::STATE;
 			bytes_written = 1;
@@ -346,43 +378,43 @@ int system_main() {
 				{
 					memcpy(&buffer[bytes_written], &i, sizeof(i));
 					bytes_written += sizeof(i);
-
+                    
 					memcpy(&buffer[bytes_written], &client_objects[i].x, sizeof(client_objects[i].x));
 					bytes_written += sizeof(client_objects[i].x);
-
+                    
 					memcpy(&buffer[bytes_written], &client_objects[i].y, sizeof(client_objects[i].y));
 					bytes_written += sizeof(client_objects[i].y);
-
+                    
 					memcpy(&buffer[bytes_written], &client_objects[i].facing, sizeof(client_objects[i].facing));
 					bytes_written += sizeof(client_objects[i].facing);
 				}
 			}
-
-
+            
+            
 			// send back to clients
 			int flags = 0;
 			///////Ip_Endpoint to;
 			//to.sin_family = AF_INET;
 			//to.sin_port = htons(9999);
 			//int to_length = sizeof(to);
-
+            
 			for (u16 i = 0; i < MAX_CLIENTS; ++i)
 			{
 				if (client_endpoints[i].address)
 				{
 					to.address = client_endpoints[i].address;
 					to.port = client_endpoints[i].port;
-
+                    
 					if (system_net_send_to(socket, buffer, bytes_written, to) == SOCKET_ERROR)
 					{
 						printf("sendto failed: %d\n", WSAGetLastError());
 					}
 				}
 			}
-
-
+            
+            
 			s32 time_taken_s = time_since(tick_start_time, clock_frequency);
-
+            
 			while (time_taken_s < SECONDS_PER_TICK)
 			{
 				if (sleep_granularity_was_set)
@@ -393,12 +425,13 @@ int system_main() {
 						Sleep(time_to_wait_ms);
 					}
 				}
-
+                
 				time_taken_s = time_since(tick_start_time, clock_frequency);
 			}
-
+            
 		}
-	
+#endif
+        
 	}
 	return 0;
 }

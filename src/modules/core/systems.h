@@ -571,6 +571,7 @@ Thread_Wait system_thread_wait(Thread_Context &thread, u32 millisecs);
 void        system_thread_terminate(Thread_Context &thread, int exit_code);
 void        system_thread_exit(int exit_code);
 void		system_thread_sleep(u32 millisecs);
+bool		system_sleep_is_granular();
 
 Handle      system_create_mutex();
 void        system_destory_mutex(Handle handle);
