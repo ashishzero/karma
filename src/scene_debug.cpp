@@ -199,7 +199,7 @@ void ieditor_save_resource(Scene *scene, Editor *editor) {
 	memcpy(header.name, editor->entity.name, sizeof(Resource_Name));
 	memcpy(header.texture, editor->entity.texture_name, sizeof(Resource_Name));
 
-	scene_save_resource(scene, header, texture, fixture, true);
+	scene_save_resource(header, texture, fixture, true);
 }
 
 inline void ieditor_reset(Scene *scene, Editor *editor, Editor_Mode new_mode) {
@@ -1255,7 +1255,7 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 		if (editor->level.name_storage[0]) {
 			if (ImGui::Button("Create##New Level", ImVec2(120, 0))) {
 				String level_name = String(editor->level.name_storage, strlen(editor->level.name_storage));
-				if (scene_create_new_level(scene, level_name)) {
+				if (scene_create_new_level(level_name)) {
 					scene_load_level(scene, level_name);
 					ieditor_deselect_body(scene, editor);
 					ImGui::CloseCurrentPopup();
@@ -1367,7 +1367,7 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 		}
 
 
-		auto resource_headers = scene_resource_headers(scene);
+		auto resource_headers = scene_resource_headers();
 
 		auto resources = resource_headers.data;
 		int resource_count = (int)resource_headers.count;
@@ -1411,7 +1411,7 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 			if (resource_count && selected >= 0) {
 				auto header = resources + selected;
 
-				auto resource_group = scene_find_resource(scene, header->id);
+				auto resource_group = scene_find_resource(header->id);
 
 				ImVec2 canvas_p0 = ImGui::GetCursorScreenPos();
 				ImVec2 canvas_sz = ImGui::GetContentRegionAvail();
@@ -1507,7 +1507,7 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 		if (ImGui::Button("Select", ImVec2(120, 0))) {
 			int selected = editor->level.selected_resource_index;
 			auto header = resources + selected;
-			auto resource_group = scene_find_resource(scene, header->id);
+			auto resource_group = scene_find_resource(header->id);
 			ieditor_create_new_entity(scene, editor, new_entity_type, &resource_group, true);
 			ImGui::CloseCurrentPopup();
 		}
@@ -1524,7 +1524,7 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 			resource_collection.fixture = nullptr;
 			resource_collection.texture = nullptr;
 			resource_collection.index = MAX_UINT32;
-			resource_collection.header = (Resource_Header *)scene_create_new_resource(scene, name, nullptr, 0, tex, mm_rect(0, 0, 1, 1));
+			resource_collection.header = (Resource_Header *)scene_create_new_resource(name, nullptr, 0, tex, mm_rect(0, 0, 1, 1));
 
 			ieditor_create_new_entity(scene, editor, new_entity_type, &resource_collection, false);
 			editor_set_mode_entity_editor(scene, editor, &resource_collection);
@@ -1700,7 +1700,7 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 		ieditor_fixture_group(scene, editor, body);
 		if (ImGui::Button("Edit##EntityEditor")) {
 			auto res_id = scene_find_entity_resource_id(scene, body->entity_id);
-			auto res_col = scene_find_resource(scene, res_id);
+			auto res_col = scene_find_resource(res_id);
 			editor_set_mode_entity_editor(scene, editor, &res_col);
 		}
 	}

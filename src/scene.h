@@ -79,33 +79,18 @@ struct Scene {
 	Rigid_Body_List rigid_bodies;
 	HGrid hgrid;
 
-	Array<Resource_Header>	resource_header;
-	Array<Fixture_Group>	fixture_group;
-	Array<Texture_Group>	texture_group;
-
-	Array<Audio_Group>		audio_group;
-	Audio_Stream *fire;
-	Audio_Stream *hit;
-
-	Allocator					pool_allocator;
-
 	s32				loaded_level;
-	Array<Level>	levels;
 
 	Array<Entity_Id>	removed_entity[Entity_Type_Count];
 
-	Audio_Mixer audio_mixer;
-
-	Random_Series	id_series;
-
 	#ifdef ENABLE_DEVELOPER_OPTIONS
 	Array<Contact_Manifold> manifolds;
-
 	Editor editor;
 	#endif
 };
 
-void scene_prepare();
+void scene_prepare(Render_Backend backend, System_Window_Show show);
+void scene_shutdown();
 
 //
 //
@@ -118,7 +103,7 @@ void scene_destroy(Scene *scene);
 //
 //
 
-const Resource_Header *scene_create_new_resource(Scene *scene, Resource_Name &name, Fixture *fixtures, u32 fixture_count, const Resource_Name &tex_name, const Mm_Rect &uv);
+const Resource_Header *scene_create_new_resource(Resource_Name &name, Fixture *fixtures, u32 fixture_count, const Resource_Name &tex_name, const Mm_Rect &uv);
 
 struct Resource_Collection {
 	Resource_Header *	header;
@@ -127,11 +112,11 @@ struct Resource_Collection {
 	u32					index;
 };
 
-const Array_View<Resource_Header> scene_resource_headers(Scene *scene);
+const Array_View<Resource_Header> scene_resource_headers();
 
 Resource_Id					scene_find_entity_resource_id(Scene *scene, Entity_Id id);
-const Resource_Collection	scene_find_resource(Scene *scene, Resource_Id id);
-Audio_Stream *				scene_find_audio_stream(Scene *scene, const char *name);
+const Resource_Collection	scene_find_resource(Resource_Id id);
+Audio_Stream *				scene_find_audio_stream(const char *name);
 
 Entity *scene_clone_entity(Scene *scene, Entity *entity, Vec2 p, Resource_Id *resource = nullptr);
 Entity_Reference scene_get_entity(Scene *scene, Entity_Id id);
@@ -174,12 +159,11 @@ void scene_remove_entity_from_level(Scene *scene, Entity_Id id);
 //
 //
 
-bool scene_handle_event(Scene *scene, const Event &event);
-
-void scene_begin(Scene *scene);
-void scene_simulate(Scene *scene, r32 dt);
-void scene_update(Scene *scene, r32 sim_factor);
-void scene_end(Scene *scene);
+void scene_loop(Scene *scene);
+bool scene_running();
+void scene_frame_begin(Scene *scene);
+void scene_frame_simulate(Scene *scene);
+void scene_frame_end(Scene *scene);
 
 //
 //
@@ -191,24 +175,26 @@ void scene_render_shape(const Capsule &capsule, Vec4 shade, Vec4 outline);
 void scene_render_shape(const Polygon &polyon, Vec4 shade, Vec4 outline);
 void scene_render_shape(const Polygon_Pt &polyon, Vec4 shade, Vec4 outline);
 
-void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio);
+void scene_begin_drawing();
+void scene_end_drawing();
+void scene_render(Scene *scene, bool draw_editor = true);
 
 //
 //
 //
 
-bool scene_save_resource(Scene *scene, Resource_Header &h, Texture_Group &texture, Fixture_Group &fixture, bool pt_polygon);
-void scene_save_resources(Scene *scene);
-void scene_load_resources(Scene *scene);
+bool scene_save_resource(Resource_Header &h, Texture_Group &texture, Fixture_Group &fixture, bool pt_polygon);
+void scene_save_resources();
+void scene_load_resources();
 void scene_reload_resource(Scene *scene, Resource_Id id);
-void scene_clean_resources(Scene *scene);
+void scene_clean_resources();
 void scene_clean_entities(Scene *scene);
 
 //
 //
 //
 
-bool scene_create_new_level(Scene *scene, const String name);
+bool scene_create_new_level(const String name);
 bool scene_save_level(Scene *scene);
 bool scene_load_level(Scene *scene, const String name);
 bool scene_reload_level(Scene *scene);

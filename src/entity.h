@@ -5,8 +5,31 @@
 #include "modules/core/reflection.h"
 #include "modules/core/random.h"
 
+enum Physics_State {
+	Physics_State_RUNNING,
+	Physics_State_PAUSED,
+	Physics_State_RUN_SINGLE_STEP,
+};
+
+struct Simulation_Speed {
+	u32 index;
+	s32 x;
+	r32 factor;
+};
+
 struct Physics {
-	r32 gravity = 0.1f;
+	attribute(no_serialize, read_only)	Simulation_Speed	sim_speed;
+	attribute(no_serialize, read_only)	Physics_State		state;
+	attribute(no_serialize, read_only)	r32					fixed_dt;
+	attribute(no_serialize, no_display) r32					game_dt;
+	attribute(no_serialize, no_display) r32					real_dt;
+	attribute(no_serialize, no_display) r32					game_t;
+	attribute(no_serialize, no_display) r32					real_t;
+	attribute(no_serialize, no_display) r32					accumulator_t;
+	attribute(no_serialize, no_display) u64					frequency;
+	attribute(no_serialize, no_display) u64					counter;
+
+	r32 gravity;
 };
 
 struct Entity_Id {

@@ -4,6 +4,8 @@
 #include "modules/core/systems.h"
 #include "modules/gfx/renderer.h"
 #include "modules/core/stb_image.h"
+#include "modules/imgui/imconfig.h"
+#include "modules/imgui/imgui.h"
 #include "modules/imgui/dev.h"
 
 #include ".generated/entity.typeinfo"
@@ -96,7 +98,62 @@ static bool test_fixture_point(Fixture &a, const Transform &ta, Vec2 point, r32 
 // End Collision
 //
 
-void scene_prepare() {
+struct Scene_Global {
+	Handle platform;
+	Render_Backend render_backend;
+
+	r32 framebuffer_w;
+	r32 framebuffer_h;
+
+	r32 window_w;
+	r32 window_h;
+
+	r32 aspect_ratio;
+
+	bool running;
+
+	//
+	//
+	//
+
+	Array<Resource_Header>	resource_header;
+	Array<Fixture_Group>	fixture_group;
+	Array<Texture_Group>	texture_group;
+
+	Allocator		pool_allocator;
+
+	Array<Audio_Group>		audio_group;
+	Audio_Stream *fire;
+	Audio_Stream *hit;
+
+	Audio_Mixer audio_mixer;
+
+	Array<Level>	levels;
+
+	Random_Series	id_series;
+};
+
+static Scene_Global g;
+
+void scene_prepare(Render_Backend backend, System_Window_Show show) {
+	g.framebuffer_w = 1280;
+	g.framebuffer_h = 720;
+	g.platform = system_create_window(u8"Karma", 1280, 720, show);
+	g.render_backend = backend;
+	gfx_create_context(g.platform, g.render_backend, Vsync_ADAPTIVE, 2, (u32)g.framebuffer_w, (u32)g.framebuffer_h);
+
+	ImGui_Initialize();
+	Dev_ModeEnable();
+
+	Dev_SetPresentationState(false);
+
+	g.running = true;
+
+	g.aspect_ratio = g.framebuffer_w / g.framebuffer_h;
+
+	g.window_w = 0;
+	g.window_h = 0;
+
 	COLLISION_RESOLVERS[Fixture_Shape_Circle][Fixture_Shape_Circle] = shapes_collision_resolver<Circle, Circle>;
 	COLLISION_RESOLVERS[Fixture_Shape_Circle][Fixture_Shape_Mm_Rect] = shapes_collision_resolver<Circle, Mm_Rect>;
 	COLLISION_RESOLVERS[Fixture_Shape_Circle][Fixture_Shape_Capsule] = shapes_collision_resolver<Circle, Capsule>;
@@ -178,14 +235,92 @@ void scene_prepare() {
 	COLLISION_DETECTORS[Fixture_Shape_Polygon][Fixture_Shape_Polygon] = shapes_collision_detector<Polygon, Polygon>;
 
 	stbi_set_flip_vertically_on_load(1);
+
+	//
+	//
+	//
+
+	g.resource_header.count = 0;
+	g.resource_header.capacity = 0;
+	g.resource_header.data = nullptr;
+	g.resource_header.allocator = context.allocator;
+
+	g.fixture_group.count = 0;
+	g.fixture_group.capacity = 0;
+	g.fixture_group.data = nullptr;
+	g.fixture_group.allocator = context.allocator;
+
+	g.texture_group.count = 0;
+	g.texture_group.capacity = 0;
+	g.texture_group.data = nullptr;
+	g.texture_group.allocator = context.allocator;
+
+	g.audio_group.count = 0;
+	g.audio_group.capacity = 0;
+	g.audio_group.data = nullptr;
+	g.audio_group.allocator = context.allocator;
+
+	array_resize(&g.resource_header, 100);
+	array_resize(&g.fixture_group, 100);
+	array_resize(&g.texture_group, 100);
+	array_resize(&g.audio_group, 100);
+
+	g.pool_allocator = context.allocator;
+
+	g.levels.count = g.levels.capacity = 0;
+	g.levels.data = nullptr;
+	g.levels.allocator = context.allocator;
+	array_resize(&g.levels, 5);
+
+	g.id_series = random_init(context.id, system_get_counter());
+
+	audio_mixer(&g.audio_mixer);
+
+	if (!system_audio(system_update_audio, system_refresh_audio_device, &g.audio_mixer)) {
+		system_display_critical_message("Failed to load audio!");
+	}
+}
+
+void scene_shutdown() {
+	scene_clean_resources();
+
+	array_free(&g.levels);
+
+	array_free(&g.resource_header);
+	array_free(&g.fixture_group);
+	array_free(&g.texture_group);
+
+	ImGui_Shutdown();
+	gfx_destroy_context();
 }
 
 //
 //
 //
 
-static u64 iscene_generate_unique_id(Scene *scene) {
-	u32 a = random_get(&scene->id_series);
+static const s32 SIMULATION_SPEED_FACTORS[] = {
+	-8, -7, -6, -5, -4, -3, -2, 1, 2, 3, 4, 5, 6, 7, 8
+};
+static const u32 SIMULATION_SPEED_1X = 7;
+
+static Simulation_Speed simulation_speed(u32 index) {
+	assert(index < static_count(SIMULATION_SPEED_FACTORS));
+	Simulation_Speed speed;
+	speed.index = index;
+	speed.x = SIMULATION_SPEED_FACTORS[speed.index];
+	if (speed.x < 0)
+		speed.factor = -1.0f / (r32)speed.x;
+	else
+		speed.factor = (r32)speed.x;
+	return speed;
+}
+
+//
+//
+//
+
+static u64 iscene_generate_unique_id() {
+	u32 a = random_get(&g.id_series);
 	u32 b = (time(0) & 0xffffffff);
 	u64 id = ((u64)a | ((u64)b << 32));
 	return id;
@@ -465,7 +600,20 @@ inline void iscene_destroy_rigid_body(Scene *scene, Rigid_Body *rigid_body) {
 Scene *scene_create() {
 	Scene *scene = (Scene *)memory_allocate(sizeof(Scene));
 
-	scene->physics = Physics{};
+	const r32 dt = 1.0f / 30.0f;
+
+	scene->physics.state = Physics_State_RUNNING;
+	scene->physics.sim_speed = simulation_speed(SIMULATION_SPEED_1X);
+
+	scene->physics.fixed_dt = dt;
+	scene->physics.game_dt = dt * scene->physics.sim_speed.factor;
+	scene->physics.real_dt = dt;
+	scene->physics.game_t = 0.0f;
+	scene->physics.real_t = 0.0f;
+	scene->physics.accumulator_t = dt;
+
+	scene->physics.gravity = 0.1f;
+
 	scene->player_id = {};
 
 	for (u32 index = 0; index < Entity_Type_Count; ++index) {
@@ -489,45 +637,11 @@ Scene *scene_create() {
 
 	memset(scene->entity_table.keys, 0, sizeof(Entity_Hash_Table::Key) * SCENE_MAX_ENTITY_COUNT);
 
-	scene->resource_header.count = 0;
-	scene->resource_header.capacity = 0;
-	scene->resource_header.data = nullptr;
-	scene->resource_header.allocator = context.allocator;
-
-	scene->fixture_group.count = 0;
-	scene->fixture_group.capacity = 0;
-	scene->fixture_group.data = nullptr;
-	scene->fixture_group.allocator = context.allocator;
-
-	scene->texture_group.count = 0;
-	scene->texture_group.capacity = 0;
-	scene->texture_group.data = nullptr;
-	scene->texture_group.allocator = context.allocator;
-
-	scene->audio_group.count = 0;
-	scene->audio_group.capacity = 0;
-	scene->audio_group.data = nullptr;
-	scene->audio_group.allocator = context.allocator;
-
-	array_resize(&scene->resource_header, 100);
-	array_resize(&scene->fixture_group, 100);
-	array_resize(&scene->texture_group, 100);
-	array_resize(&scene->audio_group, 100);
-
 	circular_linked_list_init(&scene->rigid_bodies, context.allocator);
 
 	scene->hgrid = hgrid_create(8, 256);
 
-	scene->pool_allocator = context.allocator;
-
 	scene->loaded_level = -1;
-
-	scene->levels.count = scene->levels.capacity = 0;
-	scene->levels.data = nullptr;
-	scene->levels.allocator = context.allocator;
-	array_resize(&scene->levels, 5);
-
-	scene->id_series = random_init(context.id, system_get_counter());
 
 	for (s64 index = 0; index < Entity_Type_Count; ++index) {
 		auto &rm = scene->removed_entity[index];
@@ -537,17 +651,10 @@ Scene *scene_create() {
 		rm.allocator = TEMPORARY_ALLOCATOR;
 	}
 
-	audio_mixer(&scene->audio_mixer);
-
-	if (!system_audio(system_update_audio, system_refresh_audio_device, &scene->audio_mixer)) {
-		system_display_critical_message("Failed to load audio!");
-	}
-
 	#ifdef ENABLE_DEVELOPER_OPTIONS
 	scene->manifolds.count = scene->manifolds.capacity = 0;
 	scene->manifolds.data = nullptr;
 	scene->manifolds.allocator = TEMPORARY_ALLOCATOR;
-
 	scene->editor = editor_create(scene);
 	#endif
 
@@ -557,14 +664,6 @@ Scene *scene_create() {
 void scene_destroy(Scene *scene) {
 	// Entites are cleaned when level is unloaded
 	scene_unload_current_level(scene);
-
-	scene_clean_resources(scene);
-
-	array_free(&scene->levels);
-
-	array_free(&scene->resource_header);
-	array_free(&scene->fixture_group);
-	array_free(&scene->texture_group);
 
 	circular_linked_list_clear(&scene->rigid_bodies);
 
@@ -583,7 +682,7 @@ void scene_destroy(Scene *scene) {
 //
 //
 
-Texture2d_Handle iscene_load_texture(Scene *scene, const Resource_Name &name) {
+Texture2d_Handle iscene_load_texture(const Resource_Name &name) {
 	scoped_temporary_allocation();
 	Texture2d_Handle handle;
 	if (name[0]) {
@@ -611,21 +710,21 @@ Texture2d_Handle iscene_load_texture(Scene *scene, const Resource_Name &name) {
 	return im_white_texture();
 }
 
-const Resource_Header *scene_create_new_resource(Scene *scene, Resource_Name &name, Fixture *fixtures, u32 fixture_count, const Resource_Name &tex_name, const Mm_Rect &uv) {
-	auto header = array_add(&scene->resource_header);
-	auto fixture = array_add(&scene->fixture_group);
-	auto texture = array_add(&scene->texture_group);
+const Resource_Header *scene_create_new_resource(Resource_Name &name, Fixture *fixtures, u32 fixture_count, const Resource_Name &tex_name, const Mm_Rect &uv) {
+	auto header = array_add(&g.resource_header);
+	auto fixture = array_add(&g.fixture_group);
+	auto texture = array_add(&g.texture_group);
 
-	header->id.handle = iscene_generate_unique_id(scene);
+	header->id.handle = iscene_generate_unique_id();
 	memcpy(header->name, name, sizeof(Resource_Name));
 	memcpy(header->texture, tex_name, sizeof(Resource_Name));
 
-	texture->handle = iscene_load_texture(scene, tex_name);
+	texture->handle = iscene_load_texture(tex_name);
 	texture->uv = uv;
 
 	fixture->count = fixture_count;
 	if (fixture_count) {
-		fixture->fixtures = new (scene->pool_allocator) Fixture[fixture->count];
+		fixture->fixtures = new (g.pool_allocator) Fixture[fixture->count];
 	} else {
 		fixture->fixtures = nullptr;
 	}
@@ -646,7 +745,7 @@ const Resource_Header *scene_create_new_resource(Scene *scene, Resource_Name &na
 		}
 
 		dst->shape = src->shape;
-		dst->handle = memory_allocate(size, scene->pool_allocator);
+		dst->handle = memory_allocate(size, g.pool_allocator);
 		memcpy(dst->handle, src->handle, size);
 
 		dst += 1;
@@ -655,25 +754,25 @@ const Resource_Header *scene_create_new_resource(Scene *scene, Resource_Name &na
 	return header;
 }
 
-const Array_View<Resource_Header> scene_resource_headers(Scene *scene) {
-	return scene->resource_header;
+const Array_View<Resource_Header> scene_resource_headers() {
+	return g.resource_header;
 }
 
 Resource_Id	scene_find_entity_resource_id(Scene *scene, Entity_Id id) {
 	return iscene_get_entity_resource(&scene->entity_table, id);
 }
 
-const Resource_Collection scene_find_resource(Scene *scene, Resource_Id id) {
-	s64 index = array_find(&scene->resource_header, [](const Resource_Header &header, Resource_Id id) {
+const Resource_Collection scene_find_resource(Resource_Id id) {
+	s64 index = array_find(&g.resource_header, [](const Resource_Header &header, Resource_Id id) {
 		return header.id.handle == id.handle; }, id);
 	if (index >= 0) {
-		return  { &scene->resource_header[index], &scene->fixture_group[index], &scene->texture_group[index], (u32)index };
+		return  { &g.resource_header[index], &g.fixture_group[index], &g.texture_group[index], (u32)index };
 	}
 	return  { nullptr, nullptr, nullptr, MAX_UINT32 };
 }
 
-Audio_Stream *scene_find_audio_stream(Scene *scene, const char *name) {
-	for (auto &a : scene->audio_group) {
+Audio_Stream *scene_find_audio_stream(const char *name) {
+	for (auto &a : g.audio_group) {
 		if (strcmp(a.name, name) == 0) {
 			return a.stream;
 		}
@@ -682,7 +781,7 @@ Audio_Stream *scene_find_audio_stream(Scene *scene, const char *name) {
 }
 
 Entity *scene_clone_entity(Scene *scene, Entity *src, Vec2 p, Resource_Id *resource) {
-	Entity_Id id = { iscene_generate_unique_id(scene) };
+	Entity_Id id = { iscene_generate_unique_id() };
 
 	Entity *result = nullptr;
 
@@ -704,8 +803,8 @@ Entity *scene_clone_entity(Scene *scene, Entity *src, Vec2 p, Resource_Id *resou
 			auto character = iscene_add_character(scene, id, p, resource_id);
 			memcpy((u8 *)character + sizeof(Entity), (u8 *)src + sizeof(Entity), sizeof(Character) - sizeof(Entity));
 			character->particle_system.particles = (Particle *)memory_allocate(sizeof(Particle) * character->particle_system.particles_count);
-			character->boost = audio_mixer_add_audio(&scene->audio_mixer, scene_find_audio_stream(scene, "engine.wav"), false, true);
-			character->fall = audio_mixer_add_audio(&scene->audio_mixer, scene_find_audio_stream(scene, "vacuum.wav"), false, true);
+			character->boost = audio_mixer_add_audio(&g.audio_mixer, scene_find_audio_stream("engine.wav"), false, true);
+			character->fall = audio_mixer_add_audio(&g.audio_mixer, scene_find_audio_stream("vacuum.wav"), false, true);
 			character->rigid_body = iscene_create_new_rigid_body(scene, character, ((Character *)src)->rigid_body);
 			hgrid_add_body_to_grid(&scene->hgrid, character->rigid_body);
 			character->controller.axis = vec2(0);
@@ -737,7 +836,7 @@ Entity *scene_clone_entity(Scene *scene, Entity *src, Vec2 p, Resource_Id *resou
 
 			auto bullet = iscene_add_bullet(scene, id, p, resource_id);
 			memcpy((u8 *)bullet + sizeof(Entity), (u8 *)src + sizeof(Entity), sizeof(Bullet) - sizeof(Entity));
-			bullet->audio = audio_mixer_add_audio(&scene->audio_mixer, scene->fire, false, false);
+			bullet->audio = audio_mixer_add_audio(&g.audio_mixer, g.fire, false, false);
 			bullet->rigid_body = iscene_create_new_rigid_body(scene, bullet, ((Bullet *)src)->rigid_body);
 			hgrid_add_body_to_grid(&scene->hgrid, bullet->rigid_body);
 			result = bullet;
@@ -926,10 +1025,10 @@ r32 color_id_get_intensity(Color_Id color_id) {
 Character *scene_spawn_player(Scene *scene, Vec2 p, Color_Id color_id) {
 	if (!scene->player_id.handle) {
 		Resource_Id id = { 6895733819830550519 }; // TODO: hard coded resource id
-		Resource_Collection resource = scene_find_resource(scene, id);
+		Resource_Collection resource = scene_find_resource(id);
 
 		Resource_Id particle_id = { 6926504382549284097 };
-		Resource_Collection particle_resource = scene_find_resource(scene, particle_id);
+		Resource_Collection particle_resource = scene_find_resource(particle_id);
 
 		Rigid_Body body;
 		Character src;
@@ -948,7 +1047,7 @@ Character *scene_spawn_player(Scene *scene, Vec2 p, Color_Id color_id) {
 
 Particle_Emitter *scene_spawn_emitter(Scene *scene, Vec2 p, Vec4 color, r32 intensity) {
 	Resource_Id particle_id = { 6926504382549284097 };
-	Resource_Collection particle_resource = scene_find_resource(scene, particle_id);
+	Resource_Collection particle_resource = scene_find_resource(particle_id);
 
 	Particle_Emitter src;
 	ent_init_particle_emitter(&src, p, particle_resource.texture, particle_resource.index);
@@ -978,7 +1077,7 @@ Particle_Emitter *scene_spawn_emitter(Scene *scene, Vec2 p, Vec4 color, r32 inte
 
 Bullet *scene_spawn_bullet(Scene *scene, Vec2 p, Color_Id color_id, Vec2 dir) {
 	Resource_Id id = { 6926438366305714858 }; // TODO: hard coded resource id
-	Resource_Collection resource = scene_find_resource(scene, id);
+	Resource_Collection resource = scene_find_resource(id);
 
 	Rigid_Body body;
 	Bullet src;
@@ -1036,40 +1135,123 @@ bool scene_handle_event(Scene *scene, const Event &event) {
 		return true;
 	#endif
 
-	return false;
-}
+	Character *player = scene_get_player(scene);
 
-void scene_begin(Scene *scene) {
-	{
-		constexpr r32 PLAYER_FORCE = 10;
+	if (player) {
+		auto &controller = player->controller;
 
-		auto count = scene->by_type.character.count;
-		auto &characters = scene->by_type.character;
-		for (auto index = 0; index < count; ++index) {
-			auto &character = characters[index];
-			character.rigid_body->force = vec2(0);
-			character.rigid_body->force += PLAYER_FORCE * vec2_normalize_check(character.controller.axis);
+		if (event.type & Event_Type_MOUSE_CURSOR) {
+			controller.pointer.x = (r32)event.mouse_cursor.x / g.window_w;
+			controller.pointer.y = (r32)event.mouse_cursor.y / g.window_h;
+			controller.pointer = 2 * controller.pointer - vec2(1);
+		}
 
-			if (character.hit) {
-				character.hit -= 1;
+		if (event.type & Event_Type_KEYBOARD) {
+			float value = (float)(event.key.state == Key_State_DOWN);
+			switch (event.key.symbol) {
+				case Key_D:
+				case Key_RIGHT:
+					controller.axis.x = value;
+					break;
+
+				case Key_A:
+				case Key_LEFT:
+					controller.axis.x = -value;
+					break;
+
+				case Key_W:
+				case Key_UP:
+					controller.axis.y = value;
+					break;
+
+				case Key_S:
+				case Key_DOWN:
+					controller.axis.y = -value;
+					break;
+
+				case Key_SPACE:
+					controller.attack = (event.key.state == Key_State_DOWN);
+					break;
+			}
+		}
+
+		if (event.type & Event_Type_CONTROLLER_AXIS) {
+			if (event.controller_axis.symbol == Controller_Axis_LTHUMB_X)
+				controller.axis.x = event.controller_axis.value;
+			else if (event.controller_axis.symbol == Controller_Axis_LTHUMB_Y)
+				controller.axis.y = event.controller_axis.value;
+			else if (event.controller_axis.symbol == Controller_Axis_LTRIGGER)
+				controller.attack = (event.controller_axis.value > 0);
+			else if (event.controller_axis.symbol == Controller_Axis_RTHUMB_X) {
+				controller.pointer.x += event.controller_axis.value;
+				controller.pointer = vec2_normalize_check(controller.pointer);
+			} else if (event.controller_axis.symbol == Controller_Axis_RTHUMB_Y) {
+				controller.pointer.y += event.controller_axis.value;
+				controller.pointer = vec2_normalize_check(controller.pointer);
 			}
 		}
 	}
 
-	{
-		auto count = scene->by_type.bullet.count;
-		auto &bullets = scene->by_type.bullet;
-		for (auto index = 0; index < count; ++index) {
-			auto &bullet = bullets[index];
-			bullet.rigid_body->force = vec2(0);
+	return false;
+}
+
+void scene_loop(Scene *scene) {
+	scene->physics.frequency = system_get_frequency();
+	scene->physics.counter = system_get_counter();
+}
+
+bool scene_running() {
+	return g.running;
+}
+
+void scene_frame_begin(Scene *scene) {
+	Dev_TimedFrameBegin();
+
+	Dev_TimedBlockBegin(EventHandling);
+	auto events = system_poll_events();
+	for (s64 event_index = 0; event_index < events.count; ++event_index) {
+		Event &event = events[event_index];
+
+		if (event.type & Event_Type_EXIT) {
+			g.running = false;
+			break;
 		}
+
+		if (event.type & Event_Type_WINDOW_RESIZE) {
+			s32 w = event.window.dimension.x;
+			s32 h = event.window.dimension.y;
+
+			gfx_on_client_resize(w, h);
+			g.window_w = (r32)w;
+			g.window_h = (r32)h;
+
+			if (g.window_w && g.window_h) {
+				g.aspect_ratio = g.window_w / g.window_h;
+				gfx_resize_framebuffer(w, h, lroundf(512 * g.aspect_ratio), 512);
+				g.framebuffer_w = g.window_w;
+				g.framebuffer_h = g.window_h;
+			}
+
+			continue;
+		}
+
+		if (ImGui_HandleEvent(event))
+			continue;
+
+		if ((event.type & Event_Type_KEY_UP) && event.key.symbol == Key_ESCAPE) {
+			system_request_quit();
+			break;
+		}
+
+		if ((event.type & Event_Type_KEY_UP) && event.key.symbol == Key_F11) {
+			system_fullscreen_state(SYSTEM_TOGGLE);
+			continue;
+		}
+
+		scene_handle_event(scene, event);
 	}
 
-	#ifdef ENABLE_DEVELOPER_OPTIONS
-	scene->manifolds.capacity = 0;
-	scene->manifolds.count = 0;
-	scene->manifolds.data = nullptr;
-	#endif
+	Dev_TimedBlockEnd(EventHandling);
 }
 
 bool iscene_simulate_world_enabled(Scene *scene) {
@@ -1194,7 +1376,16 @@ void iscene_clean_particle_system(Particle_System *system) {
 	memory_free(system->particles);
 }
 
-void iscene_post_simulate(Scene *scene) {
+void iscene_pre_tick(Scene *scene) {
+	for (s64 index = 0; index < Entity_Type_Count; ++index) {
+		auto &rm = scene->removed_entity[index];
+		rm.capacity = 0;
+		rm.count = 0;
+		rm.data = nullptr;
+	}
+}
+
+void iscene_post_tick(Scene *scene) {
 	Array<Entity_Id> *rma;
 	s64 count;
 
@@ -1228,8 +1419,8 @@ void iscene_post_simulate(Scene *scene) {
 				scene->player_id = { 0 };
 			}
 			if (iscene_delete_entity_reference_if_present(&scene->entity_table, id, &ref)) {
-				audio_mixer_remove_audio(&scene->audio_mixer, characters[ref.index].boost);
-				audio_mixer_remove_audio(&scene->audio_mixer, characters[ref.index].fall);
+				audio_mixer_remove_audio(&g.audio_mixer, characters[ref.index].boost);
+				audio_mixer_remove_audio(&g.audio_mixer, characters[ref.index].fall);
 				iscene_clean_particle_system(&characters[ref.index].particle_system);
 				iscene_destroy_rigid_body(scene, characters[ref.index].rigid_body);
 				memory_free(characters[ref.index].particle_system.particles);
@@ -1268,7 +1459,7 @@ void iscene_post_simulate(Scene *scene) {
 		for (s64 index = 0; index < count; ++index) {
 			id = rma->data[index];
 			if (iscene_delete_entity_reference_if_present(&scene->entity_table, id, &ref)) {
-				audio_mixer_remove_audio(&scene->audio_mixer, bullets[ref.index].audio);
+				audio_mixer_remove_audio(&g.audio_mixer, bullets[ref.index].audio);
 				iscene_destroy_rigid_body(scene, bullets[ref.index].rigid_body);
 				bullets[ref.index] = bullets[bullets.count - 1];
 				bullets.count -= 1;
@@ -1299,13 +1490,8 @@ void iscene_post_simulate(Scene *scene) {
 	}
 }
 
-void scene_simulate(Scene *scene, r32 dt) {
-	for (s64 index = 0; index < Entity_Type_Count; ++index) {
-		auto &rm = scene->removed_entity[index];
-		rm.capacity = 0;
-		rm.count = 0;
-		rm.data = nullptr;
-	}
+void scene_tick(Scene *scene, r32 dt) {
+	iscene_pre_tick(scene);
 
 	if (iscene_simulate_world_enabled(scene)) {
 		if (scene->by_type.character.count) {
@@ -1414,19 +1600,14 @@ void scene_simulate(Scene *scene, r32 dt) {
 			}
 		}
 
-		iscene_post_simulate(scene);
+		iscene_post_tick(scene);
 
 		Contact_Manifold manifold;
 		manifold.penetration = 0;
 
 		// TODO: Continuous collision detection
 		for (int iteration = 0; iteration < SCENE_SIMULATION_MAX_ITERATION; ++iteration) {
-			for (s64 index = 0; index < Entity_Type_Count; ++index) {
-				auto &rm = scene->removed_entity[index];
-				rm.capacity = 0;
-				rm.count = 0;
-				rm.data = nullptr;
-			}
+			iscene_pre_tick(scene);
 
 			for_list(Rigid_Body, a_ptr, &scene->rigid_bodies) {
 				for_list_offset(Rigid_Body, b_ptr, a_ptr, &scene->rigid_bodies) {
@@ -1499,7 +1680,7 @@ void scene_simulate(Scene *scene, r32 dt) {
 											}
 
 											scene_spawn_emitter(scene, manifold.contacts[0], color_id_get_color(spawn_color_id), 2.0f * color_id_get_intensity(spawn_color_id));
-											auto audio = audio_mixer_add_audio(&scene->audio_mixer, scene->hit, false, false);
+											auto audio = audio_mixer_add_audio(&g.audio_mixer, g.hit, false, false);
 
 											auto player = scene_get_player(scene);
 											auto src = player->position;
@@ -1507,7 +1688,7 @@ void scene_simulate(Scene *scene, r32 dt) {
 											auto d = src - manifold.contacts[0];
 											audio->attenuation = vec2_dot(d, d);
 											audio_play(audio, 0.5f);
-											audio_mixer_remove_audio(&scene->audio_mixer, audio);
+											audio_mixer_remove_audio(&g.audio_mixer, audio);
 
 											scene_remove_entity(scene, entt_a, a.entity_id);
 										} else if (entt_b.type == Entity_Type_Bullet && entt_a.type != Entity_Type_Bullet) {
@@ -1551,7 +1732,7 @@ void scene_simulate(Scene *scene, r32 dt) {
 											}
 
 											scene_spawn_emitter(scene, manifold.contacts[0], color_id_get_color(spawn_color_id), 2.0f * color_id_get_intensity(spawn_color_id));
-											auto audio = audio_mixer_add_audio(&scene->audio_mixer, scene->hit, false, false);
+											auto audio = audio_mixer_add_audio(&g.audio_mixer, g.hit, false, false);
 
 											auto player = scene_get_player(scene);
 											auto src = player->position;
@@ -1559,7 +1740,7 @@ void scene_simulate(Scene *scene, r32 dt) {
 											auto d = src - manifold.contacts[0];
 											audio->attenuation = vec2_dot(d, d);
 											audio_play(audio, 0.5f);
-											audio_mixer_remove_audio(&scene->audio_mixer, audio);
+											audio_mixer_remove_audio(&g.audio_mixer, audio);
 
 											scene_remove_entity(scene, entt_b, b.entity_id);
 										} else {
@@ -1597,7 +1778,7 @@ void scene_simulate(Scene *scene, r32 dt) {
 			}
 
 
-			iscene_post_simulate(scene);
+			iscene_post_tick(scene);
 		}
 
 		// Update positions
@@ -1644,17 +1825,85 @@ void scene_simulate(Scene *scene, r32 dt) {
 	}
 }
 
-void scene_update(Scene *scene, r32 sim_factor) {
+void iscene_pre_simulate(Scene *scene) {
+	{
+		constexpr r32 PLAYER_FORCE = 10;
+
+		auto count = scene->by_type.character.count;
+		auto &characters = scene->by_type.character;
+		for (auto index = 0; index < count; ++index) {
+			auto &character = characters[index];
+			character.rigid_body->force = vec2(0);
+			character.rigid_body->force += PLAYER_FORCE * vec2_normalize_check(character.controller.axis);
+
+			if (character.hit) {
+				character.hit -= 1;
+			}
+		}
+	}
+
+	{
+		auto count = scene->by_type.bullet.count;
+		auto &bullets = scene->by_type.bullet;
+		for (auto index = 0; index < count; ++index) {
+			auto &bullet = bullets[index];
+			bullet.rigid_body->force = vec2(0);
+		}
+	}
+
+	#ifdef ENABLE_DEVELOPER_OPTIONS
+	scene->manifolds.capacity = 0;
+	scene->manifolds.count = 0;
+	scene->manifolds.data = nullptr;
+	#endif
+}
+
+void scene_frame_simulate(Scene *scene) {
+	Dev_TimedScope(Simulation);
+
+	iscene_pre_simulate(scene);
+
+	const r32 dt = scene->physics.fixed_dt;
+
+	while (scene->physics.accumulator_t >= dt) {
+		if (scene->physics.state == Physics_State_PAUSED)
+			break;
+		else if (scene->physics.state == Physics_State_RUN_SINGLE_STEP)
+			scene->physics.state = Physics_State_PAUSED;
+
+		Dev_TimedScope(SimulationFrame);
+
+		scene_tick(scene, dt);
+
+		scene->physics.accumulator_t -= dt;
+	}
+
 	Dev_TimedBlockBegin(AudioUpdate);
-	scene->audio_mixer.pitch_factor = sim_factor;
-	audio_mixer_update(&scene->audio_mixer);
+	g.audio_mixer.pitch_factor = scene->physics.sim_speed.factor;
+	audio_mixer_update(&g.audio_mixer);
 	Dev_TimedBlockEnd(AudioUpdate);
 
 	editor_update(scene, &scene->editor);
+
+	ImGui_UpdateFrame(scene->physics.real_dt);
 }
 
-void scene_end(Scene *scene) {
-	
+void scene_frame_end(Scene *scene) {
+	reset_temporary_memory();
+
+	auto new_counter = system_get_counter();
+	auto counts = new_counter - scene->physics.counter;
+	scene->physics.counter = new_counter;
+
+	scene->physics.real_dt = ((1000000.0f * (r32)counts) / (r32)scene->physics.frequency) / 1000000.0f;
+	scene->physics.real_t += scene->physics.real_dt;
+
+	scene->physics.game_dt = scene->physics.real_dt * scene->physics.sim_speed.factor;
+
+	scene->physics.accumulator_t += scene->physics.game_dt;
+	scene->physics.accumulator_t = minimum(scene->physics.accumulator_t, 0.2f);
+
+	Dev_TimedFrameEnd(scene->physics.real_dt);
 }
 
 //
@@ -1783,7 +2032,7 @@ inline bool iscene_render_broadphase_enabled(Scene *scene) {
 }
 
 void iscene_render_particles(Scene *scene, Particle_System *system) {
-	auto text = scene->texture_group[system->texture.index];
+	auto text = g.texture_group[system->texture.index];
 	im2d_bind_texture(text.handle);
 
 	Vec2 c = system->position;
@@ -1805,8 +2054,49 @@ void iscene_render_particles(Scene *scene, Particle_System *system) {
 	}
 }
 
-// TODO: Use the alpha
-void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio) {
+void scene_begin_drawing() {
+	Dev_TimedScope(StartRendering);
+	
+	gfx_begin_drawing(Framebuffer_Type_HDR, Clear_ALL, vec4(0.05f, 0.05f, 0.05f, 1.0f));
+	gfx_viewport(0, 0, g.window_w, g.window_h);
+}
+
+void scene_end_drawing() {
+	Dev_TimedScope(FinishRendering);
+
+	gfx_end_drawing();
+	gfx_apply_bloom(2);
+
+	gfx_begin_drawing(Framebuffer_Type_DEFAULT, Clear_COLOR, vec4(0.0f));
+	gfx_blit_hdr(0, 0, g.window_w, g.window_h);
+	gfx_viewport(0, 0, g.window_w, g.window_h);
+
+	//ImGui::ShowDemoWindow();
+
+	#if defined(ENABLE_DEVELOPER_OPTIONS)
+	{
+		Dev_TimedScope(DebugRender);
+		Dev_RenderFrame();
+	}
+	{
+		Dev_TimedScope(ImGuiRender);
+		ImGui_RenderFrame();
+	}
+	#endif
+
+	gfx_end_drawing();
+
+	Dev_TimedBlockBegin(Present);
+	gfx_present();
+	Dev_TimedBlockEnd(Present);
+}
+
+void scene_render(Scene *scene, bool draw_editor) {
+	Dev_TimedScope(FinishRendering);
+
+	r32 aspect_ratio = g.aspect_ratio;
+	r32 alpha = scene->physics.accumulator_t / scene->physics.fixed_dt; // TODO: Use the alpha
+
 	Camera *camera = iscene_get_rendering_camera(scene);
 
 	r32 view_height = SCENE_VIEW_HEIGHT_HALF;
@@ -1828,7 +2118,7 @@ void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio) {
 			for (s64 index = 0; index < count; ++index) {
 				Character &c = characters[index];
 
-				auto text = scene->texture_group[c.texture.index];
+				auto text = g.texture_group[c.texture.index];
 
 				im2d_bind_texture(text.handle);
 
@@ -1888,7 +2178,7 @@ void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio) {
 			for (s64 index = 0; index < count; ++index) {
 				Obstacle &o = obs[index];
 
-				auto text = scene->texture_group[o.texture.index];
+				auto text = g.texture_group[o.texture.index];
 
 				im2d_bind_texture(text.handle);
 
@@ -2015,14 +2305,16 @@ void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio) {
 		im2d_end();
 	}
 
-	editor_render(scene, &scene->editor, aspect_ratio);
+	if (draw_editor) {
+		editor_render(scene, &scene->editor, aspect_ratio);
+	}
 }
 
 //
 //
 //
 
-void iscene_serialize_fixture(Scene *scene, Fixture *fixture, Ostream *out, bool pt_polygon) {
+void iscene_serialize_fixture(Fixture *fixture, Ostream *out, bool pt_polygon) {
 	serialize_fmt_text(out, "shape", reflect_info<Fixture_Shape>(), (char *)&fixture->shape);
 	serialize_fmt_text_next(out);
 
@@ -2057,7 +2349,7 @@ void iscene_serialize_fixture(Scene *scene, Fixture *fixture, Ostream *out, bool
 	}
 }
 
-void iscene_serialize_resource(Scene *scene, Resource_Header &header, Texture_Group &texture, Fixture_Group &fixture, Ostream *out, bool pt_polygon) {
+void iscene_serialize_resource(Resource_Header &header, Texture_Group &texture, Fixture_Group &fixture, Ostream *out, bool pt_polygon) {
 	serialize_fmt_text(out, "header", reflect_info<Resource_Header>(), (char *)&header);
 	serialize_fmt_text_next(out);
 	serialize_fmt_text(out, "uv", reflect_info<Mm_Rect>(), (char *)&texture.uv);
@@ -2068,7 +2360,7 @@ void iscene_serialize_resource(Scene *scene, Resource_Header &header, Texture_Gr
 	auto f = fixture.fixtures;
 	for (u32 index = 0; index < count; ++index, ++f) {
 		serialize_fmt_text_next(out);
-		iscene_serialize_fixture(scene, f, out, pt_polygon);
+		iscene_serialize_fixture(f, out, pt_polygon);
 	}
 }
 
@@ -2116,8 +2408,8 @@ bool iscene_deserialize_fixture(Fixture *fixture, Deserialize_State *state) {
 	return result;
 }
 
-bool iscene_deserialize_resource(Scene *scene, Resource_Header *header, Texture_Group *texture, Fixture_Group *fixture, Deserialize_State *state) {
-	auto mark = push_allocator(scene->pool_allocator);
+bool iscene_deserialize_resource(Resource_Header *header, Texture_Group *texture, Fixture_Group *fixture, Deserialize_State *state) {
+	auto mark = push_allocator(g.pool_allocator);
 	defer{ pop_allocator(mark); };
 
 	if (!deserialize_fmt_text(state, "header", reflect_info<Resource_Header>(), (char *)header))
@@ -2139,7 +2431,7 @@ bool iscene_deserialize_resource(Scene *scene, Resource_Header *header, Texture_
 		}
 	}
 
-	texture->handle = iscene_load_texture(scene, header->texture);
+	texture->handle = iscene_load_texture(header->texture);
 
 	return true;
 }
@@ -2148,13 +2440,13 @@ bool iscene_deserialize_resource(Scene *scene, Resource_Header *header, Texture_
 //
 //
 
-bool scene_save_resource(Scene *scene, Resource_Header &header, Texture_Group &texture, Fixture_Group &fixture, bool pt_polygon) {
+bool scene_save_resource(Resource_Header &header, Texture_Group &texture, Fixture_Group &fixture, bool pt_polygon) {
 	auto mark = push_temporary_allocator();
 	defer{ pop_temporary_allocator(mark); };
 
 	Ostream out;
 	System_File file;
-	iscene_serialize_resource(scene, header, texture, fixture, &out, pt_polygon);
+	iscene_serialize_resource(header, texture, fixture, &out, pt_polygon);
 
 	String file_name = tprintf("resources/sprites/%zu.sprite", header.id);
 	if (system_open_file(file_name, File_Operation_NEW, &file)) {
@@ -2167,16 +2459,16 @@ bool scene_save_resource(Scene *scene, Resource_Header &header, Texture_Group &t
 	return true;
 }
 
-void scene_save_resources(Scene *scene) {
+void scene_save_resources() {
 	System_File file;
 	Ostream out;
 
-	s64 count = scene->resource_header.count;
+	s64 count = g.resource_header.count;
 
 	for (s64 index = 0; index < count; ++index) {
 		scoped_temporary_allocation();
-		iscene_serialize_resource(scene, scene->resource_header[index], scene->texture_group[index], scene->fixture_group[index], &out, false);
-		String file_name = tprintf("resources/sprites/%zu.sprite", scene->resource_header[index].id);
+		iscene_serialize_resource(g.resource_header[index], g.texture_group[index], g.fixture_group[index], &out, false);
+		String file_name = tprintf("resources/sprites/%zu.sprite", g.resource_header[index].id);
 		if (system_open_file(file_name, File_Operation_NEW, &file)) {
 			ostream_build_out_file(&out, &file);
 			system_close_file(&file);
@@ -2189,7 +2481,7 @@ void scene_save_resources(Scene *scene) {
 	ostream_free(&out);
 }
 
-bool iscene_load_resource(Scene *scene, const String path, Resource_Header *header, Texture_Group *texture, Fixture_Group *fixture) {
+bool iscene_load_resource(const String path, Resource_Header *header, Texture_Group *texture, Fixture_Group *fixture) {
 	scoped_temporary_allocation();
 	String content = system_read_entire_file(path);
 	if (content.count) {
@@ -2202,7 +2494,7 @@ bool iscene_load_resource(Scene *scene, const String path, Resource_Header *head
 
 		if (status.result == Tokenization_Result_SUCCESS) {
 			auto state = deserialize_begin(tokens);
-			if (!iscene_deserialize_resource(scene, header, texture, fixture, &state)) {
+			if (!iscene_deserialize_resource(header, texture, fixture, &state)) {
 				system_log(LOG_ERROR, "Scene", "Failed loading %s. Invalid file: %s", tto_cstring(path), state.error.string);
 				return false;
 			}
@@ -2219,8 +2511,8 @@ bool iscene_load_resource(Scene *scene, const String path, Resource_Header *head
 	return true;
 }
 
-void scene_load_resources(Scene *scene) {
-	scene_clean_resources(scene);
+void scene_load_resources() {
+	scene_clean_resources();
 
 	{
 		auto mark = push_temporary_allocator();
@@ -2230,15 +2522,15 @@ void scene_load_resources(Scene *scene) {
 		defer{ memory_free(files.data); };
 
 		System_File file;
-		array_resize(&scene->resource_header, files.count);
-		array_resize(&scene->texture_group, files.count);
-		array_resize(&scene->fixture_group, files.count);
+		array_resize(&g.resource_header, files.count);
+		array_resize(&g.texture_group, files.count);
+		array_resize(&g.fixture_group, files.count);
 
 		for (auto &f : files) {
-			if (!iscene_load_resource(scene, f.path, array_add(&scene->resource_header), array_add(&scene->texture_group), array_add(&scene->fixture_group))) {
-				scene->resource_header.count -= 1;
-				scene->texture_group.count -= 1;
-				scene->fixture_group.count -= 1;
+			if (!iscene_load_resource(f.path, array_add(&g.resource_header), array_add(&g.texture_group), array_add(&g.fixture_group))) {
+				g.resource_header.count -= 1;
+				g.texture_group.count -= 1;
+				g.fixture_group.count -= 1;
 			}
 		}
 	}
@@ -2247,59 +2539,59 @@ void scene_load_resources(Scene *scene) {
 		auto files = system_find_files("resources/audios", ".wav", false);
 		defer{ memory_free(files.data); };
 
-		array_resize(&scene->audio_group, files.count);
+		array_resize(&g.audio_group, files.count);
 
 		for (auto &f : files) {
 			auto content = system_read_entire_file(f.path);
-			auto group = array_add(&scene->audio_group);
+			auto group = array_add(&g.audio_group);
 			group->stream = (Audio_Stream *)content.data;
 			int length = (int)minimum(f.name.count, sizeof(Resource_Name) - 1);
 			memcpy(group->name, f.name.data, length);
 			group->name[length] = 0;
 		}
 
-		scene->fire = scene_find_audio_stream(scene, "bullet.wav");
-		scene->hit = scene_find_audio_stream(scene, "hit.wav");
+		g.fire = scene_find_audio_stream("bullet.wav");
+		g.hit = scene_find_audio_stream("hit.wav");
 	}
 }
 
-void scene_clean_resources(Scene *scene) {
-	auto &textures = scene->texture_group;
+void scene_clean_resources() {
+	auto &textures = g.texture_group;
 	for (auto &t : textures) {
 		gfx_destroy_texture2d(t.handle);
 	}
 	textures.count = 0;
 
-	auto &fixtures = scene->fixture_group;
+	auto &fixtures = g.fixture_group;
 	for (auto &f : fixtures) {
 		for (u32 i = 0; i < f.count; ++i)
-			memory_free(f.fixtures[i].handle, scene->pool_allocator);
-		memory_free(f.fixtures, scene->pool_allocator);
+			memory_free(f.fixtures[i].handle, g.pool_allocator);
+		memory_free(f.fixtures, g.pool_allocator);
 	}
-	scene->fixture_group.count = 0;
+	g.fixture_group.count = 0;
 
-	scene->resource_header.count = 0;
+	g.resource_header.count = 0;
 
-	auto &audios = scene->audio_group;
+	auto &audios = g.audio_group;
 	for (auto &a : audios) {
 		memory_free(a.stream);
 	}
-	scene->audio_group.count = 0;
+	g.audio_group.count = 0;
 }
 
 void scene_reload_resource(Scene *scene, Resource_Id id) {
-	auto resource = scene_find_resource(scene, id);
+	auto resource = scene_find_resource(id);
 
 	Resource_Header header;
 	Texture_Group texture;
 	Fixture_Group fixture;
-	if (!iscene_load_resource(scene, tprintf("resources/sprites/%zu.sprite", id), &header, &texture, &fixture)) {
+	if (!iscene_load_resource(tprintf("resources/sprites/%zu.sprite", id), &header, &texture, &fixture)) {
 		return;
 	}
 
 	u32 count = resource.fixture->count;
 	for (u32 i = 0; i < count; ++i)
-		memory_free(resource.fixture->fixtures[i].handle, scene->pool_allocator);
+		memory_free(resource.fixture->fixtures[i].handle, g.pool_allocator);
 
 	auto white_texture = im_white_texture();
 
@@ -2347,8 +2639,8 @@ void scene_reload_resource(Scene *scene, Resource_Id id) {
 
 void scene_clean_entities(Scene *scene) {
 	for (auto &character : scene->by_type.character) {
-		audio_mixer_remove_audio(&scene->audio_mixer, character.boost);
-		audio_mixer_remove_audio(&scene->audio_mixer, character.fall);
+		audio_mixer_remove_audio(&g.audio_mixer, character.boost);
+		audio_mixer_remove_audio(&g.audio_mixer, character.fall);
 		iscene_clean_particle_system(&character.particle_system);
 		iscene_destroy_rigid_body(scene, character.rigid_body);
 	}
@@ -2356,7 +2648,7 @@ void scene_clean_entities(Scene *scene) {
 		iscene_destroy_rigid_body(scene, obstable.rigid_body);
 	}
 	for (auto &bullet : scene->by_type.bullet) {
-		audio_mixer_remove_audio(&scene->audio_mixer, bullet.audio);
+		audio_mixer_remove_audio(&g.audio_mixer, bullet.audio);
 		iscene_destroy_rigid_body(scene, bullet.rigid_body);
 	}
 	for (auto &emitter : scene->by_type.emitter) {
@@ -2428,7 +2720,7 @@ bool iscene_deserialize_entity(Scene *scene, Level *level, Deserialize_State *st
 
 				if (deserialize_fmt_text(state, "data", reflect_info<Character>(), (char *)character) &&
 					deserialize_fmt_text(state, "body", reflect_info<Rigid_Body>(), (char *)(character->rigid_body))) {
-					auto r = scene_find_resource(scene, id);
+					auto r = scene_find_resource(id);
 
 					character->texture.index = r.index;
 
@@ -2457,7 +2749,7 @@ bool iscene_deserialize_entity(Scene *scene, Level *level, Deserialize_State *st
 
 				if (deserialize_fmt_text(state, "data", reflect_info<Obstacle>(), (char *)obstacle) &&
 					deserialize_fmt_text(state, "body", reflect_info<Rigid_Body>(), (char *)(obstacle->rigid_body))) {
-					auto r = scene_find_resource(scene, id);
+					auto r = scene_find_resource(id);
 
 					obstacle->texture.index = r.index;
 
@@ -2486,9 +2778,9 @@ bool iscene_deserialize_entity(Scene *scene, Level *level, Deserialize_State *st
 //
 //
 
-Level *iscene_add_new_level(Scene *scene, const String name, s32 *index) {
-	*index = (s32)scene->levels.count;
-	auto level = array_add(&scene->levels);
+Level *iscene_add_new_level(const String name, s32 *index) {
+	*index = (s32)g.levels.count;
+	auto level = array_add(&g.levels);
 	level->name_count = minimum((u32)name.count, (u32)sizeof(Level_Name) - 1);
 	memcpy(level->name, name.data, level->name_count);
 	level->name[level->name_count] = 0;
@@ -2499,17 +2791,17 @@ Level *iscene_add_new_level(Scene *scene, const String name, s32 *index) {
 	return level;
 }
 
-Level *iscene_create_new_level(Scene *scene, const String name, s32 *index) {
+Level *iscene_create_new_level(const String name, s32 *index) {
 	String path = tprintf("resources/levels/%s", tto_cstring(name));
 	if (system_create_directory(path) == Create_Directory_SUCCESS) {
-		return iscene_add_new_level(scene, name, index);
+		return iscene_add_new_level(name, index);
 	}
 	return nullptr;
 }
 
-bool scene_create_new_level(Scene *scene, const String name) {
+bool scene_create_new_level(const String name) {
 	s32 index;
-	Level *level = iscene_create_new_level(scene, name, &index);
+	Level *level = iscene_create_new_level(name, &index);
 	if (level) {
 		push_scoped_temporary_allocator();
 
@@ -2622,7 +2914,7 @@ bool scene_load_level(Scene *scene, const String name) {
 
 	// First search if the level if already loaded
 	u32 key = murmur3_32(name.data, name.count, 5656);
-	s32 index = (s32)array_find(&scene->levels, [](const Level &l, u32 key, const String name) {
+	s32 index = (s32)array_find(&g.levels, [](const Level &l, u32 key, const String name) {
 		return l.key == key && string_match(name, String(l.name, l.name_count));
 								}, key, name);
 
@@ -2630,7 +2922,7 @@ bool scene_load_level(Scene *scene, const String name) {
 
 	// Load from file is the level is not already loaded
 	if (index < 0) {
-		iscene_add_new_level(scene, name, &index);
+		iscene_add_new_level(name, &index);
 	}
 
 	// Load entities
@@ -2641,7 +2933,7 @@ bool scene_load_level(Scene *scene, const String name) {
 	String content;
 	System_File file;
 
-	Level *level = &scene->levels[index];
+	Level *level = &g.levels[index];
 
 	for (auto &f : files) {
 		scoped_temporary_allocation();
@@ -2707,7 +2999,7 @@ void scene_unload_current_level(Scene *scene) {
 
 Level *scene_current_level_pointer(Scene *scene) {
 	assert(scene->loaded_level >= 0);
-	return &scene->levels[scene->loaded_level];
+	return &g.levels[scene->loaded_level];
 }
 
 const String scene_current_level(Scene *scene) {

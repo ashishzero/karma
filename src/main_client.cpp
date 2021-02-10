@@ -14,7 +14,7 @@
 
 #include ".generated/entity.typeinfo"
 
-int karma_user_zero() {
+int karma_client() {
 	#ifdef INIT_THREAD_POOL
 	if (!async_initialize(2, mega_bytes(32), context.allocator)) {
 		system_fatal_error("Thread could not be created");

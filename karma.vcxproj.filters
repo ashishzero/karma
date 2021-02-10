@@ -42,6 +42,7 @@
     <ClCompile Include="src\template.cpp" />
     <ClCompile Include="src\main_shankar.cpp" />
     <ClCompile Include="src\main_zero.cpp" />
+    <ClCompile Include="src\main_client.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\asset_loader.h" />
@@ -89,6 +90,7 @@
     <ClInclude Include="src\modules\core\systems.h" />
     <ClInclude Include="src\modules\core\stb_truetype.h" />
     <ClInclude Include="src\modules\core\utility.h" />
+    <ClInclude Include="src\karma_config.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\modules\core\windows\resource.rc" />

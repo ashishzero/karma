@@ -278,6 +278,7 @@ popd
     <ClCompile Include="src\broad_phase.cpp" />
     <ClCompile Include="src\first.cpp" />
     <ClCompile Include="src\main_atish.cpp" />
+    <ClCompile Include="src\main_client.cpp" />
     <ClCompile Include="src\main_pujan.cpp" />
     <ClCompile Include="src\main_shankar.cpp" />
     <ClCompile Include="src\main_zero.cpp" />
@@ -354,6 +355,7 @@ popd
     <ClInclude Include="src\asset.h" />
     <ClInclude Include="src\audio.h" />
     <ClInclude Include="src\broad_phase.h" />
+    <ClInclude Include="src\karma_config.h" />
     <ClInclude Include="src\modules\core\data_structures.h" />
     <ClInclude Include="src\modules\core\stb_rect_pack.h" />
     <ClInclude Include="src\modules\core\thread_pool.h" />
