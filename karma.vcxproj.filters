@@ -27,7 +27,6 @@
     <ClCompile Include="src\modules\imgui\imgui_draw.cpp" />
     <ClCompile Include="src\modules\imgui\imgui_impl_opengl3.cpp" />
     <ClCompile Include="src\modules\imgui\imgui_widgets.cpp" />
-    <ClCompile Include="src\main_zero.cpp" />
     <ClCompile Include="src\modules\core\opengl\gfx_opengl.cpp" />
     <ClCompile Include="src\modules\gfx\renderer.cpp" />
     <ClCompile Include="src\modules\core\opengl\glad\src\glad.c" />
@@ -42,6 +41,7 @@
     <ClCompile Include="src\scene_debug.cpp" />
     <ClCompile Include="src\template.cpp" />
     <ClCompile Include="src\main_shankar.cpp" />
+    <ClCompile Include="src\main_zero.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\asset_loader.h" />
@@ -68,7 +68,6 @@
     <ClInclude Include="src\modules\imgui\imstb_truetype.h" />
     <ClInclude Include="src\modules\core\intrinsics.h" />
     <ClInclude Include="src\opentype.h" />
-    <ClInclude Include="src\particle_system.h" />
     <ClInclude Include="src\modules\core\random.h" />
     <ClInclude Include="src\modules\core\reflection.h" />
     <ClInclude Include="src\modules\core\unicode.h" />

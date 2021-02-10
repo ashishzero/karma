@@ -106,6 +106,7 @@ int karma_network() {
 			}
 		}
 
+		Ip_Endpoint from;
 		int ready_received = 1;
 		while (ready_received) {
 			ready_received = system_net_receive_from(socket, buffer, SOCKET_BUFFER_SIZE, &from);
@@ -131,7 +132,7 @@ int karma_network() {
 			QueryPerformanceCounter(&tick_start_time);
 
 
-			Ip_Endpoint from;
+			
 			int bytes_received = 1;
 
 			while (bytes_received) {

@@ -516,7 +516,7 @@ Scene *scene_create() {
 
 	circular_linked_list_init(&scene->rigid_bodies, context.allocator);
 
-	scene->hgrid = hgrid_create(8, 512);
+	scene->hgrid = hgrid_create(8, 256);
 
 	scene->pool_allocator = context.allocator;
 
