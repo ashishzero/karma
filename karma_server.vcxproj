@@ -286,15 +286,6 @@ popd
     <ClCompile Include="src\modules\core\utility.cpp" />
     <ClCompile Include="src\modules\core\unicode.cpp" />
     <ClCompile Include="src\modules\core\windows\systems_windows.cpp" />
-    <ClCompile Include="src\modules\gfx\renderer.cpp" />
-    <ClCompile Include="src\modules\imgui\dev.cpp" />
-    <ClCompile Include="src\modules\imgui\imconfig.cpp" />
-    <ClCompile Include="src\modules\imgui\imgui.cpp" />
-    <ClCompile Include="src\modules\imgui\imgui_demo.cpp" />
-    <ClCompile Include="src\modules\imgui\imgui_draw.cpp" />
-    <ClCompile Include="src\modules\imgui\imgui_impl_dx11.cpp" />
-    <ClCompile Include="src\modules\imgui\imgui_impl_opengl3.cpp" />
-    <ClCompile Include="src\modules\imgui\imgui_widgets.cpp" />
     <ClCompile Include="src\modules\pcg\pcg_basic.c" />
     <ClCompile Include="src\server.cpp" />
   </ItemGroup>
@@ -323,16 +314,6 @@ popd
     <ClInclude Include="src\modules\core\unicode.h" />
     <ClInclude Include="src\modules\core\utility.h" />
     <ClInclude Include="src\modules\core\windows\resource.h" />
-    <ClInclude Include="src\modules\gfx\renderer.h" />
-    <ClInclude Include="src\modules\imgui\dev.h" />
-    <ClInclude Include="src\modules\imgui\imconfig.h" />
-    <ClInclude Include="src\modules\imgui\imgui.h" />
-    <ClInclude Include="src\modules\imgui\imgui_impl_dx11.h" />
-    <ClInclude Include="src\modules\imgui\imgui_impl_opengl3.h" />
-    <ClInclude Include="src\modules\imgui\imgui_internal.h" />
-    <ClInclude Include="src\modules\imgui\imstb_rectpack.h" />
-    <ClInclude Include="src\modules\imgui\imstb_textedit.h" />
-    <ClInclude Include="src\modules\imgui\imstb_truetype.h" />
     <ClInclude Include="src\modules\pcg\pcg_basic.h" />
   </ItemGroup>
   <ItemGroup>

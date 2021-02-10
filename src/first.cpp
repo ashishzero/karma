@@ -2,7 +2,7 @@
 
 int karma_user_zero();
 int karma_user_atish();
-int karma_user_shankar() { return 0; }
+int karma_user_shankar();
 int karma_user_pujan();
 int karma_main_template();
 
