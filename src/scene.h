@@ -158,7 +158,7 @@ Rigid_Body *scene_collide_point(Scene *scene, Vec2 point, r32 size = 0);
 Camera *scene_primary_camera(Scene *scene);
 Character *scene_get_player(Scene *scene);
 
-Character *scene_spawn_player(Scene *scene, Vec2 p = vec2(0), Vec4 color = vec4(1));
+Character *scene_spawn_player(Scene *scene, Vec2 p, Color_Id color_id);
 
 //
 //
@@ -291,13 +291,21 @@ inline void ent_init_camera(Camera *camera, Vec2 p, r32 distance) {
 }
 
 // TODO: dont take in index
-inline void ent_init_character(Character *character, Scene *scene, Vec2 p, Vec4 color, Rigid_Body *body, Fixture_Group *fixture, Texture_Group *texture, u32 index, Texture_Group *particle, u32 particle_index) {
+inline void ent_init_character(Character *character, Scene *scene, Vec2 p, Color_Id color_id, Rigid_Body *body, Fixture_Group *fixture, Texture_Group *texture, u32 index, Texture_Group *particle, u32 particle_index) {
 	character->id.handle = 0;
 	character->type = Entity_Type_Character;
 	character->position = p;
 	character->size = vec2(1);
 	character->rotation = 0;
-	character->color = color;
+	character->original_color_id = color_id;
+	character->color_id = color_id;
+
+	for (auto i = 0; i < Color_Id_COUNT; ++i) {
+		character->color_values[i] = 0.25f;
+	}
+	character->color_values[color_id] = 1;
+	character->hit = 0;
+
 	character->texture.index = index;
 	character->controller.axis = vec2(0);
 	character->controller.pointer = vec2(0, 1);
@@ -323,10 +331,11 @@ inline void ent_init_obstacle(Obstacle *obstable, Scene *scene, Vec2 p, Rigid_Bo
 	obstable->rigid_body = body;
 }
 
-inline void ent_init_bullet(Bullet *bullet, Scene *scene, Vec2 p, r32 radius, r32 intensity, Vec4 color, r32 life_span, Rigid_Body *body, Fixture_Group *fixture) {
+inline void ent_init_bullet(Bullet *bullet, Scene *scene, Vec2 p, Color_Id color_id, r32 radius, r32 intensity, Vec4 color, r32 life_span, Rigid_Body *body, Fixture_Group *fixture) {
 	bullet->id.handle = 0;
 	bullet->type = Entity_Type_Bullet;
 	bullet->position = p;
+	bullet->color_id = color_id;
 	bullet->radius = radius;
 	bullet->intensity = intensity;
 	bullet->color = color;

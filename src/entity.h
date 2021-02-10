@@ -242,10 +242,22 @@ struct attribute(no_serialize_base) Camera : public Entity {
 
 #define camera_distance_to_scale(camera) powf(0.5f, camera->distance)
 
+enum Color_Id {
+	Color_Id_A, 
+	Color_Id_B, 
+	Color_Id_C, 
+	Color_Id_D,
+
+	Color_Id_COUNT
+};
+
 struct attribute(no_serialize_base, v:2) Character : public Entity {
 											r32 rotation;
 											Vec2 size;
-	attribute(color)						Vec4 color;
+	attribute(read_only)					Color_Id original_color_id;
+	attribute(read_only)					Color_Id color_id;
+	attribute(read_only)					r32 color_values[Color_Id_COUNT];
+	attribute(no_display, no_serialize)		u32 hit;
 	attribute(no_serialize)					Texture_Id texture;
 											Particle_System particle_system;
 	attribute(no_display, no_serialize)		Entity_Controller controller;
@@ -263,6 +275,7 @@ struct attribute(no_serialize_base, v:1) Obstacle : public Entity {
 };
 
 struct attribute(no_serialize_base) Bullet : public Entity {
+											Color_Id color_id;
 	attribute(min:0)						r32 radius;
 	attribute(min:0)						r32 intensity;
 	attribute(color)						Vec4 color;

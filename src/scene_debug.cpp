@@ -1140,7 +1140,7 @@ inline void ieditor_create_new_entity(Scene *scene, Editor *editor, Entity_Type 
 			Rigid_Body body;
 			auto r0 = resource_collection[0];
 			auto r1 = resource_collection[1];
-			ent_init_character(&character, scene, camera->position, vec4(1), &body, r0.fixture, r0.texture, r0.index, r1.texture, r1.index);
+			ent_init_character(&character, scene, camera->position, Color_Id_A, &body, r0.fixture, r0.texture, r0.index, r1.texture, r1.index);
 			Character *ent = scene_clone_entity(scene, &character, camera->position, &r0.header->id)->as<Character>();
 			if (select) {
 				ieditor_select_body(scene, editor, ent->rigid_body);
@@ -1162,7 +1162,7 @@ inline void ieditor_create_new_entity(Scene *scene, Editor *editor, Entity_Type 
 			Bullet bullet;
 			Rigid_Body body;
 			auto r0 = resource_collection[0];
-			ent_init_bullet(&bullet, scene, camera->position, 0.1f, 1, vec4(1), 0.1f, &body, r0.fixture);
+			ent_init_bullet(&bullet, scene, camera->position, Color_Id_A, 0.1f, 1, vec4(1), 0.1f, &body, r0.fixture);
 			Bullet *ent = scene_clone_entity(scene, &bullet, camera->position, &r0.header->id)->as<Bullet>();
 			if (select) {
 				ieditor_select_body(scene, editor, ent->rigid_body);

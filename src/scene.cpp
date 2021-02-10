@@ -901,7 +901,29 @@ Character *scene_get_player(Scene *scene) {
 	return nullptr;
 }
 
-Character *scene_spawn_player(Scene *scene, Vec2 p, Vec4 color) {
+Vec4 color_id_get_color(Color_Id color_id) {
+	static const Vec4 COLORS[] = {
+		vec4(0, 1, 1),
+		vec4(1, 1, 0),
+		vec4(0, 1, 0),
+		vec4(0.6f, 0, 0)
+	};
+	static_assert(static_count(COLORS) == (int)Color_Id_COUNT);
+	return COLORS[(int)color_id];
+}
+
+r32 color_id_get_intensity(Color_Id color_id) {
+	static const r32 INTENS[] = {
+		2.0f,
+		2.0f,
+		2.0f,
+		10.0f
+	};
+	static_assert(static_count(INTENS) == (int)Color_Id_COUNT);
+	return INTENS[(int)color_id];	
+}
+
+Character *scene_spawn_player(Scene *scene, Vec2 p, Color_Id color_id) {
 	if (!scene->player_id.handle) {
 		Resource_Id id = { 6895733819830550519 }; // TODO: hard coded resource id
 		Resource_Collection resource = scene_find_resource(scene, id);
@@ -911,19 +933,20 @@ Character *scene_spawn_player(Scene *scene, Vec2 p, Vec4 color) {
 
 		Rigid_Body body;
 		Character src;
-		ent_init_character(&src, scene, p, color, &body, resource.fixture, resource.texture, resource.index, particle_resource.texture, particle_resource.index);
+		ent_init_character(&src, scene, p, color_id, &body, resource.fixture, resource.texture, resource.index, particle_resource.texture, particle_resource.index);
 		auto player = scene_clone_entity(scene, &src, p, &id)->as<Character>();
 		scene->player_id = player->id;
 		player->size = vec2(0.5f);
 		player->rigid_body->transform.xform = mat2_scalar(0.5f, 0.5f);
 		player->rigid_body->gravity = 1;
+
 		return player;
 	}
 
 	return scene_get_player(scene);
 }
 
-Particle_Emitter *scene_spawn_emitter(Scene *scene, Vec2 p, Vec4 color) {
+Particle_Emitter *scene_spawn_emitter(Scene *scene, Vec2 p, Vec4 color, r32 intensity) {
 	Resource_Id particle_id = { 6926504382549284097 };
 	Resource_Collection particle_resource = scene_find_resource(scene, particle_id);
 
@@ -944,15 +967,16 @@ Particle_Emitter *scene_spawn_emitter(Scene *scene, Vec2 p, Vec4 color) {
 	emitter->particle_system.properties.emission_rate = 7;
 	emitter->particle_system.properties.fade_in = 0.1f;
 	emitter->particle_system.properties.fade_out = 0.1f;
-	emitter->particle_system.properties.color_a = rgb_to_hsv(vec4(color.rgb, 0));
-	emitter->particle_system.properties.color_b = rgb_to_hsv(color);
+	emitter->particle_system.properties.intensity = intensity;
+	emitter->particle_system.properties.color_b = rgb_to_hsv(vec4(color.rgb, 0));
+	emitter->particle_system.properties.color_a = rgb_to_hsv(color);
 	emitter->particle_system.loop = 4;
 	emitter->remove_on_finish = true;
 
 	return emitter;
 }
 
-Bullet *scene_spawn_bullet(Scene *scene, Vec2 p, Vec4 color, Vec2 dir) {
+Bullet *scene_spawn_bullet(Scene *scene, Vec2 p, Color_Id color_id, Vec2 dir) {
 	Resource_Id id = { 6926438366305714858 }; // TODO: hard coded resource id
 	Resource_Collection resource = scene_find_resource(scene, id);
 
@@ -960,11 +984,11 @@ Bullet *scene_spawn_bullet(Scene *scene, Vec2 p, Vec4 color, Vec2 dir) {
 	Bullet src;
 
 	r32 radius = 0.05f * random_r32_range_r32(0.9f, 1.0f);
-	r32 intensity = 1.5f;
+	r32 intensity = 2.0f * color_id_get_intensity(color_id);
 	r32 life_span = 1.0f * random_r32_range_r32(0.6f, 1.0f);
 	r32 initial_velocity = 5 * random_r32_range_r32(0.7f, 1.0f);
 
-	ent_init_bullet(&src, scene, p, radius, intensity, color, life_span, &body, resource.fixture);
+	ent_init_bullet(&src, scene, p, color_id, radius, intensity, color_id_get_color(color_id), life_span, &body, resource.fixture);
 	auto bullet = scene_clone_entity(scene, &src, p, &id)->as<Bullet>();
 	bullet->rigid_body->transform.xform = mat2_scalar(radius, radius);
 	bullet->rigid_body->velocity = initial_velocity * dir;
@@ -1025,6 +1049,10 @@ void scene_begin(Scene *scene) {
 			auto &character = characters[index];
 			character.rigid_body->force = vec2(0);
 			character.rigid_body->force += PLAYER_FORCE * vec2_normalize_check(character.controller.axis);
+
+			if (character.hit) {
+				character.hit -= 1;
+			}
 		}
 	}
 
@@ -1375,7 +1403,7 @@ void scene_simulate(Scene *scene, r32 dt) {
 				if (character.controller.attack) {
 					if (character.controller.cool_down <= 0) {
 						auto dir = vec2_normalize_check(character.controller.pointer);
-						scene_spawn_bullet(scene, character.position + 0.5f * radius * dir, character.color, dir);
+						scene_spawn_bullet(scene, character.position + 0.5f * radius * dir, character.color_id, dir);
 						character.controller.cool_down = BULLET_SPAWN;
 					} else {
 						character.controller.cool_down -= dt;
@@ -1386,11 +1414,20 @@ void scene_simulate(Scene *scene, r32 dt) {
 			}
 		}
 
+		iscene_post_simulate(scene);
+
 		Contact_Manifold manifold;
 		manifold.penetration = 0;
 
 		// TODO: Continuous collision detection
 		for (int iteration = 0; iteration < SCENE_SIMULATION_MAX_ITERATION; ++iteration) {
+			for (s64 index = 0; index < Entity_Type_Count; ++index) {
+				auto &rm = scene->removed_entity[index];
+				rm.capacity = 0;
+				rm.count = 0;
+				rm.data = nullptr;
+			}
+
 			for_list(Rigid_Body, a_ptr, &scene->rigid_bodies) {
 				for_list_offset(Rigid_Body, b_ptr, a_ptr, &scene->rigid_bodies) {
 					auto &a = a_ptr->data;
@@ -1418,13 +1455,50 @@ void scene_simulate(Scene *scene, r32 dt) {
 										auto entt_a = scene_get_entity(scene, a.entity_id);
 										auto entt_b = scene_get_entity(scene, b.entity_id);
 
+										const r32 INCREASE_COLOR_EFFECT = 0.02f;
+										const u32 HIT_COUNT = 15;
+
 										if (entt_a.type == Entity_Type_Bullet && entt_b.type != Entity_Type_Bullet) {
+											auto spawn_color_id = scene_entity_pointer(scene, entt_a)->as<Bullet>()->color_id;
+											
 											if (entt_b.type == Entity_Type_Character) {
-												// TODO: reduce health
-												auto character = (Character *)scene_entity_pointer(scene, entt_b);
+												auto character = scene_entity_pointer(scene, entt_b)->as<Character>();
+												if (character->color_id != spawn_color_id) {
+													character->color_values[spawn_color_id] += INCREASE_COLOR_EFFECT;
+													character->hit = HIT_COUNT;
+
+													if (character->color_values[spawn_color_id] >= 1) {
+														character->color_values[spawn_color_id] = 1;
+
+														bool another_full_present = false;
+														for (auto in = 0; in < Color_Id_COUNT; ++in) {
+															if (in != spawn_color_id && character->color_values[in] == 1) {
+																another_full_present = true;
+																break;
+															}
+														}
+
+														if (another_full_present) {
+															for (auto in = 0; in < Color_Id_COUNT; ++in) {
+																character->color_values[in] *= 0.5f;
+															}
+														} else {
+															character->color_id = spawn_color_id;
+														}
+													} else {
+														r32 max_value = character->color_values[character->color_id];
+
+														for (auto in = 0; in < Color_Id_COUNT; ++in) {
+															if (max_value < character->color_values[in]) {
+																max_value = character->color_values[in];
+																character->color_id = (Color_Id)in;
+															}
+														}
+													}
+												}
 											}
 
-											scene_spawn_emitter(scene, manifold.contacts[0], vec4(0, 1, 1));
+											scene_spawn_emitter(scene, manifold.contacts[0], color_id_get_color(spawn_color_id), 2.0f * color_id_get_intensity(spawn_color_id));
 											auto audio = audio_mixer_add_audio(&scene->audio_mixer, scene->hit, false, false);
 
 											auto player = scene_get_player(scene);
@@ -1437,12 +1511,46 @@ void scene_simulate(Scene *scene, r32 dt) {
 
 											scene_remove_entity(scene, entt_a, a.entity_id);
 										} else if (entt_b.type == Entity_Type_Bullet && entt_a.type != Entity_Type_Bullet) {
+											auto spawn_color_id = scene_entity_pointer(scene, entt_b)->as<Bullet>()->color_id;
+
 											if (entt_a.type == Entity_Type_Character) {
-												// TODO: reduce health
-												auto character = (Character *)scene_entity_pointer(scene, entt_a);
+												auto character = scene_entity_pointer(scene, entt_a)->as<Character>();
+												if (character->color_id != spawn_color_id) {
+													character->color_values[spawn_color_id] += INCREASE_COLOR_EFFECT;
+													character->hit = HIT_COUNT;
+
+													if (character->color_values[spawn_color_id] >= 1) {
+														character->color_values[spawn_color_id] = 1;
+
+														bool another_full_present = false;
+														for (auto in = 0; in < Color_Id_COUNT; ++in) {
+															if (in != spawn_color_id && character->color_values[in] == 1) {
+																another_full_present = true;
+																break;
+															}
+														}
+														
+														if (another_full_present) {
+															for (auto in = 0; in < Color_Id_COUNT; ++in) {
+																character->color_values[in] *= 0.5f;
+															}
+														} else {
+															character->color_id = spawn_color_id;
+														}
+													} else {
+														r32 max_value = character->color_values[character->color_id];
+
+														for (auto in = 0; in < Color_Id_COUNT; ++in) {
+															if (max_value < character->color_values[in]) {
+																max_value = character->color_values[in];
+																character->color_id = (Color_Id)in;
+															}
+														}
+													}
+												}
 											}
 
-											scene_spawn_emitter(scene, manifold.contacts[0], vec4(0, 1, 1));
+											scene_spawn_emitter(scene, manifold.contacts[0], color_id_get_color(spawn_color_id), 2.0f * color_id_get_intensity(spawn_color_id));
 											auto audio = audio_mixer_add_audio(&scene->audio_mixer, scene->hit, false, false);
 
 											auto player = scene_get_player(scene);
@@ -1487,6 +1595,9 @@ void scene_simulate(Scene *scene, r32 dt) {
 					}
 				}
 			}
+
+
+			iscene_post_simulate(scene);
 		}
 
 		// Update positions
@@ -1531,8 +1642,6 @@ void scene_simulate(Scene *scene, r32 dt) {
 			}
 		}
 	}
-
-	iscene_post_simulate(scene);
 }
 
 void scene_update(Scene *scene, r32 sim_factor) {
@@ -1723,7 +1832,14 @@ void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio) {
 
 				im2d_bind_texture(text.handle);
 
-				im2d_rect_centered_rotated(c.position, c.size, c.rotation, text.uv, c.color);
+				Vec4 color;
+				if (c.hit) {
+					color = vec4(1);
+				} else {
+					color = color_id_get_color(c.color_id);
+				}
+
+				im2d_rect_centered_rotated(c.position, c.size, c.rotation, text.uv, color);
 			}
 
 			for (s64 index = 0; index < count; ++index) {
@@ -1737,12 +1853,13 @@ void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio) {
 				Character &c = characters[index];
 				Vec2 point = vec2_normalize_check(c.controller.pointer);
 				if (!vec2_null(point)) {
+					r32 intensity = color_id_get_intensity(c.color_id);
 					r32 radius = sqrtf(c.size.x * c.size.x + c.size.y * c.size.y);
-
-					im2d_circle(c.position + 0.50f * point * radius, 0.020f, 2.00f * c.color);
-					im2d_circle(c.position + 0.65f * point * radius, 0.010f, 1.75f * c.color);
-					im2d_circle(c.position + 0.75f * point * radius, 0.008f, 1.50f * c.color);
-					im2d_circle(c.position + 0.85f * point * radius, 0.006f, 1.00f * c.color);
+					auto color = color_id_get_color(c.color_id);
+					im2d_circle(c.position + 0.50f * point * radius, 0.020f, intensity * 2.00f * color);
+					im2d_circle(c.position + 0.65f * point * radius, 0.010f, intensity * 1.75f * color);
+					im2d_circle(c.position + 0.75f * point * radius, 0.008f, intensity * 1.50f * color);
+					im2d_circle(c.position + 0.85f * point * radius, 0.006f, intensity * 1.00f * color);
 				}
 			}
 		}
@@ -1831,6 +1948,72 @@ void scene_render(Scene *scene, r32 alpha, r32 aspect_ratio) {
 		}
 	}
 	im2d_end();
+
+	if (iscene_render_world_enabled(scene)) {
+		// Render Status
+
+		const auto VIEW_HEIGHT = 10.0f;
+		const auto VIEW_WIDTH = aspect_ratio * VIEW_HEIGHT;
+
+		view = orthographic_view(0.0f, VIEW_WIDTH, VIEW_HEIGHT, 0.0f);
+
+		im2d_begin(view);
+
+		struct Color_Id_Value {
+			Color_Id id;
+			r32 value;
+		};
+		Color_Id_Value color_id_values[Color_Id_COUNT];
+
+		auto player = scene_get_player(scene);
+
+		for (auto i = 0; i < Color_Id_COUNT; ++i) {
+			color_id_values[i].id = (Color_Id)i;
+			color_id_values[i].value = player->color_values[i];
+		}
+
+		sort_insert(color_id_values, Color_Id_COUNT, [](Color_Id_Value &a, Color_Id_Value &b) {
+			return sgn(b.value - a.value);
+		});
+
+		const r32 cx = 0.8f;
+		const r32 cy = VIEW_HEIGHT - cx;
+		const r32 color_potion_radius = 0.6f;
+		const r32 color_rect_height = color_potion_radius / (r32)(Color_Id_COUNT);
+		const r32 color_rect_max_width = 2.5f;
+		
+		const r32 color_width_ratio[] = {
+			1.0f, 0.9f, 0.7f, 0.5f
+		};
+		const r32 color_start_offset[] = {
+			0.0f, 0.3f, 0.6f, 0.9f
+		};
+		
+		r32 value_offset;
+		r32 y = cy + color_potion_radius - color_rect_height;
+		for (auto i = 0; i < Color_Id_COUNT; ++i, y -= color_rect_height) {
+			value_offset = color_start_offset[i] * color_potion_radius;
+			im2d_rect(vec2(cx + value_offset, y), 
+					  vec2((color_rect_max_width - value_offset) * color_width_ratio[i], color_rect_height),
+					  vec4_hadamard(vec4(0.07f, 0.07f, 0.07f, 1.0f), color_id_get_color(color_id_values[i].id)));
+		}
+
+		y = cy + color_potion_radius - color_rect_height;
+		for (auto i = 0; i < Color_Id_COUNT; ++i, y -= color_rect_height) {
+			value_offset = color_start_offset[i] * color_potion_radius;
+			im2d_rect(vec2(cx + value_offset, y), 
+					  vec2(color_id_values[i].value * (color_rect_max_width - value_offset) * color_width_ratio[i], color_rect_height),
+					  color_id_get_color(color_id_values[i].id));
+		}
+
+		im2d_circle(vec2(cx, cy), color_potion_radius, vec4(0, 0, 0));
+
+		auto potion_color =color_id_get_color(player->color_id);
+		potion_color.xyz *= color_id_get_intensity(player->color_id);
+		im2d_circle(vec2(cx, cy), color_potion_radius * 0.8f, potion_color);
+
+		im2d_end();
+	}
 
 	editor_render(scene, &scene->editor, aspect_ratio);
 }
@@ -2493,7 +2676,7 @@ bool scene_load_level(Scene *scene, const String name) {
 
 	scene->loaded_level = index;
 
-	auto player = scene_spawn_player(scene);
+	auto player = scene_spawn_player(scene, vec2(0), (Color_Id)random_get_range(0, (u32)Color_Id_COUNT));
 
 	Camera *camera = scene_primary_camera(scene);
 	camera->position = player->position;
