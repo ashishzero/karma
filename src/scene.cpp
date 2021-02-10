@@ -125,6 +125,12 @@ struct Scene_Global {
 	//
 	//
 
+	Socket socket;
+
+	//
+	//
+	//
+
 	Array<Resource_Header>	resource_header;
 	Array<Fixture_Group>	fixture_group;
 	Array<Texture_Group>	texture_group;
@@ -229,6 +235,24 @@ void scene_prepare(Scene_Run_Method method, Render_Backend backend, System_Windo
 
 	Dev_ModeEnable();
 	Dev_SetPresentationState(false);
+
+	//
+	//
+	//
+
+	if (method != Scene_Run_Method_DEVELOP) {
+		g.socket = system_net_open_udp_client();
+
+		if (g.socket == SOCKET_INVALID) {
+			system_fatal_error("Failed to open socket");
+		}
+
+		system_net_set_socket_nonblocking(g.socket);
+	}
+
+	//
+	//
+	//
 
 	COLLISION_RESOLVERS[Fixture_Shape_Circle][Fixture_Shape_Circle] = shapes_collision_resolver<Circle, Circle>;
 	COLLISION_RESOLVERS[Fixture_Shape_Circle][Fixture_Shape_Mm_Rect] = shapes_collision_resolver<Circle, Mm_Rect>;
@@ -374,6 +398,8 @@ void scene_shutdown() {
 	if (g.method != Scene_Run_Method_SERVER) {
 		ImGui_Shutdown();
 		gfx_destroy_context();
+	} else {
+		system_net_close_socket(g.socket);
 	}
 }
 
@@ -1211,72 +1237,6 @@ void scene_remove_entity_from_level(Scene *scene, Entity_Id id) {
 //
 //
 //
-
-bool scene_handle_event(Scene *scene, const Event &event) {
-	#ifdef ENABLE_DEVELOPER_OPTIONS
-	if (editor_handle_event(event, scene, &scene->editor))
-		return true;
-	#endif
-
-	Character *player = scene_get_player(scene);
-
-	if (player) {
-		auto &controller = player->controller;
-
-		if (event.type & Event_Type_MOUSE_CURSOR) {
-			controller.pointer.x = (r32)event.mouse_cursor.x / g.window_w;
-			controller.pointer.y = (r32)event.mouse_cursor.y / g.window_h;
-			controller.pointer = 2 * controller.pointer - vec2(1);
-		}
-
-		if (event.type & Event_Type_KEYBOARD) {
-			float value = (float)(event.key.state == Key_State_DOWN);
-			switch (event.key.symbol) {
-				case Key_D:
-				case Key_RIGHT:
-					controller.axis.x = value;
-					break;
-
-				case Key_A:
-				case Key_LEFT:
-					controller.axis.x = -value;
-					break;
-
-				case Key_W:
-				case Key_UP:
-					controller.axis.y = value;
-					break;
-
-				case Key_S:
-				case Key_DOWN:
-					controller.axis.y = -value;
-					break;
-
-				case Key_SPACE:
-					controller.attack = (event.key.state == Key_State_DOWN);
-					break;
-			}
-		}
-
-		if (event.type & Event_Type_CONTROLLER_AXIS) {
-			if (event.controller_axis.symbol == Controller_Axis_LTHUMB_X)
-				controller.axis.x = event.controller_axis.value;
-			else if (event.controller_axis.symbol == Controller_Axis_LTHUMB_Y)
-				controller.axis.y = event.controller_axis.value;
-			else if (event.controller_axis.symbol == Controller_Axis_LTRIGGER)
-				controller.attack = (event.controller_axis.value > 0);
-			else if (event.controller_axis.symbol == Controller_Axis_RTHUMB_X) {
-				controller.pointer.x += event.controller_axis.value;
-				controller.pointer = vec2_normalize_check(controller.pointer);
-			} else if (event.controller_axis.symbol == Controller_Axis_RTHUMB_Y) {
-				controller.pointer.y += event.controller_axis.value;
-				controller.pointer = vec2_normalize_check(controller.pointer);
-			}
-		}
-	}
-
-	return false;
-}
 
 void scene_loop(Scene *scene) {
 	scene->physics.frequency = system_get_frequency();
@@ -2771,7 +2731,104 @@ const String scene_current_level(Scene *scene) {
 //
 //
 
+bool iscene_gui_related_events(Scene *scene, const Event &event) {
+	if (event.type & Event_Type_WINDOW_RESIZE) {
+		s32 w = event.window.dimension.x;
+		s32 h = event.window.dimension.y;
+
+		gfx_on_client_resize(w, h);
+		g.window_w = (r32)w;
+		g.window_h = (r32)h;
+
+		if (g.window_w && g.window_h) {
+			g.aspect_ratio = g.window_w / g.window_h;
+			gfx_resize_framebuffer(w, h, lroundf(512 * g.aspect_ratio), 512);
+			g.framebuffer_w = g.window_w;
+			g.framebuffer_h = g.window_h;
+		}
+
+		return true;
+	}
+
+	if (ImGui_HandleEvent(event))
+		return true;
+
+	if ((event.type & Event_Type_KEY_UP) && event.key.symbol == Key_F11) {
+		system_fullscreen_state(SYSTEM_TOGGLE);
+		return true;
+	}
+
+	#ifdef ENABLE_DEVELOPER_OPTIONS
+	if (editor_handle_event(event, scene, &scene->editor))
+		return true;
+	#endif
+
+	return false;
+}
+
 namespace Develop {
+
+	bool update_input(Scene *scene, const Event &event) {
+		Character *player = scene_get_player(scene);
+
+		if (player) {
+			auto &controller = player->controller;
+
+			if (event.type & Event_Type_MOUSE_CURSOR) {
+				controller.pointer.x = (r32)event.mouse_cursor.x / g.window_w;
+				controller.pointer.y = (r32)event.mouse_cursor.y / g.window_h;
+				controller.pointer = 2 * controller.pointer - vec2(1);
+			}
+
+			if (event.type & Event_Type_KEYBOARD) {
+				float value = (float)(event.key.state == Key_State_DOWN);
+				switch (event.key.symbol) {
+					case Key_D:
+					case Key_RIGHT:
+						controller.axis.x = value;
+						break;
+
+					case Key_A:
+					case Key_LEFT:
+						controller.axis.x = -value;
+						break;
+
+					case Key_W:
+					case Key_UP:
+						controller.axis.y = value;
+						break;
+
+					case Key_S:
+					case Key_DOWN:
+						controller.axis.y = -value;
+						break;
+
+					case Key_SPACE:
+						controller.attack = (event.key.state == Key_State_DOWN);
+						break;
+				}
+			}
+
+			if (event.type & Event_Type_CONTROLLER_AXIS) {
+				if (event.controller_axis.symbol == Controller_Axis_LTHUMB_X)
+					controller.axis.x = event.controller_axis.value;
+				else if (event.controller_axis.symbol == Controller_Axis_LTHUMB_Y)
+					controller.axis.y = event.controller_axis.value;
+				else if (event.controller_axis.symbol == Controller_Axis_LTRIGGER)
+					controller.attack = (event.controller_axis.value > 0);
+				else if (event.controller_axis.symbol == Controller_Axis_RTHUMB_X) {
+					controller.pointer.x += event.controller_axis.value;
+					controller.pointer = vec2_normalize_check(controller.pointer);
+				} else if (event.controller_axis.symbol == Controller_Axis_RTHUMB_Y) {
+					controller.pointer.y += event.controller_axis.value;
+					controller.pointer = vec2_normalize_check(controller.pointer);
+				}
+			}
+		}
+
+		return false;
+	}
+
 	void Scene_Frame_Begin(Scene *scene) {
 		Dev_TimedFrameBegin();
 
@@ -2785,38 +2842,16 @@ namespace Develop {
 				break;
 			}
 
-			if (event.type & Event_Type_WINDOW_RESIZE) {
-				s32 w = event.window.dimension.x;
-				s32 h = event.window.dimension.y;
-
-				gfx_on_client_resize(w, h);
-				g.window_w = (r32)w;
-				g.window_h = (r32)h;
-
-				if (g.window_w && g.window_h) {
-					g.aspect_ratio = g.window_w / g.window_h;
-					gfx_resize_framebuffer(w, h, lroundf(512 * g.aspect_ratio), 512);
-					g.framebuffer_w = g.window_w;
-					g.framebuffer_h = g.window_h;
-				}
-
+			if (iscene_gui_related_events(scene, event)) {
 				continue;
 			}
-
-			if (ImGui_HandleEvent(event))
-				continue;
 
 			if ((event.type & Event_Type_KEY_UP) && event.key.symbol == Key_ESCAPE) {
 				system_request_quit();
 				break;
 			}
-
-			if ((event.type & Event_Type_KEY_UP) && event.key.symbol == Key_F11) {
-				system_fullscreen_state(SYSTEM_TOGGLE);
-				continue;
-			}
-
-			scene_handle_event(scene, event);
+	
+			update_input(scene, event);
 		}
 
 		Dev_TimedBlockEnd(EventHandling);
@@ -3128,53 +3163,56 @@ namespace Develop {
 }
 
 namespace Server {
-	void Scene_Frame_Begin(Scene *) {
-
+	void Scene_Frame_Begin(Scene *scene) {
+		// TODO: Receive data from client
+		Develop::Scene_Frame_Begin(scene);
 	}
 
-	void Scene_Frame_Simulate(Scene *) {
-
+	void Scene_Frame_Simulate(Scene *scene) {
+		Develop::Scene_Frame_Simulate(scene);
 	}
 
 	void Scene_Begin_Drawing() {
-
+		// no render in server
 	}
 
 	void Scene_Render(Scene *scene, bool draw_editor) {
-
+		// no render in server
 	}
 
 	void Scene_End_Drawing() {
-
+		// no drawing in server
 	}
 
-	void Scene_Frame_End(Scene *) {
-
+	void Scene_Frame_End(Scene *scene) {
+		Develop::Scene_Frame_End(scene);
 	}
 }
 
 namespace Client {
-	void Scene_Frame_Begin(Scene *) {
-
+	void Scene_Frame_Begin(Scene *scene) {
+		// TODO: Send data to server
+		Develop::Scene_Frame_Begin(scene);
 	}
 
-	void Scene_Frame_Simulate(Scene *) {
-
+	void Scene_Frame_Simulate(Scene *scene) {
+		// TODO: do we simulate in client as well?
+		Develop::Scene_Frame_Simulate(scene);
 	}
 
 	void Scene_Begin_Drawing() {
-
+		Develop::Scene_Begin_Drawing();
 	}
 
 	void Scene_Render(Scene *scene, bool draw_editor) {
-
+		Develop::Scene_Render(scene, draw_editor);
 	}
 
 	void Scene_End_Drawing() {
-
+		Develop::Scene_End_Drawing();
 	}
 
-	void Scene_Frame_End(Scene *) {
-
+	void Scene_Frame_End(Scene *scene) {
+		Develop::Scene_Frame_End(scene);
 	}
 }

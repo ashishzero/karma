@@ -9,7 +9,7 @@ int karma_client() {
 	}
 	#endif
 
-	scene_prepare(Scene_Run_Method_DEVELOP, Render_Backend_DIRECTX11, System_Window_Show_NORMAL);
+	scene_prepare(Scene_Run_Method_CLIENT, Render_Backend_DIRECTX11, System_Window_Show_NORMAL);
 
 	Scene *scene = scene_create();
 
