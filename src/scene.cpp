@@ -2277,7 +2277,9 @@ void scene_load_resources() {
 void scene_clean_resources() {
 	auto &textures = g.texture_group;
 	for (auto &t : textures) {
-		gfx_destroy_texture2d(t.handle);
+		if (t.handle != im_white_texture()) {
+			gfx_destroy_texture2d(t.handle);
+		}
 	}
 	textures.count = 0;
 
