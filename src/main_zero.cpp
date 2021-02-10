@@ -66,7 +66,7 @@ int karma_user_zero() {
 
 	Simulation_Speed sim_speed = simulation_speed(SIMULATION_SPEED_1X);
 
-	r32 const dt = 1.0f / 60.0f;
+	r32 const dt = 1.0f / 30.0f;
 	r32       game_dt = dt * sim_speed.factor;
 	r32       real_dt = dt;
 	r32       game_t = 0.0f;
@@ -144,36 +144,56 @@ int karma_user_zero() {
 			if (player) {
 				auto &controller = player->controller;
 
+				if (event.type & Event_Type_MOUSE_CURSOR) {
+					controller.pointer.x = (r32)event.mouse_cursor.x / window_w;
+					controller.pointer.y = (r32)event.mouse_cursor.y / window_h;
+					controller.pointer = 2 * controller.pointer - vec2(1);
+				}
+
 				if (event.type & Event_Type_KEYBOARD) {
 					float value = (float)(event.key.state == Key_State_DOWN);
 					switch (event.key.symbol) {
 						case Key_D:
 						case Key_RIGHT:
-							controller.axis = value;
+							controller.axis.x = value;
 							break;
+
 						case Key_A:
 						case Key_LEFT:
-							controller.axis = -value;
+							controller.axis.x = -value;
 							break;
 
 						case Key_W:
 						case Key_UP:
-							controller.boost = value;
+							controller.axis.y = value;
 							break;
 
 						case Key_S:
 						case Key_DOWN:
-							if (event.key.state == Key_State_DOWN)
-								controller.boost = 0;
+							controller.axis.y = -value;
+							break;
+
+						case Key_SPACE:
+							controller.attack = (event.key.state == Key_State_DOWN);
 							break;
 					}
 				}
 
 				if (event.type & Event_Type_CONTROLLER_AXIS) {
 					if (event.controller_axis.symbol == Controller_Axis_LTHUMB_X)
-						controller.axis = event.controller_axis.value;
+						controller.axis.x = event.controller_axis.value;
 					else if (event.controller_axis.symbol == Controller_Axis_LTHUMB_Y)
-						controller.boost = event.controller_axis.value < 0 ? 0 : event.controller_axis.value;
+						controller.axis.y = event.controller_axis.value;
+					else if (event.controller_axis.symbol == Controller_Axis_LTRIGGER)
+						controller.attack = (event.controller_axis.value > 0);
+					else if (event.controller_axis.symbol == Controller_Axis_RTHUMB_X) {
+						controller.pointer.x += event.controller_axis.value;
+						controller.pointer = vec2_normalize_check(controller.pointer);
+					}
+					else if (event.controller_axis.symbol == Controller_Axis_RTHUMB_Y) {
+						controller.pointer.y += event.controller_axis.value;
+						controller.pointer = vec2_normalize_check(controller.pointer);
+					}
 				}
 			}
 
@@ -193,16 +213,12 @@ int karma_user_zero() {
 
 			Dev_TimedScope(SimulationFrame);
 
-			// TODO: Do broad phase collision detection and narrow collision detection
-			// TODO: Continuous collision detection
-			
-
 			scene_simulate(scene, dt);
 
 			accumulator_t -= dt;
 		}
 
-		scene_update(scene);
+		scene_update(scene, sim_speed.factor);
 
 		ImGui_UpdateFrame(real_dt);
 

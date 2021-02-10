@@ -1,0 +1,39 @@
+header: #0
+   id: #0
+      handle: 6926887501941402615
+   name: "thin_ice"
+   texture: "thin_ice_block.png"
+uv: #0
+   min: #0
+      x: 0.000000
+      y: 0.000000
+   max: #0
+      x: 1.000000
+      y: 1.000000
+fixture_count: 3
+shape: 2
+shape_data: #0
+   a: #0
+      x: -0.411185
+      y: -0.414184
+   b: #0
+      x: 0.402657
+      y: -0.415466
+   radius: 0.070000
+shape: 2
+shape_data: #0
+   a: #0
+      x: -0.410855
+      y: 0.426436
+   b: #0
+      x: 0.404122
+      y: 0.428933
+   radius: 0.070000
+shape: 1
+shape_data: #0
+   min: #0
+      x: -0.479528
+      y: -0.415563
+   max: #0
+      x: 0.473132
+      y: 0.458207

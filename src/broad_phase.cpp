@@ -1,15 +1,12 @@
 #include "broad_phase.h"
 
 bool hgrid_fully_fits(Vec2 R1, r32 dimension, Mm_Rect rect) {
-
 	if (R1.x <= rect.min.x && R1.y <= rect.min.y && (R1.x + dimension) >= rect.max.x && (R1.y + dimension) >= rect.max.y)
 		return true;
-
 	return false;
 }
 
 void hgrid_add_body_to_grid(HGrid *hgrid, Rigid_Body *body) {
-
 	auto grids = hgrid->grids;
 	auto count = hgrid->count;
 	assert(hgrid_fully_fits(grids->position, grids->dimension, body->bounding_box));
@@ -29,7 +26,6 @@ void hgrid_add_body_to_grid(HGrid *hgrid, Rigid_Body *body) {
 			}
 		}
 	}
-
 
 	struct Rigid_Body *temp;
 	auto grid = grids + parent_index;
@@ -51,7 +47,6 @@ void hgrid_add_body_to_grid(HGrid *hgrid, Rigid_Body *body) {
 		body->next = NULL;
 		body->level = my_grid_level;
 	}
-
 }
 
 void iterate_and_remove_linklist(Grid *start, Rigid_Body *body) {
@@ -73,7 +68,6 @@ void hgrid_remove_body_from_grid(HGrid *hgrid, Rigid_Body *body) {
 	assert(body->grid_index < hgrid->count);
 	iterate_and_remove_linklist(hgrid->grids + body->grid_index, body);
 }
-
 
 void hgrid_collision_check_objects(HGrid *hgrid, Rigid_Body *body, u32 index) {
 	auto start = hgrid->grids;
@@ -120,13 +114,10 @@ void hgrid_collision_check_objects(HGrid *hgrid, Rigid_Body *body, u32 index) {
 }
 
 void hgrid_check_collision(HGrid *start, Rigid_Body *body) {
-
 	hgrid_collision_check_objects(start, body, body->grid_index);
 }
 
-
 void initialize_grid(Grid *grids, u32 index, u32 count, r32 dimension, Vec2 position) {
-
 	auto grid = grids + index;
 
 	grid->no_of_object = 0;
@@ -161,36 +152,39 @@ void hgrid_move_body(HGrid *start, Rigid_Body *rigid_body) {
 bool hgrid_test_collision(HGrid *hgrid, Rigid_Body *a, Rigid_Body *b) {
 	u32 min_level;
 	u32 max_level;
-	bool need_checking = false;
-	Rigid_Body* temp = new Rigid_Body;
+
+	Rigid_Body *temp = nullptr;
+	
 	u32 left_most_index;
 	u32 right_most_index;
+	
 	if (a->level == b->level) {
 		if (a->grid_index != b->grid_index)
 			return false;
 		else
 			return true;
 	}
+
 	if (a->level < b->level) {
 		min_level = a->level;
 		temp = b;
 		left_most_index = a->grid_index;
 		max_level = b->level;
-	}
-	else {
+	} else {
 		min_level = b->level;
 		temp = a;
 		left_most_index = b->grid_index;
 		max_level = a->level;
 	}
+
 	right_most_index = left_most_index;
+	
 	for (u32 i = min_level; i <= max_level; i++) {
 		if (temp->grid_index >= (4 * left_most_index + 1) && temp->grid_index <= (4 * right_most_index + 4))
-			need_checking = true;
-		if (need_checking)
 			return true;
 		left_most_index = 4 * left_most_index + 1;
 		right_most_index = 4 * right_most_index + 4;
 	}
+
 	return false;
 }

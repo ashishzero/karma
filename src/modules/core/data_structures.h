@@ -85,3 +85,10 @@ typename Circular_Linked_List<T>::Node *circular_linked_list_node_from_data(cons
 
 #define for_list(type, ptr, l) for (auto ptr = iter_begin(l); iter_continue(l, ptr); ptr = iter_next<type>(ptr))
 #define for_list_offset(type, ptr, offset, l) for (auto ptr = offset->next; iter_continue(l, ptr); ptr = iter_next<type>(ptr))
+
+template <typename T>
+typename Circular_Linked_List<T>::Node *circular_linked_list_loop_remove(Circular_Linked_List<T> *list, typename Circular_Linked_List<T>::Node *ptr) {
+	auto nxt = ptr->next;
+	circular_linked_list_remove(list, ptr);
+	return nxt;
+}

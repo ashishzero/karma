@@ -4,6 +4,7 @@
 #include "modules/imgui/editor.h"
 #include "modules/gfx/renderer.h"
 #include "modules/imgui/dev.h"
+#include "modules/core/stb_image.h"
 #include "scene.h"
 
 #include ".generated/entity.typeinfo"
@@ -84,8 +85,6 @@ Editor editor_create(Scene *scene) {
 
 	editor.entity_camera = editor.level_camera;
 
-	editor_set_mode_level_editor(scene, &editor);
-
 	editor.entity.fixture_count = 0;
 	editor.entity.selected_index = -1;
 	editor.entity.hovered_index = -1;
@@ -97,8 +96,24 @@ Editor editor_create(Scene *scene) {
 	editor.entity.added_vertex_index = -1;
 	editor.entity.vertex_is_valid = false;
 	editor.entity.vertex_pointer_angle = 0;
+	editor.entity.selected_texture = -1;
+	memset(&editor.entity.texture, 0, sizeof(editor.entity.texture));
 
 	editor.flags = Editor_Flag_Bit_RENDER_WORLD | Editor_Flag_Bit_RENDER_FIXTURE;
+
+	editor.level.hovered_body = nullptr;
+	editor.level.selected_body = nullptr;
+	editor.level.selected_camera_index = -1;
+	editor.level.selected_emitter_index = -1;
+	memset(editor.level.name_storage, 0, sizeof(Level_Name));
+	editor.level.name_is_valid = false;
+
+	editor.level.new_entity_type = Entity_Type_Character;
+	editor.level.selected_resource_index = 0;
+	editor.level.preview_shape_scale = 1;
+	editor.level.preview_shapes = true;
+
+	editor.mode = Editor_Mode_LEVEL_EDITOR;
 
 	return editor;
 }
@@ -169,17 +184,44 @@ bool editor_handle_event(const Event &event, Scene *scene, Editor *editor) {
 	return true;
 }
 
+void ieditor_save_resource(Scene *scene, Editor *editor) {
+	Fixture_Group fixture;
+	fixture.fixtures = editor->entity.fixtures;
+	fixture.count = editor->entity.fixture_count;
+
+	Texture_Group texture;
+	texture.handle.buffer.id.hptr = nullptr;
+	texture.handle.view.id.hptr = nullptr;
+	texture.uv = editor->entity.texture_uv;
+
+	Resource_Header header;
+	header.id = editor->entity.id;
+	memcpy(header.name, editor->entity.name, sizeof(Resource_Name));
+	memcpy(header.texture, editor->entity.texture_name, sizeof(Resource_Name));
+
+	scene_save_resource(scene, header, texture, fixture, true);
+}
+
 inline void ieditor_reset(Scene *scene, Editor *editor, Editor_Mode new_mode) {
 	editor->level.hovered_body = nullptr;
 	editor->level.selected_body = nullptr;
 	editor->level.selected_camera_index = -1;
+	editor->level.selected_emitter_index = -1;
 	editor->gizmo.render_type = Gizmo_Render_Type_NONE;
 	editor->gizmo.type = Gizmo_Type_NONE;
 	editor->level_camera.behaviour = 0;
 	editor->entity_camera.behaviour = 0;
 
 	if (editor->mode == Editor_Mode_ENTITY_EDITOR) {
-		scene_reload_resources(scene, editor->entity.fixture_id);
+		if (editor->entity.texture.view.id) {
+			gfx_destroy_texture2d(editor->entity.texture);
+			memset(&editor->entity.texture, 0, sizeof(editor->entity.texture));
+		}
+
+		ieditor_save_resource(scene, editor);
+
+		scene_reload_resource(scene, editor->entity.id);
+		editor->entity.id = { 0 };
 	}
 
 	if (editor->mode != Editor_Mode_ENTITY_EDITOR && new_mode != Editor_Mode_ENTITY_EDITOR) {
@@ -207,54 +249,91 @@ void editor_set_mode_level_editor(Scene *scene, Editor *editor) {
 	editor->entity.vertex_is_valid = false;
 	editor->level.new_entity_type = Entity_Type_Character;
 	editor->level.selected_resource_index = 0;
-	editor->level.preview_shape_scale = 150.0f;
 	editor->level.preview_shapes = true;
+	editor->level.preview_shape_scale = 1;
+	editor->entity.selected_texture = -1;
 }
 
-void editor_set_mode_entity_editor(Scene *scene, Editor *editor, Resource_Id id, const Resource_Name &name, Fixture *fixtures, u32 fixture_count, const Resource_Name &texture_name) {
+void editor_set_mode_entity_editor(Scene *scene, Editor *editor, Resource_Collection *r) {
+	u32 fixture_count = 0;
+
+	if (r->fixture) {
+		fixture_count = r->fixture->count;
+	}
+
 	assert(fixture_count < MAXIMUM_FIXTURE_COUNT);
 	ieditor_reset(scene, editor, Editor_Mode_ENTITY_EDITOR);
 
-	editor->entity.fixture_id = id;
-	memcpy(editor->entity.fixture_name, name, sizeof(Resource_Name));
-	editor->entity.fixture_count = fixture_count;
+	editor->entity.id = r->header->id;
+	memcpy(editor->entity.name, r->header->name, sizeof(Resource_Name));
 
-	Fixture *src = fixtures;
-	Fixture *dst = editor->entity.fixtures;
+	bool loaded = false;
 
-	for (u32 index = 0; index < fixture_count; ++index, ++src, ++dst) {
-		switch (src->shape) {
-			case Fixture_Shape_Circle: {
-				dst->shape = Fixture_Shape_Circle;
-				dst->handle = &editor->entity.circle_storage[index];
-				memcpy(dst->handle, src->handle, sizeof(Circle));
-			} break;
+	if (r->texture) {
+		memcpy(editor->entity.texture_name, r->header->texture, sizeof(Resource_Name));
+		editor->entity.texture_uv = r->texture->uv;
 
-			case Fixture_Shape_Mm_Rect: {
-				dst->shape = Fixture_Shape_Mm_Rect;
-				dst->handle = &editor->entity.mm_rect_storage[index];
-				memcpy(dst->handle, src->handle, sizeof(Mm_Rect));
-			} break;
+		String path = tprintf("resources/textures/%s", editor->entity.texture_name);
 
-			case Fixture_Shape_Capsule: {
-				dst->shape = Fixture_Shape_Capsule;
-				dst->handle = &editor->entity.capsule_storage[index];
-				memcpy(dst->handle, src->handle, sizeof(Capsule));
-			} break;
+		int w, h, n;
+		String content = system_read_entire_file(path);
 
-			case Fixture_Shape_Polygon: {
-				Polygon *polygon_src = fixture_get_shape(src, Polygon);
-				Polygon_Pt *polygon_dst = &editor->entity.polygon_storage[index];
-				dst->shape = Fixture_Shape_Polygon;
-				dst->handle = polygon_dst;
-				polygon_dst->vertex_count = polygon_src->vertex_count;
-				polygon_dst->vertices = editor->entity.polygon_vertices[index];
-				memcpy(polygon_dst->vertices, polygon_src->vertices, sizeof(Vec2) * polygon_src->vertex_count);
-			} break;
+		if (content.count) {
+			u8 *pixels = stbi_load_from_memory(content.data, (int)content.count, &w, &h, &n, 4);
+			if (pixels) {
+				editor->entity.texture = gfx_create_texture2d((u32)w, (u32)h, 4, Data_Format_RGBA8_UNORM_SRGB, (const u8 **)&pixels, Buffer_Usage_IMMUTABLE, 1);
+				stbi_image_free(pixels);
+				loaded = true;
+			}
+
+			memory_free(content.data);
 		}
 	}
 
-	memcpy(editor->entity.texture_name, texture_name, sizeof(Resource_Name));
+	if (!loaded) {
+		memset(editor->entity.texture_name, 0, sizeof(Resource_Name));
+		editor->entity.texture_uv = mm_rect(0, 0, 1, 1);
+		memset(&editor->entity.texture, 0, sizeof(editor->entity.texture));
+	}
+
+	editor->entity.fixture_count = fixture_count;
+
+	if (fixture_count) {
+		Fixture *src = r->fixture->fixtures;
+		Fixture *dst = editor->entity.fixtures;
+
+		for (u32 index = 0; index < fixture_count; ++index, ++src, ++dst) {
+			switch (src->shape) {
+				case Fixture_Shape_Circle: {
+					dst->shape = Fixture_Shape_Circle;
+					dst->handle = &editor->entity.circle_storage[index];
+					memcpy(dst->handle, src->handle, sizeof(Circle));
+				} break;
+
+				case Fixture_Shape_Mm_Rect: {
+					dst->shape = Fixture_Shape_Mm_Rect;
+					dst->handle = &editor->entity.mm_rect_storage[index];
+					memcpy(dst->handle, src->handle, sizeof(Mm_Rect));
+				} break;
+
+				case Fixture_Shape_Capsule: {
+					dst->shape = Fixture_Shape_Capsule;
+					dst->handle = &editor->entity.capsule_storage[index];
+					memcpy(dst->handle, src->handle, sizeof(Capsule));
+				} break;
+
+				case Fixture_Shape_Polygon: {
+					Polygon *polygon_src = fixture_get_shape(src, Polygon);
+					Polygon_Pt *polygon_dst = &editor->entity.polygon_storage[index];
+					dst->shape = Fixture_Shape_Polygon;
+					dst->handle = polygon_dst;
+					polygon_dst->vertex_count = polygon_src->vertex_count;
+					polygon_dst->vertices = editor->entity.polygon_vertices[index];
+					memcpy(polygon_dst->vertices, polygon_src->vertices, sizeof(Vec2) * polygon_src->vertex_count);
+				} break;
+			}
+		}
+	}
 
 	editor->entity.added_vertex_index = -1;
 	editor->entity.vertex_is_valid = false;
@@ -279,9 +358,32 @@ Camera *ieditor_get_selected_camera(Scene *scene, Editor *editor) {
 	return nullptr;
 }
 
+Particle_Emitter *ieditor_get_selected_emitter(Scene *scene, Editor *editor) {
+	int index = editor->level.selected_emitter_index;
+	auto emitters = scene_emitters(scene);
+	if (index >= 0 && index < emitters.count) {
+		return &emitters[index];
+	} else {
+		editor->level.selected_emitter_index = -1;
+	}
+	return nullptr;
+}
+
+
 void ieditor_select_camera(Editor *editor, int index) {
 	editor->level.selected_body = nullptr;
 	editor->level.selected_camera_index = index;
+	editor->level.selected_emitter_index = -1;
+}
+
+void ieditor_select_emitter(Editor *editor, int index) {
+	editor->level.selected_body = nullptr;
+	editor->level.selected_camera_index = -1;
+	editor->level.selected_emitter_index = index;
+}
+
+void ieditor_deselect_emitter(Scene *scene, Editor *editor) {
+	editor->level.selected_emitter_index = -1;
 }
 
 void ieditor_deselect_camera(Scene *scene, Editor *editor) {
@@ -610,85 +712,86 @@ void ieditor_try_select_fixture(Editor *editor, Vec2 cursor) {
 }
 
 void ieditor_try_select_vertex(Editor *editor, Vec2 cursor) {
-	assert(editor->entity.selected_index >= 0);
-	Fixture *f = editor->entity.fixtures + editor->entity.selected_index;
+	if (editor->entity.selected_index >= 0) {
+		Fixture *f = editor->entity.fixtures + editor->entity.selected_index;
 
-	editor->entity.hovered_vertex = nullptr;
+		editor->entity.hovered_vertex = nullptr;
 
-	Circle p;
-	p.radius = EDITOR_VERTEX_RADIUS;
+		Circle p;
+		p.radius = EDITOR_VERTEX_RADIUS;
 
-	bool vertex_hovered = false;
+		bool vertex_hovered = false;
 
-	switch (f->shape) {
-		case Fixture_Shape_Circle: {
-			auto shape = fixture_get_shape(f, Circle);
-			p.center = shape->center;
-			if (test_shape_vs_point(p, cursor, 0)) {
-				vertex_hovered = true;
-				editor->entity.hovered_vertex = &shape->center;
-			}
-		} break;
-
-		case Fixture_Shape_Mm_Rect: {
-			auto shape = fixture_get_shape(f, Mm_Rect);
-			p.center = shape->min;
-			if (test_shape_vs_point(p, cursor, 0)) {
-				vertex_hovered = true;
-				editor->entity.hovered_vertex = &shape->min;
-			} else {
-				p.center = shape->max;
+		switch (f->shape) {
+			case Fixture_Shape_Circle: {
+				auto shape = fixture_get_shape(f, Circle);
+				p.center = shape->center;
 				if (test_shape_vs_point(p, cursor, 0)) {
 					vertex_hovered = true;
-					editor->entity.hovered_vertex = &shape->max;
+					editor->entity.hovered_vertex = &shape->center;
 				}
-			}
-		} break;
+			} break;
 
-		case Fixture_Shape_Capsule: {
-			auto shape = fixture_get_shape(f, Capsule);
-			p.center = shape->a;
-			if (test_shape_vs_point(p, cursor, 0)) {
-				vertex_hovered = true;
-				editor->entity.hovered_vertex = &shape->a;
-			} else {
-				p.center = shape->b;
+			case Fixture_Shape_Mm_Rect: {
+				auto shape = fixture_get_shape(f, Mm_Rect);
+				p.center = shape->min;
 				if (test_shape_vs_point(p, cursor, 0)) {
 					vertex_hovered = true;
-					editor->entity.hovered_vertex = &shape->b;
+					editor->entity.hovered_vertex = &shape->min;
+				} else {
+					p.center = shape->max;
+					if (test_shape_vs_point(p, cursor, 0)) {
+						vertex_hovered = true;
+						editor->entity.hovered_vertex = &shape->max;
+					}
 				}
-			}
-		} break;
+			} break;
 
-		case Fixture_Shape_Polygon: {
-			auto shape = fixture_get_shape(f, Polygon_Pt);
-			u32 vcount = shape->vertex_count;
-			auto v = shape->vertices;
-			for (u32 vi = 0; vi < vcount; ++vi, ++v) {
-				p.center = *v;
+			case Fixture_Shape_Capsule: {
+				auto shape = fixture_get_shape(f, Capsule);
+				p.center = shape->a;
 				if (test_shape_vs_point(p, cursor, 0)) {
 					vertex_hovered = true;
-					editor->entity.hovered_vertex = v;
-					break;
+					editor->entity.hovered_vertex = &shape->a;
+				} else {
+					p.center = shape->b;
+					if (test_shape_vs_point(p, cursor, 0)) {
+						vertex_hovered = true;
+						editor->entity.hovered_vertex = &shape->b;
+					}
 				}
-			}
-		} break;
-	}
+			} break;
 
-	if (vertex_hovered && ImGui::GetIO().MouseClicked[ImGuiMouseButton_Left]) {
-		ieditor_select_vertex(editor, editor->entity.hovered_vertex);
-
-		Gizmo &gizmo = editor->gizmo;
-		if (gizmo.render_type == Gizmo_Render_Type_NONE) {
-			gizmo.render_type = Gizmo_Render_Type_TRANSLATE;
-		} else if (editor->entity.selected_vertex &&
-				   (f->shape == Fixture_Shape_Mm_Rect || f->shape == Fixture_Shape_Polygon)) {
-			gizmo.render_type = Gizmo_Render_Type_TRANSLATE;
+			case Fixture_Shape_Polygon: {
+				auto shape = fixture_get_shape(f, Polygon_Pt);
+				u32 vcount = shape->vertex_count;
+				auto v = shape->vertices;
+				for (u32 vi = 0; vi < vcount; ++vi, ++v) {
+					p.center = *v;
+					if (test_shape_vs_point(p, cursor, 0)) {
+						vertex_hovered = true;
+						editor->entity.hovered_vertex = v;
+						break;
+					}
+				}
+			} break;
 		}
-	}
 
-	if (!vertex_hovered && (editor->entity.mode == Editor_Entity::SELECTED || editor->entity.mode == Editor_Entity::EDITING)) {
-		ieditor_try_select_fixture(editor, cursor);
+		if (vertex_hovered && ImGui::GetIO().MouseClicked[ImGuiMouseButton_Left]) {
+			ieditor_select_vertex(editor, editor->entity.hovered_vertex);
+
+			Gizmo &gizmo = editor->gizmo;
+			if (gizmo.render_type == Gizmo_Render_Type_NONE) {
+				gizmo.render_type = Gizmo_Render_Type_TRANSLATE;
+			} else if (editor->entity.selected_vertex &&
+					   (f->shape == Fixture_Shape_Mm_Rect || f->shape == Fixture_Shape_Polygon)) {
+				gizmo.render_type = Gizmo_Render_Type_TRANSLATE;
+			}
+		}
+
+		if (!vertex_hovered && (editor->entity.mode == Editor_Entity::SELECTED || editor->entity.mode == Editor_Entity::EDITING)) {
+			ieditor_try_select_fixture(editor, cursor);
+		}
 	}
 }
 
@@ -788,12 +891,42 @@ void editor_update(Scene *scene, Editor *editor) {
 						case Gizmo_Type_SCALE_Y: {
 							editor->level.selected_body->transform.xform = mat2_scalar(gizmo.out) * editor->level.selected_body->transform.xform;
 							scene_rigid_body_update_bounding_box(editor->level.selected_body, 0);
+
+							Entity_Reference ref;
+							if (scene_find_entity(scene, editor->level.selected_body->entity_id, &ref)) {
+								switch (ref.type) {
+									case Entity_Type_Character: {
+										Character *ent = scene_entity_pointer(scene, ref)->as<Character>();
+										ent->size = vec2_hadamard(ent->size, gizmo.out);
+									} break;
+
+									case Entity_Type_Obstacle: {
+										Obstacle *ent = scene_entity_pointer(scene, ref)->as<Obstacle>();
+										ent->size = vec2_hadamard(ent->size, gizmo.out);
+									} break;
+								}
+							}
 						} break;
 
 						case Gizmo_Type_ROTOR: {
 							editor->level.selected_body->bounding_box = scene_rigid_body_bounding_box(editor->level.selected_body, 0);
 							editor->level.selected_body->transform.xform = mat2_rotation(gizmo.out.x) * editor->level.selected_body->transform.xform;
 							scene_rigid_body_update_bounding_box(editor->level.selected_body, 0);
+
+							Entity_Reference ref;
+							if (scene_find_entity(scene, editor->level.selected_body->entity_id, &ref)) {
+								switch (ref.type) {
+									case Entity_Type_Character: {
+										Character *ent = scene_entity_pointer(scene, ref)->as<Character>();
+										ent->rotation += gizmo.out.x;
+									} break;
+
+									case Entity_Type_Obstacle: {
+										Obstacle *ent = scene_entity_pointer(scene, ref)->as<Obstacle>();
+										ent->rotation += gizmo.out.x;
+									} break;
+								}
+							}
 						} break;
 					}
 				}
@@ -989,16 +1122,26 @@ void ieditor_fixture_group(Scene *scene, Editor *editor, Rigid_Body *body) {
 	}
 }
 
-#if 0
-inline void ieditor_create_new_entity(Scene *scene, Editor *editor, Entity_Type type, Resource_Fixture &resource, const String texture, bool select) {
+inline void ieditor_create_new_entity(Scene *scene, Editor *editor, Entity_Type type, Resource_Collection *resource_collection, bool select) {
 	Camera *camera = editor_rendering_camera(scene, editor);
 
 	switch (type) {
+		case Entity_Type_Camera: {
+			Camera new_camera;
+			ent_init_camera(&new_camera, camera->position, camera->distance);
+			Camera *ent = scene_clone_entity(scene, &new_camera, camera->position, nullptr)->as<Camera>();
+			if (select) {
+				ieditor_select_camera(editor, scene_get_entity(scene, ent->id).index);
+			}
+		} break;
+
 		case Entity_Type_Character: {
 			Character character;
 			Rigid_Body body;
-			ent_init_character(&character, scene, camera->position, &body, resource, texture);
-			Character *ent = (Character *)scene_clone_entity(scene, &character, camera->position);
+			auto r0 = resource_collection[0];
+			auto r1 = resource_collection[1];
+			ent_init_character(&character, scene, camera->position, vec4(1), &body, r0.fixture, r0.texture, r0.index, r1.texture, r1.index);
+			Character *ent = scene_clone_entity(scene, &character, camera->position, &r0.header->id)->as<Character>();
 			if (select) {
 				ieditor_select_body(scene, editor, ent->rigid_body);
 			}
@@ -1007,8 +1150,20 @@ inline void ieditor_create_new_entity(Scene *scene, Editor *editor, Entity_Type 
 		case Entity_Type_Obstacle: {
 			Obstacle obstacle;
 			Rigid_Body body;
-			ent_init_obstacle(&obstacle, scene, camera->position, &body, resource, texture);
-			Obstacle *ent = (Obstacle *)scene_clone_entity(scene, &obstacle, camera->position);
+			auto r0 = resource_collection[0];
+			ent_init_obstacle(&obstacle, scene, camera->position, &body, r0.fixture, r0.texture, r0.index);
+			Obstacle *ent = scene_clone_entity(scene, &obstacle, camera->position, &r0.header->id)->as<Obstacle>();
+			if (select) {
+				ieditor_select_body(scene, editor, ent->rigid_body);
+			}
+		} break;
+
+		case Entity_Type_Bullet: {
+			Bullet bullet;
+			Rigid_Body body;
+			auto r0 = resource_collection[0];
+			ent_init_bullet(&bullet, scene, camera->position, 0.1f, 1, vec4(1), 0.1f, &body, r0.fixture);
+			Bullet *ent = scene_clone_entity(scene, &bullet, camera->position, &r0.header->id)->as<Bullet>();
 			if (select) {
 				ieditor_select_body(scene, editor, ent->rigid_body);
 			}
@@ -1017,7 +1172,6 @@ inline void ieditor_create_new_entity(Scene *scene, Editor *editor, Entity_Type 
 			invalid_default_case();
 	}
 }
-#endif
 
 bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 	bool result = false;
@@ -1030,7 +1184,7 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 	int new_entity_type_index = -1;
 	bool create_new_level = false;
 	bool open_another_level = false;
-	
+
 	if (ImGui::BeginMenuBar()) {
 		if (ImGui::BeginMenu("File")) {
 
@@ -1064,7 +1218,12 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 			if (ImGui::BeginMenu("Add")) {
 				auto type_strings = enum_string_array<Entity_Type>();
 
-				for (u32 index = 0; index < Entity_Type_Count; ++index) {
+				const Entity_Type ADDABLE_ENTITY[] = {
+					Entity_Type_Obstacle,
+				};
+
+				for (u32 counter = 0; counter < static_count(ADDABLE_ENTITY); ++counter) {
+					auto index = ADDABLE_ENTITY[counter];
 					if (ImGui::MenuItem(type_strings[index])) {
 						new_entity_type_index = (int)index;
 						break;
@@ -1186,7 +1345,7 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 	if (new_entity_type_index != -1) {
 		editor->level.new_entity_type = (Entity_Type)new_entity_type_index;
 		editor->level.selected_resource_index = 0;
-		editor->level.preview_shape_scale = 150.0f;
+		editor->level.preview_shape_scale = 1;
 		editor->level.preview_shapes = true;
 		ImGui::OpenPopup("Resource Selection");
 	}
@@ -1194,7 +1353,6 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 	ImVec2 center = ImGui::GetMainViewport()->GetCenter();
 	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
 
-	#if 0
 	if (ImGui::BeginPopupModal("Resource Selection", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
 		Entity_Type new_entity_type = editor->level.new_entity_type;
 
@@ -1208,9 +1366,11 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 			ImGui::CloseCurrentPopup();
 		}
 
-		const Array_View<Resource_Entity> resources_view = scene_resources(scene);
-		auto resources = resources_view.data;
-		int resource_count = (int)resources_view.count;
+
+		auto resource_headers = scene_resource_headers(scene);
+
+		auto resources = resource_headers.data;
+		int resource_count = (int)resource_headers.count;
 
 		// Left
 		{
@@ -1222,10 +1382,10 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 			int selected = editor->level.selected_resource_index;
 
 			for (int index = 0; index < resource_count; ++index) {
-				Resource_Entity *r = resources + index;
-				ImGui::PushID((void *)r);
+				auto *header = resources + index;
+				ImGui::PushID((void *)header);
 
-				const char *name = r->texture_name;
+				const char *name = header->name;
 
 				if (filter.PassFilter(name)) {
 					if (ImGui::Selectable(name, selected == index)) {
@@ -1249,7 +1409,9 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 			int selected = editor->level.selected_resource_index;
 
 			if (resource_count && selected >= 0) {
-				Resource_Entity *r = resources + selected;
+				auto header = resources + selected;
+
+				auto resource_group = scene_find_resource(scene, header->id);
 
 				ImVec2 canvas_p0 = ImGui::GetCursorScreenPos();
 				ImVec2 canvas_sz = ImGui::GetContentRegionAvail();
@@ -1265,24 +1427,24 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 
 				ImDrawList *draw_list = ImGui::GetWindowDrawList();
 
-				Texture_Id id;
-				if (scene_find_resource_texture(scene, String(r->texture_name, strlen(r->texture_name)), &id)) {
-					auto tex = scene_get_texture(scene, id);
-					draw_list->AddImage(tex.view.id.hptr, canvas_p0, canvas_p1);
-				}
-
 				ImU32 grid_color = IM_COL32(200, 200, 200, 40);
 				ImU32 shape_color = IM_COL32(255, 255, 0, 255);
 				r32   scale_scalar = editor->level.preview_shape_scale;
 				Vec2  shape_scale = vec2(scale_scalar, -scale_scalar);
 
-				if (editor->level.preview_shapes) {
-					Resource_Fixture *res_fix = scene_find_resource_fixture(scene, r->fixture_id);
+				const ImVec2 origin(0.5f * (canvas_p0.x + canvas_p1.x), 0.5f * (canvas_p0.y + canvas_p1.y));
 
-					Fixture *f = res_fix->fixtures;
-					int fixture_count = res_fix->fixture_count;
+				if (resource_group.texture) {
+					auto tex = resource_group.texture;
+					auto scale = shape_scale;
+					draw_list->AddImage(tex->handle.view.id.hptr,
+										origin + vec2_hadamard(scale, canvas_p0 - origin), origin + vec2_hadamard(scale, canvas_p1 - origin),
+										tex->uv.min, tex->uv.max);
+				}
 
-					const ImVec2 origin(0.5f * (canvas_p0.x + canvas_p1.x), 0.5f * (canvas_p0.y + canvas_p1.y));
+				if (editor->level.preview_shapes && resource_group.fixture) {
+					Fixture *f = resource_group.fixture->fixtures;
+					int fixture_count = resource_group.fixture->count;
 
 					for (int index = 0; index < fixture_count; ++index, ++f) {
 						switch (f->shape) {
@@ -1332,9 +1494,7 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 					}
 				}
 
-				ImGui::Text("id: %zu | name: %s", r->id, r->texture_name);
 				ImGui::Checkbox("Shapes##Preview", &editor->level.preview_shapes);
-
 			} else {
 				ImGui::TextColored(ImVec4(0.2f, 0.8f, 0.3f, 1.0f), "No resource selected!");
 			}
@@ -1345,8 +1505,10 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 		ImGui::SetCursorPosX(250);
 
 		if (ImGui::Button("Select", ImVec2(120, 0))) {
-			auto r = &resources[editor->level.selected_resource_index];
-			ieditor_create_new_entity(scene, editor, new_entity_type, *scene_find_resource_fixture(scene, r->fixture_id), String(r->texture_name, strlen(r->texture_name)), true);
+			int selected = editor->level.selected_resource_index;
+			auto header = resources + selected;
+			auto resource_group = scene_find_resource(scene, header->id);
+			ieditor_create_new_entity(scene, editor, new_entity_type, &resource_group, true);
 			ImGui::CloseCurrentPopup();
 		}
 
@@ -1354,10 +1516,18 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 		ImGui::SameLine();
 
 		if (ImGui::Button("Create New...", ImVec2(120, 0))) {
-			auto r = &resources[editor->level.selected_resource_index];
-			Resource_Fixture *resource = scene_create_new_resource_fixture(scene, "(unnamed)", nullptr, 0);
-			ieditor_create_new_entity(scene, editor, new_entity_type, *resource, String(r->texture_name, strlen(r->texture_name)), false);
-			editor_set_mode_entity_editor(scene, editor, resource->id, resource->name, resource->fixtures, resource->fixture_count, r->texture_name);
+			Resource_Name name, tex;
+			tex[0] = 0;
+			strncpy(name, "(unnamed)", sizeof(Resource_Name));
+
+			Resource_Collection resource_collection;
+			resource_collection.fixture = nullptr;
+			resource_collection.texture = nullptr;
+			resource_collection.index = MAX_UINT32;
+			resource_collection.header = (Resource_Header *)scene_create_new_resource(scene, name, nullptr, 0, tex, mm_rect(0, 0, 1, 1));
+
+			ieditor_create_new_entity(scene, editor, new_entity_type, &resource_collection, false);
+			editor_set_mode_entity_editor(scene, editor, &resource_collection);
 			ImGui::CloseCurrentPopup();
 		}
 
@@ -1369,7 +1539,6 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 
 		ImGui::EndPopup();
 	}
-	#endif
 
 	ImGui::Text(level->name);
 	ImGui::SameLine();
@@ -1435,6 +1604,28 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 		ImGui::Unindent();
 	}
 
+	if (ImGui::CollapsingHeader("Particle Emitters")) {
+		ImGui::Indent();
+
+		const auto emitters = scene_emitters(scene);
+		int count = (int)emitters.count;
+		int selected = editor->level.selected_emitter_index;
+		for (int index = 0; index < count; index++) {
+			auto &e = emitters[index];
+			ImGui::PushID((void *)&e);
+			if (ImGui::Selectable(null_tprintf("%d Emitter", index), selected == index)) {
+				if (selected == index) {
+					ieditor_deselect_emitter(scene, editor);
+				} else {
+					ieditor_select_emitter(editor, index);
+				}
+			}
+			ImGui::PopID();
+		}
+
+		ImGui::Unindent();
+	}
+
 	u32 *flags = &editor->flags;
 	ImGui::CheckboxFlags("Render World", flags, Editor_Flag_Bit_RENDER_WORLD);
 	ImGui::CheckboxFlags("Render Fixture", flags, Editor_Flag_Bit_RENDER_FIXTURE);
@@ -1442,7 +1633,9 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 	ImGui::CheckboxFlags("Render Collision", flags, Editor_Flag_Bit_RENDER_COLLISION);
 	ImGui::CheckboxFlags("Render Broadphase", flags, Editor_Flag_Bit_RENDER_BROADPHASE);
 
-	editor_widget(scene->physics, "Physics");
+	if (ImGui::CollapsingHeader("Physics")) {
+		editor_widget(scene->physics, "Physics");
+	}
 
 	ImGui::End();
 
@@ -1456,6 +1649,9 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 		entity = scene_entity_pointer(scene, entity_ref);
 	} else if (editor->level.selected_camera_index >= 0) {
 		entity = ieditor_get_selected_camera(scene, editor);
+		entity_ref = scene_get_entity(scene, entity->id);
+	} else if (editor->level.selected_emitter_index >= 0) {
+		entity = ieditor_get_selected_emitter(scene, editor);
 		entity_ref = scene_get_entity(scene, entity->id);
 	}
 
@@ -1493,33 +1689,21 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 			body = o->rigid_body;
 		} break;
 
+		case Entity_Type_Particle_Emitter: {
+			editor_widget<Particle_Emitter>(*entity->as<Particle_Emitter>(), "Particle Emitter");
+		} break;
+
 			invalid_default_case();
 	}
 
-	#if 0
 	if (body) {
 		ieditor_fixture_group(scene, editor, body);
 		if (ImGui::Button("Edit##EntityEditor")) {
-			Resource_Fixture *r = scene_find_resource_fixture_from_fixture(scene, body->fixtures);
-			Entity *ent = scene_entity_pointer(scene, scene_get_entity(scene, body->entity_id));
-
-			Texture_Id id;
-			switch (ent->type) {
-				case Entity_Type_Character: {
-					id = ((Character *)ent)->texture;
-				} break;
-				case Entity_Type_Obstacle: {
-					id = ((Obstacle *)ent)->texture;
-				} break;
-
-				invalid_default_case();
-			}
-
-			Resource_Texture *tex = scene_find_resource_texture_from_index(scene, id);
-			editor_set_mode_entity_editor(scene, editor, r->id, r->name, r->fixtures, r->fixture_count, tex->name);
+			auto res_id = scene_find_entity_resource_id(scene, body->entity_id);
+			auto res_col = scene_find_resource(scene, res_id);
+			editor_set_mode_entity_editor(scene, editor, &res_col);
 		}
 	}
-	#endif
 
 	if (ImGui::Button("Clone##Entity")) {
 		Camera *camera = editor_rendering_camera(scene, editor);
@@ -1617,6 +1801,38 @@ bool ieditor_fixture(Editor *editor, Fixture &fixture) {
 	return result;
 }
 
+void ieditor_load_new_texture(Editor *editor) {
+	if (editor->entity.texture.view.id) {
+		gfx_destroy_texture2d(editor->entity.texture);
+	}
+
+	bool loaded = false;
+
+	if (editor->entity.texture_name[0]) {
+		String path = tprintf("resources/textures/%s", editor->entity.texture_name);
+
+		int w, h, n;
+		String content = system_read_entire_file(path);
+
+		if (content.count) {
+			u8 *pixels = stbi_load_from_memory(content.data, (int)content.count, &w, &h, &n, 4);
+			if (pixels) {
+				editor->entity.texture = gfx_create_texture2d((u32)w, (u32)h, 4, Data_Format_RGBA8_UNORM_SRGB, (const u8 **)&pixels, Buffer_Usage_IMMUTABLE, 1);
+				stbi_image_free(pixels);
+				loaded = true;
+			}
+
+			memory_free(content.data);
+		}
+	}
+
+	if (!loaded) {
+		memset(editor->entity.texture_name, 0, sizeof(Resource_Name));
+		editor->entity.texture_uv = mm_rect(0, 0, 1, 1);
+		memset(&editor->entity.texture, 0, sizeof(editor->entity.texture));
+	}
+}
+
 bool ieditor_gui_entity_editor(Scene *scene, Editor *editor) {
 	bool result = false;
 
@@ -1653,8 +1869,56 @@ bool ieditor_gui_entity_editor(Scene *scene, Editor *editor) {
 			ImGui::BeginGroup();
 			ImGui::BeginChild("Resource View", ImVec2(0, -ImGui::GetFrameHeightWithSpacing()));
 
-			ImGui::LabelText("id", "%zu", editor->entity.fixture_id);
-			ImGui::InputText("name", editor->entity.fixture_name, sizeof(Resource_Name));
+			ImGui::LabelText("id", "%zu", editor->entity.id);
+			ImGui::InputText("name", editor->entity.name, sizeof(Resource_Name));
+
+			ImGui::LabelText("texture", "%s", editor->entity.texture_name);
+			ImGui::SameLine();
+			if (ImGui::Button("X##Change Texture")) {
+				ImGui::OpenPopup("Select Texture");
+			}
+
+			if (ImGui::BeginPopupModal("Select Texture", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+
+				int selected = editor->entity.selected_texture;
+
+				auto files = system_find_files("resources/textures/", ".png", false);
+				defer{ memory_free(files.data); };
+
+				for (auto index = 0; index < files.count; ++index) {
+					if (ImGui::Selectable((char *)files[index].name.data, selected == index, ImGuiSelectableFlags_DontClosePopups)) {
+						selected = index;
+					}
+				}
+
+				editor->entity.selected_texture = selected;
+
+				if (selected >= 0) {
+					if (ImGui::Button("Select")) {
+						int length = (int)minimum(files[selected].name.count, sizeof(Resource_Name) - 1);
+						memcpy(editor->entity.texture_name, files[selected].name.data, length);
+						editor->entity.texture_name[length] = 0;
+						ieditor_load_new_texture(editor);
+						ImGui::CloseCurrentPopup();
+					}
+				} else {
+					ImGui::TextDisabled("Select");
+				}
+				ImGui::SameLine();
+
+				if (ImGui::Button("Remove")) {
+					editor->entity.texture_name[0] = 0;
+					ieditor_load_new_texture(editor);
+					ImGui::CloseCurrentPopup();
+				}
+
+				ImGui::SameLine();
+				if (ImGui::Button("Close")) {
+					ImGui::CloseCurrentPopup();
+				}
+
+				ImGui::EndPopup();
+			}
 
 			ImGui::Separator();
 
@@ -1670,25 +1934,10 @@ bool ieditor_gui_entity_editor(Scene *scene, Editor *editor) {
 
 			ImGui::EndChild();
 
-			#if 0
 			if (ImGui::Button("Save")) {
-				Resource_Fixture r;
-				r.id = editor->entity.fixture_id;
-				memcpy(r.name, editor->entity.fixture_name, sizeof(Resource_Name));
-				r.fixtures = editor->entity.fixtures;
-				r.fixture_count = editor->entity.fixture_count;
-				Texture_Group texture;
-				texture.handle.buffer.id.hptr = nullptr;
-				texture.handle.view.id.hptr = nullptr;
-				texture.uv = mm_rect(0, 0, 1, 1);
-				Resource_Header header;
-				header.id = r.id;
-				memcpy(header.name, r.name, sizeof(Resource_Name));
-				header.texture[0] = 0;
-				scene_save_resource(scene, header, texture, r, true);
+				ieditor_save_resource(scene, editor);
 			}
 			ImGui::SameLine();
-			#endif
 
 			if (editor->entity.fixture_count < MAXIMUM_FIXTURE_COUNT) {
 				if (ImGui::Button("New Shape##FixtureShape")) {
@@ -1714,25 +1963,8 @@ bool ieditor_gui_entity_editor(Scene *scene, Editor *editor) {
 	}
 	ImGui::End();
 
-	
-	if (!open) {
-		#if 0
-		Resource_Fixture r;
-		r.id = editor->entity.fixture_id;
-		memcpy(r.name, editor->entity.fixture_name, sizeof(Resource_Name));
-		r.fixtures = editor->entity.fixtures;
-		r.fixture_count = editor->entity.fixture_count;
-		Texture_Group texture;
-		texture.handle.buffer.id.hptr = nullptr;
-		texture.handle.view.id.hptr = nullptr;
-		texture.uv = mm_rect(0, 0, 1, 1);
-		Resource_Header header;
-		header.id = r.id;
-		memcpy(header.name, r.name, sizeof(Resource_Name));
-		header.texture[0] = 0;
-		scene_save_resource(scene, header, texture, r, true);
-		#endif
 
+	if (!open) {
 		editor_set_mode_level_editor(scene, editor);
 	}
 
@@ -1865,6 +2097,12 @@ void editor_render(Scene *scene, Editor *editor, r32 aspect_ratio) {
 			Mat4 transform = mat4_translation(vec3(-camera->position, 0)) * mat4_scalar(scale, scale, 1.0f);
 
 			im2d_begin(view, transform);
+
+			if (editor->entity.texture.view.id) {
+				im2d_bind_texture(editor->entity.texture);
+				im2d_rect_centered(vec2(0), vec2(1), editor->entity.texture_uv, vec4(1));
+				im2d_unbind_texture();
+			}
 
 			r32 thickness = 0.003f;
 
