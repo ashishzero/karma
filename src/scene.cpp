@@ -10,6 +10,8 @@
 
 #include ".generated/entity.typeinfo"
 
+#include "message.h"
+
 //
 // Collision
 //
@@ -127,6 +129,8 @@ struct Scene_Global {
 
 	Socket socket;
 
+	Ip_Endpoint server_ip;
+
 	//
 	//
 	//
@@ -195,7 +199,7 @@ void scene_prepare(Scene_Run_Method method, Render_Backend backend, System_Windo
 		gfx_create_context(g.platform, g.render_backend, Vsync_ADAPTIVE, 2, (u32)g.framebuffer_w, (u32)g.framebuffer_h);
 
 		ImGui_Initialize();
-	
+
 		g.aspect_ratio = g.framebuffer_w / g.framebuffer_h;
 
 		g.window_w = 0;
@@ -248,6 +252,8 @@ void scene_prepare(Scene_Run_Method method, Render_Backend backend, System_Windo
 		}
 
 		system_net_set_socket_nonblocking(g.socket);
+
+		g.server_ip = ip_endpoint_local(SERVER_CONNECTION_PORT);
 	}
 
 	//
@@ -1373,488 +1379,6 @@ void iscene_clean_particle_system(Particle_System *system) {
 	memory_free(system->particles);
 }
 
-void iscene_pre_tick(Scene *scene) {
-	for (s64 index = 0; index < Entity_Type_Count; ++index) {
-		auto &rm = scene->removed_entity[index];
-		rm.capacity = 0;
-		rm.count = 0;
-		rm.data = nullptr;
-	}
-}
-
-void iscene_post_tick(Scene *scene) {
-	Array<Entity_Id> *rma;
-	s64 count;
-
-	Entity_Reference ref;
-	Entity_Id id;
-
-	{
-		rma = scene->removed_entity + Entity_Type_Camera;
-		count = rma->count;
-		auto &cameras = scene->by_type.camera;
-		for (s64 index = 0; index < count; ++index) {
-			id = rma->data[index];
-			if (iscene_delete_entity_reference_if_present(&scene->entity_table, id, &ref)) {
-				cameras[ref.index] = cameras[cameras.count - 1];
-				cameras.count -= 1;
-				if (ref.index < cameras.count) {
-					auto data = iscene_get_entity_reference(&scene->entity_table, cameras[ref.index].id);
-					data->index = ref.index;
-				}
-			}
-		}
-	}
-
-	{
-		rma = scene->removed_entity + Entity_Type_Character;
-		count = rma->count;
-		auto &characters = scene->by_type.character;
-		for (s64 index = 0; index < count; ++index) {
-			id = rma->data[index];
-			if (id.handle == scene->player_id.handle) {
-				scene->player_id = { 0 };
-			}
-			if (iscene_delete_entity_reference_if_present(&scene->entity_table, id, &ref)) {
-				audio_mixer_remove_audio(&g.audio_mixer, characters[ref.index].boost);
-				audio_mixer_remove_audio(&g.audio_mixer, characters[ref.index].fall);
-				iscene_clean_particle_system(&characters[ref.index].particle_system);
-				iscene_destroy_rigid_body(scene, characters[ref.index].rigid_body);
-				memory_free(characters[ref.index].particle_system.particles);
-				characters[ref.index] = characters[characters.count - 1];
-				characters.count -= 1;
-				if (ref.index < characters.count) {
-					auto data = iscene_get_entity_reference(&scene->entity_table, characters[ref.index].id);
-					data->index = ref.index;
-				}
-			}
-		}
-	}
-
-	{
-		rma = scene->removed_entity + Entity_Type_Obstacle;
-		count = rma->count;
-		auto &obstacles = scene->by_type.obstacle;
-		for (s64 index = 0; index < count; ++index) {
-			id = rma->data[index];
-			if (iscene_delete_entity_reference_if_present(&scene->entity_table, id, &ref)) {
-				iscene_destroy_rigid_body(scene, obstacles[ref.index].rigid_body);
-				obstacles[ref.index] = obstacles[obstacles.count - 1];
-				obstacles.count -= 1;
-				if (ref.index < obstacles.count) {
-					auto data = iscene_get_entity_reference(&scene->entity_table, obstacles[ref.index].id);
-					data->index = ref.index;
-				}
-			}
-		}
-	}
-
-	{
-		rma = scene->removed_entity + Entity_Type_Bullet;
-		count = rma->count;
-		auto &bullets = scene->by_type.bullet;
-		for (s64 index = 0; index < count; ++index) {
-			id = rma->data[index];
-			if (iscene_delete_entity_reference_if_present(&scene->entity_table, id, &ref)) {
-				audio_mixer_remove_audio(&g.audio_mixer, bullets[ref.index].audio);
-				iscene_destroy_rigid_body(scene, bullets[ref.index].rigid_body);
-				bullets[ref.index] = bullets[bullets.count - 1];
-				bullets.count -= 1;
-				if (ref.index < bullets.count) {
-					auto data = iscene_get_entity_reference(&scene->entity_table, bullets[ref.index].id);
-					data->index = ref.index;
-				}
-			}
-		}
-	}
-
-	{
-		rma = scene->removed_entity + Entity_Type_Particle_Emitter;
-		count = rma->count;
-		auto &emitters = scene->by_type.emitter;
-		for (s64 index = 0; index < count; ++index) {
-			id = rma->data[index];
-			if (iscene_delete_entity_reference_if_present(&scene->entity_table, id, &ref)) {
-				iscene_clean_particle_system(&emitters[ref.index].particle_system);
-				emitters[ref.index] = emitters[emitters.count - 1];
-				emitters.count -= 1;
-				if (ref.index < emitters.count) {
-					auto data = iscene_get_entity_reference(&scene->entity_table, emitters[ref.index].id);
-					data->index = ref.index;
-				}
-			}
-		}
-	}
-}
-
-void scene_tick(Scene *scene, r32 dt) {
-	iscene_pre_tick(scene);
-
-	if (iscene_simulate_world_enabled(scene)) {
-		if (scene->by_type.character.count) {
-			auto player = scene_get_player(scene);
-			if (player) {
-				auto camera = scene_primary_camera(scene);
-				camera->behaviour |= Camera_Behaviour_ANIMATE_MOVEMENT;
-				camera->target_position = player->position;
-			}
-		}
-
-		{
-			auto count = scene->by_type.character.count;
-			auto &characters = scene->by_type.character;
-			for (auto index = 0; index < count; ++index) {
-				auto &character = characters[index];
-				character.rigid_body->transform.p = character.position;
-				simulate_particle_system(&character.particle_system, dt);
-			}
-		}
-
-		auto player = scene_get_player(scene);
-		auto src = player->position;
-
-		{
-			auto count = scene->by_type.bullet.count;
-			auto &bullets = scene->by_type.bullet;
-			for (auto index = 0; index < count; ++index) {
-				auto &bullet = bullets[index];
-				bullet.rigid_body->transform.p = bullet.position;
-
-				if (bullet.age >= bullet.life_span) {
-					scene_remove_entity(scene, bullet.id);
-				}
-				bullet.age += dt;
-
-				auto d = bullet.position - src;
-				bullet.audio->attenuation = vec2_dot(d, d);
-			}
-		}
-
-		{
-			auto count = scene->by_type.emitter.count;
-			auto &emitters = scene->by_type.emitter;
-			for (auto index = 0; index < count; ++index) {
-				auto &emitter = emitters[index];
-
-				if (emitter.remove_on_finish && emitter.particle_system.loop == 0) {
-					scene_remove_entity(scene, emitter.id);
-				}
-
-				simulate_particle_system(&emitter.particle_system, dt);
-			}
-		}
-
-		for_list(Rigid_Body, ptr, &scene->rigid_bodies) {
-			if (ptr->data.type == Rigid_Body_Type_Dynamic) {
-				ptr->data.velocity += dt * ptr->data.force - vec2(0, scene->physics.gravity * ptr->data.gravity);
-				ptr->data.velocity *= powf(0.5f, ptr->data.drag * dt);
-				ptr->data.transform.p += dt * ptr->data.velocity;
-				ptr->data.bounding_box = scene_rigid_body_bounding_box(&ptr->data, 0);
-				hgrid_move_body(&scene->hgrid, &ptr->data);
-			}
-			clear_bit(ptr->data.flags, Rigid_Body_COLLIDING);
-			clear_bit(ptr->data.flags, Rigid_Body_BOUNDING_BOX_COLLIDING);
-		}
-
-		{
-			constexpr r32 BULLET_SPAWN = 0.15f;
-
-			auto count = scene->by_type.character.count;
-			auto &characters = scene->by_type.character;
-			for (auto index = 0; index < count; ++index) {
-				auto &character = characters[index];
-
-				r32 radius = sqrtf(character.size.x * character.size.x + character.size.y * character.size.y);
-
-				r32 v = character.rigid_body->velocity.x;
-				character.rotation = atan2f(1, v) - MATH_TAU;
-
-				auto dir = -vec2_normalize_check(vec2(v, 1));
-				character.particle_system.position = character.position + 0.5f * dir * radius;
-
-				character.particle_system.properties.initial_velocity_x.min = -0.8f + dir.x;
-				character.particle_system.properties.initial_velocity_x.max = +0.8f + dir.x;
-
-				if (character.controller.axis.x || character.controller.axis.y > 0) {
-					character.particle_system.loop = 1;
-					audio_play(character.boost, 0.8f);
-				} else {
-					character.particle_system.loop = 0;
-					audio_vanish(character.boost, 0.8f);
-				}
-
-				if (character.controller.attack) {
-					if (character.controller.cool_down <= 0) {
-						auto dir = vec2_normalize_check(character.controller.pointer);
-						scene_spawn_bullet(scene, character.position + 0.5f * radius * dir, character.color_id, dir);
-						character.controller.cool_down = BULLET_SPAWN;
-					} else {
-						character.controller.cool_down -= dt;
-					}
-				} else {
-					character.controller.cool_down = 0;
-				}
-			}
-		}
-
-		iscene_post_tick(scene);
-
-		Contact_Manifold manifold;
-		manifold.penetration = 0;
-
-		// TODO: Continuous collision detection
-		for (int iteration = 0; iteration < SCENE_SIMULATION_MAX_ITERATION; ++iteration) {
-			iscene_pre_tick(scene);
-
-			for_list(Rigid_Body, a_ptr, &scene->rigid_bodies) {
-				for_list_offset(Rigid_Body, b_ptr, a_ptr, &scene->rigid_bodies) {
-					auto &a = a_ptr->data;
-					auto &b = b_ptr->data;
-
-					if (a.type == Rigid_Body_Type_Static && b.type == Rigid_Body_Type_Static) {
-						continue;
-					}
-
-					if (hgrid_test_collision(&scene->hgrid, &a, &b)) {
-
-						if (test_mmrect_vs_mmrect(a.bounding_box, b.bounding_box)) {
-							set_bit(a.flags, Rigid_Body_BOUNDING_BOX_COLLIDING);
-							set_bit(b.flags, Rigid_Body_BOUNDING_BOX_COLLIDING);
-
-							for (u32 a_index = 0; a_index < a.fixture_count; ++a_index) {
-								for (u32 b_index = 0; b_index < b.fixture_count; ++b_index) {
-									Fixture *a_fixture = scene_rigid_body_get_fixture(&a, a_index);
-									Fixture *b_fixture = scene_rigid_body_get_fixture(&b, b_index);
-
-									if (fixture_vs_fixture(a_fixture, b_fixture, a.transform, b.transform, &manifold)) {
-										set_bit(a.flags, Rigid_Body_COLLIDING);
-										set_bit(b.flags, Rigid_Body_COLLIDING);
-
-										auto entt_a = scene_get_entity(scene, a.entity_id);
-										auto entt_b = scene_get_entity(scene, b.entity_id);
-
-										const r32 INCREASE_COLOR_EFFECT = 0.02f;
-										const u32 HIT_COUNT = 15;
-
-										if (entt_a.type == Entity_Type_Bullet && entt_b.type != Entity_Type_Bullet) {
-											auto spawn_color_id = scene_entity_pointer(scene, entt_a)->as<Bullet>()->color_id;
-
-											if (entt_b.type == Entity_Type_Character) {
-												auto character = scene_entity_pointer(scene, entt_b)->as<Character>();
-												if (character->color_id != spawn_color_id) {
-													character->color_values[spawn_color_id] += INCREASE_COLOR_EFFECT;
-													character->hit = HIT_COUNT;
-
-													if (character->color_values[spawn_color_id] >= 1) {
-														character->color_values[spawn_color_id] = 1;
-
-														bool another_full_present = false;
-														for (auto in = 0; in < Color_Id_COUNT; ++in) {
-															if (in != spawn_color_id && character->color_values[in] == 1) {
-																another_full_present = true;
-																break;
-															}
-														}
-
-														if (another_full_present) {
-															for (auto in = 0; in < Color_Id_COUNT; ++in) {
-																character->color_values[in] *= 0.5f;
-															}
-														} else {
-															character->color_id = spawn_color_id;
-														}
-													} else {
-														r32 max_value = character->color_values[character->color_id];
-
-														for (auto in = 0; in < Color_Id_COUNT; ++in) {
-															if (max_value < character->color_values[in]) {
-																max_value = character->color_values[in];
-																character->color_id = (Color_Id)in;
-															}
-														}
-													}
-												}
-											}
-
-											scene_spawn_emitter(scene, manifold.contacts[0], color_id_get_color(spawn_color_id), 2.0f * color_id_get_intensity(spawn_color_id));
-											auto audio = audio_mixer_add_audio(&g.audio_mixer, g.hit, false, false);
-
-											auto player = scene_get_player(scene);
-											auto src = player->position;
-
-											auto d = src - manifold.contacts[0];
-											audio->attenuation = vec2_dot(d, d);
-											audio_play(audio, 0.5f);
-											audio_mixer_remove_audio(&g.audio_mixer, audio);
-
-											scene_remove_entity(scene, entt_a, a.entity_id);
-										} else if (entt_b.type == Entity_Type_Bullet && entt_a.type != Entity_Type_Bullet) {
-											auto spawn_color_id = scene_entity_pointer(scene, entt_b)->as<Bullet>()->color_id;
-
-											if (entt_a.type == Entity_Type_Character) {
-												auto character = scene_entity_pointer(scene, entt_a)->as<Character>();
-												if (character->color_id != spawn_color_id) {
-													character->color_values[spawn_color_id] += INCREASE_COLOR_EFFECT;
-													character->hit = HIT_COUNT;
-
-													if (character->color_values[spawn_color_id] >= 1) {
-														character->color_values[spawn_color_id] = 1;
-
-														bool another_full_present = false;
-														for (auto in = 0; in < Color_Id_COUNT; ++in) {
-															if (in != spawn_color_id && character->color_values[in] == 1) {
-																another_full_present = true;
-																break;
-															}
-														}
-
-														if (another_full_present) {
-															for (auto in = 0; in < Color_Id_COUNT; ++in) {
-																character->color_values[in] *= 0.5f;
-															}
-														} else {
-															character->color_id = spawn_color_id;
-														}
-													} else {
-														r32 max_value = character->color_values[character->color_id];
-
-														for (auto in = 0; in < Color_Id_COUNT; ++in) {
-															if (max_value < character->color_values[in]) {
-																max_value = character->color_values[in];
-																character->color_id = (Color_Id)in;
-															}
-														}
-													}
-												}
-											}
-
-											scene_spawn_emitter(scene, manifold.contacts[0], color_id_get_color(spawn_color_id), 2.0f * color_id_get_intensity(spawn_color_id));
-											auto audio = audio_mixer_add_audio(&g.audio_mixer, g.hit, false, false);
-
-											auto player = scene_get_player(scene);
-											auto src = player->position;
-
-											auto d = src - manifold.contacts[0];
-											audio->attenuation = vec2_dot(d, d);
-											audio_play(audio, 0.5f);
-											audio_mixer_remove_audio(&g.audio_mixer, audio);
-
-											scene_remove_entity(scene, entt_b, b.entity_id);
-										} else {
-											// Resolve velocity
-											r32 restitution = minimum(a.restitution, b.restitution);
-											r32 j = -(1 + restitution) * vec2_dot(b.velocity - a.velocity, manifold.normal);
-											j /= (a.imass + b.imass);
-											j = maximum(0, j);
-
-											r32 alpha = SCENE_SIMULATION_CORRECTION_ALPHA;
-
-											a.velocity -= alpha * j * a.imass * manifold.normal;
-											b.velocity += alpha * j * b.imass * manifold.normal;
-
-											// Fix position
-											Vec2 correction = maximum(manifold.penetration, 0.0f) / (a.imass + b.imass) * manifold.normal;
-											a.transform.p -= a.imass * correction;
-											b.transform.p += b.imass * correction;
-											a.bounding_box = scene_rigid_body_bounding_box(&a, 0);
-											b.bounding_box = scene_rigid_body_bounding_box(&b, 0);
-											hgrid_move_body(&scene->hgrid, &a);
-											hgrid_move_body(&scene->hgrid, &b);
-
-											#ifdef ENABLE_DEVELOPER_OPTIONS
-											array_add(&scene->manifolds, manifold);
-											#endif
-										}
-									}
-								}
-							}
-						}
-
-					}
-				}
-			}
-
-
-			iscene_post_tick(scene);
-		}
-
-		// Update positions
-		{
-			auto count = scene->by_type.character.count;
-			auto &characters = scene->by_type.character;
-			for (auto index = 0; index < count; ++index) {
-				auto &character = characters[index];
-
-				auto new_p = character.rigid_body->transform.p;
-
-				if ((new_p.y - character.position.y < -0.001f) && character.controller.axis.y < 0) {
-					audio_play(character.fall, 0.3f);
-				} else {
-					audio_vanish(character.fall, 0.8f);
-				}
-
-				character.position = character.rigid_body->transform.p;
-			}
-		}
-		{
-			auto count = scene->by_type.bullet.count;
-			auto &bullets = scene->by_type.bullet;
-			for (auto index = 0; index < count; ++index) {
-				auto &bullet = bullets[index];
-				bullet.position = bullet.rigid_body->transform.p;
-			}
-		}
-
-		// Simulate camera
-		{
-			auto count = scene->by_type.camera.count;
-			auto &cameras = scene->by_type.camera;
-			for (s64 index = 0; index < count; ++index) {
-				Camera &camera = cameras[index];
-				if (camera.behaviour & Camera_Behaviour_ANIMATE_MOVEMENT) {
-					camera.position = lerp(camera.position, camera.target_position, 1.0f - powf(1.0f - camera.follow_factor, dt));
-				}
-				if (camera.behaviour & Camera_Behaviour_ANIMATE_FOCUS) {
-					camera.distance = lerp(camera.distance, camera.target_distance, 1.0f - powf(1.0f - camera.zoom_factor, dt));
-				}
-			}
-		}
-	}
-}
-
-void iscene_pre_simulate(Scene *scene) {
-	{
-		constexpr r32 PLAYER_FORCE = 10;
-
-		auto count = scene->by_type.character.count;
-		auto &characters = scene->by_type.character;
-		for (auto index = 0; index < count; ++index) {
-			auto &character = characters[index];
-			character.rigid_body->force = vec2(0);
-			character.rigid_body->force += PLAYER_FORCE * vec2_normalize_check(character.controller.axis);
-
-			if (character.hit) {
-				character.hit -= 1;
-			}
-		}
-	}
-
-	{
-		auto count = scene->by_type.bullet.count;
-		auto &bullets = scene->by_type.bullet;
-		for (auto index = 0; index < count; ++index) {
-			auto &bullet = bullets[index];
-			bullet.rigid_body->force = vec2(0);
-		}
-	}
-
-	#ifdef ENABLE_DEVELOPER_OPTIONS
-	scene->manifolds.capacity = 0;
-	scene->manifolds.count = 0;
-	scene->manifolds.data = nullptr;
-	#endif
-}
-
 void scene_frame_simulate(Scene *scene) {
 	g.frame_simulate(scene);
 }
@@ -2768,6 +2292,521 @@ bool iscene_gui_related_events(Scene *scene, const Event &event) {
 	return false;
 }
 
+//
+//
+//
+
+void iscene_pre_simulate(Scene *scene) {
+	{
+		constexpr r32 PLAYER_FORCE = 10;
+
+		auto count = scene->by_type.character.count;
+		auto &characters = scene->by_type.character;
+		for (auto index = 0; index < count; ++index) {
+			auto &character = characters[index];
+			character.rigid_body->force = vec2(0);
+			character.rigid_body->force += PLAYER_FORCE * vec2_normalize_check(character.controller.axis);
+
+			if (character.hit) {
+				character.hit -= 1;
+			}
+		}
+	}
+
+	{
+		auto count = scene->by_type.bullet.count;
+		auto &bullets = scene->by_type.bullet;
+		for (auto index = 0; index < count; ++index) {
+			auto &bullet = bullets[index];
+			bullet.rigid_body->force = vec2(0);
+		}
+	}
+
+	#ifdef ENABLE_DEVELOPER_OPTIONS
+	scene->manifolds.capacity = 0;
+	scene->manifolds.count = 0;
+	scene->manifolds.data = nullptr;
+	#endif
+}
+
+void iscene_update_audio_and_ui(Scene *scene) {
+	Dev_TimedBlockBegin(AudioUpdate);
+	g.audio_mixer.pitch_factor = scene->physics.sim_speed.factor;
+	audio_mixer_update(&g.audio_mixer);
+	Dev_TimedBlockEnd(AudioUpdate);
+
+	editor_update(scene, &scene->editor);
+
+	ImGui_UpdateFrame(scene->physics.real_dt);
+}
+
+void iscene_pre_tick(Scene *scene) {
+	for (s64 index = 0; index < Entity_Type_Count; ++index) {
+		auto &rm = scene->removed_entity[index];
+		rm.capacity = 0;
+		rm.count = 0;
+		rm.data = nullptr;
+	}
+}
+
+void iscene_post_tick(Scene *scene) {
+	Array<Entity_Id> *rma;
+	s64 count;
+
+	Entity_Reference ref;
+	Entity_Id id;
+
+	{
+		rma = scene->removed_entity + Entity_Type_Camera;
+		count = rma->count;
+		auto &cameras = scene->by_type.camera;
+		for (s64 index = 0; index < count; ++index) {
+			id = rma->data[index];
+			if (iscene_delete_entity_reference_if_present(&scene->entity_table, id, &ref)) {
+				cameras[ref.index] = cameras[cameras.count - 1];
+				cameras.count -= 1;
+				if (ref.index < cameras.count) {
+					auto data = iscene_get_entity_reference(&scene->entity_table, cameras[ref.index].id);
+					data->index = ref.index;
+				}
+			}
+		}
+	}
+
+	{
+		rma = scene->removed_entity + Entity_Type_Character;
+		count = rma->count;
+		auto &characters = scene->by_type.character;
+		for (s64 index = 0; index < count; ++index) {
+			id = rma->data[index];
+			if (id.handle == scene->player_id.handle) {
+				scene->player_id = { 0 };
+			}
+			if (iscene_delete_entity_reference_if_present(&scene->entity_table, id, &ref)) {
+				audio_mixer_remove_audio(&g.audio_mixer, characters[ref.index].boost);
+				audio_mixer_remove_audio(&g.audio_mixer, characters[ref.index].fall);
+				iscene_clean_particle_system(&characters[ref.index].particle_system);
+				iscene_destroy_rigid_body(scene, characters[ref.index].rigid_body);
+				memory_free(characters[ref.index].particle_system.particles);
+				characters[ref.index] = characters[characters.count - 1];
+				characters.count -= 1;
+				if (ref.index < characters.count) {
+					auto data = iscene_get_entity_reference(&scene->entity_table, characters[ref.index].id);
+					data->index = ref.index;
+				}
+			}
+		}
+	}
+
+	{
+		rma = scene->removed_entity + Entity_Type_Obstacle;
+		count = rma->count;
+		auto &obstacles = scene->by_type.obstacle;
+		for (s64 index = 0; index < count; ++index) {
+			id = rma->data[index];
+			if (iscene_delete_entity_reference_if_present(&scene->entity_table, id, &ref)) {
+				iscene_destroy_rigid_body(scene, obstacles[ref.index].rigid_body);
+				obstacles[ref.index] = obstacles[obstacles.count - 1];
+				obstacles.count -= 1;
+				if (ref.index < obstacles.count) {
+					auto data = iscene_get_entity_reference(&scene->entity_table, obstacles[ref.index].id);
+					data->index = ref.index;
+				}
+			}
+		}
+	}
+
+	{
+		rma = scene->removed_entity + Entity_Type_Bullet;
+		count = rma->count;
+		auto &bullets = scene->by_type.bullet;
+		for (s64 index = 0; index < count; ++index) {
+			id = rma->data[index];
+			if (iscene_delete_entity_reference_if_present(&scene->entity_table, id, &ref)) {
+				audio_mixer_remove_audio(&g.audio_mixer, bullets[ref.index].audio);
+				iscene_destroy_rigid_body(scene, bullets[ref.index].rigid_body);
+				bullets[ref.index] = bullets[bullets.count - 1];
+				bullets.count -= 1;
+				if (ref.index < bullets.count) {
+					auto data = iscene_get_entity_reference(&scene->entity_table, bullets[ref.index].id);
+					data->index = ref.index;
+				}
+			}
+		}
+	}
+
+	{
+		rma = scene->removed_entity + Entity_Type_Particle_Emitter;
+		count = rma->count;
+		auto &emitters = scene->by_type.emitter;
+		for (s64 index = 0; index < count; ++index) {
+			id = rma->data[index];
+			if (iscene_delete_entity_reference_if_present(&scene->entity_table, id, &ref)) {
+				iscene_clean_particle_system(&emitters[ref.index].particle_system);
+				emitters[ref.index] = emitters[emitters.count - 1];
+				emitters.count -= 1;
+				if (ref.index < emitters.count) {
+					auto data = iscene_get_entity_reference(&scene->entity_table, emitters[ref.index].id);
+					data->index = ref.index;
+				}
+			}
+		}
+	}
+}
+
+void iscene_camera_follow(Scene *scene) {
+	auto player = scene_get_player(scene);
+	if (player) {
+		auto camera = scene_primary_camera(scene);
+		camera->behaviour |= Camera_Behaviour_ANIMATE_MOVEMENT;
+		camera->target_position = player->position;
+	}
+}
+
+void iscene_simulate_particle_systems(Scene *scene, r32 dt) {
+	{
+		auto count = scene->by_type.character.count;
+		auto &characters = scene->by_type.character;
+		for (auto index = 0; index < count; ++index) {
+			auto &character = characters[index];
+
+			r32 radius = sqrtf(character.size.x * character.size.x + character.size.y * character.size.y);
+
+			r32 v = character.rigid_body->velocity.x;
+
+			auto dir = -vec2_normalize_check(vec2(v, 1));
+			character.particle_system.position = character.position + 0.5f * dir * radius;
+
+			character.particle_system.properties.initial_velocity_x.min = -0.8f + dir.x;
+			character.particle_system.properties.initial_velocity_x.max = +0.8f + dir.x;
+
+			if (character.controller.axis.x || character.controller.axis.y > 0) {
+				character.particle_system.loop = 1;
+				audio_play(character.boost, 0.8f);
+			} else {
+				character.particle_system.loop = 0;
+				audio_vanish(character.boost, 0.8f);
+			}
+
+			simulate_particle_system(&character.particle_system, dt);
+		}
+	}
+
+	{
+		auto count = scene->by_type.emitter.count;
+		auto &emitters = scene->by_type.emitter;
+		for (auto index = 0; index < count; ++index) {
+			auto &emitter = emitters[index];
+
+			if (emitter.remove_on_finish && emitter.particle_system.loop == 0) {
+				scene_remove_entity(scene, emitter.id);
+			}
+
+			simulate_particle_system(&emitter.particle_system, dt);
+		}
+	}
+}
+
+void iscene_pre_update_entities(Scene *scene, r32 dt) {
+	{
+		auto count = scene->by_type.character.count;
+		auto &characters = scene->by_type.character;
+		for (auto index = 0; index < count; ++index) {
+			auto &character = characters[index];
+			character.rigid_body->transform.p = character.position;
+		}
+	}
+
+	{
+		auto count = scene->by_type.bullet.count;
+		auto &bullets = scene->by_type.bullet;
+		for (auto index = 0; index < count; ++index) {
+			auto &bullet = bullets[index];
+			bullet.rigid_body->transform.p = bullet.position;
+
+			if (bullet.age >= bullet.life_span) {
+				scene_remove_entity(scene, bullet.id);
+			}
+			bullet.age += dt;
+		}
+	}
+
+	{
+		constexpr r32 BULLET_SPAWN = 0.15f;
+
+		auto count = scene->by_type.character.count;
+		auto &characters = scene->by_type.character;
+		for (auto index = 0; index < count; ++index) {
+			auto &character = characters[index];
+			r32 radius = sqrtf(character.size.x * character.size.x + character.size.y * character.size.y);
+
+			if (character.controller.attack) {
+				if (character.controller.cool_down <= 0) {
+					auto dir = vec2_normalize_check(character.controller.pointer);
+					scene_spawn_bullet(scene, character.position + 0.5f * radius * dir, character.color_id, dir);
+					character.controller.cool_down = BULLET_SPAWN;
+				} else {
+					character.controller.cool_down -= dt;
+				}
+			} else {
+				character.controller.cool_down = 0;
+			}
+		}
+	}
+}
+
+void iscene_post_update_entities(Scene *scene) {
+	auto count = scene->by_type.character.count;
+	auto &characters = scene->by_type.character;
+	for (auto index = 0; index < count; ++index) {
+		auto &character = characters[index];
+		r32 v = character.rigid_body->velocity.x;
+		character.rotation = atan2f(1, v) - MATH_TAU;
+	}
+}
+
+void iscene_update_positions(Scene *scene) {
+	{
+		auto count = scene->by_type.character.count;
+		auto &characters = scene->by_type.character;
+		for (auto index = 0; index < count; ++index) {
+			auto &character = characters[index];
+
+			auto new_p = character.rigid_body->transform.p;
+
+			if ((new_p.y - character.position.y < -0.001f) && character.controller.axis.y < 0) {
+				audio_play(character.fall, 0.3f);
+			} else {
+				audio_vanish(character.fall, 0.8f);
+			}
+
+			character.position = character.rigid_body->transform.p;
+		}
+	}
+
+	{
+		auto count = scene->by_type.bullet.count;
+		auto &bullets = scene->by_type.bullet;
+		for (auto index = 0; index < count; ++index) {
+			auto &bullet = bullets[index];
+			bullet.position = bullet.rigid_body->transform.p;
+		}
+	}
+}
+
+void iscene_update_audio_params(Scene *scene) {
+	auto player = scene_get_player(scene);
+	auto src = player->position;
+
+	{
+		auto count = scene->by_type.bullet.count;
+		auto &bullets = scene->by_type.bullet;
+		for (auto index = 0; index < count; ++index) {
+			auto &bullet = bullets[index];
+			auto d = bullet.position - src;
+			bullet.audio->attenuation = vec2_dot(d, d);
+		}
+	}
+}
+
+void iscene_simulate_rigid_bodies(Scene *scene, r32 dt) {
+	for_list(Rigid_Body, ptr, &scene->rigid_bodies) {
+		if (ptr->data.type == Rigid_Body_Type_Dynamic) {
+			ptr->data.velocity += dt * ptr->data.force - vec2(0, scene->physics.gravity * ptr->data.gravity);
+			ptr->data.velocity *= powf(0.5f, ptr->data.drag * dt);
+			ptr->data.transform.p += dt * ptr->data.velocity;
+			ptr->data.bounding_box = scene_rigid_body_bounding_box(&ptr->data, 0);
+			hgrid_move_body(&scene->hgrid, &ptr->data);
+		}
+		clear_bit(ptr->data.flags, Rigid_Body_COLLIDING);
+		clear_bit(ptr->data.flags, Rigid_Body_BOUNDING_BOX_COLLIDING);
+	}
+}
+
+void iscene_simulate_camera(Scene *scene, r32 dt) {
+	auto count = scene->by_type.camera.count;
+	auto &cameras = scene->by_type.camera;
+	for (s64 index = 0; index < count; ++index) {
+		Camera &camera = cameras[index];
+		if (camera.behaviour & Camera_Behaviour_ANIMATE_MOVEMENT) {
+			camera.position = lerp(camera.position, camera.target_position, 1.0f - powf(1.0f - camera.follow_factor, dt));
+		}
+		if (camera.behaviour & Camera_Behaviour_ANIMATE_FOCUS) {
+			camera.distance = lerp(camera.distance, camera.target_distance, 1.0f - powf(1.0f - camera.zoom_factor, dt));
+		}
+	}
+}
+
+void resolve_velocity(Scene *scene, Rigid_Body *a, Rigid_Body *b, const Contact_Manifold &manifold) {
+	// Resolve velocity
+	r32 restitution = minimum(a->restitution, b->restitution);
+	r32 j = -(1 + restitution) * vec2_dot(b->velocity - a->velocity, manifold.normal);
+	j /= (a->imass + b->imass);
+	j = maximum(0, j);
+
+	r32 alpha = SCENE_SIMULATION_CORRECTION_ALPHA;
+
+	a->velocity -= alpha * j * a->imass * manifold.normal;
+	b->velocity += alpha * j * b->imass * manifold.normal;
+
+	// Fix position
+	Vec2 correction = maximum(manifold.penetration, 0.0f) / (a->imass + b->imass) * manifold.normal;
+	a->transform.p -= a->imass * correction;
+	b->transform.p += b->imass * correction;
+	a->bounding_box = scene_rigid_body_bounding_box(a, 0);
+	b->bounding_box = scene_rigid_body_bounding_box(b, 0);
+	hgrid_move_body(&scene->hgrid, a);
+	hgrid_move_body(&scene->hgrid, b);
+
+	#ifdef ENABLE_DEVELOPER_OPTIONS
+	array_add(&scene->manifolds, manifold);
+	#endif
+}
+
+// NOTE: "a" must be given bullet
+void resolve_bullet_collision(Scene *scene, Entity_Reference &entt_a, Rigid_Body *a, Entity_Reference &entt_b, Rigid_Body *b, const Contact_Manifold &manifold) {
+	const r32 INCREASE_COLOR_EFFECT = 0.02f;
+	const u32 HIT_COUNT = 15;
+
+	auto spawn_color_id = scene_entity_pointer(scene, entt_a)->as<Bullet>()->color_id;
+
+	if (entt_b.type == Entity_Type_Character) {
+		auto character = scene_entity_pointer(scene, entt_b)->as<Character>();
+		if (character->color_id != spawn_color_id) {
+			character->color_values[spawn_color_id] += INCREASE_COLOR_EFFECT;
+			character->hit = HIT_COUNT;
+
+			if (character->color_values[spawn_color_id] >= 1) {
+				character->color_values[spawn_color_id] = 1;
+
+				bool another_full_present = false;
+				for (auto in = 0; in < Color_Id_COUNT; ++in) {
+					if (in != spawn_color_id && character->color_values[in] == 1) {
+						another_full_present = true;
+						break;
+					}
+				}
+
+				if (another_full_present) {
+					for (auto in = 0; in < Color_Id_COUNT; ++in) {
+						character->color_values[in] *= 0.5f;
+					}
+				} else {
+					character->color_id = spawn_color_id;
+				}
+			} else {
+				r32 max_value = character->color_values[character->color_id];
+
+				for (auto in = 0; in < Color_Id_COUNT; ++in) {
+					if (max_value < character->color_values[in]) {
+						max_value = character->color_values[in];
+						character->color_id = (Color_Id)in;
+					}
+				}
+			}
+		}
+	}
+
+	scene_spawn_emitter(scene, manifold.contacts[0], color_id_get_color(spawn_color_id), 2.0f * color_id_get_intensity(spawn_color_id));
+	auto audio = audio_mixer_add_audio(&g.audio_mixer, g.hit, false, false);
+
+	auto player = scene_get_player(scene);
+	auto src = player->position;
+
+	auto d = src - manifold.contacts[0];
+	audio->attenuation = vec2_dot(d, d);
+	audio_play(audio, 0.5f);
+	audio_mixer_remove_audio(&g.audio_mixer, audio);
+
+	scene_remove_entity(scene, entt_a, a->entity_id);
+}
+
+void detect_collision_and_resolve(Scene *scene) {
+	Contact_Manifold manifold;
+	manifold.penetration = 0;
+
+	for_list(Rigid_Body, a_ptr, &scene->rigid_bodies) {
+		for_list_offset(Rigid_Body, b_ptr, a_ptr, &scene->rigid_bodies) {
+			auto &a = a_ptr->data;
+			auto &b = b_ptr->data;
+
+			if (a.type == Rigid_Body_Type_Static && b.type == Rigid_Body_Type_Static) {
+				continue;
+			}
+
+			if (hgrid_test_collision(&scene->hgrid, &a, &b)) {
+				if (test_mmrect_vs_mmrect(a.bounding_box, b.bounding_box)) {
+					set_bit(a.flags, Rigid_Body_BOUNDING_BOX_COLLIDING);
+					set_bit(b.flags, Rigid_Body_BOUNDING_BOX_COLLIDING);
+
+					for (u32 a_index = 0; a_index < a.fixture_count; ++a_index) {
+						for (u32 b_index = 0; b_index < b.fixture_count; ++b_index) {
+							Fixture *a_fixture = scene_rigid_body_get_fixture(&a, a_index);
+							Fixture *b_fixture = scene_rigid_body_get_fixture(&b, b_index);
+
+							if (fixture_vs_fixture(a_fixture, b_fixture, a.transform, b.transform, &manifold)) {
+								set_bit(a.flags, Rigid_Body_COLLIDING);
+								set_bit(b.flags, Rigid_Body_COLLIDING);
+
+								auto entt_a = scene_get_entity(scene, a.entity_id);
+								auto entt_b = scene_get_entity(scene, b.entity_id);
+
+								if (entt_a.type == Entity_Type_Bullet && entt_b.type != Entity_Type_Bullet) {
+									resolve_bullet_collision(scene, entt_a, &a, entt_b, &b, manifold);
+								} else if (entt_b.type == Entity_Type_Bullet && entt_a.type != Entity_Type_Bullet) {
+									resolve_bullet_collision(scene, entt_b, &b, entt_a, &a, manifold);
+								} else {
+									resolve_velocity(scene, &a, &b, manifold);
+								}
+							}
+
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+void iscene_tick(Scene *scene, r32 dt) {
+	iscene_pre_tick(scene);
+
+	if (iscene_simulate_world_enabled(scene)) {
+		iscene_camera_follow(scene);
+
+		iscene_pre_update_entities(scene, dt);
+
+		iscene_update_audio_params(scene);
+
+		iscene_simulate_rigid_bodies(scene, dt);
+
+		iscene_post_update_entities(scene);
+
+		iscene_simulate_particle_systems(scene, dt);
+
+		iscene_post_tick(scene);
+
+
+		for (int iteration = 0; iteration < SCENE_SIMULATION_MAX_ITERATION; ++iteration) {
+			iscene_pre_tick(scene);
+
+			// TODO: Continuous collision detection
+			detect_collision_and_resolve(scene);
+
+			iscene_post_tick(scene);
+		}
+
+		iscene_update_positions(scene);
+
+		iscene_simulate_camera(scene, dt);
+	}
+}
+
+
+//
+//
+//
+
 namespace Develop {
 
 	bool update_input(Scene *scene, const Event &event) {
@@ -2852,7 +2891,7 @@ namespace Develop {
 				system_request_quit();
 				break;
 			}
-	
+
 			update_input(scene, event);
 		}
 
@@ -2874,19 +2913,12 @@ namespace Develop {
 
 			Dev_TimedScope(SimulationFrame);
 
-			scene_tick(scene, dt);
+			iscene_tick(scene, dt);
 
 			scene->physics.accumulator_t -= dt;
 		}
 
-		Dev_TimedBlockBegin(AudioUpdate);
-		g.audio_mixer.pitch_factor = scene->physics.sim_speed.factor;
-		audio_mixer_update(&g.audio_mixer);
-		Dev_TimedBlockEnd(AudioUpdate);
-
-		editor_update(scene, &scene->editor);
-
-		ImGui_UpdateFrame(scene->physics.real_dt);
+		iscene_update_audio_and_ui(scene);
 	}
 
 	void Scene_Begin_Drawing() {
@@ -3164,37 +3196,125 @@ namespace Develop {
 	}
 }
 
-namespace Server {
-	void Scene_Frame_Begin(Scene *scene) {
-		// TODO: Receive data from client
-		Develop::Scene_Frame_Begin(scene);
-	}
-
-	void Scene_Frame_Simulate(Scene *scene) {
-		Develop::Scene_Frame_Simulate(scene);
-	}
-
-	void Scene_Begin_Drawing() {
-		// no render in server
-	}
-
-	void Scene_Render(Scene *scene, bool draw_editor) {
-		// no render in server
-	}
-
-	void Scene_End_Drawing() {
-		// no drawing in server
-	}
-
-	void Scene_Frame_End(Scene *scene) {
-		Develop::Scene_Frame_End(scene);
-	}
-}
-
 namespace Client {
+
+	void collect_input_events(Scene *scene, const Event &event, Array<Message_Input> *inputs) {
+		if (event.type & Event_Type_MOUSE_CURSOR) {
+			auto pointer = vec2((r32)event.mouse_cursor.x / g.window_w, (r32)event.mouse_cursor.y / g.window_h);
+			pointer = 2 * pointer - vec2(1);
+
+			auto msg0 = array_add(inputs);
+			auto msg1 = array_add(inputs);
+
+			msg0->type = Message_Input::X_POINTER;
+			msg0->real_value = pointer.x;
+
+			msg1->type = Message_Input::Y_POINTER;
+			msg1->real_value = pointer.y;
+		}
+
+		if (event.type & Event_Type_KEYBOARD) {
+			float value = (float)(event.key.state == Key_State_DOWN);
+			switch (event.key.symbol) {
+				case Key_D:
+				case Key_RIGHT: {
+					auto msg = array_add(inputs);
+					msg->type = Message_Input::X_AXIS;
+					msg->real_value = value;
+				} break;
+
+				case Key_A:
+				case Key_LEFT: {
+					auto msg = array_add(inputs);
+					msg->type = Message_Input::X_AXIS;
+					msg->real_value = -value;
+				} break;
+
+				case Key_W:
+				case Key_UP: {
+					auto msg = array_add(inputs);
+					msg->type = Message_Input::Y_AXIS;
+					msg->real_value = value;
+				} break;
+
+				case Key_S:
+				case Key_DOWN: {
+					auto msg = array_add(inputs);
+					msg->type = Message_Input::Y_AXIS;
+					msg->real_value = -value;
+				} break;
+
+				case Key_SPACE: {
+					auto msg = array_add(inputs);
+					msg->type = Message_Input::ATTACK;
+					msg->signed_value = (event.key.state == Key_State_DOWN);
+				} break;
+			}
+		}
+	}
+
 	void Scene_Frame_Begin(Scene *scene) {
-		// TODO: Send data to server
-		Develop::Scene_Frame_Begin(scene);
+		Dev_TimedFrameBegin();
+
+		Array<Message_Input> inputs;
+		inputs.allocator = TEMPORARY_ALLOCATOR;
+
+		Dev_TimedBlockBegin(EventHandling);
+		auto events = system_poll_events();
+		for (s64 event_index = 0; event_index < events.count; ++event_index) {
+			Event &event = events[event_index];
+
+			if (event.type & Event_Type_EXIT) {
+				g.running = false;
+				break;
+			}
+
+			if (iscene_gui_related_events(scene, event)) {
+				continue;
+			}
+
+			if ((event.type & Event_Type_KEY_UP) && event.key.symbol == Key_ESCAPE) {
+				system_request_quit();
+				break;
+			}
+
+			//Develop::update_input(scene, event); // TODO: probably remove this??
+			collect_input_events(scene, event, &inputs);
+		}
+
+		for (auto &in : inputs) {
+			system_net_send_to(g.socket, &in, sizeof(Message_Input), g.server_ip);
+		}
+
+
+		// Receive from clients
+		// TODO:: Add support for multiple clients
+
+		Message_Input in;
+		Ip_Endpoint ip_client;
+
+		auto player = scene_get_player(scene);
+		auto &controller = player->controller;
+
+		s32 bytes_received = 1;
+		while (bytes_received) {
+			bytes_received = system_net_receive_from(g.socket, &in, sizeof(Message_Input), &ip_client);
+			if (bytes_received < 0) {
+				break;
+			} else if (bytes_received != sizeof(Message_Input)) {
+				system_display_critical_message("Invalid message received");
+			} else {
+				switch (in.type) {
+					case Message_Input::X_POINTER: controller.pointer.x = in.real_value; break;
+					case Message_Input::Y_POINTER: controller.pointer.y = in.real_value; break;
+					case Message_Input::X_AXIS:	controller.axis.x = in.real_value; break;
+					case Message_Input::Y_AXIS:	controller.axis.y = in.real_value; break;
+					case Message_Input::ATTACK:	controller.attack = in.signed_value; break;
+				}
+			}
+		}
+
+		Dev_TimedBlockEnd(EventHandling);
 	}
 
 	void Scene_Frame_Simulate(Scene *scene) {
@@ -3212,6 +3332,46 @@ namespace Client {
 
 	void Scene_End_Drawing() {
 		Develop::Scene_End_Drawing();
+	}
+
+	void Scene_Frame_End(Scene *scene) {
+		Develop::Scene_Frame_End(scene);
+	}
+}
+
+namespace Server {
+	void Scene_Frame_Begin(Scene *scene) {
+		Dev_TimedFrameBegin();
+
+		Dev_TimedBlockBegin(EventHandling);
+		auto events = system_poll_events();
+		for (s64 event_index = 0; event_index < events.count; ++event_index) {
+			Event &event = events[event_index];
+
+			if (event.type & Event_Type_EXIT) {
+				g.running = false;
+				break;
+			}
+		}
+
+
+		Dev_TimedBlockEnd(EventHandling);
+	}
+
+	void Scene_Frame_Simulate(Scene *scene) {
+		Develop::Scene_Frame_Simulate(scene);
+	}
+
+	void Scene_Begin_Drawing() {
+		// no render in server
+	}
+
+	void Scene_Render(Scene *scene, bool draw_editor) {
+		// no render in server
+	}
+
+	void Scene_End_Drawing() {
+		// no drawing in server
 	}
 
 	void Scene_Frame_End(Scene *scene) {

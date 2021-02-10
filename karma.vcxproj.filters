@@ -91,6 +91,7 @@
     <ClInclude Include="src\modules\core\stb_truetype.h" />
     <ClInclude Include="src\modules\core\utility.h" />
     <ClInclude Include="src\karma_config.h" />
+    <ClInclude Include="src\message.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\modules\core\windows\resource.rc" />
