@@ -2,7 +2,6 @@
 #include <winsock2.h>
 //#include <time.h>
 #include "modules/core/utility.h"
-#pragma comment(lib, "Winmm.lib")
 
 #define SOCKET_BUFFER_SIZE kilo_bytes(1)
 

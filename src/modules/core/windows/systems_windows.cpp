@@ -30,6 +30,7 @@
 #pragma comment(lib, "Shlwapi.lib")
 #pragma comment(lib, "Avrt.lib")
 #pragma comment( lib, "wsock32.lib")
+#pragma comment( lib, "Winmm.lib")
 
 //
 // Win32 Error
@@ -719,6 +720,8 @@ static Audio_Client		windows_audio_client;
 
 static Win32_Controller windows_controllers_state[XUSER_MAX_COUNT];
 static Controller       controllers[XUSER_MAX_COUNT];
+
+static bool sleep_granularity;
 
 Array_View<u8> system_read_entire_file(const String path) {
 	Array_View<u8> result = {};
@@ -2620,6 +2623,10 @@ void system_thread_sleep(u32 millisecs) {
 	Sleep(millisecs);
 }
 
+bool system_sleep_is_granular() {
+	return sleep_granularity;
+}
+
 Handle system_create_mutex() {
 	HANDLE mutex = CreateMutexA(NULL, FALSE, 0);
 	Handle result;
@@ -2699,6 +2706,9 @@ int __stdcall wWinMain(HINSTANCE instance, HINSTANCE prev_instance, LPWSTR cmd_l
 	DWORD task_index = 0;
 	HANDLE task_handle = AvSetMmThreadCharacteristicsW(L"Games", &task_index);
 	SetThreadDescription(GetCurrentThread(), L"Main");
+
+	UINT sleep_granularity_ms = 1;
+	sleep_granularity = (timeBeginPeriod(sleep_granularity_ms) == TIMERR_NOERROR);
 
 	Builder builder = system_builder();
 

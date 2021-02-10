@@ -1138,26 +1138,32 @@ r32 color_id_get_intensity(Color_Id color_id) {
 }
 
 Character *scene_spawn_player(Scene *scene, Vec2 p, Color_Id color_id) {
-	if (!scene->player_id.handle) {
-		Resource_Id id = { 6895733819830550519 }; // TODO: hard coded resource id
-		Resource_Collection resource = scene_find_resource(id);
+	if (g.method != Scene_Run_Method_SERVER) {
+		if (!scene->player_id.handle) {
+			Resource_Id id = { 6895733819830550519 }; // TODO: hard coded resource id
+			Resource_Collection resource = scene_find_resource(id);
 
-		Resource_Id particle_id = { 6926504382549284097 };
-		Resource_Collection particle_resource = scene_find_resource(particle_id);
+			Resource_Id particle_id = { 6926504382549284097 };
+			Resource_Collection particle_resource = scene_find_resource(particle_id);
 
-		Rigid_Body body;
-		Character src;
-		ent_init_character(&src, scene, p, color_id, &body, resource.fixture, resource.texture, resource.index, particle_resource.texture, particle_resource.index);
-		auto player = scene_clone_entity(scene, &src, p, &id)->as<Character>();
-		scene->player_id = player->id;
-		player->size = vec2(0.5f);
-		player->rigid_body->transform.xform = mat2_scalar(0.5f, 0.5f);
-		player->rigid_body->gravity = 1;
+			Rigid_Body body;
+			Character src;
+			ent_init_character(&src, scene, p, color_id, &body, resource.fixture, resource.texture, resource.index, particle_resource.texture, particle_resource.index);
+			auto player = scene_clone_entity(scene, &src, p, &id)->as<Character>();
+			scene->player_id = player->id;
+			player->size = vec2(0.5f);
+			player->rigid_body->transform.xform = mat2_scalar(0.5f, 0.5f);
+			player->rigid_body->gravity = 1;
 
-		return player;
+			return player;
+		}
+
+		return scene_get_player(scene);
+	} else {
+		unimplemented("Server Add Player to the Room");
+
+		return nullptr;
 	}
-
-	return scene_get_player(scene);
 }
 
 Particle_Emitter *scene_spawn_emitter(Scene *scene, Vec2 p, Vec4 color, r32 intensity) {
@@ -1209,8 +1215,12 @@ Bullet *scene_spawn_bullet(Scene *scene, Vec2 p, Color_Id color_id, Vec2 dir) {
 	bullet->rigid_body->restitution = 1;
 	bullet->rigid_body->drag = 0;
 
-	audio_pitch_factor(bullet->audio, random_r32_range_r32(0.9f, 1.0f));
-	audio_play(bullet->audio);
+	if (g.method != Scene_Run_Method_SERVER) {
+		audio_pitch_factor(bullet->audio, random_r32_range_r32(0.9f, 1.0f));
+		audio_play(bullet->audio);
+	} else {
+		unimplemented("Send Spawn Bullet Server Message");
+	}
 
 	return bullet;
 }
@@ -2349,6 +2359,12 @@ void iscene_pre_tick(Scene *scene) {
 	}
 }
 
+void iscene_send_remove_entity_message(Entity_Id id) {
+	if (g.method == Scene_Run_Method_SERVER) {
+		unimplemented("Send Server Entity Remove message");
+	}
+}
+
 void iscene_post_tick(Scene *scene) {
 	Array<Entity_Id> *rma;
 	s64 count;
@@ -2369,6 +2385,7 @@ void iscene_post_tick(Scene *scene) {
 					auto data = iscene_get_entity_reference(&scene->entity_table, cameras[ref.index].id);
 					data->index = ref.index;
 				}
+				iscene_send_remove_entity_message(id);
 			}
 		}
 	}
@@ -2394,6 +2411,7 @@ void iscene_post_tick(Scene *scene) {
 					auto data = iscene_get_entity_reference(&scene->entity_table, characters[ref.index].id);
 					data->index = ref.index;
 				}
+				iscene_send_remove_entity_message(id);
 			}
 		}
 	}
@@ -2412,6 +2430,7 @@ void iscene_post_tick(Scene *scene) {
 					auto data = iscene_get_entity_reference(&scene->entity_table, obstacles[ref.index].id);
 					data->index = ref.index;
 				}
+				iscene_send_remove_entity_message(id);
 			}
 		}
 	}
@@ -2431,6 +2450,7 @@ void iscene_post_tick(Scene *scene) {
 					auto data = iscene_get_entity_reference(&scene->entity_table, bullets[ref.index].id);
 					data->index = ref.index;
 				}
+				iscene_send_remove_entity_message(id);
 			}
 		}
 	}
@@ -2449,6 +2469,7 @@ void iscene_post_tick(Scene *scene) {
 					auto data = iscene_get_entity_reference(&scene->entity_table, emitters[ref.index].id);
 					data->index = ref.index;
 				}
+				iscene_send_remove_entity_message(id);
 			}
 		}
 	}
@@ -2571,15 +2592,6 @@ void iscene_update_positions(Scene *scene) {
 		auto &characters = scene->by_type.character;
 		for (auto index = 0; index < count; ++index) {
 			auto &character = characters[index];
-
-			auto new_p = character.rigid_body->transform.p;
-
-			if ((new_p.y - character.position.y < -0.001f) && character.controller.axis.y < 0) {
-				audio_play(character.fall, 0.3f);
-			} else {
-				audio_vanish(character.fall, 0.8f);
-			}
-
 			character.position = character.rigid_body->transform.p;
 		}
 	}
@@ -2597,6 +2609,23 @@ void iscene_update_positions(Scene *scene) {
 void iscene_update_audio_params(Scene *scene) {
 	auto player = scene_get_player(scene);
 	auto src = player->position;
+
+	{
+		auto count = scene->by_type.character.count;
+		auto &characters = scene->by_type.character;
+		for (auto index = 0; index < count; ++index) {
+			auto &character = characters[index];
+
+			auto new_p = character.rigid_body->transform.p;
+
+			if ((new_p.y - character.position.y < -0.001f) && character.controller.axis.y < 0) {
+				audio_play(character.fall, 0.3f);
+			} else {
+				audio_vanish(character.fall, 0.8f);
+			}
+
+		}
+	}
 
 	{
 		auto count = scene->by_type.bullet.count;
@@ -2672,6 +2701,7 @@ void resolve_bullet_collision(Scene *scene, Entity_Reference &entt_a, Rigid_Body
 
 	if (entt_b.type == Entity_Type_Character) {
 		auto character = scene_entity_pointer(scene, entt_b)->as<Character>();
+
 		if (character->color_id != spawn_color_id) {
 			character->color_values[spawn_color_id] += INCREASE_COLOR_EFFECT;
 			character->hit = HIT_COUNT;
@@ -2704,19 +2734,27 @@ void resolve_bullet_collision(Scene *scene, Entity_Reference &entt_a, Rigid_Body
 					}
 				}
 			}
+
+			if (g.method == Scene_Run_Method_SERVER) {
+				unimplemented("Send Server Message to update character health");
+			}
 		}
 	}
 
-	scene_spawn_emitter(scene, manifold.contacts[0], color_id_get_color(spawn_color_id), 2.0f * color_id_get_intensity(spawn_color_id));
-	auto audio = audio_mixer_add_audio(&g.audio_mixer, g.hit, false, false);
+	if (g.method != Scene_Run_Method_SERVER) {
+		scene_spawn_emitter(scene, manifold.contacts[0], color_id_get_color(spawn_color_id), 2.0f * color_id_get_intensity(spawn_color_id));
+		auto audio = audio_mixer_add_audio(&g.audio_mixer, g.hit, false, false);
 
-	auto player = scene_get_player(scene);
-	auto src = player->position;
+		auto player = scene_get_player(scene);
+		auto src = player->position;
 
-	auto d = src - manifold.contacts[0];
-	audio->attenuation = vec2_dot(d, d);
-	audio_play(audio, 0.5f);
-	audio_mixer_remove_audio(&g.audio_mixer, audio);
+		auto d = src - manifold.contacts[0];
+		audio->attenuation = vec2_dot(d, d);
+		audio_play(audio, 0.5f);
+		audio_mixer_remove_audio(&g.audio_mixer, audio);
+	} else {
+		unimplemented("Send Server Message to spawn emitter");
+	}
 
 	scene_remove_entity(scene, entt_a, a->entity_id);
 }
@@ -2776,8 +2814,6 @@ void iscene_tick(Scene *scene, r32 dt) {
 
 		iscene_pre_update_entities(scene, dt);
 
-		iscene_update_audio_params(scene);
-
 		iscene_simulate_rigid_bodies(scene, dt);
 
 		iscene_post_update_entities(scene);
@@ -2785,7 +2821,6 @@ void iscene_tick(Scene *scene, r32 dt) {
 		iscene_simulate_particle_systems(scene, dt);
 
 		iscene_post_tick(scene);
-
 
 		for (int iteration = 0; iteration < SCENE_SIMULATION_MAX_ITERATION; ++iteration) {
 			iscene_pre_tick(scene);
@@ -2796,79 +2831,117 @@ void iscene_tick(Scene *scene, r32 dt) {
 			iscene_post_tick(scene);
 		}
 
+		iscene_update_audio_params(scene);
+
 		iscene_update_positions(scene);
 
 		iscene_simulate_camera(scene, dt);
 	}
 }
 
+void iscene_tick_client(Scene *scene, r32 dt) {
+	unimplemented("Reveice Message from server");
+
+	iscene_camera_follow(scene);
+
+	iscene_update_audio_params(scene);
+
+	iscene_simulate_particle_systems(scene, dt);
+
+	iscene_simulate_camera(scene, dt);
+}
+
+void iscene_tick_server(Scene *scene, r32 dt) {
+	iscene_pre_tick(scene);
+
+	iscene_pre_update_entities(scene, dt);
+
+	iscene_simulate_rigid_bodies(scene, dt);
+
+	iscene_post_update_entities(scene);
+
+	iscene_post_tick(scene);
+
+	for (int iteration = 0; iteration < SCENE_SIMULATION_MAX_ITERATION; ++iteration) {
+		iscene_pre_tick(scene);
+
+		// TODO: Continuous collision detection
+		detect_collision_and_resolve(scene);
+
+		iscene_post_tick(scene);
+	}
+
+	iscene_update_positions(scene);
+
+	unimplemented("Send Server Messages");
+}
+
+bool update_input(Scene *scene, const Event &event) {
+	Character *player = scene_get_player(scene);
+
+	if (player) {
+		auto &controller = player->controller;
+
+		if (event.type & Event_Type_MOUSE_CURSOR) {
+			controller.pointer.x = (r32)event.mouse_cursor.x / g.window_w;
+			controller.pointer.y = (r32)event.mouse_cursor.y / g.window_h;
+			controller.pointer = 2 * controller.pointer - vec2(1);
+		}
+
+		if (event.type & Event_Type_KEYBOARD) {
+			float value = (float)(event.key.state == Key_State_DOWN);
+			switch (event.key.symbol) {
+				case Key_D:
+				case Key_RIGHT:
+					controller.axis.x = value;
+					break;
+
+				case Key_A:
+				case Key_LEFT:
+					controller.axis.x = -value;
+					break;
+
+				case Key_W:
+				case Key_UP:
+					controller.axis.y = value;
+					break;
+
+				case Key_S:
+				case Key_DOWN:
+					controller.axis.y = -value;
+					break;
+
+				case Key_SPACE:
+					controller.attack = (event.key.state == Key_State_DOWN);
+					break;
+			}
+		}
+
+		if (event.type & Event_Type_CONTROLLER_AXIS) {
+			if (event.controller_axis.symbol == Controller_Axis_LTHUMB_X)
+				controller.axis.x = event.controller_axis.value;
+			else if (event.controller_axis.symbol == Controller_Axis_LTHUMB_Y)
+				controller.axis.y = event.controller_axis.value;
+			else if (event.controller_axis.symbol == Controller_Axis_LTRIGGER)
+				controller.attack = (event.controller_axis.value > 0);
+			else if (event.controller_axis.symbol == Controller_Axis_RTHUMB_X) {
+				controller.pointer.x += event.controller_axis.value;
+				controller.pointer = vec2_normalize_check(controller.pointer);
+			} else if (event.controller_axis.symbol == Controller_Axis_RTHUMB_Y) {
+				controller.pointer.y += event.controller_axis.value;
+				controller.pointer = vec2_normalize_check(controller.pointer);
+			}
+		}
+	}
+
+	return false;
+}
 
 //
 //
 //
 
 namespace Develop {
-
-	bool update_input(Scene *scene, const Event &event) {
-		Character *player = scene_get_player(scene);
-
-		if (player) {
-			auto &controller = player->controller;
-
-			if (event.type & Event_Type_MOUSE_CURSOR) {
-				controller.pointer.x = (r32)event.mouse_cursor.x / g.window_w;
-				controller.pointer.y = (r32)event.mouse_cursor.y / g.window_h;
-				controller.pointer = 2 * controller.pointer - vec2(1);
-			}
-
-			if (event.type & Event_Type_KEYBOARD) {
-				float value = (float)(event.key.state == Key_State_DOWN);
-				switch (event.key.symbol) {
-					case Key_D:
-					case Key_RIGHT:
-						controller.axis.x = value;
-						break;
-
-					case Key_A:
-					case Key_LEFT:
-						controller.axis.x = -value;
-						break;
-
-					case Key_W:
-					case Key_UP:
-						controller.axis.y = value;
-						break;
-
-					case Key_S:
-					case Key_DOWN:
-						controller.axis.y = -value;
-						break;
-
-					case Key_SPACE:
-						controller.attack = (event.key.state == Key_State_DOWN);
-						break;
-				}
-			}
-
-			if (event.type & Event_Type_CONTROLLER_AXIS) {
-				if (event.controller_axis.symbol == Controller_Axis_LTHUMB_X)
-					controller.axis.x = event.controller_axis.value;
-				else if (event.controller_axis.symbol == Controller_Axis_LTHUMB_Y)
-					controller.axis.y = event.controller_axis.value;
-				else if (event.controller_axis.symbol == Controller_Axis_LTRIGGER)
-					controller.attack = (event.controller_axis.value > 0);
-				else if (event.controller_axis.symbol == Controller_Axis_RTHUMB_X) {
-					controller.pointer.x += event.controller_axis.value;
-					controller.pointer = vec2_normalize_check(controller.pointer);
-				} else if (event.controller_axis.symbol == Controller_Axis_RTHUMB_Y) {
-					controller.pointer.y += event.controller_axis.value;
-					controller.pointer = vec2_normalize_check(controller.pointer);
-				}
-			}
-		}
-
-		return false;
-	}
 
 	void Scene_Frame_Begin(Scene *scene) {
 		Dev_TimedFrameBegin();
@@ -3278,7 +3351,7 @@ namespace Client {
 				break;
 			}
 
-			//Develop::update_input(scene, event); // TODO: probably remove this??
+			update_input(scene, event); // TODO: probably remove this??
 			collect_input_events(scene, event, &inputs);
 		}
 
@@ -3286,40 +3359,21 @@ namespace Client {
 			system_net_send_to(g.socket, &in, sizeof(Message_Input), g.server_ip);
 		}
 
-
-		// Receive from clients
-		// TODO:: Add support for multiple clients
-
-		Message_Input in;
-		Ip_Endpoint ip_client;
-
-		auto player = scene_get_player(scene);
-		auto &controller = player->controller;
-
-		s32 bytes_received = 1;
-		while (bytes_received) {
-			bytes_received = system_net_receive_from(g.socket, &in, sizeof(Message_Input), &ip_client);
-			if (bytes_received < 0) {
-				break;
-			} else if (bytes_received != sizeof(Message_Input)) {
-				system_display_critical_message("Invalid message received");
-			} else {
-				switch (in.type) {
-					case Message_Input::X_POINTER: controller.pointer.x = in.real_value; break;
-					case Message_Input::Y_POINTER: controller.pointer.y = in.real_value; break;
-					case Message_Input::X_AXIS:	controller.axis.x = in.real_value; break;
-					case Message_Input::Y_AXIS:	controller.axis.y = in.real_value; break;
-					case Message_Input::ATTACK:	controller.attack = in.signed_value; break;
-				}
-			}
-		}
-
 		Dev_TimedBlockEnd(EventHandling);
 	}
 
 	void Scene_Frame_Simulate(Scene *scene) {
-		// TODO: do we simulate in client as well?
-		Develop::Scene_Frame_Simulate(scene);
+		Dev_TimedScope(Simulation);
+
+		const r32 dt = scene->physics.fixed_dt;
+
+		while (scene->physics.accumulator_t >= dt) {
+			Dev_TimedScope(SimulationFrame);
+			iscene_tick_client(scene, dt);
+			scene->physics.accumulator_t -= dt;
+		}
+
+		iscene_update_audio_and_ui(scene);
 	}
 
 	void Scene_Begin_Drawing() {
@@ -3354,12 +3408,57 @@ namespace Server {
 			}
 		}
 
+		// Receive from clients
+		// TODO:: Add support for multiple clients
+
+		unimplemented("Reveice Message from Clients");
+
+		Message_Input in;
+		Ip_Endpoint ip_client;
+
+		auto player = scene_get_player(scene);
+		auto &controller = player->controller;
+
+		s32 bytes_received = 1;
+		while (bytes_received) {
+			bytes_received = system_net_receive_from(g.socket, &in, sizeof(Message_Input), &ip_client);
+			if (bytes_received < 0) {
+				break;
+			} else if (bytes_received != sizeof(Message_Input)) {
+				system_display_critical_message("Invalid message received");
+			} else {
+				switch (in.type) {
+					case Message_Input::X_POINTER: controller.pointer.x = in.real_value; break;
+					case Message_Input::Y_POINTER: controller.pointer.y = in.real_value; break;
+					case Message_Input::X_AXIS:	controller.axis.x = in.real_value; break;
+					case Message_Input::Y_AXIS:	controller.axis.y = in.real_value; break;
+					case Message_Input::ATTACK:	controller.attack = in.signed_value; break;
+				}
+			}
+		}
 
 		Dev_TimedBlockEnd(EventHandling);
 	}
 
 	void Scene_Frame_Simulate(Scene *scene) {
-		Develop::Scene_Frame_Simulate(scene);
+		Dev_TimedScope(Simulation);
+
+		iscene_pre_simulate(scene);
+
+		const r32 dt = scene->physics.fixed_dt;
+
+		while (scene->physics.accumulator_t >= dt) {
+			if (scene->physics.state == Physics_State_PAUSED)
+				break;
+			else if (scene->physics.state == Physics_State_RUN_SINGLE_STEP)
+				scene->physics.state = Physics_State_PAUSED;
+
+			Dev_TimedScope(SimulationFrame);
+
+			iscene_tick(scene, dt);
+
+			scene->physics.accumulator_t -= dt;
+		}
 	}
 
 	void Scene_Begin_Drawing() {
@@ -3374,7 +3473,40 @@ namespace Server {
 		// no drawing in server
 	}
 
+	r32 time_spend_since(u64 old_counter, u64 frequency) {
+		return ((1000000.0f * (r32)(system_get_counter() - old_counter)) / (r32)frequency) / 10000.0f;
+	}
+
 	void Scene_Frame_End(Scene *scene) {
-		Develop::Scene_Frame_End(scene);
+		reset_temporary_memory();
+
+		const r32 SERVER_UPDATE_RATE_MS = 1000.0f / 60.0f; // 60fps
+
+		// Fix server update rate
+		r32 time_taken_ms = time_spend_since(scene->physics.counter, scene->physics.frequency);
+		while (time_taken_ms < SERVER_UPDATE_RATE_MS) {
+			if (system_sleep_is_granular()) {
+				u32 time_to_wait_ms = (u32)(SERVER_UPDATE_RATE_MS - time_taken_ms);
+				if (time_to_wait_ms > 0) {
+					system_thread_sleep(time_to_wait_ms);
+				}
+			}
+			time_taken_ms = time_spend_since(scene->physics.counter, scene->physics.frequency);
+		}
+
+		auto new_counter = system_get_counter();
+		auto counts = new_counter - scene->physics.counter;
+
+		scene->physics.counter = new_counter;
+
+		scene->physics.real_dt = ((1000000.0f * (r32)counts) / (r32)scene->physics.frequency) / 1000000.0f;
+		scene->physics.real_t += scene->physics.real_dt;
+
+		scene->physics.game_dt = scene->physics.real_dt * scene->physics.sim_speed.factor;
+
+		scene->physics.accumulator_t += scene->physics.game_dt;
+		scene->physics.accumulator_t = minimum(scene->physics.accumulator_t, 0.2f);
+
+		Dev_TimedFrameEnd(scene->physics.real_dt);
 	}
 }

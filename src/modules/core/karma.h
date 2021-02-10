@@ -126,7 +126,7 @@ inline void runtime_assert(bool exp) {
 
 #if defined(BUILD_DEBUG) || defined(BUILD_DEBUG_FAST)
 #	define assert(expression) runtime_assert(expression)
-#	define unimplemented() \
+#	define unimplemented(exp) \
 		{ trigger_breakpoint(); }
 #	define trigger_if(x)         \
 		if (x) {                  \
@@ -139,7 +139,7 @@ inline void runtime_assert(bool exp) {
 #	define invalid_code_path() trigger_breakpoint()
 #else
 #	define assert(expression) 
-#	define unimplemented()
+#	define unimplemented(exp)
 #	define trigger_if(x)
 #	define invalid_default_case()
 #	define invalid_code_path()
