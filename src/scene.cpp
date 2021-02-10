@@ -98,7 +98,16 @@ static bool test_fixture_point(Fixture &a, const Transform &ta, Vec2 point, r32 
 // End Collision
 //
 
+typedef void (*Scene_Frame_Begin_Proc)(Scene *);
+typedef void (*Scene_Frame_Simulate_Proc)(Scene *);
+typedef void (*Scene_Begin_Drawing_Proc)();
+typedef void (*Scene_Render_Proc)(Scene *, bool);
+typedef void (*Scene_End_Drawing_Proc)();
+typedef void (*Scene_Frame_End_Proc)(Scene *);
+
 struct Scene_Global {
+	Scene_Run_Method method;
+
 	Handle platform;
 	Render_Backend render_backend;
 
@@ -131,28 +140,95 @@ struct Scene_Global {
 	Array<Level>	levels;
 
 	Random_Series	id_series;
+
+	Scene_Frame_Begin_Proc			frame_begin;
+	Scene_Frame_Simulate_Proc		frame_simulate;
+	Scene_Begin_Drawing_Proc		begin_drawing;
+	Scene_Render_Proc				render;
+	Scene_End_Drawing_Proc			end_drawing;
+	Scene_Frame_End_Proc			frame_end;
 };
+
+namespace Develop {
+	void Scene_Frame_Begin(Scene *);
+	void Scene_Frame_Simulate(Scene *);
+	void Scene_Begin_Drawing();
+	void Scene_Render(Scene *, bool);
+	void Scene_End_Drawing();
+	void Scene_Frame_End(Scene *);
+}
+
+namespace Server {
+	void Scene_Frame_Begin(Scene *);
+	void Scene_Frame_Simulate(Scene *);
+	void Scene_Begin_Drawing();
+	void Scene_Render(Scene *, bool);
+	void Scene_End_Drawing();
+	void Scene_Frame_End(Scene *);
+}
+
+namespace Client {
+	void Scene_Frame_Begin(Scene *);
+	void Scene_Frame_Simulate(Scene *);
+	void Scene_Begin_Drawing();
+	void Scene_Render(Scene *, bool);
+	void Scene_End_Drawing();
+	void Scene_Frame_End(Scene *);
+}
 
 static Scene_Global g;
 
-void scene_prepare(Render_Backend backend, System_Window_Show show) {
-	g.framebuffer_w = 1280;
-	g.framebuffer_h = 720;
-	g.platform = system_create_window(u8"Karma", 1280, 720, show);
-	g.render_backend = backend;
-	gfx_create_context(g.platform, g.render_backend, Vsync_ADAPTIVE, 2, (u32)g.framebuffer_w, (u32)g.framebuffer_h);
+void scene_prepare(Scene_Run_Method method, Render_Backend backend, System_Window_Show show) {
+	g.method = method;
 
-	ImGui_Initialize();
-	Dev_ModeEnable();
+	if (method != Scene_Run_Method_SERVER) {
+		g.framebuffer_w = 1280;
+		g.framebuffer_h = 720;
+		g.platform = system_create_window(u8"Karma", 1280, 720, show);
+		g.render_backend = backend;
+		gfx_create_context(g.platform, g.render_backend, Vsync_ADAPTIVE, 2, (u32)g.framebuffer_w, (u32)g.framebuffer_h);
 
-	Dev_SetPresentationState(false);
+		ImGui_Initialize();
+	
+		g.aspect_ratio = g.framebuffer_w / g.framebuffer_h;
+
+		g.window_w = 0;
+		g.window_h = 0;
+	}
+
+	switch (method) {
+		case Scene_Run_Method_DEVELOP: {
+			g.frame_begin = Develop::Scene_Frame_Begin;
+			g.frame_simulate = Develop::Scene_Frame_Simulate;
+			g.begin_drawing = Develop::Scene_Begin_Drawing;
+			g.render = Develop::Scene_Render;
+			g.end_drawing = Develop::Scene_End_Drawing;
+			g.frame_end = Develop::Scene_Frame_End;
+		} break;
+
+		case Scene_Run_Method_CLIENT: {
+			g.frame_begin = Client::Scene_Frame_Begin;
+			g.frame_simulate = Client::Scene_Frame_Simulate;
+			g.begin_drawing = Client::Scene_Begin_Drawing;
+			g.render = Client::Scene_Render;
+			g.end_drawing = Client::Scene_End_Drawing;
+			g.frame_end = Client::Scene_Frame_End;
+		} break;
+
+		case Scene_Run_Method_SERVER: {
+			g.frame_begin = Server::Scene_Frame_Begin;
+			g.frame_simulate = Server::Scene_Frame_Simulate;
+			g.begin_drawing = Server::Scene_Begin_Drawing;
+			g.render = Server::Scene_Render;
+			g.end_drawing = Server::Scene_End_Drawing;
+			g.frame_end = Server::Scene_Frame_End;
+		} break;
+	}
 
 	g.running = true;
 
-	g.aspect_ratio = g.framebuffer_w / g.framebuffer_h;
-
-	g.window_w = 0;
-	g.window_h = 0;
+	Dev_ModeEnable();
+	Dev_SetPresentationState(false);
 
 	COLLISION_RESOLVERS[Fixture_Shape_Circle][Fixture_Shape_Circle] = shapes_collision_resolver<Circle, Circle>;
 	COLLISION_RESOLVERS[Fixture_Shape_Circle][Fixture_Shape_Mm_Rect] = shapes_collision_resolver<Circle, Mm_Rect>;
@@ -262,8 +338,11 @@ void scene_prepare(Render_Backend backend, System_Window_Show show) {
 
 	array_resize(&g.resource_header, 100);
 	array_resize(&g.fixture_group, 100);
-	array_resize(&g.texture_group, 100);
-	array_resize(&g.audio_group, 100);
+
+	if (method != Scene_Run_Method_SERVER) {
+		array_resize(&g.texture_group, 100);
+		array_resize(&g.audio_group, 100);
+	}
 
 	g.pool_allocator = context.allocator;
 
@@ -274,10 +353,12 @@ void scene_prepare(Render_Backend backend, System_Window_Show show) {
 
 	g.id_series = random_init(context.id, system_get_counter());
 
-	audio_mixer(&g.audio_mixer);
+	if (method != Scene_Run_Method_SERVER) {
+		audio_mixer(&g.audio_mixer);
 
-	if (!system_audio(system_update_audio, system_refresh_audio_device, &g.audio_mixer)) {
-		system_display_critical_message("Failed to load audio!");
+		if (!system_audio(system_update_audio, system_refresh_audio_device, &g.audio_mixer)) {
+			system_display_critical_message("Failed to load audio!");
+		}
 	}
 }
 
@@ -290,8 +371,10 @@ void scene_shutdown() {
 	array_free(&g.fixture_group);
 	array_free(&g.texture_group);
 
-	ImGui_Shutdown();
-	gfx_destroy_context();
+	if (g.method != Scene_Run_Method_SERVER) {
+		ImGui_Shutdown();
+		gfx_destroy_context();
+	}
 }
 
 //
@@ -1019,7 +1102,7 @@ r32 color_id_get_intensity(Color_Id color_id) {
 		10.0f
 	};
 	static_assert(static_count(INTENS) == (int)Color_Id_COUNT);
-	return INTENS[(int)color_id];	
+	return INTENS[(int)color_id];
 }
 
 Character *scene_spawn_player(Scene *scene, Vec2 p, Color_Id color_id) {
@@ -1205,53 +1288,7 @@ bool scene_running() {
 }
 
 void scene_frame_begin(Scene *scene) {
-	Dev_TimedFrameBegin();
-
-	Dev_TimedBlockBegin(EventHandling);
-	auto events = system_poll_events();
-	for (s64 event_index = 0; event_index < events.count; ++event_index) {
-		Event &event = events[event_index];
-
-		if (event.type & Event_Type_EXIT) {
-			g.running = false;
-			break;
-		}
-
-		if (event.type & Event_Type_WINDOW_RESIZE) {
-			s32 w = event.window.dimension.x;
-			s32 h = event.window.dimension.y;
-
-			gfx_on_client_resize(w, h);
-			g.window_w = (r32)w;
-			g.window_h = (r32)h;
-
-			if (g.window_w && g.window_h) {
-				g.aspect_ratio = g.window_w / g.window_h;
-				gfx_resize_framebuffer(w, h, lroundf(512 * g.aspect_ratio), 512);
-				g.framebuffer_w = g.window_w;
-				g.framebuffer_h = g.window_h;
-			}
-
-			continue;
-		}
-
-		if (ImGui_HandleEvent(event))
-			continue;
-
-		if ((event.type & Event_Type_KEY_UP) && event.key.symbol == Key_ESCAPE) {
-			system_request_quit();
-			break;
-		}
-
-		if ((event.type & Event_Type_KEY_UP) && event.key.symbol == Key_F11) {
-			system_fullscreen_state(SYSTEM_TOGGLE);
-			continue;
-		}
-
-		scene_handle_event(scene, event);
-	}
-
-	Dev_TimedBlockEnd(EventHandling);
+	g.frame_begin(scene);
 }
 
 bool iscene_simulate_world_enabled(Scene *scene) {
@@ -1470,7 +1507,7 @@ void iscene_post_tick(Scene *scene) {
 			}
 		}
 	}
-	
+
 	{
 		rma = scene->removed_entity + Entity_Type_Particle_Emitter;
 		count = rma->count;
@@ -1538,11 +1575,11 @@ void scene_tick(Scene *scene, r32 dt) {
 			auto &emitters = scene->by_type.emitter;
 			for (auto index = 0; index < count; ++index) {
 				auto &emitter = emitters[index];
-				
+
 				if (emitter.remove_on_finish && emitter.particle_system.loop == 0) {
 					scene_remove_entity(scene, emitter.id);
 				}
-				
+
 				simulate_particle_system(&emitter.particle_system, dt);
 			}
 		}
@@ -1641,7 +1678,7 @@ void scene_tick(Scene *scene, r32 dt) {
 
 										if (entt_a.type == Entity_Type_Bullet && entt_b.type != Entity_Type_Bullet) {
 											auto spawn_color_id = scene_entity_pointer(scene, entt_a)->as<Bullet>()->color_id;
-											
+
 											if (entt_b.type == Entity_Type_Character) {
 												auto character = scene_entity_pointer(scene, entt_b)->as<Character>();
 												if (character->color_id != spawn_color_id) {
@@ -1710,7 +1747,7 @@ void scene_tick(Scene *scene, r32 dt) {
 																break;
 															}
 														}
-														
+
 														if (another_full_present) {
 															for (auto in = 0; in < Color_Id_COUNT; ++in) {
 																character->color_values[in] *= 0.5f;
@@ -1859,51 +1896,11 @@ void iscene_pre_simulate(Scene *scene) {
 }
 
 void scene_frame_simulate(Scene *scene) {
-	Dev_TimedScope(Simulation);
-
-	iscene_pre_simulate(scene);
-
-	const r32 dt = scene->physics.fixed_dt;
-
-	while (scene->physics.accumulator_t >= dt) {
-		if (scene->physics.state == Physics_State_PAUSED)
-			break;
-		else if (scene->physics.state == Physics_State_RUN_SINGLE_STEP)
-			scene->physics.state = Physics_State_PAUSED;
-
-		Dev_TimedScope(SimulationFrame);
-
-		scene_tick(scene, dt);
-
-		scene->physics.accumulator_t -= dt;
-	}
-
-	Dev_TimedBlockBegin(AudioUpdate);
-	g.audio_mixer.pitch_factor = scene->physics.sim_speed.factor;
-	audio_mixer_update(&g.audio_mixer);
-	Dev_TimedBlockEnd(AudioUpdate);
-
-	editor_update(scene, &scene->editor);
-
-	ImGui_UpdateFrame(scene->physics.real_dt);
+	g.frame_simulate(scene);
 }
 
 void scene_frame_end(Scene *scene) {
-	reset_temporary_memory();
-
-	auto new_counter = system_get_counter();
-	auto counts = new_counter - scene->physics.counter;
-	scene->physics.counter = new_counter;
-
-	scene->physics.real_dt = ((1000000.0f * (r32)counts) / (r32)scene->physics.frequency) / 1000000.0f;
-	scene->physics.real_t += scene->physics.real_dt;
-
-	scene->physics.game_dt = scene->physics.real_dt * scene->physics.sim_speed.factor;
-
-	scene->physics.accumulator_t += scene->physics.game_dt;
-	scene->physics.accumulator_t = minimum(scene->physics.accumulator_t, 0.2f);
-
-	Dev_TimedFrameEnd(scene->physics.real_dt);
+	g.frame_end(scene);
 }
 
 //
@@ -2055,259 +2052,15 @@ void iscene_render_particles(Scene *scene, Particle_System *system) {
 }
 
 void scene_begin_drawing() {
-	Dev_TimedScope(StartRendering);
-	
-	gfx_begin_drawing(Framebuffer_Type_HDR, Clear_ALL, vec4(0.05f, 0.05f, 0.05f, 1.0f));
-	gfx_viewport(0, 0, g.window_w, g.window_h);
+	g.begin_drawing();
 }
 
 void scene_end_drawing() {
-	Dev_TimedScope(FinishRendering);
-
-	gfx_end_drawing();
-	gfx_apply_bloom(2);
-
-	gfx_begin_drawing(Framebuffer_Type_DEFAULT, Clear_COLOR, vec4(0.0f));
-	gfx_blit_hdr(0, 0, g.window_w, g.window_h);
-	gfx_viewport(0, 0, g.window_w, g.window_h);
-
-	//ImGui::ShowDemoWindow();
-
-	#if defined(ENABLE_DEVELOPER_OPTIONS)
-	{
-		Dev_TimedScope(DebugRender);
-		Dev_RenderFrame();
-	}
-	{
-		Dev_TimedScope(ImGuiRender);
-		ImGui_RenderFrame();
-	}
-	#endif
-
-	gfx_end_drawing();
-
-	Dev_TimedBlockBegin(Present);
-	gfx_present();
-	Dev_TimedBlockEnd(Present);
+	g.end_drawing();
 }
 
 void scene_render(Scene *scene, bool draw_editor) {
-	Dev_TimedScope(FinishRendering);
-
-	r32 aspect_ratio = g.aspect_ratio;
-	r32 alpha = scene->physics.accumulator_t / scene->physics.fixed_dt; // TODO: Use the alpha
-
-	Camera *camera = iscene_get_rendering_camera(scene);
-
-	r32 view_height = SCENE_VIEW_HEIGHT_HALF;
-	r32 view_width = aspect_ratio * view_height;
-
-	Camera_View view = orthographic_view(-view_width, view_width, view_height, -view_height);
-
-	im2d_set_stroke_weight(0.008f);
-
-	r32 scale = camera_distance_to_scale(camera);
-	Mat4 transform = mat4_scalar(scale, scale, 1.0f) * mat4_translation(vec3(-camera->position, 0.0f));
-
-	im2d_begin(view, transform);
-
-	if (iscene_render_world_enabled(scene)) {
-		{
-			s64 count = scene->by_type.character.count;
-			auto &characters = scene->by_type.character;
-			for (s64 index = 0; index < count; ++index) {
-				Character &c = characters[index];
-
-				auto text = g.texture_group[c.texture.index];
-
-				im2d_bind_texture(text.handle);
-
-				Vec4 color;
-				if (c.hit) {
-					color = vec4(1);
-				} else {
-					color = color_id_get_color(c.color_id);
-				}
-
-				im2d_rect_centered_rotated(c.position, c.size, c.rotation, text.uv, color);
-			}
-
-			for (s64 index = 0; index < count; ++index) {
-				Character &c = characters[index];
-				iscene_render_particles(scene, &c.particle_system);
-			}
-
-			im2d_unbind_texture();
-
-			for (s64 index = 0; index < count; ++index) {
-				Character &c = characters[index];
-				Vec2 point = vec2_normalize_check(c.controller.pointer);
-				if (!vec2_null(point)) {
-					r32 intensity = color_id_get_intensity(c.color_id);
-					r32 radius = sqrtf(c.size.x * c.size.x + c.size.y * c.size.y);
-					auto color = color_id_get_color(c.color_id);
-					im2d_circle(c.position + 0.50f * point * radius, 0.020f, intensity * 2.00f * color);
-					im2d_circle(c.position + 0.65f * point * radius, 0.010f, intensity * 1.75f * color);
-					im2d_circle(c.position + 0.75f * point * radius, 0.008f, intensity * 1.50f * color);
-					im2d_circle(c.position + 0.85f * point * radius, 0.006f, intensity * 1.00f * color);
-				}
-			}
-		}
-
-		{
-			s64 count = scene->by_type.bullet.count;
-			auto &bullets = scene->by_type.bullet;
-			for (s64 index = 0; index < count; ++index) {
-				Bullet &b = bullets[index];
-				im2d_circle(b.position, b.radius, b.color * map(0, b.life_span, 1, b.intensity, b.age));
-			}
-		}
-
-		{
-			s64 count = scene->by_type.emitter.count;
-			auto &emitters = scene->by_type.emitter;
-			for (s64 index = 0; index < count; ++index) {
-				Particle_Emitter &e = emitters[index];
-				iscene_render_particles(scene, &e.particle_system);
-			}
-		}
-
-		{
-			s64 count = scene->by_type.obstacle.count;
-			auto &obs = scene->by_type.obstacle;
-			for (s64 index = 0; index < count; ++index) {
-				Obstacle &o = obs[index];
-
-				auto text = g.texture_group[o.texture.index];
-
-				im2d_bind_texture(text.handle);
-
-				im2d_rect_centered_rotated(o.position, o.size, o.rotation, text.uv, vec4(1));
-			}
-		}
-
-		im2d_unbind_texture();
-	}
-
-	u32 type;
-	if (iscene_render_fixture_enabled(scene, &type)) {
-		Rigid_Body *body_hovered = scene->editor.level.hovered_body;
-		Vec4 color;
-		for_list(Rigid_Body, ptr, &scene->rigid_bodies) {
-			auto &body = ptr->data;
-
-			if (type & Editor_Flag_Bit_RENDER_FIXTURE) {
-				color = (body.flags & Rigid_Body_COLLIDING) ? vec4(1, 0, 0) : vec4(0.7f, 0.45f, 0);
-
-				if (&body == body_hovered) {
-					color.xyz = vec3(1) - color.xyz;
-				}
-
-				for (u32 index = 0; index < body.fixture_count; ++index) {
-					auto f = scene_rigid_body_get_fixture(&body, index);
-					iscene_render_shape_transformed(*f, body.transform, color.xyz);
-				}
-			}
-
-			if (type & Editor_Flag_Bit_RENDER_BOUNDING_BOX) {
-				color = (body.flags & Rigid_Body_BOUNDING_BOX_COLLIDING) ? vec4(0.7f, 0.1f, 0.1f, 1) : vec4(0.1f, 0.7f, 0.1f, 1);
-
-				im2d_rect_outline(body.bounding_box.min, body.bounding_box.max - body.bounding_box.min, color);
-			}
-		}
-	}
-
-	if (iscene_render_collision_enabled(scene)) {
-		auto manifolds = scene->manifolds;
-		for (auto &m : manifolds) {
-
-			im2d_line(m.contacts[1], m.contacts[1] + m.penetration * m.normal, vec4(1, 0, 1), 0.02f);
-
-			im2d_circle(m.contacts[0], 0.02f, vec4(1, 0, 1));
-			im2d_circle(m.contacts[1], 0.02f, vec4(1, 0, 1));
-		}
-	}
-
-	if (iscene_render_broadphase_enabled(scene)) {
-		r32 size = scene->hgrid.size / 2;
-		r32 inc = scene->hgrid.size / (powf(2, (float)(scene->hgrid.level - 1)));
-		for (r32 y = -size; y < size; y += inc) {
-			for (r32 x = -size; x < size; x += inc) {
-				im2d_rect_outline(vec2(x, y), vec2(inc), vec4(1));
-			}
-		}
-	}
-	im2d_end();
-
-	if (iscene_render_world_enabled(scene)) {
-		// Render Status
-
-		const auto VIEW_HEIGHT = 10.0f;
-		const auto VIEW_WIDTH = aspect_ratio * VIEW_HEIGHT;
-
-		view = orthographic_view(0.0f, VIEW_WIDTH, VIEW_HEIGHT, 0.0f);
-
-		im2d_begin(view);
-
-		struct Color_Id_Value {
-			Color_Id id;
-			r32 value;
-		};
-		Color_Id_Value color_id_values[Color_Id_COUNT];
-
-		auto player = scene_get_player(scene);
-
-		for (auto i = 0; i < Color_Id_COUNT; ++i) {
-			color_id_values[i].id = (Color_Id)i;
-			color_id_values[i].value = player->color_values[i];
-		}
-
-		sort_insert(color_id_values, Color_Id_COUNT, [](Color_Id_Value &a, Color_Id_Value &b) {
-			return sgn(b.value - a.value);
-		});
-
-		const r32 cx = 0.8f;
-		const r32 cy = VIEW_HEIGHT - cx;
-		const r32 color_potion_radius = 0.6f;
-		const r32 color_rect_height = color_potion_radius / (r32)(Color_Id_COUNT);
-		const r32 color_rect_max_width = 2.5f;
-		
-		const r32 color_width_ratio[] = {
-			1.0f, 0.9f, 0.7f, 0.5f
-		};
-		const r32 color_start_offset[] = {
-			0.0f, 0.3f, 0.6f, 0.9f
-		};
-		
-		r32 value_offset;
-		r32 y = cy + color_potion_radius - color_rect_height;
-		for (auto i = 0; i < Color_Id_COUNT; ++i, y -= color_rect_height) {
-			value_offset = color_start_offset[i] * color_potion_radius;
-			im2d_rect(vec2(cx + value_offset, y), 
-					  vec2((color_rect_max_width - value_offset) * color_width_ratio[i], color_rect_height),
-					  vec4_hadamard(vec4(0.07f, 0.07f, 0.07f, 1.0f), color_id_get_color(color_id_values[i].id)));
-		}
-
-		y = cy + color_potion_radius - color_rect_height;
-		for (auto i = 0; i < Color_Id_COUNT; ++i, y -= color_rect_height) {
-			value_offset = color_start_offset[i] * color_potion_radius;
-			im2d_rect(vec2(cx + value_offset, y), 
-					  vec2(color_id_values[i].value * (color_rect_max_width - value_offset) * color_width_ratio[i], color_rect_height),
-					  color_id_get_color(color_id_values[i].id));
-		}
-
-		im2d_circle(vec2(cx, cy), color_potion_radius, vec4(0, 0, 0));
-
-		auto potion_color =color_id_get_color(player->color_id);
-		potion_color.xyz *= color_id_get_intensity(player->color_id);
-		im2d_circle(vec2(cx, cy), color_potion_radius * 0.8f, potion_color);
-
-		im2d_end();
-	}
-
-	if (draw_editor) {
-		editor_render(scene, &scene->editor, aspect_ratio);
-	}
+	g.render(scene, draw_editor);
 }
 
 //
@@ -2431,7 +2184,12 @@ bool iscene_deserialize_resource(Resource_Header *header, Texture_Group *texture
 		}
 	}
 
-	texture->handle = iscene_load_texture(header->texture);
+	// Textures are not needed in server
+	if (g.method != Scene_Run_Method_SERVER) {
+		texture->handle = iscene_load_texture(header->texture);
+	} else {
+		texture->handle = { 0, 0 };
+	}
 
 	return true;
 }
@@ -2535,7 +2293,8 @@ void scene_load_resources() {
 		}
 	}
 
-	{
+	// Audio is not needed in server
+	if (g.method != Scene_Run_Method_SERVER) {
 		auto files = system_find_files("resources/audios", ".wav", false);
 		defer{ memory_free(files.data); };
 
@@ -2883,8 +2642,8 @@ bool scene_save_level(Scene *scene) {
 				system_log(LOG_ERROR, "Scene", "%s/%zu.ent file could not be opened. Failed to save entity.", level_dir, character->id);
 			}
 			ostream_reset(&out);
+		}
 	}
-}
 	#endif
 
 	{
@@ -3005,4 +2764,417 @@ Level *scene_current_level_pointer(Scene *scene) {
 const String scene_current_level(Scene *scene) {
 	Level *level = scene_current_level_pointer(scene);
 	return String(level->name, level->name_count);
+}
+
+
+//
+//
+//
+
+namespace Develop {
+	void Scene_Frame_Begin(Scene *scene) {
+		Dev_TimedFrameBegin();
+
+		Dev_TimedBlockBegin(EventHandling);
+		auto events = system_poll_events();
+		for (s64 event_index = 0; event_index < events.count; ++event_index) {
+			Event &event = events[event_index];
+
+			if (event.type & Event_Type_EXIT) {
+				g.running = false;
+				break;
+			}
+
+			if (event.type & Event_Type_WINDOW_RESIZE) {
+				s32 w = event.window.dimension.x;
+				s32 h = event.window.dimension.y;
+
+				gfx_on_client_resize(w, h);
+				g.window_w = (r32)w;
+				g.window_h = (r32)h;
+
+				if (g.window_w && g.window_h) {
+					g.aspect_ratio = g.window_w / g.window_h;
+					gfx_resize_framebuffer(w, h, lroundf(512 * g.aspect_ratio), 512);
+					g.framebuffer_w = g.window_w;
+					g.framebuffer_h = g.window_h;
+				}
+
+				continue;
+			}
+
+			if (ImGui_HandleEvent(event))
+				continue;
+
+			if ((event.type & Event_Type_KEY_UP) && event.key.symbol == Key_ESCAPE) {
+				system_request_quit();
+				break;
+			}
+
+			if ((event.type & Event_Type_KEY_UP) && event.key.symbol == Key_F11) {
+				system_fullscreen_state(SYSTEM_TOGGLE);
+				continue;
+			}
+
+			scene_handle_event(scene, event);
+		}
+
+		Dev_TimedBlockEnd(EventHandling);
+	}
+
+	void Scene_Frame_Simulate(Scene *scene) {
+		Dev_TimedScope(Simulation);
+
+		iscene_pre_simulate(scene);
+
+		const r32 dt = scene->physics.fixed_dt;
+
+		while (scene->physics.accumulator_t >= dt) {
+			if (scene->physics.state == Physics_State_PAUSED)
+				break;
+			else if (scene->physics.state == Physics_State_RUN_SINGLE_STEP)
+				scene->physics.state = Physics_State_PAUSED;
+
+			Dev_TimedScope(SimulationFrame);
+
+			scene_tick(scene, dt);
+
+			scene->physics.accumulator_t -= dt;
+		}
+
+		Dev_TimedBlockBegin(AudioUpdate);
+		g.audio_mixer.pitch_factor = scene->physics.sim_speed.factor;
+		audio_mixer_update(&g.audio_mixer);
+		Dev_TimedBlockEnd(AudioUpdate);
+
+		editor_update(scene, &scene->editor);
+
+		ImGui_UpdateFrame(scene->physics.real_dt);
+	}
+
+	void Scene_Begin_Drawing() {
+		Dev_TimedScope(StartRendering);
+
+		gfx_begin_drawing(Framebuffer_Type_HDR, Clear_ALL, vec4(0.05f, 0.05f, 0.05f, 1.0f));
+		gfx_viewport(0, 0, g.window_w, g.window_h);
+	}
+
+	void Scene_Render(Scene *scene, bool draw_editor) {
+		Dev_TimedScope(FinishRendering);
+
+		r32 aspect_ratio = g.aspect_ratio;
+		r32 alpha = scene->physics.accumulator_t / scene->physics.fixed_dt; // TODO: Use the alpha
+
+		Camera *camera = iscene_get_rendering_camera(scene);
+
+		r32 view_height = SCENE_VIEW_HEIGHT_HALF;
+		r32 view_width = aspect_ratio * view_height;
+
+		Camera_View view = orthographic_view(-view_width, view_width, view_height, -view_height);
+
+		im2d_set_stroke_weight(0.008f);
+
+		r32 scale = camera_distance_to_scale(camera);
+		Mat4 transform = mat4_scalar(scale, scale, 1.0f) * mat4_translation(vec3(-camera->position, 0.0f));
+
+		im2d_begin(view, transform);
+
+		if (iscene_render_world_enabled(scene)) {
+			{
+				s64 count = scene->by_type.character.count;
+				auto &characters = scene->by_type.character;
+				for (s64 index = 0; index < count; ++index) {
+					Character &c = characters[index];
+
+					auto text = g.texture_group[c.texture.index];
+
+					im2d_bind_texture(text.handle);
+
+					Vec4 color;
+					if (c.hit) {
+						color = vec4(1);
+					} else {
+						color = color_id_get_color(c.color_id);
+					}
+
+					im2d_rect_centered_rotated(c.position, c.size, c.rotation, text.uv, color);
+				}
+
+				for (s64 index = 0; index < count; ++index) {
+					Character &c = characters[index];
+					iscene_render_particles(scene, &c.particle_system);
+				}
+
+				im2d_unbind_texture();
+
+				for (s64 index = 0; index < count; ++index) {
+					Character &c = characters[index];
+					Vec2 point = vec2_normalize_check(c.controller.pointer);
+					if (!vec2_null(point)) {
+						r32 intensity = color_id_get_intensity(c.color_id);
+						r32 radius = sqrtf(c.size.x * c.size.x + c.size.y * c.size.y);
+						auto color = color_id_get_color(c.color_id);
+						im2d_circle(c.position + 0.50f * point * radius, 0.020f, intensity * 2.00f * color);
+						im2d_circle(c.position + 0.65f * point * radius, 0.010f, intensity * 1.75f * color);
+						im2d_circle(c.position + 0.75f * point * radius, 0.008f, intensity * 1.50f * color);
+						im2d_circle(c.position + 0.85f * point * radius, 0.006f, intensity * 1.00f * color);
+					}
+				}
+			}
+
+			{
+				s64 count = scene->by_type.bullet.count;
+				auto &bullets = scene->by_type.bullet;
+				for (s64 index = 0; index < count; ++index) {
+					Bullet &b = bullets[index];
+					im2d_circle(b.position, b.radius, b.color * map(0, b.life_span, 1, b.intensity, b.age));
+				}
+			}
+
+			{
+				s64 count = scene->by_type.emitter.count;
+				auto &emitters = scene->by_type.emitter;
+				for (s64 index = 0; index < count; ++index) {
+					Particle_Emitter &e = emitters[index];
+					iscene_render_particles(scene, &e.particle_system);
+				}
+			}
+
+			{
+				s64 count = scene->by_type.obstacle.count;
+				auto &obs = scene->by_type.obstacle;
+				for (s64 index = 0; index < count; ++index) {
+					Obstacle &o = obs[index];
+
+					auto text = g.texture_group[o.texture.index];
+
+					im2d_bind_texture(text.handle);
+
+					im2d_rect_centered_rotated(o.position, o.size, o.rotation, text.uv, vec4(1));
+				}
+			}
+
+			im2d_unbind_texture();
+		}
+
+		u32 type;
+		if (iscene_render_fixture_enabled(scene, &type)) {
+			Rigid_Body *body_hovered = scene->editor.level.hovered_body;
+			Vec4 color;
+			for_list(Rigid_Body, ptr, &scene->rigid_bodies) {
+				auto &body = ptr->data;
+
+				if (type & Editor_Flag_Bit_RENDER_FIXTURE) {
+					color = (body.flags & Rigid_Body_COLLIDING) ? vec4(1, 0, 0) : vec4(0.7f, 0.45f, 0);
+
+					if (&body == body_hovered) {
+						color.xyz = vec3(1) - color.xyz;
+					}
+
+					for (u32 index = 0; index < body.fixture_count; ++index) {
+						auto f = scene_rigid_body_get_fixture(&body, index);
+						iscene_render_shape_transformed(*f, body.transform, color.xyz);
+					}
+				}
+
+				if (type & Editor_Flag_Bit_RENDER_BOUNDING_BOX) {
+					color = (body.flags & Rigid_Body_BOUNDING_BOX_COLLIDING) ? vec4(0.7f, 0.1f, 0.1f, 1) : vec4(0.1f, 0.7f, 0.1f, 1);
+
+					im2d_rect_outline(body.bounding_box.min, body.bounding_box.max - body.bounding_box.min, color);
+				}
+			}
+		}
+
+		if (iscene_render_collision_enabled(scene)) {
+			auto manifolds = scene->manifolds;
+			for (auto &m : manifolds) {
+
+				im2d_line(m.contacts[1], m.contacts[1] + m.penetration * m.normal, vec4(1, 0, 1), 0.02f);
+
+				im2d_circle(m.contacts[0], 0.02f, vec4(1, 0, 1));
+				im2d_circle(m.contacts[1], 0.02f, vec4(1, 0, 1));
+			}
+		}
+
+		if (iscene_render_broadphase_enabled(scene)) {
+			r32 size = scene->hgrid.size / 2;
+			r32 inc = scene->hgrid.size / (powf(2, (float)(scene->hgrid.level - 1)));
+			for (r32 y = -size; y < size; y += inc) {
+				for (r32 x = -size; x < size; x += inc) {
+					im2d_rect_outline(vec2(x, y), vec2(inc), vec4(1));
+				}
+			}
+		}
+		im2d_end();
+
+		if (iscene_render_world_enabled(scene)) {
+			// Render Status
+
+			const auto VIEW_HEIGHT = 10.0f;
+			const auto VIEW_WIDTH = aspect_ratio * VIEW_HEIGHT;
+
+			view = orthographic_view(0.0f, VIEW_WIDTH, VIEW_HEIGHT, 0.0f);
+
+			im2d_begin(view);
+
+			struct Color_Id_Value {
+				Color_Id id;
+				r32 value;
+			};
+			Color_Id_Value color_id_values[Color_Id_COUNT];
+
+			auto player = scene_get_player(scene);
+
+			for (auto i = 0; i < Color_Id_COUNT; ++i) {
+				color_id_values[i].id = (Color_Id)i;
+				color_id_values[i].value = player->color_values[i];
+			}
+
+			sort_insert(color_id_values, Color_Id_COUNT, [](Color_Id_Value &a, Color_Id_Value &b) {
+				return sgn(b.value - a.value);
+						});
+
+			const r32 cx = 0.8f;
+			const r32 cy = VIEW_HEIGHT - cx;
+			const r32 color_potion_radius = 0.6f;
+			const r32 color_rect_height = color_potion_radius / (r32)(Color_Id_COUNT);
+			const r32 color_rect_max_width = 2.5f;
+
+			const r32 color_width_ratio[] = {
+				1.0f, 0.9f, 0.7f, 0.5f
+			};
+			const r32 color_start_offset[] = {
+				0.0f, 0.3f, 0.6f, 0.9f
+			};
+
+			r32 value_offset;
+			r32 y = cy + color_potion_radius - color_rect_height;
+			for (auto i = 0; i < Color_Id_COUNT; ++i, y -= color_rect_height) {
+				value_offset = color_start_offset[i] * color_potion_radius;
+				im2d_rect(vec2(cx + value_offset, y),
+						  vec2((color_rect_max_width - value_offset) * color_width_ratio[i], color_rect_height),
+						  vec4_hadamard(vec4(0.07f, 0.07f, 0.07f, 1.0f), color_id_get_color(color_id_values[i].id)));
+			}
+
+			y = cy + color_potion_radius - color_rect_height;
+			for (auto i = 0; i < Color_Id_COUNT; ++i, y -= color_rect_height) {
+				value_offset = color_start_offset[i] * color_potion_radius;
+				im2d_rect(vec2(cx + value_offset, y),
+						  vec2(color_id_values[i].value * (color_rect_max_width - value_offset) * color_width_ratio[i], color_rect_height),
+						  color_id_get_color(color_id_values[i].id));
+			}
+
+			im2d_circle(vec2(cx, cy), color_potion_radius, vec4(0, 0, 0));
+
+			auto potion_color = color_id_get_color(player->color_id);
+			potion_color.xyz *= color_id_get_intensity(player->color_id);
+			im2d_circle(vec2(cx, cy), color_potion_radius * 0.8f, potion_color);
+
+			im2d_end();
+		}
+
+		if (draw_editor) {
+			editor_render(scene, &scene->editor, aspect_ratio);
+		}
+	}
+
+	void Scene_End_Drawing() {
+		Dev_TimedScope(FinishRendering);
+
+		gfx_end_drawing();
+		gfx_apply_bloom(2);
+
+		gfx_begin_drawing(Framebuffer_Type_DEFAULT, Clear_COLOR, vec4(0.0f));
+		gfx_blit_hdr(0, 0, g.window_w, g.window_h);
+		gfx_viewport(0, 0, g.window_w, g.window_h);
+
+		//ImGui::ShowDemoWindow();
+
+		#if defined(ENABLE_DEVELOPER_OPTIONS)
+		{
+			Dev_TimedScope(DebugRender);
+			Dev_RenderFrame();
+		}
+		{
+			Dev_TimedScope(ImGuiRender);
+			ImGui_RenderFrame();
+		}
+		#endif
+
+		gfx_end_drawing();
+
+		Dev_TimedBlockBegin(Present);
+		gfx_present();
+		Dev_TimedBlockEnd(Present);
+	}
+
+	void Scene_Frame_End(Scene *scene) {
+		reset_temporary_memory();
+
+		auto new_counter = system_get_counter();
+		auto counts = new_counter - scene->physics.counter;
+		scene->physics.counter = new_counter;
+
+		scene->physics.real_dt = ((1000000.0f * (r32)counts) / (r32)scene->physics.frequency) / 1000000.0f;
+		scene->physics.real_t += scene->physics.real_dt;
+
+		scene->physics.game_dt = scene->physics.real_dt * scene->physics.sim_speed.factor;
+
+		scene->physics.accumulator_t += scene->physics.game_dt;
+		scene->physics.accumulator_t = minimum(scene->physics.accumulator_t, 0.2f);
+
+		Dev_TimedFrameEnd(scene->physics.real_dt);
+	}
+}
+
+namespace Server {
+	void Scene_Frame_Begin(Scene *) {
+
+	}
+
+	void Scene_Frame_Simulate(Scene *) {
+
+	}
+
+	void Scene_Begin_Drawing() {
+
+	}
+
+	void Scene_Render(Scene *scene, bool draw_editor) {
+
+	}
+
+	void Scene_End_Drawing() {
+
+	}
+
+	void Scene_Frame_End(Scene *) {
+
+	}
+}
+
+namespace Client {
+	void Scene_Frame_Begin(Scene *) {
+
+	}
+
+	void Scene_Frame_Simulate(Scene *) {
+
+	}
+
+	void Scene_Begin_Drawing() {
+
+	}
+
+	void Scene_Render(Scene *scene, bool draw_editor) {
+
+	}
+
+	void Scene_End_Drawing() {
+
+	}
+
+	void Scene_Frame_End(Scene *) {
+
+	}
 }

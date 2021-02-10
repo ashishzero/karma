@@ -8,6 +8,12 @@
 #include "broad_phase.h"
 #include "audio.h"
 
+enum Scene_Run_Method {
+	Scene_Run_Method_DEVELOP,
+	Scene_Run_Method_CLIENT,
+	Scene_Run_Method_SERVER
+};
+
 constexpr u32 SCENE_MAX_ENTITY_COUNT = 524288; // NOTE: This must be power of 2 (2^19)
 constexpr r32 SCENE_VIEW_HEIGHT_HALF = 1;
 constexpr int SCENE_SIMULATION_MAX_ITERATION = 5;
@@ -89,7 +95,7 @@ struct Scene {
 	#endif
 };
 
-void scene_prepare(Render_Backend backend, System_Window_Show show);
+void scene_prepare(Scene_Run_Method method, Render_Backend backend, System_Window_Show show);
 void scene_shutdown();
 
 //

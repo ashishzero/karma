@@ -1,3 +1,3 @@
 #pragma once
 
-//#define BUILD_CLIENT_APP
+#define BUILD_CLIENT_APP
