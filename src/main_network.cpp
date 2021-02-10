@@ -11,7 +11,7 @@ enum  Client_Message : u8
 {
 	JOIN,		// tell server we're new here
 	LEAVE,		// tell server we're leaving
-	INPUTS ,	// tell server our user input
+	INPUTS,	// tell server our user input
 	READY
 };
 
@@ -41,7 +41,7 @@ static s32 time_since(LARGE_INTEGER t, LARGE_INTEGER frequency)
 }
 
 
-int karma_network() {
+int karma_user_shankar() {
 	Ip_Endpoint to = ip_endpoint_local(9999);
 
 	auto socket = system_net_open_udp_client();
@@ -89,22 +89,12 @@ int karma_network() {
 	bool sleep_granularity_was_set = timeBeginPeriod(sleep_granularity_ms) == TIMERR_NOERROR;  //bool 32
 	LARGE_INTEGER clock_frequency;
 	QueryPerformanceFrequency(&clock_frequency);
+	bool received_ready_once = true;
+	bool connected_to_server = false;
 
 
 	while (running)
 	{
-		if (system_key(Key_R)) {
-			buffer[0] = (u8)Client_Message::READY;
-			if (system_net_send_to(socket, buffer, sizeof(buffer[0]), to) < 0)
-			{
-				system_trace("READY message failed to send\n");
-				return 0;
-			}
-			else
-			{
-				system_trace("READY message sent\n");
-			}
-		}
 
 		Ip_Endpoint from;
 		int ready_received = 1;
@@ -119,20 +109,45 @@ int karma_network() {
 			system_trace("loop\n");
 
 		}
+
 		if (system_key(Key_Q)) {
 			running = false;
 			break;
 		}
 
+		if (buffer[0] == (u8)Server_Message::JOIN_RESULT) {
+			if (buffer[1]) {
+				memcpy(&slot, &buffer[2], sizeof(slot));
+				system_trace("server let us in\n");
+			}
+			else {
+				system_trace("server didn't let us in\n");
+			}
+		}
+
+		if (system_key(Key_R) && slot >= 0 && slot < 10 && received_ready_once) {
+			buffer[0] = (u8)Client_Message::READY;
+			int bytes_written = 1;
+			memcpy(&buffer[1], &slot, 2);
+			bytes_written += sizeof(slot);
+			if (system_net_send_to(socket, buffer, bytes_written, to) < 0)
+			{
+				system_trace("READY message failed to send\n");
+				return 0;
+			}
+			else {
+				system_trace("READY message sent\n");
+				received_ready_once = false;
+			}
+		}
 
 
-		while (buffer[0] == '2') {
+		while (buffer[0] == (u8)Server_Message::START) {
+			system_trace("READY message received\n");
 
 			LARGE_INTEGER tick_start_time;
 			QueryPerformanceCounter(&tick_start_time);
 
-
-			
 			int bytes_received = 1;
 
 			while (bytes_received) {
@@ -150,18 +165,18 @@ int karma_network() {
 
 				switch (buffer[0])
 				{
-				case Server_Message::JOIN_RESULT:
-				{
-					if (buffer[1])
-					{
-						memcpy(&slot, &buffer[2], sizeof(slot));
-					}
-					else
-					{
-						system_trace("server didn't let us in\n");
-					}
-				}
-				break;
+					//case Server_Message::JOIN_RESULT:
+					//{
+					//	if (buffer[1])
+					//	{
+					//		memcpy(&slot, &buffer[2], sizeof(slot));
+					//	}
+					//	else
+					//	{
+					//		system_trace("server didn't let us in\n");
+					//	}
+					//}
+					//break;
 
 				case Server_Message::STATE:
 				{
