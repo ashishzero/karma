@@ -145,6 +145,8 @@ struct Scene_Global {
 
 	Socket socket;
 
+	u32 timestamp;
+
 	Ip_Endpoint server_ip;
 
 	//
@@ -3312,13 +3314,14 @@ namespace Client {
 			auto pointer = vec2((r32)event.mouse_cursor.x / g.window_w, (r32)event.mouse_cursor.y / g.window_h);
 			pointer = 2 * pointer - vec2(1);
 
-			auto msg0 = array_add(inputs)->as<Input_Payload>(id);
+			auto msg0 = array_add(inputs)->as<Input_Payload>(id,g.timestamp);
 			msg0->type = Input_Payload::X_POINTER;
 			msg0->real_value = pointer.x;
 
-			auto msg1 = array_add(inputs)->as<Input_Payload>(id);
+			auto msg1 = array_add(inputs)->as<Input_Payload>(id,g.timestamp);
 			msg1->type = Input_Payload::Y_POINTER;
 			msg1->real_value = pointer.y;
+			g.timestamp += 1;
 		}
 
 		if (event.type & Event_Type_KEYBOARD) {
@@ -3326,34 +3329,34 @@ namespace Client {
 			switch (event.key.symbol) {
 				case Key_D:
 				case Key_RIGHT: {
-					auto msg = array_add(inputs)->as<Input_Payload>(id);
+					auto msg = array_add(inputs)->as<Input_Payload>(id,g.timestamp++);
 					msg->type = Input_Payload::X_AXIS;
 					msg->real_value = value;
 				} break;
 
 				case Key_A:
 				case Key_LEFT: {
-					auto msg = array_add(inputs)->as<Input_Payload>(id);
+					auto msg = array_add(inputs)->as<Input_Payload>(id, g.timestamp++);
 					msg->type = Input_Payload::X_AXIS;
 					msg->real_value = -value;
 				} break;
 
 				case Key_W:
 				case Key_UP: {
-					auto msg = array_add(inputs)->as<Input_Payload>(id);
+					auto msg = array_add(inputs)->as<Input_Payload>(id, g.timestamp++);
 					msg->type = Input_Payload::Y_AXIS;
 					msg->real_value = value;
 				} break;
 
 				case Key_S:
 				case Key_DOWN: {
-					auto msg = array_add(inputs)->as<Input_Payload>(id);
+					auto msg = array_add(inputs)->as<Input_Payload>(id, g.timestamp++);
 					msg->type = Input_Payload::Y_AXIS;
 					msg->real_value = -value;
 				} break;
 
 				case Key_SPACE: {
-					auto msg = array_add(inputs)->as<Input_Payload>(id);
+					auto msg = array_add(inputs)->as<Input_Payload>(id, g.timestamp++);
 					msg->type = Input_Payload::ATTACK;
 					msg->signed_value = (event.key.state == Key_State_DOWN);
 				} break;
