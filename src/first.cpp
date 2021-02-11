@@ -44,12 +44,7 @@ Builder system_builder() {
 	builder.allocator = system_default_heap_allocator();
 	builder.entry = main;
 	builder.temporary_buffer_size = mega_bytes(128);
-
-	#ifdef BUILD_SERVER_APP
-	builder.flags = Builder_NETWORK;
-	#else
 	builder.flags = Builder_ALL;
-	#endif
 
 	return builder;
 }

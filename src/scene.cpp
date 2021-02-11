@@ -2244,13 +2244,17 @@ bool scene_load_level(Scene *scene, const String name) {
 
 	scene->loaded_level = index;
 
-	auto player = scene_spawn_player(scene, vec2(0), (Color_Id)random_get_range(0, (u32)Color_Id_COUNT));
+	if (g.method == Scene_Run_Method_DEVELOP) {
+		auto player = scene_spawn_player(scene, vec2(0), (Color_Id)random_get_range(0, (u32)Color_Id_COUNT));
+		Camera* camera = scene_primary_camera(scene);
 
-	Camera *camera = scene_primary_camera(scene);
-	camera->position = player->position;
-	camera->target_distance = 0.75f;
-	camera->distance = camera->target_distance + 1;
-	camera->behaviour |= Camera_Behaviour_ANIMATE_FOCUS;
+		if (player && camera) {
+			camera->position = player->position;
+			camera->target_distance = 0.75f;
+			camera->distance = camera->target_distance + 1;
+			camera->behaviour |= Camera_Behaviour_ANIMATE_FOCUS;
+		}
+	}
 
 	return true;
 }
