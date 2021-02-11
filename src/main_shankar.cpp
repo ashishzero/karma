@@ -1,5 +1,3 @@
-#include "modules/core/thread_pool.h"
-
 #include "scene.h"
 #include "modules/gfx/renderer.h"
 
@@ -30,7 +28,7 @@ int karma_user_shankar() {
 
 		scene_render(scene);
 
-		const auto VIEW_HEIGHT = 10.0f;
+		const auto VIEW_HEIGHT = 5.0f;
 		const auto VIEW_WIDTH = 16.0f/9.0f * VIEW_HEIGHT;
 
 		auto view = orthographic_view(0.0f, VIEW_WIDTH, VIEW_HEIGHT, 0.0f);
