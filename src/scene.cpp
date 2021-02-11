@@ -3290,7 +3290,7 @@ namespace Develop {
 
 namespace Client {
 
-	void collect_input_events(Scene *scene, const Event &event, Array<Message_Input> *inputs) {
+	void collect_input_events(Scene *scene, const Event &event, Array<Input_Payload> *inputs) {
 		if (event.type & Event_Type_MOUSE_CURSOR) {
 			auto pointer = vec2((r32)event.mouse_cursor.x / g.window_w, (r32)event.mouse_cursor.y / g.window_h);
 			pointer = 2 * pointer - vec2(1);
@@ -3298,10 +3298,10 @@ namespace Client {
 			auto msg0 = array_add(inputs);
 			auto msg1 = array_add(inputs);
 
-			msg0->type = Message_Input::X_POINTER;
+			msg0->type = Input_Payload::X_POINTER;
 			msg0->real_value = pointer.x;
 
-			msg1->type = Message_Input::Y_POINTER;
+			msg1->type = Input_Payload::Y_POINTER;
 			msg1->real_value = pointer.y;
 		}
 
@@ -3311,34 +3311,34 @@ namespace Client {
 				case Key_D:
 				case Key_RIGHT: {
 					auto msg = array_add(inputs);
-					msg->type = Message_Input::X_AXIS;
+					msg->type = Input_Payload::X_AXIS;
 					msg->real_value = value;
 				} break;
 
 				case Key_A:
 				case Key_LEFT: {
 					auto msg = array_add(inputs);
-					msg->type = Message_Input::X_AXIS;
+					msg->type = Input_Payload::X_AXIS;
 					msg->real_value = -value;
 				} break;
 
 				case Key_W:
 				case Key_UP: {
 					auto msg = array_add(inputs);
-					msg->type = Message_Input::Y_AXIS;
+					msg->type = Input_Payload::Y_AXIS;
 					msg->real_value = value;
 				} break;
 
 				case Key_S:
 				case Key_DOWN: {
 					auto msg = array_add(inputs);
-					msg->type = Message_Input::Y_AXIS;
+					msg->type = Input_Payload::Y_AXIS;
 					msg->real_value = -value;
 				} break;
 
 				case Key_SPACE: {
 					auto msg = array_add(inputs);
-					msg->type = Message_Input::ATTACK;
+					msg->type = Input_Payload::ATTACK;
 					msg->signed_value = (event.key.state == Key_State_DOWN);
 				} break;
 			}
@@ -3348,7 +3348,7 @@ namespace Client {
 	void Scene_Frame_Begin(Scene *scene) {
 		Dev_TimedFrameBegin();
 
-		Array<Message_Input> inputs;
+		Array<Input_Payload> inputs;
 		inputs.allocator = TEMPORARY_ALLOCATOR;
 
 		Dev_TimedBlockBegin(EventHandling);
@@ -3377,7 +3377,7 @@ namespace Client {
 		}
 
 		for (auto &in : inputs) {
-			system_net_send_to(g.socket, &in, sizeof(Message_Input), g.server_ip);
+			system_net_send_to(g.socket, &in, sizeof(Input_Payload), g.server_ip);
 		}
 
 		Dev_TimedBlockEnd(EventHandling);
@@ -3483,7 +3483,7 @@ namespace Server {
 
 				unimplemented("Reveice Message from Clients");
 
-				Message_Input in;
+				Input_Payload in;
 				Ip_Endpoint ip_client;
 
 				auto player = scene_get_player(scene);
@@ -3491,18 +3491,18 @@ namespace Server {
 
 				s32 bytes_received = 1;
 				while (bytes_received) {
-					bytes_received = system_net_receive_from(g.socket, &in, sizeof(Message_Input), &ip_client);
+					bytes_received = system_net_receive_from(g.socket, &in, sizeof(Input_Payload), &ip_client);
 					if (bytes_received < 0) {
 						break;
-					} else if (bytes_received != sizeof(Message_Input)) {
+					} else if (bytes_received != sizeof(Input_Payload)) {
 						system_display_critical_message("Invalid message received");
 					} else {
 						switch (in.type) {
-							case Message_Input::X_POINTER: controller.pointer.x = in.real_value; break;
-							case Message_Input::Y_POINTER: controller.pointer.y = in.real_value; break;
-							case Message_Input::X_AXIS:	controller.axis.x = in.real_value; break;
-							case Message_Input::Y_AXIS:	controller.axis.y = in.real_value; break;
-							case Message_Input::ATTACK:	controller.attack = in.signed_value; break;
+							case Input_Payload::X_POINTER: controller.pointer.x = in.real_value; break;
+							case Input_Payload::Y_POINTER: controller.pointer.y = in.real_value; break;
+							case Input_Payload::X_AXIS:	controller.axis.x = in.real_value; break;
+							case Input_Payload::Y_AXIS:	controller.axis.y = in.real_value; break;
+							case Input_Payload::ATTACK:	controller.attack = in.signed_value; break;
 						}
 					}
 				}
