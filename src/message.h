@@ -251,4 +251,9 @@ struct Message {
 		return &payload.input;
 	}
 
+	template <typename T>
+	T *get() {
+		return (T *)&payload;
+	}
+
 };
