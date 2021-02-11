@@ -120,6 +120,12 @@ typedef void (*Scene_Render_Proc)(Scene*, bool);
 typedef void (*Scene_End_Drawing_Proc)();
 typedef void (*Scene_Frame_End_Proc)(Scene*);
 
+struct Connected_Client {
+	Ip_Endpoint ip_endpoint;
+	u32			id;
+	bool		ready;
+};
+
 struct Scene_Global {
 	Scene_Run_Method method;
 
@@ -148,6 +154,8 @@ struct Scene_Global {
 	u32 timestamp;
 
 	Ip_Endpoint server_ip;
+
+	Connected_Client clients[MAX_CLIENTS_PER_ROOM];
 
 	//
 	//
@@ -2943,6 +2951,35 @@ void iscene_tick_server(Scene* scene, r32 dt) {
 	iscene_update_positions(scene);
 
 	unimplemented("Send Server Messages");
+	for (int i = 1; i <= MAX_CLIENTS_PER_ROOM;i++) {
+		if (g.clients[i].ip_endpoint.address) {
+			auto character = scene->by_type.character;
+			auto bullet = scene->by_type.bullet;
+
+			Message msg;
+			auto d = msg.as<Character_Spacial_Update_Payload>(0, g.timestamp++);
+
+			for (auto& c : character) {
+				d->position = c.position;
+				d->id = c.id;
+				d->rotation = c.rotation;
+				d->transform = c.rigid_body->transform;
+				d->hit = c.hit;
+				d->velocity = c.rigid_body->velocity;				
+			}
+			auto b = msg.as<Bullet_Spacial_Update_Payload>(0, g.timestamp++);
+
+			for (auto& x : bullet) {
+				b->id = x.id;
+				b->position = x.position;
+				b->transform = x.rigid_body->transform;
+				b->velocity = x.rigid_body->velocity;
+
+			}
+		}
+	}
+
+
 }
 
 bool update_input(Scene* scene, const Event& event) {
@@ -3648,16 +3685,29 @@ namespace Server {
 						auto res_payload = res.as<Error_Payload>(0, g.timestamp++);
 						res_payload->type = Error_Payload::INCORRECT_VERSION;
 					}
+					u32 client_id = -1;
+					bool not_connected = true;
+					for (int i = 0; i < MAX_CLIENTS_PER_ROOM; i++) {
+						if (g.clients[i].id==0) {
+							client_id = i + 1;
+						}
+					}
+					if(client_id!=-1){
+						Message msg;
+						auto payload = msg.as<Join_Acknowledgement_Payload>(0, g.timestamp++);
+						payload->author_id = client_id;
+						auto player = scene_spawn_player(scene, vec2(0), Color_Id_A);
+						payload->player_id = player->id;
 
+						Send_Message(msg, ip_client);
+					}
 					Send_Message(res, ip_client);
 				} break;
 
 				case Message::Type::ROOM_UPDATE: {
-
-				} break;
-
-				case Message::Type::INPUT: {
-
+						if (ip_client == g.clients[message.header.author_id].ip_endpoint) {
+							g.clients[message.header.author_id].ready = true;
+						}
 				} break;
 				}
 			}
@@ -3667,28 +3717,26 @@ namespace Server {
 		case Server_State::RUNNING: {
 			// Receive from clients
 			// TODO:: Add support for multiple clients
+				Message message;
+				Ip_Endpoint ip_client;
 
-			unimplemented("Reveice Message from Clients");
+				auto player = scene_get_player(scene);
+				auto& controller = player->controller;
 
-			Message message;
-			Ip_Endpoint ip_client;
-
-			auto player = scene_get_player(scene);
-			auto& controller = player->controller;
-
-			while (Receive_Message(&message, &ip_client)) {
-				if (message.type == Message::Type::INPUT) {
-					auto in = message.get<Input_Payload>();
-					switch (in->type) {
-					case Input_Payload::X_POINTER: controller.pointer.x = in->real_value; break;
-					case Input_Payload::Y_POINTER: controller.pointer.y = in->real_value; break;
-					case Input_Payload::X_AXIS:	controller.axis.x = in->real_value; break;
-					case Input_Payload::Y_AXIS:	controller.axis.y = in->real_value; break;
-					case Input_Payload::ATTACK:	controller.attack = in->signed_value; break;
+				while (Receive_Message(&message, &ip_client)) {
+					if (ip_client == g.clients[message.header.author_id].ip_endpoint) {
+						if (message.type == Message::Type::INPUT) {
+							auto in = message.get<Input_Payload>();
+							switch (in->type) {
+							case Input_Payload::X_POINTER: controller.pointer.x = in->real_value; break;
+							case Input_Payload::Y_POINTER: controller.pointer.y = in->real_value; break;
+							case Input_Payload::X_AXIS:	controller.axis.x = in->real_value; break;
+							case Input_Payload::Y_AXIS:	controller.axis.y = in->real_value; break;
+							case Input_Payload::ATTACK:	controller.attack = in->signed_value; break;
+							}
+						}
 					}
 				}
-			}
-
 		} break;
 		}
 
@@ -3722,6 +3770,7 @@ namespace Server {
 
 				scene->physics.accumulator_t -= dt;
 			}
+
 		} break;
 		}
 	}
