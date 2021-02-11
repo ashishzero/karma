@@ -267,10 +267,12 @@ void scene_prepare(Scene_Run_Method method, Render_Backend backend, System_Windo
 
 	if (method != Scene_Run_Method_DEVELOP) {
 
+		g.server_ip = ip_endpoint_local(SERVER_CONNECTION_PORT);
+
 		if (method == Scene_Run_Method_CLIENT) {
 			g.socket = system_net_open_udp_client();
 		} else {
-			g.socket = system_net_open_udp_server();
+			g.socket = system_net_open_udp_server(g.server_ip);
 		}
 
 		if (g.socket == SOCKET_INVALID) {
@@ -279,7 +281,6 @@ void scene_prepare(Scene_Run_Method method, Render_Backend backend, System_Windo
 
 		system_net_set_socket_nonblocking(g.socket);
 
-		g.server_ip = ip_endpoint_local(SERVER_CONNECTION_PORT);
 	}
 
 	//
@@ -3603,7 +3604,7 @@ namespace Server {
 			Message message;
 			Ip_Endpoint ip_client;
 
-#if 1
+#if 0
 			if (system_net_receive_from(g.socket, &message, sizeof(Message), &ip_client) > 0) {
 				switch (message.type) {
 				case Message::Type::JOIN_REQUEST: {
