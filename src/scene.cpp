@@ -3079,7 +3079,7 @@ void iscene_tick_server(Scene* scene, r32 dt) {
 
 	iscene_update_positions(scene);
 
-	for (int i = 1; i <= MAX_CLIENTS_PER_ROOM; i++) {
+	for (int i = 0; i < MAX_CLIENTS_PER_ROOM; i++) {
 		if (g.clients[i].id) {
 			auto character = scene->by_type.character;
 			auto bullet = scene->by_type.bullet;
@@ -3746,8 +3746,10 @@ namespace Client {
 					auto data = res.as<Get_Player_Payload>(g.client_id, g.timestamp++);
 
 					for (auto i = 0; i < MAX_CLIENTS_PER_ROOM; ++i) {
-						data->id = payload->id[i];
-						Send_Message(res);
+						if (payload->id[i].handle) {
+							data->id = payload->id[i];
+							Send_Message(res);
+						}
 					}
 
 					g.s_client = Client_State::WAITING;
@@ -4010,7 +4012,7 @@ namespace Server {
 			Message msg;
 			auto payload = msg.as<Room_Member_Payload>(0, g.timestamp++);
 
-			for (int i = 1; i <= MAX_CLIENTS_PER_ROOM; i++) {
+			for (int i = 0; i < MAX_CLIENTS_PER_ROOM; i++) {
 				if (g.clients[i].id) {
 					payload->id[i] = g.clients[i].player;
 				}
@@ -4019,7 +4021,7 @@ namespace Server {
 				}
 			}
 
-			for (int i = 1; i <= MAX_CLIENTS_PER_ROOM; i++) {
+			for (int i = 0; i < MAX_CLIENTS_PER_ROOM; i++) {
 				if (g.clients[i].id) {
 					payload->ready = g.clients[i].ready;
 					Send_Message(msg, g.clients[i].ip_endpoint);
