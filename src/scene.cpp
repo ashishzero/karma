@@ -966,8 +966,14 @@ Entity* scene_clone_entity(Scene* scene, Entity* src, Vec2 p, Resource_Id* resou
 		auto character = iscene_add_character(scene, id, p, resource_id);
 		memcpy((u8*)character + sizeof(Entity), (u8*)src + sizeof(Entity), sizeof(Character) - sizeof(Entity));
 		character->particle_system.particles = (Particle*)memory_allocate(sizeof(Particle) * character->particle_system.particles_count);
-		character->boost = audio_mixer_add_audio(&g.audio_mixer, scene_find_audio_stream("engine.wav"), false, true);
-		character->fall = audio_mixer_add_audio(&g.audio_mixer, scene_find_audio_stream("vacuum.wav"), false, true);
+		if (g.method == Scene_Run_Method_SERVER) {
+			character->boost = nullptr;
+			character->fall = nullptr;
+		}
+		else {
+			character->boost = audio_mixer_add_audio(&g.audio_mixer, scene_find_audio_stream("engine.wav"), false, true);
+			character->fall = audio_mixer_add_audio(&g.audio_mixer, scene_find_audio_stream("vacuum.wav"), false, true);
+		}
 		character->rigid_body = iscene_create_new_rigid_body(scene, character, ((Character*)src)->rigid_body);
 		hgrid_add_body_to_grid(&scene->hgrid, character->rigid_body);
 		character->controller.axis = vec2(0);
@@ -3909,6 +3915,7 @@ namespace Server {
 							for (int i = 0; i < MAX_CLIENTS_PER_ROOM; i++) {
 								if (g.clients[i].id == 0) {
 									client_id = i + 1;
+									break;
 								}
 							}
 
@@ -3927,7 +3934,12 @@ namespace Server {
 							rpayload->player_id = player->id;
 
 							for (auto i = 0; i < MAX_CLIENTS_PER_ROOM; ++i) {
-								rpayload->id[i] = g.clients[i].player;
+								if (g.clients[i].id) {
+									rpayload->id[i] = g.clients[i].player;
+								}
+								else {
+									rpayload->id[i] = { 0 };
+								}
 							}
 
 							Send_Message(res, ip_client);
@@ -3946,8 +3958,10 @@ namespace Server {
 				} break;
 
 				case Message::Type::ROOM_UPDATE: {
-					if (ip_client == g.clients[message.header.author_id].ip_endpoint) {
-						g.clients[message.header.author_id].ready = true;
+					if (message.header.author_id >= 1 && message.header.author_id <= MAX_CLIENTS_PER_ROOM) {
+						if (ip_client == g.clients[message.header.author_id - 1].ip_endpoint) {
+							g.clients[message.header.author_id].ready = true;
+						}
 					}
 				} break;
 
@@ -3958,12 +3972,13 @@ namespace Server {
 						auto c = scene_entity_pointer(scene, ref)->as<Character>();
 
 						Message res;
-						auto d = res.as<Character_Spacial_Update_Payload>(0, g.timestamp++);
-						d->position = c->position;
+						auto d = res.as<Character_Spawn_Payload>(0, g.timestamp++);
+
 						d->id = c->id;
+						d->color_id = c->color_id;
+						d->position = c->position;
 						d->rotation = c->rotation;
 						d->transform = c->rigid_body->transform;
-						d->hit = c->hit;
 						d->velocity = c->rigid_body->velocity;
 
 						Send_Message(res, ip_client);
