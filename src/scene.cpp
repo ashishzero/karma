@@ -100,6 +100,19 @@ static bool test_fixture_point(Fixture &a, const Transform &ta, Vec2 point, r32 
 // End Collision
 //
 
+enum class Server_State {
+	WAITING,
+	RUNNING
+};
+
+enum class Client_State {
+	MENU,
+	CONNECTING,
+	WAITING,
+	RUNNING,
+	END_GAME
+};
+
 typedef void (*Scene_Frame_Begin_Proc)(Scene *);
 typedef void (*Scene_Frame_Simulate_Proc)(Scene *);
 typedef void (*Scene_Begin_Drawing_Proc)();
@@ -109,6 +122,9 @@ typedef void (*Scene_Frame_End_Proc)(Scene *);
 
 struct Scene_Global {
 	Scene_Run_Method method;
+
+	Server_State s_server;
+	Client_State s_client;
 
 	Handle platform;
 	Render_Backend render_backend;
@@ -190,6 +206,9 @@ static Scene_Global g;
 
 void scene_prepare(Scene_Run_Method method, Render_Backend backend, System_Window_Show show) {
 	g.method = method;
+
+	g.s_server = Server_State::WAITING;
+	g.s_client = Client_State::MENU;
 
 	if (method != Scene_Run_Method_SERVER) {
 		g.framebuffer_w = 1280;
@@ -3351,8 +3370,10 @@ namespace Client {
 				break;
 			}
 
-			update_input(scene, event); // TODO: probably remove this??
-			collect_input_events(scene, event, &inputs);
+			if (g.s_client == Client_State::RUNNING) {
+				update_input(scene, event);
+				collect_input_events(scene, event, &inputs);
+			}
 		}
 
 		for (auto &in : inputs) {
@@ -3365,15 +3386,35 @@ namespace Client {
 	void Scene_Frame_Simulate(Scene *scene) {
 		Dev_TimedScope(Simulation);
 
-		const r32 dt = scene->physics.fixed_dt;
+		switch (g.s_client) {
+			case Client_State::MENU: {
 
-		while (scene->physics.accumulator_t >= dt) {
-			Dev_TimedScope(SimulationFrame);
-			iscene_tick_client(scene, dt);
-			scene->physics.accumulator_t -= dt;
+			} break;
+
+			case Client_State::CONNECTING: {
+
+			} break;
+
+			case Client_State::WAITING: {
+
+			} break;
+
+			case Client_State::RUNNING: {
+				const r32 dt = scene->physics.fixed_dt;
+
+				while (scene->physics.accumulator_t >= dt) {
+					Dev_TimedScope(SimulationFrame);
+					iscene_tick_client(scene, dt);
+					scene->physics.accumulator_t -= dt;
+				}
+
+				iscene_update_audio_and_ui(scene);
+			} break;
+
+			case Client_State::END_GAME: {
+
+			} break;
 		}
-
-		iscene_update_audio_and_ui(scene);
 	}
 
 	void Scene_Begin_Drawing() {
@@ -3381,7 +3422,27 @@ namespace Client {
 	}
 
 	void Scene_Render(Scene *scene, bool draw_editor) {
-		Develop::Scene_Render(scene, draw_editor);
+		switch (g.s_client) {
+			case Client_State::MENU: {
+
+			} break;
+
+			case Client_State::CONNECTING: {
+
+			} break;
+
+			case Client_State::WAITING: {
+
+			} break;
+
+			case Client_State::RUNNING: {
+				Develop::Scene_Render(scene, false);
+			} break;
+
+			case Client_State::END_GAME: {
+
+			} break;
+		}
 	}
 
 	void Scene_End_Drawing() {
@@ -3408,56 +3469,77 @@ namespace Server {
 			}
 		}
 
-		// Receive from clients
-		// TODO:: Add support for multiple clients
+		Dev_TimedBlockBegin(NetworkReveice);
 
-		unimplemented("Reveice Message from Clients");
+		switch (g.s_server) {
+			case Server_State::WAITING: {
+				// Add clients to the list and send the list to other clients
+			} break;
 
-		Message_Input in;
-		Ip_Endpoint ip_client;
+			case Server_State::RUNNING: {
+				// Receive from clients
+				// TODO:: Add support for multiple clients
 
-		auto player = scene_get_player(scene);
-		auto &controller = player->controller;
 
-		s32 bytes_received = 1;
-		while (bytes_received) {
-			bytes_received = system_net_receive_from(g.socket, &in, sizeof(Message_Input), &ip_client);
-			if (bytes_received < 0) {
-				break;
-			} else if (bytes_received != sizeof(Message_Input)) {
-				system_display_critical_message("Invalid message received");
-			} else {
-				switch (in.type) {
-					case Message_Input::X_POINTER: controller.pointer.x = in.real_value; break;
-					case Message_Input::Y_POINTER: controller.pointer.y = in.real_value; break;
-					case Message_Input::X_AXIS:	controller.axis.x = in.real_value; break;
-					case Message_Input::Y_AXIS:	controller.axis.y = in.real_value; break;
-					case Message_Input::ATTACK:	controller.attack = in.signed_value; break;
+				unimplemented("Reveice Message from Clients");
+
+				Message_Input in;
+				Ip_Endpoint ip_client;
+
+				auto player = scene_get_player(scene);
+				auto &controller = player->controller;
+
+				s32 bytes_received = 1;
+				while (bytes_received) {
+					bytes_received = system_net_receive_from(g.socket, &in, sizeof(Message_Input), &ip_client);
+					if (bytes_received < 0) {
+						break;
+					} else if (bytes_received != sizeof(Message_Input)) {
+						system_display_critical_message("Invalid message received");
+					} else {
+						switch (in.type) {
+							case Message_Input::X_POINTER: controller.pointer.x = in.real_value; break;
+							case Message_Input::Y_POINTER: controller.pointer.y = in.real_value; break;
+							case Message_Input::X_AXIS:	controller.axis.x = in.real_value; break;
+							case Message_Input::Y_AXIS:	controller.axis.y = in.real_value; break;
+							case Message_Input::ATTACK:	controller.attack = in.signed_value; break;
+						}
+					}
 				}
-			}
+			} break;
 		}
 
+		Dev_TimedBlockEnd(NetworkReveice);
+		
 		Dev_TimedBlockEnd(EventHandling);
 	}
 
 	void Scene_Frame_Simulate(Scene *scene) {
 		Dev_TimedScope(Simulation);
 
-		iscene_pre_simulate(scene);
+		switch (g.s_server) {
+			case Server_State::WAITING: {
+				// Handshake and such??
+			} break;
 
-		const r32 dt = scene->physics.fixed_dt;
+			case Server_State::RUNNING: {
+				iscene_pre_simulate(scene);
 
-		while (scene->physics.accumulator_t >= dt) {
-			if (scene->physics.state == Physics_State_PAUSED)
-				break;
-			else if (scene->physics.state == Physics_State_RUN_SINGLE_STEP)
-				scene->physics.state = Physics_State_PAUSED;
+				const r32 dt = scene->physics.fixed_dt;
 
-			Dev_TimedScope(SimulationFrame);
+				while (scene->physics.accumulator_t >= dt) {
+					if (scene->physics.state == Physics_State_PAUSED)
+						break;
+					else if (scene->physics.state == Physics_State_RUN_SINGLE_STEP)
+						scene->physics.state = Physics_State_PAUSED;
 
-			iscene_tick(scene, dt);
+					Dev_TimedScope(SimulationFrame);
 
-			scene->physics.accumulator_t -= dt;
+					iscene_tick(scene, dt);
+
+					scene->physics.accumulator_t -= dt;
+				}
+			} break;
 		}
 	}
 
