@@ -4,37 +4,6 @@
 constexpr u16 SERVER_CONNECTION_PORT = 9999;
 constexpr u16 MAX_CLIENTS_PER_ROOM   = 8;
 
-struct Join_Request_Payload {
-	u32 version;
-};
-
-struct Join_Acknowledgement_Payload {
-	Entity_Id player_id;
-	u32		  author_id;
-};
-
-struct Room_Member_Payload {
-	Entity_Id id[MAX_CLIENTS_PER_ROOM];
-};
-
-struct Room_Update_Payload {
-	enum Type : u32 {
-		READY, START
-	};
-
-	Type type;
-};
-
-struct Error_Payload {
-	enum Type : u32 {
-		INCORRECT_VERSION,
-		ROOM_FULL,
-		NOT_CAPTAIN
-	};
-
-	Type type;
-};
-
 struct Remove_Entity_Payload {
 	Entity_Id id;
 };
@@ -98,6 +67,43 @@ struct Input_Payload {
 	};
 };
 
+struct Join_Request_Payload {
+	u32 version;
+};
+
+struct Join_Acknowledgement_Payload {
+	u32			client_id;
+	Entity_Id	player_id;
+	Entity_Id	id[MAX_CLIENTS_PER_ROOM];
+};
+
+struct Get_Player_Payload {
+	Entity_Id id;
+};
+
+struct Room_Member_Payload {
+	Entity_Id	id[MAX_CLIENTS_PER_ROOM];
+	bool		ready;
+};
+
+struct Room_Update_Payload {
+	enum Type : u32 {
+		READY, START
+	};
+
+	Type type;
+};
+
+struct Error_Payload {
+	enum Type : u32 {
+		INCORRECT_VERSION,
+		ROOM_FULL,
+		NOT_CAPTAIN
+	};
+
+	Type type;
+};
+
 //
 //
 //
@@ -118,6 +124,7 @@ struct Message {
 		JOIN_REQUEST,
 		JOIN_ACKNOWLEDGEMENT,
 		ROOM_MEMBER,
+		GET_PLAYER,
 		ROOM_UPDATE,
 		ERROR,
 
@@ -134,6 +141,7 @@ struct Message {
 		Join_Request_Payload				join_request;
 		Join_Acknowledgement_Payload		join_acknowledgement;
 		Room_Member_Payload					room_member;
+		Get_Player_Payload					get_player;
 		Room_Update_Payload					room_update;
 		Error_Payload						error;
 
@@ -182,6 +190,16 @@ struct Message {
 
 		type = Type::ROOM_MEMBER;
 		return &payload.room_member;
+	}
+	
+	template <> 
+	Get_Player_Payload *as(u32 id, u32 timestamp) {
+		header.source = Source::CLIENT;
+		header.author_id = id;
+		header.timestamp = timestamp;
+
+		type = Type::GET_PLAYER;
+		return &payload.get_player;
 	}
 
 	template <> 

@@ -155,6 +155,9 @@ struct Scene_Global {
 
 	Ip_Endpoint server_ip;
 
+	u32 client_id;
+	bool client_is_ready;
+
 	Connected_Client clients[MAX_CLIENTS_PER_ROOM];
 
 	//
@@ -279,7 +282,8 @@ void scene_prepare(Scene_Run_Method method, Render_Backend backend, System_Windo
 
 		if (method == Scene_Run_Method_CLIENT) {
 			g.socket = system_net_open_udp_client();
-		} else {
+		}
+		else {
 			g.socket = system_net_open_udp_server(g.server_ip);
 		}
 
@@ -1181,6 +1185,114 @@ r32 color_id_get_intensity(Color_Id color_id) {
 	return INTENS[(int)color_id];
 }
 
+Character *scene_add_player(Scene* scene, Entity_Id player_id, Color_Id color_id, Vec2 p, r32 rotation, Vec2 velocity, const Transform &transform) {
+	Resource_Id id = { 6895733819830550519 }; // TODO: hard coded resource id
+	Resource_Collection resource = scene_find_resource(id);
+
+	Resource_Id particle_id = { 6926504382549284097 };
+	Resource_Collection particle_resource = scene_find_resource(particle_id);
+
+	const u32 max_particles = 1000;
+
+	auto character = iscene_add_character(scene, player_id, vec2(0), id);
+
+	character->particle_system.particles = (Particle*)memory_allocate(sizeof(Particle) * max_particles);
+	character->boost = audio_mixer_add_audio(&g.audio_mixer, scene_find_audio_stream("engine.wav"), false, true);
+	character->fall = audio_mixer_add_audio(&g.audio_mixer, scene_find_audio_stream("vacuum.wav"), false, true);
+	character->rigid_body = iscene_create_new_rigid_body(scene, character, nullptr);
+	hgrid_add_body_to_grid(&scene->hgrid, character->rigid_body);
+	character->controller.axis = vec2(0);
+
+	character->type = Entity_Type_Character;
+	character->size = vec2(0.5f);
+	character->rotation = rotation;
+	character->original_color_id = color_id;
+	character->color_id = color_id;
+
+	for (auto i = 0; i < Color_Id_COUNT; ++i) {
+		character->color_values[i] = 0.25f;
+	}
+	character->color_values[(int)color_id] = 1;
+	character->hit = 0;
+
+	character->texture.index = resource.index;
+	character->controller.axis = vec2(0);
+	character->controller.pointer = vec2(0, 1);
+	character->controller.attack = 0;
+	character->controller.cool_down = 0;
+
+	auto system = &character->particle_system;
+
+	system->position = vec2(0);
+	system->texture = { particle_resource.index };
+	system->properties = particle_system_default_property();
+	system->particles_count = max_particles;
+	system->emit_count = 0;
+	system->loop = -1;
+	system->time_elapsed = 0;
+
+	auto fixture = resource.fixture;
+	auto body = character->rigid_body;
+
+	body->type = Rigid_Body_Type_Dynamic;
+	body->flags = 0;
+	body->imass = 1.0f;
+	body->drag = 5;
+	body->restitution = 0;
+	body->velocity = velocity;
+	body->force = vec2(0);
+	body->gravity = 1;
+	body->transform = transform;
+	body->fixtures = fixture ? fixture->fixtures : nullptr;
+	body->fixture_count = fixture ? fixture->count : 0;
+	body->entity_id = character->id;
+	body->bounding_box = scene_rigid_body_bounding_box(body, 0);
+}
+
+Bullet* scene_add_bullet(Scene* scene, Entity_Id bullet_id, Color_Id color_id, Vec2 p, Vec2 velocity, const Transform &transform) {
+	Resource_Id id = { 6926438366305714858 }; // TODO: hard coded resource id
+	Resource_Collection resource = scene_find_resource(id);
+
+	r32 radius = 0.05f * random_r32_range_r32(0.9f, 1.0f);
+	r32 intensity = 2.0f * color_id_get_intensity(color_id);
+	r32 life_span = 1.0f * random_r32_range_r32(0.6f, 1.0f);
+
+	auto bullet = iscene_add_bullet(scene, bullet_id, p, id);
+	bullet->audio = audio_mixer_add_audio(&g.audio_mixer, g.fire, false, false);
+	bullet->rigid_body = iscene_create_new_rigid_body(scene, bullet, nullptr);
+	hgrid_add_body_to_grid(&scene->hgrid, bullet->rigid_body);
+
+	bullet->type = Entity_Type_Bullet;
+	bullet->color_id = color_id;
+	bullet->radius = radius;
+	bullet->intensity = intensity;
+	bullet->color = color_id_get_color(color_id);
+	bullet->age = 0;
+	bullet->life_span = life_span;
+
+	auto fixture = resource.fixture;
+	auto body = bullet->rigid_body;
+
+	body->type = Rigid_Body_Type_Dynamic;
+	body->flags = 0;
+	body->imass = 1.0f;
+	body->gravity = 0;
+	body->force = vec2(0);
+	body->transform = transform;
+	body->fixtures = fixture ? fixture->fixtures : nullptr;
+	body->fixture_count = fixture ? fixture->count : 0;
+	body->entity_id = bullet->id;
+	body->bounding_box = scene_rigid_body_bounding_box(body, 0);
+	body->velocity = velocity;
+	body->restitution = 1;
+	body->drag = 0;
+
+	audio_pitch_factor(bullet->audio, random_r32_range_r32(0.9f, 1.0f));
+	audio_play(bullet->audio);
+
+	return bullet;
+}
+
 Character* scene_spawn_player(Scene* scene, Vec2 p, Color_Id color_id) {
 	if (g.method != Scene_Run_Method_SERVER) {
 		if (!scene->player_id.handle) {
@@ -1203,11 +1315,23 @@ Character* scene_spawn_player(Scene* scene, Vec2 p, Color_Id color_id) {
 		}
 
 		return scene_get_player(scene);
-	}
-	else {
-		unimplemented("Server Add Player to the Room");
+	} else {
+		Resource_Id id = { 6895733819830550519 }; // TODO: hard coded resource id
+		Resource_Collection resource = scene_find_resource(id);
 
-		return nullptr;
+		Resource_Id particle_id = { 6926504382549284097 };
+		Resource_Collection particle_resource = scene_find_resource(particle_id);
+
+		Rigid_Body body;
+		Character src;
+		ent_init_character(&src, scene, p, color_id, &body, resource.fixture, resource.texture, resource.index, particle_resource.texture, particle_resource.index);
+		auto player = scene_clone_entity(scene, &src, p, &id)->as<Character>();
+		scene->player_id = player->id;
+		player->size = vec2(0.5f);
+		player->rigid_body->transform.xform = mat2_scalar(0.5f, 0.5f);
+		player->rigid_body->gravity = 1;
+
+		return player;
 	}
 }
 
@@ -1263,8 +1387,7 @@ Bullet* scene_spawn_bullet(Scene* scene, Vec2 p, Color_Id color_id, Vec2 dir) {
 	if (g.method != Scene_Run_Method_SERVER) {
 		audio_pitch_factor(bullet->audio, random_r32_range_r32(0.9f, 1.0f));
 		audio_play(bullet->audio);
-	}
-	else {
+	} else {
 		unimplemented("Send Spawn Bullet Server Message");
 	}
 
@@ -3463,19 +3586,62 @@ namespace Client {
 		Dev_TimedScope(Simulation);
 
 		switch (g.s_client) {
-		case Client_State::MENU: {
-
-		} break;
-
-		case Client_State::CONNECTING: {
-
-		} break;
-
-		case Client_State::WAITING: {
-
-		} break;
-
 		case Client_State::RUNNING: {
+
+			iscene_pre_tick(scene);
+
+			Message msg;
+			while (Receive_Message(&msg)) {
+				switch (msg.type) {
+				case Message::Type::REMOVE_ENTITY: {
+					auto payload = msg.get<Remove_Entity_Payload>();
+					scene_remove_entity(scene, payload->id);
+				} break;
+
+				case Message::Type::BULLET_SPAWN: {
+					auto payload = msg.get<Bullet_Spawn_Payload>();
+					Entity_Reference ref;
+					if (!scene_find_entity(scene, payload->id, &ref)) {
+						scene_add_bullet(scene, payload->id, payload->color_id, payload->position, payload->velocity, payload->transform);
+					}
+				} break;
+
+				case Message::Type::CHARACTER_SPACIAL_UPDATE: {
+					auto payload = msg.get<Character_Spacial_Update_Payload>();
+					auto player = scene_entity_pointer(scene, scene_get_entity(scene, payload->id))->as<Character>();
+
+					player->position = payload->position;
+					player->rotation = payload->rotation;
+					player->hit = payload->hit;
+					player->rigid_body->velocity = payload->velocity;
+					player->rigid_body->transform = payload->transform;
+				} break;
+
+				case Message::Type::CHARACTER_COLOR_UPDATE: {
+					auto payload = msg.get<Character_Color_Update_Payload>();
+					auto player = scene_entity_pointer(scene, scene_get_entity(scene, payload->id))->as<Character>();
+
+					player->color_id = payload->color_id;
+					memcpy(player->color_values, payload->color_values, sizeof(payload->color_values));
+				} break;
+
+				case Message::Type::BULLET_SPACIAL_UPDATE: {
+					auto payload = msg.get<Bullet_Spacial_Update_Payload>();
+					auto bullet = scene_entity_pointer(scene, scene_get_entity(scene, payload->id))->as<Bullet>();
+
+					bullet->position = payload->position;
+					bullet->rigid_body->velocity = payload->velocity;
+					bullet->rigid_body->transform = payload->transform;
+				} break;
+
+				case Message::Type::ERROR: {
+					// TODO: SOlve error
+				} break;
+				}
+			}
+
+			iscene_post_tick(scene);
+
 			const r32 dt = scene->physics.fixed_dt;
 
 			while (scene->physics.accumulator_t >= dt) {
@@ -3499,48 +3665,132 @@ namespace Client {
 
 	void Scene_Render(Scene* scene, bool draw_editor) {
 		switch (g.s_client) {
-			case Client_State::MENU: {
-				const auto VIEW_HEIGHT = 10.0f;
-				const auto VIEW_WIDTH = 16.0f / 9.0f * VIEW_HEIGHT;
+		case Client_State::MENU: {
+			const auto VIEW_HEIGHT = 10.0f;
+			const auto VIEW_WIDTH = 16.0f / 9.0f * VIEW_HEIGHT;
 
-				auto view = orthographic_view(0.0f, VIEW_WIDTH, VIEW_HEIGHT, 0.0f);
-				Vec2 cursor = system_get_cursor_position();
+			auto view = orthographic_view(0.0f, VIEW_WIDTH, VIEW_HEIGHT, 0.0f);
+			Vec2 cursor = system_get_cursor_position();
 
-				// convert cursor and delta value from window space into world space
-				cursor.x /= g.window_w;
-				cursor.y /= g.window_h;
+			// convert cursor and delta value from window space into world space
+			cursor.x /= g.window_w;
+			cursor.y /= g.window_h;
 
-				auto connect_button = mm_rect(vec2(5), vec2(9));
-				auto color = vec4(1);
+			auto connect_button = mm_rect(vec2(5), vec2(9));
+			auto color = vec4(1);
 
-				cursor.x *=  VIEW_WIDTH;
-				cursor.y *= VIEW_HEIGHT;
+			cursor.x *= VIEW_WIDTH;
+			cursor.y *= VIEW_HEIGHT;
 
-				system_trace("%f, %f", cursor.x, cursor.y);
+			if (test_point_inside_rect(cursor, connect_button)) {
+				color = vec4(1, 1, 0);
 
+				if (system_button(Button_LEFT)) {
+					Message msg;
+					auto payload = msg.as<Join_Request_Payload>(0, g.timestamp++);
+					payload->version = 0;
+					Send_Message(msg);
+					g.s_client = Client_State::CONNECTING;
+				}
+			}
+
+			im2d_begin(view);
+			im2d_rect(connect_button.min, connect_button.max - connect_button.min, color);
+			im2d_end();
+		} break;
+
+		case Client_State::CONNECTING: {
+			Message msg;
+			while (Receive_Message(&msg)) {
+				if (msg.type == Message::Type::JOIN_ACKNOWLEDGEMENT) {
+					auto payload = msg.get<Join_Acknowledgement_Payload>();
+					g.client_id = payload->client_id;
+
+					scene->player_id = payload->player_id;
+
+					Message res;
+					auto data = res.as<Get_Player_Payload>(g.client_id, g.timestamp++);
+					data->id = payload->player_id;
+					Send_Message(res);
+
+					for (auto i = 0; i < MAX_CLIENTS_PER_ROOM; ++i) {
+						data->id = payload->id[i];
+						Send_Message(res);
+					}
+
+					g.s_client = Client_State::WAITING;
+				}
+				else if (msg.type == Message::Type::ERROR) {
+					// TODO: Handle error
+				}
+			}
+		} break;
+
+		case Client_State::WAITING: {
+			Message msg;
+
+			while (Receive_Message(&msg)) {
+				if (msg.type == Message::Type::ROOM_MEMBER) {
+					auto payload = msg.get<Room_Member_Payload>();
+
+					Entity_Reference ref;
+					Message msg;
+					auto res = msg.as<Get_Player_Payload>(g.client_id, g.timestamp++);
+
+					for (auto i = 0; i < MAX_CLIENTS_PER_ROOM; ++i) {
+						if (!scene_find_entity(scene, payload->id[i], &ref)) {
+							res->id = payload->id[i];
+							Send_Message(msg);
+						}
+					}
+
+					g.client_is_ready = payload->ready;
+
+				} else if (msg.type == Message::Type::CHARACTER_SPAWN) {
+					auto payload = msg.get<Character_Spawn_Payload>();
+					Entity_Reference ref;
+					if (!scene_find_entity(scene, payload->id, &ref)) {
+						scene_add_player(scene, payload->id, payload->color_id, payload->position, payload->rotation, payload->velocity, payload->transform);
+					}
+				} else if (msg.type == Message::Type::ERROR) {
+					// TODO: Handle error
+				}
+			}
+
+			const auto VIEW_HEIGHT = 10.0f;
+			const auto VIEW_WIDTH = 16.0f / 9.0f * VIEW_HEIGHT;
+
+			auto view = orthographic_view(0.0f, VIEW_WIDTH, VIEW_HEIGHT, 0.0f);
+			Vec2 cursor = system_get_cursor_position();
+
+			// convert cursor and delta value from window space into world space
+			cursor.x /= g.window_w;
+			cursor.y /= g.window_h;
+
+			auto connect_button = mm_rect(vec2(5), vec2(9));
+			auto color = vec4(1);
+
+			cursor.x *= VIEW_WIDTH;
+			cursor.y *= VIEW_HEIGHT;
+
+			if (!g.client_is_ready) {
 				if (test_point_inside_rect(cursor, connect_button)) {
 					color = vec4(1, 1, 0);
 
 					if (system_button(Button_LEFT)) {
 						Message msg;
-						auto payload = msg.as<Join_Request_Payload>(0, g.timestamp++);
-						payload->version = 0;
+						auto payload = msg.as<Room_Update_Payload>(g.client_id, g.timestamp++);
+						payload->type = Room_Update_Payload::READY;
 						Send_Message(msg);
 						g.s_client = Client_State::CONNECTING;
 					}
 				}
+			}
 
-				im2d_begin(view);
-				im2d_rect(connect_button.min, connect_button.max - connect_button.min, color);
-				im2d_end();
-			} break;
-
-			case Client_State::CONNECTING: {
-				system_trace("message received");
-			} break;
-			case Client_State::WAITING: {
-
-			} break;
+			im2d_begin(view);
+			im2d_rect(connect_button.min, connect_button.max - connect_button.min, color);
+			im2d_end();
+		} break;
 
 		case Client_State::RUNNING: {
 			Develop::Scene_Render(scene, false);
@@ -3617,12 +3867,13 @@ namespace Server {
 				case Message::Type::JOIN_REQUEST: {
 					auto payload = message.get<Join_Request_Payload>();
 					Message res;
-					
+
 					if (payload->version == 0) {
 						auto res_payload = res.as<Join_Acknowledgement_Payload>(0, g.timestamp++);
-						res_payload->author_id = 4;
+						res_payload->client_id = 4;
 						res_payload->player_id = { 25 };
-					} else {
+					}
+					else {
 						auto res_payload = res.as<Error_Payload>(0, g.timestamp++);
 						res_payload->type = Error_Payload::INCORRECT_VERSION;
 					}
