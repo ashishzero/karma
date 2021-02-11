@@ -266,7 +266,12 @@ void scene_prepare(Scene_Run_Method method, Render_Backend backend, System_Windo
 	//
 
 	if (method != Scene_Run_Method_DEVELOP) {
-		g.socket = system_net_open_udp_client();
+
+		if (method == Scene_Run_Method_CLIENT) {
+			g.socket = system_net_open_udp_client();
+		} else {
+			g.socket = system_net_open_udp_server();
+		}
 
 		if (g.socket == SOCKET_INVALID) {
 			system_fatal_error("Failed to open socket");
@@ -3598,6 +3603,36 @@ namespace Server {
 			Message message;
 			Ip_Endpoint ip_client;
 
+#if 1
+			if (system_net_receive_from(g.socket, &message, sizeof(Message), &ip_client) > 0) {
+				switch (message.type) {
+				case Message::Type::JOIN_REQUEST: {
+					auto payload = message.get<Join_Request_Payload>();
+					Message res;
+
+					if (payload->version == 0) {
+						auto res_payload = res.as<Join_Acknowledgement_Payload>(0, g.timestamp++);
+						res_payload->author_id = 4;
+						res_payload->player_id = { 25 };
+					}
+					else {
+						auto res_payload = res.as<Error_Payload>(0, g.timestamp++);
+						res_payload->type = Error_Payload::INCORRECT_VERSION;
+					}
+
+					Send_Message(res, ip_client);
+				} break;
+
+				case Message::Type::ROOM_UPDATE: {
+
+				} break;
+
+				case Message::Type::INPUT: {
+
+				} break;
+				}
+			}
+#else
 			while (Receive_Message(&message, &ip_client)) {
 				switch (message.type) {
 				case Message::Type::JOIN_REQUEST: {
@@ -3625,6 +3660,7 @@ namespace Server {
 				} break;
 				}
 			}
+#endif
 		} break;
 
 		case Server_State::RUNNING: {
