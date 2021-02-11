@@ -25,6 +25,11 @@ struct Bullet_Spawn_Payload {
 	Transform transform;
 };
 
+struct Emitter_Spawn_Payload {
+	Vec2 position;
+	Color_Id color_id;
+};
+
 //
 //
 //
@@ -67,6 +72,11 @@ struct Input_Payload {
 	};
 };
 
+struct Character_Controller_Update_Payload {
+	Entity_Id id;
+	Input_Payload input;
+};
+
 struct Join_Request_Payload {
 	u32 version;
 };
@@ -88,10 +98,18 @@ struct Room_Member_Payload {
 
 struct Room_Update_Payload {
 	enum Type : u32 {
-		READY, START
+		READY, UNREADY
 	};
 
 	Type type;
+};
+
+struct Start_Game_Payload {
+	u32 player_count;
+};
+
+struct Finish_Game_Payload {
+	Color_Id color_id;
 };
 
 struct Error_Payload {
@@ -126,15 +144,19 @@ struct Message {
 		ROOM_MEMBER,
 		GET_PLAYER,
 		ROOM_UPDATE,
+		START_GAME,
+		FINISH_GAME,
 		ERROR,
 
 		REMOVE_ENTITY,
 		CHARACTER_SPAWN,
 		BULLET_SPAWN,
+		EMITTER_SPAWN,
 		CHARACTER_SPACIAL_UPDATE,
 		CHARACTER_COLOR_UPDATE,
 		BULLET_SPACIAL_UPDATE,
-		INPUT
+		INPUT,
+		CHARACTER_CONTROLLER_UPDATE,
 	};
 
 	union Payload {
@@ -143,15 +165,19 @@ struct Message {
 		Room_Member_Payload					room_member;
 		Get_Player_Payload					get_player;
 		Room_Update_Payload					room_update;
+		Start_Game_Payload					start_game;
+		Finish_Game_Payload					finish_game;
 		Error_Payload						error;
 
 		Remove_Entity_Payload				remove_entity;
 		Character_Spawn_Payload				character_spawn;
 		Bullet_Spawn_Payload				bullet_spawn;
+		Emitter_Spawn_Payload				emitter_spawn;
 		Character_Spacial_Update_Payload	character_spacial_update;
 		Character_Color_Update_Payload		character_color_update;
 		Bullet_Spacial_Update_Payload		bullet_spacial_update;
 		Input_Payload						input;
+		Character_Controller_Update_Payload	character_controller_update;
 	};
 
 	Header	header;
@@ -212,6 +238,26 @@ struct Message {
 		return &payload.room_update;
 	}
 
+	template <>
+	Start_Game_Payload *as(u32 id, u32 timestamp) {
+		header.source = Source::SERVER;
+		header.author_id = id;
+		header.timestamp = timestamp;
+
+		type = Type::START_GAME;
+		return &payload.start_game;
+	}
+
+	template <>
+	Finish_Game_Payload *as(u32 id, u32 timestamp) {
+		header.source = Source::SERVER;
+		header.author_id = id;
+		header.timestamp = timestamp;
+
+		type = Type::FINISH_GAME;
+		return &payload.finish_game;
+	}
+
 	template <> 
 	Error_Payload *as(u32 id, u32 timestamp) {
 		header.source = Source::SERVER;
@@ -253,6 +299,16 @@ struct Message {
 	}
 
 	template <>
+	Emitter_Spawn_Payload *as(u32 id, u32 timestamp) {
+		header.source = Source::SERVER;
+		header.author_id = id;
+		header.timestamp = timestamp;
+
+		type = Type::EMITTER_SPAWN;
+		return &payload.emitter_spawn;
+	}
+
+	template <>
 	Character_Spacial_Update_Payload *as(u32 id, u32 timestamp) {
 		header.source = Source::SERVER;
 		header.author_id = id;
@@ -290,6 +346,16 @@ struct Message {
 
 		type = Type::INPUT;
 		return &payload.input;
+	}
+
+	template <>
+	Character_Controller_Update_Payload *as(u32 id, u32 timestamp) {
+		header.source = Source::SERVER;
+		header.author_id = id;
+		header.timestamp = timestamp;
+
+		type = Type::CHARACTER_CONTROLLER_UPDATE;
+		return &payload.character_controller_update;
 	}
 
 	template <typename T>
