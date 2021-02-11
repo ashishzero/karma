@@ -122,8 +122,9 @@ typedef void (*Scene_Frame_End_Proc)(Scene*);
 
 struct Connected_Client {
 	Ip_Endpoint ip_endpoint;
-	u32 id;
-	Entity_Id player;
+	Entity_Id	player;
+	u32			id;
+	bool		ready;
 };
 
 struct Scene_Global {
@@ -159,6 +160,7 @@ struct Scene_Global {
 	bool client_is_ready;
 
 	Connected_Client clients[MAX_CLIENTS_PER_ROOM];
+	u32				 n_clients;
 
 	//
 	//
@@ -1185,7 +1187,7 @@ r32 color_id_get_intensity(Color_Id color_id) {
 	return INTENS[(int)color_id];
 }
 
-Character *scene_add_player(Scene* scene, Entity_Id player_id, Color_Id color_id, Vec2 p, r32 rotation, Vec2 velocity, const Transform &transform) {
+Character* scene_add_player(Scene* scene, Entity_Id player_id, Color_Id color_id, Vec2 p, r32 rotation, Vec2 velocity, const Transform& transform) {
 	Resource_Id id = { 6895733819830550519 }; // TODO: hard coded resource id
 	Resource_Collection resource = scene_find_resource(id);
 
@@ -1247,9 +1249,11 @@ Character *scene_add_player(Scene* scene, Entity_Id player_id, Color_Id color_id
 	body->fixture_count = fixture ? fixture->count : 0;
 	body->entity_id = character->id;
 	body->bounding_box = scene_rigid_body_bounding_box(body, 0);
+
+	return character;
 }
 
-Bullet* scene_add_bullet(Scene* scene, Entity_Id bullet_id, Color_Id color_id, Vec2 p, Vec2 velocity, const Transform &transform) {
+Bullet* scene_add_bullet(Scene* scene, Entity_Id bullet_id, Color_Id color_id, Vec2 p, Vec2 velocity, const Transform& transform) {
 	Resource_Id id = { 6926438366305714858 }; // TODO: hard coded resource id
 	Resource_Collection resource = scene_find_resource(id);
 
@@ -1315,7 +1319,8 @@ Character* scene_spawn_player(Scene* scene, Vec2 p, Color_Id color_id) {
 		}
 
 		return scene_get_player(scene);
-	} else {
+	}
+	else {
 		Resource_Id id = { 6895733819830550519 }; // TODO: hard coded resource id
 		Resource_Collection resource = scene_find_resource(id);
 
@@ -1387,7 +1392,8 @@ Bullet* scene_spawn_bullet(Scene* scene, Vec2 p, Color_Id color_id, Vec2 dir) {
 	if (g.method != Scene_Run_Method_SERVER) {
 		audio_pitch_factor(bullet->audio, random_r32_range_r32(0.9f, 1.0f));
 		audio_play(bullet->audio);
-	} else {
+	}
+	else {
 		unimplemented("Send Spawn Bullet Server Message");
 	}
 
@@ -3073,7 +3079,35 @@ void iscene_tick_server(Scene* scene, r32 dt) {
 
 	iscene_update_positions(scene);
 
-	unimplemented("Send Server Messages");
+	for (int i = 1; i <= MAX_CLIENTS_PER_ROOM; i++) {
+		if (g.clients[i].id) {
+			auto character = scene->by_type.character;
+			auto bullet = scene->by_type.bullet;
+
+			Message msg;
+			auto d = msg.as<Character_Spacial_Update_Payload>(0, g.timestamp++);
+
+			for (auto& c : character) {
+				d->position = c.position;
+				d->id = c.id;
+				d->rotation = c.rotation;
+				d->transform = c.rigid_body->transform;
+				d->hit = c.hit;
+				d->velocity = c.rigid_body->velocity;
+			}
+			auto b = msg.as<Bullet_Spacial_Update_Payload>(0, g.timestamp++);
+
+			for (auto& x : bullet) {
+				b->id = x.id;
+				b->position = x.position;
+				b->transform = x.rigid_body->transform;
+				b->velocity = x.rigid_body->velocity;
+
+			}
+		}
+	}
+
+
 }
 
 bool update_input(Scene* scene, const Event& event) {
@@ -3710,8 +3744,6 @@ namespace Client {
 
 					Message res;
 					auto data = res.as<Get_Player_Payload>(g.client_id, g.timestamp++);
-					data->id = payload->player_id;
-					Send_Message(res);
 
 					for (auto i = 0; i < MAX_CLIENTS_PER_ROOM; ++i) {
 						data->id = payload->id[i];
@@ -3738,7 +3770,7 @@ namespace Client {
 					auto res = msg.as<Get_Player_Payload>(g.client_id, g.timestamp++);
 
 					for (auto i = 0; i < MAX_CLIENTS_PER_ROOM; ++i) {
-						if (!scene_find_entity(scene, payload->id[i], &ref)) {
+						if (payload[i].id->handle && !scene_find_entity(scene, payload->id[i], &ref)) {
 							res->id = payload->id[i];
 							Send_Message(msg);
 						}
@@ -3752,7 +3784,8 @@ namespace Client {
 					if (!scene_find_entity(scene, payload->id, &ref)) {
 						scene_add_player(scene, payload->id, payload->color_id, payload->position, payload->rotation, payload->velocity, payload->transform);
 					}
-				} else if (msg.type == Message::Type::ERROR) {
+				}
+				else if (msg.type == Message::Type::ERROR) {
 					// TODO: Handle error
 				}
 			}
@@ -3869,24 +3902,70 @@ namespace Server {
 					Message res;
 
 					if (payload->version == 0) {
-						auto res_payload = res.as<Join_Acknowledgement_Payload>(0, g.timestamp++);
-						res_payload->client_id = 4;
-						res_payload->player_id = { 25 };
+						if (g.n_clients < MAX_CLIENTS_PER_ROOM) {
+							u32 client_id = 0;
+							for (int i = 0; i < MAX_CLIENTS_PER_ROOM; i++) {
+								if (g.clients[i].id == 0) {
+									client_id = i + 1;
+								}
+							}
+
+							assert(client_id != 0);
+							g.n_clients += 1;
+
+							auto player = scene_spawn_player(scene, vec2(0), Color_Id_A);
+
+							g.clients[client_id - 1].id = client_id;
+							g.clients[client_id - 1].ip_endpoint = ip_client;
+							g.clients[client_id - 1].player = player->id;
+							g.clients[client_id - 1].ready = false;
+
+							auto rpayload = res.as<Join_Acknowledgement_Payload>(0, g.timestamp++);
+							rpayload->client_id = client_id;
+							rpayload->player_id = player->id;
+
+							for (auto i = 0; i < MAX_CLIENTS_PER_ROOM; ++i) {
+								rpayload->id[i] = g.clients[i].player;
+							}
+
+							Send_Message(res, ip_client);
+						}
+						else {
+							auto res_payload = res.as<Error_Payload>(0, g.timestamp++);
+							res_payload->type = Error_Payload::ROOM_FULL;
+							Send_Message(res, ip_client);
+						}
 					}
 					else {
 						auto res_payload = res.as<Error_Payload>(0, g.timestamp++);
 						res_payload->type = Error_Payload::INCORRECT_VERSION;
+						Send_Message(res, ip_client);
 					}
-
-					Send_Message(res, ip_client);
 				} break;
 
 				case Message::Type::ROOM_UPDATE: {
-
+					if (ip_client == g.clients[message.header.author_id].ip_endpoint) {
+						g.clients[message.header.author_id].ready = true;
+					}
 				} break;
 
-				case Message::Type::INPUT: {
+				case Message::Type::GET_PLAYER: {
+					auto payload = message.get<Get_Player_Payload>();
+					Entity_Reference ref;
+					if (scene_find_entity(scene, payload->id, &ref)) {
+						auto c = scene_entity_pointer(scene, ref)->as<Character>();
 
+						Message res;
+						auto d = res.as<Character_Spacial_Update_Payload>(0, g.timestamp++);
+						d->position = c->position;
+						d->id = c->id;
+						d->rotation = c->rotation;
+						d->transform = c->rigid_body->transform;
+						d->hit = c->hit;
+						d->velocity = c->rigid_body->velocity;
+
+						Send_Message(res, ip_client);
+					}
 				} break;
 				}
 			}
@@ -3895,9 +3974,6 @@ namespace Server {
 		case Server_State::RUNNING: {
 			// Receive from clients
 			// TODO:: Add support for multiple clients
-
-			unimplemented("Reveice Message from Clients");
-
 			Message message;
 			Ip_Endpoint ip_client;
 
@@ -3905,18 +3981,19 @@ namespace Server {
 			auto& controller = player->controller;
 
 			while (Receive_Message(&message, &ip_client)) {
-				if (message.type == Message::Type::INPUT) {
-					auto in = message.get<Input_Payload>();
-					switch (in->type) {
-					case Input_Payload::X_POINTER: controller.pointer.x = in->real_value; break;
-					case Input_Payload::Y_POINTER: controller.pointer.y = in->real_value; break;
-					case Input_Payload::X_AXIS:	controller.axis.x = in->real_value; break;
-					case Input_Payload::Y_AXIS:	controller.axis.y = in->real_value; break;
-					case Input_Payload::ATTACK:	controller.attack = in->signed_value; break;
+				if (ip_client == g.clients[message.header.author_id].ip_endpoint) {
+					if (message.type == Message::Type::INPUT) {
+						auto in = message.get<Input_Payload>();
+						switch (in->type) {
+						case Input_Payload::X_POINTER: controller.pointer.x = in->real_value; break;
+						case Input_Payload::Y_POINTER: controller.pointer.y = in->real_value; break;
+						case Input_Payload::X_AXIS:	controller.axis.x = in->real_value; break;
+						case Input_Payload::Y_AXIS:	controller.axis.y = in->real_value; break;
+						case Input_Payload::ATTACK:	controller.attack = in->signed_value; break;
+						}
 					}
 				}
 			}
-
 		} break;
 		}
 
@@ -3930,7 +4007,24 @@ namespace Server {
 
 		switch (g.s_server) {
 		case Server_State::WAITING: {
-			// Handshake and such??
+			Message msg;
+			auto payload = msg.as<Room_Member_Payload>(0, g.timestamp++);
+
+			for (int i = 1; i <= MAX_CLIENTS_PER_ROOM; i++) {
+				if (g.clients[i].id) {
+					payload->id[i] = g.clients[i].player;
+				}
+				else {
+					payload->id[i] = { 0 };
+				}
+			}
+
+			for (int i = 1; i <= MAX_CLIENTS_PER_ROOM; i++) {
+				if (g.clients[i].id) {
+					payload->ready = g.clients[i].ready;
+					Send_Message(msg, g.clients[i].ip_endpoint);
+				}
+			}
 		} break;
 
 		case Server_State::RUNNING: {
@@ -3946,10 +4040,11 @@ namespace Server {
 
 				Dev_TimedScope(SimulationFrame);
 
-				iscene_tick(scene, dt);
+				iscene_tick_server(scene, dt);
 
 				scene->physics.accumulator_t -= dt;
 			}
+
 		} break;
 		}
 	}
