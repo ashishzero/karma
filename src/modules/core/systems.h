@@ -494,6 +494,14 @@ struct Ip_Endpoint {
 	u16 port;
 };
 
+inline bool operator==(const Ip_Endpoint &a, const Ip_Endpoint &b) {
+	return a.address == b.address && a.port == b.port;
+}
+
+inline bool operator!=(const Ip_Endpoint &a, const Ip_Endpoint &b) {
+	return !(a == b);
+}
+
 inline Ip_Endpoint ip_endpoint(u8 a, u8 b, u8 c, u8 d, u16 port) {
 	Ip_Endpoint endpoint;
 	endpoint.address = (( a << 24 ) | ( b << 16 ) | ( c << 8  ) | d);

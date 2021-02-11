@@ -8,7 +8,7 @@ int karma_user_shankar() {
 	}
 #endif
 
-	scene_prepare(Scene_Run_Method_DEVELOP, Render_Backend_DIRECTX11, System_Window_Show_NORMAL);
+	scene_prepare(Scene_Run_Method_CLIENT, Render_Backend_DIRECTX11, System_Window_Show_NORMAL);
 
 	Scene* scene = scene_create();
 
@@ -28,27 +28,7 @@ int karma_user_shankar() {
 
 		scene_render(scene);
 
-		const auto VIEW_HEIGHT = 10.0f;
-		const auto VIEW_WIDTH = 16.0f/9.0f * VIEW_HEIGHT;
-
-		auto view = orthographic_view(0.0f, VIEW_WIDTH, VIEW_HEIGHT , 0.0f);
-
-		//auto& io = ImGui::GetIO();
-
-		//Vec2 cursor = io.MousePos;
-
-		//// Convert cursor and delta value from window space into world space
-		//cursor.x /= window_w;
-		//cursor.y /= window_h;
-		//cursor.y = 1.0f - cursor.y;
-		//cursor = 2.0f * cursor - vec2(1);
-
-		//cursor.x *= iscale * view_width;
-		//cursor.y *= iscale * view_height;
-		im2d_begin(view);
-		im2d_rect(vec2(5), vec2(4), vec4(1));
-		im2d_end();
-
+		
 		scene_end_drawing();
 
 		scene_frame_end(scene);

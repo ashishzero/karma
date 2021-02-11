@@ -100,6 +100,19 @@ static bool test_fixture_point(Fixture &a, const Transform &ta, Vec2 point, r32 
 // End Collision
 //
 
+enum class Server_State {
+	WAITING,
+	RUNNING
+};
+
+enum class Client_State {
+	MENU,
+	CONNECTING,
+	WAITING,
+	RUNNING,
+	END_GAME
+};
+
 typedef void (*Scene_Frame_Begin_Proc)(Scene *);
 typedef void (*Scene_Frame_Simulate_Proc)(Scene *);
 typedef void (*Scene_Begin_Drawing_Proc)();
@@ -109,6 +122,9 @@ typedef void (*Scene_Frame_End_Proc)(Scene *);
 
 struct Scene_Global {
 	Scene_Run_Method method;
+
+	Server_State s_server;
+	Client_State s_client;
 
 	Handle platform;
 	Render_Backend render_backend;
@@ -190,6 +206,9 @@ static Scene_Global g;
 
 void scene_prepare(Scene_Run_Method method, Render_Backend backend, System_Window_Show show) {
 	g.method = method;
+
+	g.s_server = Server_State::WAITING;
+	g.s_client = Client_State::MENU;
 
 	if (method != Scene_Run_Method_SERVER) {
 		g.framebuffer_w = 1280;
@@ -3225,7 +3244,6 @@ namespace Develop {
 
 		gfx_end_drawing();
 		gfx_apply_bloom(2);
-
 		gfx_begin_drawing(Framebuffer_Type_DEFAULT, Clear_COLOR, vec4(0.0f));
 		gfx_blit_hdr(0, 0, g.window_w, g.window_h);
 		gfx_viewport(0, 0, g.window_w, g.window_h);
@@ -3271,18 +3289,34 @@ namespace Develop {
 
 namespace Client {
 
-	void collect_input_events(Scene *scene, const Event &event, Array<Message_Input> *inputs) {
+	void Send_Message(Message &message) {
+		auto bytes_sent = system_net_send_to(g.socket, &message, sizeof(Message), g.server_ip);
+		if (bytes_sent < 0) {
+			// TODO: Handle error!!!!
+		}
+	}
+
+	bool Receive_Message(Message *message) {
+		Ip_Endpoint server_endpoint;
+		while (true) {
+			auto bytes_received = system_net_receive_from(g.socket, message, sizeof(Message), &server_endpoint);
+			if (bytes_received < 0) return false;
+			if (bytes_received == sizeof(Message) && server_endpoint == g.server_ip && message->header.source == Message::Source::SERVER) return true;
+		}
+		return false;
+	}
+
+	void collect_input_events(Scene *scene, const Event &event, Array<Message> *inputs, u32 id) {
 		if (event.type & Event_Type_MOUSE_CURSOR) {
 			auto pointer = vec2((r32)event.mouse_cursor.x / g.window_w, (r32)event.mouse_cursor.y / g.window_h);
 			pointer = 2 * pointer - vec2(1);
 
-			auto msg0 = array_add(inputs);
-			auto msg1 = array_add(inputs);
-
-			msg0->type = Message_Input::X_POINTER;
+			auto msg0 = array_add(inputs)->as<Input_Payload>(id);
+			msg0->type = Input_Payload::X_POINTER;
 			msg0->real_value = pointer.x;
 
-			msg1->type = Message_Input::Y_POINTER;
+			auto msg1 = array_add(inputs)->as<Input_Payload>(id);
+			msg1->type = Input_Payload::Y_POINTER;
 			msg1->real_value = pointer.y;
 		}
 
@@ -3291,35 +3325,35 @@ namespace Client {
 			switch (event.key.symbol) {
 				case Key_D:
 				case Key_RIGHT: {
-					auto msg = array_add(inputs);
-					msg->type = Message_Input::X_AXIS;
+					auto msg = array_add(inputs)->as<Input_Payload>(id);
+					msg->type = Input_Payload::X_AXIS;
 					msg->real_value = value;
 				} break;
 
 				case Key_A:
 				case Key_LEFT: {
-					auto msg = array_add(inputs);
-					msg->type = Message_Input::X_AXIS;
+					auto msg = array_add(inputs)->as<Input_Payload>(id);
+					msg->type = Input_Payload::X_AXIS;
 					msg->real_value = -value;
 				} break;
 
 				case Key_W:
 				case Key_UP: {
-					auto msg = array_add(inputs);
-					msg->type = Message_Input::Y_AXIS;
+					auto msg = array_add(inputs)->as<Input_Payload>(id);
+					msg->type = Input_Payload::Y_AXIS;
 					msg->real_value = value;
 				} break;
 
 				case Key_S:
 				case Key_DOWN: {
-					auto msg = array_add(inputs);
-					msg->type = Message_Input::Y_AXIS;
+					auto msg = array_add(inputs)->as<Input_Payload>(id);
+					msg->type = Input_Payload::Y_AXIS;
 					msg->real_value = -value;
 				} break;
 
 				case Key_SPACE: {
-					auto msg = array_add(inputs);
-					msg->type = Message_Input::ATTACK;
+					auto msg = array_add(inputs)->as<Input_Payload>(id);
+					msg->type = Input_Payload::ATTACK;
 					msg->signed_value = (event.key.state == Key_State_DOWN);
 				} break;
 			}
@@ -3329,7 +3363,7 @@ namespace Client {
 	void Scene_Frame_Begin(Scene *scene) {
 		Dev_TimedFrameBegin();
 
-		Array<Message_Input> inputs;
+		Array<Message> inputs;
 		inputs.allocator = TEMPORARY_ALLOCATOR;
 
 		Dev_TimedBlockBegin(EventHandling);
@@ -3351,12 +3385,14 @@ namespace Client {
 				break;
 			}
 
-			update_input(scene, event); // TODO: probably remove this??
-			collect_input_events(scene, event, &inputs);
+			if (g.s_client == Client_State::RUNNING) {
+				update_input(scene, event);
+				collect_input_events(scene, event, &inputs, 0); // TODO: give proper id
+			}
 		}
 
 		for (auto &in : inputs) {
-			system_net_send_to(g.socket, &in, sizeof(Message_Input), g.server_ip);
+			Send_Message(in);
 		}
 
 		Dev_TimedBlockEnd(EventHandling);
@@ -3365,15 +3401,35 @@ namespace Client {
 	void Scene_Frame_Simulate(Scene *scene) {
 		Dev_TimedScope(Simulation);
 
-		const r32 dt = scene->physics.fixed_dt;
+		switch (g.s_client) {
+			case Client_State::MENU: {
 
-		while (scene->physics.accumulator_t >= dt) {
-			Dev_TimedScope(SimulationFrame);
-			iscene_tick_client(scene, dt);
-			scene->physics.accumulator_t -= dt;
+			} break;
+
+			case Client_State::CONNECTING: {
+
+			} break;
+
+			case Client_State::WAITING: {
+
+			} break;
+
+			case Client_State::RUNNING: {
+				const r32 dt = scene->physics.fixed_dt;
+
+				while (scene->physics.accumulator_t >= dt) {
+					Dev_TimedScope(SimulationFrame);
+					iscene_tick_client(scene, dt);
+					scene->physics.accumulator_t -= dt;
+				}
+
+				iscene_update_audio_and_ui(scene);
+			} break;
+
+			case Client_State::END_GAME: {
+
+			} break;
 		}
-
-		iscene_update_audio_and_ui(scene);
 	}
 
 	void Scene_Begin_Drawing() {
@@ -3381,11 +3437,78 @@ namespace Client {
 	}
 
 	void Scene_Render(Scene *scene, bool draw_editor) {
-		Develop::Scene_Render(scene, draw_editor);
+		switch (g.s_client) {
+			case Client_State::MENU: {
+				const auto VIEW_HEIGHT = 10.0f;
+				const auto VIEW_WIDTH = 16.0f / 9.0f * VIEW_HEIGHT;
+
+				auto view = orthographic_view(0.0f, VIEW_WIDTH, VIEW_HEIGHT, 0.0f);
+				Vec2 cursor = system_get_cursor_position();
+
+				// convert cursor and delta value from window space into world space
+				cursor.x /= g.window_w;
+				cursor.y /= g.window_h;
+
+				auto connect_button = mm_rect(vec2(5), vec2(9));
+				auto color = vec4(1);
+
+				cursor.x *=  VIEW_WIDTH;
+				cursor.y *= VIEW_HEIGHT;
+
+				system_trace("%f, %f", cursor.x, cursor.y);
+
+				if (test_point_inside_rect(cursor, connect_button)) {
+					color = vec4(1, 1, 0);
+
+					if (system_button(Button_LEFT)) {
+						Message msg;
+						auto payload = msg.as<Join_Request_Payload>(0);
+						payload->version = 0;
+						Send_Message(msg);
+						g.s_client = Client_State::CONNECTING;
+					}
+				}
+
+				im2d_begin(view);
+				im2d_rect(connect_button.min, connect_button.max - connect_button.min, color);
+				im2d_end();
+				
+
+			} break;
+
+			case Client_State::CONNECTING: {
+					system_trace("message received");
+			} break;
+
+			case Client_State::WAITING: {
+
+			} break;
+
+			case Client_State::RUNNING: {
+				Develop::Scene_Render(scene, false);
+			} break;
+
+			case Client_State::END_GAME: {
+
+			} break;
+		}
 	}
 
 	void Scene_End_Drawing() {
-		Develop::Scene_End_Drawing();
+		Dev_TimedScope(FinishRendering);
+
+		gfx_end_drawing();
+		gfx_apply_bloom(2);
+
+		gfx_begin_drawing(Framebuffer_Type_DEFAULT, Clear_COLOR, vec4(0.0f));
+		gfx_blit_hdr(0, 0, g.window_w, g.window_h);
+		gfx_viewport(0, 0, g.window_w, g.window_h);
+
+		gfx_end_drawing();
+
+		Dev_TimedBlockBegin(Present);
+		gfx_present();
+		Dev_TimedBlockEnd(Present);
 	}
 
 	void Scene_Frame_End(Scene *scene) {
@@ -3394,6 +3517,22 @@ namespace Client {
 }
 
 namespace Server {
+	void Send_Message(Message &message, Ip_Endpoint &endpoint) {
+		auto bytes_sent = system_net_send_to(g.socket, &message, sizeof(Message), endpoint);
+		if (bytes_sent < 0) {
+			// TODO: Handle error!!!!
+		}
+	}
+
+	bool Receive_Message(Message *message, Ip_Endpoint *endpoint) {
+		while (true) {
+			auto bytes_received = system_net_receive_from(g.socket, message, sizeof(Message), endpoint);
+			if (bytes_received < 0) return false;
+			if (bytes_received == sizeof(Message) && message->header.source == Message::Source::CLIENT) return true;
+		}
+		return false;
+	}
+
 	void Scene_Frame_Begin(Scene *scene) {
 		Dev_TimedFrameBegin();
 
@@ -3408,56 +3547,72 @@ namespace Server {
 			}
 		}
 
-		// Receive from clients
-		// TODO:: Add support for multiple clients
+		Dev_TimedBlockBegin(NetworkReveice);
 
-		unimplemented("Reveice Message from Clients");
+		switch (g.s_server) {
+			case Server_State::WAITING: {
+				// Add clients to the list and send the list to other clients
+			} break;
 
-		Message_Input in;
-		Ip_Endpoint ip_client;
+			case Server_State::RUNNING: {
+				// Receive from clients
+				// TODO:: Add support for multiple clients
 
-		auto player = scene_get_player(scene);
-		auto &controller = player->controller;
+				unimplemented("Reveice Message from Clients");
 
-		s32 bytes_received = 1;
-		while (bytes_received) {
-			bytes_received = system_net_receive_from(g.socket, &in, sizeof(Message_Input), &ip_client);
-			if (bytes_received < 0) {
-				break;
-			} else if (bytes_received != sizeof(Message_Input)) {
-				system_display_critical_message("Invalid message received");
-			} else {
-				switch (in.type) {
-					case Message_Input::X_POINTER: controller.pointer.x = in.real_value; break;
-					case Message_Input::Y_POINTER: controller.pointer.y = in.real_value; break;
-					case Message_Input::X_AXIS:	controller.axis.x = in.real_value; break;
-					case Message_Input::Y_AXIS:	controller.axis.y = in.real_value; break;
-					case Message_Input::ATTACK:	controller.attack = in.signed_value; break;
+				Message message;
+				Ip_Endpoint ip_client;
+
+				auto player = scene_get_player(scene);
+				auto &controller = player->controller;
+
+				while (Receive_Message(&message, &ip_client)) {
+					if (message.type == Message::Type::INPUT) {
+						auto in = message.get<Input_Payload>();
+						switch (in->type) {
+							case Input_Payload::X_POINTER: controller.pointer.x = in->real_value; break;
+							case Input_Payload::Y_POINTER: controller.pointer.y = in->real_value; break;
+							case Input_Payload::X_AXIS:	controller.axis.x = in->real_value; break;
+							case Input_Payload::Y_AXIS:	controller.axis.y = in->real_value; break;
+							case Input_Payload::ATTACK:	controller.attack = in->signed_value; break;
+						}
+					}
 				}
-			}
+
+			} break;
 		}
 
+		Dev_TimedBlockEnd(NetworkReveice);
+		
 		Dev_TimedBlockEnd(EventHandling);
 	}
 
 	void Scene_Frame_Simulate(Scene *scene) {
 		Dev_TimedScope(Simulation);
 
-		iscene_pre_simulate(scene);
+		switch (g.s_server) {
+			case Server_State::WAITING: {
+				// Handshake and such??
+			} break;
 
-		const r32 dt = scene->physics.fixed_dt;
+			case Server_State::RUNNING: {
+				iscene_pre_simulate(scene);
 
-		while (scene->physics.accumulator_t >= dt) {
-			if (scene->physics.state == Physics_State_PAUSED)
-				break;
-			else if (scene->physics.state == Physics_State_RUN_SINGLE_STEP)
-				scene->physics.state = Physics_State_PAUSED;
+				const r32 dt = scene->physics.fixed_dt;
 
-			Dev_TimedScope(SimulationFrame);
+				while (scene->physics.accumulator_t >= dt) {
+					if (scene->physics.state == Physics_State_PAUSED)
+						break;
+					else if (scene->physics.state == Physics_State_RUN_SINGLE_STEP)
+						scene->physics.state = Physics_State_PAUSED;
 
-			iscene_tick(scene, dt);
+					Dev_TimedScope(SimulationFrame);
 
-			scene->physics.accumulator_t -= dt;
+					iscene_tick(scene, dt);
+
+					scene->physics.accumulator_t -= dt;
+				}
+			} break;
 		}
 	}
 
