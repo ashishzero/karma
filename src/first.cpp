@@ -13,8 +13,6 @@ int karma_main_template();
 int main() {
 	#ifdef BUILD_CLIENT_APP
 	return karma_client();
-	#elif BUILD_SERVER_APP
-	return karma_server();
 	#else
 
 	auto user = system_read_entire_file("dev/local.karma");

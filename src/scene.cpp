@@ -120,6 +120,12 @@ typedef void (*Scene_Render_Proc)(Scene*, bool);
 typedef void (*Scene_End_Drawing_Proc)();
 typedef void (*Scene_Frame_End_Proc)(Scene*);
 
+struct Connected_Client {
+	Ip_Endpoint ip_endpoint;
+	u32 id;
+	Entity_Id player;
+};
+
 struct Scene_Global {
 	Scene_Run_Method method;
 
@@ -148,6 +154,8 @@ struct Scene_Global {
 	u32 timestamp;
 
 	Ip_Endpoint server_ip;
+
+	Connected_Client clients[MAX_CLIENTS_PER_ROOM];
 
 	//
 	//
@@ -267,7 +275,7 @@ void scene_prepare(Scene_Run_Method method, Render_Backend backend, System_Windo
 
 	if (method != Scene_Run_Method_DEVELOP) {
 
-		g.server_ip = ip_endpoint_local(SERVER_CONNECTION_PORT);
+		g.server_ip = ip_endpoint(10, 100, 0, 227, SERVER_CONNECTION_PORT);
 
 		if (method == Scene_Run_Method_CLIENT) {
 			g.socket = system_net_open_udp_client();
@@ -3604,36 +3612,6 @@ namespace Server {
 			Message message;
 			Ip_Endpoint ip_client;
 
-#if 0
-			if (system_net_receive_from(g.socket, &message, sizeof(Message), &ip_client) > 0) {
-				switch (message.type) {
-				case Message::Type::JOIN_REQUEST: {
-					auto payload = message.get<Join_Request_Payload>();
-					Message res;
-
-					if (payload->version == 0) {
-						auto res_payload = res.as<Join_Acknowledgement_Payload>(0, g.timestamp++);
-						res_payload->author_id = 4;
-						res_payload->player_id = { 25 };
-					}
-					else {
-						auto res_payload = res.as<Error_Payload>(0, g.timestamp++);
-						res_payload->type = Error_Payload::INCORRECT_VERSION;
-					}
-
-					Send_Message(res, ip_client);
-				} break;
-
-				case Message::Type::ROOM_UPDATE: {
-
-				} break;
-
-				case Message::Type::INPUT: {
-
-				} break;
-				}
-			}
-#else
 			while (Receive_Message(&message, &ip_client)) {
 				switch (message.type) {
 				case Message::Type::JOIN_REQUEST: {
@@ -3661,7 +3639,6 @@ namespace Server {
 				} break;
 				}
 			}
-#endif
 		} break;
 
 		case Server_State::RUNNING: {
