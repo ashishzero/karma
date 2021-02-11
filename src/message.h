@@ -151,102 +151,125 @@ struct Message {
 	Payload payload;
 
 	template <typename T>
-	T *as(u32 id) {
+	T *as(u32 id, u32 timestamp) {
 		return nullptr;
 	}
 
 	template <> 
-	Join_Request_Payload *as(u32 id) {
+	Join_Request_Payload *as(u32 id, u32 timestamp) {
 		header.source = Source::CLIENT;
 		header.author_id = id;
+		header.timestamp = timestamp;
 		type = Type::JOIN_REQUEST;
 		return &payload.join_request;
 	}
 
 	template <> 
-	Join_Acknowledgement_Payload *as(u32 id) {
+	Join_Acknowledgement_Payload *as(u32 id, u32 timestamp) {
 		header.source = Source::SERVER;
 		header.author_id = id;
+		header.timestamp = timestamp;
+
 		type = Type::JOIN_ACKNOWLEDGEMENT;
 		return &payload.join_acknowledgement;
 	}
 
 	template <> 
-	Room_Member_Payload *as(u32 id) {
+	Room_Member_Payload *as(u32 id, u32 timestamp) {
 		header.source = Source::SERVER;
 		header.author_id = id;
+		header.timestamp = timestamp;
+
 		type = Type::ROOM_MEMBER;
 		return &payload.room_member;
 	}
 
 	template <> 
-	Room_Update_Payload *as(u32 id) {
+	Room_Update_Payload *as(u32 id, u32 timestamp) {
 		header.source = Source::CLIENT;
 		header.author_id = id;
+		header.timestamp = timestamp;
+
 		type = Type::ROOM_UPDATE;
 		return &payload.room_update;
 	}
 
 	template <> 
-	Error_Payload *as(u32 id) {
+	Error_Payload *as(u32 id, u32 timestamp) {
 		header.source = Source::SERVER;
 		header.author_id = id;
+		header.timestamp = timestamp;
+
 		type = Type::ERROR;
 		return &payload.error;
 	}
 			
 	template <>
-	Remove_Entity_Payload *as(u32 id) {
+	Remove_Entity_Payload *as(u32 id, u32 timestamp) {
 		header.source = Source::SERVER;
 		header.author_id = id;
+		header.timestamp = timestamp;
+
 		type = Type::REMOVE_ENTITY;
 		return &payload.remove_entity;
 	}
 
 	template <>
-	Character_Spawn_Payload *as(u32 id) {
+	Character_Spawn_Payload *as(u32 id, u32 timestamp) {
 		header.source = Source::SERVER;
 		header.author_id = id;
+		header.timestamp = timestamp;
+
 		type = Type::CHARACTER_SPAWN;
 		return &payload.character_spawn;
 	}
 
 	template <>
-	Bullet_Spawn_Payload *as(u32 id) {
+	Bullet_Spawn_Payload *as(u32 id, u32 timestamp) {
 		header.source = Source::SERVER;
 		header.author_id = id;
+		header.timestamp = timestamp;
+
 		type = Type::BULLET_SPAWN;
 		return &payload.bullet_spawn;
 	}
 
 	template <>
-	Character_Spacial_Update_Payload *as(u32 id) {
+	Character_Spacial_Update_Payload *as(u32 id, u32 timestamp) {
 		header.source = Source::SERVER;
 		header.author_id = id;
+		header.timestamp = timestamp;
+
 		type = Type::CHARACTER_SPACIAL_UPDATE;
 		return &payload.character_spacial_update;
 	}
 
 	template <>
-	Character_Color_Update_Payload *as(u32 id) {
+	Character_Color_Update_Payload *as(u32 id, u32 timestamp) {
 		header.source = Source::SERVER;
 		header.author_id = id;
+		header.timestamp = timestamp;
+
 		type = Type::CHARACTER_COLOR_UPDATE;
 		return &payload.character_color_update;
 	}
 
 	template <>
-	Bullet_Spacial_Update_Payload *as(u32 id) {
+	Bullet_Spacial_Update_Payload *as(u32 id, u32 timestamp) {
 		header.source = Source::SERVER;
 		header.author_id = id;
+		header.timestamp = timestamp;
+
 		type = Type::BULLET_SPACIAL_UPDATE;
 		return &payload.bullet_spacial_update;
 	}
 
 	template <>
-	Input_Payload *as(u32 id) {
+	Input_Payload *as(u32 id, u32 timestamp) {
 		header.source = Source::CLIENT;
 		header.author_id = id;
+		header.timestamp = timestamp;
+
 		type = Type::INPUT;
 		return &payload.input;
 	}

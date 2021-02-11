@@ -145,6 +145,8 @@ struct Scene_Global {
 
 	Socket socket;
 
+	u32 timestamp;
+
 	Ip_Endpoint server_ip;
 
 	//
@@ -2242,13 +2244,17 @@ bool scene_load_level(Scene *scene, const String name) {
 
 	scene->loaded_level = index;
 
-	auto player = scene_spawn_player(scene, vec2(0), (Color_Id)random_get_range(0, (u32)Color_Id_COUNT));
+	if (g.method == Scene_Run_Method_DEVELOP) {
+		auto player = scene_spawn_player(scene, vec2(0), (Color_Id)random_get_range(0, (u32)Color_Id_COUNT));
+		Camera* camera = scene_primary_camera(scene);
 
-	Camera *camera = scene_primary_camera(scene);
-	camera->position = player->position;
-	camera->target_distance = 0.75f;
-	camera->distance = camera->target_distance + 1;
-	camera->behaviour |= Camera_Behaviour_ANIMATE_FOCUS;
+		if (player && camera) {
+			camera->position = player->position;
+			camera->target_distance = 0.75f;
+			camera->distance = camera->target_distance + 1;
+			camera->behaviour |= Camera_Behaviour_ANIMATE_FOCUS;
+		}
+	}
 
 	return true;
 }
@@ -3311,13 +3317,14 @@ namespace Client {
 			auto pointer = vec2((r32)event.mouse_cursor.x / g.window_w, (r32)event.mouse_cursor.y / g.window_h);
 			pointer = 2 * pointer - vec2(1);
 
-			auto msg0 = array_add(inputs)->as<Input_Payload>(id);
+			auto msg0 = array_add(inputs)->as<Input_Payload>(id,g.timestamp);
 			msg0->type = Input_Payload::X_POINTER;
 			msg0->real_value = pointer.x;
 
-			auto msg1 = array_add(inputs)->as<Input_Payload>(id);
+			auto msg1 = array_add(inputs)->as<Input_Payload>(id,g.timestamp);
 			msg1->type = Input_Payload::Y_POINTER;
 			msg1->real_value = pointer.y;
+			g.timestamp += 1;
 		}
 
 		if (event.type & Event_Type_KEYBOARD) {
@@ -3325,34 +3332,34 @@ namespace Client {
 			switch (event.key.symbol) {
 				case Key_D:
 				case Key_RIGHT: {
-					auto msg = array_add(inputs)->as<Input_Payload>(id);
+					auto msg = array_add(inputs)->as<Input_Payload>(id,g.timestamp++);
 					msg->type = Input_Payload::X_AXIS;
 					msg->real_value = value;
 				} break;
 
 				case Key_A:
 				case Key_LEFT: {
-					auto msg = array_add(inputs)->as<Input_Payload>(id);
+					auto msg = array_add(inputs)->as<Input_Payload>(id, g.timestamp++);
 					msg->type = Input_Payload::X_AXIS;
 					msg->real_value = -value;
 				} break;
 
 				case Key_W:
 				case Key_UP: {
-					auto msg = array_add(inputs)->as<Input_Payload>(id);
+					auto msg = array_add(inputs)->as<Input_Payload>(id, g.timestamp++);
 					msg->type = Input_Payload::Y_AXIS;
 					msg->real_value = value;
 				} break;
 
 				case Key_S:
 				case Key_DOWN: {
-					auto msg = array_add(inputs)->as<Input_Payload>(id);
+					auto msg = array_add(inputs)->as<Input_Payload>(id, g.timestamp++);
 					msg->type = Input_Payload::Y_AXIS;
 					msg->real_value = -value;
 				} break;
 
 				case Key_SPACE: {
-					auto msg = array_add(inputs)->as<Input_Payload>(id);
+					auto msg = array_add(inputs)->as<Input_Payload>(id, g.timestamp++);
 					msg->type = Input_Payload::ATTACK;
 					msg->signed_value = (event.key.state == Key_State_DOWN);
 				} break;
@@ -3462,7 +3469,7 @@ namespace Client {
 
 					if (system_button(Button_LEFT)) {
 						Message msg;
-						auto payload = msg.as<Join_Request_Payload>(0);
+						auto payload = msg.as<Join_Request_Payload>(0, g.timestamp++);
 						payload->version = 0;
 						Send_Message(msg);
 						g.s_client = Client_State::CONNECTING;
