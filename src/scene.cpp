@@ -3003,7 +3003,9 @@ void iscene_update_audio_params(Scene *scene) {
 			auto new_p = character.rigid_body->transform.p;
 
 			auto d = new_p - src;
-			character.fall->attenuation = vec2_dot(d, d);
+			auto a = vec2_dot(d, d);
+			character.fall->attenuation = a;
+			character.boost->attenuation = a;
 
 			if ((new_p.y - character.position.y < -0.001f) && character.controller.axis.y < 0) {
 				audio_play(character.fall, 0.3f);
