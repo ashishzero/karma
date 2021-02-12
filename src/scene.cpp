@@ -11,7 +11,7 @@
 #include ".generated/entity.typeinfo"
 
 #include "message.h"
-
+#define BUILD_CLIENT_APP
 //
 // Collision
 //
