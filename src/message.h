@@ -4,6 +4,13 @@
 constexpr u16 SERVER_CONNECTION_PORT = 9999;
 constexpr u16 MAX_CLIENTS_PER_ROOM   = 8;
 
+constexpr int MAX_USERNAME_LENGTH = 255;
+
+struct Username {
+	u8 data[MAX_USERNAME_LENGTH];
+	int length;
+};
+
 struct Remove_Entity_Payload {
 	Entity_Id id;
 };
@@ -15,6 +22,9 @@ struct Character_Spawn_Payload {
 	r32	 rotation;
 	Vec2 velocity;
 	Transform transform;
+
+	u32 client_id;
+	Username username;
 };
 
 struct Bullet_Spawn_Payload {
@@ -78,7 +88,8 @@ struct Character_Controller_Update_Payload {
 };
 
 struct Join_Request_Payload {
-	u32 version;
+	u32			version;
+	Username	username;
 };
 
 struct Join_Acknowledgement_Payload {
@@ -92,8 +103,8 @@ struct Get_Player_Payload {
 };
 
 struct Room_Member_Payload {
-	Entity_Id	id[MAX_CLIENTS_PER_ROOM];
-	bool		ready;
+	Entity_Id	player_id[MAX_CLIENTS_PER_ROOM];
+	bool		ready[MAX_CLIENTS_PER_ROOM];
 };
 
 struct Room_Update_Payload {

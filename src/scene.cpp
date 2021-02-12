@@ -125,6 +125,17 @@ struct Connected_Client {
 	Entity_Id	player;
 	u32			id;
 	bool		ready;
+	Username	username;
+};
+
+struct Room_Member {
+	u32			id;
+	Username	username;
+
+	Entity_Id	player_id;
+	Color_Id	color_id;
+
+	bool		ready;
 };
 
 struct Scene_Global {
@@ -158,6 +169,9 @@ struct Scene_Global {
 
 	u32 client_id;
 	bool client_is_ready;
+	String client_name;
+
+	Room_Member room_members[MAX_CLIENTS_PER_ROOM];
 
 	Connected_Client clients[MAX_CLIENTS_PER_ROOM];
 	u32				 n_clients;
@@ -293,6 +307,12 @@ void scene_prepare(Scene_Run_Method method, Render_Backend backend, System_Windo
 
 		if (method == Scene_Run_Method_CLIENT) {
 			g.socket = system_net_open_udp_client();
+
+			 g.client_name = system_read_entire_file("dev/local.karma");
+
+			if (!g.client_name.data) {
+				g.client_name = system_get_user_name();
+			}
 		} else {
 			g.socket = system_net_open_udp_server(g.server_ip);
 		}
@@ -464,6 +484,19 @@ void scene_shutdown() {
 	} else {
 		system_net_close_socket(g.socket);
 	}
+}
+
+Username string_to_username(const String string) {
+	int length = (int)minimum(string.count, MAX_USERNAME_LENGTH - 1);
+	Username username;
+	memcpy(username.data, string.data, length);
+	username.data[length] = 0;
+	username.length = length;
+	return username;
+}
+
+String username_to_string(Username &username) {
+	return String((char *)username.data, (s64)username.length);
 }
 
 //
@@ -3455,7 +3488,7 @@ void iscene_render_hud(Scene *scene) {
 				});
 
 	const r32 cx = 0.8f;
-	const r32 cy = VIEW_HEIGHT - cx;
+	const r32 cy = VIEW_HEIGHT - 1.0f;
 	const r32 color_potion_radius = 0.6f;
 	const r32 color_rect_height = color_potion_radius / (r32)(Color_Id_COUNT);
 	const r32 color_rect_max_width = 2.5f;
@@ -3489,6 +3522,16 @@ void iscene_render_hud(Scene *scene) {
 	auto potion_color = color_id_get_color(player->color_id);
 	potion_color.xyz *= color_id_get_intensity(player->color_id);
 	im2d_circle(vec2(cx, cy), color_potion_radius * 0.8f, potion_color);
+
+
+	im2d_bind_texture(g.mono_font.texture);
+
+	const auto font_size = 0.4f;
+	const auto font_pos = vec2(cx, cy + color_potion_radius);
+
+	im2d_text(font_pos, font_size, g.mono_font.info, g.client_name, vec4(1));
+
+	im2d_unbind_texture();
 
 	im2d_end();
 }
@@ -3878,6 +3921,9 @@ void Client::Scene_Frame_Simulate(Scene *scene) {
 						if (!scene_find_entity(scene, payload->id, &ref)) {
 							scene_add_player(scene, payload->id, payload->color_id, payload->position, payload->rotation, payload->velocity, payload->transform);
 						}
+
+						g.room_members[payload->client_id - 1].username = payload->username;
+						g.room_members[payload->client_id - 1].id = payload->client_id;
 					} break;
 
 					case Message::Type::BULLET_SPAWN: {
@@ -3970,11 +4016,16 @@ void Client::Scene_Frame_Simulate(Scene *scene) {
 						if (player && player->color_id == payload->color_id) {
 							// TODO: Player won the game
 						}
+
+						for (int i = 0; i < MAX_CLIENTS_PER_ROOM; ++i) {
+							g.room_members[i].ready = false;
+						}
+
 						g.s_client = Client_State::END_GAME;
 					} break;
 
 					case Message::Type::ERROR: {
-						// TODO: SOlve error
+						// TODO: Solwe error
 					} break;
 				}
 			}
@@ -3985,7 +4036,7 @@ void Client::Scene_Frame_Simulate(Scene *scene) {
 		} break;
 
 		case Client_State::END_GAME: {
-
+			// TODO Render scores
 		} break;
 	}
 }
@@ -4026,6 +4077,7 @@ void Client::Scene_Render(Scene *scene, bool draw_editor) {
 					Message msg;
 					auto payload = msg.as<Join_Request_Payload>(0, g.timestamp++);
 					payload->version = 0;
+					payload->username = string_to_username(g.client_name);
 					Send_Message(msg);
 					g.s_client = Client_State::CONNECTING;
 				}
@@ -4092,25 +4144,28 @@ void Client::Scene_Render(Scene *scene, bool draw_editor) {
 			while (Receive_Message(&msg)) {
 				if (msg.type == Message::Type::ROOM_MEMBER) {
 					auto payload = msg.get<Room_Member_Payload>();
-
 					Entity_Reference ref;
 					Message msg;
 					auto res = msg.as<Get_Player_Payload>(g.client_id, g.timestamp++);
 
 					for (auto i = 0; i < MAX_CLIENTS_PER_ROOM; ++i) {
-						if (payload[i].id->handle && !scene_find_entity(scene, payload->id[i], &ref)) {
-							res->id = payload->id[i];
+						if (payload->player_id[i].handle && !scene_find_entity(scene, payload->player_id[i], &ref)) {
+							res->id = payload->player_id[i];
 							Send_Message(msg);
 						}
+						g.room_members[i].ready = payload->ready[i];
 					}
 
-					g.client_is_ready = payload->ready;
+					g.client_is_ready = payload->ready[g.client_id - 1];
 				} else if (msg.type == Message::Type::CHARACTER_SPAWN) {
 					auto payload = msg.get<Character_Spawn_Payload>();
 					Entity_Reference ref;
 					if (!scene_find_entity(scene, payload->id, &ref)) {
 						scene_add_player(scene, payload->id, payload->color_id, payload->position, payload->rotation, payload->velocity, payload->transform);
 					}
+
+					g.room_members[payload->client_id - 1].username = payload->username;
+					g.room_members[payload->client_id - 1].id = payload->client_id;
 				} else if (msg.type == Message::Type::START_GAME) {
 					auto payload = msg.get<Start_Game_Payload>();
 					if (payload->player_count != scene->by_type.character.count) {
@@ -4134,13 +4189,13 @@ void Client::Scene_Render(Scene *scene, bool draw_editor) {
 			cursor.x *= view_width;
 			cursor.y *= view_height;
 
-			const auto font_size = 2.0f;
+			const auto font_size = 1.0f;
 
 			const String string = "Ready";
 			const auto region = im2d_calculate_text_region(font_size, g.mono_font.info, string);
 
 			const r32 offset = 0.5f;
-			const auto button_position = vec2(view_width * 0.5f - region.x * 0.5f - offset, view_height * 0.5f - region.y * 0.5f - offset);
+			const auto button_position = vec2(view_width * 0.5f - region.x * 0.5f - offset, 2.0f * offset);
 			const auto button_size = vec2(region.x + 2.0f * offset, region.y + 2.0f * offset);
 
 			auto button_color = vec4(1);
@@ -4169,6 +4224,19 @@ void Client::Scene_Render(Scene *scene, bool draw_editor) {
 			im2d_rect(button_position, button_size, button_color);
 
 			im2d_bind_texture(g.mono_font.texture);
+
+			r32 mem_y = 3.5f;
+			r32 mem_x = view_width * 0.35f;
+			for (int i = MAX_CLIENTS_PER_ROOM; i >= 0; --i) {
+				if (g.room_members[i].id) {
+					auto color = g.room_members[i].ready ? color_id_get_color(g.room_members[i].color_id) : vec4(1);
+					im2d_text(vec2(mem_x, mem_y), 0.4f, g.mono_font.info, username_to_string(g.room_members[i].username), color);
+				} else {
+					im2d_text(vec2(mem_x, mem_y), 0.4f, g.mono_font.info, "<empty>", vec4(0.7f, 0.7f, 0.7f));
+				}
+				mem_y += 0.6f;
+			}
+
 			im2d_text(button_position + vec2(offset), font_size, g.mono_font.info, string, vec4(0, 1, 0));
 			im2d_unbind_texture();
 
@@ -4304,6 +4372,7 @@ void Server::Scene_Frame_Begin(Scene *scene) {
 								g.clients[client_id - 1].ip_endpoint = ip_client;
 								g.clients[client_id - 1].player = player->id;
 								g.clients[client_id - 1].ready = false;
+								g.clients[client_id - 1].username = payload->username;
 
 								auto rpayload = res.as<Join_Acknowledgement_Payload>(0, g.timestamp++);
 								rpayload->client_id = client_id;
@@ -4353,21 +4422,30 @@ void Server::Scene_Frame_Begin(Scene *scene) {
 
 					case Message::Type::GET_PLAYER: {
 						auto payload = message.get<Get_Player_Payload>();
-						Entity_Reference ref;
-						if (scene_find_entity(scene, payload->id, &ref)) {
-							auto c = scene_entity_pointer(scene, ref)->as<Character>();
 
-							Message res;
-							auto d = res.as<Character_Spawn_Payload>(0, g.timestamp++);
+						for (int index = 0; index < MAX_CLIENTS_PER_ROOM; ++index) {
+							if (g.clients[index].id && g.clients[index].player.handle == payload->id.handle) {
+								Entity_Reference ref;
+								if (scene_find_entity(scene, payload->id, &ref)) {
+									auto c = scene_entity_pointer(scene, ref)->as<Character>();
 
-							d->id = c->id;
-							d->color_id = c->color_id;
-							d->position = c->position;
-							d->rotation = c->rotation;
-							d->transform = c->rigid_body->transform;
-							d->velocity = c->rigid_body->velocity;
+									Message res;
+									auto d = res.as<Character_Spawn_Payload>(0, g.timestamp++);
 
-							Server::Send_Message(res, ip_client);
+									d->id = c->id;
+									d->color_id = c->color_id;
+									d->position = c->position;
+									d->rotation = c->rotation;
+									d->transform = c->rigid_body->transform;
+									d->velocity = c->rigid_body->velocity;
+
+									d->client_id = g.clients[index].id;
+									d->username = g.clients[index].username;
+
+									Server::Send_Message(res, ip_client);
+									break;
+								}
+							}
 						}
 					} break;
 				}
@@ -4408,21 +4486,30 @@ void Server::Scene_Frame_Begin(Scene *scene) {
 							}
 						} else if (message.type == Message::Type::GET_PLAYER) {
 							auto payload = message.get<Get_Player_Payload>();
-							Entity_Reference ref;
-							if (scene_find_entity(scene, payload->id, &ref)) {
-								auto c = scene_entity_pointer(scene, ref)->as<Character>();
 
-								Message res;
-								auto d = res.as<Character_Spawn_Payload>(0, g.timestamp++);
+							for (int index = 0; index < MAX_CLIENTS_PER_ROOM; ++index) {
+								if (g.clients[index].id && g.clients[index].player.handle == payload->id.handle) {
+									Entity_Reference ref;
+									if (scene_find_entity(scene, payload->id, &ref)) {
+										auto c = scene_entity_pointer(scene, ref)->as<Character>();
 
-								d->id = c->id;
-								d->color_id = c->color_id;
-								d->position = c->position;
-								d->rotation = c->rotation;
-								d->transform = c->rigid_body->transform;
-								d->velocity = c->rigid_body->velocity;
+										Message res;
+										auto d = res.as<Character_Spawn_Payload>(0, g.timestamp++);
 
-								Server::Send_Message(res, ip_client);
+										d->id = c->id;
+										d->color_id = c->color_id;
+										d->position = c->position;
+										d->rotation = c->rotation;
+										d->transform = c->rigid_body->transform;
+										d->velocity = c->rigid_body->velocity;
+
+										d->client_id = g.clients[index].id;
+										d->username = g.clients[index].username;
+
+										Server::Send_Message(res, ip_client);
+										break;
+									}
+								}
 							}
 						}
 					}
@@ -4469,18 +4556,15 @@ void Server::Scene_Frame_Simulate(Scene *scene) {
 
 			for (int i = 0; i < MAX_CLIENTS_PER_ROOM; i++) {
 				if (g.clients[i].id) {
-					payload->id[i] = g.clients[i].player;
+					payload->player_id[i] = g.clients[i].player;
+					payload->ready[i] = g.clients[i].ready;
 				} else {
-					payload->id[i] = { 0 };
+					payload->player_id[i] = { 0 };
+					payload->ready[i] = false;
 				}
 			}
 
-			for (int i = 0; i < MAX_CLIENTS_PER_ROOM; i++) {
-				if (g.clients[i].id) {
-					payload->ready = g.clients[i].ready;
-					Server::Send_Message(msg, g.clients[i].ip_endpoint);
-				}
-			}
+			Server::Dispatch_Message(msg);
 
 			bool game_should_start = (g.n_clients > 0);
 			for (int i = 0; i < MAX_CLIENTS_PER_ROOM; ++i) {
