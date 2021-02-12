@@ -287,7 +287,7 @@ void scene_prepare(Scene_Run_Method method, Render_Backend backend, System_Windo
 
 	if (method != Scene_Run_Method_DEVELOP) {
 
-		g.server_ip = ip_endpoint_local(SERVER_CONNECTION_PORT);
+		g.server_ip = ip_endpoint(192, 168, 1, 103, SERVER_CONNECTION_PORT);
 
 		if (method == Scene_Run_Method_CLIENT) {
 			g.socket = system_net_open_udp_client();
@@ -3002,6 +3002,9 @@ void iscene_update_audio_params(Scene *scene) {
 
 			auto new_p = character.rigid_body->transform.p;
 
+			auto d = new_p - src;
+			character.fall->attenuation = vec2_dot(d, d);
+
 			if ((new_p.y - character.position.y < -0.001f) && character.controller.axis.y < 0) {
 				audio_play(character.fall, 0.3f);
 			} else {
@@ -3835,6 +3838,15 @@ void Client::Scene_Frame_Simulate(Scene *scene) {
 					case Message::Type::EMITTER_SPAWN: {
 						auto payload = msg.get<Emitter_Spawn_Payload>();
 						scene_spawn_emitter(scene, payload->position, color_id_get_color(payload->color_id), 2.0f * color_id_get_intensity(payload->color_id));
+						auto audio = audio_mixer_add_audio(&g.audio_mixer, g.hit, false, false);
+
+						auto player = scene_get_player(scene);
+						auto src = player->position;
+
+						auto d = src - payload->position;
+						audio->attenuation = vec2_dot(d, d);
+						audio_play(audio, 0.5f);
+						audio_mixer_remove_audio(&g.audio_mixer, audio);
 					} break;
 
 					case Message::Type::CHARACTER_CONTROLLER_UPDATE: {
