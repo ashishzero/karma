@@ -170,6 +170,8 @@ struct Scene_Global {
 	Array<Fixture_Group>	fixture_group;
 	Array<Texture_Group>	texture_group;
 
+	Monospaced_Font			mono_font;
+
 	Allocator		pool_allocator;
 
 	Array<Audio_Group>		audio_group;
@@ -1948,6 +1950,47 @@ bool iscene_load_resource(const String path, Resource_Header *header, Texture_Gr
 	return true;
 }
 
+bool load_monospaced_font(const String path, Monospaced_Font *font) {
+	String content = system_read_entire_file(path);
+	defer{ memory_free(content.data); };
+
+	if (content.count) {
+		Istream in = istream(content);
+
+		u32 min_c = *istream_consume(&in, u32);
+		u32 max_c = *istream_consume(&in, u32);
+		r32 advance = *istream_consume(&in, r32);
+		u32 size = *istream_consume(&in, u32);
+
+		font->info.range = (Monospaced_Font_Glyph_Range *)memory_allocate(size);
+		memcpy(font->info.range, istream_consume_size(&in, size), size);
+		font->info.first = (s32)min_c;
+		font->info.count = (s32)(max_c - min_c + 2);
+		font->info.advance = advance;
+
+		int w = *istream_consume(&in, int);
+		int h = *istream_consume(&in, int);
+		int n = *istream_consume(&in, int);
+		u8 *pixels = (u8 *)istream_consume_size(&in, w * h * n);
+
+		font->texture = gfx_create_texture2d((u32)w, (u32)h, (u32)n, Data_Format_RGBA8_UNORM_SRGB, (const u8 **)&pixels, Buffer_Usage_IMMUTABLE, 1);
+
+		return true;
+	}
+
+	return false;
+}
+
+void free_monospaced_font(Monospaced_Font &font) {
+	gfx_destroy_texture2d(font.texture);
+
+	font.texture = { 0,0 };
+
+	memory_free(font.info.range);
+	font.info.range = nullptr;
+	font.info.count = 0;
+}
+
 void scene_load_resources() {
 	scene_clean_resources();
 
@@ -1990,6 +2033,8 @@ void scene_load_resources() {
 
 		g.fire = scene_find_audio_stream("bullet.wav");
 		g.hit = scene_find_audio_stream("hit.wav");
+
+		load_monospaced_font("resources/font/mono.font", &g.mono_font);
 	}
 }
 
@@ -2017,6 +2062,12 @@ void scene_clean_resources() {
 		memory_free(a.stream);
 	}
 	g.audio_group.count = 0;
+
+	if (g.method != Scene_Run_Method_SERVER) {
+		if (g.mono_font.info.count) {
+			free_monospaced_font(g.mono_font);
+		}
+	}
 }
 
 void scene_reload_resource(Scene *scene, Resource_Id id) {
@@ -3946,24 +3997,30 @@ void Client::Scene_Begin_Drawing() {
 void Client::Scene_Render(Scene *scene, bool draw_editor) {
 	switch (g.s_client) {
 		case Client_State::MENU: {
-			const auto VIEW_HEIGHT = 10.0f;
-			const auto VIEW_WIDTH = 16.0f / 9.0f * VIEW_HEIGHT;
+			const auto view_height = 10.0f;
+			const auto view_width  = 16.0f / 9.0f * view_height;
 
-			auto view = orthographic_view(0.0f, VIEW_WIDTH, VIEW_HEIGHT, 0.0f);
+			auto view = orthographic_view(0.0f, view_width, view_height, 0.0f);
 			Vec2 cursor = system_get_cursor_position();
 
 			// convert cursor and delta value from window space into world space
 			cursor.x /= g.window_w;
 			cursor.y /= g.window_h;
+			cursor.x *= view_width;
+			cursor.y *= view_height;
 
-			auto connect_button = mm_rect(vec2(5), vec2(9));
-			auto color = vec4(1);
+			const auto font_size = 2.0f;
 
-			cursor.x *= VIEW_WIDTH;
-			cursor.y *= VIEW_HEIGHT;
+			const String string = "Connect";
+			const auto region = im2d_calculate_text_region(font_size, g.mono_font.info, string);
 
-			if (test_point_inside_rect(cursor, connect_button)) {
-				color = vec4(1, 1, 0);
+			const r32 offset = 0.5f;
+			const auto button_position = vec2(view_width * 0.5f - region.x * 0.5f - offset, view_height * 0.5f - region.y * 0.5f - offset);
+			const auto button_size = vec2(region.x + 2.0f * offset, region.y + 2.0f * offset);
+
+			auto button_color = vec4(1);
+			if (test_point_inside_rect(cursor, mm_rect(button_position, button_position + button_size))) {
+				button_color = vec4(1, 1, 0);
 
 				if (system_button(Button_LEFT)) {
 					Message msg;
@@ -3975,7 +4032,12 @@ void Client::Scene_Render(Scene *scene, bool draw_editor) {
 			}
 
 			im2d_begin(view);
-			im2d_rect(connect_button.min, connect_button.max - connect_button.min, color);
+			im2d_rect(button_position, button_size, button_color);
+
+			im2d_bind_texture(g.mono_font.texture);
+			im2d_text(button_position + vec2(offset), font_size, g.mono_font.info, string, vec4(0, 1, 0));
+			im2d_unbind_texture();
+
 			im2d_end();
 		} break;
 
@@ -4003,6 +4065,25 @@ void Client::Scene_Render(Scene *scene, bool draw_editor) {
 					// TODO: Handle error
 				}
 			}
+
+			const auto view_height = 10.0f;
+			const auto view_width = 16.0f / 9.0f * view_height;
+
+			auto view = orthographic_view(0.0f, view_width, view_height, 0.0f);
+
+			const String string = "Connecting...";
+			const auto font_size = 2.0f;
+
+			const auto region = im2d_calculate_text_region(font_size, g.mono_font.info, string);
+			const auto position = vec2(view_width * 0.5f - region.x * 0.5f, view_height * 0.5f - region.y * 0.5f);
+
+			im2d_begin(view);
+
+			im2d_bind_texture(g.mono_font.texture);
+			im2d_text(position, font_size, g.mono_font.info, string, vec4(1, 1, 0));
+			im2d_unbind_texture();
+
+			im2d_end();
 		} break;
 
 		case Client_State::WAITING: {
@@ -4041,37 +4122,56 @@ void Client::Scene_Render(Scene *scene, bool draw_editor) {
 				}
 			}
 
-			const auto VIEW_HEIGHT = 10.0f;
-			const auto VIEW_WIDTH = 16.0f / 9.0f * VIEW_HEIGHT;
+			const auto view_height = 10.0f;
+			const auto view_width = 16.0f / 9.0f * view_height;
 
-			auto view = orthographic_view(0.0f, VIEW_WIDTH, VIEW_HEIGHT, 0.0f);
+			auto view = orthographic_view(0.0f, view_width, view_height, 0.0f);
 			Vec2 cursor = system_get_cursor_position();
 
 			// convert cursor and delta value from window space into world space
 			cursor.x /= g.window_w;
 			cursor.y /= g.window_h;
+			cursor.x *= view_width;
+			cursor.y *= view_height;
 
-			auto connect_button = mm_rect(vec2(5), vec2(9));
-			auto color = vec4(1);
+			const auto font_size = 2.0f;
 
-			cursor.x *= VIEW_WIDTH;
-			cursor.y *= VIEW_HEIGHT;
+			const String string = "Ready";
+			const auto region = im2d_calculate_text_region(font_size, g.mono_font.info, string);
+
+			const r32 offset = 0.5f;
+			const auto button_position = vec2(view_width * 0.5f - region.x * 0.5f - offset, view_height * 0.5f - region.y * 0.5f - offset);
+			const auto button_size = vec2(region.x + 2.0f * offset, region.y + 2.0f * offset);
+
+			auto button_color = vec4(1);
+
+			static Key_State prev_key_state = Key_State_UP;
 
 			if (!g.client_is_ready) {
-				if (test_point_inside_rect(cursor, connect_button)) {
-					color = vec4(1, 1, 0);
+				if (test_point_inside_rect(cursor, mm_rect(button_position, button_position + button_size))) {
+					button_color = vec4(1, 1, 0);
 
-					if (system_button(Button_LEFT)) {
+					auto new_key_state = system_button(Button_LEFT);
+					if (prev_key_state == Key_State_DOWN && new_key_state == Key_State_UP) {
 						Message msg;
 						auto payload = msg.as<Room_Update_Payload>(g.client_id, g.timestamp++);
 						payload->type = Room_Update_Payload::READY;
 						Send_Message(msg);
 					}
+					prev_key_state = new_key_state;
 				}
+			} else {
+				prev_key_state = Key_State_UP;
+				button_color = vec4(1, 1, 0);
 			}
 
 			im2d_begin(view);
-			im2d_rect(connect_button.min, connect_button.max - connect_button.min, color);
+			im2d_rect(button_position, button_size, button_color);
+
+			im2d_bind_texture(g.mono_font.texture);
+			im2d_text(button_position + vec2(offset), font_size, g.mono_font.info, string, vec4(0, 1, 0));
+			im2d_unbind_texture();
+
 			im2d_end();
 		} break;
 
@@ -4382,7 +4482,7 @@ void Server::Scene_Frame_Simulate(Scene *scene) {
 				}
 			}
 
-			bool game_should_start = (g.n_clients > 1);
+			bool game_should_start = (g.n_clients > 0);
 			for (int i = 0; i < MAX_CLIENTS_PER_ROOM; ++i) {
 				if (g.clients[i].id && !g.clients[i].ready) {
 					game_should_start = false;
