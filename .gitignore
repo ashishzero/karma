@@ -34,3 +34,4 @@ run_tree/imgui/*.ini
 
 # temp directory
 /run_tree/temp/
+/run_tree/dev/server.txt
