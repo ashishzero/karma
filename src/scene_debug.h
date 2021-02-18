@@ -9,7 +9,7 @@ enum Gizmo_Type {
 	Gizmo_Type_SCALE_X,
 	Gizmo_Type_SCALE_Y,
 	Gizmo_Type_ROTOR,
-
+	
 	Gizmo_Type_COUNT
 };
 
@@ -18,7 +18,7 @@ enum Gizmo_Render_Type {
 	Gizmo_Render_Type_TRANSLATE,
 	Gizmo_Render_Type_SCALE,
 	Gizmo_Render_Type_ROTATE,
-
+	
 	Gizmo_Render_Type_COUNT
 };
 
@@ -52,7 +52,7 @@ struct Editor_Level {
 	int			selected_emitter_index;
 	Level_Name	name_storage;
 	bool		name_is_valid;
-
+	
 	Entity_Type		new_entity_type;
 	int				selected_resource_index;
 	r32				preview_shape_scale;
@@ -68,30 +68,30 @@ struct Editor_Entity {
 		SELECTED,
 		EDITING
 	};
-
+	
 	Resource_Id		id;
 	Resource_Name	name;
 	Resource_Name	texture_name;
 	Mm_Rect			texture_uv;
-
+	
 	Texture2d_Handle	texture;
-
+	
 	int				selected_texture;
-
+	
 	Fixture fixtures[MAXIMUM_FIXTURE_COUNT];
 	int		fixture_count;
-
+	
 	int			  selected_index;
 	int			  hovered_index;
-
+	
 	Vec2 *		hovered_vertex;
 	Vec2 *		selected_vertex;
-
+	
 	Mode			mode;
 	int				added_vertex_index;
 	bool			vertex_is_valid;
 	r32				vertex_pointer_angle;
-
+	
 	Circle		circle_storage[MAXIMUM_FIXTURE_COUNT];
 	Mm_Rect		mm_rect_storage[MAXIMUM_FIXTURE_COUNT];
 	Capsule		capsule_storage[MAXIMUM_FIXTURE_COUNT];
@@ -101,12 +101,14 @@ struct Editor_Entity {
 
 struct Editor {
 	Gizmo		gizmo;
-
+	
 	Camera		level_camera;
 	Camera		entity_camera;
 	Editor_Mode	mode;
 	u32			flags;
-
+	
+	Render_Backend backend;
+	
 	Editor_Level	level;
 	Editor_Entity	entity;
 };

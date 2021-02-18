@@ -115,6 +115,8 @@ Editor editor_create(Scene *scene) {
 	
 	editor.mode = Editor_Mode_LEVEL_EDITOR;
 	
+	editor.backend = gfx_render_backend();
+	
 	return editor;
 }
 
@@ -1635,6 +1637,11 @@ bool ieditor_gui_developer_editor(Scene *scene, Editor *editor) {
 	
 	if (ImGui::CollapsingHeader("Physics")) {
 		editor_widget(scene->physics, "Physics");
+	}
+	
+	editor->backend = gfx_render_backend();
+	if (editor_widget(editor->backend, "Render Backend")) {
+		// NOTE: This is handled in scene_end!
 	}
 	
 	ImGui::End();

@@ -242,6 +242,22 @@ namespace Client {
 
 static Scene_Global g;
 
+void iscene_reload_textures_process_start();
+void iscene_reload_textures_process_end();
+
+void scene_change_render_backend(Render_Backend backend) {
+	if (backend > Render_Backend_NONE && backend < Render_Backend_COUNT) {
+		iscene_reload_textures_process_start();
+		
+		gfx_destroy_context();
+		g.render_backend = backend;
+		gfx_create_context(g.platform, g.render_backend, Vsync_ADAPTIVE, 2, (u32)g.framebuffer_w, (u32)g.framebuffer_h);
+		ImGui_RefreshRenderingContext();
+		
+		iscene_reload_textures_process_end();
+	}
+}
+
 void scene_prepare(Scene_Run_Method method, Render_Backend backend, System_Window_Show show) {
 	g.method = method;
 	
@@ -1505,6 +1521,10 @@ bool scene_running() {
 }
 
 void scene_frame_begin(Scene *scene) {
+	if (scene->editor.backend != g.render_backend) {
+		scene_change_render_backend(scene->editor.backend);
+	}
+	
 	g.frame_begin(scene);
 }
 
@@ -2095,6 +2115,36 @@ void scene_load_resources() {
 		g.fire = scene_find_audio_stream("bullet.wav");
 		g.hit = scene_find_audio_stream("hit.wav");
 		
+		load_monospaced_font("resources/font/mono.font", &g.mono_font);
+	}
+}
+
+void iscene_reload_textures_process_start() {
+	auto &textures = g.texture_group;
+	for (auto &t : textures) {
+		if (t.handle != im_white_texture()) {
+			gfx_destroy_texture2d(t.handle);
+		}
+	}
+	
+	if (g.method != Scene_Run_Method_SERVER) {
+		if (g.mono_font.info.count) {
+			free_monospaced_font(g.mono_font);
+		}
+	}
+}
+
+void iscene_reload_textures_process_end() {
+	auto &textures = g.texture_group;
+	
+	int index = 0;
+	auto &resources = g.resource_header;
+	for (auto &r : resources) {
+		textures[index].handle = iscene_load_texture(r.texture);
+		index += 1;
+	}
+	
+	if (g.method != Scene_Run_Method_SERVER) {
 		load_monospaced_font("resources/font/mono.font", &g.mono_font);
 	}
 }
