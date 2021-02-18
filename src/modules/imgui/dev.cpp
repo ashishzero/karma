@@ -25,7 +25,7 @@ enum Menu_Icon {
 	Menu_FRAME_TIME,
 	Menu_AUDIO,
 	Menu_PROFILER,
-
+	
 	Menu_COUNT,
 };
 
@@ -71,7 +71,7 @@ struct Record {
 	r32    ms;
 	u32    begin_cycle;
 	u32    end_cycle;
-
+	
 	Record *parent;
 	Record *next;
 	Record *child;
@@ -81,16 +81,16 @@ struct Profiler {
 	Timed_Frame timed_frames[PROFILER_RECORD_CIRCULAR_BUFFER_FRAMES_AHEAD];
 	Timed_Frame *timed_frame_write_ptr;
 	Timed_Frame *timed_frame_read_ptr;
-
+	
 	Record *root_record;
 	Record *leaf_record;
-
+	
 	Record *        record_collation_ptr;
 	Record *        record_collation_trav;
-
+	
 	bool recording			= true;
 	bool next_recording		= true;
-
+	
 	Color3 block_colors[PROFILER_MAX_PRESENTATION_COLORS];
 };
 
@@ -113,9 +113,9 @@ static bool					menu_icons_value[Menu_COUNT];
 
 void dev_mode_enable() {
 	// NOTE: Allocated memory are not freed, because it doesn't matter, they will be freed by OS when app closes
-
+	
 	auto memory = system_virtual_alloc(0, PROFILER_RECORD_CIRCULAR_BUFFER_FRAMES_AHEAD * PROFILER_MAX_TIMED_RECORDS_LOGS * sizeof(Timed_Record) + PROFILER_MAX_COLLATION_RECORDS * sizeof(Record), Virtual_Memory_COMMIT | Virtual_Memory_RESERVE);
-
+	
 	for (u32 i = 0; i < PROFILER_RECORD_CIRCULAR_BUFFER_FRAMES_AHEAD; ++i) {
 		profiler.timed_frames[i].records             = ((Timed_Record *)memory) + i * PROFILER_MAX_TIMED_RECORDS_LOGS;
 		profiler.timed_frames[i].records_count       = 0;
@@ -123,12 +123,12 @@ void dev_mode_enable() {
 		profiler.timed_frames[i].begin_counter_value = 0;
 		profiler.timed_frames[i].end_counter_value   = 0;
 	}
-
+	
 	profiler.record_collation_ptr = (Record *)((u8 *)memory + PROFILER_RECORD_CIRCULAR_BUFFER_FRAMES_AHEAD * PROFILER_MAX_TIMED_RECORDS_LOGS * sizeof(Timed_Record));
-
+	
 	profiler.timed_frame_write_ptr = profiler.timed_frames + 0;
 	profiler.timed_frame_read_ptr  = profiler.timed_frames + 1;
-
+	
 	for (int color_index = 0; color_index < PROFILER_MAX_PRESENTATION_COLORS; ++color_index) {
 		profiler.block_colors[color_index] = random_color3(0.9f, 0.3f);
 	}
@@ -137,33 +137,33 @@ void dev_mode_enable() {
 void dev_audio_feedback(r32 *samples, u32 size_in_bytes, u32 channel_count, u32 zeroed_size) {
 	u32 sample_count			= size_in_bytes / (sizeof(r32) * channel_count);
 	u32 zeroed_size_in_sample	= zeroed_size / (sizeof(r32) * channel_count);
-
+	
 	assert(channel_count <= Audio_Channel_COUNT);
-
+	
 	r32 *write_ptr;
 	for (u32 index = 0; index < sample_count; ++index) {
 		write_ptr = audio_visualizer.history + audio_visualizer.write_cursor * Audio_Channel_COUNT;
-
+		
 		for (u32 channel_index = 0; channel_index < channel_count; ++channel_index, ++write_ptr, ++samples) {
 			*write_ptr = *samples;
 		}
 		if (Audio_Channel_COUNT - channel_count) {
 			memset(write_ptr, 0, (Audio_Channel_COUNT - channel_count) * sizeof(r32));
 		}
-
+		
 		audio_visualizer.write_cursor = (audio_visualizer.write_cursor + 1) % AUDIO_VISUALIZER_MAX_SAMPLES;
 	}
-
+	
 	if (zeroed_size_in_sample) {
 		system_log(LOG_WARNING, "Audio", "Probably audio buffer size small, missed frame");
-
+		
 		if ((audio_visualizer.write_cursor + zeroed_size_in_sample) < AUDIO_VISUALIZER_MAX_SAMPLES) {
 			memset(audio_visualizer.history + audio_visualizer.write_cursor * Audio_Channel_COUNT, 0, 
-				zeroed_size_in_sample * sizeof(r32) * Audio_Channel_COUNT);
+				   zeroed_size_in_sample * sizeof(r32) * Audio_Channel_COUNT);
 			audio_visualizer.write_cursor += zeroed_size_in_sample;
 		} else {
 			memset(audio_visualizer.history + audio_visualizer.write_cursor * Audio_Channel_COUNT, 0, 
-				(AUDIO_VISUALIZER_MAX_SAMPLES - audio_visualizer.write_cursor) * sizeof(r32) * Audio_Channel_COUNT);
+				   (AUDIO_VISUALIZER_MAX_SAMPLES - audio_visualizer.write_cursor) * sizeof(r32) * Audio_Channel_COUNT);
 			audio_visualizer.write_cursor = zeroed_size_in_sample - (AUDIO_VISUALIZER_MAX_SAMPLES - audio_visualizer.write_cursor);
 			memset(audio_visualizer.history, 0, audio_visualizer.write_cursor * sizeof(r32) * Audio_Channel_COUNT);
 		}
@@ -198,9 +198,9 @@ void draw_header_and_buttons() {
 	frame_time_recorder.stablilized		= frame_time_recorder.stablilized * 0.8f + 0.2f * frame_time_recorder.history[0];
 	String frame_time_string			= tprintf("FrameTime: %.3fms", frame_time_recorder.stablilized * 1000.0f);
 	String version_string				= "v" KARMA_VERSION_STRING;
-
+	
 	ImGui::TextColored(vec4(1, 1, 0), "FrameTime: %.3fms", frame_time_recorder.stablilized);
-
+	
 	Vec4 color;
 	for (int cindex = 0; cindex < Menu_COUNT; ++cindex) {
 		color = menu_icons_value[cindex] ? MENU_ITEMS_COLORS[cindex] : vec4(1, 1, 1);
@@ -223,36 +223,36 @@ void draw_frame_time_graph() {
 		if (frame_time_recorder.history[frame_time_index] < min_frame_time)
 			min_frame_time = frame_time_recorder.history[frame_time_index];
 	}
-
+	
 	ImGui::PlotLines("History", frame_time_recorder.history, static_count(frame_time_recorder.history),
-		0, nullptr, min_frame_time, max_frame_time, vec2(0, 75));
+					 0, nullptr, min_frame_time, max_frame_time, vec2(0, 75));
 }
 
 void draw_profiler_timelines_rects(Record *record, int color_index, r32 inv_cycles, Vec2 cursor, Record **hovered_record, r32 *max_height) {
 	ImDrawList *draw_list = ImGui::GetWindowDrawList();
 	ImVec2 p = ImGui::GetCursorScreenPos();
 	r32 item_width = 0.95f * ImGui::GetWindowWidth();
-
+	
 	*max_height += 25.0f;
-
+	
 	while (record) {
 		Vec4 color = vec4(profiler.block_colors[color_index], 1);
 		color_index += 1;
 		if (color_index >= PROFILER_MAX_PRESENTATION_COLORS) color_index = 0;
-
+		
 		auto render_pos = p;
 		render_pos.x += item_width * (r32)record->begin_cycle * inv_cycles;
-
+		
 		Vec2 min_rect = render_pos;
 		Vec2 dimension = vec2(item_width * (r32)(record->end_cycle - record->begin_cycle) * inv_cycles, 25.0f);
 		Vec2 max_rect = render_pos + dimension;
-
+		
 		draw_list->AddRectFilled(min_rect, max_rect, ImGui::ColorConvertFloat4ToU32(color));
 		draw_list->AddRect(min_rect, max_rect, 0xffffffff);
-
+		
 		ImVec2 text_draw_pos = min_rect;
 		text_draw_pos.y += 0.5f * (dimension.y - ImGui::GetFontSize());
-
+		
 		s64 char_draw_count = record->name.count;
 		ImVec2 text_region = ImGui::CalcTextSize((char *)record->name.data, (char *)record->name.data + record->name.count);
 		if (dimension.x > text_region.x) {
@@ -260,19 +260,19 @@ void draw_profiler_timelines_rects(Record *record, int color_index, r32 inv_cycl
 		} else {
 			char_draw_count -= lroundf(record->name.count * ((text_region.x - dimension.x) / text_region.x));
 		}
-
+		
 		draw_list->AddText(text_draw_pos, 0xffffffff, (char *)record->name.data, (char *)record->name.data + char_draw_count);
-
+		
 		if (test_point_inside_rect(cursor, mm_rect(min_rect, max_rect))) {
 			*hovered_record = record;
 		}
-
+		
 		if (record->child) {
 			ImGui::SetCursorScreenPos(ImVec2(p.x, p.y + 25.0f));
 			draw_profiler_timelines_rects(record->child, color_index, inv_cycles, cursor, hovered_record, max_height);
 			ImGui::SetCursorScreenPos(p);
 		}
-
+		
 		record = record->next;
 	}
 }
@@ -286,11 +286,11 @@ Record *draw_profiler(Vec2 cursor) {
 	// Prepare render data
 	{
 		reset_collation_record();
-
+		
 		Record *record = NULL;
 		for (s64 record_index = 0; record_index < frame->records_count; ++record_index) {
 			auto frame_record = frame->records + record_index;
-
+			
 			if (profiler.leaf_record == nullptr) {
 				record              = push_collation_record();
 				record->child       = NULL;
@@ -300,7 +300,7 @@ Record *draw_profiler(Vec2 cursor) {
 				record->name        = frame_record->block_name;
 				record->ms          = -1; // we use negative to endicate that END has not been reached
 				record->begin_cycle = (u32)(frame_record->time_stamp - frame->begin_cycle_value);
-
+				
 				profiler.root_record = record;
 				profiler.leaf_record = record;
 			} else if (frame_record->type == Timed_Record_Type_BEGIN) {
@@ -313,7 +313,7 @@ Record *draw_profiler(Vec2 cursor) {
 					record->name        = frame_record->block_name;
 					record->ms          = -1;
 					record->begin_cycle = (u32)(frame_record->time_stamp - frame->begin_cycle_value);
-
+					
 					profiler.leaf_record->next = record;
 					profiler.leaf_record       = record;
 				} else {
@@ -325,40 +325,40 @@ Record *draw_profiler(Vec2 cursor) {
 					record->name        = frame_record->block_name;
 					record->ms          = -1;
 					record->begin_cycle = (u32)(frame_record->time_stamp - frame->begin_cycle_value);
-
+					
 					profiler.leaf_record->child = record;
 					profiler.leaf_record        = record;
 				}
 			} else {
 				auto parent = profiler.leaf_record;
-
+				
 				while (parent) {
 					if (parent->id.data == frame_record->id.data && parent->name.data == frame_record->block_name.data) {
 						break;
 					}
 					parent = parent->parent;
 				}
-
+				
 				assert(parent);         // block begin/end mismatch
 				assert(parent->ms < 0); // block begin/end mismatch
-
+				
 				parent->end_cycle = (u32)(frame_record->time_stamp - frame->begin_cycle_value);
 				r32 cycles        = (r32)(parent->end_cycle - parent->begin_cycle);
 				parent->ms        = 1000.0f * dt * cycles * inv_cycles_count;
-
+				
 				profiler.leaf_record = parent;
 			}
 		}
 	}
-
+	
 	// Draw the profile data
 	Record *hovered_record = NULL;
 	auto root_record	= profiler.root_record;
-
+	
 	ImGui::NewLine();
 	ImGui::TextColored(vec4(1, 1, 0), "Profiler");
 	ImGui::SameLine();
-
+	
 	if (profiler.next_recording) {
 		if (ImGui::Button(u8"Pause")) {
 			profiler.next_recording = false;
@@ -368,21 +368,21 @@ Record *draw_profiler(Vec2 cursor) {
 			profiler.next_recording = true;
 		}
 	}
-
+	
 	auto p = ImGui::GetCursorScreenPos();
-
+	
 	r32 max_height = 0;
 	draw_profiler_timelines_rects(root_record, 0, inv_cycles_count, cursor, &hovered_record, &max_height);
-
+	
 	auto pe = p;
 	p.x += 0.95f * ImGui::GetWindowWidth();
 	p.y += maximum(max_height, 25.0f * 3);
-
+	
 	ImGui::GetWindowDrawList()->AddRect(p, pe, 0xffffffff);
-
+	
 	p.y += max_height;
 	ImGui::SetCursorScreenPos(p);
-
+	
 	return hovered_record;
 }
 
@@ -391,35 +391,41 @@ void draw_audio_visualizer() {
 	ImGui::TextColored(vec4(1, 1, 0), "Audio: %d channels", Audio_Channel_COUNT);
 	for (int channel_index = 0; channel_index < Audio_Channel_COUNT; ++channel_index) {
 		ImGui::PlotLines(AUDIO_VISUALIZER_CHANNEL_NAMES[channel_index], 
-				audio_visualizer.history, 
-				AUDIO_VISUALIZER_MAX_SAMPLES, 
-				sizeof(r32) * channel_index, 
-				nullptr, -1.0f, 1.0f, vec2(0, 75),
-				sizeof(r32) * Audio_Channel_COUNT);
+						 audio_visualizer.history, 
+						 AUDIO_VISUALIZER_MAX_SAMPLES, 
+						 sizeof(r32) * channel_index, 
+						 nullptr, -1.0f, 1.0f, vec2(0, 75),
+						 sizeof(r32) * Audio_Channel_COUNT);
 	}
 }
 
 void dev_render_frame() {
 	if (should_present) {
+		ImGui::GetStyle().Alpha = 1.0f;
+		
+		if (!ImGui_IsUsingCursor()) {
+			ImGui::GetStyle().Alpha = 0.4f;
+		}
+		
 		ImGui::Begin("Debug Information", &should_present);
-
+		
 		Vec2 cursor = ImGui::GetIO().MousePos;
-
+		
 		draw_header_and_buttons();
-
+		
 		if (menu_icons_value[Menu_FRAME_TIME]) {
 			draw_frame_time_graph();
 		}
-
+		
 		if (menu_icons_value[Menu_AUDIO]) {
 			draw_audio_visualizer();
 		}
-
+		
 		Record *hovered_record = nullptr;
 		if (menu_icons_value[Menu_PROFILER]) {
 			hovered_record = draw_profiler(cursor);
 		}
-
+		
 		// Rendering Overlays at last
 		if (hovered_record) {
 			r32    cycles = (r32)(hovered_record->end_cycle - hovered_record->begin_cycle) / 1000.0f;
@@ -427,7 +433,7 @@ void dev_render_frame() {
 			String desc   = hovered_record->id;
 			String time   = tprintf("%.3fms (%.3fkclocks)", hovered_record->ms, cycles);
 			const char *cctime   = null_tprintf("%.3fms (%.3fkclocks)", hovered_record->ms, cycles);
-
+			
 			ImGui::BeginTooltip();
 			ImGui::SetTooltip("%s\n%s\n%s", name.data, desc.data, cctime);
 			ImGui::EndTooltip();
@@ -448,17 +454,17 @@ void dev_profiler_timed_frame_end(r32 frame_time) {
 	if (profiler.recording) {
 		profiler.timed_frame_write_ptr->end_cycle_value   = intrin__rdtsc();
 		profiler.timed_frame_write_ptr->end_counter_value = system_get_counter();
-
+		
 		swap(&profiler.timed_frame_write_ptr, &profiler.timed_frame_read_ptr);
-
+		
 		profiler.timed_frame_write_ptr->records_count       = 0;
 		profiler.timed_frame_write_ptr->begin_counter_value = 0;
 		profiler.timed_frame_write_ptr->end_counter_value   = 0;
 	}
-
+	
 	memmove(frame_time_recorder.history + 1, frame_time_recorder.history, sizeof(r32) * (FRAME_TIME_MAX_LOGS - 1));
 	frame_time_recorder.history[0] = frame_time * 1000.0f;
-
+	
 	profiler.recording = profiler.next_recording;
 }
 
@@ -467,15 +473,15 @@ Timed_Block_Match dev_profiler_timed_block_begin(String id, String block_name) {
 		assert(profiler.timed_frame_write_ptr->records_count < PROFILER_MAX_TIMED_RECORDS_LOGS);
 		auto record = profiler.timed_frame_write_ptr->records + profiler.timed_frame_write_ptr->records_count;
 		profiler.timed_frame_write_ptr->records_count += 1;
-
+		
 		record->id         = id;
 		record->block_name = block_name;
 		record->time_stamp = intrin__rdtsc();
 		record->type       = Timed_Record_Type_BEGIN;
-
+		
 		return id;
 	}
-
+	
 	return String("", 0);
 }
 
@@ -484,7 +490,7 @@ void dev_profiler_timed_block_end(Timed_Block_Match value, String block_name) {
 		assert(profiler.timed_frame_write_ptr->records_count < PROFILER_MAX_TIMED_RECORDS_LOGS);
 		auto record = profiler.timed_frame_write_ptr->records + profiler.timed_frame_write_ptr->records_count;
 		profiler.timed_frame_write_ptr->records_count += 1;
-
+		
 		record->id         = value;
 		record->block_name = block_name;
 		record->time_stamp = intrin__rdtsc();

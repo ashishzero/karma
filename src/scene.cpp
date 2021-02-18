@@ -1738,6 +1738,13 @@ inline bool iscene_render_world_enabled(Scene *scene) {
 													  );
 }
 
+inline bool iscene_render_hud_enabled(Scene *scene) {
+	auto mode = scene->editor.mode;
+	auto flags = scene->editor.flags;
+	
+	return (flags & Editor_Flag_Bit_RENDER_WORLD) && mode == Editor_Mode_GAME;
+}
+
 inline bool iscene_render_fixture_enabled(Scene *scene, u32 *type) {
 	auto mode = scene->editor.mode;
 	auto flags = scene->editor.flags;
@@ -3622,7 +3629,7 @@ namespace Develop {
 	}
 	
 	void Scene_Render(Scene *scene, bool draw_editor) {
-		Dev_TimedScope(FinishRendering);
+		Dev_TimedScope(Rendering);
 		
 		r32 aspect_ratio = g.aspect_ratio;
 		r32 alpha = scene->physics.accumulator_t / scene->physics.fixed_dt; // TODO: Use the alpha
@@ -3695,7 +3702,7 @@ namespace Develop {
 		}
 		im2d_end();
 		
-		if (iscene_render_world_enabled(scene)) {
+		if (iscene_render_hud_enabled(scene)) {
 			iscene_render_hud(scene);
 		}
 		
