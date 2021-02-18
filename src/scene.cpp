@@ -2577,6 +2577,7 @@ bool scene_load_level(Scene *scene, const String name) {
 	
 	if (g.method == Scene_Run_Method_DEVELOP) {
 		auto player = scene_spawn_player(scene, vec2(0), (Color_Id)random_get_range(0, (u32)Color_Id_COUNT));
+		
 		Camera *camera = scene_primary_camera(scene);
 		
 		if (player && camera) {
