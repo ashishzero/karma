@@ -116,7 +116,7 @@ struct Editor {
 struct Scene;
 struct Resource_Collection;
 
-Editor editor_create(Scene *scene);
+Editor editor_create(Scene *scene, bool from_server = false);
 bool editor_handle_event(const Event &event, Scene *scene, Editor *editor);
 void editor_set_mode_game(Scene *scene, Editor *editor);
 void editor_set_mode_game_developer(Scene *scene, Editor *editor);

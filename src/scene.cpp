@@ -897,7 +897,7 @@ Scene *scene_create() {
 	scene->manifolds.count = scene->manifolds.capacity = 0;
 	scene->manifolds.data = nullptr;
 	scene->manifolds.allocator = TEMPORARY_ALLOCATOR;
-	scene->editor = editor_create(scene);
+	scene->editor = editor_create(scene, g.method == Scene_Run_Method_SERVER);
 #endif
 	
 	return scene;
@@ -928,11 +928,14 @@ Texture2d_Handle iscene_load_texture(const Resource_Name &name) {
 	scoped_temporary_allocation();
 	Texture2d_Handle handle;
 	if (name[0]) {
+		
 		String path = tprintf("resources/textures/%s", name);
 		
 		int w, h, n;
 		String content = system_read_entire_file(path);
 		if (content.count) {
+			defer { memory_free(content.data); };
+			
 			u8 *pixels = stbi_load_from_memory(content.data, (int)content.count, &w, &h, &n, 4);
 			if (pixels) {
 				handle = gfx_create_texture2d((u32)w, (u32)h, 4, Data_Format_RGBA8_UNORM_SRGB, (const u8 **)&pixels, Buffer_Usage_IMMUTABLE, 1);

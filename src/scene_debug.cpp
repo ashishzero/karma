@@ -61,7 +61,7 @@ const Circle GIZMO_INNER = { vec2(0), GIZMO_ROTOR_MIN_RADIUS };
 //
 //
 
-Editor editor_create(Scene *scene) {
+Editor editor_create(Scene *scene, bool from_server) {
 	Editor editor;
 	editor.gizmo.type = Gizmo_Type_NONE;
 	editor.gizmo.render_type = Gizmo_Render_Type_NONE;
@@ -115,7 +115,11 @@ Editor editor_create(Scene *scene) {
 	
 	editor.mode = Editor_Mode_LEVEL_EDITOR;
 	
-	editor.backend = gfx_render_backend();
+	if (from_server == false) {
+		editor.backend = gfx_render_backend();
+	} else {
+		editor.backend = Render_Backend_NONE;
+	}
 	
 	return editor;
 }
