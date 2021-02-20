@@ -4369,6 +4369,17 @@ void Client::Scene_End_Drawing() {
 	gfx_begin_drawing(Framebuffer_Type_DEFAULT, Clear_COLOR, vec4(0.0f));
 	gfx_blit_hdr(0, 0, g.window_w, g.window_h);
 	gfx_viewport(0, 0, g.window_w, g.window_h);
+
+	#if defined(ENABLE_DEVELOPER_OPTIONS)
+	{
+		Dev_TimedScope(DebugRender);
+		Dev_RenderFrame();
+	}
+	{
+		Dev_TimedScope(ImGuiRender);
+		ImGui_RenderFrame();
+	}
+	#endif
 	
 	gfx_end_drawing();
 	
