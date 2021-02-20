@@ -43,12 +43,12 @@ struct Entity_Hash_Table {
 		EMPTY,
 		OCCUPIED
 	};
-
+	
 	struct Key {
 		Entity_Id	id;
 		Slot		slot;
 	};
-
+	
 	Key *				keys;
 	Entity_Reference *	references;
 	Resource_Id *		resources;
@@ -73,26 +73,26 @@ struct Scene {
 			Array<u8>	data[Entity_Type_Count];
 		};
 	};
-
+	
 	Physics physics;
-
+	
 	Entity_Hash_Table entity_table;
-
+	
 	Entity_By_Type	by_type;
-
+	
 	Entity_Id player_id;
-
+	
 	Rigid_Body_List rigid_bodies;
 	HGrid hgrid;
-
+	
 	s32				loaded_level;
-
+	
 	Array<Entity_Id>	removed_entity[Entity_Type_Count];
-
-	#ifdef ENABLE_DEVELOPER_OPTIONS
+	
+#ifdef ENABLE_DEVELOPER_OPTIONS
 	Array<Contact_Manifold> manifolds;
 	Editor editor;
-	#endif
+#endif
 };
 
 void scene_prepare(Scene_Run_Method method, Render_Backend backend, System_Window_Show show);
@@ -238,7 +238,7 @@ inline Particle_Emitter_Property particle_system_default_property() {
 	props.emission_rate = 5;
 	props.fade_in = 0.06f;
 	props.fade_out = 0.03f;
-
+	
 	return props;
 }
 
@@ -291,13 +291,13 @@ inline void ent_init_character(Character *character, Scene *scene, Vec2 p, Color
 	character->rotation = 0;
 	character->original_color_id = color_id;
 	character->color_id = color_id;
-
+	
 	for (auto i = 0; i < Color_Id_COUNT; ++i) {
 		character->color_values[i] = 0.25f;
 	}
 	character->color_values[color_id] = 1;
 	character->hit = 0;
-
+	
 	character->texture.index = index;
 	character->controller.axis = vec2(0);
 	character->controller.pointer = vec2(0, 1);
