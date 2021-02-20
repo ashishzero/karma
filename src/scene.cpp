@@ -303,7 +303,7 @@ void scene_prepare(Scene_Run_Method method, Render_Backend backend, System_Windo
 
 	if (method != Scene_Run_Method_DEVELOP) {
 
-		g.server_ip = ip_endpoint(192, 168, 1, 103, SERVER_CONNECTION_PORT);
+		g.server_ip = ip_endpoint(127, 0, 0, 1, SERVER_CONNECTION_PORT);
 
 		if (method == Scene_Run_Method_CLIENT) {
 			g.socket = system_net_open_udp_client();
