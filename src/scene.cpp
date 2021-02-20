@@ -2757,8 +2757,6 @@ void iscene_update_audio_and_ui(Scene *scene) {
 	Dev_TimedBlockEnd(AudioUpdate);
 	
 	editor_update(scene, &scene->editor);
-	
-	ImGui_UpdateFrame(scene->physics.real_dt);
 }
 
 void iscene_pre_tick(Scene *scene) {
@@ -3674,6 +3672,8 @@ namespace Develop {
 		}
 		
 		iscene_update_audio_and_ui(scene);
+
+		ImGui_UpdateFrame(scene->physics.real_dt);
 	}
 	
 	void Scene_Begin_Drawing() {
@@ -4122,6 +4122,8 @@ void Client::Scene_Frame_Simulate(Scene *scene) {
 			// TODO Render scores
 		} break;
 	}
+
+	ImGui_UpdateFrame(scene->physics.real_dt);
 }
 
 void Client::Scene_Begin_Drawing() {
