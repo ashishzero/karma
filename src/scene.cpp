@@ -173,7 +173,7 @@ struct Scene_Global {
 	
 	Color_Id win_color_id;
 	bool i_win;
-
+    
 	Room_Member room_members[MAX_CLIENTS_PER_ROOM];
 	
 	Connected_Client clients[MAX_CLIENTS_PER_ROOM];
@@ -321,7 +321,7 @@ void scene_prepare(Scene_Run_Method method, Render_Backend backend, System_Windo
 	//
 	
 	if (method != Scene_Run_Method_DEVELOP) {
-
+        
 		
 		auto ip_string = system_read_entire_file("dev/server.txt");
 		if (!ip_string.data) {
@@ -3689,7 +3689,7 @@ namespace Develop {
 		iscene_pre_tick(scene);
 		iscene_update_audio_and_ui(scene);
 		iscene_post_tick_client(scene);
-
+        
 		ImGui_UpdateFrame(scene->physics.real_dt);
 	}
 	
@@ -3780,7 +3780,7 @@ namespace Develop {
 		
 		if (draw_editor) {
 			iscene_pre_tick(scene);
-
+            
 			editor_render(scene, &scene->editor, aspect_ratio);
 			
 			iscene_post_tick_client(scene);
@@ -3961,7 +3961,7 @@ void iscene_tick_client(Scene *scene, r32 dt) {
 
 void Client::Scene_Frame_Simulate(Scene *scene) {
 	Dev_TimedScope(Simulation);
-
+    
 	switch (g.s_client) {
 		case Client_State::RUNNING: {
 			
@@ -4117,10 +4117,11 @@ void Client::Scene_Frame_Simulate(Scene *scene) {
 					case Message::Type::FINISH_GAME: {
 						auto payload = msg.get<Finish_Game_Payload>();
 						auto player = scene_get_player(scene);
-						if (player && player->color_id == payload->color_id) {
-
+                        
+						if (player && player->original_color_id == payload->color_id) {
 							g.i_win = true;
 						}
+                        
 						g.win_color_id = payload->color_id;
 						for (int i = 0; i < MAX_CLIENTS_PER_ROOM; ++i) {
 							g.room_members[i].ready = false;
@@ -4142,11 +4143,11 @@ void Client::Scene_Frame_Simulate(Scene *scene) {
 		
 		case Client_State::END_GAME: {
 			// TODO Render scores
-
-
+            
+            
 		} break;
 	}
-
+    
 	ImGui_UpdateFrame(scene->physics.real_dt);
 }
 
@@ -4379,61 +4380,61 @@ void Client::Scene_Render(Scene *scene, bool draw_editor) {
 		
 		case Client_State::END_GAME: {
 			// TODO: PUT SCORES AND RESULTS!!!
-
+            
 			const auto view_height = 10.0f;
 			const auto view_width = 16.0f / 9.0f * view_height;
-
+            
 			auto view = orthographic_view(0.0f, view_width, view_height, 0.0f);
 			Vec2 cursor = system_get_cursor_position();
-
+            
 			// convert cursor and delta value from window space into world space
 			cursor.x /= g.window_w;
 			cursor.y /= g.window_h;
 			cursor.x *= view_width;
 			cursor.y *= view_height;
-
+            
 			const auto font_size = 2.0f;
-
+            
 			const String string = "Main Menu";
 			const auto region = im2d_calculate_text_region(font_size, g.mono_font.info, string);
-
+            
 			const r32 offset = 0.5f;
 			const auto button_position = vec2(view_width * 0.5f - region.x * 0.5f - offset, 2.0f * offset);
 			const auto button_size = vec2(region.x + 2.0f * offset, region.y + 2.0f * offset);
-
+            
 			auto button_color = vec4(1);
 			if (test_point_inside_rect(cursor, mm_rect(button_position, button_position + button_size))) {
 				button_color = vec4(1, 1, 0);
-
+                
 				if (system_button(Button_LEFT)) {
 					g.client_is_ready = false;
 					iscene_reset_client(scene);
 					g.s_client = Client_State::WAITING;
 				}
 			}
-
+            
 			im2d_begin(view);
 			im2d_rect(button_position, button_size, button_color);
-
+            
 			im2d_bind_texture(g.mono_font.texture);
-
-
+            
+            
 			String str;
 			if (g.i_win)
 				str = "You Won!!!";
 			else
 				str = tprintf("%s %s", color_id_get_string( g.win_color_id ).data , "Won");
-
+            
 			const auto text_region = im2d_calculate_text_region(3 , g.mono_font.info, str);
 			const auto text_position = vec2(view_width * 0.5f - text_region.x * 0.5f , 2.0f * 3.0f);
-
+            
 			im2d_text(text_position, 3, g.mono_font.info, str, color_id_get_color(g.win_color_id));
-
+            
 			im2d_text(button_position + vec2(offset), font_size, g.mono_font.info, string, vec4(0, 1, 0));
 			im2d_unbind_texture();
-
+            
 			im2d_end();
-
+            
 			
 		} break;
 	}
@@ -4448,8 +4449,8 @@ void Client::Scene_End_Drawing() {
 	gfx_begin_drawing(Framebuffer_Type_DEFAULT, Clear_COLOR, vec4(0.0f));
 	gfx_blit_hdr(0, 0, g.window_w, g.window_h);
 	gfx_viewport(0, 0, g.window_w, g.window_h);
-
-	#if defined(ENABLE_DEVELOPER_OPTIONS)
+    
+#if defined(ENABLE_DEVELOPER_OPTIONS)
 	{
 		Dev_TimedScope(DebugRender);
 		Dev_RenderFrame();
@@ -4458,7 +4459,7 @@ void Client::Scene_End_Drawing() {
 		Dev_TimedScope(ImGuiRender);
 		ImGui_RenderFrame();
 	}
-	#endif
+#endif
 	
 	gfx_end_drawing();
 	
