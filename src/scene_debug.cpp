@@ -1888,6 +1888,7 @@ bool ieditor_gui_entity_editor(Scene *scene, Editor *editor) {
 			if (ImGui::Button("X##Change Texture")) {
 				ImGui::OpenPopup("Select Texture");
 			}
+			editor_widget(editor->entity.texture_uv, "Tex Rect");
 			
 			if (ImGui::BeginPopupModal("Select Texture", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
 				

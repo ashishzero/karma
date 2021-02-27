@@ -3764,7 +3764,11 @@ namespace Develop {
 		}
 		
 		if (draw_editor) {
+			iscene_pre_tick(scene);
+
 			editor_render(scene, &scene->editor, aspect_ratio);
+			
+			iscene_post_tick_client(scene);
 		}
 	}
 	
