@@ -3671,7 +3671,9 @@ namespace Develop {
 			scene->physics.accumulator_t -= dt;
 		}
 		
+		iscene_pre_tick(scene);
 		iscene_update_audio_and_ui(scene);
+		iscene_post_tick_client(scene);
 
 		ImGui_UpdateFrame(scene->physics.real_dt);
 	}
