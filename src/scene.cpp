@@ -4410,6 +4410,7 @@ void Client::Scene_Render(Scene *scene, bool draw_editor) {
 					g.client_is_ready = false;
 					iscene_reset_client(scene);
 					g.s_client = Client_State::WAITING;
+                    g.i_win = false;
 				}
 			}
             
