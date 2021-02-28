@@ -3,14 +3,14 @@ header: #0
       handle: 6898545027483202505
    type: 0
    position: #0
-      x: 0.000000
-      y: 0.000000
+      x: -0.055854
+      y: 3.506034
 data: #0
-   distance: 1.750000
+   distance: 1.444372
    target_position: #0
       x: 1.002852
       y: -0.594394
-   target_distance: 0.750000
+   target_distance: 1.335326
    follow_factor: 0.971400
    zoom_factor: 0.800000
-   behaviour: 3
+   behaviour: 2

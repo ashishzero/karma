@@ -46,7 +46,7 @@
 
 @echo Creating zip...
 	pushd bin\zip
-	tar.exe -cf charitra.zip charitra 1>nul
+	tar.exe -cf charitra.zip charitra 1>log.txt
 	popd
 
 @echo Cleaning up...
