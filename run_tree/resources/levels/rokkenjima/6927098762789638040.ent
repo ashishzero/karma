@@ -3,7 +3,7 @@ header: #0
       handle: 6927098762789638040
    type: 2
    position: #0
-      x: -5.745834
+      x: -5.376869
       y: 3.545722
 resource: #0
    handle: 6926887501941402615
@@ -25,7 +25,7 @@ body: #1
    gravity: 0.000000
    transform: #0
       p: #0
-         x: -5.745834
+         x: -5.376869
          y: 3.545722
       xform: 
          rows: [ #0

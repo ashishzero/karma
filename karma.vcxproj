@@ -410,6 +410,7 @@ popd
     <None Include=".gitattributes" />
     <None Include=".gitignore" />
     <None Include="readme.md" />
+    <None Include="run_tree\dev\local.karma" />
     <None Include="src\shaders\blur.glsl" />
     <None Include="src\shaders\debug.glsl" />
     <None Include="src\shaders\hdr.glsl" />

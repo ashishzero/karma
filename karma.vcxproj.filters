@@ -109,6 +109,7 @@
     <None Include="src\shaders\im3d.glsl" />
     <None Include="src\shaders\quad.glsl" />
     <None Include="src\prebuild.bat" />
+    <None Include="run_tree\dev\local.karma" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="src\.generated\readme.txt" />
