@@ -38,6 +38,13 @@
 ## Build Process (Windows)
 - Set your Working Directory as `run_tree` directory
 - Build using visual studio and run the exe generated in `run_tree`
+- There is built exe present in `run_tree` directory already if you don't want to go through the build process
+- Executable with suffix `_Developer` contains Editor
+
+## Running with custom Ip Address
+- Create a file named `server.txt` in `run_tree/dev/` directory
+- The content of the file should be valid ip address
+- The engine will run with the ip address in that file if that file is present
 
 ## Developer Controls
 - F1 : Pauses / Resumes Game Time
