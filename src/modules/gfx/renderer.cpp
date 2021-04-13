@@ -24,7 +24,7 @@ struct Im_Vertex3d {
 	Color4 color;
 };
 
-typedef u16 Im_Index;
+typedef u32 Im_Index;
 
 struct Im_Draw_Cmd {
 	Texture_View texture;
@@ -660,7 +660,7 @@ void iim2d_flush(bool restart) {
 
 	if (im_context2d.draw_cmd) {
 		gfx->cmd_bind_vertex_buffer(im_context2d.vertex_buffer, sizeof(Im_Vertex2d));
-		gfx->cmd_bind_index_buffer(im_context2d.index_buffer, Index_Type_U16);
+		gfx->cmd_bind_index_buffer(im_context2d.index_buffer, Index_Type_U32);
 
 		for (u32 draw_cmd_index = 0; draw_cmd_index < im_context2d.draw_cmd; ++draw_cmd_index) {
 			Im_Draw_Cmd *cmd = im_context2d.draw_cmds + draw_cmd_index;
@@ -1586,7 +1586,7 @@ void iim3d_flush(bool restart) {
 
 	if (im_context3d.draw_cmd) {
 		gfx->cmd_bind_vertex_buffer(im_context3d.vertex_buffer, sizeof(Im_Vertex3d));
-		gfx->cmd_bind_index_buffer(im_context3d.index_buffer, Index_Type_U16);
+		gfx->cmd_bind_index_buffer(im_context3d.index_buffer, Index_Type_U32);
 
 		for (u32 draw_cmd_index = 0; draw_cmd_index < im_context3d.draw_cmd; ++draw_cmd_index) {
 			Im_Draw_Cmd *cmd = im_context3d.draw_cmds + draw_cmd_index;

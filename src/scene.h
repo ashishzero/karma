@@ -21,10 +21,7 @@ constexpr r32 SCENE_SIMULATION_CORRECTION_ALPHA = 0.8f;
 
 struct Scene;
 
-
-#ifdef ENABLE_DEVELOPER_OPTIONS
 #include "scene_debug.h"
-#endif
 
 typedef bool(*Collision_Resolver)(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb, Contact_Manifold *manifold);
 typedef Impact_Type(*Continuous_Collision_Resolver)(Fixture &a, Fixture &b, const Transform &ta, const Transform &tb, Vec2 a_dp, Vec2 b_dp, Impact_Time *impact);
@@ -91,8 +88,8 @@ struct Scene {
 	
 #ifdef ENABLE_DEVELOPER_OPTIONS
 	Array<Contact_Manifold> manifolds;
-	Editor editor;
 #endif
+	Editor editor;
 };
 
 void scene_prepare(Scene_Run_Method method, Render_Backend backend, System_Window_Show show);

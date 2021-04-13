@@ -113,7 +113,11 @@ Editor editor_create(Scene *scene, bool from_server) {
 	editor.level.preview_shape_scale = 1;
 	editor.level.preview_shapes = true;
 	
+	#ifdef ENABLE_DEVELOPER_OPTIONS
 	editor.mode = Editor_Mode_LEVEL_EDITOR;
+	#else
+	editor.mode = Editor_Mode_GAME;
+	#endif
 	
 	if (from_server == false) {
 		editor.backend = gfx_render_backend();

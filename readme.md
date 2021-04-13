@@ -36,10 +36,8 @@
 ```
 
 ## Build Process (Windows)
-- Check `src/build.cpp` file for build configuration
-- The source files that are included in `src/build.cpp` are excluded from the build process
-- `src/prebuild.bat` is run before the build process to generate reflection
-- The executable is ran from `run_tree` directory
+- Set your Working Directory as `run_tree` directory
+- Build using visual studio and run the exe generated in `run_tree`
 
 ## Developer Controls
 - F1 : Pauses / Resumes Game Time
@@ -48,3 +46,16 @@
 - F4 : Enables / Disables Debug View
 - F5 : Enables / Disables Editor
 - F6 : Resets Level
+
+## Usage
+- There are no docs as of right now, but the entry point is at `first.cpp`
+- See `template.cpp` for setting up start up code
+- See `scene.cpp` for various features of the engine in action
+
+## Example Game Control
+- [W], [A], [S], [D]: Player Controls
+- [Space]: Attack
+- [Mouse Movement]: Target
+
+## Screenshot
+![Game Screenshot](./Screenshot 2021-04-13 165713.png)

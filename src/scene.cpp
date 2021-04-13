@@ -901,8 +901,9 @@ Scene *scene_create() {
 	scene->manifolds.count = scene->manifolds.capacity = 0;
 	scene->manifolds.data = nullptr;
 	scene->manifolds.allocator = TEMPORARY_ALLOCATOR;
-	scene->editor = editor_create(scene, g.method == Scene_Run_Method_SERVER);
 #endif
+
+	scene->editor = editor_create(scene, g.method == Scene_Run_Method_SERVER);
 	
 	return scene;
 }
@@ -2771,7 +2772,9 @@ void iscene_update_audio_and_ui(Scene *scene) {
 	audio_mixer_update(&g.audio_mixer);
 	Dev_TimedBlockEnd(AudioUpdate);
 	
+	#ifdef ENABLE_DEVELOPER_OPTIONS
 	editor_update(scene, &scene->editor);
+	#endif
 }
 
 void iscene_pre_tick(Scene *scene) {
@@ -3751,7 +3754,8 @@ namespace Develop {
 				}
 			}
 		}
-		
+
+		#ifdef ENABLE_DEVELOPER_OPTIONS
 		if (iscene_render_collision_enabled(scene)) {
 			auto manifolds = scene->manifolds;
 			for (auto &m : manifolds) {
@@ -3762,6 +3766,7 @@ namespace Develop {
 				im2d_circle(m.contacts[1], 0.02f, vec4(1, 0, 1));
 			}
 		}
+		#endif
 		
 		if (iscene_render_broadphase_enabled(scene)) {
 			r32 size = scene->hgrid.size / 2;
