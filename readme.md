@@ -65,8 +65,8 @@
 - [Mouse Movement]: Target
 
 ## Screenshot
-![Game Screenshot]("Screenshot 2021-04-13 165713.png")
+![Game Screenshot](Screenshot_2021-04-13_165713.png "Game Screenshot")
 
-![Level Editor Screenshot]("Screenshot 2021-04-13 171442.png")
+![Level Editor Screenshot](Screenshot_2021-04-13_171442.png "Level Editor Screenshot")
 
-![Entity Editor Screenshot]("Screenshot 2021-04-13 171625.png")
+![Entity Editor Screenshot](Screenshot_2021-04-13_171625.png "Entity Editor Screenshot")
