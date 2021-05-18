@@ -60,9 +60,9 @@
 - See `scene.cpp` for various features of the engine in action
 
 ## Example Game Control
-- [W], [A], [S], [D]: Player Controls
-- [Space]: Attack
-- [Mouse Movement]: Target
+- [ W ], [ A ], [ S ], [ D ]: Player Controls
+- [ Space ]: Attack
+- [ Mouse Movement ]: Target
 
 ## Screenshot
 ![Game Screenshot](Screenshot_2021-04-13_165713.png "Game Screenshot")
