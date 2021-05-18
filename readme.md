@@ -35,6 +35,14 @@
 └── .gitignore
 ```
 
+## Features
+- Rendering via OpenGL 4.2 and DirectX 11 (API can be changed at runtime without the need to restart the engine)
+- Auto generation of meta data of structs using Clang which is used for UI generation and serializing and deserializing
+- 2D Broad Phase and Narrow Phase Collision detection and response and 2D Physics Simulation
+- Windows Core Audio for audio rendering
+- Automatic version detection and update of saved files and levels using the reflection system
+- Networking and Multiplayer support
+
 ## Build Process (Windows)
 - Set your Working Directory as `run_tree` directory
 - Build using visual studio and run the exe generated in `run_tree`
@@ -60,9 +68,9 @@
 - See `scene.cpp` for various features of the engine in action
 
 ## Example Game Control
-- [ W ], [ A ], [ S ], [ D ]: Player Controls
-- [ Space ]: Attack
-- [ Mouse Movement ]: Target
+- W, A, S, D: Player Controls
+- Space: Attack
+- Mouse Movement: Target
 
 ## Screenshot
 ![Game Screenshot](Screenshot_2021-04-13_165713.png "Game Screenshot")
