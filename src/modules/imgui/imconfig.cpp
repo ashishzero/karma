@@ -58,14 +58,6 @@ void ImGuiEx::RefreshRenderingContext() {
 void ImGuiEx::Initialize() {
 	IMGUI_CHECKVERSION();
 
-	ImGui::SetAllocatorFunctions(
-		[](size_t size, void *user_data) -> void * {
-			return memory_allocate(size);
-		},
-		[](void *ptr, void *user_data) {
-			memory_free(ptr);
-		});
-
 	ImGui::CreateContext();
 	ImGui::StyleColorsDark();
 
