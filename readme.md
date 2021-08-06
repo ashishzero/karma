@@ -55,12 +55,10 @@
 - The engine will run with the ip address in that file if that file is present
 
 ## Developer Controls
-- F1 : Pauses / Resumes Game Time
-- F2 : Decreases Game Speed
-- F3 : Increases Game Speed
-- F4 : Enables / Disables Debug View
-- F5 : Enables / Disables Editor
-- F6 : Resets Level
+- F1 : Enables / Disables Debug View (Demo Game Only)
+- F2 : Toggles Game and Editor (Demo Game Only)
+- F3 : Decreases Game Speed (Template Only)
+- F4 : Increases Game Speed (Template Only)
 
 ## Usage
 - There are no docs as of right now, but the entry point is at `first.cpp`
