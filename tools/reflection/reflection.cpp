@@ -637,7 +637,7 @@ void reflection_of_templated_struct(Ostream *stream, CXCursor cursor, Array_View
 		ostream_write_formatted(stream, "\t\t};\n");
 	}
 
-	ostream_write_formatted(stream, "\t\tstatic const Type_Info_Struct i(sizeof(Templated_Type), \"%s<%s>\", ", name);
+	ostream_write_formatted(stream, "\t\tstatic const Type_Info_Struct i(sizeof(Templated_Type), \"%s<%s>\", ", name, t_call);
 
 	if (parent_has_attrs)
 		ostream_write_formatted(stream, "static_count(attrs_%s), attrs_%s, ", name, name);

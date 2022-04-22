@@ -11,8 +11,6 @@
     <ClCompile Include="src\audio.cpp" />
     <ClCompile Include="src\broad_phase.cpp" />
     <ClCompile Include="src\first.cpp" />
-    <ClCompile Include="src\main_atish.cpp" />
-    <ClCompile Include="src\main_pujan.cpp" />
     <ClCompile Include="src\modules\core\null\gfx_null.cpp" />
     <ClCompile Include="src\modules\core\stb.cpp" />
     <ClCompile Include="src\modules\core\thread_pool.cpp" />
@@ -40,8 +38,6 @@
     <ClCompile Include="src\scene.cpp" />
     <ClCompile Include="src\scene_debug.cpp" />
     <ClCompile Include="src\template.cpp" />
-    <ClCompile Include="src\main_shankar.cpp" />
-    <ClCompile Include="src\main_zero.cpp" />
     <ClCompile Include="src\main_client.cpp" />
   </ItemGroup>
   <ItemGroup>
